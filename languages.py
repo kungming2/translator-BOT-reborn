@@ -44,6 +44,7 @@ class Lingvo:
         self.link_statistics = kwargs.get("permalink")  # Maps permalink → statistics_page
 
     @property
+    # Define a preferred code.
     def preferred_code(self):
         if self.language_code_1 and self.language_code_1 != "unknown":
             return self.language_code_1
