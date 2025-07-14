@@ -1,0 +1,138 @@
+
+# Title formatting words.
+ENGLISH_DASHES:
+  - English -
+  - English-
+  - '-English'
+  - '- English'
+  - '-Eng'
+  - Eng-
+  - '- Eng'
+  - Eng -
+  - ENGLISH-
+  - ENGLISH -
+  - EN-
+  - ENG-
+  - ENG -
+  - '-ENG'
+  - '- ENG'
+  - '-ENGLISH'
+  - '- ENGLISH'
+
+WRONG_DIRECTIONS:
+  - '<'
+  - '〉'
+  - '›'
+  - '》'
+  - '»'
+  - '⟶'
+  - "\udcfe"
+  - '&gt;'
+  - '→'
+  - '←'
+  - '~'
+
+WRONG_BRACKETS_LEFT:
+  - ［
+  - 〚
+  - '【 '
+  - 〔
+  - 〖
+  - ⟦
+  - ｟
+  - 《
+
+WRONG_BRACKETS_RIGHT:
+  - ］
+  - 〛
+  - 】
+  - 〕
+  - 〗
+  - ⟧
+  - ｠
+  - 》
+
+# These are symbols used to indicate states in defined multiple posts.
+# The last two are currently used.
+DEFINED_MULTIPLE_LEGEND:
+  '⍉': missing
+  '¦': inprogress
+  '✓': doublecheck
+  '✔': translated
+
+# These are two-letter and three-letter English words that can be confused for ISO language codes.
+# We exclude them when processing the title. When adding new ones, add them in title case.
+ENGLISH_2_WORDS:
+  - Am
+  - An
+  - As
+  - Be
+  - Br
+  - El
+  - He
+  - Hi
+  - Is
+  - It
+  - My
+  - 'No'
+  - Or
+  - Se
+  - So
+  - To
+  - Tw
+
+ENGLISH_3_WORDS: >-
+  Abs Abu Aby Ace Act Add Ado Ads Aft Age Ago Aid Ail Aim Air Ait Aka Ale Amp
+  And Ant Ape App Apt Arc Are Ark Arm Art Ash Ask Asp Ass Ate Auk Awe Awn Axe
+  Azo Baa Bag Bah Bam Ban Bar Bay Bed Bee Beg Bet Bey Bib Bid Big Bin Bio Bit
+  Boa Bob Bod Bog Boo Bop Bot Bow Box Boy Bra Bro Bub Bud Bug Bum Bun Bus But
+  Buy Bye Cab Cad Cam Can Cap Car Cat Caw Cha Chi Cob Cod Cog Com Con Coo Cop
+  Cot Cow Cox Cry Cub Cup Cur Cut Dad Dag Dam Dee Den Dib Did Dig Dim Din Dip
+  Doc Doe Don Doo Dop Dot Dry Dub Due Dug Duh Dun Duo Dux Ego Eke Elk Elm Emu
+  End Era Erg Err Ese Etc Eve Ewe Fab Fad Fag Fan Far Far Fat Fax Fay Fie Fin
+  Fir Fit Fly Fon For Fry Fue Fun Fur Gab Gag Gak Gal Gap Gas Gaw Gay Gel Geo
+  Gig Gil Gin Git Gnu Gob God Goo Got Gum Gun Gut Gym Had Hag Hal Han Ham Has
+  Hat Hay Hem Her Hid Hit Hoe Hop Hot How Hoy Hub Hue Hug Hug Huh Hum Hut Ice
+  Ich Ilk Inn Ire Irk Ism Its Jab Jah Jak Jam Jav Jay Jet Jib Jig Job Jog Jus
+  Jut Keg Key Kid Kin Kit Koa Koi Lab Lad Lag Lap Law Lax Lay Lea Led Lee Lei
+  Let Lew Lid Lie Lip Lit Lob Log Lol Loo Lop Los Lot Low Lug Mac Mad Mag Man
+  Mao Mar Mat Maw Max May Men Met Mic Mid Min Mit Mix Mod Mog Mom Mon Moo Mop
+  Mow Mud Mug Mum Nab Nag Nap Nay Nee Neo Net New Nib Nil Nit Nix Nob Nod Nog
+  Non Nor Not Now Nub Nun Nut Oar Old Ole Oma One Opt Ore Owl Pac Pad Pal Pan
+  Pap Par Pas Paw Pax Pay Pea Pee Peg Pep Per Pls Plz Pic Pie Pig Pin Pip Pit
+  Pix Ply Poe Pog Poi Poo Pop Pot Pow Pox Pre Pro Pub Pud Pug Pup Pus Put Pyx
+  Qat Qua Rad Rag Ram Ran Rap Rat Raw Ray Rib Rim Rob Roc Rod Roe Row Rub Rue
+  Rug Rum Run Rut Sac Sad Sag Sat Saw Sax Say Sea Sec See Set Sew She Shh Shy
+  Sim Sin Sip Sir Sis Six Ski Sky Sly Sob Sod Som Sop Sot Sow Soy Spa Spy Sty
+  Sub Sue Sun Sun Tab Tad Tag Tam Tan Tae Tap Tar Tat Tax Tea Tee Ten The Tic
+  Til Tin Tip Tit Tom Ton Too Top Tow Toy Try Tub Tug Tui Two Txt Ugh Ump Urn
+  Usa Van Vie Vig Wad Wag Wan War Was Wax Way Wed Wel Wet Wig Win Woe Wog Wok
+  Won Woo Wow Wry Yak Yam Yap Yaw Yay Yea Yes Yet Yip Yum Yup Zag Zap Zen Zoo
+
+ENGLISH_ALIASES:
+  - en
+  - eng
+  - english
+  - englisch
+  - inglés
+  - inglês
+  - inglese
+  - inggris
+  - anglais
+  - англи́йский
+  - 英语
+  - 英語
+  - 英文
+  - 영어
+
+CONNECTORS:
+  - '>'
+  - 'to'
+  - '<'  # shows up in mistakes
+  - '〉'
+  - '›'
+  - '》'
+  - '»'
+  - '⟶'
+  - '→'
+  - '~'
