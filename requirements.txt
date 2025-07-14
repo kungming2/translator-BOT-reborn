@@ -1,0 +1,67 @@
+# Reddit API
+praw
+prawcore
+
+# OpenAI API
+openai
+
+# YAML config
+pyyaml
+
+# HTTP requests
+requests
+
+# Fuzzy matching
+rapidfuzz
+
+# Wikipedia API
+wikipedia
+
+# HTML parsing
+lxml
+beautifulsoup4
+
+# Image hashing
+ImageHash
+Pillow
+
+# Chinese text processing
+jieba
+opencc
+
+# Japanese text processing
+MeCab
+pykakasi
+unidic-lite
+
+# Korean romanization and lookup
+korean-romanizer
+krdict.py
+
+# Google search
+googlesearch-python
+
+# Wayback Machine
+waybackpy
+
+# YouTube downloader
+pytube
+
+# Wiktionary parsing
+wiktionaryparser
+
+# System utilities
+psutil
+
+# For system formatting messages
+wasabi
+
+selenium
+aiohttp
+pycountry
+korean_romanizer
+unidic
+korean_romanizer
+aiofiles
+httpx
+orjson
