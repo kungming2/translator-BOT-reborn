@@ -1,67 +1,77 @@
-# Reddit API
-praw
-prawcore
+# Asynchronous HTTP client
+aiohttp
 
-# OpenAI API
-openai
-
-# YAML config
-pyyaml
-
-# HTTP requests
-requests
-
-# Fuzzy matching
-rapidfuzz
-
-# Wikipedia API
-wikipedia
+# Asynchronous file operations
+aiofiles
 
 # HTML parsing
-lxml
 beautifulsoup4
+
+# Image processing
+Pillow
 
 # Image hashing
 ImageHash
-Pillow
 
 # Chinese text processing
 jieba
 opencc
 
-# Japanese text processing
-MeCab
-pykakasi
-unidic-lite
-
 # Korean romanization and lookup
 korean-romanizer
 krdict.py
 
-# Google search
-googlesearch-python
+# Japanese text processing
+MeCab
+pykakasi
+unidic
+unidic-lite
 
-# Wayback Machine
-waybackpy
+# HTML/XML parsing
+lxml
 
-# YouTube downloader
-pytube
+# OpenAI API
+openai
 
-# Wiktionary parsing
-wiktionaryparser
+# Fast JSON library
+orjson
+
+# HTTP client
+httpx
 
 # System utilities
 psutil
 
-# For system formatting messages
+# Reddit API
+praw
+prawcore
+
+# YAML config
+pyyaml
+
+# YouTube downloader
+pytube
+
+# Fuzzy matching
+rapidfuzz
+
+# Web automation
+selenium
+
+# HTTP requests
+requests
+
+# Country data
+pycountry
+
+# Formatting messages
 wasabi
 
-selenium
-aiohttp
-pycountry
-korean_romanizer
-unidic
-korean_romanizer
-aiofiles
-httpx
-orjson
+# Wayback Machine
+waybackpy
+
+# Wikipedia API
+wikipedia
+
+# Google search
+googlesearch-python
