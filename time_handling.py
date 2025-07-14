@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 Handles time-related conversion tasks.
+Adherence to ISO 8601 or timestamps is strongly emphasized.
 """
 import time
 from datetime import datetime, timezone
