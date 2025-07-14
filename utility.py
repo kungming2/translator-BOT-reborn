@@ -28,6 +28,13 @@ def check_url_extension(submission_url):
         return False
 
 
+def extract_text_within_curly_braces(text):
+    """Gets text from between two paired curly braces."""
+    pattern = r"\{{([^}}]+)\}"  # Regex pattern to match text within curly braces
+    matches = re.findall(pattern, text)
+    return matches
+
+
 def generate_image_hash(image_url):
     """
     Generates an image hash from a linked URL for later comparison.
@@ -49,4 +56,3 @@ def generate_image_hash(image_url):
         logger.info(f"[ZW] generate_image_hash: Assessed {image_url}: {hash_value}")
 
     return hash_value
-
