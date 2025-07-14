@@ -1,0 +1,51 @@
+unknown:
+  language_code_3: unknown
+  name_alternates:
+    - Asian
+    - Asiatic
+    - Don'T Know
+    - Dont Know
+    - Dunno
+    - I Don'T Know
+    - Idk
+    - Indian
+    - Mystery
+    - Native American
+    - No Idea
+    - Not Sure
+    - Source Language
+    - Und
+    - Uncertain
+    - Undefined
+    - Unidentified
+    - Unknow
+    - Unknown
+    - Unknon
+    - Unkown
+    - Unsure
+    - Uknown
+  name: Unknown
+  supported: true
+
+multiple:
+  language_code_3: multiple
+  name_alternates:
+    - All
+    - Any
+    - Anything
+    - Every Language
+    - Everything
+    - Many
+    - Multi
+    - Multi-language
+    - Multiple
+    - Mul
+    - Various
+  name: Multiple Languages
+  supported: true
+
+generic:
+  supported: true
+  name: Generic
+  language_code_3: generic
+  name_alternates: null

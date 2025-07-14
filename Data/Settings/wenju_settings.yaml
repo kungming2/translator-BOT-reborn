@@ -1,0 +1,2 @@
+LINES_TO_KEEP: 5000
+MAX_QUEUE: 5  # Number of items we want to alert mods about.
