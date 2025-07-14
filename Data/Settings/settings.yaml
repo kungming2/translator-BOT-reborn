@@ -1,0 +1,50 @@
+bot_name: Ziwen
+version_number: "2.0 beta"
+subreddit: translator
+commands:
+  - "!claim"
+  - "!delete"  # to remove
+  - "!doublecheck"
+  - "!id:"
+  - "!identify:"
+  - "!long"
+  - "!missing"
+  - "!nuke:"
+  - "!page:"
+  - "!reset"
+  - "!search:"
+  - "!set:"
+  - "!translated"
+  - "!verify"
+  - "`"
+thanks_keywords:
+  - appreciate
+  - arigato
+  - danke
+  - gracias
+  - solved
+  - thank
+  - thanks
+  - thx
+  - tysm
+  - tyvm
+verifying_keywords:
+  - agree
+  - approve
+  - concur
+  - good job
+  - good work
+  - is correct
+  - is right
+  - verified
+  - verify
+  - well done
+  - well-done
+# This is how many posts Ziwen will retrieve all at once. PRAW can download 100 at a time.
+max_posts: 100
+# How long do we allow people to `!claim` a post? This is defined in seconds.
+claim_period: 28800
+# A number that defines the soft number of notifications an individual will get in a month *per language*.
+notifications_limit: 100
+# A number that defines how many MAX number of people we message for.
+notifications_user_limit: 20
