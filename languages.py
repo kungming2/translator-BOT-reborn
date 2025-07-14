@@ -60,7 +60,7 @@ class Lingvo:
     @classmethod
     def from_csv_row(cls, row: dict):
         """
-        Create a Lingvo object from a language CSV row.
+        Create a Lingvo object from a language CSV row in Datasets.
         Expected keys: 'ISO 639-3', 'ISO 639-1', 'Language Name', 'Alternate Names'
         """
         alt_names = row.get("Alternate Names", "")
