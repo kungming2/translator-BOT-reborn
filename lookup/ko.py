@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+Contains functions that deal with Korean-language content.
+"""
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
