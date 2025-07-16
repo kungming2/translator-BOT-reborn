@@ -13,6 +13,7 @@ import re
 import requests
 from contextlib import suppress
 import html as html_stdlib
+from time import sleep
 
 import opencc
 from bs4 import BeautifulSoup as Bs
@@ -21,7 +22,7 @@ from lxml import html
 
 from config import Paths, logger
 from connection import get_random_useragent
-from async_helpers import maybe_async
+from lookup.async_helpers import maybe_async
 from responses import RESPONSE
 
 useragent = get_random_useragent()
@@ -377,74 +378,42 @@ def old_chinese_search(character):
 
 def variant_character_search(search_term, retries=3):
     """
-    Function to search the MOE dictionary for a link to character
-    variants, and returns the link if found. None if nothing is found.
+    Search the MOE dictionary for a link to character variants.
+    Returns the full URL if found, else None.
     """
-
     search_term = search_term.strip()
-    entry_url = None
-    timeout_amount = 4
+    base_search_url = f"https://dict.variants.moe.edu.tw/search.jsp?QTP=0&WORD={search_term}#searchL"
+    base_site = "https://dict.variants.moe.edu.tw/"
 
     session = requests.Session()
-    base_url = "https://dict.variants.moe.edu.tw/variants/rbt"
-    try:
-        initial_response = session.get(
-            f"{base_url}/query_by_standard_tiles.rbt",
-            timeout=0.5,
-        )
-    except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
-        logger.warning("Issue with gathering session for variant search.")
-        return None
+    timeout_amount = 4
 
-    try:
-        rci = re.search("componentId=(rci_.*_4)", initial_response.text).group(1)
-        cookies = session.cookies.get_dict()  # sets JSESSIONID
-    except AttributeError:
-        return None
-
-    search_params = {
-        "rbtType": "AJAX_INVOKE",
-        "componentId": rci,
-    }
-
-    data = {"searchedText": search_term}
-    try:
-        search_response = requests.post(
-            f"{base_url}/query_by_standard.rbt",
-            params=search_params,
-            cookies=cookies,
-            data=data,
-            timeout=1,
-        )
-        fetch_id = Bs(search_response.text, "lxml").findAll("a")[0].get("id")
-    except (IndexError, requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout):
-        return None
-
-    fetch_params = {"quote_code": fetch_id}
-
-    # Regular function iteration.
-    for _ in range(retries):
+    for attempt in range(retries):
         try:
-            response = requests.get(
-                f"{base_url}/word_attribute.rbt",
-                params=fetch_params,
-                cookies=cookies,
-                timeout=timeout_amount,
-                headers=useragent,
-            )
+            response = session.get(base_search_url, timeout=timeout_amount)
+            response.raise_for_status()
+            tree = html.fromstring(response.content)
 
-            # Note that the full HTML of the page is response.text.
-            entry_url = response.url
-            if 'quote_code' not in entry_url:
-                entry_url = None
+            # XPath to the <a> element inside /html/body/main/div/form/div/a
+            link_elements = tree.xpath('/html/body/main/div/form/div/a')
 
-            return entry_url
-        except (ConnectionError, requests.exceptions.ReadTimeout):
-            logger.info("Timed out for variant search, trying again.")
-            timeout_amount += 2
-            continue
+            if link_elements:
+                href = link_elements[0].get('href')
+                if href:
+                    full_url = base_site + href
+                    return full_url
 
-    return entry_url
+            # If link not found, no need to retry, return None immediately
+            return None
+
+        except (requests.RequestException, IndexError) as e:
+            # If not last attempt, wait a bit and retry
+            if attempt < retries - 1:
+                sleep(1)
+                continue
+            else:
+                return None
+    return None
 
 
 def min_hakka_readings(character):
@@ -1059,19 +1028,20 @@ def show_menu():
     print("1. zh_character (search for a single Chinese character)")
     print("2. zh_word (search for a Chinese word)")
     print("3. zh_word_chengyu_supplement (search for a chengyu addition)")
+    print("4. variant_character_search (search for a variant character)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         show_menu()
-        choice = input("Enter your choice (0-3): ")
+        choice = input("Enter your choice (0-4): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3"]:
+        if choice not in ["1", "2", "3", "4"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1083,3 +1053,5 @@ if __name__ == "__main__":
             print(asyncio.run(zh_word(my_test)))
         elif choice == "3":
             print(zh_word_chengyu_supplement(my_test))
+        elif choice == "4":
+            print(variant_character_search(my_test))
