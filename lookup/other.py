@@ -13,9 +13,8 @@ import unidic
 from commands import command_parser
 from config import logger, load_settings, Paths
 from connection import get_random_useragent
-from languages import converter
 from title_handling import extract_lingvos_from_text
-from zh import simplify
+from lookup.zh import simplify
 
 useragent = get_random_useragent()
 
@@ -77,7 +76,7 @@ def lookup_matcher(content_text, language_code):
     Only text enclosed in backticks (`) is processed, excluding
     triple-backtick code blocks.
     Tokenizes Chinese ('zh'), Japanese ('ja'), and Korean ('ko') appropriately.
-
+    TODO crashes with !identify:ja+ko
     :param content_text: Text of the comment to search.
     :param language_code: Language code ('zh', 'ja', 'ko'), or None to return list of terms in backticks.
     :return: Dict mapping language code to list of terms, or list if language_code is None.
@@ -88,18 +87,18 @@ def lookup_matcher(content_text, language_code):
 
     cjk_languages = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
 
-    # Check for explicit identify command
+    # Check for explicit !identify command
     if "!identify:" in original_text:
-        parsed = command_parser(original_text, "!identify:")[0]
-        for key in ['Chinese', 'Japanese', 'Korean']:
-            if len(parsed) == 4 and parsed.title() in cjk_languages[key]:  # TODO change to use codes
-                parsed = key
-        language_code = converter(parsed).preferred_code
+        parsed_code = command_parser(original_text, "!identify:")[0].preferred_code
+        for key in ['zh', 'ja', 'ko']:
+            if len(parsed_code) == 4 and parsed_code in cjk_languages[key]:
+                parsed_code = key
+        language_code = parsed_code
 
     elif language_code is None:
         mentions = extract_lingvos_from_text(content_text)
         if mentions and len(mentions) == 1:
-            language_code = mentions[0]
+            language_code = mentions[0].preferred_code
 
     # Extract all segments between backticks
     matches = re.findall(r'`(.*?)`', content_text, re.DOTALL)
@@ -114,7 +113,8 @@ def lookup_matcher(content_text, language_code):
     has_hangul = bool(re.search(r'[\uac00-\ud7af]', combined_text))
 
     if language_code is None:
-        return matches
+        # Instead of returning list, return dict with a default key, e.g. 'all' or 'default'
+        return {'lookup': matches}
 
     result = {}
 
@@ -161,4 +161,5 @@ def lookup_matcher(content_text, language_code):
 
 
 if __name__ == "__main__":
-    print(lookup_matcher("`世界无产阶级人民万岁`", "zh"))
+    print(lookup_matcher("`舊世界打個落花流水`", "zh"))
+    print(lookup_matcher("`過去を叩きのめせ`", "ja"))
