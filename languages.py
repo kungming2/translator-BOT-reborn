@@ -43,14 +43,17 @@ class Lingvo:
         self.rate_yearly = kwargs.get("rate_yearly")
         self.link_statistics = kwargs.get("permalink")  # Maps permalink → statistics_page
 
+    # Define the preferred code to be used.
     @property
-    # Define a preferred code.
     def preferred_code(self):
-        if self.language_code_1 and self.language_code_1 != "unknown":
-            return self.language_code_1
-        if self.language_code_3 and self.language_code_3 != "unknown":
-            return self.language_code_3
-        return self.script_code or "unknown"
+        for code in (self.language_code_1, self.language_code_3):
+            if code:
+                lowered = code.lower()
+                if lowered in {"multiple", "generic"}:
+                    return lowered
+                if lowered != "unknown":
+                    return lowered
+        return (self.script_code or "unknown").lower()
 
     def __repr__(self):
         return f"<Lingvo: {self.name} ({self.preferred_code})>"
@@ -131,6 +134,15 @@ def load_lingvo_dataset():
 
     :return: dict[str, Lingvo]
     """
+    # Add statistics if present, but only include specific keys
+    allowed_keys = {
+        "num_months",
+        "permalink",
+        "rate_daily",
+        "rate_monthly",
+        "rate_yearly",
+    }
+
     raw_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
     utility_data = load_settings(Paths.DATASETS["UTILITY_LINGVO_DATA"])
     with open(Paths.LOGS["STATISTICS"], "rb") as f:  # Note 'rb' for binary mode
@@ -151,11 +163,14 @@ def load_lingvo_dataset():
 
     # Add statistics if present
     for code, stats in statistics_data.items():
+        filtered_stats = {k: v for k, v in stats.items() if k in allowed_keys}
+        if not filtered_stats:
+            continue  # Skip if nothing relevant
+
         if code in combined_data:
-            combined_data[code].update(stats)
+            combined_data[code].update(filtered_stats)
         else:
-            # If stats exist but no entry yet, create one
-            combined_data[code] = stats.copy()
+            combined_data[code] = filtered_stats.copy()
 
     return {code: Lingvo(**attrs) for code, attrs in combined_data.items()}
 
@@ -201,7 +216,7 @@ def define_language_lists():
             iso_default_associated.append(f"{code_1}-{lingvo.countries_default}")
 
         if hasattr(lingvo, "countries_associated") and lingvo.countries_associated:
-            language_country_associated[code_1] = lingvo.countries_associated
+            language_country_associated[code_1] = lingvo.countries_associated  # TODO check on this.
 
         if hasattr(lingvo, "mistake_abbreviation") and lingvo.mistake_abbreviation:
             mistake_abbreviations[lingvo.mistake_abbreviation] = code_1
@@ -359,13 +374,14 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
         broader, specific = input_text.split("-", 1)
 
         if broader.lower() == "unknown":
-            # Probably a script code
+            # Attempt to resolve the code as a script code
             try:
-                script_name = iso_codes_deep_search(specific, script_search=True).name
-                if script_name is None:
+                result = iso_codes_deep_search(specific, script_search=True)
+                script_name = getattr(result, "name", None)
+                if not script_name:
                     return None
                 return Lingvo(name=script_name, language_code_3=specific, supported=False)
-            except TypeError:
+            except (AttributeError, TypeError):
                 return None
 
         # Language-region combo
@@ -594,10 +610,10 @@ lingvos = load_lingvo_dataset()
 if __name__ == "__main__":
     while True:
         my_test = input("Enter the string you wish to test with the converter: ")
-        result = converter(my_test)
+        converter_result = converter(my_test)
 
-        if result:
-            print(result)
-            print(vars(result))
+        if converter_result:
+            print(converter_result.preferred_code)
+            print(vars(converter_result))
         else:
             print("Did not match anything.")
