@@ -5,6 +5,8 @@ Wrapper for Reddit functions to allow for testing without sending
 messages. This wraps functions for comment replies, message replies,
 and message sending.
 """
+from praw import exceptions
+
 from config import SETTINGS, logger
 from testing import log_testing_mode
 
@@ -33,8 +35,12 @@ def comment_reply(comment, reply_text):
             }
         )
     else:
-        comment.reply(reply_text)
-        logger.info(f"Replied to comment ID {comment.id} successfully.")
+        try:
+            comment.reply(reply_text)
+            logger.info(f"Replied to comment ID {comment.id} successfully.")
+        except exceptions.RedditAPIException:  # Comment has been deleted.
+            logger.info(f"Comment ID {comment.id} has been deleted.")
+            pass
 
 
 def message_reply(message_obj, reply_text):
