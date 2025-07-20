@@ -170,7 +170,7 @@ def user_statistics_loader(username):
 
     # Fetch and process both command and notification data
     commands_dict = fetch_data("SELECT * FROM total_commands WHERE username = ?")
-    notifications_dict = fetch_data("SELECT * FROM notify_monthly_limit WHERE username = ?")
+    notifications_dict = fetch_data("SELECT * FROM notify_cumulative WHERE username = ?")
 
     if not commands_dict and not notifications_dict:
         return None
