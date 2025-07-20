@@ -52,14 +52,6 @@ WRONG_BRACKETS_RIGHT:
   - ｠
   - 》
 
-# These are symbols used to indicate states in defined multiple posts.
-# The last two are currently used.
-DEFINED_MULTIPLE_LEGEND:
-  '⍉': missing
-  '¦': inprogress
-  '✓': doublecheck
-  '✔': translated
-
 # These are two-letter and three-letter English words that can be confused for ISO language codes.
 # We exclude them when processing the title. When adding new ones, add them in title case.
 ENGLISH_2_WORDS:

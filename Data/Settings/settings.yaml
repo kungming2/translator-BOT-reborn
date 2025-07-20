@@ -1,33 +1,60 @@
 bot_name: Ziwen
 version_number: "2.0 beta"
 subreddit: translator
-commands:
-  - "!claim"
-  - "!delete"  # to remove
-  - "!doublecheck"
+testing_mode: true
+commands_with_args:
   - "!id:"
   - "!identify:"
-  - "!long"
-  - "!missing"
-  - "!nuke:"
   - "!page:"
-  - "!reset"
-  - "!search:"
+  - "!search:"  # Does not accept language terms.
   - "!set:"
+
+commands_optional_args:
   - "!translated"
+  - "!doublecheck"
+  - "!claim"
+
+commands_no_args:
+  - "!delete"
+  - "!long"
+  - "!nuke"
+  - "!missing"
+  - "!reset"
   - "!verify"
-  - "`"
-thanks_keywords:
+
+lookup_commands:
+  - "`"     # CJK lookup
+  - "{{"    # Wikipedia lookup
+
+command_aliases:
+  '!id:': identify
+  '!identify:': identify
+
+# Note that translated and doublecheck have variable scores,
+# calculated separately.
+command_points:
+  identify: 3
+  claim: 1
+  page: 1
+  search: 1
+  reference: 1
+  cjk_lookup: 2
+  wikipedia_lookup: 1
+
+thanks_keywords:  # Must be lowercase.
   - appreciate
   - arigato
   - danke
   - gracias
+  - merci
   - solved
   - thank
   - thanks
   - thx
   - tysm
   - tyvm
+  - you rock
+
 verifying_keywords:
   - agree
   - approve
@@ -40,11 +67,36 @@ verifying_keywords:
   - verify
   - well done
   - well-done
-# This is how many posts Ziwen will retrieve all at once. PRAW can download 100 at a time.
+
+# These are symbols used to indicate states in defined multiple posts.
+# The last two are currently used.
+defined_multiple_legend:
+  '⍉': missing
+  '¦': inprogress
+  '✓': doublecheck
+  '✔': translated
+
+# This is how many posts or comments Ziwen will retrieve all at once.
+# PRAW can download 100 at a time.
 max_posts: 100
 # How long do we allow people to `!claim` a post? This is defined in seconds.
 claim_period: 28800
-# A number that defines the soft number of notifications an individual will get in a month *per language*.
+# A number that defines the soft number of notifications an individual
+# will get in a month *per language*.
 notifications_limit: 100
-# A number that defines how many MAX number of people we message for.
+# A number that defines how many MAX number of people we message for
+# a single language post.
 notifications_user_limit: 20
+# How many posts (per 24 hours) can an OP make before they trigger
+# the notifications cut-off (that is, we stop sending language post
+# notifications to avoid spamming)
+user_submission_limit: 4
+
+# Month delta for points calculation. How many months ago do we want to
+# use as a reference for points calculation?
+points_months_delta: 3
+
+# Edit tracking variables.
+comment_edit_age_max: 12  # in hours
+# How many comments back we want to check.
+comment_edit_num_limit: 30
