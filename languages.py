@@ -3,7 +3,7 @@
 """
 A collection of database sets and language functions that all r/translator bots use.
 """
-
+import copy
 import csv
 import random
 import re
@@ -25,7 +25,7 @@ class Lingvo:
         self.language_code_1 = kwargs.get("language_code_1")
         self.language_code_3 = kwargs.get("language_code_3")
         self.script_code = kwargs.get("script_code")  # For script entries
-        self.country = kwargs.get("country")
+        self.country = kwargs.get("country")  # country code
         self.countries_default = kwargs.get("countries_default")
         self.family = kwargs.get("family")
         self.mistake_abbreviation = kwargs.get("mistake_abbreviation")
@@ -60,6 +60,15 @@ class Lingvo:
 
     def __str__(self):
         return self.preferred_code
+
+    def __eq__(self, other):
+        if not isinstance(other, Lingvo):
+            return NotImplemented
+        return self.preferred_code == other.preferred_code
+
+    def __hash__(self):
+        # hash should be consistent with __eq__
+        return hash(self.preferred_code)
 
     @classmethod
     def from_csv_row(cls, row: dict):
@@ -237,26 +246,30 @@ def define_language_lists():
     }
 
 
-def fuzzy_text(word, supported_languages, threshold=75):
-    """
-    Returns the best fuzzy match for a word from a list of supported languages.
+def normalize(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
-    :param word: The input word to check (e.g., possibly misspelled language name).
-    :param supported_languages: A list of language names to match against.
-    :param threshold: Minimum fuzz ratio required for a match.
-    :return: The best match if above threshold, otherwise None.
-    """
+
+def fuzzy_text(word, supported_languages, threshold=75):
     exclude = language_module_settings['FUZZ_IGNORE_LANGUAGE_NAMES']
+    word_norm = normalize(word)
+
+    best_match = None
+    best_score = threshold
 
     for language in supported_languages:
         if language in exclude:
             continue
+        lang_norm = normalize(language)
+        score = fuzz.token_set_ratio(lang_norm, word_norm)
+        if score > best_score:
+            best_score = score
+            best_match = language
 
-        closeness = fuzz.ratio(language, word)
-        if closeness > threshold:
-            return language
-
-    return None
+    return best_match
 
 
 """MAIN CONVERTER FUNCTIONS"""
@@ -331,50 +344,12 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
     input_lower = input_text.lower()
     reference_lists = define_language_lists()
 
-    # Search by name or alternate name
-    input_title = input_text.title()
-    for code, lingvo in lingvos.items():
-        if input_title == lingvo.name:
-            return lingvo
-        if input_title in (alt.title() for alt in lingvo.name_alternates or []):
-            return lingvo
-
-    # Try to find a Lingvo by 2-letter code first
-    if input_lower in reference_lists['ISO_639_1']:
-        return lingvos.get(input_lower)
-
-    # If input is 3 letters, check if it maps to a 2-letter code, then prefer that Lingvo
-    if len(input_lower) == 3:
-        # Search for 2-letter code matching this 3-letter code
-        for code_1, lingvo in lingvos.items():
-            if lingvo.language_code_3 == input_lower:
-                # Found 3-letter code, try to return the 2-letter Lingvo if exists
-                if code_1 in lingvos:
-                    return lingvos[code_1]
-                else:
-                    # fallback to this lingvo
-                    return lingvo
-
-        # If no 2-letter match, fallback to exact 3-letter match
-        for lingvo in lingvos.values():
-            if input_lower == lingvo.language_code_3:
-                return lingvo
-
-    # First try language codes.
-    iso_search = iso_codes_deep_search(input_text)
-    if not iso_search:
-        # Fallback to script names or codes.
-        iso_search = iso_codes_deep_search(input_text, script_search=True)
-
-    if iso_search:
-        return iso_search  # Returns a Lingvo object.
-
-    # Handle compound codes like zh-CN or unknown-Cyrl
+    # Handle compound codes like zh-CN or unknown-Cyrl first,
+    # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
         broader, specific = input_text.split("-", 1)
 
         if broader.lower() == "unknown":
-            # Attempt to resolve the code as a script code
             try:
                 result = iso_codes_deep_search(specific, script_search=True)
                 script_name = getattr(result, "name", None)
@@ -390,20 +365,81 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
             country_code = country_info[0].upper()
             language_code = broader.lower()
             if language_code in lingvos:
-                lingvo = lingvos[language_code]
+                lingvo = copy.deepcopy(lingvos[language_code])
                 lingvo.name += f" {{{country_info[1]}}}"  # e.g., "Chinese {China}"
-                lingvo.country = country_converter(country_code)[1]  # Return the country name
+                lingvo.country = country_code  # e.g. 'IN'
                 return lingvo
+
+    # Search by name or alternate name
+    input_title = input_text.title()
+    for code, lingvo in lingvos.items():
+        if input_title == lingvo.name:
+            # Return a copy with no country info since input has no region
+            lingvo_copy = copy.deepcopy(lingvo)
+            lingvo_copy.country = None
+            return lingvo_copy
+        if input_title in (alt.title() for alt in lingvo.name_alternates or []):
+            lingvo_copy = copy.deepcopy(lingvo)
+            lingvo_copy.country = None
+            return lingvo_copy
+
+    # Try to find a Lingvo by 2-letter code first
+    if input_lower in reference_lists['ISO_639_1']:
+        lingvo = lingvos.get(input_lower)
+        if lingvo:
+            lingvo_copy = copy.deepcopy(lingvo)
+            # Clear country info for simple 2-letter code inputs
+            lingvo_copy.country = None
+            return lingvo_copy
+
+    # If input is 3 letters, check if it maps to a 2-letter code, then prefer that Lingvo
+    if len(input_lower) == 3:
+        for code_1, lingvo in lingvos.items():
+            if lingvo.language_code_3 == input_lower:
+                if code_1 in lingvos:
+                    lingvo_copy = copy.deepcopy(lingvos[code_1])
+                    lingvo_copy.country = None
+                    return lingvo_copy
+                else:
+                    lingvo_copy = copy.deepcopy(lingvo)
+                    lingvo_copy.country = None
+                    return lingvo_copy
+
+        for lingvo in lingvos.values():
+            if input_lower == lingvo.language_code_3:
+                lingvo_copy = copy.deepcopy(lingvo)
+                lingvo_copy.country = None
+                return lingvo_copy
+
+    # First try language codes.
+    iso_search = iso_codes_deep_search(input_text)
+    if not iso_search:
+        iso_search = iso_codes_deep_search(input_text, script_search=True)
+
+    if iso_search:
+        # iso_codes_deep_search returns a Lingvo instance.
+        # Copy it and clear country for simple inputs
+        lingvo_copy = copy.deepcopy(iso_search)
+        lingvo_copy.country = None
+        return lingvo_copy
 
     # Special abbreviation fixes (like 'vn' meaning Vietnamese)
     if input_lower in reference_lists['MISTAKE_ABBREVIATIONS']:
         fixed = reference_lists['MISTAKE_ABBREVIATIONS'][input_lower]
-        return lingvos.get(fixed)
+        lingvo = lingvos.get(fixed)
+        if lingvo:
+            lingvo_copy = copy.deepcopy(lingvo)
+            lingvo_copy.country = None
+            return lingvo_copy
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
     if input_lower in reference_lists['ISO_639_2B']:
         canonical_code = reference_lists['ISO_639_2B'][input_lower]
-        return lingvos.get(canonical_code)
+        lingvo = lingvos.get(canonical_code)
+        if lingvo:
+            lingvo_copy = copy.deepcopy(lingvo)
+            lingvo_copy.country = None
+            return lingvo_copy
 
     # Fuzzy match if nothing else worked
     if fuzzy and input_title not in language_module_settings['FUZZ_IGNORE_WORDS']:
@@ -416,7 +452,9 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
         try:
             lingvo_script = iso_codes_deep_search(input_text, script_search=True)
             if lingvo_script:
-                return lingvo_script
+                lingvo_copy = copy.deepcopy(lingvo_script)
+                lingvo_copy.country = None
+                return lingvo_copy
             else:
                 return None
         except TypeError:
