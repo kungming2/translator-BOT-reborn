@@ -11,6 +11,8 @@ import yaml
 
 # Base directory configuration
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+# Note that since this is a storage folder and not a module,
+# it is capitalized in my logic.
 DATA_DIR = os.path.join(BASE_DIR, "Data")
 
 
@@ -36,7 +38,7 @@ class Paths:
         "TEXT": os.path.join(DATA_DIR, "responses.yaml"),
     }
 
-    # Language reference datasets
+    # Language reference datasets (infrequently changed)
     DATASETS = {
         "COUNTRIES": os.path.join(DATA_DIR, "Datasets", "countries.csv"),
         "LANGUAGE_DATA": os.path.join(DATA_DIR, "Datasets", "language_data.yaml"),
@@ -49,7 +51,7 @@ class Paths:
         "ZH_CCANTO": os.path.join(DATA_DIR, "Datasets", "ccanto.md"),
     }
 
-    # Log files
+    # Log files that are frequently written to
     LOGS = {
         "ERROR": os.path.join(DATA_DIR, "_log_error.yaml"),
         "COUNTER": os.path.join(DATA_DIR, "_log_counter.json"),
@@ -58,11 +60,13 @@ class Paths:
         "ACTIVITY": os.path.join(DATA_DIR, "_log_activity.csv"),
         "HASHES": os.path.join(DATA_DIR, "_log_hashes.json"),
         "STATISTICS": os.path.join(DATA_DIR, "_statistics.json"),
+        "TESTING": os.path.join(DATA_DIR, "_log_testing.md"),
     }
 
-    # Settings files
+    # Settings files. No private information should be in these.
     SETTINGS = {
         "SETTINGS": os.path.join(DATA_DIR, "Settings", "settings.yaml"),
+        "DISCORD_SETTINGS": os.path.join(DATA_DIR, "Settings", "discord_settings.yaml"),
         "LANGUAGES_MODULE_SETTINGS": os.path.join(DATA_DIR, "Settings", "languages_settings.yaml"),
         "TITLE_MODULE_SETTINGS": os.path.join(DATA_DIR, "Settings", "title_settings.yaml")
     }
@@ -94,7 +98,7 @@ def set_up_logger():
 
 
 def load_settings(path):
-    """General function for loading settings from a yaml file"""
+    """General function for loading settings from a YAML file."""
     with open(path, 'r', encoding='utf-8') as f:
         settings = yaml.safe_load(f)  # Parse the file's content
 
