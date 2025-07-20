@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+This handles language processing from posts' titles and also
+filters out posts that do not match the community rules.
+"""
 import json
 import re
 import string
@@ -57,6 +61,20 @@ class Titolo:
     def add_final_text(self, text):
         """Add a CSS text to the object used for flairs."""
         self.final_text = text
+
+    @classmethod
+    def process_title(cls, title_text_or_post, post=None):
+        """
+        Class method that processes a title or submission and returns a new Titolo instance.
+        """
+        if hasattr(title_text_or_post, "title"):
+            title = title_text_or_post.title
+            post = title_text_or_post
+        else:
+            title = title_text_or_post
+
+        updated = process_title(title, post)
+        return updated  # Already a Titolo instance
 
 
 # Load the title module's settings.
@@ -152,7 +170,7 @@ def build_required_title_keywords() -> dict[str, list[str]]:
             keywords['total'] += pairs
 
     # Generate combinations with supported languages
-    for lang in title_settings['SUPPORTED_LANGUAGES']:
+    for lang in title_settings['SUPPORTED_LANGUAGES']:  # TODO generate this.
         lang = lang.lower()
         for conn in connectors:
             pairs = [f" {conn} {lang}", f"{lang} {conn} "]
@@ -455,11 +473,26 @@ def extract_target_chunk(title):
     return ""
 
 
+def clean_chunk(chunk: str) -> str:
+    # Strip brackets and spaces
+    chunk = chunk.strip()
+    chunk = chunk.lstrip('[').rstrip(']')
+    chunk = chunk.strip()
+    # Remove trailing punctuation like '-' or ':' or spaces again
+    import re
+    chunk = re.sub(r'\W+$', '', chunk.lower())
+    return chunk
+
+
 def resolve_languages(chunk, is_source):
-    """
-    Resolve a string chunk into a list of recognized language names.
-    Removes short ISO-like tokens and handles common misspellings.
-    """
+    # Remove trailing punctuation like '-' or ':'
+    cleaned = clean_chunk(chunk)
+    logger.debug(f"Cleaned Chunk: {cleaned}")
+
+    if cleaned in {"unknown", "unk", "???", "n/a"}:
+        logger.debug("Handling 'unknown' chunk explicitly.")
+        return [converter('unknown')]
+
     # Cut off after ']' if present
     if ']' in chunk:
         chunk = chunk.split(']', 1)[0]
@@ -467,38 +500,35 @@ def resolve_languages(chunk, is_source):
     words = chunk.split()
     words = [w for w in words if not is_punctuation_only(w)]
 
-    # If it's a short 2–3 word phrase, try the full phrase first
     if 2 <= len(words) <= 3:
         joined = " ".join(words)
         words.insert(0, joined)
 
-    # Normalize to title case only for comparison against the English word lists
+    logger.debug(f"Words before cleanup: {words}")
     cleaned_words = [
         w for w in words
         if not (
-                (len(w) == 2 and w.title() in title_settings['ENGLISH_2_WORDS']) or
-                (len(w) == 3 and w.title() in title_settings['ENGLISH_3_WORDS'])
+            (len(w) == 2 and w.title() in title_settings['ENGLISH_2_WORDS']) or
+            (len(w) == 3 and w.title() in title_settings['ENGLISH_3_WORDS'])
         )
     ]
 
-    logger.debug(cleaned_words)
+    logger.debug(f"Cleaned words: {cleaned_words}")
     resolved = []
-    # Only process the first few words.
     for word in cleaned_words[:5]:
         if 'Eng' in word and len(word) <= 8:
             word = 'English'
         converter_result = converter(word)
+        logger.debug(f"Converted {word} -> {converter_result}")
         if converter_result:
             resolved.append(converter_result)
 
-    # Deduplicate by language code or name (you can adjust as needed)
     unique = {}
     for lang in resolved:
         key = lang.name if hasattr(lang, "name") else lang.language_code_3
         unique[key] = lang
 
-    final = list(unique.values()) or []  # Empty list if it makes no sense.
-
+    final = list(unique.values()) or []
     logger.debug(f"{'Source' if is_source else 'Target'} Language Strings: {resolved}")
 
     return final
@@ -694,6 +724,8 @@ def process_title(title, post=None):
     # Combine source and target, remove English lingvos, then assess
     combined_languages = (result.source or []) + (result.target or [])
     combined_languages = [x for x in combined_languages if x.preferred_code != 'en']
+    logger.debug("Combined languages before filtering: " + str([x.preferred_code for x in combined_languages]))
+    logger.debug("Language names: " + str([x.name for x in combined_languages]))
     if not combined_languages:
         logger.error("Could not make sense of this title at all. Asking AI...")
         ai_result = title_ai_parser(title, post)
@@ -786,6 +818,48 @@ def title_ai_parser(title, post=None):
     return query_dict
 
 
+def format_title_correction_comment(title_text: str, author: str) -> str:
+    """
+    Constructs a comment suggesting a new, properly formatted post title, along with a resubmit link
+    that includes the revised title. This helps streamline the process of resubmitting a post to r/translator.
+
+    :param title_text: The filtered title that lacked required keywords.
+    :param author: The OP of the post.
+    :return: A formatted comment for `ziwen_posts` to reply with.
+    """
+
+    # Prepare the query input (text only)
+    query_input = RESPONSE.TITLE_REFORMATTING_QUERY + title_text
+
+    # Construct query kwargs
+    query_kwargs = {
+        "service": "openai",
+        "behavior": "You are checking data entry",
+        "query": query_input,
+        "client_object": openai_access()
+    }
+
+    # Send to AI
+    query_data = ai_query(**query_kwargs)
+
+    # Parse AI response
+    suggested_title = query_data
+
+    # Build a URL-safe version of the suggested title
+    url_safe_title = (
+        suggested_title
+        .replace(" ", "%20")
+        .replace(")", r"\)")
+        .replace(">", "%3E")
+    )
+
+    reformat_comment = RESPONSE.COMMENT_BAD_TITLE.format(author=author,
+                                                         new_url=url_safe_title,
+                                                         new_title=suggested_title)
+
+    return reformat_comment
+
+
 """INQUIRY SECTION"""
 
 
@@ -823,4 +897,4 @@ if __name__ == "__main__":
                 print('\n\n')
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
-            print(title_ai_parser(my_test))
+            print(format_title_correction_comment(my_test, 'kungming2'))
