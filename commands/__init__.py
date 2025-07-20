@@ -3,15 +3,31 @@
 """
 Handles processing commands by users.
 """
+import importlib
+import os
 import re
 
 from languages import converter, iso_codes_deep_search, define_language_lists
+
+HANDLERS = {}
+
+
+def discover_handlers():
+    # List all .py files under commands/ (excluding __init__.py)
+    files = [f for f in os.listdir(os.path.dirname(__file__))
+             if f.endswith('.py') and f != '__init__.py']
+    for f in files:
+        cmd_name = f[:-3]  # Strip .py
+        mod = importlib.import_module(f'commands.{cmd_name}')
+        if hasattr(mod, 'handle'):
+            HANDLERS[cmd_name] = mod.handle
 
 
 def command_parser(comment_text, command):
     """
     Parses a comment for actionable information related to Ziwen commands like `!identify:`.
-    # TODO allow for multiple id+ms+zh
+    # TODO allow for multiple id+ms+zh,
+    # TODO this function is not really used but retains for compatibility.
     The command must include the colon `:` (e.g. `!identify:`).
 
     Parameters:
@@ -84,5 +100,9 @@ def command_parser(comment_text, command):
     return (match_lingvo, advanced_mode) if match_text else None
 
 
+discover_handlers()
+
+
 if __name__ == "__main__":
-    print(command_parser("!identify:tlh+sindarin", "!identify:"))
+    print(command_parser("!identify:tlh", "!identify:"))
+    print(HANDLERS)
