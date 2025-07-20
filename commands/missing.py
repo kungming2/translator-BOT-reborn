@@ -12,7 +12,7 @@ from reddit_sender import message_send
 from responses import RESPONSE
 
 
-def handle(comment, instruo, komando, ajo):
+def handle(comment, _instruo, _komando, ajo):
     print("Missing handler initiated.")
     logger.info(f"[ZW] Bot: COMMAND: !missing, from u/{comment.author} on `{ajo.id}`.")
     current_time = time.time()

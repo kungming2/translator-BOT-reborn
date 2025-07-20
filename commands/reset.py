@@ -9,7 +9,7 @@ from connection import is_mod
 from reddit_sender import message_send
 
 
-def handle(comment, instruo, komando, ajo):
+def handle(comment, _instruo, _komando, ajo):
     print("Reset handler initiated.")
     original_poster = comment.submission.author
 
