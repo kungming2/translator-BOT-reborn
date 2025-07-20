@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Handler for the !reset command, to revert a post back to as if it
+were freshly processed.
+"""
+from config import logger
+from connection import is_mod
+from reddit_sender import message_send
+
+
+def handle(comment, instruo, komando, ajo):
+    print("Reset handler initiated.")
+    original_poster = comment.submission.author
+
+    if is_mod(comment.author) or original_poster == comment.author:
+        logger.info(f"[ZW] Bot: COMMAND: !reset, from user u/{comment.author} on `{ajo.id}`.")
+        ajo.reset()
+        logger.info(f"[ZW] Bot: > Reset everything for the designated post `{ajo.id}`.")
+
+        # Message the person who called it.
+        reset_msg = f"The [post](https://redd.it/{ajo.id})'s state has been reset."
+        message_send(comment.author, subject='[Notification] !reset command successful',
+                     body=reset_msg)
+
+        ajo.update_reddit()
