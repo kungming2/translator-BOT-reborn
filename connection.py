@@ -8,6 +8,8 @@ import random
 import requests
 
 import praw
+from praw.models import Redditor
+from prawcore import exceptions
 from config import Paths, load_settings, logger
 
 
@@ -84,15 +86,41 @@ def get_random_useragent():
     }
 
 
-def is_mod(reddit_object, user: str) -> bool:
+def is_mod(user) -> bool:
     """
     Checks whether the given user is a moderator of r/translator.
 
-    :param reddit_object: Reddit object from PRAW.
-    :param user: Reddit username to check.
+    :param user: Reddit username (str) or Redditor object.
     :return: True if user is a moderator, False otherwise.
     """
-    return user.lower() in (mod.name.lower() for mod in reddit_object.moderator())
+    if isinstance(user, Redditor):
+        username = user.name
+    elif isinstance(user, str):
+        username = user
+    else:
+        raise TypeError("`user` must be a string or Redditor object")
+
+    return username.lower() in (mod.name.lower() for mod in REDDIT.subreddit("translator").moderator())
+
+
+def is_valid_user(username):
+    """
+    Simple function that tests if a Redditor is a valid user.
+    Used to keep the notifications database clean.
+    Note that `AttributeError` is returned if a user is *suspended* by Reddit.
+
+    :param username: The username of a Reddit user.
+    :return exists: A boolean. False if non-existent or shadowbanned,
+                    True if a regular user.
+    """
+
+    try:
+        # Just try to access fullname; no need to assign it if unused
+        _ = REDDIT_HELPER.redditor(username).fullname
+        return True
+    except (exceptions.NotFound, AttributeError):
+        logger.error(f"User {username} not found.")
+        return False
 
 
 credentials_source = load_settings(Paths.AUTH['CREDENTIALS'])
@@ -101,3 +129,4 @@ REDDIT_HELPER = reddit_helper_login(credentials_source)
 
 if __name__ == "__main__":
     print(get_random_useragent())
+    print(is_mod(REDDIT.redditor('kungming2')))
