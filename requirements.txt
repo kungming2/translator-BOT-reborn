@@ -75,3 +75,9 @@ wikipedia
 
 # Google search
 googlesearch-python
+
+# Discord connection
+discord.py
+
+# Determing dates
+python-dateutil
