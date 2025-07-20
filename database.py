@@ -62,6 +62,27 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    def fetch_ajo(self, query: str, params: tuple = (), used_database: str = "ajo"):
+        """
+        Execute a SELECT query and return a single row from the specified database.
+
+        :param query: SQL SELECT statement
+        :param params: Query parameters as a tuple
+        :param used_database: One of 'ajo', 'main', or 'cache'
+        :return: A single row (as a tuple or sqlite3.Row), or None
+        """
+        cursor = {
+            "ajo": self.cursor_ajo,
+            "main": self.cursor_main,
+            "cache": self.cursor_cache
+        }.get(used_database)
+
+        if cursor is None:
+            raise ValueError(f"Invalid database key '{used_database}'. Must be 'ajo', 'main', or 'cache'.")
+
+        cursor.execute(query, params)
+        return cursor.fetchone()
+
 
 """CREATES DATABASES IF THEY DO NOT EXIST"""
 
