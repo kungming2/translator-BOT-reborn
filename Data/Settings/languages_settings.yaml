@@ -1,0 +1,352 @@
+# These are English words that usually get erroneously recognized as a
+# language due to Fuzzywuzzy. Let's ignore them.
+FUZZ_IGNORE_WORDS:
+  - Acehnese
+  - Ancient Mayan
+  - Archaic
+  - Base
+  - Canada
+  - Cheese
+  - Chopstick
+  - Classical Japanese
+  - Creek
+  - Dish
+  - Green
+  - Guarani
+  - Here
+  - Horse
+  - Japanese
+  - Javanese
+  - Kanada
+  - Karen
+  - Latina
+  - Ladin
+  - Ladino
+  - Latino
+  - Lmao
+  - Logo
+  - Maay
+  - Major
+  - Malaysia
+  - Mardi
+  - Maria
+  - Mario
+  - Morse
+  - Nosey
+  - Nurse
+  - Orkish
+  - Past
+  - Person
+  - Peruvian
+  - Prussian
+  - Roman
+  - Romani
+  - Romanization
+  - Romanized
+  - Romanji
+  - Romanjin
+  - Romany
+  - Sake
+  - Scandinavian
+  - Serial
+  - Sorbian
+  - Sumerian
+  - Syrian Arabic
+  - Titan
+  - Trail
+  - Trench
+  - Turks
+
+# These are languages for which fuzzing usually doesn't play well.
+FUZZ_IGNORE_LANGUAGE_NAMES:
+  - American Sign Language
+  - Javanese
+
+
+ISO_MACROLANGUAGES:
+  aka:
+    - twi
+    - [fat, twi]
+  ara:
+    - arb
+    - [aao, abh, abv, acm, acq, acw, acx, acy, adf, aeb, aec, afb, apc, apd, arb, arq, ars, ary, arz, auz, avl, ayh, ayl, ayn, ayp, bbz, pga, shu, ssh]
+  aym:
+    - ayr
+    - [ayr, ayc]
+  aze:
+    - azj
+    - [azj, azb]
+  bal:
+    - bgp
+    - [bcc, bgn, bgp]
+  bik:
+    - bcl
+    - [bcl, bhk, bln, bto, cts, fbl, lbl, rbl, ubl]
+  bnc:
+    - lbk
+    - [ebk, lbk, obk, rbk, vbk]
+  bua:
+    - bxr
+    - [bxm, bxr, bxu]
+  chm:
+    - mhr
+    - [mhr, mrj]
+  cre:
+    - crk
+    - [crj, crk, crl, crm, csw, cwd]
+  del:
+    - umu
+    - [umu, unm]
+  den:
+    - xsl
+    - [scs, xsl]
+  din:
+    - dik
+    - [dib, dik, dip, diw, dks]
+  doi:
+    - dgo
+    - [dgo, xnr]
+  est:
+    - ekk
+    - [ekk, vro]
+  fas:
+    - pes
+    - [prs, pes]
+  ful:
+    - fuf
+    - [ffm, fub, fuc, fue, fuf, fuh, fui, fuq, fuv]
+  gba:
+    - gbp
+    - [bdt, gbp, gbq, gmm, gso, gya, mdo]
+  gon:
+    - ggo
+    - [esg, ggo, gno, wsg]
+  grb:
+    - grj
+    - [gbo, gec, grj, grv, gry]
+  grn:
+    - gug
+    - [gnw, gug, gui, gun, nhd]
+  hai:
+    - hdn
+    - [hax, hdn]
+  hbs:
+    - hrv
+    - [bos, hrv, srp]
+  hmn:
+    - mww
+    - [blu, cqd, hea, hma, hmc, hmd, hme, hmg, hmh, hmi, hmj, hml, hmm, hmp, hmq, hms, hmw, hmy, hmz, hnj, hrm, huj, mmr, muq, mww, sfm]
+  iku:
+    - ike
+    - [ike, ikt]
+  ipk:
+    - esi
+    - [esi, esk]
+  jrb:
+    - aju
+    - [ajt, aju, jye, yhd, yud]
+  kau:
+    - knc
+    - [kby, knc, krt]
+  kln:
+    - niq
+    - [enb, eyo, niq, oki, pko, sgc, spy, tec, tuy]
+  kok:
+    - gom
+    - [gom, knn]
+  kom:
+    - kpv
+    - [koi, kpv]
+  kon:
+    - kng
+    - [kng, kwy, ldi]
+  kpe:
+    - gkp
+    - [gkp, xpe]
+  kur:
+    - kmr
+    - [ckb, kmr, sdh]
+  lah:
+    - skr
+    - [hnd, hno, jat, phr, pmu, pnb, skr, xhe]
+  lav:
+    - lvs
+    - [ltg, lvs]
+  luy:
+    - lwg
+    - [bxk, ida, lkb, lko, lks, lri, lrm, lsm, lto, lts, lwg, nle, nyd, rag]
+  man:
+    - mnk
+    - [emk, mku, mlq, mnk, msc, mwk, myq]
+  mlg:
+    - plt
+    - [bhr, bjq, bmm, bzc, msh, plt, skg, tdx, tkg, txy, xmv, xmw]
+  mon:
+    - khk
+    - [khk, mvf]
+  msa:
+    - zsm
+    - [bjn, btj, bve, bvu, coa, dup, hji, ind, jak, jax, kvb, kvr, kxd, lce, lcf, liw, max, meo, mfa, mfb, min, mly, mqg, msi, mui, orn, ors, pel, pse, tmw, urk, vkk, vkt, xmm, zlm, zmi, zsm]
+  mwr:
+    - rwr
+    - [dhd, mtr, mve, rwr, swv, wry]
+  nep:
+    - npi
+    - [npi, dty]
+  nor:
+    - nob
+    - [nno, nob]
+  oji:
+    - ojb
+    - [ciw, ojb, ojc, ojg, ojs, ojw, otw]
+  ori:
+    - ory
+    - [ory, spv]
+  orm:
+    - gaz
+    - [gaz, gax, hae, orc]
+  pus:
+    - pst
+    - [pbt, pbu, pst]
+  que:
+    - quh
+    - [cqu, qub, qud, quf, qug, quh, quk, qul, qup, qur,qus, quw, qux, quy, quz, qva, qvc, qve, qvh, qvi, qvj, qvl, qvm, qvn, qvo, qvp, qvs, qvw, qvz, qwa, qwc, qwh, qws, qxa, qxc, qxh, qxl, qxn, qxo, qxp, qxr, qxt, qxu, qxw]
+  raj:
+    - mup
+    - [bgq, gda, gju, hoj, mup, wbr]
+  rom:
+    - rmy
+    - [rmc, rmf, rml, rmn, rmo, rmw, rmy]
+  sqi:
+    - als
+    - [aae, aat, aln, als]
+  srd:
+    - src
+    - [sdc, sdn, src, sro]
+  swa:
+    - swh
+    - [swh, swc]
+  syr:
+    - cld
+    - [aii, cld]
+  tmh:
+    - ttq
+    - [taq, thv, thz, ttq]
+  uzb:
+    - uzn
+    - [uzn, uzs]
+  yid:
+    - ydd
+    - [ydd, yih]
+  zap:
+    - zai
+    - [zaa, zab, zac, zad, zae, zaf, zai, zam, zao, zaq, zar, zas, zat, zav, zaw, zax, zca, zoo, zpa, zpb, zpc, zpd, zpe, zpf, zpg, zph, zpi, zpj, zpk, zpl, zpm, zpn, zpo, zpp, zpq, zpr, zps, zpt, zpu, zpv, zpw, zpx, zpy, zpz, zsr, ztc, zte, ztg, ztl, ztm, ztn, ztp, ztq, zts, ztt, ztu, ztx, zty]
+  zha:
+    - zyb
+    - [ccx, ccy, zch, zeh, zgb, zgm, zgn, zhd, zhn, zlj, zln, zlq, zqe, zyb, zyg, zyj, zyn, zzj]
+  zho:
+    - cmn
+    - [cdo, cjy, cmn, cpx, czh, czo, gan, hak, hsn, lzh, mnp, nan, wuu, yue]
+  zza:
+    - kiu
+    - [diq, kiu]
+
+ISO_LANGUAGE_COUNTRY_ASSOCIATED:
+  ar-CY: acy
+  ar-DZ: arq
+  ar-BH: abv
+  ar-TD: shu
+  ar-EG: arz
+  ar-KW: afb
+  ar-IQ: acm
+  ar-AE: afb
+  ar-LB: apc
+  ar-SY: apc
+  ar-LY: ayl
+  ar-SA: acw
+  ar-OM: acx
+  ar-IL: apc
+  ar-PS: apc
+  ar-JO: apc
+  ar-SD: apd
+  ar-TN: aeb
+  ay-PE: ayc
+  ay-CL: ayr
+  ay-BO: ayr
+  de-CH: gsw
+  fa-AF: prs
+  ff-SN: fuc
+  ff-GM: fuc
+  ff-MR: fuc
+  ff-SL: fuf
+  ff-GN: fuf
+  ff-GH: ffm
+  ff-ML: ffm
+  ff-BJ: fue
+  ff-TG: fue
+  ff-BF: fuh
+  ff-NE: fuh
+  ff-NG: fuv
+  ff-CM: fub
+  ff-TD: fub
+  ff-SD: fub
+  ff-CF: fui
+  gn-BO: gui
+  hi-FJ: hif
+  om-KE: gax
+  ms-BN: kxd
+  sw-CD: swc
+  uz-AF: uzs
+  sq-XK: aln
+
+CJK_LANGUAGES:
+  Chinese:
+    - zh
+    - zho
+    - cdo
+    - lzh
+    - cjy
+    - cmn
+    - cpx
+    - czh
+    - czo
+    - gan
+    - hak
+    - hsn
+    - mnp
+    - nan
+    - wuu
+    - yue
+    - ltc
+    - och
+    - hnm
+    - Bopo  # ISO 15924 code
+    - Hani  # ISO 15924 code
+    - Hanb  # ISO 15924 code
+    - Hans  # ISO 15924 code
+    - Hant  # ISO 15924 code
+    - unknown  # Fallback value
+  Japanese:
+    - ja
+    - ojp
+    - ryn
+    - ams
+    - kzg
+    - tkn
+    - xug
+    - okn
+    - ryu
+    - yox
+    - mvi
+    - rys
+    - yoi
+    - Hira  # ISO 15924 code
+    - Jpan  # ISO 15924 code
+    - Kana  # ISO 15924 code
+  Korean:
+    - ko  # ISO 639-1 code
+    - okm
+    - oko
+    - jje
+    - Hang  # ISO 15924 code
+    - Kore  # ISO 15924 code
