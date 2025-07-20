@@ -29,10 +29,9 @@ def check_url_extension(submission_url):
 
 
 def extract_text_within_curly_braces(text):
-    """Gets text from between two paired curly braces."""
-    pattern = r"\{{([^}}]+)\}"  # Regex pattern to match text within curly braces
-    matches = re.findall(pattern, text)
-    return matches
+    """Extracts all content inside {{...}} blocks, with whitespace stripped."""
+    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
+    return [match.strip() for match in re.findall(pattern, text)]
 
 
 def generate_image_hash(image_url):
@@ -48,11 +47,11 @@ def generate_image_hash(image_url):
         img = Image.open(io.BytesIO(response.content))
     except (PIL.UnidentifiedImageError, requests.exceptions.ConnectionError):
         # Imgur redirects break this.
-        logger.info(f"[ZW] generate_image_hash: Unable to hash {image_url}.")
+        logger.debug(f"[ZW] generate_image_hash: Unable to hash {image_url}.")
         return None
     else:
         # Generate the hash using `dhash` algorithm.
         hash_value = str(imagehash.dhash(img))
-        logger.info(f"[ZW] generate_image_hash: Assessed {image_url}: {hash_value}")
+        logger.debug(f"[ZW] generate_image_hash: Assessed {image_url}: {hash_value}")
 
     return hash_value
