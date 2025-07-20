@@ -181,14 +181,16 @@ def user_statistics_loader(username):
     return header + "\n".join(command_lines + notification_lines)
 
 
-def messaging_user_statistics_writer(instruo):
+def user_statistics_writer(instruo):
     """
-    Records which commands were used by a Reddit user and stores them in the main database.
+    Records which commands were used by a Reddit user and stores
+    them in the main database.
 
-    :param instruo: An Instruo object that contains the commands and author information.
+    :param instruo: An Instruo object that contains the commands
+                    and author information.
     :return: Nothing.
     """
-    username = instruo.author
+    username = instruo.author_comment
     commands_list = instruo.commands  # List of Komando(name=..., data=[...])
 
     cursor = db.cursor_main
