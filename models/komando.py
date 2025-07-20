@@ -7,6 +7,7 @@ comment, along with the data associated with that comment call.
 """
 import re
 import shlex
+from collections import defaultdict
 
 from config import SETTINGS
 from languages import converter
@@ -34,65 +35,84 @@ def split_arguments(arg_str):
 
 
 def extract_commands_from_text(text):
-    commands = []
+    from collections import defaultdict
 
-    text = text.strip()
+    commands_dict = defaultdict(list)
+    original_text = text.strip()
+
+    # Normalize curly quotes in both cases
+    text = original_text.replace('“', '"').replace('”', '"')
+    text = text.replace('‘', "'").replace('’', "'")
+    text_lower = text.lower()  # For case-insensitive command detection
 
     # Commands with required arguments
     for cmd in SETTINGS['commands_with_args']:
-        pattern = re.escape(cmd) + r'(?:\"([^\"]+)\"|([^\s]+))'
+        cmd_lower = cmd.lower()
+        pattern = r"(?i)" + re.escape(cmd) + r'(?:\"([^\"]+)\"|([^\s]+))'
         matches = re.findall(pattern, text)
+
         for match in matches:
-            canonical = SETTINGS['command_aliases'].get(cmd, cmd).rstrip(':').lstrip('!')
+            canonical = SETTINGS['command_aliases'].get(cmd_lower, cmd_lower).rstrip(':').lstrip('!')
             if match[0]:  # quoted group matched
-                raw_args = [match[0]]  # preserve as single argument
+                raw_args = [match[0]]
             else:
-                raw_args = re.split(r'[,+]', match[1])  # unquoted → split on comma or plus
+                raw_args = re.split(r'[,+]', match[1])
 
-            should_convert = cmd not in ["!search:"]
+            should_convert = cmd_lower not in ["!search:"]
             args = [converter(arg) if should_convert else arg for arg in raw_args]
-            commands.append(Komando(canonical, args))
+            commands_dict[canonical].extend(args)
 
+    # Commands with optional arguments
     for cmd in SETTINGS['commands_optional_args']:
-        base = cmd.lstrip('!')
-        pattern = re.escape(cmd) + r'(?:\"([^\"]+)\"|:([^\s]+))?'
+        cmd_lower = cmd.lower()
+        base = cmd_lower.lstrip('!')
+        pattern = r"(?i)" + re.escape(cmd) + r'(?:\"([^\"]+)\"|:([^\s]+))?'
         matches = re.findall(pattern, text)
+
         for match in matches:
             raw = match[0] or match[1]
             if raw:
-                if match[0]:  # quoted
+                if match[0]:
                     raw_args = [match[0]]
                 else:
                     raw_args = re.split(r'[,+]', match[1])
-                should_convert = cmd not in SETTINGS.get('commands_skip_conversion', [])
+
+                should_convert = cmd_lower not in SETTINGS.get('commands_skip_conversion', [])
                 args = [converter(arg) if should_convert else arg for arg in raw_args]
-                commands.append(Komando(base, args))
+                commands_dict[base].extend(args)
             else:
-                commands.append(Komando(base, []))
+                commands_dict.setdefault(base, [])
 
     # Commands with no arguments
     for cmd in SETTINGS['commands_no_args']:
-        if cmd in text:
-            commands.append(Komando(cmd.lstrip('!')))
+        cmd_lower = cmd.lower()
+        if cmd_lower in text_lower:
+            canonical = cmd_lower.lstrip('!')
+            commands_dict.setdefault(canonical, [])
 
     # Special: CJK lookup using lookup_matcher
     if text.count('`') > 1:
-        cjk_lookup = lookup_matcher(text, None)  # TODO change when we have Lingvos integrated. it should pass the language on through.
+        cjk_lookup = lookup_matcher(original_text, None)
         for lang, terms in cjk_lookup.items():
-            # If the key is 'lookup', treat all terms as a single bucket without a language code
             if lang == 'lookup':
-                for term in terms:
-                    commands.append(Komando('cjk_lookup', [term]))  # just the term, no lang
+                commands_dict['cjk_lookup'].extend(terms)
             else:
-                # Normal language-keyed terms
                 for term in terms:
-                    commands.append(Komando('cjk_lookup', [lang, term]))
+                    commands_dict['cjk_lookup'].append([lang, term])
 
-    # Special: Wikipedia lookup using extract_text_within_curly_braces
+    # Special: Wikipedia lookup using {{braces}}
     if text.count('{{') > 0 and text.count('}}') > 0:
-        wiki_terms = extract_text_within_curly_braces(text)
+        wiki_terms = extract_text_within_curly_braces(original_text)
         if wiki_terms:
-            commands.append(Komando('wikipedia_lookup', wiki_terms))
+            commands_dict['wikipedia_lookup'].extend(wiki_terms)
+
+    # Finalize Komando list
+    commands = []
+    for name, args in commands_dict.items():
+        if any(isinstance(arg, list) for arg in args):
+            commands.append(Komando(name, args))
+        else:
+            commands.append(Komando(name, list(args)))
 
     return commands
 
