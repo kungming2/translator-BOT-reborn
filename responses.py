@@ -23,4 +23,5 @@ class ResponseLoader:
         return getattr(self.responses, item)
 
 
+# To use: RESPONSE.VARIABLE_NAME
 RESPONSE = ResponseLoader(Paths.RESPONSES['TEXT'])
