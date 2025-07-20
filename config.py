@@ -106,4 +106,5 @@ def load_settings(path):
 
 
 logger = set_up_logger()
+# To use, SETTINGS['variable_name']
 SETTINGS = load_settings(Paths.SETTINGS['SETTINGS'])
