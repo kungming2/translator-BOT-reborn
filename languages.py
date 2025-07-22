@@ -7,12 +7,13 @@ import copy
 import csv
 import random
 import re
+from pprint import pprint
 
 import orjson  # Using for faster performance
 import pycountry
 from rapidfuzz import fuzz
 
-from config import Paths, load_settings
+from config import Paths, load_settings, logger
 
 # Load the language module's settings and parse the file's content
 language_module_settings = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
@@ -23,10 +24,12 @@ class Lingvo:
         self.name = kwargs.get("name")
         self.name_alternates = kwargs.get("name_alternates", [])
         self.language_code_1 = kwargs.get("language_code_1")
+        self.language_code_2b = kwargs.get("language_code_2b")
         self.language_code_3 = kwargs.get("language_code_3")
         self.script_code = kwargs.get("script_code")  # For script entries
         self.country = kwargs.get("country")  # country code
         self.countries_default = kwargs.get("countries_default")
+        self.countries_associated = kwargs.get("countries_associated")
         self.family = kwargs.get("family")
         self.mistake_abbreviation = kwargs.get("mistake_abbreviation")
         self.population = kwargs.get("population")
@@ -83,9 +86,11 @@ class Lingvo:
             name=row.get("Language Name") or None,
             name_alternates=name_alternates,
             language_code_1=row.get("ISO 639-1") or None,
+            language_code_2b=None,
             language_code_3=row.get("ISO 639-3") or None,
             country=None,
             countries_default=None,
+            countries_associated=None,
             family=None,
             mistake_abbreviation=None,
             population=0,
@@ -108,10 +113,12 @@ class Lingvo:
             "name": self.name,
             "name_alternates": self.name_alternates,
             "language_code_1": self.language_code_1,
+            "language_code_2b": self.language_code_2b,
             "language_code_3": self.language_code_3,
             "script_code": self.script_code,
             "country": self.country,
             "countries_default": self.countries_default,
+            "countries_associated": self.countries_associated,
             "family": self.family,
             "mistake_abbreviation": self.mistake_abbreviation,
             "population": self.population,
@@ -225,7 +232,7 @@ def define_language_lists():
             iso_default_associated.append(f"{code_1}-{lingvo.countries_default}")
 
         if hasattr(lingvo, "countries_associated") and lingvo.countries_associated:
-            language_country_associated[code_1] = lingvo.countries_associated  # TODO check on this.
+            language_country_associated[code_1] = lingvo.countries_associated
 
         if hasattr(lingvo, "mistake_abbreviation") and lingvo.mistake_abbreviation:
             mistake_abbreviations[lingvo.mistake_abbreviation] = code_1
@@ -332,9 +339,13 @@ def iso_codes_deep_search(search_term, script_search=False):
 def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
     """
     Convert an input string to a Lingvo object.
-    Input can be a language code, name, or compound like zh-CN or
-    unknown-CYRL.
-    TODO test out with more country language combinations
+    Input can be a language code, name, or compound like zh-MO or
+    unknown-cyrl.
+
+    Note that the converter will NOT convert language-country inputs
+    into their equivalent specific language codes (e.g. ar-DZ to arq);
+    title_handling's main function will do that. This is to increase
+    fidelity to the input by the user.
 
     :param input_text: The input string to resolve.
     :param fuzzy: Whether to apply fuzzy name matching.
@@ -344,18 +355,26 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
     input_lower = input_text.lower()
     reference_lists = define_language_lists()
 
+    # Too-short input.
+    if len(input_text) <= 1:
+        logger.debug(f"Skipping {input_text} as it's too short.")
+        return None
+
     # Handle compound codes like zh-CN or unknown-Cyrl first,
     # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
         broader, specific = input_text.split("-", 1)
 
+        # Prefixed script code. This is only for internal use, for
+        # example, saving script notifications in the database.
         if broader.lower() == "unknown":
             try:
                 result = iso_codes_deep_search(specific, script_search=True)
                 script_name = getattr(result, "name", None)
                 if not script_name:
                     return None
-                return Lingvo(name=script_name, language_code_3=specific, supported=False)
+                return Lingvo(name=script_name, language_code_1='unknown', language_code_3='unknown',
+                              script_code=specific.lower(), supported=True)
             except (AttributeError, TypeError):
                 return None
 
@@ -651,7 +670,7 @@ if __name__ == "__main__":
         converter_result = converter(my_test)
 
         if converter_result:
-            print(converter_result.preferred_code)
-            print(vars(converter_result))
+            print(f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`")
+            pprint(vars(converter_result))
         else:
             print("Did not match anything.")
