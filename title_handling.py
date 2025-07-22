@@ -15,7 +15,7 @@ from rapidfuzz import fuzz
 from ai import ai_query, openai_access
 from config import Paths, logger, load_settings
 from connection import REDDIT_HELPER
-from languages import converter, country_converter, Lingvo
+from languages import converter, country_converter, Lingvo, define_language_lists
 from responses import RESPONSE
 
 
@@ -155,6 +155,7 @@ def build_required_title_keywords() -> dict[str, list[str]]:
         - 'to_phrases': Only the "to LANGUAGE" style combinations.
     """
     keywords = {'total': [], 'to_phrases': []}
+    supported_languages = define_language_lists()['SUPPORTED_LANGUAGES']
 
     english_aliases = title_settings['ENGLISH_ALIASES']
     connectors = title_settings['CONNECTORS']
@@ -170,7 +171,7 @@ def build_required_title_keywords() -> dict[str, list[str]]:
             keywords['total'] += pairs
 
     # Generate combinations with supported languages
-    for lang in title_settings['SUPPORTED_LANGUAGES']:  # TODO generate this.
+    for lang in supported_languages:
         lang = lang.lower()
         for conn in connectors:
             pairs = [f" {conn} {lang}", f"{lang} {conn} "]
@@ -897,4 +898,4 @@ if __name__ == "__main__":
                 print('\n\n')
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
-            print(format_title_correction_comment(my_test, 'kungming2'))
+            print(build_required_title_keywords())
