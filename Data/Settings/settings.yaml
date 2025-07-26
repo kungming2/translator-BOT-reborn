@@ -15,7 +15,6 @@ commands_optional_args:
   - "!claim"
 
 commands_no_args:
-  - "!delete"
   - "!long"
   - "!nuke"
   - "!missing"
@@ -91,6 +90,12 @@ notifications_user_limit: 20
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
 user_submission_limit: 4
+
+# How many days old must an account be before it can utilize
+# the paging system.
+user_age_page: 14
+# How many users !page should contact.
+num_users_page: 3
 
 # Month delta for points calculation. How many months ago do we want to
 # use as a reference for points calculation?
