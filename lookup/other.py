@@ -4,16 +4,17 @@
 Handles the text matching functions for the other lookup functions.
 Serves as a consolidator of detecting matching strings.
 """
+import os
 import re
 
 import jieba
 import MeCab
-import unidic
+import unidic_lite
 
-from commands import command_parser
 from config import logger, load_settings, Paths
 from connection import get_random_useragent
 from title_handling import extract_lingvos_from_text
+from languages import converter
 from lookup.zh import simplify
 
 useragent = get_random_useragent()
@@ -29,7 +30,7 @@ def wiktionary_search() -> str | None:
 """MATCHING TEXT"""
 
 
-def lookup_zh_ja_tokenizer(phrase, language):
+def lookup_zh_ja_tokenizer(phrase, language_code):
     """
     Tokenizes a given phrase in Chinese or Japanese using appropriate libraries:
     - Chinese ('zh'): Uses Jieba.
@@ -38,7 +39,7 @@ def lookup_zh_ja_tokenizer(phrase, language):
     This function is called by `lookup_matcher`.
 
     :param phrase: The text to be tokenized.
-    :param language: Language code, either 'zh' or 'ja'.
+    :param language_code: Language code, either 'zh' or 'ja'.
     :return: A list of tokenized words, excluding kana (optional) and punctuation.
     """
 
@@ -46,11 +47,13 @@ def lookup_zh_ja_tokenizer(phrase, language):
         """Returns True if the token is not a punctuation character."""
         return not re.match(r"[.!/_,$%^*+\"\'\[\]—！，。？、~@#￥…&（）：“”《》»〔〕「」％]+", token)
 
-    if language == 'zh':
+    if language_code == 'zh':
         tokens = list(jieba.cut(phrase, cut_all=False))
 
-    elif language == 'ja':
-        tagger = MeCab.Tagger(f'-d "{unidic.DICDIR}"')
+    elif language_code == 'ja':
+        dic_dir = unidic_lite.DICDIR
+        mecab_rc_path = os.path.join(dic_dir, "mecabrc")
+        tagger = MeCab.Tagger(f'-r "{mecab_rc_path}" -d "{dic_dir}"')
         tagger.parse(phrase)  # Workaround for Unicode bug in MeCab
         node = tagger.parseToNode(phrase.strip())
 
@@ -89,11 +92,13 @@ def lookup_matcher(content_text, language_code):
 
     # Check for explicit !identify command
     if "!identify:" in original_text:
-        parsed_code = command_parser(original_text, "!identify:")[0].preferred_code
-        for key in ['zh', 'ja', 'ko']:
-            if len(parsed_code) == 4 and parsed_code in cjk_languages[key]:
-                parsed_code = key
-        language_code = parsed_code
+        match = re.search(r"!identify:\s*(\S+)", original_text)
+        if match:
+            parsed_code = converter(match.group(1)).preferred_code
+            for key in ['zh', 'ja', 'ko']:
+                if len(parsed_code) == 4 and parsed_code in cjk_languages[key]:
+                    parsed_code = key
+            language_code = parsed_code
 
     elif language_code is None:
         mentions = extract_lingvos_from_text(content_text)
