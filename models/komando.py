@@ -7,11 +7,9 @@ comment, along with the data associated with that comment call.
 """
 import re
 import shlex
-from collections import defaultdict
 
 from config import SETTINGS
 from languages import converter
-from lookup.other import lookup_matcher
 from utility import extract_text_within_curly_braces
 
 
@@ -44,6 +42,9 @@ def extract_commands_from_text(text):
     text = original_text.replace('“', '"').replace('”', '"')
     text = text.replace('‘', "'").replace('’', "'")
     text_lower = text.lower()  # For case-insensitive command detection
+
+    # Replace !id with synonym !identify.
+    text = text.replace('!id:', "!identify:")
 
     # Commands with required arguments
     for cmd in SETTINGS['commands_with_args']:
@@ -91,6 +92,9 @@ def extract_commands_from_text(text):
             commands_dict.setdefault(canonical, [])
 
     # Special: CJK lookup using lookup_matcher
+    # Note that since the language code here is OPTIONAL, it won't
+    # tokenize. Call lookup_matcher directly to do that.
+    from lookup.other import lookup_matcher
     if text.count('`') > 1:
         cjk_lookup = lookup_matcher(original_text, None)
         for lang, terms in cjk_lookup.items():
@@ -120,4 +124,7 @@ def extract_commands_from_text(text):
 if "__main__" == __name__:
     while True:
         my_input = input("Enter the comment with commands you'd like to test here: ")
-        print(extract_commands_from_text(my_input))
+        commands_new = extract_commands_from_text(my_input)
+        for command_new in commands_new:
+            print(command_new)
+
