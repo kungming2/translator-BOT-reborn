@@ -26,6 +26,9 @@ if __name__ == '__main__':
             # Process comments.
             ziwen_bot()
 
+            # Then it checks its messages (generally for new subscription lookups).
+            # ziwen_messages()
+
             # Record API usage limit.
             probe = REDDIT.redditor(credentials_source['USERNAME']).created_utc
             used_calls = REDDIT.auth.limits["used"]
