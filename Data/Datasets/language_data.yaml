@@ -126,7 +126,7 @@ acr:
   population: 106000
 acv:
   country: United States
-  family: ''
+  family: Palaihnihan
   language_code_3: acv
   link_ethnologue: https://www.ethnologue.com/language/acv
   link_wikipedia: https://en.wikipedia.org/wiki/Achumawi_language
@@ -1179,7 +1179,7 @@ bvk:
   population: 400
 bvl:
   country: Bolivia
-  family: ''
+  family: Sign language
   language_code_3: bvl
   link_ethnologue: https://www.ethnologue.com/language/bvl
   link_wikipedia: https://en.wikipedia.org/wiki/Varieties_of_American_Sign_Language
@@ -2103,14 +2103,6 @@ es:
   - UY
   thanks: Gracias
   greetings: Hola
-est:
-  country: Estonia
-  family: ''
-  language_code_3: est
-  link_ethnologue: https://www.ethnologue.com/language/est
-  link_wikipedia: https://en.wikipedia.org/wiki/Estonian_language
-  name: Estonian
-  population: 1251770
 et:
   country: Estonia
   family: Uralic
@@ -3551,7 +3543,7 @@ kas:
   population: 6914780
 kav:
   country: Brazil
-  family: ''
+  family: Harákmbut–Katukinan
   language_code_3: kav
   link_ethnologue: https://www.ethnologue.com/language/kav
   link_wikipedia: https://en.wikipedia.org/wiki/Kanamar%C3%AD_language
@@ -4040,7 +4032,7 @@ kxd:
   population: 346000
 kxo:
   country: Brazil
-  family: ''
+  family: Language isolate
   language_code_3: kxo
   link_ethnologue: https://www.ethnologue.com/language/kxo
   link_wikipedia: https://en.wikipedia.org/wiki/Kano%C3%AA_language
@@ -6112,7 +6104,7 @@ rad:
   population: 331000
 raj:
   country: India
-  family: ''
+  family: Indo-European
   language_code_3: raj
   link_ethnologue: https://www.ethnologue.com/language/raj
   link_wikipedia: https://en.wikipedia.org/wiki/Rajasthani_languages
