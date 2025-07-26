@@ -61,8 +61,7 @@ def ajo_writer(new_ajo):
         )
         conn.commit()
         logger.info("[ZW] ajo_writer: New Ajo not found in the database.")
-
-    logger.info("[ZW] ajo_writer: Wrote Ajo to local database.")
+        logger.info("[ZW] ajo_writer: Wrote Ajo to local database.")
 
 
 def parse_ajo_data(data_str):
