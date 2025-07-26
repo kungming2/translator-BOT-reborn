@@ -654,7 +654,7 @@ async def zh_character(character):
             simp_char = simplify(character)
             logger.debug(f'[ZW] ZH-Character: The two versions of {character} are *not* identical.')
             lookup_line_1 = (
-                f"# [{trad_char} ({simp_char})](https://en.wiktionary.org/wiki/{trad_char}#Chinese)\n\n"
+                f"# [{trad_char} / {simp_char}](https://en.wiktionary.org/wiki/{trad_char}#Chinese)\n\n"
                 "Language | Pronunciation\n"
                 "---------|--------------\n"
                 f"**Mandarin** | *{cmn_pronunciation}*\n"
@@ -979,7 +979,7 @@ async def zh_word(word):
 
     is_same_script = tradify(word) == simplify(word)
     lookup_header = f'# [{word}](https://en.wiktionary.org/wiki/{word}#Chinese)' if is_same_script else \
-        f'# [{tradify(word)} ({simplify(word)})](https://en.wiktionary.org/wiki/{tradify(word)}#Chinese)'
+        f'# [{tradify(word)} / {simplify(word)}](https://en.wiktionary.org/wiki/{tradify(word)}#Chinese)'
 
     pronunciation_block = (
         "\n\nLanguage | Pronunciation\n---------|--------------"
