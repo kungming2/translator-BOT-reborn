@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Contains functions that deal with Wikipedia access.
+"""
 import re
 
 import wikipedia
@@ -7,13 +12,6 @@ from languages import converter
 from statistics import action_counter
 
 """WIKIPEDIA DETECTOR (COMMENTS)"""
-
-
-def extract_text_within_curly_braces(text):
-    """Gets text from between two paired curly braces."""
-    pattern = r"\{{([^}}]+)\}"  # Regex pattern to match text within curly braces
-    matches = re.findall(pattern, text)
-    return matches
 
 
 def wikipedia_lookup(terms, language_code="en"):
