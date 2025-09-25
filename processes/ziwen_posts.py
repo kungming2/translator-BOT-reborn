@@ -3,13 +3,21 @@
 """
 Main script to fetch posts and act upon them.
 """
+import re
 import time
+
+from wasabi import msg
 
 from config import logger, SETTINGS
 from connection import REDDIT
-from database import db
-from models import ajo
-from models.ajo import ajo_loader
+from database import db, record_filter_log
+from models.ajo import Ajo, ajo_loader
+from notifications import is_user_over_submission_limit, notifier
+from reddit_sender import message_reply
+from responses import RESPONSE
+from statistics import action_counter
+from title_handling import Diskuto, Titolo, format_title_correction_comment, main_posts_filter, is_english_only
+from utility import fetch_youtube_length
 
 
 def ziwen_posts():
@@ -23,6 +31,8 @@ def ziwen_posts():
     """
     subreddit_object = REDDIT.subreddit(SETTINGS['subreddit'])
     fetch_amount = SETTINGS['max_posts']
+    valid_period = SETTINGS['claim_period'] * 3  # Window to act on posts
+    titolo_content = None
 
     current_time = int(time.time())  # This is the current time.
     logger.debug(f'[ZW] Fetching new r/{subreddit_object} posts at {current_time}.')
@@ -32,10 +42,14 @@ def ziwen_posts():
     posts += list(subreddit_object.new(limit=fetch_amount))
     posts.reverse()  # Reverse it so that we start processing the older ones first. Newest ones last.
 
+    # Main processing logic.
     for post in posts:
         # Anything that needs to happen every loop goes here.
         post_ajo = None
         post_id = post.id
+        post_age = current_time - post.created_utc  # Age of this post, in seconds
+        post_title = str(post.title)
+        post_long_comment = False  # Whether to warn user the post is long.
 
         try:
             post_author = post.author.name
@@ -43,6 +57,12 @@ def ziwen_posts():
             # Author is deleted. We skip.
             logger.debug(f"> u/{post.author} does not exist.")
             continue
+
+        # Handle meta / community posts.
+        if re.match(r"^\s*\[(meta|community)]", post_title, flags=re.I):
+            diskuto_information = Diskuto.process_title(post)
+            # TODO this passes to external handling for meta/community notifications
+            continue  # Do not write to database.
 
         # Skip if post has already been processed
         if db.cursor_main.execute('SELECT 1 FROM old_posts WHERE ID = ?', (post_id,)).fetchone():
@@ -56,13 +76,122 @@ def ziwen_posts():
                 logger.warning(f"[ZW] Posts: Post {post_id} is in `old_posts` database but has no Ajo stored.")
             continue
 
-        # TODO load ajo here
+        # Create a new Ajo here into memory if it doesn't already exist.
+        if not post_ajo:
+            logger.info("[ZW] Posts: No Ajo stored in existing database. Creating new Ajo...")
+            titolo_content = Titolo.process_title(post)
+            post_ajo = Ajo.from_titolo(titolo_content, post)
 
         # Mark post as processed
         db.cursor_main.execute('INSERT INTO old_posts (ID) VALUES (?)', (post_id,))
         db.conn_main.commit()
 
-        # Check on ajo status. We only want to deal with untranslated new posts.
+        # Check on Ajo status. We only want to deal with untranslated new posts.
         if post_ajo is not None and post_ajo.status in ["translated", "doublecheck", "missing", "inprogress"]:
             logger.info(f"[ZW] Posts: Skipping post {post_id} because status is '{post_ajo.status}'.")
             continue
+
+        # Continue work on post.
+        logger.info(f"[ZW] Posts: Processing post `{post_id}`.")
+        logger.info(f"[ZW] Posts: New {post_ajo.language_name} post submitted by u/{post_author} | `{post_id}`.")
+
+        # Check post age to be younger than a period of time.
+        # This is to speed up rare cases where there is a huge backlog
+        # of posts due to an extremely long downtime.
+        if post_age < valid_period:
+            logger.info(f"[ZW] Posts: Post `{post_id}` is too old for my action "
+                        f"parameters. Skipping...")
+            continue
+
+        # If the post is under an hour, give permission to send
+        # notifications to people. Otherwise, we won't.
+        # This is mainly for catching up with older posts for downtime;
+        # we want to process them, but we don't want to send notes.
+        if post_age < 3600:
+            messages_send_okay = True
+        else:
+            messages_send_okay = False
+
+        # Apply a filtration test to make sure this post is valid.
+        post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
+
+        # If it fails this test, write to `record_filter_log`
+        if not post_okay:
+            # Remove this post, it failed all routines.
+            post.mod.remove()
+            suggested_title_replacement = format_title_correction_comment(title_text=post_title,
+                                                                          author=post_author)
+            removal_suggestion = suggested_title_replacement + RESPONSE.BOT_DISCLAIMER
+            message_reply(post, removal_suggestion)
+
+            # Write the title to the log.
+            record_filter_log(post_title, post.created_utc, filter_reason)
+            action_counter(1, "Removed posts")  # Write to the counter log
+            logger.info(f"[ZW] Posts: Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`")
+            continue
+
+        # Check for English-only content.
+        if is_english_only(titolo_content):
+            # Remove this post, as it is English-only.
+            post.mod.remove()
+            message_reply(post, RESPONSE.COMMENT_ENGLISH_ONLY.format(oauthor=post_author))
+
+            record_filter_log(post_title, post.created_utc, "EE")
+            action_counter(1, "Removed posts")  # Write to the counter log
+            logger.info("[ZW] Posts: Removed an English-only post. | `{post.id}`")
+            continue
+
+        # After this point, this post is something we can work with.
+        # Length checks for overly long posts.
+        if len(post.selftext) > SETTINGS['post_long_characters']:
+            logger.info("[ZW] Posts: This is a long piece of text.")
+            post_long_comment = True
+        # Check for YouTube length.
+        elif "youtube.com" in post.url or "youtu.be" in post.url:
+            logger.debug(f"[ZW] Posts: Analyzing YouTube video link at: {post.url}")
+            video_length = fetch_youtube_length(post.url)
+
+            # If the video is considered long by our settings,
+            # but make an exception if someone posts the exact timestamp.
+            if video_length > SETTINGS['video_long_seconds'] and "t=" not in post.url:
+                logger.info("[ZW] Posts: This is a long YouTube video.")
+                post_long_comment = True
+
+        # This is a boolean that is True if the user has posted too much
+        # in a short period of time and False if they haven't.
+        user_posted_too_much = is_user_over_submission_limit(post_author)
+
+        # Get the Titolo and send notifications to users.
+        if messages_send_okay and not user_posted_too_much:
+            action_counter(1, "New posts")  # Write to the counter log
+            for lingvo in titolo_content.notify_languages:
+                notified = notifier(lingvo, post)  # Returns a list of messaged individuals.
+
+                # Add the list of notified users to the Ajo.
+                post_ajo.add_notified(notified)
+
+        # Leave a long comment if required.
+        if post_long_comment:
+            # Add attribute to Ajo
+            post_ajo.is_long = True
+
+            long_comment = RESPONSE.COMMENT_LONG + RESPONSE.BOT_DISCLAIMER
+            message_reply(post, long_comment)
+            logger.info("[ZW] Posts: Left a comment informing that the post is long.")
+
+        # Update the Ajo with the Titolo data. This takes care of writing
+        # the Ajo to the local database as well as updating the Reddit
+        # flair.
+        logger.debug("[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`")
+        print(vars(post_ajo))
+        print(post_ajo.id)
+        post_ajo.update_reddit()
+
+    return
+
+
+# Primary runtime.
+if __name__ == "__main__":
+    msg.good("Launching Ziwen posts...")
+    ziwen_posts()
+    msg.info("Ziwen posts completed.")
