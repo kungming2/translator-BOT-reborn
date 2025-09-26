@@ -2,7 +2,12 @@
 # -*- coding: UTF-8 -*-
 """
 This handles language processing from posts' titles and also
-filters out posts that do not match the community rules.
+filters out posts that do not match the community rules. The main class
+associated with requests is the Titolo class.
+
+Separately, a Diskuto class covers posts that are *not* requests - e.g.
+Meta or Community posts. This is intended to make creating more granular
+types easier in the future.
 """
 import json
 import re
@@ -65,16 +70,52 @@ class Titolo:
     @classmethod
     def process_title(cls, title_text_or_post, post=None):
         """
-        Class method that processes a title or submission and returns a new Titolo instance.
+        Class method that processes a title or submission and returns
+        a new Titolo instance.
         """
-        if hasattr(title_text_or_post, "title"):
-            title = title_text_or_post.title
-            post = title_text_or_post
+        if hasattr(title_text_or_post, "title"):  # It's a PRAW submission
+            title = str(title_text_or_post.title)  # ensure it's a string
+            post = title_text_or_post  # assign the submission
         else:
-            title = title_text_or_post
+            title = str(title_text_or_post)  # raw string input
 
         updated = process_title(title, post)
         return updated  # Already a Titolo instance
+
+
+class Diskuto:
+    def __init__(self, title_original=None, post_type=None):
+        self.title_original = title_original
+        self.post_type = post_type
+
+    def __repr__(self):
+        return f"<Diskuto: (type={self.post_type}) | {self.title_original}>"
+
+    def __str__(self):
+        return (f"Diskuto(\n"
+                f"  title_original='{self.title_original}',\n"
+                f"  post_type='{self.post_type}'\n"
+                f")")
+
+    @classmethod
+    def process_title(cls, title_text_or_post):
+        """
+        Build a Diskuto directly:
+        - title_original: the full title string
+        - post_type: the lowercase text inside the first [TAG] if present
+        """
+        # Accept either a Reddit-like object or a raw string
+        if hasattr(title_text_or_post, "title") and not callable(title_text_or_post.title):
+            title = title_text_or_post.title
+        else:
+            title = str(title_text_or_post)
+
+        # Extract [TAG] at start (e.g. [META] -> 'meta')
+        m = re.match(r"^\s*\[([^]]+)]", title)
+        post_type = m.group(1).strip().lower() if m else None
+
+        # Create the Diskuto instance directly
+        return cls(title_original=title, post_type=post_type)
 
 
 # Load the title module's settings.
@@ -348,12 +389,12 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
 """ASSESSING (SECOND ROUND)"""
 
 
-def preprocess_title(title):
+def preprocess_title(post_title):
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
     misused language tags, and removing cross-post markers.
     """
-    title = re.sub(r"\(x-post.*", "", title).strip()
+    title = re.sub(r"\(x-post.*", "", post_title).strip()
 
     # Correct spelling/alias issues
     for spelling in converter('en').name_alternates:
@@ -861,6 +902,22 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
     return reformat_comment
 
 
+def is_english_only(titolo_content: dict) -> bool:
+    """
+    Returns True if BOTH source and target contain only Lingvo objects
+    whose preferred_code is 'en'.
+    """
+    source = getattr(titolo_content, "source", []) or []
+    target = getattr(titolo_content, "target", []) or []
+    if not source or not target:
+        return False
+
+    return (
+        all(getattr(lang, "preferred_code", None) == "en" for lang in source)
+        and all(getattr(lang, "preferred_code", None) == "en" for lang in target)
+    )
+
+
 """INQUIRY SECTION"""
 
 
@@ -869,19 +926,20 @@ def show_menu():
     print("1. Title testing (enter your own title to test)")
     print("2. Reddit titles (retrieve the last few Reddit posts to test against)")
     print("3. AI title testing (test AI output for a malformed title)")
+    print("4. Diskuto testing (test title processing for a non-request title)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         show_menu()
-        choice = input("Enter your choice (0-3): ")
+        choice = input("Enter your choice (0-4): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3"]:
+        if choice not in ["1", "2", "3", "4"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -899,3 +957,7 @@ if __name__ == "__main__":
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
             print(build_required_title_keywords())
+        elif choice == "4":
+            my_test = input("Enter the string you wish to test with Diskuto: ")
+            diskuto_output = Diskuto.process_title(my_test)
+            pprint(vars(diskuto_output))
