@@ -35,7 +35,8 @@ class Lingvo:
         self.population = kwargs.get("population")
         self.subreddit = kwargs.get("subreddit")
         self.supported = kwargs.get("supported", False)
-        self.thanks = kwargs.get("thanks")
+        self.thanks = kwargs.get("thanks", "Thanks")
+        self.greetings = kwargs.get("greetings", "Hello")
         self.link_ethnologue = kwargs.get("link_ethnologue")
         self.link_wikipedia = kwargs.get("link_wikipedia")
 
@@ -96,7 +97,6 @@ class Lingvo:
             population=0,
             subreddit=None,
             supported=False,
-            thanks=None,
             link_ethnologue=None,
             link_wikipedia=None,
 
@@ -125,6 +125,7 @@ class Lingvo:
             "subreddit": self.subreddit,
             "supported": self.supported,
             "thanks": self.thanks,
+            "greetings": self.greetings,
             "link_ethnologue": self.link_ethnologue,
             "link_wikipedia": self.link_wikipedia,
             "preferred_code": self.preferred_code,
