@@ -17,7 +17,7 @@ MSG_CANNOT_PROCESS: Sorry, but I couldn't process the [language/language codes](
   in your message. Please double-check your message to make sure they're accurate and [try again]({}).
 MSG_PAGE: >
 
-  Hey there u/{username},
+  {greetings} u/{username},
 
   This is a page to take a look at a possible {language_name} request. Can you check
   it out?
@@ -39,7 +39,7 @@ MSG_SHORT_THANKS_TRANSLATED: "\nHey there u/{0},\n\nThanks for submitting to r/t
   \ Thank you.\n"
 MSG_NOTIFY: >
 
-  Hey there u/{username},
+  {greetings} u/{username},
 
 
   There's a new {language_name} {post_type}:
@@ -49,7 +49,7 @@ MSG_NOTIFY: >
 
 MSG_NOTIFY_IDENTIFY: >
 
-  Hey there u/{username},
+  {greetings} u/{username},
 
 
   A {post_type} has been newly identified as {language_name}:
