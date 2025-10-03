@@ -38,16 +38,28 @@ def process_language_code(code: str) -> str:
     return code
 
 
-def notifier_duplicate_checker(language_code: str, username: str) -> bool:
+def notifier_duplicate_checker(code: str, username: str, internal: bool = False) -> bool:
     """
-    Check if a user is already signed up for a specific language code.
-    Returns True if they are, False otherwise.
-    """
-    if len(language_code) == 4:
-        language_code = f"unknown-{language_code}"  # For script entries
+    Check if a user is already signed up for a specific notification.
 
-    query = "SELECT 1 FROM notify_users WHERE language_code = ? AND username = ? LIMIT 1"
-    params = (language_code.lower(), username)
+    Args:
+        code: Either a language_code (notify_users) or a post_type (notify_internal)
+        username: Reddit username
+        internal: If True, checks the internal post_type table instead of language_code
+
+    Returns:
+        True if a matching entry exists, False otherwise.
+    """
+    # Determine target table/column
+    table = "notify_internal" if internal else "notify_users"
+    column = "post_type" if internal else "language_code"
+
+    # Maintain legacy 4-char handling only for language codes
+    if not internal and len(code) == 4:
+        code = f"unknown-{code}"  # For script entries
+
+    query = f"SELECT 1 FROM {table} WHERE {column} = ? AND username = ? LIMIT 1"
+    params = (code.lower(), username)
     logger.debug(f"Executing: {query} with params: {params}")
 
     try:
@@ -55,7 +67,9 @@ def notifier_duplicate_checker(language_code: str, username: str) -> bool:
             result = db.cursor_main.execute(query, params).fetchone()
             return result is not None
     except sqlite3.Error as e:
-        logger.error(f"Database error with notifier duplicate checker: {e}")
+        logger.error(
+            f"Database error in notifier_duplicate_checker (table={table}): {e}"
+        )
         raise
 
 
@@ -98,45 +112,52 @@ def prune_deleted_user_notifications(username: str) -> list[str] | None:
     return final_codes
 
 
-def notifier_language_list_editor(language_list: list, user_object, mode: str = 'insert') -> None:
+def notifier_language_list_editor(language_list: list, user_object, mode: str = "insert") -> None:
     """
-    Modify the notification database by inserting or
-    deleting language entries for a username.
+    Modify the notification database by inserting or deleting entries for a username.
 
     Args:
-        language_list: List of Lingvos to process
+        language_list: List of Lingvo objects OR special strings ("meta", "community")
         user_object: Reddit username *object* to modify entries for
-        mode: Operation mode - 'insert' adds languages, 'delete' removes them,
-                                'purge' removes all for a particular user.
+        mode: 'insert' adds, 'delete' removes, 'purge' removes all (languages only)
     """
     username = user_object.name
 
-    # Delete all notifications entries for this individual.
-    if mode == 'purge':
+    # Purge all language notifications for this user (languages only)
+    if mode == "purge":
         with db.conn_main:
             db.cursor_main.execute("DELETE FROM notify_users WHERE username = ?", (username,))
         return
 
-    if not language_list:  # Empty list check
+    if not language_list:  # Nothing to process
         return
 
-    # Assess the list of Lingvos.
-    for lingvo in language_list:
-        processed_code = process_language_code(lingvo.preferred_code)
-        if not processed_code:  # Skip invalid/empty codes
+    for item in language_list:
+        # Determine if this is an internal type (meta/community) or a
+        # Lingvo language object
+        if isinstance(item, str) and item.lower() in SETTINGS['internal_post_types']:
+            processed_code = item.lower()
+            table, column, internal_flag = "notify_internal", "post_type", True
+        else:
+            processed_code = process_language_code(item.preferred_code)
+            table, column, internal_flag = "notify_users", "language_code", False
+
+        if not processed_code:
             continue
 
-        # Check if an entry exists before for that user.
-        exists = notifier_duplicate_checker(processed_code, username)
+        exists = notifier_duplicate_checker(processed_code, username, internal=internal_flag)
         sql_params = (processed_code, username)
 
-        if mode == 'insert' and not exists:
-            with db.conn_main:
-                db.cursor_main.execute("INSERT INTO notify_users VALUES (?, ?)", sql_params)
-        elif mode == 'delete' and exists:
+        if mode == "insert" and not exists:
             with db.conn_main:
                 db.cursor_main.execute(
-                    "DELETE FROM notify_users WHERE language_code = ? AND username = ?",
+                    f"INSERT INTO {table} ({column}, username) VALUES (?, ?)",
+                    sql_params
+                )
+        elif mode == "delete" and exists:
+            with db.conn_main:
+                db.cursor_main.execute(
+                    f"DELETE FROM {table} WHERE {column} = ? AND username = ?",
                     sql_params
                 )
 
@@ -529,7 +550,7 @@ def notifier(lingvo, submission, mode="new_post"):
 
         try:
             # Send message to user via Reddit messages
-            message_subject = f"[Notification] New {language_name} post on r/translator"
+            message_subject = f"[Notification] New {language_name} request on r/translator"
             recipient = REDDIT.redditor(username)
             full_message = f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
             message_send(
@@ -563,6 +584,60 @@ def notifier(lingvo, submission, mode="new_post"):
     logger.info(f"[Notifier] Sent notifications to {len(notify_users_list)} users signed up for {language_name}.")
 
     return notify_users_list
+
+
+def notifier_internal(post_type, submission):
+    """A stripped down version of notifier solely intended to send
+    notifications regarding internal non-request posts, such as
+    meta or community posts."""
+
+    post_type_search = post_type.lower()
+    original_post_author = submission.author.name if submission.author else None
+
+    # Ensure only supported posts are acted upon.
+    if post_type_search not in SETTINGS["internal_post_types"]:
+        logger.error(f"Notifier Internal: `post_type_search` is not a supported post type.")
+        return []
+
+    # Exit if the author's invalid.
+    if not original_post_author:
+        return []
+
+    # Query for users subscribed to this post type
+    sql_pt = "SELECT * FROM notify_internal WHERE post_type = ?"
+    cursor = db.conn_main.cursor()
+    cursor.execute(sql_pt, (post_type_search,))
+    notify_targets = cursor.fetchall()
+
+    if not notify_targets:
+        return []
+
+    # Message people on the list.
+    for username in notify_targets:
+        try:
+            message_subject = f"[Notification] New {post_type.title()} post on r/translator"
+            recipient = REDDIT.redditor(username)
+            message_body = RESPONSE.MSG_NOTIFY.format(
+                username=username,
+                language_name=post_type,
+                post_type='post',
+                title=submission.title,
+                permalink=submission.permalink,
+                post_author=original_post_author
+            )
+            full_message = f"{message_body}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
+            message_send(
+                redditor_obj=recipient,
+                subject=message_subject,
+                body=full_message
+            )
+
+        except exceptions.APIException as e:
+            logger.info(f"[Notifier] Error sending internal message to u/{username}. Removing user.")
+            logger.error(f"API Exception for u/{username}: {e}")
+            prune_deleted_user_notifications(username)
+
+    return notify_targets
 
 
 if __name__ == "__main__":
