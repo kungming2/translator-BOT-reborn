@@ -4,12 +4,9 @@
 This handles language processing from posts' titles and also
 filters out posts that do not match the community rules. The main class
 associated with requests is the Titolo class.
-
-Separately, a Diskuto class covers posts that are *not* requests - e.g.
-Meta or Community posts. This is intended to make creating more granular
-types easier in the future.
 """
 import json
+import logging
 import re
 import string
 from pprint import pprint
@@ -81,41 +78,6 @@ class Titolo:
 
         updated = process_title(title, post)
         return updated  # Already a Titolo instance
-
-
-class Diskuto:
-    def __init__(self, title_original=None, post_type=None):
-        self.title_original = title_original
-        self.post_type = post_type
-
-    def __repr__(self):
-        return f"<Diskuto: (type={self.post_type}) | {self.title_original}>"
-
-    def __str__(self):
-        return (f"Diskuto(\n"
-                f"  title_original='{self.title_original}',\n"
-                f"  post_type='{self.post_type}'\n"
-                f")")
-
-    @classmethod
-    def process_title(cls, title_text_or_post):
-        """
-        Build a Diskuto directly:
-        - title_original: the full title string
-        - post_type: the lowercase text inside the first [TAG] if present
-        """
-        # Accept either a Reddit-like object or a raw string
-        if hasattr(title_text_or_post, "title") and not callable(title_text_or_post.title):
-            title = title_text_or_post.title
-        else:
-            title = str(title_text_or_post)
-
-        # Extract [TAG] at start (e.g. [META] -> 'meta')
-        m = re.match(r"^\s*\[([^]]+)]", title)
-        post_type = m.group(1).strip().lower() if m else None
-
-        # Create the Diskuto instance directly
-        return cls(title_original=title, post_type=post_type)
 
 
 # Load the title module's settings.
@@ -485,13 +447,16 @@ def is_punctuation_only(s):
     return len(s) > 0 and all(c in string.punctuation for c in s)
 
 
-def clean_text(text):
+def clean_text(text, preserve_commas=False):
     """Insert spaces around brackets/parentheses and remove other punctuation with extra spaces."""
     # Insert spaces around brackets and parentheses
     text = re.sub(r"([\[\]()])", r" \1 ", text)
 
     # Remove other punctuation (excluding brackets/parentheses)
-    text = re.sub(r"[,.;@#?!&$“”’\"•/]+ *", " ", text)
+    if preserve_commas:
+        text = re.sub(r"[.;@#?!&$""'\"•/]+ *", " ", text)  # Remove comma from the pattern
+    else:
+        text = re.sub(r"[,.;@#?!&$""'\"•/]+ *", " ", text)
 
     # Collapse multiple spaces into one
     text = re.sub(r"\s+", " ", text)
@@ -511,7 +476,11 @@ def extract_target_chunk(title):
     """Extract the target language chunk from a processed title."""
     for sep in ['>', ' to ', '-', '<']:
         if sep in title:
-            return clean_text(title.split(sep, 1)[1])
+            chunk = title.split(sep, 1)[1]
+            # Stop at the closing bracket
+            if ']' in chunk:
+                chunk = chunk.split(']', 1)[0]
+            return clean_text(chunk, True)
     return ""
 
 
@@ -539,6 +508,23 @@ def resolve_languages(chunk, is_source):
     if ']' in chunk:
         chunk = chunk.split(']', 1)[0]
 
+    # Split on commas first to handle multiple languages
+    if ',' in chunk:
+        language_parts = [part.strip() for part in chunk.split(',')]
+        resolved = []
+        for part in language_parts:
+            result = resolve_languages(part, is_source)  # Recursive call
+            if result:
+                resolved.extend(result)
+
+        # Deduplicate
+        unique = {}
+        for lang in resolved:
+            key = lang.name if hasattr(lang, "name") else lang.language_code_3
+            unique[key] = lang
+
+        return list(unique.values())
+
     words = chunk.split()
     words = [w for w in words if not is_punctuation_only(w)]
 
@@ -550,8 +536,8 @@ def resolve_languages(chunk, is_source):
     cleaned_words = [
         w for w in words
         if not (
-            (len(w) == 2 and w.title() in title_settings['ENGLISH_2_WORDS']) or
-            (len(w) == 3 and w.title() in title_settings['ENGLISH_3_WORDS'])
+                (len(w) == 2 and w.title() in title_settings['ENGLISH_2_WORDS']) or
+                (len(w) == 3 and w.title() in title_settings['ENGLISH_3_WORDS'])
         )
     ]
 
@@ -561,9 +547,18 @@ def resolve_languages(chunk, is_source):
         if 'Eng' in word and len(word) <= 8:
             word = 'English'
         converter_result = converter(word)
-        logger.debug(f"Converted {word} -> {converter_result}")
+
+        # Log differently for multi-word phrases
+        if ' ' in word:
+            logger.debug(f"Converted full phrase: {word} -> {converter_result}")
+        else:
+            logger.debug(f"Converted {word} -> {converter_result}")
+
         if converter_result:
             resolved.append(converter_result)
+            # If this was a successful multi-word phrase, stop processing individual words
+            if ' ' in word:
+                break
 
     unique = {}
     for lang in resolved:
@@ -682,6 +677,34 @@ def determine_flair(titolo_object):
             return lang_obj.language_code_3
         return 'generic'
 
+    def generate_final_text(language_codes, max_length=64):
+        """Generate final_text with a character limit, abbreviating if needed."""
+        sorted_codes = sorted(language_codes)
+        full_text = f"Multiple Languages [{', '.join(sorted_codes)}]"
+
+        if len(full_text) <= max_length:
+            return full_text
+
+        # Abbreviate to fit within limit
+        prefix = "Multiple Languages ["
+        suffix = "]"
+        max_content_length = max_length - len(prefix) - len(suffix)
+
+        included_codes = []
+        current_length = 0
+
+        for code in sorted_codes:
+            separator_length = 2 if included_codes else 0  # ", "
+            code_length = len(code) + separator_length
+
+            if current_length + code_length <= max_content_length:
+                included_codes.append(code)
+                current_length += code_length
+            else:
+                break
+
+        return f"{prefix}{', '.join(included_codes)}{suffix}"
+
     if titolo_object.direction == "english_to":
         if not titolo_object.source:
             return  # No source language to base flair on
@@ -702,15 +725,14 @@ def determine_flair(titolo_object):
                 titolo_object.add_final_text(lang.name)
                 return
         elif len(targets) > 1:  # Defined multiple post
-            preferred_codes = sorted(
+            preferred_codes = [
                 lang.preferred_code.upper()
                 for lang in targets
                 if hasattr(lang, "preferred_code") and lang.preferred_code
-            )
+            ]
 
-            codes_str = ", ".join(preferred_codes)
             titolo_object.add_final_code("multiple")
-            titolo_object.add_final_text(f"Multiple Languages [{codes_str}]")
+            titolo_object.add_final_text(generate_final_text(preferred_codes))
             return
 
         else:
@@ -926,20 +948,20 @@ def show_menu():
     print("1. Title testing (enter your own title to test)")
     print("2. Reddit titles (retrieve the last few Reddit posts to test against)")
     print("3. AI title testing (test AI output for a malformed title)")
-    print("4. Diskuto testing (test title processing for a non-request title)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
+    logger.setLevel(logging.DEBUG)
     while True:
         show_menu()
-        choice = input("Enter your choice (0-4): ")
+        choice = input("Enter your choice (1-3): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3", "4"]:
+        if choice not in ["1", "2", "3"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -957,7 +979,3 @@ if __name__ == "__main__":
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
             print(build_required_title_keywords())
-        elif choice == "4":
-            my_test = input("Enter the string you wish to test with Diskuto: ")
-            diskuto_output = Diskuto.process_title(my_test)
-            pprint(vars(diskuto_output))
