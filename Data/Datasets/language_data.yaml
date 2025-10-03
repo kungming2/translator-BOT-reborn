@@ -8531,3 +8531,180 @@ zxx:
   name: Nonlanguage
   supported: true
   language_code_3: zxx
+acy:
+  country: Cyprus
+  family: Afro-Asiatic
+  language_code_3: acy
+  link_ethnologue: https://www.ethnologue.com/language/acy
+  link_wikipedia: https://en.wikipedia.org/wiki/Cypriot_Arabic
+  name: Cypriot Arabic
+  name_alternates:
+  - Cypriot Maronite Arabic
+  - Kormakiti
+  population: 9760
+abv:
+  country: Bahrain
+  family: Afro-Asiatic
+  language_code_3: abv
+  link_ethnologue: https://www.ethnologue.com/language/abv
+  link_wikipedia: https://en.wikipedia.org/wiki/Bahrani_Arabic
+  name: Baharna Arabic
+  name_alternates:
+  - Baharna
+  - Baharna Arabic
+  - Baharnah
+  - Bahraini Arabic
+  - Bahrani
+  - Bahrani Arabic
+  population: 737000
+shu:
+  country: Chad
+  family: Afro-Asiatic
+  language_code_3: shu
+  link_ethnologue: https://www.ethnologue.com/language/shu
+  link_wikipedia: https://en.wikipedia.org/wiki/Chadian_Arabic
+  name: Chadian Arabic
+  name_alternates:
+  - Arabe Choa
+  - Chad Arabic
+  - Chadian Arabic
+  - Chowa
+  - Shua
+  - Shua Arabic
+  - Shuwa
+  - Shuwa Arabic
+  - Suwa
+  - Western Sudanic Arabic
+ayc:
+  country: Peru
+  family: Aymaran
+  language_code_3: ayc
+  link_ethnologue: https://www.ethnologue.com/language/ayc
+  link_wikipedia: https://en.wikipedia.org/wiki/Aymara_language
+  name: Southern Aymara
+  name_alternates:
+  - Aymar
+  - Aymar aru
+  population: 213000
+ffm:
+  country: Mali
+  family: Niger-Congo
+  language_code_3: ffm
+  link_ethnologue: https://www.ethnologue.com/language/ffm
+  link_wikipedia: https://en.wikipedia.org/wiki/Fula_language
+  name: Maasina Fulfulde
+  name_alternates:
+  - Macina
+  - Peul
+  - Toucouleur
+  population: 1523240
+fue:
+  country: Benin
+  family: Niger-Congo
+  language_code_3: fue
+  link_ethnologue: https://www.ethnologue.com/language/fue
+  link_wikipedia: https://en.wikipedia.org/wiki/Borgu_Fulfulde
+  name: Borgu Fulfulde
+  name_alternates:
+  - Benin-Togo Fulfulde
+  - Fulbe-Borgu
+  - Peul
+  - Peulh
+  population: 652200
+fuh:
+  country: Niger
+  family: Niger-Congo
+  language_code_3: fuh
+  link_ethnologue: https://www.ethnologue.com/language/fuh
+  link_wikipedia: https://en.wikipedia.org/wiki/Western_Niger_Fulfulde
+  name: Western Niger Fulfulde
+  name_alternates:
+  - Gorgal Fulfulde
+  - Northeastern Burkina Faso Fulfulde
+  - Peul
+  - Peulh
+  population: 1650000
+fuv:
+  country: Nigeria
+  family: Niger-Congo
+  language_code_3: fuv
+  link_ethnologue: https://www.ethnologue.com/language/fuv
+  link_wikipedia: https://en.wikipedia.org/wiki/Nigerian_Fulfulde
+  name: Nigerian Fulfulde
+  population: 14485000
+fub:
+  country: Cameroon
+  family: Niger-Congo
+  language_code_3: fub
+  link_ethnologue: https://www.ethnologue.com/language/fub
+  link_wikipedia: https://en.wikipedia.org/wiki/Adamawa_Fulfulde
+  name: Adamawa Fulfulde
+  name_alternates:
+  - Boulbe
+  - Domona
+  - Dzemay
+  - Eastern Fulani
+  - Foulfoulde
+  - Mbororo
+  - Palata
+  - Peul
+  - Peulh
+  population: 13000000
+fui:
+  country: Chad
+  family: Niger-Congo
+  language_code_3: fui
+  link_ethnologue: https://www.ethnologue.com/language/fui
+  link_wikipedia: https://en.wikipedia.org/wiki/Bagirmi_Fulfulde
+  name: Bagirmi Fulfulde
+  name_alternates:
+  - Baghirmi Peul
+  - Bagirmi Fula
+  population: 180000
+gui:
+  country: Bolivia
+  family: Tupian
+  language_code_3: gui
+  link_ethnologue: https://www.ethnologue.com/language/gui
+  link_wikipedia: https://en.wikipedia.org/wiki/Eastern_Bolivian_Guaran%C3%AD_language
+  name: Eastern Bolivian Guarani
+  population: 125000
+hif:
+  country: Fiji
+  family: Indo-European
+  language_code_3: hif
+  link_ethnologue: https://www.ethnologue.com/language/hif
+  link_wikipedia: https://en.wikipedia.org/wiki/Fiji_Hindi
+  name: Fiji Hindi
+  name_alternates:
+  - Fiji Hindustani
+  population: 384380
+gax:
+  country: Ethiopia
+  family: Afro-Asiatic
+  language_code_3: gax
+  link_ethnologue: https://www.ethnologue.com/language/gax
+  link_wikipedia: https://en.wikipedia.org/wiki/Southern_Oromo_language
+  name: Borana-Arsi-Guji Oromo
+  name_alternates:
+  - Afan Oromo
+  - Booranaa
+  - Borana
+  - Oromiffa
+  population: 24900000
+swc:
+  country: Democratic Republic of the Congo
+  family: Niger-Congo
+  language_code_3: swc
+  link_ethnologue: https://www.ethnologue.com/language/swc
+  link_wikipedia: https://en.wikipedia.org/wiki/Congo_Swahili
+  name: Congo Swahili
+  population: 11100000
+uzs:
+  country: Afghanistan
+  family: Turkic
+  language_code_3: uzs
+  link_ethnologue: https://www.ethnologue.com/language/uzs
+  link_wikipedia: https://en.wikipedia.org/wiki/Southern_Uzbek_language
+  name: Southern Uzbek
+  population: 4365700
