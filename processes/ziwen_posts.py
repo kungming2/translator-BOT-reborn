@@ -5,22 +5,25 @@ Main script to fetch posts and act upon them.
 """
 import re
 import time
+import traceback
 
 from wasabi import msg
 
 from config import logger, SETTINGS
 from connection import REDDIT
 from database import db, record_filter_log
+from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
+from models.diskuto import Diskuto, diskuto_writer
 from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
 from responses import RESPONSE
 from statistics import action_counter
-from title_handling import Diskuto, Titolo, format_title_correction_comment, main_posts_filter, is_english_only
+from title_handling import Titolo, format_title_correction_comment, main_posts_filter, is_english_only
 from utility import fetch_youtube_length
 
 
-def ziwen_posts():
+def ziwen_posts(post_limit=None):
     """
     The main top-level post filtering runtime for r/translator.
     It removes posts that do not meet the subreddit's guidelines.
@@ -30,7 +33,7 @@ def ziwen_posts():
     :return: Nothing.
     """
     subreddit_object = REDDIT.subreddit(SETTINGS['subreddit'])
-    fetch_amount = SETTINGS['max_posts']
+    fetch_amount = post_limit if post_limit is not None else SETTINGS['max_posts']
     valid_period = SETTINGS['claim_period'] * 3  # Window to act on posts
     titolo_content = None
 
@@ -40,7 +43,9 @@ def ziwen_posts():
 
     # We get the last X new posts.
     posts += list(subreddit_object.new(limit=fetch_amount))
-    posts.reverse()  # Reverse it so that we start processing the older ones first. Newest ones last.
+    # Reverse order so that we start processing the older posts, with
+    # newest ones last.
+    posts.reverse()
 
     # Main processing logic.
     for post in posts:
@@ -58,10 +63,15 @@ def ziwen_posts():
             logger.debug(f"> u/{post.author} does not exist.")
             continue
 
-        # Handle meta / community posts.
-        if re.match(r"^\s*\[(meta|community)]", post_title, flags=re.I):
-            diskuto_information = Diskuto.process_title(post)
-            # TODO this passes to external handling for meta/community notifications
+        # Handle internal posts (such as meta or community ones).
+        # Build regex dynamically from the list, then passes to external
+        # handling for internal notifications at designated intervals
+        # by Wenju
+        diskuto_pattern = r"^\s*\[(" + "|".join(SETTINGS['internal_post_types']) + r")]"
+        if re.match(diskuto_pattern, post_title, flags=re.I):
+            diskuto_output = Diskuto.process_post(post)
+            diskuto_writer(diskuto_output)
+            logger.info(f"> `post.id` post saved as an internal post for later processing.")
             continue  # Do not write to database.
 
         # Skip if post has already been processed
@@ -98,7 +108,7 @@ def ziwen_posts():
         # Check post age to be younger than a period of time.
         # This is to speed up rare cases where there is a huge backlog
         # of posts due to an extremely long downtime.
-        if post_age < valid_period:
+        if post_age > valid_period:
             logger.info(f"[ZW] Posts: Post `{post_id}` is too old for my action "
                         f"parameters. Skipping...")
             continue
@@ -107,10 +117,7 @@ def ziwen_posts():
         # notifications to people. Otherwise, we won't.
         # This is mainly for catching up with older posts for downtime;
         # we want to process them, but we don't want to send notes.
-        if post_age < 3600:
-            messages_send_okay = True
-        else:
-            messages_send_okay = False
+        messages_send_okay = post_age < 3600
 
         # Apply a filtration test to make sure this post is valid.
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
@@ -185,7 +192,10 @@ def ziwen_posts():
         logger.debug("[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`")
         print(vars(post_ajo))
         print(post_ajo.id)
-        post_ajo.update_reddit()
+
+        # Only update if we're not in testing mode.
+        if not SETTINGS['testing_mode']:
+            post_ajo.update_reddit()
 
     return
 
@@ -193,5 +203,9 @@ def ziwen_posts():
 # Primary runtime.
 if __name__ == "__main__":
     msg.good("Launching Ziwen posts...")
-    ziwen_posts()
-    msg.info("Ziwen posts completed.")
+    try:
+        ziwen_posts(15)
+    except Exception:  # intentionally broad: catch all exceptions for logging
+        error_entry = traceback.format_exc()
+        error_log_extended(error_entry, "Ziwen Posts")
+    msg.info("Ziwen posts routine completed.")
