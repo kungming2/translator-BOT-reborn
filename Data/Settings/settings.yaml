@@ -1,7 +1,7 @@
 bot_name: Ziwen
 version_number: "2.0 beta"
 subreddit: translator
-testing_mode: true
+testing_mode: true  # Very important variable!
 commands_with_args:
   - "!id:"
   - "!identify:"
@@ -75,6 +75,12 @@ defined_multiple_legend:
   '✓': doublecheck
   '✔': translated
 
+# Types of internal posts (non-language requests) that the notifications
+# system can also handle.
+internal_post_types:
+  - community
+  - meta
+
 # This is how many posts or comments Ziwen will retrieve all at once.
 # PRAW can download 100 at a time.
 max_posts: 100
@@ -90,6 +96,10 @@ notifications_user_limit: 20
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
 user_submission_limit: 4
+# How long a video is to be considered a "long" request.
+video_long_seconds: 300
+# How long a post is in characters to be considered a "long" request.
+post_long_characters: 1500
 
 # How many days old must an account be before it can utilize
 # the paging system.
