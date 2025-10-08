@@ -7,6 +7,7 @@ import ast
 from typing import List
 
 import orjson
+import pprint
 
 from config import logger, SETTINGS
 from connection import REDDIT, REDDIT_HELPER
@@ -144,8 +145,8 @@ def _normalize_lang_field(value):
 class Ajo:
     """
     The main class we work with that represents translation requests.
-    TODO make multiple, defined multiple tests
     """
+
     def __init__(self):
         self._id = None
         self._created_utc = None
@@ -173,6 +174,7 @@ class Ajo:
         self.author_messaged = False
         self.type = "single"
         self.image_hash = None
+        self.is_defined_multiple = False  # New attribute
 
         self._lingvo = None  # initialized lazily from preferred_code
 
@@ -299,8 +301,23 @@ class Ajo:
         ajo.original_target_language_name = titolo.target
 
         # Ajo extras
-        ajo.language_history = [titolo.final_text] if titolo.final_text else []
+        # Populate language_history with actual language codes from target languages
+        if titolo.target:
+            # If multiple languages (defined multiple), wrap in a list
+            if len(titolo.target) > 1:
+                ajo.language_history = [[lang.preferred_code for lang in titolo.target]]
+            else:
+                # Single language, keep as flat list
+                ajo.language_history = [titolo.final_code]
+        else:
+            ajo.language_history = []
+
         ajo.status = "untranslated"  # Default; this can be changed later by a function below
+
+        # Set is_defined_multiple if there are multiple target languages
+        if titolo.target and len(titolo.target) > 1:
+            ajo.is_defined_multiple = True
+            ajo.type = 'multiple'
 
         # Populate fields from Reddit submission if available
         if submission:
@@ -335,6 +352,7 @@ class Ajo:
         Serialize only JSON-safe fields of this Ajo object.
         Excludes internal and derived attributes like `_lingvo`, `language_name`, `is_supported`, etc.
         """
+
         def lingvo_list_to_names(lingvo_list):
             if not lingvo_list:
                 return []
@@ -350,14 +368,15 @@ class Ajo:
             "preferred_code": self.preferred_code,
             "language_history": self.language_history or [],
             "status": self.status or "untranslated",
-            "output_post_flair_css": self.output_post_flair_css,
-            "output_post_flair_text": self.output_post_flair_text,
+            "output_post_flair_css": self.output_post_flair_css,  # solely for backwards compatability
+            "output_post_flair_text": self.output_post_flair_text,  # solely for backwards compatability
             "original_source_language_name": lingvo_list_to_names(self.original_source_language_name),
             "original_target_language_name": lingvo_list_to_names(self.original_target_language_name),
             "is_identified": bool(self.is_identified),
             "is_long": bool(self.is_long),
             "image_hash": self.image_hash,
-            "type": self.type or "single"  # default fallback
+            "type": self.type or "single",  # default fallback
+            "is_defined_multiple": bool(self.is_defined_multiple)
         }
 
     @classmethod
@@ -386,6 +405,7 @@ class Ajo:
         ajo.status = data.get("status", "untranslated")
         ajo.is_identified = data.get("is_identified", False)
         ajo.is_long = data.get("is_long", False)
+        ajo.is_defined_multiple = data.get("is_defined_multiple", False)
 
         # Normalize language name fields
         ajo.original_source_language_name = _normalize_lang_field(data.get("original_source_language_name"))
@@ -427,10 +447,16 @@ class Ajo:
         """
         Set the type of the post.
         Must be either 'single' or 'multiple'.
+        If changing from 'multiple' to 'single', reset
+        is_defined_multiple to False.
         """
         if value not in ["single", "multiple"]:
             raise ValueError("Post type must be 'single' or 'multiple'.")
         self.type = value
+
+        # Reset is_defined_multiple if type is changed to 'single'
+        if value == "single":
+            self.is_defined_multiple = False
 
     def set_status(self, value: str):
         """
@@ -441,6 +467,25 @@ class Ajo:
         if value not in allowed:
             raise ValueError(f"Status must be one of {allowed}.")
         self.status = value
+
+    def set_is_defined_multiple(self, value: bool):
+        """
+        Set whether the post is marked as a defined multiple post.
+        This should only be meaningful when type is 'multiple'.
+
+        :param value: Boolean indicating if this is a defined multiple.
+        """
+        self.is_defined_multiple = bool(value)
+
+    def toggle_is_defined_multiple(self):
+        """
+        Toggle the is_defined_multiple attribute between True and False.
+        Returns the new value after toggling.
+
+        :return: The new value of is_defined_multiple after toggling.
+        """
+        self.is_defined_multiple = not self.is_defined_multiple
+        return self.is_defined_multiple
 
     def set_time(self, status, moment):
         """
@@ -671,9 +716,45 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     ajo.output_flair_text = output_flair_text
 
 
+"""INQUIRY SECTION"""
+
+
+def show_menu():
+    print("\nSelect a search to run:")
+    print("1. Ajo testing (enter a URL of a Reddit post to test)")
+    print("2. Reddit posts (retrieve the last few Reddit posts to test against)")
+    print("x. Exit")
+
+
 if __name__ == "__main__":
-    for submission_new in REDDIT_HELPER.subreddit('translator').new(limit=3):
-        print(submission_new.title)
-        ajo_new = Ajo.from_titolo(Titolo.process_title(submission_new), submission_new)
-        print(vars(ajo_new))
-        print('------------------')
+
+    while True:
+        show_menu()
+        choice = input("Enter your choice (1-2): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            test_url = input("Enter the URL of the Reddit post to test: ")
+            submission_id = test_url.split("comments/")[1].split("/")[0]
+            test_post = REDDIT_HELPER.submission(id=submission_id)
+
+            test_titolo = Titolo.process_title(test_post)
+            pprint.pprint(vars(test_titolo))
+
+            post_ajo = Ajo.from_titolo(test_titolo, test_post)
+            pprint.pprint(vars(post_ajo))
+
+        elif choice == "2":
+            for submission_new in REDDIT_HELPER.subreddit('translator').new(limit=3):
+                print(f"Title: {submission_new.title}")
+                ajo_new = Ajo.from_titolo(Titolo.process_title(submission_new),
+                                          submission_new)
+                pprint.pprint(vars(ajo_new))
+                print('------------------')
