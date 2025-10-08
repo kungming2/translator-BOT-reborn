@@ -9,6 +9,7 @@ import requests
 
 import imagehash
 import PIL
+from yt_dlp import YoutubeDL
 
 from config import logger
 from PIL import Image
@@ -55,3 +56,32 @@ def generate_image_hash(image_url):
         logger.debug(f"[ZW] generate_image_hash: Assessed {image_url}: {hash_value}")
 
     return hash_value
+
+
+def fetch_youtube_length(youtube_url):
+    """
+    Returns the length of a YouTube video in seconds using the
+    yt-dlp library.
+    """
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,  # we only want metadata
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        try:
+            info = ydl.extract_info(youtube_url, download=False)
+            return info.get('duration')  # duration in seconds
+        except Exception as e:
+            print(f"Error fetching video info: {e}")
+            return None
+
+
+if __name__ == "__main__":
+    test_url = input("Enter a YouTube URL: ").strip()
+    length_seconds = fetch_youtube_length(test_url)
+
+    if length_seconds is not None:
+        print(f"Video length: {length_seconds}")
+    else:
+        print("Failed to fetch video length.")
