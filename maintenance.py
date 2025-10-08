@@ -55,9 +55,10 @@ def most_recent_submitters():
 
 def clean_processed_database():
     """
-    Cleans up the processed comments and posts in the database by pruning
-    old entries from the 'old_comments' and 'old_posts' tables, keeping only the most recent.
-    # TODO to be called by the upcoming Wenju rewrite
+    Cleans up the processed comments and posts in the database by
+    pruning old entries from the 'old_comments' and 'old_posts' tables,
+    keeping only the most recent ones.
+
     :return: None
     """
     max_posts = SETTINGS["max_posts"]
@@ -93,7 +94,7 @@ def clean_processed_database():
 def ziwen_maintenance() -> State:
     """
     Group together common activities that need to be run on an occasional basis.
-    Usually activated at start-up.
+    Usually activated at start-up. This is used in ajo.py.
 
     :return: A State object containing the current maintenance state.
     """
