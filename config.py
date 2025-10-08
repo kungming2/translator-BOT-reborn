@@ -30,7 +30,6 @@ class Paths:
     # Authentication and configuration files
     AUTH = {
         "CREDENTIALS": os.path.join(DATA_DIR, "auth.yaml"),
-        "USER_AGENT": os.path.join(DATA_DIR, "_ua.yaml"),
     }
 
     # Written responses by the bot
