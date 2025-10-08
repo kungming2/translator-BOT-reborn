@@ -6641,6 +6641,15 @@ nzs:
   name_alternates:
   - NZSL
   population: 20200
+obi:
+  country: United States
+  family: Chumashan
+  language_code_3: obi
+  link_ethnologue: https://www.ethnologue.com/language/obi
+  link_wikipedia: https://en.wikipedia.org/wiki/Obispe%C3%B1o_language
+  name: Obispeno
+  name_alternates: []
+  population: 201
 oc:
   country: France
   family: Indo-European
@@ -7257,15 +7266,37 @@ qaa:
   link_wikipedia: https://en.wikipedia.org/wiki/Dothraki_language
   name: Dothraki
   population: 0
+qab:
+  family: Constructed
+  greetings: Rytsas
+  language_code_3: qab
+  link_wikipedia: https://en.wikipedia.org/wiki/Valyrian_languages
+  name: Valyrian
+  thanks: Kirimvose
 qac:
   family: Constructed
   language_code_3: qac
   name: Elvish
+qai:
+  family: Constructed
+  language_code_3: qai
+  link_wikipedia: https://en.wikipedia.org/wiki/Na%CA%BCvi_language
+  name: Naʼvi
 qal:
   family: Constructed
   language_code_3: qal
   link_wikipedia: https://en.wikipedia.org/wiki/Ithkuil
   name: Ithkuil
+qaq:
+  family: Creole
+  language_code_3: qaq
+  link_wikipedia: https://en.wikipedia.org/wiki/Singlish
+  name: Singlish
+qas:
+  family: Constructed
+  language_code_3: qai
+  link_wikipedia: https://en.wikipedia.org/wiki/Enochian
+  name: Enochian
 qbb:
   country: Italy
   family: Indo-European
@@ -9495,6 +9526,29 @@ ulm:
   - Ulumandak
   - Ulunda
   population: 30000
+umu:
+  country: Canada
+  family: Algic
+  language_code_3: umu
+  link_ethnologue: https://www.ethnologue.com/language/umu
+  link_wikipedia: https://en.wikipedia.org/wiki/Munsee_language
+  name: Munsee
+  name_alternates:
+  - Delaware
+  - Ontario Delaware
+  population: 400
+unm:
+  country: United States
+  family: Algic
+  language_code_3: unm
+  link_ethnologue: https://www.ethnologue.com/language/unm
+  link_wikipedia: https://en.wikipedia.org/wiki/Unami_language
+  name: Unami
+  name_alternates:
+  - Delaware
+  - Lenape
+  - Lenni-Lenape
+  population: 11000
 ur:
   countries_default: PK
   country: Pakistan
