@@ -110,33 +110,21 @@ def comment_has_command(comment):
     return False
 
 
-'''TESTING FUNCTIONS'''
-
-
-def test_instruo_on_r_translator_recent_comments(limit=100):
-    """Testing function only. To be moved in final version."""
-    subreddit = REDDIT_HELPER.subreddit("translator")
-    print(f"Fetching the last {limit} comments from r/translator...")
-    count = 0
-    for comment in subreddit.comments(limit=limit):
-        if comment_has_command(comment):
-            try:
-                instruo = Instruo.from_comment(comment)
-                if instruo.author_comment == "translator-BOT":
-                    print("skipped own comment")
-                    continue
-
-                print(f"Comment ID: {instruo.id_comment}, Comment Author: {instruo.author_comment}, Commands: {instruo.commands}")
-                print(f"Comment body: {comment.body[0:50]}")
-                print(f"Comment permalink: https://www.reddit.com{comment.permalink}")
-                print(vars(instruo))
-                count += 1
-                print('------------------')
-            except Exception as e:
-                print(f"Error processing comment {comment.id if hasattr(comment, 'id') else '[unknown]'}: {e}")
-                print(f"Error Comment permalink: https://www.reddit.com{comment.permalink}")
-    print(f"Processed {count} comments.")
-
-
 if '__main__' == __name__:
-    test_instruo_on_r_translator_recent_comments()
+    # test_instruo_on_r_translator_recent_comments()
+    while True:
+        # Get comment URL from user
+        comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
+
+        # Check for exit
+        if comment_url.lower() in ['quit', 'exit', 'q']:
+            break
+
+        # Get comment from URL and process
+        try:
+            test_comment = REDDIT_HELPER.comment(url=comment_url)
+            test_instruo = Instruo.from_comment(test_comment)
+            print(f"Instruo created: {test_instruo}\n")
+            print(vars(test_instruo))
+        except Exception as ex:
+            print(f"Error: {ex}\n")
