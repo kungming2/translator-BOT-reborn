@@ -49,9 +49,6 @@ prawcore
 # YAML config
 pyyaml
 
-# YouTube downloader
-pytube
-
 # Fuzzy matching
 rapidfuzz
 
@@ -81,3 +78,6 @@ discord.py
 
 # Determing dates
 python-dateutil
+
+yt-dlp
+random_user_agent
