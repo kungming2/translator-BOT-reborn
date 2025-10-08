@@ -4,26 +4,34 @@
 Functions that deal with the verification process on r/translator.
 There is usually only one valid verification post to analyze and
 watch for.
-TODO INCOMPLETE
 """
 import re
 import time
 
 from config import logger, SETTINGS
-from connection import REDDIT, is_mod
+from connection import REDDIT, REDDIT_HELPER, is_mod
+from discord_utils import send_discord_alert
 from languages import converter
+from reddit_sender import message_send, message_reply
+from responses import RESPONSE
 
 
 def get_verified_thread():
     """
-    Return the ID of the most recent 'Verified' meta thread in r/translator.
+    Return the ID of the most recent 'Verified' meta thread in r/translator
+    that was posted by a moderator.
 
-    :return: The verification post ID as a string, or None if not found.
+    :return: The verification post ID as a string, or None if not found or author is not a mod.
     """
     search = REDDIT.subreddit("translator").search(
         "title:verified AND flair:meta", time_filter="year", sort="new", limit=1
     )
-    return next((post.id for post in search), None)
+
+    for post in search:
+        if is_mod(post.author):
+            return post.id
+
+    return None
 
 
 def set_user_flair(user, verified_language):
@@ -74,16 +82,16 @@ def process_verification(confirming_comment):
     """
 
     mod_caller = confirming_comment.author
-    if not is_mod(REDDIT, mod_caller):
+    if not is_mod(mod_caller):
         logger.error(f"u{mod_caller} is NOT a mod.")
-        return None
+        return
 
     logger.info(f"> Verify command called by u/{mod_caller}.")
     confirming_comment.save()
 
     # Exit if we've processed this already.
     if confirming_comment.saved:
-        return None
+        return
 
     # Fetch the person to be nuked by looking at the parent of the
     # comment. This is the person to whom the mod replied.
@@ -100,13 +108,13 @@ def process_verification(confirming_comment):
     parent_comment.mod.approve()
 
     # Message the mod.
-    mod_caller.message(subject=f"Verified u/{verified_person}",
-                       message=f"Verified u/{verified_person} for {language_to_verify}. Command called by you "
-                               f"[here]({confirming_comment.permalink}?context=10000).")
+    message_send(mod_caller, subject=f"Verified u/{verified_person}",
+                 body=f"Verified u/{verified_person} for {language_to_verify}. Command called by you "
+                      f"[here](https://www.reddit.com{confirming_comment.permalink}?context=10000).")
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
     logger.info("> Verified procedure complete.")
 
-    return parent_comment
+    return
 
 
 def verification_parser():
@@ -119,14 +127,13 @@ def verification_parser():
     if not VERIFIED_POST_ID:
         return
 
-    submission = reddit.submission(id=VERIFIED_POST_ID)
+    submission = REDDIT_HELPER.submission(id=VERIFIED_POST_ID)
     try:
         submission.comments.replace_more(limit=None)
     except ValueError:
         return
 
     for comment in submission.comments.list():
-        comment_id = comment.id
         comment_body = comment.body.strip()
 
         try:
@@ -135,14 +142,6 @@ def verification_parser():
         except AttributeError:
             # Author is deleted; skip this comment
             continue
-
-        # Skip if comment already processed
-        cursor_main.execute('SELECT 1 FROM old_comments WHERE ID=?', (comment_id,))
-        if cursor_main.fetchone():
-            continue
-
-        cursor_main.execute('INSERT INTO old_comments VALUES (?)', (comment_id,))
-        conn_main.commit()
 
         comment.save()  # Mark comment as processed on Reddit (bot ignores saved comments)
 
@@ -166,20 +165,21 @@ def verification_parser():
             # Malformed comment - ignore and stop processing
             return
 
-        language_code = converter(language_name).preferred_code
-        thanks_phrase = MAIN_LANGUAGES.get(language_code, {}).get('thanks', 'Thank you')
+        language_lingvo = converter(language_name)
 
         # Format verification log entry
         entry = f"| {author_string} | {language_name} | [1]({url_1}), [2]({url_2}), [3]({url_3}) | {notes} |"
-        wiki_page = reddit.subreddit(SUBREDDIT).wiki["verification_log"]
+        wiki_page = REDDIT.subreddit('translator').wiki["verification_log"]
         updated_content = f"{wiki_page.content_md}\n{entry}"
 
         wiki_page.edit(content=updated_content,
-                       reason=f'Updating the verification log with a new request from {author_string}')
+                       reason=f'Updating verification log with a new request from {author_string}')
 
-        comment_reply(comment, COMMENT_VERIFICATION_RESPONSE.format(thanks_phrase, author_name) + BOT_DISCLAIMER)
+        # Reply to the person who asked for verification.
+        reply_text = RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(language_lingvo.thanks, author_name) + RESPONSE.BOT_DISCLAIMER
+        message_reply(comment, reply_text)
 
-        _discord_alert.send_discord_alert(
+        send_discord_alert(
             f'New Verification Request for **{language_name}**',
             f"Please check [this verification request](https://www.reddit.com{comment.permalink}) "
             f"from [{author_string}](https://www.reddit.com/user/{author_name}).",
@@ -189,7 +189,6 @@ def verification_parser():
 
 
 VERIFIED_POST_ID = get_verified_thread()
-
 
 if __name__ == "__main__":
     print(get_verified_thread())
