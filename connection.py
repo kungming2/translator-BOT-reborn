@@ -40,6 +40,19 @@ def reddit_helper_login(credentials):
     return reddit
 
 
+def chinese_reference_login(credentials):
+
+    reddit = praw.Reddit(
+        client_id=credentials['CHINESE_APP_ID'],
+        client_secret=credentials['CHINESE_APP_SECRET'],
+        username=credentials['CHINESE_USERNAME'],
+        password=credentials['CHINESE_PASSWORD'],
+        user_agent='Regular maintenance on r/ChineseLanguage'
+    )
+
+    return reddit
+
+
 def reddit_status_check():
     """
     Check if there are any unresolved Reddit incidents that may affect bot operation.

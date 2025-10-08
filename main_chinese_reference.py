@@ -2,14 +2,17 @@
 # -*- coding: UTF-8 -*-
 import asyncio
 import re
+import traceback
 
 from praw import exceptions
+from wasabi import msg
 
 from config import logger, SETTINGS
-from connection import reddit_login  # TODO Likely will want to change accounts for this one.
-from database import db
+from connection import chinese_reference_login, credentials_source
+from error import error_log_extended
 from lookup.other import lookup_zh_ja_tokenizer
 from lookup.zh import zh_word, zh_character
+from reddit_sender import comment_reply
 from responses import RESPONSE
 
 
@@ -17,27 +20,23 @@ def cc_ref():
     """
     Runtime for Chinese language subreddits. The bot monitors a
     multireddit called 'chinese' and provides character and word lookups
-    for requests marked by backticks, similar to r/translator.
+    for requests marked by backticks, just like on r/translator.
     """
-    multireddit = REDDIT_CHINESE.multireddit(redditor='translator-BOT', name='chinese')
+    multireddit = REDDIT_CHINESE.multireddit(redditor='translator-BOT',
+                                             name='chinese')
     comments = list(multireddit.comments(limit=SETTINGS['max_posts']))
-    cursor = db.cursor_main
-    conn = db.conn_main
 
     for comment in comments:
-        comment_id = comment.id
+        body = comment.body
 
-        # Skip already processed comments
-        cursor.execute("SELECT 1 FROM old_comments WHERE ID = ?", (comment_id,))
-        if cursor.fetchone():
+        # Skip already processed comments.
+        if comment.saved:
             continue
 
-        body = comment.body.lower()
-        cursor.execute("INSERT INTO old_comments (ID) VALUES (?)", (comment_id,))
-        conn.commit()
-
+        # Detected a possible match.
         if '`' in body:
             matches = re.findall(r'`([\u2E80-\u9FFF]+)`', body)
+            comment.save()  # To mark as processed
             if not matches:
                 continue
 
@@ -59,16 +58,24 @@ def cc_ref():
             if reply_parts:
                 reply_text = '\n\n'.join(reply_parts)
                 if len(reply_text) > 10000:
-                    reply_text = reply_text[:9900]  # Reddit max comment length
+                    reply_text = reply_text[:9900]  # shorten to Reddit max comment length
 
                 try:
-                    print(reply_text + RESPONSE.BOT_DISCLAIMER)  # TODO change back to reply when deployed
-                    logger.info(f"[ZW] CC_REF: Replied to lookup request for {tokenized_matches} "
+                    comment_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
+                    logger.info(f"[CC_REF]: Replied to lookup request for {tokenized_matches} "
                                 f"on a Chinese subreddit.")
-                except exceptions.RedditAPIException:
-                    print("Sorry, but the character data you've requested exceeds "
-                          "the amount Reddit allows for a comment.")  # TODO change back to reply when deployed
+                except exceptions.RedditAPIException as ex:
+                    logger.error(f"Encountered an API exception. `{ex}`")
+
+
+REDDIT_CHINESE = chinese_reference_login(credentials_source)
 
 
 if __name__ == '__main__':
-    cc_ref()
+    msg.good("Launching Chinese Reference...")
+    try:
+        cc_ref()
+    except Exception:  # intentionally broad: catch all exceptions for logging
+        error_entry = traceback.format_exc()
+        error_log_extended(error_entry, "Chinese Reference")
+    msg.info("Chinese Reference routine completed.")
