@@ -225,18 +225,17 @@ def points_tabulator(comment, original_post, original_post_lingvo):
 
     if not comment_author or comment_author.lower() in ("automoderator", "translator-bot"):
         # Ignore bot comments.
+        logger.info(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
         return
 
     body = comment.body.strip().lower()
 
-    if original_post.link_flair_css_class in {"meta", "community"}:
-        # Ignore utility codes.
-        return
-
     if comment_author == op_author and any(k in body for k in SETTINGS['thanks_keywords']) and len(body) < 20:
+        logger.info(f"[ZW] Skipping short OP thank-you comment `{comment.id}`")
         return  # Short thank-you from the OP, not meaningful
 
     # Determine worth of the translation based on language
+    logger.info(f"[ZW] Processing comment by u/{comment_author} on post by u/{op_author} ({original_post_lingvo.name})")
     language_name = original_post_lingvo.name
     try:
         multiplier = points_worth_determiner(original_post_lingvo)
@@ -307,7 +306,6 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                         points += 1
                     final_translator_points += 1 + multiplier
                     logger.debug(f"[ZW] Cleanup mark: u/{comment_author} marked u/{final_translator}'s work.")
-
         elif name == "identify":
             points += 3
         elif name in {"claim", "page", "search", "reference"}:
@@ -318,6 +316,9 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             points += 1
         else:
             logger.debug(f"[Points] No point value set for command: {name}")
+    logger.info(
+        f"[ZW] Commands processed for comment {comment.id}: {len(commands)} commands, "
+        f"total preliminary points {points}")
 
     if len(body) > 120 and comment_author != op_author:
         # Long-form comments (not from OP)
@@ -360,6 +361,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             ajo_writer(ajo_w_points)
 
     # Write to DB
+    logger.info(f"[ZW] Writing {len(results)} point record(s) to DB for comment `{comment.id}`")
     for username, user_points in results:
         logger.debug(f"[ZW] Writing: ({username}, {user_points})")
         cursor_main.execute(
@@ -367,6 +369,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             (month_string, pid, username, str(user_points), original_post.id)
         )
     conn_main.commit()
+    logger.info(f"[ZW] Points tabulation complete for comment `{comment.id}`")
 
     return
 
