@@ -68,6 +68,18 @@ class Diskuto:
         self.processed = not self.processed
 
 
+def diskuto_exists(post_id):
+    """
+    Check if a Diskuto post exists in the internal_posts table.
+
+    :param post_id: The ID of the Diskuto post to check
+    :return: True if exists, False otherwise
+    """
+    cursor = db.cursor_main
+    cursor.execute("SELECT 1 FROM internal_posts WHERE id = ? LIMIT 1", (post_id,))
+    return cursor.fetchone() is not None
+
+
 def diskuto_writer(diskuto_obj):
     """
     Takes a Diskuto object and saves it to the main database
