@@ -18,13 +18,16 @@ def wikipedia_lookup(terms, language_code="en"):
     """
     Basic function to look up terms on Wikipedia.
 
-    :param terms: A list of strings to look up.
+    :param terms: A list of strings to look up. Alternatively, accepts
+                  a single string for compatability.
     :param language_code: Which Wikipedia language to look up in.
     :return: A properly formatted paragraph of entries if there are
              results, otherwise `None`.
     """
     entries = []
-    if not isinstance(terms, list):
+    if isinstance(terms, str):
+        terms = [terms]
+    elif not isinstance(terms, list):
         raise TypeError("Wikipedia lookup: 'terms' must be a string or a list of strings.")
 
     # Code for searching non-English Wikipedia, currently not needed.
