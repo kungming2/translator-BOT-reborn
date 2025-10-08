@@ -6,6 +6,7 @@ messages. This wraps functions for comment replies, message replies,
 and message sending.
 """
 from praw import exceptions
+from praw.models import Comment, Message, Submission
 
 from config import SETTINGS, logger
 from testing import log_testing_mode
@@ -43,30 +44,41 @@ def comment_reply(comment, reply_text):
             pass
 
 
-def message_reply(message_obj, reply_text):
+def message_reply(msg_obj, reply_text):
     """
-    Reply to a Reddit comment or private message object.
+    Reply to a Reddit object (Comment, Message, or Submission).
     In testing mode, logs the reply instead of sending it.
 
     Args:
-        message_obj: A PRAW Comment or Message object.
+        msg_obj: A PRAW Comment, Message, or Submission object.
         reply_text: The reply text to send.
     """
+    target_id = getattr(msg_obj, "id", "unknown")
+    target_author = getattr(msg_obj, "author", "unknown")
+
     if testing_mode:
-        logger.info(f"[TESTING MODE] Would reply to {getattr(message_obj, 'id', 'unknown')} by {getattr(message_obj, 'author', 'unknown')}:")
+        logger.info(f"[TESTING MODE] Would reply to {target_id} by {target_author}:")
         logger.info(reply_text)
 
         log_testing_mode(
             output_text=reply_text,
             title="Reply",
             metadata={
-                "Reply Target": getattr(message_obj, 'id', 'unknown'),
-                "Author": str(getattr(message_obj, 'author', 'unknown'))
+                "Reply Target": target_id,
+                "Author": str(target_author)
             },
         )
+        return
+
+    # Actual reply
+    if isinstance(msg_obj, (Comment, Message, Submission)):
+        msg_obj.reply(reply_text)
+        logger.info(f"Replied to {target_id} successfully.")
     else:
-        message_obj.reply(reply_text)
-        logger.info(f"Replied to {getattr(message_obj, 'id', 'unknown')} successfully.")
+        logger.warning(
+            f"Unsupported object type {type(msg_obj).__name__}; "
+            "no reply attempted."
+        )
 
 
 def message_send(redditor_obj, subject, body):
