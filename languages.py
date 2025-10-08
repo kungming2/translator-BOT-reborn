@@ -142,16 +142,14 @@ class Lingvo:
 """MAIN LOADER"""
 
 
-def load_lingvo_dataset():
+def load_lingvo_dataset(debug=False):
     """
     Loads the language dataset by combining raw language data and
     utility language data, then returns a dictionary of Lingvo instances.
-    This also adds a limited amount of data regarding the language's
-    statistical history on r/translator.
+    Also returns a list of language codes missing required fields.
 
-    :return: dict[str, Lingvo]
+    :return: tuple[dict[str, Lingvo], list[str]]
     """
-    # Add statistics if present, but only include specific keys
     allowed_keys = {
         "num_months",
         "permalink",
@@ -162,34 +160,58 @@ def load_lingvo_dataset():
 
     raw_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
     utility_data = load_settings(Paths.DATASETS["UTILITY_LINGVO_DATA"])
-    with open(Paths.LOGS["STATISTICS"], "rb") as f:  # Note 'rb' for binary mode
-        statistics_data = orjson.loads(f.read())  # Need to read the file content first
+    with open(Paths.LOGS["STATISTICS"], "rb") as f:
+        statistics_data = orjson.loads(f.read())
 
     combined_data = {}
 
-    # First process raw data
+    # Process raw data
     for code, attrs in raw_data.items():
         combined_data[code] = attrs.copy()
+        if debug:
+            print(f"[DEBUG] raw_data[{code}] = {attrs}")
 
-    # Then overlay utility data (which may add new entries or override existing ones)
+    # Overlay utility data
     for code, attrs in utility_data.items():
         if code in combined_data:
             combined_data[code].update(attrs)
         else:
             combined_data[code] = attrs.copy()
+        if debug:
+            print(f"[DEBUG] utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
 
-    # Add statistics if present
+    # Add statistics
     for code, stats in statistics_data.items():
         filtered_stats = {k: v for k, v in stats.items() if k in allowed_keys}
         if not filtered_stats:
-            continue  # Skip if nothing relevant
-
+            continue
         if code in combined_data:
             combined_data[code].update(filtered_stats)
         else:
             combined_data[code] = filtered_stats.copy()
+        if debug:
+            print(f"[DEBUG] statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
 
-    return {code: Lingvo(**attrs) for code, attrs in combined_data.items()}
+    # Create Lingvo instances and track problematic codes
+    lingvo_dict = {}
+    problematic_codes = []
+
+    for code, attrs in combined_data.items():
+        # Get values and remove from attrs so they are not passed twice
+        name = attrs.pop("name", None)
+        lang_code = attrs.pop("language_code", code)
+
+        if not name or not lang_code:
+            problematic_codes.append(code)
+            if debug:
+                print(f"[DEBUG] WARNING: {code} is missing required fields: name={name}, language_code={lang_code}")
+
+        # Create Lingvo with cleaned attrs
+        lingvo_dict[code] = Lingvo(language_code=lang_code, name=name or "unknown", **attrs)
+
+    print(problematic_codes)
+
+    return lingvo_dict
 
 
 def define_language_lists():
@@ -365,21 +387,33 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
     # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
         broader, specific = input_text.split("-", 1)
+        combo = f"{broader.lower()}-{specific.upper()}"
 
-        # Prefixed script code. This is only for internal use, for
-        # example, saving script notifications in the database.
+        # Direct lookup in ISO_LANGUAGE_COUNTRY_ASSOCIATED
+        # e.g. `de-CH` becomes `gsw`
+        iso_map = language_module_settings["ISO_LANGUAGE_COUNTRY_ASSOCIATED"]
+        if combo in iso_map:
+            mapped_code = iso_map[combo]
+            lingvo = lingvos.get(mapped_code)
+            if lingvo:
+                lingvo_copy = copy.deepcopy(lingvo)
+                lingvo_copy.country = None
+                return lingvo_copy
+
+        # Step 2: Prefixed script code ("unknown-Cyrl")
         if broader.lower() == "unknown":
             try:
                 result = iso_codes_deep_search(specific, script_search=True)
                 script_name = getattr(result, "name", None)
                 if not script_name:
                     return None
-                return Lingvo(name=script_name, language_code_1='unknown', language_code_3='unknown',
+                return Lingvo(name=script_name, language_code_1='unknown',
+                              language_code_3='unknown',
                               script_code=specific.lower(), supported=True)
             except (AttributeError, TypeError):
                 return None
 
-        # Language-region combo
+        # Step 3: Language-region combo (fallback, less strict)
         country_info = country_converter(specific, abbreviations_okay=True)
         if country_info:
             country_code = country_info[0].upper()
