@@ -952,7 +952,7 @@ def show_menu():
 
 
 if __name__ == "__main__":
-    logger.setLevel(logging.DEBUG)
+
     while True:
         show_menu()
         choice = input("Enter your choice (1-3): ")
@@ -966,10 +966,12 @@ if __name__ == "__main__":
             continue
 
         if choice == "1":
+            logger.setLevel(logging.DEBUG)
             my_test = input("Enter the string you wish to test: ")
             titolo_output = process_title(my_test)
             pprint(vars(titolo_output))
         elif choice == "2":
+            logger.setLevel(logging.INFO)
             submissions = list(REDDIT_HELPER.subreddit('translator').new(limit=10))
             for submission in submissions:
                 print(submission.title)
