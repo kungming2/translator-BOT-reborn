@@ -226,10 +226,11 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
     Given a regional Lingvo object (e.g., 'ar-LB' or 'apc'),
     returns a list of usernames who are subscribed to the *specific*
     regional variant but NOT to the broader language. That is, someone
-    who is signed up for `pt-BR` will match, but only if they're not
+    who is signed up for `pt-BR` will match, but only if they're *not*
     also signed up for regular `pt`.
 
-    This ensures notifications are only sent to users who prefer a specific variant.
+    This ensures notifications are only sent to users who prefer a
+    specific variant.
 
     :param lingvo_object: A Lingvo object representing a regional variant.
     :return: List of usernames who prefer the specific variant only.
@@ -244,22 +245,23 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
         if not country_code:
             logger.warning(f"Could not normalize country '{lingvo_object.country}'")
             return []
-        language_code = f"{lingvo_code}-{country_code}"
-        iso_associated_code = language_country_associations.get(language_code)  # TODO
-        logger.info(f"Regional Lingvo: {language_code} converted to ISO 639-3 code: {iso_associated_code}")
+        language_region_code = f"{lingvo_code}-{country_code}"
+        iso_associated_code = language_country_associations.get(language_region_code)
+        logger.info(f"Regional Lingvo: `{language_region_code}` "
+                    f"converted to ISO 639-3 code: `{iso_associated_code}`")
     else:
-        language_code = None
+        language_region_code = None
         iso_associated_code = None
 
     # Always get users subscribed to the regional code itself
     specific_usernames.update(fetch_usernames_for_lingvo(lingvo_object))
 
     # Only get users subscribed to ISO code if it exists and differs
-    if iso_associated_code and iso_associated_code.lower() != (language_code or "").lower():
+    if iso_associated_code and iso_associated_code.lower() != (language_region_code or "").lower():
         specific_usernames.update(fetch_usernames_for_lingvo(Lingvo(language_code_3=iso_associated_code)))
 
     # Broader language code (e.g. 'pt' from 'pt-BR')
-    broader_code = language_code.split("-")[0] if language_code else None
+    broader_code = language_region_code.split("-")[0] if language_region_code else None
     if broader_code:
         broader_usernames.update(fetch_usernames_for_lingvo(Lingvo(language_code_1=broader_code)))
 
@@ -271,7 +273,7 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
 
 def update_user_notification_count(username: str, lingvo_object, num_notifications: int = 1) -> None:
     """
-    Updates the count of notifications a user has received for a specific language this month.
+    Updates the count of notifications a user has received for a specific language.
     If no record exists, a new one is created. Data is stored as an orjson-encoded dictionary.
 
     :param username: Reddit username of the recipient.
@@ -281,8 +283,8 @@ def update_user_notification_count(username: str, lingvo_object, num_notificatio
     cursor = db.cursor_main
     language_code = lingvo_object.preferred_code
 
-    # Attempt to fetch existing notification record
-    cursor.execute("SELECT received FROM notify_cumulative WHERE username = ?", (username,))  # TODO rename this table
+    # Attempt to fetch existing notification records
+    cursor.execute("SELECT received FROM notify_cumulative WHERE username = ?", (username,))
     row = cursor.fetchone()
 
     if row:
@@ -456,6 +458,7 @@ def notifier(lingvo, submission, mode="new_post"):
     # Get the language code and name from Lingvo
     search_code = lingvo.preferred_code
     language_name = lingvo.name
+    language_greetings = lingvo.greetings.title()
 
     # Load post tracking data from AJO (includes contact history)
     ajo_data = ajo_loader(post_id)
@@ -540,6 +543,7 @@ def notifier(lingvo, submission, mode="new_post"):
 
         # Format the message we wish to send.
         message = template.format(
+            greetings=language_greetings,
             username=username,
             language_name=language_name,
             post_type=post_type,
@@ -641,4 +645,4 @@ def notifier_internal(post_type, submission):
 
 
 if __name__ == "__main__":
-    notifier_duplicate_checker('avk', 'kungming2')
+    print(notifier_specific_language_filter(converter('pt-BR')))
