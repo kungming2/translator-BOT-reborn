@@ -3,13 +3,14 @@
 """
 Handles connections with Reddit.
 """
-
-import random
 import requests
 
 import praw
+from random_user_agent.user_agent import UserAgent
+from random_user_agent.params import SoftwareName, OperatingSystem
 from praw.models import Redditor
 from prawcore import exceptions
+
 from config import Paths, load_settings, logger
 
 
@@ -72,13 +73,21 @@ def reddit_status_check():
 
 def get_random_useragent():
     """
-    Returns a dictionary with a random User-Agent and a default Accept header.
+    Returns a dictionary with a random User-Agent and a
+    default Accept header.
     """
-    ua_data = load_settings(Paths.AUTH['USER_AGENT'])
+    software_names = [SoftwareName.CHROME.value]
+    operating_systems = [OperatingSystem.WINDOWS.value, OperatingSystem.LINUX.value]
 
-    random_ua = random.choice(ua_data['ua'])
+    user_agent_rotator = UserAgent(software_names=software_names,
+                                   operating_systems=operating_systems,
+                                   limit=1)
+
+    # Get Random User Agent String.
+    user_agent = user_agent_rotator.get_random_user_agent()
+
     return {
-        'User-Agent': random_ua,
+        'User-Agent': user_agent,
         'Accept': (
             "text/html,application/json,application/xhtml+xml,"
             "application/xml;q=0.9,image/webp,*/*;q=0.8"
