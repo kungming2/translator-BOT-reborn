@@ -4453,6 +4453,19 @@ kk:
   subreddit: Kazakh
   supported: true
   thanks: Рахмет
+kko:
+  country: Sudan
+  family: Nilo-Saharan
+  language_code_3: kko
+  link_ethnologue: https://www.ethnologue.com/language/kko
+  link_wikipedia: https://en.wikipedia.org/wiki/Karko_language_(Sudan)
+  name: Karko
+  name_alternates:
+  - Garko
+  - Kaak
+  - Karme
+  - Kithonirishe
+  population: 7000
 kl:
   country: Greenland
   family: Eskimo-Aleut
@@ -5515,6 +5528,21 @@ mdh:
   - Maguindanao
   - Maguindanaw
   population: 1100000
+mei:
+  country: Sudan
+  family: Nilo-Saharan
+  language_code_3: mei
+  link_ethnologue: https://www.ethnologue.com/language/mei
+  link_wikipedia: https://en.wikipedia.org/wiki/Midob_language
+  name: Midob
+  name_alternates:
+  - Meidob
+  - Meidob Nubian
+  - Midobi
+  - Tid
+  - Tid-N-Aal
+  - Tidda
+  population: 76000
 mey:
   country: Mauritania
   family: Afro-Asiatic
@@ -6531,6 +6559,11 @@ ntp:
   name_alternates:
   - Tepehuán del Norte
   population: 6200
+nub:
+  family: Nilo-Saharan
+  language_code_3: nub
+  link_wikipedia: https://en.wikipedia.org/wiki/Nubian_languages
+  name: Nubian
 nue:
   country: Democratic Republic of the Congo
   family: Niger-Congo

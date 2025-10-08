@@ -169,7 +169,7 @@ def load_lingvo_dataset(debug=False):
     for code, attrs in raw_data.items():
         combined_data[code] = attrs.copy()
         if debug:
-            print(f"[DEBUG] raw_data[{code}] = {attrs}")
+            logger.debug(f"raw_data[{code}] = {attrs}")
 
     # Overlay utility data
     for code, attrs in utility_data.items():
@@ -178,7 +178,7 @@ def load_lingvo_dataset(debug=False):
         else:
             combined_data[code] = attrs.copy()
         if debug:
-            print(f"[DEBUG] utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
+            logger.debug(f"utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
 
     # Add statistics
     for code, stats in statistics_data.items():
@@ -190,7 +190,7 @@ def load_lingvo_dataset(debug=False):
         else:
             combined_data[code] = filtered_stats.copy()
         if debug:
-            print(f"[DEBUG] statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
+            logger.debug(f"statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
 
     # Create Lingvo instances and track problematic codes
     lingvo_dict = {}
@@ -204,12 +204,14 @@ def load_lingvo_dataset(debug=False):
         if not name or not lang_code:
             problematic_codes.append(code)
             if debug:
-                print(f"[DEBUG] WARNING: {code} is missing required fields: name={name}, language_code={lang_code}")
+                logger.warning(f"WARNING: {code} is missing required fields: name={name}, language_code={lang_code}")
 
         # Create Lingvo with cleaned attrs
         lingvo_dict[code] = Lingvo(language_code=lang_code, name=name or "unknown", **attrs)
 
-    print(problematic_codes)
+    if problematic_codes:
+        logger.warning(f"The following codes have issues in the "
+                       f"language database: `{problematic_codes}`")
 
     return lingvo_dict
 
