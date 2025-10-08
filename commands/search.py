@@ -6,8 +6,11 @@ on r/translator and can also handle frequently requested translation
 lookups.
 """
 import datetime
+import re
 
-from config import logger
+import googlesearch
+
+from config import logger, SETTINGS
 from connection import REDDIT_HELPER, credentials_source
 from models.instruo import Instruo
 from reddit_sender import message_reply
@@ -20,22 +23,51 @@ def _extract_reddit_post_ids(search_term):
     Note this has temporarily been changed from Google search;
     that may be changed back post-deployment."""
     post_ids = []
+    search_engine = SETTINGS['search_engine']
 
-    print(f"DEBUG: Searching Reddit for: {search_term}")
+    if search_engine == "Reddit":
+        logger.debug(f"Searching Reddit for: {search_term}")
 
-    try:
-        # Use Reddit's search directly
-        subreddit = REDDIT_HELPER.subreddit('translator')
-        search_results = subreddit.search(search_term, limit=5)
+        try:
+            # Use Reddit's search directly
+            subreddit = REDDIT_HELPER.subreddit('translator')
+            search_results = subreddit.search(search_term, limit=5)
 
-        for submission in search_results:
-            post_ids.append(submission.id)
-            print(f"DEBUG: Found post: {submission.title} (ID: {submission.id})")
+            for submission in search_results:
+                post_ids.append(submission.id)
+                logger.debug(f"Found post: {submission.title} (ID: {submission.id})")
 
-    except Exception as e:
-        print(f"DEBUG: Error during Reddit search: {type(e).__name__}: {e}")
+        except Exception as e:
+            logger.error(f"Error during Reddit search: {type(e).__name__}: {e}")
 
-    print(f"DEBUG: Total post IDs extracted: {len(post_ids)}")
+        logger.debug(f"Total post IDs extracted: {len(post_ids)}")
+    elif search_engine == "Google":
+        search_query = f'{search_term} site:reddit.com/r/translator'
+        logger.info(f"Searching Google for: {search_term}")
+
+        try:
+            results = list(googlesearch.search(search_query, num_results=5))
+            logger.info(f"Number of URLs returned in Google results: {len(results)}")
+
+            for i, url in enumerate(results):
+                if 'comments' in url:
+                    logger.debug(f"URL {i + 1} contains 'comments'")
+                    match = re.search(r'comments/(.*?)/\w', url)
+                    if match:
+                        post_id = match.group(1)
+                        logger.debug(f"Extracted post ID: {post_id}")
+                        post_ids.append(post_id)
+                    else:
+                        logger.debug(f"Regex did not match for URL {i + 1}")
+                else:
+                    logger.debug(f"URL {i + 1} does not contain 'comments'")
+
+        except Exception as e:
+            logger.error(f"Error during search: {type(e).__name__}: {e}")
+
+        logger.debug(f"Total post IDs extracted: {len(post_ids)}")
+        logger.debug(f"Post IDs: {post_ids}")
+
     return post_ids
 
 
