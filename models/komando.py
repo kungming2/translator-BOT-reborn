@@ -123,8 +123,7 @@ def extract_commands_from_text(text):
 
 if "__main__" == __name__:
     while True:
-        my_input = input("Enter the comment with commands you'd like to test here: ")
+        my_input = input("Enter the comment text with commands you'd like to test here: ")
         commands_new = extract_commands_from_text(my_input)
         for command_new in commands_new:
             print(command_new)
-
