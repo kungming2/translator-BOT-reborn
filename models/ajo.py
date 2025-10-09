@@ -306,13 +306,15 @@ class Ajo:
             # If multiple languages (defined multiple), wrap in a list
             if len(titolo.target) > 1:
                 ajo.language_history = [[lang.preferred_code for lang in titolo.target]]
+                # Create status dictionary with 'untranslated' for each language code
+                ajo.status = {lang.preferred_code: 'untranslated' for lang in titolo.target}
             else:
                 # Single language, keep as flat list
                 ajo.language_history = [titolo.final_code]
+                ajo.status = "untranslated"  # Default
         else:
             ajo.language_history = []
-
-        ajo.status = "untranslated"  # Default; this can be changed later by a function below
+            ajo.status = "untranslated"
 
         # Set is_defined_multiple if there are multiple target languages
         if titolo.target and len(titolo.target) > 1:
@@ -420,21 +422,47 @@ class Ajo:
         Change the Lingvo for this Ajo and update relevant fields.
 
         Parameters:
-            code_or_lingvo (str or Lingvo): An ISO 639-1 or 639-3 language code,
-            or a Lingvo object.
+            code_or_lingvo (str, Lingvo, or list): An ISO 639-1 or 639-3 language code,
+            a Lingvo object, or a list of codes/Lingvo objects for defined multiple posts.
             is_identified (bool): Whether this update was due to manual language correction.
                                   Defaults to True.
         """
-        if isinstance(code_or_lingvo, str):
-            self.preferred_code = code_or_lingvo.lower()
-            self.initialize_lingvo()
-        else:
-            # Assume it's a Lingvo object
-            self._lingvo = code_or_lingvo
-            self.preferred_code = self._lingvo.language_code_3  # or however you want to set this
+        # Check if we received a list (for defined multiples)
+        if isinstance(code_or_lingvo, list):
+            # Convert all items to language codes
+            lang_codes = []
+            for item in code_or_lingvo:
+                if isinstance(item, str):
+                    lang_codes.append(item.lower())
+                else:
+                    # Assume it's a Lingvo object
+                    lang_codes.append(item.preferred_code)
 
-        # Update tracking fields
-        self.language_history.append(self.language_name)
+            # Set up as a defined multiple
+            self.preferred_code = 'multiple'
+            self.initialize_lingvo()
+            self.type = 'multiple'
+            self.is_defined_multiple = True
+
+            # Initialize status as dictionary with all languages set to 'untranslated'
+            self.status = {code: 'untranslated' for code in lang_codes}
+
+            # Append the list of codes to language_history
+            self.language_history.append(lang_codes)
+        else:
+            # Single language (default behavior)
+            if isinstance(code_or_lingvo, str):
+                self.preferred_code = code_or_lingvo.lower()
+                self.initialize_lingvo()
+            else:
+                # Assume it's a Lingvo object
+                self._lingvo = code_or_lingvo
+                self.preferred_code = self._lingvo.preferred_code
+
+            # Update tracking fields
+            self.language_history.append(self.language_name)
+
+        # Set is_identified for both cases
         self.is_identified = is_identified
 
     def set_is_long(self, value: bool):
@@ -461,12 +489,48 @@ class Ajo:
     def set_status(self, value: str):
         """
         Set the status of the post.
-        Allowed values: 'translated', 'doublecheck', 'inprogress', 'missing'
+        Allowed values: 'translated', 'doublecheck', 'inprogress', 'missing', 'untranslated'
+
+        This method is for single language posts or non-defined multiple posts only.
+        For defined multiple posts, use set_defined_multiple_status() instead.
+
+        :raises ValueError: If the status value is not allowed or if called on a defined multiple.
         """
-        allowed = {"translated", "doublecheck", "inprogress", "missing"}
+        if self.is_defined_multiple:
+            raise ValueError(
+                "Cannot use set_status() on a defined multiple post. Use set_defined_multiple_status() instead.")
+
+        allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
         if value not in allowed:
             raise ValueError(f"Status must be one of {allowed}.")
         self.status = value
+
+    def set_defined_multiple_status(self, language_code: str, status_value: str):
+        """
+        Set the status for a specific language in a defined multiple post.
+        Allowed status values: 'translated', 'doublecheck', 'inprogress', 'missing', 'untranslated'
+
+        This method is for defined multiple posts only.
+        For regular posts, use set_status() instead.
+
+        :param language_code: The ISO language code (e.g., 'ja', 'ko', 'es')
+        :param status_value: The status to set for that language
+        :raises ValueError: If called on a non-defined multiple or if status value is not allowed.
+        """
+        if not self.is_defined_multiple:
+            raise ValueError(
+                "Cannot use set_defined_multiple_status() on a non-defined multiple post. Use set_status() instead.")
+
+        allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
+        if status_value not in allowed:
+            raise ValueError(f"Status must be one of {allowed}.")
+
+        # Initialize status as a dict if it's not already
+        if not isinstance(self.status, dict):
+            self.status = {}
+
+        # Set the status for the specific language
+        self.status[language_code] = status_value
 
     def set_is_defined_multiple(self, value: bool):
         """
