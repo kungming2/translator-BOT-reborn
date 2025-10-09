@@ -297,8 +297,8 @@ ISO_LANGUAGE_COUNTRY_ASSOCIATED:
 
 CJK_LANGUAGES:
   Chinese:
-    - zh
-    - zho
+    - zh  # ISO 639-1 code
+    - zho  # ISO 639-3 macrolanguage
     - cdo
     - lzh
     - cjy
@@ -316,6 +316,9 @@ CJK_LANGUAGES:
     - ltc
     - och
     - hnm
+    - sjc
+    - hnm
+    - luh
     - Bopo  # ISO 15924 code
     - Hani  # ISO 15924 code
     - Hanb  # ISO 15924 code
@@ -323,7 +326,7 @@ CJK_LANGUAGES:
     - Hant  # ISO 15924 code
     - unknown  # Fallback value
   Japanese:
-    - ja
+    - ja  # ISO 639-1 code
     - ojp
     - ryn
     - ams
