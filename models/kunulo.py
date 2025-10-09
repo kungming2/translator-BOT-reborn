@@ -21,8 +21,7 @@ from connection import REDDIT_HELPER
 class Kunulo:
     """
     This class generally contains a dictionary keyed by the comment type
-    and the comment ID it is linked to. Since deletion is necessary
-    make sure the submission passed to it is via a mod Reddit instance.
+    and the comment ID it is linked to.
     Another Boolean stores whether the OP has thanked people.
 
     To use: kunulo = Kunulo.from_submission(reddit_submission)
@@ -72,7 +71,16 @@ class Kunulo:
             return self._data[tag]
         raise AttributeError(f"'Kunulo' object has no attribute '{tag}'")
 
-    def first(self, tag):
+    def get_tag(self, tag):
+        """
+        Get the first comment ID associated with a tag.
+
+        Args:
+            tag: The tag identifier to look up
+
+        Returns:
+            str or None: The first comment ID if the tag exists, None otherwise
+        """
         return self._data.get(tag, [None])[0]
 
     def delete(self, tag):
@@ -151,5 +159,5 @@ if __name__ == "__main__":
         test_url = input("Enter the URL of the Reddit post to test: ")
         submission_id = test_url.split("comments/")[1].split("/")[0]
         test_post = REDDIT_HELPER.submission(id=submission_id)
-
-        pprint.pprint(Kunulo.from_submission(test_post))
+        test_kunulo = Kunulo.from_submission(test_post)
+        pprint.pprint(test_kunulo)
