@@ -21,48 +21,58 @@ from utility import check_url_extension, generate_image_hash
 def ajo_writer(new_ajo):
     """
     Takes an Ajo object and saves it to the local Ajo database.
+    Note that if a PRAW submission is attached, it will discard it
+    before saving it.
 
     :param new_ajo: An Ajo object that should be saved.
     :return: Nothing.
     """
     ajo_id = str(new_ajo.id)
     created_time = new_ajo.created_utc
-    representation = orjson.dumps(new_ajo.to_dict()).decode("utf-8")
 
-    cursor = db.cursor_ajo
-    conn = db.conn_ajo
+    # Temporarily clear the submission cache to avoid saving it
+    cached_submission = new_ajo.clear_submission_cache()
 
-    cursor.execute("SELECT ajo FROM ajo_database WHERE id = ?", (ajo_id,))
-    row = cursor.fetchone()
+    try:
+        representation = orjson.dumps(new_ajo.to_dict()).decode("utf-8")
 
-    if row:
-        try:
-            stored_ajo_dict = orjson.loads(row["ajo"])
-        except orjson.JSONDecodeError:  # Stored in an old format.
-            logger.warning("[ZW] ajo_writer: Old Ajo format detected; trying literal_eval fallback.")
+        cursor = db.cursor_ajo
+        conn = db.conn_ajo
+
+        cursor.execute("SELECT ajo FROM ajo_database WHERE id = ?", (ajo_id,))
+        row = cursor.fetchone()
+
+        if row:
             try:
-                stored_ajo_dict = ast.literal_eval(row["ajo"])
-                if not isinstance(stored_ajo_dict, dict):
-                    raise ValueError("Fallback eval didn't yield a dict.")
-            except Exception as e:
-                logger.exception("[ZW] ajo_writer: Failed to decode legacy Ajo format.")
-                raise e
-        if new_ajo.to_dict() != stored_ajo_dict:
+                stored_ajo_dict = orjson.loads(row["ajo"])
+            except orjson.JSONDecodeError:  # Stored in an old format.
+                logger.warning("[ZW] ajo_writer: Old Ajo format detected; trying literal_eval fallback.")
+                try:
+                    stored_ajo_dict = ast.literal_eval(row["ajo"])
+                    if not isinstance(stored_ajo_dict, dict):
+                        raise ValueError("Fallback eval didn't yield a dict.")
+                except Exception as e:
+                    logger.exception("[ZW] ajo_writer: Failed to decode legacy Ajo format.")
+                    raise e
+            if new_ajo.to_dict() != stored_ajo_dict:
+                cursor.execute(
+                    "UPDATE ajo_database SET ajo = ? WHERE id = ?", (representation, ajo_id)
+                )
+                conn.commit()
+                logger.info("[ZW] ajo_writer: Ajo exists, data updated.")
+            else:
+                logger.info("[ZW] ajo_writer: Ajo exists, but no change in data.")
+        else:
             cursor.execute(
-                "UPDATE ajo_database SET ajo = ? WHERE id = ?", (representation, ajo_id)
+                "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
+                (ajo_id, created_time, representation)
             )
             conn.commit()
-            logger.info("[ZW] ajo_writer: Ajo exists, data updated.")
-        else:
-            logger.info("[ZW] ajo_writer: Ajo exists, but no change in data.")
-    else:
-        cursor.execute(
-            "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
-            (ajo_id, created_time, representation)
-        )
-        conn.commit()
-        logger.info("[ZW] ajo_writer: New Ajo not found in the database.")
-        logger.info("[ZW] ajo_writer: Wrote Ajo to local database.")
+            logger.info("[ZW] ajo_writer: New Ajo not found in the database.")
+            logger.info("[ZW] ajo_writer: Wrote Ajo to local database.")
+    finally:
+        # Restore the cached submission after writing
+        new_ajo.restore_submission_cache(cached_submission)
 
 
 def parse_ajo_data(data_str):
@@ -177,6 +187,7 @@ class Ajo:
         self.is_defined_multiple = False  # New attribute
 
         self._lingvo = None  # initialized lazily from preferred_code
+        self._submission = None  # cached PRAW submission
 
     def initialize_lingvo(self):
         """
@@ -243,6 +254,16 @@ class Ajo:
         return self._lingvo
 
     @property
+    def submission(self):
+        """
+        Lazily load and cache the PRAW submission object.
+        Returns None if no ID is set.
+        """
+        if self._submission is None and self._id is not None:
+            self._submission = _fetch_submission(self._id)
+        return self._submission
+
+    @property
     def language_code_1(self):
         return self.lingvo.language_code_1
 
@@ -280,7 +301,7 @@ class Ajo:
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
         This is the main way to construct an Ajo, as simple as:
         Ajo.from_titolo(Titolo.process_title(submission.title))
-        TODO verify each attribute
+
         :param titolo: A Titolo instance containing parsed title information.
         :param submission: (Optional) A PRAW submission object to populate Ajo fields.
         :return: A fully constructed Ajo object.
@@ -491,10 +512,15 @@ class Ajo:
         Set the status of the post.
         Allowed values: 'translated', 'doublecheck', 'inprogress', 'missing', 'untranslated'
 
+        Status transition rules:
+        - Once marked as 'doublecheck', can only transition to 'translated'
+        - Once marked as 'translated', status is final and cannot be changed
+
         This method is for single language posts or non-defined multiple posts only.
         For defined multiple posts, use set_defined_multiple_status() instead.
 
-        :raises ValueError: If the status value is not allowed or if called on a defined multiple.
+        :raises ValueError: If the status value is not allowed, if called on a defined multiple,
+                           or if the status transition is not permitted.
         """
         if self.is_defined_multiple:
             raise ValueError(
@@ -503,6 +529,16 @@ class Ajo:
         allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
         if value not in allowed:
             raise ValueError(f"Status must be one of {allowed}.")
+
+        # Check if current status is 'translated' - cannot change from this state
+        if hasattr(self, 'status') and self.status == 'translated':
+            raise ValueError("Cannot change status once marked as 'translated'. Status is final.")
+
+        # Check if current status is 'doublecheck' - can only transition to 'translated'
+        if hasattr(self, 'status') and self.status == 'doublecheck' and value != 'translated':
+            raise ValueError(
+                "Once marked as 'doublecheck', status can only be changed to 'translated'.")
+
         self.status = value
 
     def set_defined_multiple_status(self, language_code: str, status_value: str):
@@ -555,6 +591,9 @@ class Ajo:
         """
         Create or update a dictionary marking times when the status/state of the Ajo changed.
         The dictionary is keyed by status and contains Unix times of the changes.
+        Note that this is shared between single and defined multiple posts;
+        that is, if a defined multiple post is claimed, the timestamp will
+        not be disambiguated by language.
 
         :param status: The status that it was changed to. Example: 'translated'.
         :param moment: The Unix UTC time when the action was taken (integer).
@@ -613,6 +652,25 @@ class Ajo:
             if check_url_extension(reddit_submission.url):
                 self.image_hash = generate_image_hash(reddit_submission.url)
 
+    def clear_submission_cache(self):
+        """
+        Clear the cached PRAW submission object.
+        Useful before serialization to avoid storing large objects.
+
+        :return: The cached submission object (if any) before clearing.
+        """
+        cached = self._submission
+        self._submission = None
+        return cached
+
+    def restore_submission_cache(self, submission):
+        """
+        Restore a previously cached PRAW submission object.
+
+        :param submission: The PRAW submission object to cache.
+        """
+        self._submission = submission
+
     """ACTING FUNCTIONS"""
 
     def reset(self) -> None:
@@ -632,6 +690,21 @@ class Ajo:
         """
         determine_flair_and_update(self)
         ajo_writer(self)
+
+
+# Module-level utility function
+def _fetch_submission(post_id: str):
+    """
+    Fetch a PRAW submission by ID.
+
+    :param post_id: The Reddit submission ID
+    :return: PRAW submission object or None if fetch fails
+    """
+    try:
+        return REDDIT.submission(id=post_id)
+    except Exception as e:
+        logger.error(f"[ZW] Failed to fetch submission {post_id}: {e}")
+        return None
 
 
 """EXTERNAL FUNCTIONS"""
@@ -780,6 +853,46 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     ajo.output_flair_text = output_flair_text
 
 
+"""INTERNAL USE"""
+
+
+def _convert_to_dict(input_string):
+    """
+    Converts a Python dictionary string or JSON string to a Python dictionary.
+
+    Args:
+        input_string (str): A string containing either a Python dict or JSON
+
+    Returns:
+        dict: The converted Python dictionary
+
+    Raises:
+        ValueError: If the input cannot be parsed as either a Python dict or JSON
+    """
+    # Remove any leading/trailing whitespace
+    input_string = input_string.strip()
+
+    # Try parsing as Python dictionary first
+    try:
+        result = ast.literal_eval(input_string)
+        if isinstance(result, dict):
+            return result
+    except (ValueError, SyntaxError):
+        pass
+
+    # Try parsing as JSON using orjson
+    try:
+        # orjson.loads expects bytes, so encode the string
+        result = orjson.loads(input_string.encode('utf-8'))
+        if isinstance(result, dict):
+            return result
+    except orjson.JSONDecodeError:
+        pass
+
+    # If both methods fail, raise an error
+    raise ValueError("Input could not be parsed as a Python dictionary or JSON")
+
+
 """INQUIRY SECTION"""
 
 
@@ -787,6 +900,7 @@ def show_menu():
     print("\nSelect a search to run:")
     print("1. Ajo testing (enter a URL of a Reddit post to test)")
     print("2. Reddit posts (retrieve the last few Reddit posts to test against)")
+    print("3. Text testing (paste a dictionary of an Ajo to test)")
     print("x. Exit")
 
 
@@ -794,13 +908,13 @@ if __name__ == "__main__":
 
     while True:
         show_menu()
-        choice = input("Enter your choice (1-2): ")
+        choice = input("Enter your choice (1-3): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2"]:
+        if choice not in ["1", "2", "3"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -822,3 +936,8 @@ if __name__ == "__main__":
                                           submission_new)
                 pprint.pprint(vars(ajo_new))
                 print('------------------')
+
+        elif choice == "3":
+            test_dict = input("Paste an Ajo as a Python dictionary or JSON: ")
+            test_dict = _convert_to_dict(test_dict)
+            pprint.pp(vars(Ajo.from_dict(test_dict)))
