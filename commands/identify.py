@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+!identify is a public means of setting the post flair. This is also
+known by the short form !id, which is treated as a synonym.
+"""
+from . import update_language
 from config import logger
 from models.kunulo import Kunulo
 from notifications import notifier
@@ -23,8 +28,12 @@ def send_notifications_okay(instruo, ajo):
 
 
 def handle(comment, instruo, komando, ajo):
-    print("Identify handler initiated.")
+    logger.info("Identify handler initiated.")
     original_post = comment.submission
+
+    # Check against !translated or doublecheck also in the Instruo.
+    # We don't want to alert people if the comment already included
+    # a translation.
     permission_to_send = send_notifications_okay(instruo, ajo)
 
     # Invalid identification data.
@@ -32,41 +41,52 @@ def handle(comment, instruo, komando, ajo):
         logger.error("No Komando data found!")
         return
 
-    logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author}.")
+    logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author} on `{ajo.id}`.")
     logger.info(f'[ZW] Bot: !identify data is: {komando.data}')
 
-    # Update the Ajo's language for a single-language post.
-    if ajo.type == 'single':
-        original_language = ajo.language_name
+    # Update the Ajo's language(s) post.
+    update_language(ajo, komando)
+
+    # Handle notifications.
+    if ajo.type == 'single' or (ajo.type == 'multiple' and not ajo.is_defined_multiple):
+        original_language = ajo.lingvo
         new_language = komando.data[0]  # Lingvo
-        ajo.set_language(new_language)
-        update_wiki_page(
-            save_or_identify=False,
-            formatted_date=ajo.created_utc,
-            title=ajo.title_original,
-            post_id=ajo.id,
-            flair_text=original_language,
-            new_flair=komando.data[0].name,
-            user=ajo.author
-        )
 
         # Assuming the two languages are different, we can obtain a
         # list of people to notify for.
-        if original_language != new_language and permission_to_send:
-            logger.info("Now sending notifications...")
-            contacted = notifier(new_language, original_post, 'identify')
-            ajo.add_notified(contacted)
-
+        if original_language != new_language:
+            # Update the 'identified' wiki page for single languages.
+            if ajo.type == 'single':
+                update_wiki_page(
+                    save_or_identify=False,
+                    formatted_date=ajo.created_utc,
+                    title=ajo.title_original,
+                    post_id=ajo.id,
+                    flair_text=original_language,
+                    new_flair=komando.data[0].name,
+                    user=ajo.author
+                )
+            if permission_to_send:
+                logger.info("Now sending notifications...")
+                contacted = notifier(new_language, original_post, 'identify')
+                ajo.add_notified(contacted)
     else:  # Defined multiple post.
-        logger.info("Handling defined multiple post...")
-        # TODO fill out logic
-        # TODO Notify others about the identification.
-        logger.info("Now sending notifications...")
-        # TODO check against !translated or doublecheck also in the Instruo.
-        pass
+        if ajo.is_defined_multiple:
+            logger.info("Handling defined multiple post...")
+            # For a defined multiple post, iterate over the new
+            # languages that are listed.
+            new_languages = komando.data
+            for language in new_languages:
+                if permission_to_send:
+                    logger.info(f"Now sending notifications for {language.name}...")
+                    contacted = notifier(language, original_post, 'identify')
+                    ajo.add_notified(contacted)
 
-    # TODO Delete the 'Unknown' placeholder comment left by the bot.
+    # Delete the 'Unknown' placeholder comment left by the bot.
     kunulo = Kunulo.from_submission(original_post)
+    kunulo.delete('comment_unknown')
 
     # Update the Ajo and post.
     ajo.update_reddit()
+
+    return
