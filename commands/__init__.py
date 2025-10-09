@@ -5,9 +5,9 @@ Handles processing commands by users.
 """
 import importlib
 import os
-import re
+import time
 
-from languages import converter, iso_codes_deep_search, define_language_lists
+from connection import logger
 
 HANDLERS = {}
 
@@ -23,86 +23,36 @@ def discover_handlers():
             HANDLERS[cmd_name] = mod.handle
 
 
-def command_parser(comment_text, command):
+def update_status(ajo, komando, status_type):
     """
-    Parses a comment for actionable information related to Ziwen commands like `!identify:`.
-    # TODO allow for multiple id+ms+zh,
-    # TODO this function is not really used but retains for compatibility.
-    The command must include the colon `:` (e.g. `!identify:`).
+    Shared function to handle status updates for different post types.
 
-    Parameters:
-        comment_text (str): The comment body containing a Ziwen command.
-        command (str): The command to parse, such as `!identify:`.
-                       Note that the exclamation point and the colon should
-                       be included if it's part of the command.
-
-    Returns:
-        tuple[str, bool] | None: A tuple containing the target string and a flag for advanced mode,
-                                 or None if parsing fails.
+    Args:
+        ajo: The Ajo object representing the post
+        komando: Command object containing data
+        status_type: Type of status to set
     """
-    advanced_mode = False
-    longer_search = False
-    match_text = ""
+    current_time = time.time()
 
-    # Normalize shorthand
-    comment_text = comment_text.replace("!id:", "!identify:")
-    comment_text = comment_text.replace("\n", " ")
-
-    # Normalize common syntax issues
-    if command + " " in comment_text:
-        comment_text = comment_text.replace(command + " ", command)
-    elif ":[" in comment_text:
-        comment_text = comment_text.replace("[", '"').replace("]", '"')
-
-    # Handle ":unknown-XXXX" syntax
-    if ":unknown-" in comment_text:
-        script_code = comment_text.split(":unknown-", 1)[1][:4]
-        replacement = f":{script_code}! " if len(script_code) == 4 else f":{script_code} "
-        comment_text = comment_text.replace(":unknown-", replacement)
-
-    if command not in comment_text:
-        return None
-
-    remainder = comment_text.split(command, 1)[1]
-
-    if "!" in remainder[:5]:  # Advanced mode with ! marker
-        found = re.search(f"{re.escape(command)}(.*?)!", comment_text)
-        if found:
-            match_text = found.group(1).strip().lower()
-            advanced_mode = " " not in match_text and "\n" not in match_text
-
-    elif '"' in remainder[:2]:  # Longer phrase inside quotes
-        try:
-            found = re.search(r':"(.*?)"', comment_text)
-            if found:
-                match_text = found.group(1).strip().title()
-                longer_search = True
-        except AttributeError:
-            return None
-    match_lingvo = converter(match_text)
-
-    if not longer_search:
-        if not advanced_mode:
-            found = re.search(rf"(?<={re.escape(command)})[\w\-<^'+]+", comment_text)
-            if not found:
-                return None
-            match_text = found.group(0).strip().lower()
-            match_lingvo = converter(match_text)
-
-            # If it's a possible script code, double check TODO
-            if len(match_text) == 4:
-                script_check = iso_codes_deep_search(match_text, True)
-                if script_check and match_text.title() not in define_language_lists()['ISO_NAMES']:
-                    advanced_mode = True
-
-        return match_lingvo, advanced_mode
-
-    return (match_lingvo, advanced_mode) if match_text else None
+    if ajo.type == 'single':
+        ajo.set_status(status_type)
+        ajo.set_time(status_type, current_time)
+    else:
+        if ajo.is_defined_multiple:
+            defined_languages = komando.data  # Lingvo object list
+            for language in defined_languages:
+                ajo.set_defined_multiple_status(language.preferred_code,
+                                                status_type)
+                logger.info(f"Defined multiple post. Marking "
+                            f"{language.preferred_code} as {status_type}.")
+            ajo.set_time(status_type, current_time)
+        else:
+            logger.debug("Regular multiple post. Skipping...")
+            pass
 
 
 discover_handlers()
 
 
 if __name__ == "__main__":
-    print(command_parser("!identify:tlh", "!identify:"))
     print(HANDLERS)
