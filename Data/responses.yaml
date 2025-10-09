@@ -96,8 +96,8 @@ MSG_RESTORE_TEXT_TEMPLATE: '
 
   '
 
-ZF_CLOSING_OUT_SUBJECT: '[Notification] Was your {language} request translated?'
-ZF_CLOSING_OUT_MESSAGE: '
+MSG_CLOSING_OUT_SUBJECT: '[Notification] Was your {language} request translated?'
+MSG_CLOSING_OUT: '
 
   Hey there, u/{author}!
 
@@ -217,11 +217,11 @@ COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anythi
 COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
   Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
 
-ZF_DUPLICATE_COMMENT: "\nHey u/{author}! \n\nIt appears that this post may be a duplicate of another that\
+COMMENT_DUPLICATE: "\nHey u/{author}! \n\nIt appears that this post may be a duplicate of another that\
   \ you've recently submitted and I have removed it as a result.\n\nIf this is in error, please resubmit\
   \ this post with a *unique* title giving\nmore context for translators, or message the r/translator\
   \ moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{permalink}).\
-  \ Thank you.\n [](#zf_duplicate_comment)"
+  \ Thank you.\n [](#duplicate_comment)"
 
 # POSTS - THESE ARE TEMPLATES FOR POSTS BY THE BOT OR PAGE EDITS
 
