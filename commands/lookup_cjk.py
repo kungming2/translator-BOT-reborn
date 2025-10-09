@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Simple command wrapper for CJK languages lookup."""
+"""Command wrapper for CJK languages lookup."""
 import random
 import time
 
@@ -93,12 +93,13 @@ def _perform_lookups(cjk_language, search_terms):
 
 def _format_reply(ajo, lookup_results):
     """Format the reply body with lookup results."""
+    anchor_tag = RESPONSE.ANCHOR_CJK
     formatted_results = '\n\n'.join(lookup_results)
     author_tag = (
         f"*u/{ajo.author} (OP), the following lookup results "
         "may be of interest to your request.*\n\n"
     )
-    return author_tag + formatted_results + RESPONSE.BOT_DISCLAIMER
+    return author_tag + formatted_results + RESPONSE.BOT_DISCLAIMER + anchor_tag
 
 
 def handle(comment, instruo, komando, ajo):
@@ -128,7 +129,3 @@ def handle(comment, instruo, komando, ajo):
         reply_body = _format_reply(ajo, lookup_results)
         comment_reply(comment, reply_body)
         logger.info(f"[ZW] Bot: >> Looked up the term(s) in {cjk_language}.")
-
-
-if __name__ == "__main__":
-    print(get_cjk_languages())
