@@ -21,8 +21,8 @@ def handle(comment, _instruo, komando, ajo):
     update_status(ajo, komando, status_type)
 
     # Format and send the message to the OP letting them know.
-    total_message = RESPONSE['MSG_MISSING_ASSETS'].format(oauthor=original_poster,
-                                                          opermalink=ajo.permalink)
+    total_message = RESPONSE.MSG_MISSING_ASSETS.format(oauthor=original_poster,
+                                                       opermalink=ajo.permalink)
     message_send(original_poster,
                  subject='A message from r/translator regarding your translation request',
                  body=total_message)
