@@ -115,3 +115,6 @@ points_months_delta: 3
 comment_edit_age_max: 12  # in hours
 # How many comments back we want to check.
 comment_edit_num_limit: 30
+
+# Search function uses... (Google or Reddit)
+search_engine: Reddit
