@@ -620,7 +620,7 @@ async def zh_character(character):
 
         pronunciation = [div.text_content() for div in tree.xpath('//div[contains(@class,"pinyin")]')]
         if not pronunciation:
-            to_post = RESPONSE['COMMENT_INVALID_ZH_CHARACTER'].format(character)
+            to_post = RESPONSE.COMMENT_INVALID_ZH_CHARACTER.format(character)
             logger.info(f"[ZW] ZH-Character: No results for {character}")
             return to_post
 
