@@ -26,3 +26,5 @@ def handle(comment, _instruo, _komando, ajo):
 
         ajo.update_reddit()
         logger.info(f"[ZW] Bot: > Reset everything for the designated post `{ajo.id}`.")
+
+    return
