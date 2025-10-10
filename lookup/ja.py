@@ -17,8 +17,8 @@ from lxml import html
 
 from config import logger
 from connection import get_random_useragent
-from async_helpers import fetch_json, maybe_async
-from zh import calligraphy_search
+from .async_helpers import fetch_json, maybe_async
+from .zh import calligraphy_search
 
 useragent = get_random_useragent()
 
@@ -152,7 +152,6 @@ def ja_character(character):
     else:
         lookup_line_3 = (
             f"\n\n^Information ^from [^(Jisho)](https://jisho.org/search/{character}%20%23kanji) ^| "
-            f"[^(Goo Dictionary)](https://dictionary.goo.ne.jp/word/en/{character}) ^| "
             f"[^(Tangorin)](https://tangorin.com/kanji/{character}) ^| "
             f"[^(Weblio EJJE)](https://ejje.weblio.jp/content/{character})"
         )
