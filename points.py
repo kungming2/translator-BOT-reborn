@@ -51,7 +51,7 @@ def points_retriever(username: str) -> str:
     all_rows = cursor.fetchall()
 
     if not all_rows:
-        return RESPONSE['MSG_NO_POINTS']  # User has no points listed.
+        return RESPONSE.MSG_NO_POINTS  # User has no points listed.
 
     # Monthly points
     month_points = sum(row[3] for row in month_rows)
