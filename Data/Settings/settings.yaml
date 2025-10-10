@@ -53,6 +53,31 @@ thanks_keywords:  # Must be lowercase.
   - tysm
   - tyvm
   - you rock
+  - awesome
+  - perfect
+  - exactly
+  - helpful
+  - helped
+  - cheers
+  - kudos
+  - legend
+  - lifesaver
+  - brilliant
+  - fantastic
+  - amazing
+  - wonderful
+
+thanks_negation_keywords:  # Must be lowercase.
+  - but
+  - however
+  - 'no'
+  - 'not'
+  - unfortunately
+  - though
+  - although
+  - don't
+  - didn't
+  - doesn't
 
 verifying_keywords:
   - agree
