@@ -22,7 +22,7 @@ from lxml import html
 
 from config import Paths, logger
 from connection import get_random_useragent
-from lookup.async_helpers import maybe_async
+from .async_helpers import maybe_async
 from responses import RESPONSE
 
 useragent = get_random_useragent()
