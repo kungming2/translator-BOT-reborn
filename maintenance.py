@@ -5,10 +5,12 @@ Handles regular functions to keep things tidy.
 """
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Any
 
+import yaml
 
-from config import logger, SETTINGS
+from config import logger, SETTINGS, Paths
 from connection import REDDIT, credentials_source
 from database import db
 from points import points_worth_cacher
@@ -53,6 +55,53 @@ def most_recent_submitters():
     ]
 
 
+def validate_all_yaml_files():
+    """
+    Scans the given Paths class for all attributes containing YAML file paths
+    and validates them.
+
+    :return: True if all YAML files are valid, False otherwise.
+    """
+    yaml_files = []
+    paths_class = Paths
+
+    # Collect all paths ending with .yaml from dictionaries in the Paths class
+    for attr_name in dir(paths_class):
+        attr_value = getattr(paths_class, attr_name)
+        if isinstance(attr_value, dict):
+            for key, path in attr_value.items():
+                if isinstance(path, str) and path.lower().endswith(".yaml"):
+                    yaml_files.append(path)
+
+    if not yaml_files:
+        logger.warning("[YAML Validation] No YAML files found in Paths.")
+        return True
+
+    logger.info(f"[YAML Validation] Found {len(yaml_files)} YAML files to check.")
+
+    all_valid = True
+    for file_path in yaml_files:
+        path_obj = Path(file_path)
+
+        if not path_obj.exists():
+            logger.error(f"[YAML Validation] File not found: {file_path}")
+            all_valid = False
+            continue
+
+        try:
+            with open(path_obj, "r", encoding="utf-8") as f:
+                yaml.safe_load(f)
+            logger.debug(f"[YAML Validation] Valid YAML: {file_path}")
+        except yaml.YAMLError as e:
+            logger.error(f"[YAML Validation] Invalid YAML in {file_path}: {e}")
+            all_valid = False
+        except Exception as e:
+            logger.error(f"[YAML Validation] Error reading {file_path}: {e}")
+            all_valid = False
+
+    return all_valid
+
+
 def clean_processed_database():
     """
     Cleans up the processed comments and posts in the database by
@@ -91,12 +140,12 @@ def clean_processed_database():
     db.conn_main.commit()
 
 
-def ziwen_maintenance() -> State:
+def ziwen_startup() -> State:
     """
     Group together common activities that need to be run on an occasional basis.
     Usually activated at start-up. This is used in ajo.py.
 
-    :return: A State object containing the current maintenance state.
+    :return: A State object containing the current tasks state.
     """
     post_templates = template_retriever()
     logger.debug("[ZW] # Current post templates retrieved: %d templates", len(post_templates))
@@ -112,10 +161,10 @@ def ziwen_maintenance() -> State:
     )
 
 
-STATE = ziwen_maintenance()
+STATE = ziwen_startup()
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    print(ziwen_maintenance())
+    print(validate_all_yaml_files())
     print(round(time.time() - start_time, 2))
