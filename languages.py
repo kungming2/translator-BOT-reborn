@@ -17,6 +17,7 @@ from config import Paths, load_settings, logger
 
 # Load the language module's settings and parse the file's content
 language_module_settings = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
+_lingvos_cache = None  # for reloading purposes when the data changes
 
 
 class Lingvo:
@@ -142,7 +143,7 @@ class Lingvo:
 """MAIN LOADER"""
 
 
-def load_lingvo_dataset(debug=False):
+def _load_lingvo_dataset(debug=False):
     """
     Loads the language dataset by combining raw language data and
     utility language data, then returns a dictionary of Lingvo instances.
@@ -216,12 +217,21 @@ def load_lingvo_dataset(debug=False):
     return lingvo_dict
 
 
+def get_lingvos(force_refresh=False):
+    """Get lingvos dataset, optionally forcing a refresh."""
+    global _lingvos_cache
+    if _lingvos_cache is None or force_refresh:
+        _lingvos_cache = _load_lingvo_dataset()
+    return _lingvos_cache
+
+
 def define_language_lists():
     """
     Generate various language code and name mappings from a language dataset.
 
     :return: A dictionary with structured language metadata lists and mappings.
     """
+    lingvos = get_lingvos()
 
     supported_codes = []
     supported_languages = []
@@ -376,6 +386,9 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
     :param fuzzy: Whether to apply fuzzy name matching.
     :return: A Lingvo instance or None if not found.
     """
+    # Get the current (possibly refreshed) lingvos data
+    lingvos = get_lingvos()
+
     input_text = input_text.strip()
     input_lower = input_text.lower()
     reference_lists = define_language_lists()
@@ -570,25 +583,35 @@ def parse_language_list(list_string):
 
 
 def get_country_emoji(country_name):
-    """ Returns the emoji for a given country name in English.
+    """Return the flag emoji for a given country name."""
+    if not country_name:
+        return ''
 
-    :param country_name: Name of a country in English.
-    :return: Emoji if found, an empty string otherwise.
-    """
-    # Find the country using pycountry
-    country = pycountry.countries.get(name=country_name)
+    try:
+        # Try direct name match first
+        country = pycountry.countries.get(name=country_name)
+    except LookupError:
+        country = None
 
-    # If country not found, try matching common names (like UK
-    # for the United Kingdom.)
     if not country:
-        country = pycountry.countries.get(common_name=country_name)
+        # Try using common_name (like "UK" or "South Korea")
+        try:
+            country = pycountry.countries.get(common_name=country_name)
+        except LookupError:
+            country = None
+
+    if not country:
+        # Try fuzzy lookup (partial match)
+        try:
+            matches = pycountry.countries.search_fuzzy(country_name)
+            if matches:
+                country = matches[0]
+        except LookupError:
+            country = None
 
     if country:
-        # Convert the alpha_2 code (ISO 3166-1) to emoji
         code = country.alpha_2
-        # Convert each character to its corresponding regional indicator symbol
-        flag = chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
-        return flag
+        return chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
     else:
         return ''
 
@@ -699,9 +722,6 @@ def select_random_language(iso_639_1=False):
 
     return selected_language
 
-
-# Load dataset for functions to use internally.
-lingvos = load_lingvo_dataset()
 
 if __name__ == "__main__":
     while True:
