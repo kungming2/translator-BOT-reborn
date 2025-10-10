@@ -83,6 +83,18 @@ class DatabaseManager:
         cursor.execute(query, params)
         return cursor.fetchone()
 
+    def fetchall_ajo(self, query: str, params: tuple = ()):
+        """
+        Execute a SELECT query and return all matching rows from the AJO database.
+
+        :param query: SQL SELECT statement
+        :param params: Query parameters as a tuple
+        :return: A list of rows (sqlite3.Row objects)
+        """
+        cursor = self.cursor_ajo
+        cursor.execute(query, params)
+        return cursor.fetchall()
+
 
 """CREATES DATABASES IF THEY DO NOT EXIST"""
 
