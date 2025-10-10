@@ -19,7 +19,7 @@ MSG_PAGE: >
 
   {greetings} u/{username},
 
-  This is a page to take a look at a possible {language_name} request. Can you check
+  This is a page to take a look at a possible {language_name} request. Could you check
   it out?
 
   **[{title}](https://www.reddit.com{permalink})** posted by *u/{post_author}*.
@@ -129,13 +129,13 @@ COMMENT_LONG: '**Your translation request appears to be very long.** It may take
   required on your part.* [](#comment_long)'
 COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
   to be 14 days or older to use the service. [](#comment_page_disallowed)
-COMMENT_NO_LANGUAGE: 'Hey, u/{pauthor}, thanks for using my paging service. Unfortunately, we don''t have
+COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
   anyone on file for {language_name}.
 
 
   If someone else is reading this and knows {language_name}, please [sign up for notifications for that
   language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
-  if you would like to be notified for future posts for it! [](#comment_no_language)'
+  if you would like to be notified for future posts for it! [](#comment_no_language)\n\n'
 COMMENT_NO_RESULTS: Sorry, but that doesn't look like anything to me. [](#comment_no_results)
 COMMENT_ENGLISH_ONLY: "\nHey there u/{oauthor},\n\n* Your post above has been automatically removed because\
   \ does not appear to be a request for a translation. \nThere are more focused communities for English-only\
@@ -154,6 +154,8 @@ COMMENT_BAD_TITLE: "\nHey there, u/{author}!\n    \nWe're happy to help you tran
 COMMENT_CLAIM: '
 
   **Claimer:** u/{claimer} at {time} UTC
+  
+  **Language:** {language_name} (`{language_code}`)
 
 
   *The user above has indicated that they are working on a translation for this {language_name} request.*
@@ -165,9 +167,10 @@ COMMENT_CLAIM: '
   [](#comment_claim)'
 COMMENT_CURRENTLY_CLAIMED: '
 
-  This post has already been claimed by u/{claimer_name}. Their in-progress claim will expire in {remaining_time}.
+  This {language_name} (`{language_code}`) post has already been claimed by u/{claimer_name}. Their in-progress claim will expire in {remaining_time} minutes.
 
   [](#comment_currently_claimed)'
+COMMENT_SELF_ALREADY_CLAIMED: "You've already claimed this post. [](#comment_self_already_claimed)"
 COMMENT_UNKNOWN: "\n**It looks like you have submitted a translation request tagged as 'Unknown.'** \n\
   \n* Other community members may help you recategorize your post with the `!identify:` or the `!page:`\
   \ [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).\n* Please\
@@ -222,6 +225,10 @@ COMMENT_DUPLICATE: "\nHey u/{author}! \n\nIt appears that this post may be a dup
   \ this post with a *unique* title giving\nmore context for translators, or message the r/translator\
   \ moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{permalink}).\
   \ Thank you.\n [](#duplicate_comment)"
+
+# ANCHORS - THESE ARE ADDED TO CONTENT GENERATED ELSEWHERE
+ANCHOR_WIKIPEDIA: '\n[](#comment_wikipedia)'
+ANCHOR_CJK: '\n[](#comment_cjk)'
 
 # POSTS - THESE ARE TEMPLATES FOR POSTS BY THE BOT OR PAGE EDITS
 
