@@ -37,6 +37,4 @@ def handle(comment, _instruo, komando, ajo):
     message_send(comment.author, subject='[Notification] !set command successful', body=set_msg)
     logger.info("Informed moderator of command success.")
 
-    ajo.update_reddit()
-
     return

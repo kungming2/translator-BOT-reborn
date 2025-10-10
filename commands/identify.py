@@ -86,7 +86,4 @@ def handle(comment, instruo, komando, ajo):
     kunulo = Kunulo.from_submission(original_post)
     kunulo.delete('comment_unknown')
 
-    # Update the Ajo and post.
-    ajo.update_reddit()
-
     return

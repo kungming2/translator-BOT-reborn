@@ -61,6 +61,4 @@ def handle(comment, _instruo, komando, ajo):
         logger.info("Left a comment letting users know which languages "
                     "have no notifications coverage.")
 
-    ajo.update_reddit()
-
     return

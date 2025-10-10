@@ -24,7 +24,6 @@ def handle(comment, _instruo, _komando, ajo):
         message_send(comment.author, subject='[Notification] !reset command successful',
                      body=reset_msg)
 
-        ajo.update_reddit()
         logger.info(f"[ZW] Bot: > Reset everything for the designated post `{ajo.id}`.")
 
     return

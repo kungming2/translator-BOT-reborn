@@ -28,6 +28,5 @@ def handle(comment, _instruo, _komando, ajo):
 
         ajo.set_long(new_status)
         logger.info(f"[ZW] Bot: Changed post `{ajo.id}`'s long state to '{new_status}.'")
-        ajo.update_reddit()
 
     return

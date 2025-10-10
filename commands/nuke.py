@@ -65,3 +65,5 @@ def handle(comment, _instruo, _komando, _ajo):
                        f"Command called by you [here](https://www.reddit.com{comment.permalink})."
                        ))
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
+
+    return

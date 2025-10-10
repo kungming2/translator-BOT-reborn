@@ -21,7 +21,6 @@ def handle(comment, _instruo, komando, ajo):
     # Update the Ajo and post.
     logger.info(f"[ZW] Bot: > Marked post `{ajo.id}` as 'Needs Review.' "
                 f"(`{status_type}`)")
-    ajo.update_reddit()
 
     # Delete any previously claimed comment.
     kunulo_object = Kunulo.from_submission(ajo.submission)

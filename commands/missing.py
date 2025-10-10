@@ -29,6 +29,5 @@ def handle(comment, _instruo, komando, ajo):
 
     logger.info(f"[ZW] Bot: > Marked post `{ajo.id}` by u/{original_poster} "
                 f"as missing assets and messaged them.")
-    ajo.update_reddit()
 
     return
