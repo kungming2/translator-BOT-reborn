@@ -72,7 +72,7 @@ def ziwen_posts(post_limit=None):
             diskuto_output = Diskuto.process_post(post)
             diskuto_writer(diskuto_output)
             logger.info(f"> `post.id` post saved as an internal post for later processing.")
-            continue  # Do not write to database.
+            continue  # Do not write to regular Ajo database.
 
         # Skip if post has already been processed
         if db.cursor_main.execute('SELECT 1 FROM old_posts WHERE ID = ?', (post_id,)).fetchone():
@@ -190,8 +190,8 @@ def ziwen_posts(post_limit=None):
         # the Ajo to the local database as well as updating the Reddit
         # flair.
         logger.debug("[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`")
-        print(vars(post_ajo))
-        print(post_ajo.id)
+        logger.info(f"[ZW] Post Ajo ID: {post_ajo.id}")
+        logger.info(f"[ZW] Post Ajo data: {vars(post_ajo)}")
 
         # Only update if we're not in testing mode.
         if not SETTINGS['testing_mode']:
