@@ -125,7 +125,8 @@ def ziwen_posts(post_limit=None):
         # If it fails this test, write to `record_filter_log`
         if not post_okay:
             # Remove this post, it failed all routines.
-            post.mod.remove()
+            if not SETTINGS['testing_mode']:
+                post.mod.remove()
             suggested_title_replacement = format_title_correction_comment(title_text=post_title,
                                                                           author=post_author)
             removal_suggestion = suggested_title_replacement + RESPONSE.BOT_DISCLAIMER
@@ -140,7 +141,8 @@ def ziwen_posts(post_limit=None):
         # Check for English-only content.
         if is_english_only(titolo_content):
             # Remove this post, as it is English-only.
-            post.mod.remove()
+            if not SETTINGS['testing_mode']:
+                post.mod.remove()
             message_reply(post, RESPONSE.COMMENT_ENGLISH_ONLY.format(oauthor=post_author))
 
             record_filter_log(post_title, post.created_utc, "EE")
