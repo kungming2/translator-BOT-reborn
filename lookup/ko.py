@@ -102,7 +102,9 @@ def ko_word(korean_word):
 
         entry_text = (
                 f"\n\n##### *{translate_part_of_speech(entry['part_of_speech']).title()}*\n\n"
-                + (f"**Origin:** {entry['origin']}\n\n" if entry.get('origin') else "")
+                + (
+                    f"**Origin:** [{entry['origin']}](https://en.wiktionary.org/wiki/{entry['origin']})\n\n" if entry.get(
+                        'origin') else "")
                 + f"**Romanization:** *{hangul_romanization}*\n\n"
                 + f"**Meanings**:\n* {definitions}"
         )
