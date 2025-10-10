@@ -43,6 +43,7 @@ class Kunulo:
         # This is how it is usually called.
         # Accepts a PRAW submission object.
         thanks_keywords = SETTINGS['thanks_keywords']
+        thanks_negation_keywords = SETTINGS['thanks_negation_keywords']
         data = {}
         op_thanks = False
 
@@ -56,9 +57,12 @@ class Kunulo:
                 for tag in cls.anchor_pattern.findall(comment.body):
                     data.setdefault(tag, []).append(comment.id)
             # Check for OP thanking (case-insensitive)
-            if not op_thanks and comment_author == op_author and any(
-                    kw in comment_body.lower() for kw in thanks_keywords):
-                op_thanks = True
+            # Don't count as thanks if negation keywords are present
+            if not op_thanks and comment_author == op_author:
+                has_thanks = any(kw in comment_body for kw in thanks_keywords)
+                has_negation = any(kw in comment_body for kw in thanks_negation_keywords)
+                if has_thanks and not has_negation:
+                    op_thanks = True
 
         instance = cls(data, op_thanks)
         instance._submission = submission  # Store submission reference
