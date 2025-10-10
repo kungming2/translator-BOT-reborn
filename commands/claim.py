@@ -52,7 +52,7 @@ def handle(comment, _instruo, komando, ajo):
             logger.info("[ZW] Bot: Pre-existing claim comment found.")
 
             # Pass current_time to the parser
-            claim_info = _parse_claim_comment(existing_claim_comment, current_time)
+            claim_info = parse_claim_comment(existing_claim_comment, current_time)
 
             # Check if the claim languages match.
             if language == claim_info['language']:
@@ -95,7 +95,7 @@ def handle(comment, _instruo, komando, ajo):
     return
 
 
-def _parse_claim_comment(comment_text, current_time):
+def parse_claim_comment(comment_text, current_time):
     """
     Parse a claim comment to extract claimer username, time,
     and language code.
