@@ -17,7 +17,7 @@ from waybackpy import exceptions
 
 from config import Paths
 from connection import logger, get_random_useragent
-from languages import converter, load_lingvo_dataset, select_random_language
+from languages import converter, get_lingvos, select_random_language
 
 
 def get_archived_ethnologue_page(language_code: str) -> str | None:
@@ -58,7 +58,7 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
     :param language_code: ISO 639-1/3 language code of the language
     :return: Dictionary containing language reference data, or None if unavailable
     """
-    language_data = load_lingvo_dataset()  # Provides Lingvos
+    language_data = get_lingvos()  # Provides Lingvos
     useragent = get_random_useragent()
     lingvo_object = language_data.get(language_code)
 
@@ -112,9 +112,16 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
         logger.warning(f"[Reference] Problem fetching population for `{language_code}`, defaulting to 0.")
         ref_data["population"] = 0
 
-    # Country
+    # Country - multiple fallback strategies
     try:
-        country_list = tree.xpath('//div[contains(@class,"a-language-of")]/div/div/h2/a/text()')
+        # Try multiple XPath strategies
+        country_list = (
+                tree.xpath('//div[contains(@class,"a-language-of")]/div/div/h2/a/text()') or
+                tree.xpath('//div[contains(@class,"field-ethnologue-language-of")]//h2/a/text()') or
+                tree.xpath('//div[contains(text(), "A language of")]/..//a[contains(@href, "/country/")]/text()') or
+                tree.xpath('//h2[contains(., "A language of")]/a/text()')
+        )
+
         if country_list:
             ref_data["country"] = str(country_list[0]).strip()
         else:
