@@ -17,7 +17,7 @@ from waybackpy import exceptions
 
 from config import Paths
 from connection import logger, get_random_useragent
-from languages import converter, load_lingvo_dataset
+from languages import converter, load_lingvo_dataset, select_random_language
 
 
 def get_archived_ethnologue_page(language_code: str) -> str | None:
@@ -182,7 +182,29 @@ def get_language_reference(language_code: str) -> dict | None:
     return reference_data
 
 
+def show_menu():
+    print("\nSelect a search to run:")
+    print("1. Language selection (enter your own language code)")
+    print("2. Random (retrieve information for a random language code)")
+
+
 if __name__ == "__main__":
     while True:
-        my_input = input("Enter a language code to search for: ")
-        print(get_language_reference(my_input))
+        show_menu()
+        choice = input("Enter your choice (1-2): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            my_input = input("Enter a language code to search for: ")
+            print(get_language_reference(my_input))
+        elif choice == "2":
+            random_selection = select_random_language()
+            logger.info(f"[Reference] Randomly selected {random_selection.name} (`{random_selection.preferred_code}`).")
+            print(get_language_reference(random_selection.language_code_3))
