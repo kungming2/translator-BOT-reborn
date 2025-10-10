@@ -1,9 +1,9 @@
-LINES_TO_KEEP: 20000
-MAX_QUEUE: 5  # Number of items we want to alert mods about.
+lines_to_keep: 20000
+max_queue: 5  # number of items we want to alert mods about.
 
-# Formerly Zifang settings
-CLOSE_OUT_AGE: 7  # Age of posts (in days) that we inform people about.
-CLOSE_OUT_COMMENTS_MINIMUM: 5
-DUPLICATES_AGE: 4  # Age of posts (in hours) that we check for duplicates.
-DUPLICATE_CONFIDENCE: 85  # Similarity level of posts to mark as duplicates.
-NUMERICAL_SIMILARITY: 20  # How close we want the numbers to be together.
+# formerly in zifang settings
+close_out_age: 7  # age of posts (in days) that we inform people about.
+close_out_comments_minimum: 5
+duplicates_age: 4  # age of posts (in hours) that we check for duplicates.
+duplicate_confidence: 85  # similarity level of posts to mark as duplicates.
+numerical_similarity: 20  # how close we want the numbers to be together.
