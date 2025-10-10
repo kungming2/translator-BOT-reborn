@@ -454,6 +454,7 @@ def notifier(lingvo, submission, mode="new_post"):
     post_permalink = submission.permalink
     post_author = submission.author.name if submission.author else None
     post_id = submission.id
+    post_nsfw = submission.over_18
 
     # Get the language code and name from Lingvo
     search_code = lingvo.preferred_code
@@ -552,6 +553,10 @@ def notifier(lingvo, submission, mode="new_post"):
             post_author=post_author
         )
 
+        # Tack on an NSFW warning if necessary.
+        if post_nsfw:
+            message += RESPONSE.MSG_NSFW_WARNING
+
         try:
             # Send message to user via Reddit messages
             message_subject = f"[Notification] New {language_name} request on r/translator"
@@ -645,4 +650,4 @@ def notifier_internal(post_type, submission):
 
 
 if __name__ == "__main__":
-    print(notifier_specific_language_filter(converter('pt-BR')))
+    print(fetch_usernames_for_lingvo(converter('ii')))
