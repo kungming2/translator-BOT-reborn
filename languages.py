@@ -676,7 +676,7 @@ def select_random_language(iso_639_1=False):
                           Otherwise, select ISO 639-3 codes (3-letter).
 
     Returns:
-        tuple: (code, language name) or None if no match found.
+        Lingvo or None if no match found.
     """
     pattern = r'^[a-z]{2}$' if iso_639_1 else r'^[a-z]{3}$'
 
@@ -695,7 +695,9 @@ def select_random_language(iso_639_1=False):
 
     chosen = random.choice(filtered)
     code_index = 1 if iso_639_1 else 0
-    return chosen[code_index], chosen[2]
+    selected_language = converter(chosen[code_index])
+
+    return selected_language
 
 
 # Load dataset for functions to use internally.
