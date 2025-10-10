@@ -10,6 +10,11 @@ from config import Paths
 
 
 class ResponseLoader:
+    """
+    Responses are generally formatted as:
+    RESPONSE.ANCHOR_WIKIPEDIA
+    """
+
     def __init__(self, yaml_path):
         self._data = self._load_yaml(yaml_path)
         self.responses = SimpleNamespace(**self._data)
