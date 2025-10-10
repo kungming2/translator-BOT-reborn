@@ -1268,6 +1268,17 @@ bql:
   link_wikipedia: https://en.wikipedia.org/wiki/Karian_language
   name: Bilakura
   population: 200
+bqr:
+  country: Indonesia
+  family: Austronesian
+  language_code_3: bqr
+  link_ethnologue: https://www.ethnologue.com/language/bqr
+  link_wikipedia: https://en.wikipedia.org/wiki/Burusu_language
+  name: Burusu
+  name_alternates:
+  - Berusuh
+  - Bulusu
+  population: 4350
 br:
   country: France
   family: Indo-European
@@ -4042,6 +4053,7 @@ ja:
   - Romanji
   - Rōmaji
   - 日本語
+  - 日語
   - Japones
   - Japonés
   - Japnese
@@ -4097,6 +4109,19 @@ jax:
   - Djambi
   - Jambi
   population: 1000000
+jet:
+  country: Papua New Guinea
+  family: Border
+  language_code_3: jet
+  link_ethnologue: https://www.ethnologue.com/language/jet
+  link_wikipedia: https://en.wikipedia.org/wiki/Manem_language
+  name: Manem
+  name_alternates:
+  - Jeti
+  - Skofro
+  - Wembi
+  - Yeti
+  population: 900
 jit:
   country: Tanzania
   family: Niger-Congo
@@ -7148,6 +7173,18 @@ pov:
   - Kriulo
   - Portuguese Creole
   population: 1061800
+ppk:
+  country: Indonesia
+  family: Austronesian
+  language_code_3: ppk
+  link_ethnologue: https://www.ethnologue.com/language/ppk
+  link_wikipedia: https://en.wikipedia.org/wiki/Uma_language
+  name: Uma
+  name_alternates:
+  - Koro
+  - Oema
+  - Pipikoro
+  population: 20000
 prg:
   country: Poland
   family: Indo-European
@@ -9612,6 +9649,17 @@ ute:
   - Southern Paiute
   - Ute-Chemehuevi
   population: 6230
+uwa:
+  country: Australia
+  family: Australian
+  language_code_3: uwa
+  link_ethnologue: https://www.ethnologue.com/language/uwa
+  link_wikipedia: https://en.wikipedia.org/wiki/Kugu_Nganhcara_language
+  name: Kuku-Uwanh
+  name_alternates:
+  - Gugu-Uwanh
+  - Kugu-Uwanh
+  population: 199
 uz:
   countries_associated:
   - AF
