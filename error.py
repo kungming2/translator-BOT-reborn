@@ -53,7 +53,7 @@ def record_last_post_and_comment():
              - 'last_comment': Formatted string of the last comment's timestamp, link, and body.
     """
     now = time.time()
-    fallback_time = datetime.fromtimestamp(now).strftime("%Y-%m-%d [%I:%M:%S %p]")
+    fallback_time = datetime.fromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     post_info = {
         'timestamp': fallback_time,
@@ -101,7 +101,7 @@ def error_log_extended(error_save_entry, bot_version):
     :return: None
     """
     error_log_path = Paths.LOGS["ERROR"]
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     try:
         # Load existing YAML log (if file exists and is non-empty)
