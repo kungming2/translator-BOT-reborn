@@ -740,7 +740,7 @@ async def zh_character(character):
     lookup_line_2 = (
         f"\n\n\n^Information ^from "
         f"[^(Unihan)](https://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint={character}) ^| "
-        f"[^(CantoDict)](https://www.cantonese.sheik.co.uk/dictionary/characters/{character}/) ^| "
+        f"[^(CantoDict)](https://www.cantonese.sheik.co.uk/dictionary/characters/{tradify(character)}/) ^| "
         f"[^(Chinese Etymology)](https://hanziyuan.net/#{tradify(character)}) ^| "
         f"[^(CHISE)](https://www.chise.org/est/view/char/{character}) ^| "
         f"[^(CTEXT)](https://ctext.org/dictionary.pl?if=en&char={tradify(character)}) ^| "
@@ -1009,7 +1009,7 @@ async def zh_word(word):
 
     footer = (
         '\n\n^Information ^from '
-        f'[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={word}) ^| '
+        f'[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| '
         f'[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| '
         f'[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| '
         f'[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index)'
