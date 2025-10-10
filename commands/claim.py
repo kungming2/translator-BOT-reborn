@@ -92,9 +92,6 @@ def handle(comment, _instruo, komando, ajo):
         claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
         logger.info(f"[ZW] Bot: > Left a claim comment for u/{comment.author}.")
 
-    # Update the Ajo and post.
-    ajo.update_reddit()
-
     return
 
 
