@@ -8,6 +8,7 @@ import requests
 import praw
 from random_user_agent.user_agent import UserAgent
 from random_user_agent.params import SoftwareName, OperatingSystem
+from praw.exceptions import RedditAPIException
 from praw.models import Redditor
 from prawcore import exceptions
 
@@ -142,6 +143,50 @@ def is_valid_user(username):
         return True
     except (exceptions.NotFound, AttributeError):
         logger.error(f"User {username} not found.")
+        return False
+
+
+def widget_update(widget_id, new_text):
+    """
+    Update a text widget on a subreddit with new content.
+
+    Args:
+        reddit: Authenticated PRAW Reddit instance
+        subreddit_name: Name of the subreddit (without r/)
+        widget_id: ID of the widget to update
+        new_text: New text content for the widget
+
+    Returns:
+        bool: True if update was successful, False otherwise
+    """
+    try:
+        widgets = REDDIT.subreddit("translator").widgets
+        widgets.progressive_images = True
+
+        # Search for the widget in the sidebar
+        active_widget = None
+        for widget in widgets.sidebar:
+            if isinstance(widget, praw.models.TextArea):
+                if widget.id == widget_id:
+                    logger.debug(f"Found widget with ID: {widget_id}")
+                    active_widget = widget
+                    break
+
+        if active_widget is None:
+            logger.info(f'Widget with ID {widget_id} not found.')
+            return False
+
+        # Update the widget
+        try:
+            active_widget.mod.update(text=new_text)
+            logger.error(f"Successfully updated widget {widget_id}.")
+            return True
+        except RedditAPIException as e:
+            logger.error(f'Error updating widget {widget_id}: {e}')
+            return False
+
+    except Exception as e:
+        logger.error(f'Unexpected error in widget_update: {e}')
         return False
 
 
