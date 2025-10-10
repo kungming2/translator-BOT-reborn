@@ -838,7 +838,7 @@ def title_ai_parser(title, post=None):
 
     :param title: Title of a Reddit post.
     :param post: A PRAW submission object, or `None`
-    :return: Tuple (language_code, language_name) or ("error", error_message)
+    :return: A dictionary (see the responses file for its format)
     """
     image_url = None
 
@@ -858,6 +858,7 @@ def title_ai_parser(title, post=None):
     query_input = RESPONSE.TITLE_PARSING_QUERY + title
 
     # Construct query kwargs
+    logger.info("Passing information to AI service...")
     query_kwargs = {
         "service": "openai",
         "behavior": "You are assessing a technical identification",
@@ -943,7 +944,7 @@ def is_english_only(titolo_content: dict) -> bool:
 """INQUIRY SECTION"""
 
 
-def show_menu():
+def _show_menu():
     print("\nSelect a search to run:")
     print("1. Title testing (enter your own title to test)")
     print("2. Reddit titles (retrieve the last few Reddit posts to test against)")
@@ -954,7 +955,7 @@ def show_menu():
 if __name__ == "__main__":
 
     while True:
-        show_menu()
+        _show_menu()
         choice = input("Enter your choice (1-3): ")
 
         if choice == "x":
@@ -980,4 +981,4 @@ if __name__ == "__main__":
                 print('\n\n')
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
-            print(build_required_title_keywords())
+            print(title_ai_parser(my_test))
