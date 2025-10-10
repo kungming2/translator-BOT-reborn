@@ -18,7 +18,9 @@ DATA_DIR = os.path.join(BASE_DIR, "Data")
 
 # Group related paths into dictionaries for better organization
 class Paths:
-    """Centralized path configuration for all application files"""
+    """Centralized path configuration for all application files
+    Use like: Paths.SETTINGS['TITLE_MODULE_SETTINGS']
+    """
 
     # Core database files
     DATABASE = {
@@ -65,6 +67,7 @@ class Paths:
     # Settings files. No private information should be in these.
     SETTINGS = {
         "SETTINGS": os.path.join(DATA_DIR, "Settings", "settings.yaml"),
+        "WENJU_SETTINGS": os.path.join(DATA_DIR, "Settings", "wenju_settings.yaml"),
         "DISCORD_SETTINGS": os.path.join(DATA_DIR, "Settings", "discord_settings.yaml"),
         "LANGUAGES_MODULE_SETTINGS": os.path.join(DATA_DIR, "Settings", "languages_settings.yaml"),
         "TITLE_MODULE_SETTINGS": os.path.join(DATA_DIR, "Settings", "title_settings.yaml")
