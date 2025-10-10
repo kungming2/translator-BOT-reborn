@@ -119,8 +119,10 @@ def process_verification(confirming_comment):
 
 def verification_parser():
     """
-    Top-level function to collect requests for verified flairs. Ziwen will write their information into a log
-    and also report their comment to the moderators for inspection and verification.
+    Top-level function to collect requests for verified flairs.
+    Ziwen will write their information into a log
+    and also report their comment to the moderators for inspection
+    and verification.
 
     :return: None
     """
@@ -186,6 +188,8 @@ def verification_parser():
             'verification'
         )
         logger.info(f'[ZW] Updated the verification log with a new request from {author_string}.')
+
+    return
 
 
 VERIFIED_POST_ID = get_verified_thread()
