@@ -13,11 +13,11 @@ commands_optional_args:
   - "!translated"
   - "!doublecheck"
   - "!claim"
+  - "!missing"
 
 commands_no_args:
   - "!long"
   - "!nuke"
-  - "!missing"
   - "!reset"
   - "!verify"
 
@@ -136,9 +136,11 @@ num_users_page: 3
 # use as a reference for points calculation?
 points_months_delta: 3
 
-# Edit tracking variables.
-comment_edit_age_max: 12  # in hours
-# How many comments back we want to check.
+# Edit tracking variables.This determines how old the cache for edited
+# comments is.
+comment_edit_age_max: 18  # in hours
+# This number determines how many comments back the edit tracker should
+# search for.
 comment_edit_num_limit: 30
 
 # Search function uses... (Google or Reddit)
