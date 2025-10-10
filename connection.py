@@ -47,7 +47,7 @@ def chinese_reference_login(credentials):
         client_secret=credentials['CHINESE_APP_SECRET'],
         username=credentials['CHINESE_USERNAME'],
         password=credentials['CHINESE_PASSWORD'],
-        user_agent='Regular maintenance on r/ChineseLanguage'
+        user_agent='Regular tasks on r/ChineseLanguage'
     )
 
     return reddit
