@@ -744,7 +744,7 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     Determine the correct flair CSS and text based on ajo attributes
     and update the Reddit submission flair.
     """
-    from maintenance import STATE
+    from startup import STATE
     testing_mode = SETTINGS['testing_mode']
     post_templates = STATE.post_templates
     submission = REDDIT.submission(id=ajo.id)
