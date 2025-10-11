@@ -95,6 +95,18 @@ class DatabaseManager:
         cursor.execute(query, params)
         return cursor.fetchall()
 
+    def fetch_main(self, query: str, params: tuple = ()):
+        """Return a single row from the MAIN database."""
+        cursor = self.cursor_main
+        cursor.execute(query, params)
+        return cursor.fetchone()
+
+    def fetchall_main(self, query: str, params: tuple = ()):
+        """Return all rows from the MAIN database."""
+        cursor = self.cursor_main
+        cursor.execute(query, params)
+        return cursor.fetchall()
+
 
 """CREATES DATABASES IF THEY DO NOT EXIST"""
 
