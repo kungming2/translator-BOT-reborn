@@ -25,6 +25,7 @@ def translate_part_of_speech(korean_pos):
         '조사': 'particle',
         '수사': 'numeral',
         '관형사': 'determiner',
+        '의존 명사': 'dependent noun',
     }
     return mapping.get(korean_pos, korean_pos)
 
