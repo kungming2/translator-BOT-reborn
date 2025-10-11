@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Handles simple messaging retrieval and sending functions for Discord.
+Handles simple functions to send one-way notifications for Discord.
 """
 import requests
 
-from config import load_settings, Paths
+from config import load_settings, Paths, logger
 
 webhook_settings = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 
@@ -25,7 +25,7 @@ def send_discord_alert(subject, message, webhook_name, roles=None):
 
     webhook_data = select_webhook(webhook_name)
     if not webhook_data:
-        print(f"Webhook not found: '{webhook_name}'. Alert not sent.")
+        logger.error(f"Webhook not found: '{webhook_name}'. Alert not sent.")
         return  # Exit function early if webhook is invalid
 
     webhook_url, image_url, color_hex = webhook_data  # Extract URL, image, and color
@@ -37,7 +37,7 @@ def send_discord_alert(subject, message, webhook_name, roles=None):
     # embed in order to work properly. Roles are sent as a list.
     if roles:
         roles_content = ' '.join(f'<@&{role}>' for role in roles)
-        print(f"Roles: {roles_content}")
+        logger.debug(f"Roles: {roles_content}")
     else:
         roles_content = None
 
@@ -59,4 +59,4 @@ def send_discord_alert(subject, message, webhook_name, roles=None):
         response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"Failed to send Discord alert: {e}")
+        logger.error(f"Failed to send Discord alert: {e}")
