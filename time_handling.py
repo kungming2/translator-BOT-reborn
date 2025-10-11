@@ -5,7 +5,7 @@ Handles time-related conversion tasks.
 Adherence to ISO 8601 or timestamps is strongly emphasized.
 """
 import time
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 
 
 def time_convert_to_string(unix_integer):
@@ -36,6 +36,23 @@ def get_previous_month(year_month):
     previous = f"{previous_year}-{previous_month}"
 
     return previous
+
+
+def messaging_months_elapsed() -> int:
+    """
+    Returns the number of months of statistics since May 2016,
+    when the r/translator redesign was implemented. This is used
+    to assess average posts per language for notifications.
+
+    :return: Number of months since May 2016.
+    """
+    # May 2016 corresponds to 2016 * 12 + 5 = 24197 (January = 1)
+    month_beginning = 2016 * 12 + 5
+
+    today = date.today()
+    total_current_months = today.year * 12 + today.month
+
+    return total_current_months - month_beginning
 
 
 YEAR_MONTH_NOW = time.strftime("%Y-%m")
