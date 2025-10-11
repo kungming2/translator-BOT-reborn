@@ -4,17 +4,22 @@ import datetime
 import re
 import sqlite3
 import time
+from ast import literal_eval
 from collections import Counter
 
+import wikipedia
 from praw.models import TextArea
 from praw.exceptions import RedditAPIException
 
-from config import logger
-from connection import REDDIT
+from config import logger, get_log_directory
+from connection import REDDIT, REDDIT_HELPER, widget_update
 from database import db
 from discord_utils import send_discord_alert
-from languages import converter
+from languages import (converter, select_random_language, get_lingvos,
+                       get_country_emoji, define_language_lists)
+from lookup.reference import get_language_reference
 from main_wenju import task
+from models.ajo import Ajo
 from tasks import WENJU_SETTINGS
 
 
@@ -80,7 +85,7 @@ def _generate_24h_statistics_snippet():
     statuses = []
     for _, _, data, *rest in stored_ajos:
         try:
-            ajo_data = eval(data)  # consider using `ast.literal_eval()` for safety
+            ajo_data = literal_eval(data)
             statuses.append(ajo_data.get("status"))
         except Exception as e:
             logger.warning(f"Skipping malformed entry: {e}")
@@ -177,6 +182,116 @@ def update_sidebar_statistics():
         logger.error("Reddit API error: failed to update New Reddit sidebar widget.")
 
     return
+
+
+@task(schedule='daily')
+def language_of_the_day(selected_language=None):
+    """
+    Formats text for a randomly selected language of the day (ISO 639-3)
+    in Markdown for inclusion in the sidebar of the subreddit as a
+    widget (New Reddit). If the random language is invalid (e.g. a dead
+    language) the function will return `None` and fail gracefully.
+
+    :param selected_language: A selected language to override the random
+                              selection of languages.
+    :return: The text of the widget, or `None` if the information was
+             unable to be obtained.
+    """
+    # Get today's date
+    today = datetime.date.today()
+
+    # Check if today is an even day. Post ISO 639-1 languages on even
+    # days in order to give some more familiar languages.
+    if today.day % 2 == 0:
+        iso_639_1_day = True
+    else:
+        iso_639_1_day = False
+
+    # Language selection logic.
+    # Select a random language and get its data. (returns a Lingvo)
+    if not selected_language and not iso_639_1_day:
+        today_language = select_random_language()
+    elif not selected_language and iso_639_1_day:
+        # Pick a random ISO 639-1 language.
+        today_language = select_random_language(True)
+        logger.info('Selecting an ISO 639-1 language today.')
+    else:
+        today_language = converter(selected_language)
+
+    wikipedia_search_term = f'ISO_639:{today_language.language_code_3}'
+    logger.info(f'Language of the day is: {today_language.name} '
+                f'(`{today_language.language_code_3}`).')
+
+    # Try and fetch the relevant subreddit for that language.
+    if iso_639_1_day:
+        language_subreddit = today_language.subreddit
+        if language_subreddit:
+            logger.info(f"> Subreddit for the language is {language_subreddit}.")
+    else:
+        language_subreddit = None
+
+    # Get data from Wikipedia.
+    try:
+        language_entry_summary = wikipedia.summary(
+            wikipedia_search_term, auto_suggest=False,
+            redirect=True, sentences=2
+        )
+    except (
+            wikipedia.exceptions.DisambiguationError,
+            wikipedia.exceptions.PageError,
+    ):
+        return None
+    else:
+        # Remove sections.
+        if '==' in language_entry_summary:
+            language_entry_summary = language_entry_summary.split('==')[0]
+        # Remove line breaks.
+        language_entry_summary = language_entry_summary.replace('\n', ' ').strip()
+
+    # Fetch data from Ethnologue via the Wayback Machine if it's not an
+    # ISO 639-1 language, and then refresh the Lingvo.
+    if not today_language.language_code_1:
+        get_language_reference(today_language.language_code_3)
+        # Force refresh
+        language_data = get_lingvos(force_refresh=True)
+        logger.info("Variable refreshed.")
+        # Use the refreshed data directly
+        today_language = language_data.get(today_language.language_code_3)
+
+    # Get a couple more variables for prettier formatting.
+    country_emoji = get_country_emoji(today_language.country)
+    language_family_link = (f"https://en.wikipedia.org/wiki/"
+                            f"{today_language.family.replace('_', ' ')}_languages")
+
+    # Format the text together.
+    header = f"#### **{today_language.name}** "
+    if today_language.language_code_1:
+        header += f'`({today_language.language_code_1}`/`{today_language.language_code_3})`\n\n'
+    else:
+        header += f'`({today_language.preferred_code})`\n\n'
+    body = (f"* **Family**: [{today_language.family}]({language_family_link})\n"
+            f"* **Country**: {country_emoji} "
+            f"{today_language.country}\n* **Population**: {today_language.population:,}")
+    if language_subreddit:
+        body += f"\n* **Subreddit**: {language_subreddit}"
+    summary = f"\n\n{language_entry_summary}"
+    full_text = header + body + summary
+
+    # Update the widget.
+    update_success = widget_update("widget_1dn822a2cowgr", full_text)
+    if update_success:
+        # Choose 'a' or 'an' based on the first letter of the language family
+        article = 'an' if today_language.family and today_language.family[0].lower() in 'aeiou' else 'a'
+        code_string = f"`{today_language.preferred_code}`"
+
+        # Notify Discord.
+        language_blurb = (
+            f"The language of the day is **{today_language.name}** ({code_string}), "
+            f"{article} {today_language.family} language. {language_entry_summary}")
+        send_discord_alert(f'Language of the Day: {country_emoji} {today_language.name}',
+                           language_blurb, 'lotd')
+
+    return full_text
 
 
 @task(schedule='daily')
@@ -286,42 +401,165 @@ def update_verified_list():
 
     # Commit the edit.
     verified_page.edit(content=final_update, reason="Updating the verified list.")
-    logger.info("[WJ] > Verified list on the wiki updated.")
+    logger.info("> Verified list on the wiki updated.")
 
     return
 
 
 @task(schedule='weekly')
-def weekly_notify_list_statistics_calculator():
+def deleted_posts_assessor(start_time: int | None = None,
+                           end_time: int | None = None) -> None:
     """
-    Gather statistics on the state of our notifications and
+    Gathers data on individuals who deleted their posts from the subreddit,
+    focusing on those who deleted translated posts without thanking their translators.
+
+    :param start_time: Starting boundary as a UNIX timestamp.
+    :param end_time: Ending boundary as a UNIX timestamp.
+    :return: None — saves the report to a Markdown log file.
+    """
+    log_directory = get_log_directory()
+    today = datetime.date.today().strftime("%Y-%m-%d")
+
+    # Default to the last 7 days if no time range provided
+    if start_time is None or end_time is None:
+        end_time = int(time.time())
+        start_time = end_time - 604800  # 7 days
+
+    # Fetch relevant Ajo entries from the database
+    query = "SELECT * FROM ajo_database WHERE created_utc BETWEEN ? AND ?"
+    stored_ajos = db.fetchall_ajo(query, (start_time, end_time))
+    logger.debug(f"Fetched {len(stored_ajos)} entries from local_database.")
+
+    # Parse and store relevant Ajos keyed by post ID
+    relevant_ajos = {
+        row[0]: Ajo.from_dict(row[2]) for row in stored_ajos
+    }
+
+    # Retrieve submissions via Reddit API
+    submission_fullnames = [f"t3_{pid}" for pid in relevant_ajos]
+    submissions = list(REDDIT_HELPER.info(fullnames=submission_fullnames))
+
+    deleted_submissions = {}
+    for submission in submissions:
+        author_name = getattr(submission.author, "name", None)
+        if author_name:
+            logger.debug(f"Author u/{author_name} is active.")
+        else:
+            deleted_submissions[submission.id] = submission
+            logger.debug("Author is deleted.")
+
+    deleted_percentage = len(deleted_submissions) / len(submissions) if submissions else 0
+    logger.info(f"Deleted percentage: {deleted_percentage:.2%}")
+
+    authors = []
+    translated_deleted = []
+
+    # Compare deleted posts with cached Ajo data
+    for post_id, submission in deleted_submissions.items():
+        cached = relevant_ajos.get(post_id, {})
+        author = cached.get("author", "[unknown]")
+        authors.append(author)
+
+        # Flag posts marked as translated or doublecheck
+        if cached.get("status") in {"translated", "doublecheck"}:
+            translated_deleted.append((submission, author))
+
+    # Identify deleted posts where OP never commented (impolite deletions)
+    impolite_entries = []
+    for submission, original_author in translated_deleted:
+        comments = submission.comments.list()
+        if not any(
+            getattr(comment.author, "name", None) == original_author
+            for comment in comments
+        ):
+            impolite_entries.append((submission, original_author))
+
+    # Summarize frequent deleters
+    active_authors = [a for a in authors if a not in ("[deleted]", "[unknown]")]
+    offender_counts = Counter(active_authors)
+    top_offenders = offender_counts.most_common(5)
+
+    offenders_text = (
+        "#### Most Frequent Deleters\n\n" +
+        "\n".join(f"* u/{name}: {count}" for name, count in top_offenders)
+    )
+
+    # Summarize impolite deletions
+    if impolite_entries:
+        impolite_table = "\n".join(
+            f"| u/{author} | [{submission.title}]"
+            f"(https://www.reddit.com{submission.permalink}) |"
+            for submission, author in impolite_entries
+        )
+        impolite_text = (
+            "\n\n#### Deleted Without Thanks (Impolite)\n\n"
+            "| Username | Link |\n|----|----|\n" + impolite_table
+        )
+    else:
+        impolite_text = "\n\n#### Deleted Without Thanks (Impolite)\n\n_None_"
+
+    # Build the report
+    report = (
+        f"## Deleted Posts Data for {today}\n\n"
+        f"**Deleted Posts Percentage:** {deleted_percentage:.2%} "
+        f"({len(deleted_submissions)}/{len(submissions)})\n\n"
+        f"{offenders_text}"
+        f"{impolite_text}"
+    )
+
+    # Save the report to Markdown
+    log_path = f"{log_directory}/{today}_Deleted.md"
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write(report)
+
+    logger.info(f"weekly_deleted_posts_assessor: Report saved to {log_path}.")
+
+    return
+
+
+@task(schedule='weekly')
+def notify_list_statistics_calculator() -> None:
+    """
+    Gather statistics on the state of our notifications database and
     write the results to a Markdown file.
 
     :return: None
     """
-    today_date = date.today().strftime("%Y-%m-%d")
+    log_directory = get_log_directory()
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    # Fetch ISO 639-1 languages and ensure they are all strings
+    iso_639_1_languages_raw = define_language_lists().get('ISO_639_1', [])
+    iso_639_1_languages: list[str] = [str(code) for code in iso_639_1_languages_raw if code is not None]
 
-    # Fetch all notification subscriptions from the database
-    cursor_main.execute("SELECT * FROM notify_users")
-    all_subscriptions = cursor_main.fetchall()
+    # Fetch all notification subscriptions from the main database
+    all_subscriptions = db.fetchall_main(
+        "SELECT * FROM notify_users", (),  # not actually in AJO but uses fetch_ajo pattern
+    )
 
-    # Extract unique language codes
-    all_lang_codes = list({sub[0] for sub in all_subscriptions})
+    if not all_subscriptions:
+        logger.warning("[WY] No subscriptions found in notify_users.")
+        return
 
-    # Build the Markdown table of languages and subscriber counts
+    # Extract unique language codes and ensure they are strings
+    all_lang_codes = sorted({str(row[0]) for row in all_subscriptions if row[0] is not None})
+
+    # Build Markdown table of languages and subscriber counts
     format_lines = []
-    for code in sorted(all_lang_codes):
-        cursor_main.execute(
-            "SELECT COUNT(*) FROM notify_users WHERE language_code = ?", (code,)
+    for code in all_lang_codes:
+        if code in ['meta', 'community']:
+            continue
+        row = db.fetch_main(
+            "SELECT COUNT(*) FROM notify_users WHERE language_code = ?",
+            (code,),
         )
-        code_num = cursor_main.fetchone()[0]
-        name = converter(code)[1] or code.title()  # Meta/community fallback
-        format_lines.append(f"{name} | {code_num}")
+        code_count = row[0] if row else 0
+        name = converter(code).name
+        format_lines.append(f"{name} | `{code}` | {code_count}")
 
     # Calculate statistics
-    unique_lang = len(all_lang_codes)
-    total_subscriptions = len(all_subscriptions)
-    average_per = total_subscriptions / unique_lang if unique_lang else 0
+    unique_langs = len(all_lang_codes)
+    total_subs = len(all_subscriptions)
+    average_per = total_subs / unique_langs if unique_langs else 0
 
     # Identify duplicate subscriptions
     duplicates = [item for item, count in Counter(all_subscriptions).items() if count > 1]
@@ -329,39 +567,45 @@ def weekly_notify_list_statistics_calculator():
 
     # Compose summary section
     summary = (
-        f"## Notifications Database Data for {today_date}\n\n"
-        f"* Unique entries in notifications database: {unique_lang:,} languages\n"
-        f"* Total subscriptions in notifications database: {total_subscriptions:,} subscriptions\n"
+        f"## Notifications Database Data for {today}\n\n"
+        f"* Unique entries in notifications database: {unique_langs:,} languages\n"
+        f"* Total subscriptions in notifications database: {total_subs:,} subscriptions\n"
         f"* Average notification subscriptions per entry: {average_per:.2f} subscribers\n"
     )
 
-    # Build the subscriber table
-    header = "\n\nLanguage | Subscribers\n-----|-----\n"
+    # Subscriber table section
+    header = "\n\nLanguage | Code | Subscribers\n------|------|-----\n"
     total_table = header + "\n".join(format_lines)
-    logger.debug(f"[WY] notify_list_statistics_calculator: Total = {total_subscriptions:,}")
+    logger.debug(f"[WY] notify_list_statistics_calculator: Total = {total_subs:,}")
 
-    # Calculate missing ISO 639-1 languages
+    # Calculate missing ISO 639-1 languages (type-safe)
     ignore_codes = {"bh", "en", "nn", "nb"}
-    iso_sorted = sorted(MAIN_LANGUAGES.keys(), key=str.lower)
+    iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
-        f"{code} | {converter(code)[1]}"
+        f"`{code}` | {converter(code).name}"
         for code in iso_sorted
         if code not in all_lang_codes and len(code) == 2 and code not in ignore_codes
     ]
-    missing_codes_num = len(missing_codes)
+    missing_num = len(missing_codes)
 
-    missing_codes_section = (
-        f"\n### No Subscribers ({missing_codes_num} ISO 639-1 languages)\n"
-        f"Code | Language\n---|----\n"
+    missing_section = (
+        f"\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
+        "Code | Language Name\n---|----\n"
         + "\n".join(missing_codes)
     )
 
-    # Combine everything into the final Markdown report
-    notify_log_data = f"{summary}\n{total_table}\n{missing_codes_section}\n\n{dupe_subs}"
+    # Combine into final Markdown
+    final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"
 
-    # Write to a file labeled with today's date
-    output_path = f"{log_directory}/{today_date}_Notifications.md"
+    # Write to file
+    output_path = f"{log_directory}/{today}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(notify_log_data)
+        f.write(final_text)
 
-    logger.info("[WJ] weekly_notify_list_statistics_calculator: Notifications data saved.")
+    logger.info(f"notify_list_statistics_calculator: Report saved to {output_path}.")
+
+    return
+
+
+if __name__ == "__main__":
+    print(notify_list_statistics_calculator())
