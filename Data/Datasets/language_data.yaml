@@ -99,8 +99,9 @@ ace:
   language_code_3: ace
   link_ethnologue: https://www.ethnologue.com/language/ace
   link_wikipedia: https://en.wikipedia.org/wiki/ISO_639
-  name: Acehnese
+  name: Achinese
   name_alternates:
+  - Acehnese
   - Achehnese
   - Atjehnese
   - Basa Acèh
@@ -818,8 +819,8 @@ ba:
 bal:
   country: Pakistan
   family: Indo-European
-  language_code_3: bgp
-  link_ethnologue: https://www.ethnologue.com/language/bgp
+  language_code_3: bal
+  link_ethnologue: https://www.ethnologue.com/language/bal
   link_wikipedia: https://en.wikipedia.org/wiki/Balochi_language
   name: Baluchi
   name_alternates:
@@ -1049,6 +1050,19 @@ bgc:
   - Haryani
   - Jatu
   population: 16000000
+bgp:
+  country: Pakistan
+  family: Indo-European
+  language_code_3: bgp
+  link_ethnologue: https://www.ethnologue.com/language/bgp
+  link_wikipedia: https://en.wikipedia.org/wiki/Balochi_language
+  name: Eastern Balochi
+  name_alternates:
+  - Baloci
+  - Baluchi
+  - Baluci
+  - Eastern Hill Balochi
+  population: 3530800
 bgq:
   country: India
   family: Indo-European
@@ -3041,6 +3055,21 @@ gdx:
   name: Godwari
   name_alternates: []
   population: 3000000
+gej:
+  country: Togo
+  family: Niger-Congo
+  language_code_3: gej
+  link_ethnologue: https://www.ethnologue.com/language/gej
+  link_wikipedia: https://en.wikipedia.org/wiki/Gen_language
+  name: Gen
+  name_alternates:
+  - Ge
+  - Gebe
+  - Guin
+  - Mina
+  - Mina-Gen
+  - Popo
+  population: 325000
 gez:
   country: Ethiopia
   family: Afro-Asiatic
@@ -3893,6 +3922,18 @@ ike:
   - Inuit
   - Inuit of Quebec
   population: 35200
+ikt:
+  country: Canada
+  family: Eskimo-Aleut
+  language_code_3: ikt
+  link_ethnologue: https://www.ethnologue.com/language/ikt
+  link_wikipedia: https://en.wikipedia.org/wiki/Inuvialuktun
+  name: Inuinnaqtun
+  name_alternates:
+  - Western Canada Inuktun
+  - Western Canadian Inuit
+  - Western Canadian Inuktitut
+  population: 1020
 ilg:
   country: Australia
   family: Australian
@@ -4945,6 +4986,16 @@ ky:
   - Kirgiz
   population: 4908350
   subreddit: learnkyrgyz
+kya:
+  country: Tanzania
+  family: Niger-Congo
+  language_code_3: kya
+  link_ethnologue: https://www.ethnologue.com/language/kya
+  link_wikipedia: https://en.wikipedia.org/wiki/Kwaya_language
+  name: Kwaya
+  name_alternates:
+  - Kikwaya
+  population: 115000
 kzv:
   country: Indonesia
   family: Trans-New Guinea
@@ -5997,6 +6048,32 @@ ms:
   subreddit: bahasamelayu
   supported: true
   thanks: Terima kasih
+msb:
+  country: Philippines
+  family: Austronesian
+  language_code_3: msb
+  link_ethnologue: https://www.ethnologue.com/language/msb
+  link_wikipedia: https://en.wikipedia.org/wiki/Masbate%C3%B1o_language
+  name: Masbatenyo
+  name_alternates:
+  - Masbateño
+  - Minasbate
+  population: 724000
+msy:
+  country: Papua New Guinea
+  family: Ramu-Lower Sepik
+  language_code_3: msy
+  link_ethnologue: https://www.ethnologue.com/language/msy
+  link_wikipedia: https://en.wikipedia.org/wiki/Aruamu_language
+  name: Aruamu
+  name_alternates:
+  - Ariawiai
+  - Makarub
+  - Makarup
+  - Mikarew
+  - Mikarew-Ariaw
+  - Mikarup
+  population: 12000
 mt:
   country: Malta
   family: Afro-Asiatic
@@ -6867,6 +6944,7 @@ or:
   country: India
   family: Indo-European
   greetings: ନମସ୍କାର
+  language_code_1: or
   language_code_3: ori
   link_ethnologue: https://www.ethnologue.com/language/ori
   link_wikipedia: https://en.wikipedia.org/wiki/Odia_language
@@ -6917,6 +6995,12 @@ otk:
   language_code_3: otk
   link_wikipedia: https://en.wikipedia.org/wiki/Old_Turkic_language
   name: Old Turkish
+  population: 0
+oui:
+  family: Turkic
+  language_code_3: oui
+  link_wikipedia: https://en.wikipedia.org/wiki/Old_Uyghur
+  name: Old Uyghur
   population: 0
 pa:
   countries_default: PK
@@ -7124,6 +7208,18 @@ pl:
   subreddit: learnpolish
   supported: true
   thanks: Dzięki
+plk:
+  country: Pakistan
+  family: Indo-European
+  language_code_3: plk
+  link_ethnologue: https://www.ethnologue.com/language/plk
+  link_wikipedia: https://en.wikipedia.org/wiki/Kohistani_Shina
+  name: Kohistani Shina
+  name_alternates:
+  - Kohistani
+  - Kohistyo
+  - Palasi-Kohistani
+  population: 401000
 pnb:
   country: Pakistan
   family: Indo-European
@@ -7141,6 +7237,36 @@ pnb:
   - Punjapi
   - Shahmukhi
   population: 92725700
+pnk:
+  country: Bolivia
+  family: Maipurean
+  language_code_3: pnk
+  link_ethnologue: https://www.ethnologue.com/language/pnk
+  link_wikipedia: https://en.wikipedia.org/wiki/Paunaka_language
+  name: Paunaka
+  name_alternates:
+  - Pauna
+  - Paunaca
+  population: 201
+pok:
+  country: Brazil
+  family: Tucanoan
+  language_code_3: pok
+  link_ethnologue: https://www.ethnologue.com/language/pok
+  link_wikipedia: https://en.wikipedia.org/wiki/Waimaj%C3%A3_language
+  name: Pokanga
+  name_alternates:
+  - Bara Sona
+  - Barasana
+  - Barasano
+  - Bará
+  - Bará-Tukano
+  - Hanera
+  - Pakang
+  - Panenoá
+  - Pokangá-Tapuya
+  - Pãnerã
+  population: 201
 pon:
   country: Micronesia
   family: Austronesian
@@ -8482,6 +8608,20 @@ stq:
   - Saterlandic Frisian
   - Saterländisch
   population: 2000
+str:
+  country: Canada
+  family: Salish
+  language_code_3: str
+  link_ethnologue: https://www.ethnologue.com/language/str
+  link_wikipedia: https://en.wikipedia.org/wiki/North_Straits_Salish_language
+  name: Straits Salish
+  name_alternates:
+  - Malchosen
+  - Northern Straits Salish
+  - Sooke
+  - Straits
+  - T’Sou-ke
+  population: 3060
 sty:
   country: Russian Federation
   family: Turkic
@@ -9762,6 +9902,17 @@ vi:
   subreddit: vietnamese
   supported: true
   thanks: Cảm ơn
+vis:
+  country: India
+  family: Dravidian
+  language_code_3: vis
+  link_ethnologue: https://www.ethnologue.com/language/vis
+  link_wikipedia: https://en.wikipedia.org/wiki/Vishavan_language
+  name: Vishavan
+  name_alternates:
+  - Malankudi
+  - Malarkuti
+  population: 199
 vnm:
   country: Vanuatu
   family: Austronesian
@@ -10410,6 +10561,16 @@ za:
   link_wikipedia: https://en.wikipedia.org/wiki/Yongbei_Zhuang
   name: Zhuang
   population: 1980000
+zam:
+  country: Mexico
+  family: Otomanguean
+  language_code_3: zam
+  link_ethnologue: https://www.ethnologue.com/language/zam
+  link_wikipedia: https://en.wikipedia.org/wiki/Miahuatl%C3%A1n_Zapotec
+  name: Miahuatlan Zapotec
+  name_alternates:
+  - Zapoteco de Miahuatlán
+  population: 1000
 zbe:
   country: Malaysia
   family: Austronesian
@@ -10494,6 +10655,19 @@ zia:
   - Tsia
   - Ziya
   population: 4550
+zim:
+  country: Chad
+  family: Afro-Asiatic
+  language_code_3: zim
+  link_ethnologue: https://www.ethnologue.com/language/zim
+  link_wikipedia: https://en.wikipedia.org/wiki/Mesme_language
+  name: Mesme
+  name_alternates:
+  - Djime
+  - Djiwe
+  - Zime
+  - Zime of Kélo
+  population: 20100
 zkh:
   family: Turkic
   language_code_3: zkh
