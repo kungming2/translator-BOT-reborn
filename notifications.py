@@ -15,7 +15,7 @@ from config import logger, SETTINGS
 from connection import is_valid_user, REDDIT
 from database import db, record_activity_csv
 from languages import converter, Lingvo, language_module_settings, country_converter
-from maintenance import STATE
+from startup import STATE
 from models.ajo import ajo_loader
 from reddit_sender import message_send
 from responses import RESPONSE
