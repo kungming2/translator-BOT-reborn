@@ -11,7 +11,7 @@ import wikipedia
 from praw.models import TextArea
 from praw.exceptions import RedditAPIException
 
-from config import logger, get_log_directory
+from config import logger, get_log_directory, SETTINGS
 from connection import REDDIT, REDDIT_HELPER, widget_update
 from database import db
 from discord_utils import send_discord_alert
@@ -546,7 +546,7 @@ def notify_list_statistics_calculator() -> None:
     # Build Markdown table of languages and subscriber counts
     format_lines = []
     for code in all_lang_codes:
-        if code in ['meta', 'community']:
+        if code in SETTINGS['internal_post_types']:
             continue
         row = db.fetch_main(
             "SELECT COUNT(*) FROM notify_users WHERE language_code = ?",
