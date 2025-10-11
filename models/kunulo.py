@@ -21,12 +21,15 @@ from connection import REDDIT_HELPER
 class Kunulo:
     """
     This class generally contains a dictionary keyed by the comment type
-    and the comment ID it is linked to.
+    and the comment ID it is linked to, along with optional associated data.
     Another Boolean stores whether the OP has thanked people.
+
+    Internal storage format: Each tag maps to a list of (comment_id, data) tuples.
+    Legacy format (just comment IDs) is automatically converted for compatibility.
 
     To use: kunulo = Kunulo.from_submission(reddit_submission)
     Example output:
-    <Kunulo: ({'comment_unknown': ['nijg7y3']}) | OP Thanks: False>
+    <Kunulo: ({'comment_unknown': [('nijg7y3', None)]}) | OP Thanks: False>
     """
     anchor_pattern = re.compile(r"\[]\(#([a-zA-Z0-9_]+)\)")
 
@@ -38,24 +41,122 @@ class Kunulo:
     def __repr__(self):
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
+    @staticmethod
+    def _normalize_entry(entry):
+        """
+        Convert entry to (comment_id, data) format for internal consistency.
+        Handles legacy format where entries might be just strings.
+
+        Args:
+            entry: Either a string (comment_id) or tuple (comment_id, data)
+
+        Returns:
+            tuple: (comment_id, data) format
+        """
+        if isinstance(entry, tuple):
+            return entry
+        return entry, None  # Legacy format: just ID, no associated data
+
+    @staticmethod
+    def _extract_cjk_characters(comment_body):
+        """
+        Extract CJK characters from markdown headers in comment body.
+
+        Parses lines starting with '# [' and extracts the CJK characters
+        before any parentheses. For example:
+        - "# [古](url)" -> "古"
+        - "# [劍 (剑)](url)" -> "劍"
+
+        Args:
+            comment_body: The raw Markdown text of the comment
+
+        Returns:
+            list: List of CJK character strings found in headers
+        """
+        cjk_chars = []
+        # Pattern to match: # [characters (optional)](url)
+        # Captures text between [ and either ( or ]
+        header_pattern = re.compile(r'^#\s+\[([^](\[]+?)(?:\s*\(|])', re.MULTILINE)
+
+        for match in header_pattern.finditer(comment_body):
+            char = match.group(1).strip()
+            if char:
+                cjk_chars.append(char)
+
+        return cjk_chars
+
+    @staticmethod
+    def _extract_wikipedia_terms(comment_body):
+        """
+        Extract Wikipedia search terms from bold Markdown links in comment body.
+
+        Parses lines with **[term](url) pattern and extracts the term.
+        For example:
+        - "**[error](https://en.wikipedia.org/wiki/error)**" -> "error"
+
+        Args:
+            comment_body: The raw Markdown text of the comment
+
+        Returns:
+            list: List of Wikipedia search terms found
+        """
+        terms = []
+        # Pattern to match: **[term](url)** or **[term]
+        # Captures text between [ and ]
+        wiki_pattern = re.compile(r'\*\*\[([^]]+)]')
+
+        for match in wiki_pattern.finditer(comment_body):
+            term = match.group(1).strip()
+            if term:
+                terms.append(term)
+
+        return terms
+
+    def _add_entry(self, tag, comment_id, data=None):
+        """
+        Add an entry, storing as tuple (comment_id, data).
+
+        Args:
+            tag: The tag identifier
+            comment_id: The Reddit comment ID
+            data: Optional associated data (e.g., words, characters)
+        """
+        self._data.setdefault(tag, []).append((comment_id, data))
+
     @classmethod
     def from_submission(cls, submission):
-        # This is how it is usually called.
-        # Accepts a PRAW submission object.
+        """
+        Create a Kunulo instance from a PRAW submission object.
+
+        Args:
+            submission: PRAW submission object
+
+        Returns:
+            Kunulo: Instance populated with comment data from the submission
+        """
         thanks_keywords = SETTINGS['thanks_keywords']
         thanks_negation_keywords = SETTINGS['thanks_negation_keywords']
-        data = {}
+        instance = cls()
         op_thanks = False
 
         op_author = submission.author.name if submission.author else None
         submission.comments.replace_more(limit=None)
+
         for comment in submission.comments.list():
             comment_author = comment.author.name if comment.author else None
             comment_body = comment.body.lower()  # for easier matching
-            # Gather bot's anchor tags as before
+
+            # Gather bot's anchor tags
             if comment_author == 'translator-BOT':
                 for tag in cls.anchor_pattern.findall(comment.body):
-                    data.setdefault(tag, []).append(comment.id)
+                    # Extract associated data based on tag type
+                    associated_data = None
+                    if tag == 'comment_cjk':
+                        associated_data = cls._extract_cjk_characters(comment.body)
+                    elif tag == 'comment_wikipedia':
+                        associated_data = cls._extract_wikipedia_terms(comment.body)
+                    instance._add_entry(tag, comment.id, associated_data)
+
             # Check for OP thanking (case-insensitive)
             # Don't count as thanks if negation keywords are present
             if not op_thanks and comment_author == op_author:
@@ -64,11 +165,15 @@ class Kunulo:
                 if has_thanks and not has_negation:
                     op_thanks = True
 
-        instance = cls(data, op_thanks)
+        instance._op_thanks = op_thanks
         instance._submission = submission  # Store submission reference
         return instance
 
     def __getattr__(self, tag):
+        """
+        Allow attribute-style access to tags.
+        Returns list of (comment_id, data) tuples for backward compatibility.
+        """
         if tag == 'op_thanks':
             return self._op_thanks
         if tag in self._data:
@@ -77,7 +182,7 @@ class Kunulo:
 
     def get_tag(self, tag):
         """
-        Get the first comment ID associated with a tag.
+        Get the first comment ID associated with a tag (backward compatible).
 
         Args:
             tag: The tag identifier to look up
@@ -85,7 +190,54 @@ class Kunulo:
         Returns:
             str or None: The first comment ID if the tag exists, None otherwise
         """
-        return self._data.get(tag, [None])[0]
+        entries = self._data.get(tag, [])
+        if not entries:
+            return None
+        entry = self._normalize_entry(entries[0])
+        return entry[0]  # Return just the comment ID
+
+    def get_tag_with_data(self, tag, index=0):
+        """
+        Get the comment ID and its associated data for a tag.
+
+        Args:
+            tag: The tag identifier to look up
+            index: Which entry to retrieve if multiple exist (default: 0)
+
+        Returns:
+            tuple or (None, None): (comment_id, data) if the tag exists, (None, None) otherwise
+        """
+        entries = self._data.get(tag, [])
+        if not entries or index >= len(entries):
+            return None, None
+        entry = self._normalize_entry(entries[index])
+        return entry  # Return (comment_id, data) tuple
+
+    def get_all_entries(self, tag):
+        """
+        Get all entries for a tag as a list of (comment_id, data) tuples.
+
+        Args:
+            tag: The tag identifier to look up
+
+        Returns:
+            list: List of (comment_id, data) tuples, or empty list if tag doesn't exist
+        """
+        entries = self._data.get(tag, [])
+        return [self._normalize_entry(e) for e in entries]
+
+    def get_comment_ids(self, tag):
+        """
+        Get all comment IDs for a tag (without associated data).
+
+        Args:
+            tag: The tag identifier to look up
+
+        Returns:
+            list: List of comment IDs, or empty list if tag doesn't exist
+        """
+        entries = self._data.get(tag, [])
+        return [self._normalize_entry(e)[0] for e in entries]
 
     def delete(self, tag):
         """
@@ -106,12 +258,13 @@ class Kunulo:
                 "Use Kunulo.from_submission() to create an instance with delete capability."
             )
 
-        comment_ids = self._data.get(tag, [])
-        if not comment_ids:
+        entries = self._data.get(tag, [])
+        if not entries:
             return 0
 
         deleted_count = 0
-        for comment_id in comment_ids:
+        for entry in entries:
+            comment_id = self._normalize_entry(entry)[0]
             try:
                 comment = self._submission.reddit.comment(comment_id)
                 comment.delete()
