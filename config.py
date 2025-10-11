@@ -3,9 +3,10 @@
 """
 Handles directing of paths as well as the logger.
 """
-
 import logging
 import os
+from pathlib import Path
+from datetime import datetime
 
 import yaml
 
@@ -81,6 +82,25 @@ class Paths:
         "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
         "ALL_SAVED": os.path.join(DATA_DIR, "Archival", "all_saved.md"),
     }
+
+
+def get_log_directory(base_dir: Path | None = None) -> Path:
+    """
+    Return the Path object for the current month's log directory.
+    This used for digest reports by tasks in the tasks folder.
+
+    :param base_dir: Optional base path for data storage.
+                     Defaults to the "Data" folder next to this file.
+    :return: A Path object for the monthly log directory, e.g.:
+             /path/to/Data/Logs/2025-10
+    """
+    if base_dir is None:
+        base_dir = Path(__file__).resolve().parent / "Data"
+
+    current_month = datetime.now().strftime("%Y-%m")
+    log_dir = base_dir / "Logs" / current_month
+
+    return log_dir
 
 
 def set_up_logger():
