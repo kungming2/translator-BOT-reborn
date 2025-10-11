@@ -13,6 +13,7 @@ import yaml
 
 from commands.lookup_cjk import perform_cjk_lookups
 from config import Paths, load_settings
+from database import search_database
 from languages import converter, select_random_language
 from lookup.reference import get_language_reference
 from title_handling import process_title
@@ -87,7 +88,8 @@ async def lang_convert(ctx, *, language_input: str):
 
 async def _search_logs(ctx, search_term: str, term_type: str):
     """
-    Internal helper function to search through log files for a given term.
+    Internal helper function to search through log files and the
+    Ajo database for a given term, which can be a username or a post ID.
 
     Args:
         ctx: Discord context
@@ -101,40 +103,74 @@ async def _search_logs(ctx, search_term: str, term_type: str):
     }
 
     try:
-        all_matching_lines = []
+        log_lines = []
 
-        # Search through both log files
+        # Search through log files
         for log_name, log_path in log_files.items():
             try:
                 with open(log_path, 'r', encoding='utf-8', errors='replace') as log_file:
                     for line in log_file:
                         if search_term in line:
-                            # Prepend log source to each line
-                            all_matching_lines.append(f"[{log_name}] {line.strip()}")
+                            log_lines.append(f"[{log_name}] {line.strip()}")
             except FileNotFoundError:
                 await ctx.send(f"Warning: {log_name} log file not found at `{log_path}`")
                 continue
 
-        # Send results back to the user
-        if all_matching_lines:
-            response = f"Found {len(all_matching_lines)} line(s) for {term_type} `{search_term}`:\n```\n"
+        # Search database for historical information
+        db_results = search_database(search_term, term_type)
 
-            for line in all_matching_lines:
+        # Check if we have any results at all
+        if not log_lines and not db_results:
+            await ctx.send(f"No entries found for {term_type} `{search_term}` in log files or database.")
+            return
+
+        # Build response with sections
+        response = f"Search results for {term_type} `{search_term}`:\n```\n"
+
+        # Add log file results
+        if log_lines:
+            response += f"=== LOG FILES ({len(log_lines)} matches) ===\n"
+            for line in log_lines:
                 # Check if adding this line would exceed Discord's limit
-                if len(response) + len(line) + 10 > 1900:  # Leave buffer for closing backticks
+                if len(response) + len(line) + 10 > 1900:
                     response += "```"
                     await ctx.send(response)
                     response = "```\n"
 
                 response += line + "\n"
 
-            response += "```"
-            await ctx.send(response)
-        else:
-            await ctx.send(f"No entries found for {term_type} `{search_term}` in the log files.")
+            response += "\n"  # Extra spacing between sections
+
+        # Add database results
+        if db_results:
+            response += f"=== DATABASE ({len(db_results)} records) ===\n"
+            for ajo in db_results:
+                # Format the Ajo object as a string
+                ajo_str = (
+                    f"Post ID: {ajo.id}\n"
+                    f"  Status: {ajo.status}\n"
+                    f"  Language: {ajo.language_name} ({ajo.preferred_code})\n"
+                    f"  Title: {ajo.title}\n"
+                    f"  Direction: {ajo.direction}\n"
+                    f"---"
+                )
+
+                # Check if adding this entry would exceed Discord's limit
+                if len(response) + len(ajo_str) + 10 > 1900:
+                    response += "```"
+                    await ctx.send(response)
+                    response = "```\n"
+
+                response += ajo_str + "\n"
+
+        response += "```"
+        print(response)
+        await ctx.send(response)
 
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 @bot.command(name='user',
@@ -262,4 +298,5 @@ async def error_logs(ctx):
         await ctx.send(f"An error occurred while reading error logs: {str(e)}")
 
 
-bot.run(DISCORD_TOKEN)
+if __name__ == '__main__':
+    bot.run(DISCORD_TOKEN)
