@@ -18,9 +18,8 @@ from discord_utils import send_discord_alert
 from languages import (converter, select_random_language, get_lingvos,
                        get_country_emoji, define_language_lists)
 from lookup.reference import get_language_reference
-from main_wenju import task
 from models.ajo import Ajo
-from tasks import WENJU_SETTINGS
+from tasks import WENJU_SETTINGS, task
 
 
 @task(schedule='hourly')

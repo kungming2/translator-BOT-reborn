@@ -13,8 +13,7 @@ from config import logger, Paths, SETTINGS
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from languages import converter
-from main_wenju import task
-from tasks import WENJU_SETTINGS
+from tasks import WENJU_SETTINGS, task
 from time_handling import get_previous_month, messaging_months_elapsed
 
 

@@ -13,8 +13,7 @@ import yaml
 from config import logger, Paths, get_log_directory
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
-from main_wenju import task
-from tasks import WENJU_SETTINGS
+from tasks import WENJU_SETTINGS, task
 
 
 def activity_csv_handler():

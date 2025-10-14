@@ -7,7 +7,7 @@ from datetime import date, datetime
 from config import logger
 from connection import REDDIT
 from database import db
-from main_wenju import task
+from tasks import task
 from notifications import notifier_internal
 from responses import RESPONSE
 
