@@ -145,3 +145,8 @@ comment_edit_num_limit: 30
 
 # Search function uses... (Google or Reddit)
 search_engine: Reddit
+
+# Duplicate detector settings
+duplicate_semantic_threshold: 0.85
+duplicate_fuzzy_threshold: 85
+duplicate_age_limit: 24  # in hours
