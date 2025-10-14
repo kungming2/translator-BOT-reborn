@@ -151,8 +151,6 @@ def widget_update(widget_id, new_text):
     Update a text widget on a subreddit with new content.
 
     Args:
-        reddit: Authenticated PRAW Reddit instance
-        subreddit_name: Name of the subreddit (without r/)
         widget_id: ID of the widget to update
         new_text: New text content for the widget
 
@@ -190,10 +188,46 @@ def widget_update(widget_id, new_text):
         return False
 
 
+def _fetch_removal_reasons():
+    """
+    Fetches the removal reasons present on r/translator.
+    :return: `None` if there's nothing, a dictionary containing tuples
+    indexed by numbers otherwise.
+    """
+
+    reasons = [
+        (removal_reason.title, removal_reason.id, removal_reason.message)
+        for removal_reason in REDDIT.subreddit('translator').mod.removal_reasons
+    ]
+
+    if reasons:
+        return {index + 1: value for index, value in enumerate(reasons)}
+    else:
+        return None
+
+
+def search_removal_reasons(prompt):
+    """Takes a prompt and searches through removal reasons fetched from
+    the subreddit, returning the specific removal reason ID if found.
+    E.g. the prompt could be "spam".
+    """
+
+    reasons_dict = _fetch_removal_reasons()
+    logger.info(f"Removal reason IDs: {reasons_dict}")
+
+    if not reasons_dict:
+        return None
+
+    for entry, entry_id, _description in reasons_dict.values():
+        if prompt.lower().strip() in entry.lower():
+            return entry_id
+    return None
+
+
 credentials_source = load_settings(Paths.AUTH['CREDENTIALS'])
 REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
 
 if __name__ == "__main__":
-    print(get_random_useragent())
+    print(_fetch_removal_reasons())
     print(is_mod(REDDIT.redditor('kungming2')))
