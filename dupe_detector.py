@@ -19,7 +19,10 @@ import numpy as np
 from rapidfuzz import fuzz
 
 from config import logger
-from connection import is_mod, REDDIT
+from connection import is_mod, REDDIT, search_removal_reasons
+from reddit_sender import message_reply
+from responses import RESPONSE
+from statistics import action_counter
 
 
 class DuplicateDetector:
@@ -92,9 +95,10 @@ class DuplicateDetector:
         Returns:
             List of integers found in the text
         """
-        # Match numbers with various contexts: #1, episode 5, part 3, etc.
+        # Match numbers with various contexts: #1, episode 5, part 3, pt 2, etc.
         patterns = [
-            r'(?:episode|ep|part|chapter|ch|#)\s*(\d+)',  # Contextual numbers
+            r'(?:episode|ep|part|pt|chapter|ch|#|letter)\s*(\d+)',  # Contextual numbers
+            r'\((?:pt|part)\s*(\d+)\)',  # Numbers in parentheses: (pt 1), (part 2)
             r'(?<=[\s\.\(\[\-])\d+(?=[\s\.\)\]\-]|$)',  # Standalone numbers
         ]
 
@@ -242,13 +246,12 @@ class DuplicateDetector:
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         return hashlib.sha256(cleaned.encode()).hexdigest()
 
-    def detect_duplicates(self, list_posts, image_hash_detector=None):
+    def detect_duplicates(self, list_posts, ):
         """
         Main duplicate detection function with enhanced algorithms.
 
         Args:
             list_posts: List of Reddit PRAW submission objects
-            image_hash_detector: Optional function for image hash comparison
 
         Returns:
             List of post IDs to remove, or None
@@ -350,20 +353,78 @@ class DuplicateDetector:
         return actionable_posts if actionable_posts else None
 
 
-def duplicate_detector(list_posts, image_hash_detector=None, **kwargs):
+def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs):
     """
-    Wrapper function to maintain compatibility with existing code.
+    Wrapper function that detects and removes duplicate posts.
 
     Args:
         list_posts: List of Reddit PRAW submissions
-        image_hash_detector: Optional image hash detection function
+        reddit_instance: PRAW Reddit instance for fetching posts
+        testing_mode: If True, don't actually remove posts (default: False)
         **kwargs: Additional arguments for DuplicateDetector
 
     Returns:
-        List of post IDs to remove, or None
+        List of post IDs that were removed, or None
     """
+    # Detect duplicates
     detector = DuplicateDetector(**kwargs)
-    return detector.detect_duplicates(list_posts, image_hash_detector)
+    duplicate_ids = detector.detect_duplicates(list_posts)
+
+    if not duplicate_ids:
+        logger.info("[DD] No duplicates detected.")
+        return None
+
+    logger.info(f"[DD] Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}")
+
+    # Remove duplicates and notify authors
+    successfully_removed = []
+
+    for dupe_id in duplicate_ids:
+        try:
+            dupe_post = reddit_instance.submission(dupe_id)
+            dupe_author = dupe_post.author.name
+
+            # Find the original post (oldest post by the same author)
+            original_post = None
+            for post in list_posts:
+                try:
+                    if (hasattr(post.author, 'name') and
+                            post.author.name == dupe_author and
+                            post.id != dupe_id and
+                            post.created_utc < dupe_post.created_utc):
+                        original_post = post
+                        break
+                except AttributeError:
+                    continue
+
+            # Remove the duplicate post
+            if not testing_mode:
+                # Try to use removal reasons if available
+                removal_kwargs = {'reason_id': search_removal_reasons("duplicate"),
+                                  'mod_note': f"Duplicate of {original_post.id if original_post else 'earlier post'}"}
+                dupe_post.mod.remove(**removal_kwargs)
+
+            # Reply to the author
+            duplicate_comment = RESPONSE.COMMENT_DUPLICATE.format(
+                author=dupe_author,
+                original_link=original_post.permalink,
+                dupe_link=dupe_post.permalink,
+            )
+            bot_reply = message_reply(dupe_post, duplicate_comment)
+            if not testing_mode:
+                bot_reply.mod.distinguish()
+
+            successfully_removed.append(dupe_id)
+            logger.info(f"[DD] Removed duplicate post {dupe_id} by u/{dupe_author}")
+
+        except Exception as e:
+            logger.error(f"[DD] Error processing duplicate {dupe_id}: {e}")
+            continue
+
+    # Log to action counter
+    action_counter(len(successfully_removed), "Removed duplicates")
+
+    return successfully_removed if successfully_removed else None
 
 
 def test_duplicate_detection():
@@ -412,6 +473,7 @@ def test_duplicate_detection():
 
     duplicate_ids = duplicate_detector(
         posts,
+        REDDIT,
         image_hash_detector=None,  # No image hash detection for this test
         semantic_threshold=0.85,
         fuzzy_threshold=85,
