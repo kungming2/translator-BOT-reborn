@@ -99,6 +99,7 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
     try:
         alt_names_raw = tree.xpath('//div[contains(@class,"alternate-names")]/div[2]/div/text()')[0]
         alt_names = [name.strip() for name in alt_names_raw.split(",") if "pej." not in name]
+        alt_names = [x for x in alt_names if len(x) > 4]  # We want to avoid names which might be codes
         ref_data["name_alternates"] = alt_names
     except IndexError:
         ref_data["name_alternates"] = []
