@@ -6,6 +6,7 @@ Handles interfacing for AI queries.
 from openai import OpenAI  # Used for both DeepSeek and OpenAI
 
 from config import Paths, load_settings, logger
+from responses import RESPONSE
 
 access_credentials = load_settings(Paths.AUTH['CREDENTIALS'])
 
@@ -83,6 +84,33 @@ def ai_query(service, client_object, behavior, query, image_url=None):
     return response_data
 
 
+"""IMAGE DESCRIPTION"""
+
+
+def fetch_image_description(image_url):
+    """
+    Fetches a brief description of an image suitable for alt text.
+    TODO NSFW flag
+    :param image_url: Public URL of the image to describe.
+    :return: The AI-generated description of the image.
+    """
+    query = RESPONSE.IMAGE_DESCRIPTION_QUERY
+
+    # Define behavior/system instructions
+    behavior = (
+        "You are an assistant that provides concise, accurate image descriptions "
+        "for accessibility purposes."
+    )
+
+    # Send to AI
+    description = ai_query(service='openai', client_object=openai_access(),
+                           behavior=behavior, query=query,
+                           image_url=image_url)
+
+    return description
+
+
 if __name__ == "__main__":
     deepseek_access()
     openai_access()
+    print(fetch_image_description('https://i.redd.it/o91qxonc7puf1.jpg'))
