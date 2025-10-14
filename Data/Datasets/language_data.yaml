@@ -920,6 +920,21 @@ bbc:
   name_alternates:
   - Toba Batak
   population: 2000000
+bbg:
+  country: Gabon
+  family: Niger-Congo
+  language_code_3: bbg
+  link_ethnologue: https://www.ethnologue.com/language/bbg
+  link_wikipedia: https://en.wikipedia.org/wiki/Barama_language
+  name: Barama
+  name_alternates:
+  - Bavarama
+  - Ghibarama
+  - Gibarama
+  - Givarama
+  - Varama
+  - Yibarambu
+  population: 1000
 bcq:
   country: Ethiopia
   family: Afro-Asiatic
@@ -1828,6 +1843,16 @@ co:
   population: 125000
   supported: true
   thanks: À ringraziavvi
+coo:
+  country: Canada
+  family: Salish
+  language_code_3: coo
+  link_ethnologue: https://www.ethnologue.com/language/coo
+  link_wikipedia: https://en.wikipedia.org/wiki/Comox_language
+  name: Comox
+  name_alternates:
+  - Comox-Sliammon
+  population: 1900
 cop:
   country: Egypt
   family: Afro-Asiatic
@@ -2579,6 +2604,16 @@ fa:
   subreddit: farsi
   supported: true
   thanks: ممنونم
+faj:
+  country: Papua New Guinea
+  family: Trans-New Guinea
+  language_code_3: faj
+  link_ethnologue: https://www.ethnologue.com/language/faj
+  link_wikipedia: https://en.wikipedia.org/wiki/Kursav_language
+  name: Faita
+  name_alternates:
+  - Faita
+  population: 201
 fan:
   country: Equatorial Guinea
   family: Niger-Congo
@@ -2745,6 +2780,7 @@ fr:
   - CF
   - CD
   - DJ
+  - GA
   - GQ
   - HT
   - ML
@@ -3213,6 +3249,7 @@ gox:
 grc:
   country: Greece
   family: Indo-European
+  greetings: Χαῖρε
   language_code_3: grc
   link_ethnologue: https://www.ethnologue.com/language/grc
   link_wikipedia: https://en.wikipedia.org/wiki/Ancient_Greek
@@ -3527,6 +3564,31 @@ he:
   subreddit: hebrew
   supported: true
   thanks: תודה רבה
+hea:
+  country: China
+  family: Hmong-Mien
+  language_code_3: hea
+  link_ethnologue: https://www.ethnologue.com/language/hea
+  link_wikipedia: https://en.wikipedia.org/wiki/Hmu_language
+  name: Northern Qiandong Miao
+  name_alternates:
+  - Black Miao
+  - Central Miao
+  - Chientung Miao
+  - East Guizhou Miao
+  - Eastern Guizhou Hmu
+  - Gha Ne
+  - Gha Ne Dlai
+  - Heh Miao
+  - Hei Miao
+  - Hmu
+  - Kuv tsis has lug Moob tau
+  - Northern East Guizhou Miao
+  - Northern Hmu
+  - Qián-Dōng fāngyán
+  - m̥ə˧
+  - m̥hu˧
+  population: 1250000
 hi:
   countries_associated:
   - FJ
@@ -4013,6 +4075,15 @@ is:
   subreddit: learnicelandic
   supported: true
   thanks: Takk
+isu:
+  country: Cameroon
+  family: Niger-Congo
+  language_code_3: isu
+  link_ethnologue: https://www.ethnologue.com/language/isu
+  link_wikipedia: https://en.wikipedia.org/wiki/Isu_language
+  name: Isu <Menchum Division>
+  name_alternates: []
+  population: 15400
 it:
   country: Italy
   family: Indo-European
@@ -7457,6 +7528,16 @@ puy:
   - Purísima
   - Santa Rosa
   population: 190
+pwr:
+  country: India
+  family: Indo-European
+  language_code_3: pwr
+  link_ethnologue: https://www.ethnologue.com/language/pwr
+  link_wikipedia: https://en.wikipedia.org/wiki/Powari_language
+  name: Powari
+  name_alternates:
+  - Pwari
+  population: 2000000
 qaa:
   family: Constructed
   link_wikipedia: https://en.wikipedia.org/wiki/Dothraki_language
@@ -7795,6 +7876,15 @@ rom:
   name_alternates:
   - Romani
   population: 1500000
+rpn:
+  country: Vanuatu
+  family: Austronesian
+  language_code_3: rpn
+  link_ethnologue: https://www.ethnologue.com/language/rpn
+  link_wikipedia: https://en.wikipedia.org/wiki/Lendamboi_language
+  name: Repanbitip
+  name_alternates: []
+  population: 198
 rsl:
   country: Russian Federation
   family: Sign language
@@ -8478,10 +8568,7 @@ sox:
   link_wikipedia: https://en.wikipedia.org/wiki/Swo_language
   name: Swo
   name_alternates:
-  - Fo
   - Shwo
-  - Sso
-  - Sô
   population: 9000
 sq:
   countries_associated:
@@ -10289,6 +10376,24 @@ yal:
   - Jalungas
   - Yalunke
   population: 111100
+ybk:
+  country: China
+  family: Sino-Tibetan
+  language_code_3: ybk
+  link_ethnologue: https://www.ethnologue.com/language/ybk
+  link_wikipedia: https://en.wikipedia.org/wiki/Muji_language
+  name: Bokha
+  name_alternates:
+  - Akapa
+  - Aphu
+  - Black Muji
+  - Bokho
+  - Flowery Phula
+  - Hei Muji
+  - Hua Phula
+  - Lao Phula
+  - Pao Tle
+  population: 12000
 ydd:
   country: Israel
   family: Indo-European
