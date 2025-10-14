@@ -10,9 +10,9 @@ from praw.exceptions import APIException
 from wasabi import msg
 
 from config import logger, load_settings, Paths
-from connection import REDDIT, REDDIT_HELPER, is_mod, is_valid_user
+from connection import REDDIT, is_valid_user
 from discord_utils import send_discord_alert
-from languages import parse_language_list, converter
+from languages import parse_language_list
 from notifications import notifier_language_list_editor, notifier_language_list_retriever
 from points import points_retriever
 from reddit_sender import message_reply, message_send
@@ -44,12 +44,11 @@ def notify_op_translated_post(author, permalink):
         # User doesn't allow messages or other API exceptions - fail silently
         pass
 
-    logger.info(f"[ZW] messaging_translated_message: Messaged the OP u/{author} about their translated post.")
+    logger.info(f"[ZW] messaging_translated_message: Messaged the OP "
+                f"u/{author} about their translated post.")
 
 
 """ZIWEN MESSAGES"""
-# Note that Ziwen messages is the high-level function that reads the
-# inbox and replies based on the subject line of the message.
 
 
 def handle_subscribe(message, message_author):
@@ -135,24 +134,32 @@ def handle_unsubscribe(message, message_author):
 
 def handle_status(message, message_author):
     """Handle status requests."""
-    # TODO needs to handle META and COMMUNITY stuff, which will be stored separately on a different table.
     logger.info(f"[ZW] Messages: New status request from u/{message_author}.")
 
-    # Note: This returns strings, not Lingvos. It will be empty [] if the
-    # user is not in the database.
+    # Get language subscriptions
     final_match_entries = notifier_language_list_retriever(message_author)
 
-    if not final_match_entries:
+    # Get internal subscriptions (meta, community)
+    internal_entries = notifier_language_list_retriever(message_author, internal=True)
+
+    if not final_match_entries and not internal_entries:
         status_component = RESPONSE.MSG_NO_SUBSCRIPTIONS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
     else:
+        # Process language subscriptions
         final_match_names_set = {
-            f"{converter(entry).name}{' (Script)' if 'unknown-' in entry else ''}"
+            f"{entry.name}{' (Script)' if 'unknown-' in entry else ''}"
             for entry in final_match_entries
         }
         final_match_names = sorted(list(final_match_names_set), key=lambda x: x.lower())
 
+        # Process internal subscriptions and annotate them
+        internal_names = [f"{post_type.capitalize()} (Internal)" for post_type in internal_entries]
+
+        # Combine both lists
+        all_subscriptions = sorted(final_match_names + internal_names, key=lambda x: x.lower())
+
         status_message = "You're subscribed to notifications on r/translator for:\n\n* {}"
-        status_component = status_message.format("\n* ".join(final_match_names))
+        status_component = status_message.format("\n* ".join(all_subscriptions))
 
     user_commands_statistics_data = user_statistics_loader(message_author)
     if user_commands_statistics_data is not None:
@@ -165,10 +172,13 @@ def handle_status(message, message_author):
     action_counter(1, "Status checks")
     message_reply(message, reply_text=compilation + RESPONSE.BOT_DISCLAIMER + RESPONSE.MSG_UNSUBSCRIBE_BUTTON)
 
+    return
+
 
 def handle_add(message, message_author):
     """Handle add requests for notifications from moderators."""
-    logger.info(f"[ZW] Messages: New username addition message from moderator u/{message_author}.")
+    logger.info(f"[ZW] Messages: New username addition message from "
+                f"moderator u/{message_author}.")
 
     body = message.body
 
@@ -206,6 +216,7 @@ def handle_remove(message, message_author):
     # Purge all subscriptions for the user
     notifier_language_list_editor([], remove_username, 'purge')
 
+    subscribed_codes = [x.preferred_code for x in subscribed_codes]
     final_match_codes_print = ", ".join(subscribed_codes)
     removal_message = (
         f"Removed the subscriptions for u/{remove_username} from the notifications database. "
@@ -216,7 +227,6 @@ def handle_remove(message, message_author):
 
 def handle_points(message, message_author):
     """Handle points requests."""
-    # TODO finish when build out of points system is done.
     logger.info(f"[ZW] Messages: New points status request from u/{message_author}.")
 
     user_points_output = "### Points on r/translator\n\n" + points_retriever(message_author)
@@ -232,41 +242,6 @@ def handle_points(message, message_author):
         logger.error("[ZW] Messages: Rate limit reached.")
     else:
         action_counter(1, "Points checks")
-
-
-def ziwen_messages():
-    """Main function to process commands via Reddit messaging system."""
-
-    messages = list(REDDIT.inbox.unread(limit=10))
-
-    # Iterate over the messages in the inbox.
-    for message in messages:
-        if message.author is None:
-            continue
-
-        # Invalid user (e.g. shadow-banned)
-        if not is_valid_user(message.author):
-            logger.error('[ZW] Messages: Invalid author.')
-            continue
-
-        message_author = message.author  # Redditor object
-        message_subject = message.subject.lower()
-        message.mark_read()  # Mark the message as read.
-
-        if "subscribe" in message_subject and "un" not in message_subject:
-            handle_subscribe(message, message_author)
-        elif "unsubscribe" in message_subject:
-            handle_unsubscribe(message, message_author)
-        elif "status" in message_subject:
-            handle_status(message, message_author)
-        elif "points" in message_subject:
-            handle_points(message, message_author)
-        elif "add" in message_subject and is_mod(message_author):
-            handle_add(message, message_author)
-        elif "remove" in message_subject and is_mod(message_author):
-            handle_remove(message, message_author)
-
-    return
 
 
 if __name__ == "__main__":
