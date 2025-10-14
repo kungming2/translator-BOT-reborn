@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Handles translation notification-related functions for the messaging system.
+Handles translation notification-related functions for
+the messaging system.
 """
 import random
 import sqlite3
@@ -38,7 +39,8 @@ def process_language_code(code: str) -> str:
     return code
 
 
-def notifier_duplicate_checker(code: str, username: str, internal: bool = False) -> bool:
+def notifier_duplicate_checker(code: str, username: str,
+                               internal: bool = False) -> bool:
     """
     Check if a user is already signed up for a specific notification.
 
@@ -73,7 +75,7 @@ def notifier_duplicate_checker(code: str, username: str, internal: bool = False)
         raise
 
 
-def prune_deleted_user_notifications(username: str) -> list[str] | None:
+def prune_deleted_user_notifications(username: str, internal_posts: bool = False) -> list[str] | None:
     """
     Remove notification subscriptions for a user who no longer exists on Reddit.
 
@@ -84,6 +86,7 @@ def prune_deleted_user_notifications(username: str) -> list[str] | None:
     :param username: The Reddit username to check and potentially prune.
                      Note this is a string, since a potentially deleted
                      individual may no longer have a Redditor object.
+    :param internal_posts: If True, use the notify_internal table instead of notify_users.
     :return: None if the user exists; list of unsubscribed language codes if pruned.
     """
 
@@ -96,13 +99,15 @@ def prune_deleted_user_notifications(username: str) -> list[str] | None:
     cursor = db.cursor_main
     conn = db.conn_main
 
-    cursor.execute("SELECT * FROM notify_users WHERE username = ?", (username,))
+    table_name = "notify_internal" if internal_posts else "notify_users"
+
+    cursor.execute(f"SELECT * FROM {table_name} WHERE username = ?", (username,))
     subscriptions = cursor.fetchall()
     final_codes = [row[0] for row in subscriptions]
 
     if final_codes:
         formatted_list = ', '.join(f'`{code}`' for code in final_codes)
-        cursor.execute("DELETE FROM notify_users WHERE username = ?", (username,))
+        cursor.execute(f"DELETE FROM {table_name} WHERE username = ?", (username,))
         conn.commit()
         logger.info(f"[ZW] prune_deleted_user_notifications: Deleted subscription info for u/{username}.")
         logger.info(f"[ZW] prune_deleted_user_notifications: User was subscribed to: {formatted_list}.")
@@ -123,10 +128,11 @@ def notifier_language_list_editor(language_list: list, user_object, mode: str = 
     """
     username = user_object.name
 
-    # Purge all language notifications for this user (languages only)
+    # Purge all language notifications for this user (languages and internal)
     if mode == "purge":
         with db.conn_main:
             db.cursor_main.execute("DELETE FROM notify_users WHERE username = ?", (username,))
+            db.cursor_main.execute("DELETE FROM notify_internal WHERE username = ?", (username,))
         return
 
     if not language_list:  # Nothing to process
@@ -161,21 +167,28 @@ def notifier_language_list_editor(language_list: list, user_object, mode: str = 
                     sql_params
                 )
 
+    return
 
-def notifier_language_list_retriever(user_object) -> List[Lingvo]:
+
+def notifier_language_list_retriever(user_object, internal: bool = False) -> List:
     """
     Retrieve the list of Lingvos a user is subscribed to for notifications.
 
     :param user_object: A Redditor object from PRAW
-    :return: A list of Lingvo objects
+    :param internal: If True, returns internal post types; if False, returns language subscriptions
+    :return: A list of Lingvo objects (if internal=False) or strings (if internal=True)
     """
-    sql_stat = "SELECT * FROM notify_users WHERE username = ?"
+    username = str(user_object)
     cursor = db.cursor_main
-    cursor.execute(sql_stat, (str(user_object),))  # Convert Redditor to username string
 
-    # Note that converter() will take care of conversions with
-    # "unknown-XXXX" for script codes.
-    return [converter(row[0]) for row in cursor.fetchall()]  # Row[0] holds the subscription code
+    if internal:
+        # Get internal subscriptions (meta, community)
+        cursor.execute("SELECT post_type FROM notify_internal WHERE username = ?", (username,))
+        return [row[0] for row in cursor.fetchall()]
+    else:
+        # Get language subscriptions
+        cursor.execute("SELECT language_code FROM notify_users WHERE username = ?", (username,))
+        return [converter(row[0]) for row in cursor.fetchall()]  # Convert results to Lingvos
 
 
 def fetch_usernames_for_lingvo(lingvo, max_num=None) -> List[str]:
@@ -622,6 +635,7 @@ def notifier_internal(post_type, submission):
         return []
 
     # Message people on the list.
+    logger.info(f"Sending internal notifications to {len(notify_targets)} users. | `{submission.id}`")
     for username in notify_targets:
         try:
             message_subject = f"[Notification] New {post_type.title()} post on r/translator"
@@ -642,9 +656,10 @@ def notifier_internal(post_type, submission):
             )
 
         except exceptions.APIException as e:
-            logger.info(f"[Notifier] Error sending internal message to u/{username}. Removing user.")
+            logger.info(f"[Notifier] Error sending internal message to "
+                        f"u/{username}. Removing user.")
             logger.error(f"API Exception for u/{username}: {e}")
-            prune_deleted_user_notifications(username)
+            prune_deleted_user_notifications(username, True)
 
     return notify_targets
 
