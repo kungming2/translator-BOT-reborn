@@ -6,8 +6,12 @@ all in SQLite, there are also some plain text recording functions here.
 """
 import csv
 import datetime
+import json
 import os
+import pprint
 import sqlite3
+from ast import literal_eval
+from datetime import datetime
 
 from config import Paths, logger
 
@@ -62,24 +66,15 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
-    def fetch_ajo(self, query: str, params: tuple = (), used_database: str = "ajo"):
+    def fetch_ajo(self, query: str, params: tuple = ()):
         """
-        Execute a SELECT query and return a single row from the specified database.
+        Execute a SELECT query and return a single row from the AJO database.
 
         :param query: SQL SELECT statement
         :param params: Query parameters as a tuple
-        :param used_database: One of 'ajo', 'main', or 'cache'
         :return: A single row (as a tuple or sqlite3.Row), or None
         """
-        cursor = {
-            "ajo": self.cursor_ajo,
-            "main": self.cursor_main,
-            "cache": self.cursor_cache
-        }.get(used_database)
-
-        if cursor is None:
-            raise ValueError(f"Invalid database key '{used_database}'. Must be 'ajo', 'main', or 'cache'.")
-
+        cursor = self.cursor_ajo
         cursor.execute(query, params)
         return cursor.fetchone()
 
@@ -282,9 +277,154 @@ def record_filter_log(filtered_title, created_timestamp, filter_type):
         f.write(line)
 
 
+"""SPECIFIC SEARCH/RETRIEVAL FUNCTIONS"""
+
+
+def _parse_ajo_row(result):
+    """
+    Parse a row from the AJO database.
+
+    Args:
+        result: Database row (sqlite3.Row or tuple)
+
+    Returns:
+        Tuple of (post_id, created_utc, data_dict) or None if parsing fails
+    """
+
+    try:
+        post_id = result['id'] if isinstance(result, sqlite3.Row) else result[0]
+        created_utc = result['created_utc'] if isinstance(result, sqlite3.Row) else result[1]
+        data_json = result['ajo'] if isinstance(result, sqlite3.Row) else result[2]
+
+        # Parse the JSON/dict data
+        if isinstance(data_json, dict):
+            # Already a dict, use as-is
+            data = data_json
+        elif isinstance(data_json, str):
+            # Try JSON first (proper JSON with double quotes)
+            try:
+                data = json.loads(data_json)
+            except json.JSONDecodeError:
+                # Fall back to ast.literal_eval for Python dict strings (single quotes)
+                try:
+                    data = literal_eval(data_json)
+                except (ValueError, SyntaxError) as e:
+                    logger.debug(f"Failed to parse string data for ID {post_id}: {e}")
+                    logger.debug(f"Data preview: {repr(data_json[:100])}")
+                    return None
+        else:
+            # Handle other types (bytes, etc.)
+            try:
+                data = json.loads(str(data_json))
+            except json.JSONDecodeError:
+                data = literal_eval(str(data_json))
+
+        return post_id, created_utc, data
+
+    except (TypeError, KeyError, IndexError) as e:
+        # Fixed: Handle both Row and tuple objects properly
+        try:
+            row_id = result['id'] if isinstance(result, sqlite3.Row) else result[0]
+        except (KeyError, IndexError):
+            row_id = 'unknown'
+        logger.debug(f"Error parsing row for ID {row_id}: {e}")
+        return None
+
+
+def search_database(search_term: str, search_type: str):
+    """
+    Search the AJO database for matching records. Note that this can
+    take a while for username searches.
+
+    Args:
+        search_term: The term to search for (username or post_id)
+        search_type: Type of search ('user' or 'post')
+
+    Returns:
+        - For 'post': A list containing single Ajo object or None
+        - For 'user': List of Ajo objects (empty list if none found)
+    """
+    # Import here to avoid circular import
+    from models.ajo import Ajo
+
+    try:
+        if search_type == 'post':
+            query = "SELECT id, created_utc, ajo FROM ajo_database WHERE id = ?"
+            result = db.fetch_ajo(query, (search_term,))
+
+            if result:
+                parsed = _parse_ajo_row(result)
+                if parsed is None:
+                    logger.debug(f"Could not parse data for post {search_term}")
+                    return None
+
+                post_id, created_utc, data = parsed
+                return [Ajo.from_dict(data)]
+            else:
+                return []
+
+        elif search_type == 'user':
+            query = "SELECT id, created_utc, ajo FROM ajo_database"
+            results = db.fetchall_ajo(query)
+
+            matching_ajos = []
+            parse_errors = 0
+
+            for result in results:
+                parsed = _parse_ajo_row(result)
+                if parsed is None:
+                    parse_errors += 1
+                    continue
+
+                post_id, created_utc, data = parsed
+
+                # Check if this post matches the username
+                if data.get('author') == search_term or data.get('username') == search_term:
+                    matching_ajos.append(Ajo.from_dict(data))
+
+            if parse_errors > 0:
+                logger.debug(f"Warning: {parse_errors} rows could not be parsed")
+
+            return matching_ajos
+
+    except Exception as db_error:
+        logger.debug(f"Error querying database: {str(db_error)}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+def _show_menu():
+    print("\nSelect a search to run:")
+    print("1. Database search (enter your own query to test)")
+    print("2. Initialize databases if they do not already exist")
+
+
 # Instantiate a global shared database manager (singleton-like)
 db = DatabaseManager()
 
 
 if __name__ == "__main__":
-    initialize_all_databases()
+
+    while True:
+        _show_menu()
+        choice = input("Enter your choice (1-2): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            term_to_search = input("Enter the search term (username or post_id): ")
+            type_to_search = input("Enter the search type (user/post): ")
+            derived_ajos = search_database(term_to_search, type_to_search)
+            for item in derived_ajos:
+                pprint.pprint(vars(item))
+                print('\n\n')
+
+        elif choice == "2":
+            initialize_all_databases()
