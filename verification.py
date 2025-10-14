@@ -178,7 +178,9 @@ def verification_parser():
                        reason=f'Updating verification log with a new request from {author_string}')
 
         # Reply to the person who asked for verification.
-        reply_text = RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(language_lingvo.thanks, author_name) + RESPONSE.BOT_DISCLAIMER
+        reply_text = RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(language_lingvo.thanks,
+                                                                   author_name,
+                                                                   language_lingvo.name) + RESPONSE.BOT_DISCLAIMER
         message_reply(comment, reply_text)
 
         send_discord_alert(
