@@ -15,16 +15,6 @@ MSG_NO_SUBSCRIPTIONS: Sorry, you're not currently subscribed to notifications fo
   on r/translator. Would you like to [sign up]({})?
 MSG_CANNOT_PROCESS: Sorry, but I couldn't process the [language/language codes](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_language_codes.2Fnames_syntax)
   in your message. Please double-check your message to make sure they're accurate and [try again]({}).
-MSG_PAGE: >
-
-  {greetings} u/{username},
-
-  This is a page to take a look at a possible {language_name} request. Could you check
-  it out?
-
-  **[{title}](https://www.reddit.com{permalink})** posted by *u/{post_author}*.
-
-  Feel free to disregard the post or [message Ziwen]({removal_link}) if you wish to unsubscribe from {language_name}.
 MSG_MISSING_ASSETS: |
   Hey there u/{oauthor},
 
@@ -49,6 +39,19 @@ MSG_SHORT_THANKS_TRANSLATED: |
   Consequently, I've automatically marked your request as translated. 
 
   If this is in error, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message=https://www.reddit.com{1}). Thank you.
+MSG_PAGE: >
+
+  {greetings} u/{username},
+
+  This is a page to take a look at a possible {language_name} request. Could you check
+  it out?
+
+  **[{title}](https://www.reddit.com{permalink})** posted by *u/{post_author}*.
+
+  {image_description}
+
+  Feel free to disregard the post or [message Ziwen]({removal_link}) if you wish to unsubscribe from {language_name}.
+
 MSG_NOTIFY: >
 
   {greetings} u/{username},
@@ -58,6 +61,8 @@ MSG_NOTIFY: >
 
 
   **[{title}](https://www.reddit.com{permalink})** posted by u/{post_author}.
+  
+  {image_description}
 
 MSG_NOTIFY_IDENTIFY: >
 
@@ -68,6 +73,9 @@ MSG_NOTIFY_IDENTIFY: >
 
 
   **[{title}]({permalink})** posted by u/{post_author}.
+  
+  {image_description}
+
 MSG_WIKIPAGE_FULL: The [{0} wiki page](https://www.reddit.com/r/translatorBOT/wiki/{0}) seems to be full.
   Please archive some of the older entries on that page.
 MSG_NO_POINTS: You haven't earned any points on r/translator yet. You can earn points by helping identify
@@ -357,7 +365,8 @@ IMAGE_DESCRIPTION_QUERY: >
   suitable as alt text for accessibility. If text or written content is 
   visible, describe its appearance and context (e.g., 
   "handwritten note," "street sign in another language") 
-  but do not transcribe or translate it.
+  but do not transcribe or translate it. Keep the description to no more
+  than three sentences.
 
 BOT_DISCLAIMER: |
   

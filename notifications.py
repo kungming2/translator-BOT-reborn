@@ -12,6 +12,7 @@ from typing import List
 import orjson
 from praw import exceptions
 
+from ai import fetch_image_description
 from config import logger, SETTINGS
 from connection import is_valid_user, REDDIT
 from database import db, record_activity_csv
@@ -22,6 +23,7 @@ from reddit_sender import message_send
 from responses import RESPONSE
 from statistics import action_counter
 from time_handling import time_convert_to_string
+from utility import check_url_extension
 
 
 """NOTIFICATIONS SUBSCRIPTIONS WITH DATABASE"""
@@ -555,6 +557,13 @@ def notifier(lingvo, submission, mode="new_post"):
         # Default to "new_post" if mode is not found
         template = message_templates.get(mode, message_templates["new_post"])
 
+        # If the post has an image, get a description.
+        if check_url_extension(submission.url):
+            image_description = fetch_image_description(submission.url, post_nsfw)
+            image_description = f"Image description: *{image_description}*"
+        else:
+            image_description = ""
+
         # Format the message we wish to send.
         message = template.format(
             greetings=language_greetings,
@@ -563,7 +572,8 @@ def notifier(lingvo, submission, mode="new_post"):
             post_type=post_type,
             title=post_title,
             permalink=post_permalink,
-            post_author=post_author
+            post_author=post_author,
+            image_description=image_description
         )
 
         # Tack on an NSFW warning if necessary.
@@ -665,4 +675,6 @@ def notifier_internal(post_type, submission):
 
 
 if __name__ == "__main__":
-    print(fetch_usernames_for_lingvo(converter('ii')))
+    while True:
+        notifications_test = input("Please enter the language you'd like to retrieve notifications for: ")
+        print(fetch_usernames_for_lingvo(converter(notifications_test)))
