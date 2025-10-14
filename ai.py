@@ -87,14 +87,22 @@ def ai_query(service, client_object, behavior, query, image_url=None):
 """IMAGE DESCRIPTION"""
 
 
-def fetch_image_description(image_url):
+def fetch_image_description(image_url, nsfw_flag=False):
     """
     Fetches a brief description of an image suitable for alt text.
-    TODO NSFW flag
+
     :param image_url: Public URL of the image to describe.
+    :param nsfw_flag: Flag to determine if the image is NSFW. This will
+                      automatically return a skip message. People
+                      probably don't need a filthy description in their
+                      inboxes.
     :return: The AI-generated description of the image.
     """
     query = RESPONSE.IMAGE_DESCRIPTION_QUERY
+    if nsfw_flag:
+        reply = ("Out of an abundance of caution, a description will "
+                 "not be provided for this NSFW image.")
+        return reply
 
     # Define behavior/system instructions
     behavior = (
@@ -102,7 +110,8 @@ def fetch_image_description(image_url):
         "for accessibility purposes."
     )
 
-    # Send to AI
+    # Send to AI (needs to use OpenAI for image assessment)
+    logger.debug("Fetching image description.")
     description = ai_query(service='openai', client_object=openai_access(),
                            behavior=behavior, query=query,
                            image_url=image_url)
@@ -113,4 +122,6 @@ def fetch_image_description(image_url):
 if __name__ == "__main__":
     deepseek_access()
     openai_access()
-    print(fetch_image_description('https://i.redd.it/o91qxonc7puf1.jpg'))
+    while True:
+        image_test = input("Please enter the image URL you'd like a description of: ")
+        print(fetch_image_description(image_test))
