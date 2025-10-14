@@ -23,7 +23,7 @@ def run_schedule(schedule_name):
     """Run all tasks for a given schedule"""
     # Import task modules here to ensure they're registered
     from . import (community_digest, data_maintenance, moderator_digest,
-                   request_closeout, status_report)
+                   status_report)
 
     tasks_to_run = _tasks.get(schedule_name, [])
     for task_func in tasks_to_run:
