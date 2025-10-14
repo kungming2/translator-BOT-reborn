@@ -973,7 +973,7 @@ if __name__ == "__main__":
             pprint(vars(titolo_output))
         elif choice == "2":
             logger.setLevel(logging.INFO)
-            submissions = list(REDDIT_HELPER.subreddit('translator').new(limit=10))
+            submissions = list(REDDIT_HELPER.subreddit('translator').new(limit=50))
             for submission in submissions:
                 print(submission.title)
                 titolo_output = process_title(submission.title)
