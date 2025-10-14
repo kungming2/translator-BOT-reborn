@@ -81,3 +81,6 @@ python-dateutil
 
 yt-dlp
 random_user_agent
+huggingface_hub[hf_xet]
+sentence-transformers
+scikit-learn
