@@ -20,13 +20,6 @@ from lookup.zh import simplify
 useragent = get_random_useragent()
 
 
-def wiktionary_search() -> str | None:
-    """This is going to have to be completely redone. In the meantime,
-    disable Wiktionary search."""
-
-    return
-
-
 """MATCHING TEXT"""
 
 
