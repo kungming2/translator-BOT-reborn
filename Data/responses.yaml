@@ -25,18 +25,30 @@ MSG_PAGE: >
   **[{title}](https://www.reddit.com{permalink})** posted by *u/{post_author}*.
 
   Feel free to disregard the post or [message Ziwen]({removal_link}) if you wish to unsubscribe from {language_name}.
-MSG_MISSING_ASSETS: "\nHey there u/{oauthor},\n\nAnother community member marked **[your post]({opermalink})**\
-  \ as missing assets (text, images, etc) to be translated. \n\nPlease update your post with content,\
-  \ or delete it and resubmit it with the material you want translated.\n\nYou can re-open your translation\
-  \ request by commenting `!reset` on your post. \n"
-MSG_TRANSLATED: "\nHey there u/{oauthor},\n\nAnother redditor on r/translator has marked **[your post]({opermalink})**\
-  \ as translated. \nIf your request has been fulfilled, please leave a comment thanking the translator!\n\
-  \n*P.S. We encourage you to keep your post up as a useful resource for other people.*\n"
-MSG_SHORT_THANKS_TRANSLATED: "\nHey there u/{0},\n\nThanks for submitting to r/translator! It looks like\
-  \ you left a short \"thank you\" comment on **[your post]({1})**. \nConsequently, I've automatically\
-  \ marked your request as translated. \n\nIf this is in error, please comment `!reset` on your post or\
-  \ message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message=https://www.reddit.com{1}).\
-  \ Thank you.\n"
+MSG_MISSING_ASSETS: |
+  Hey there u/{oauthor},
+
+  Another community member marked **[your post]({opermalink})** as missing assets (text, images, etc) to be translated. 
+
+  Please update your post with content, or delete it and resubmit it with the material you want translated.
+
+  You can re-open your translation request by commenting `!reset` on your post.
+
+MSG_TRANSLATED: |
+  Hey there u/{oauthor},
+
+  Another redditor on r/translator has marked **[your post]({opermalink})** as translated. 
+  If your request has been fulfilled, please leave a comment thanking the translator!
+
+  *P.S. We encourage you to keep your post up as a useful resource for other people.*
+
+MSG_SHORT_THANKS_TRANSLATED: |
+  Hey there u/{0},
+
+  Thanks for submitting to r/translator! It looks like you left a short "thank you" comment on **[your post]({1})**. 
+  Consequently, I've automatically marked your request as translated. 
+
+  If this is in error, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message=https://www.reddit.com{1}). Thank you.
 MSG_NOTIFY: >
 
   {greetings} u/{username},
@@ -75,26 +87,12 @@ MSG_SUBSCRIBE: '{}! You have been subscribed to r/translator notifications for:
 
 
   To see all your subscribed notifications, please click the ''Status'' link below.'
-MSG_UNSUBSCRIBE_ALL: "You have been unsubscribed from r/translator notifications for:\n\n* {} \n\nTo resubscribe,\
-  \ please [click here]({})."
-MSG_RESTORE_LINK_FAIL: Sorry, but due to Reddit limitations the `!restore` function only works with text
-  posts.
-MSG_RESTORE_NOT_ELIGIBLE: Sorry, but your username does not appear on the list of translators and/or notified
-  individuals for this post. If you had previously made a translation, please mark it as translated with
-  the `!translated` command, and then try again.
-MSG_RESTORE_TEXT_FAIL: Sorry, but I couldn't find any data on [Pushshift](https://pushshift.io/) for [this
-  post]({}).
-MSG_RESTORE_TEXT_TEMPLATE: '
+MSG_UNSUBSCRIBE_ALL: |
+  You have been unsubscribed from r/translator notifications for:
 
-  *The following text was retrieved for [this post]({}) using data from [Pushshift](https://pushshift.io/)*:
+  * {} 
 
-
-  ---
-
-
-  {}
-
-  '
+  To resubscribe, please [click here]({}).
 
 MSG_CLOSING_OUT_SUBJECT: '[Notification] Was your {language} request translated?'
 MSG_CLOSING_OUT: '
@@ -117,16 +115,14 @@ MSG_CLOSING_OUT: '
   '
 
 # COMMENTS - THESE ARE PUBLICLY POSTED.
-# Note that comments should include an invisible Markdown tag in them.
+# Note that comments must include an invisible Markdown tag in them.
 # This tag should be a lowercase version of the variable name.
 # Example: [](#variable_name)
 
-COMMENT_LONG: '**Your translation request appears to be very long.** It may take a while for a translator
-  to respond. Consider narrowing the scope of your request or asking for a synopsis or summary instead.
+COMMENT_LONG: |
+  **Your translation request appears to be very long.** It may take a while for a translator to respond. Consider narrowing the scope of your request or asking for a synopsis or summary instead.
 
-
-  *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is
-  required on your part.* [](#comment_long)'
+  *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is required on your part.* [](#comment_long)
 COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
   to be 14 days or older to use the service. [](#comment_page_disallowed)
 COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
@@ -137,52 +133,78 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
   language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
   if you would like to be notified for future posts for it! [](#comment_no_language)\n\n'
 COMMENT_NO_RESULTS: Sorry, but that doesn't look like anything to me. [](#comment_no_results)
-COMMENT_ENGLISH_ONLY: "\nHey there u/{oauthor},\n\n* Your post above has been automatically removed because\
-  \ does not appear to be a request for a translation. \nThere are more focused communities for English-only\
-  \ requests.\n\n---\n\n**Our Recommendations**\n\n* Answers on English language learning, English video\
-  \ transcriptions, or word explanations: **r/EnglishLearning** or **r/Grammar**\n* Proofreading of written\
-  \ English content: **r/Proofreading** (please note their sidebar rules for submissions.)\n* Decipherment\
-  \ of illegible handwriting: **r/handwriting** \n\n* If you're requesting the *review of a translation*,\
-  \ please include the source language name and its original text in your resubmitted post to r/translator.\
-  \ [](#comment_english_only)\n"
-COMMENT_BAD_TITLE: "\nHey there, u/{author}!\n    \nWe're happy to help you translate your request, but\
-  \ this post has been automatically removed because:\n    \n* It appears that the title is not properly\
-  \ formatted according to our subreddit's guidelines.\n* Proper title formatting helps keep our community\
-  \ organized and allows our translators to access relevant requests. \n\n---\n\n**What should you do\
-  \ now?**\n\n* [Try resubmitting your request with the suggested title text below](https://www.reddit.com/r/translator/submit?title={new_url}):\n\
-  * {new_title}\n* Should you need more information, please read r/translator's [formatting guidelines on the wiki](https://www.reddit.com/r/translator/wiki/rules).[](#comment_bad_title)"
-COMMENT_CLAIM: '
+COMMENT_ENGLISH_ONLY: |
+  Hey there u/{oauthor},
 
+  * Your post above has been automatically removed because does not appear to be a request for a translation. 
+  There are more focused communities for English-only requests.
+
+  ---
+
+  **Our Recommendations**
+
+  * Answers on English language learning, English video transcriptions, or word explanations: **r/EnglishLearning** or **r/Grammar**
+  * Proofreading of written English content: **r/Proofreading** (please note their sidebar rules for submissions.)
+  * Decipherment of illegible handwriting: **r/transcription** 
+
+  * If you're requesting the *review of a translation*, please include the source language name and its original text in your resubmitted post to r/translator.
+  [](#comment_english_only)
+
+COMMENT_BAD_TITLE: |
+  Hey there, u/{author}!
+
+  We're happy to help you translate your request, but this post has been automatically removed because:
+
+  * It appears that the title is not properly formatted according to our subreddit's guidelines.
+  * Proper title formatting helps keep our community organized and allows our translators to access relevant requests. 
+
+  ---
+
+  **What should you do now?**
+
+  * [Try resubmitting your request with the suggested title text below](https://www.reddit.com/r/translator/submit?title={new_url}):
+  * {new_title}
+  * Should you need more information, please read r/translator's [formatting guidelines on the wiki](https://www.reddit.com/r/translator/wiki/rules).
+  [](#comment_bad_title)
+
+COMMENT_CLAIM: |
   **Claimer:** u/{claimer} at {time} UTC
   
   **Language:** {language_name} (`{language_code}`)
 
-
   *The user above has indicated that they are working on a translation for this {language_name} request.*
 
+  *This post will revert to an unclaimed state if it is not marked as 'Needs Review' or 'Translated' within 8 hours.*
 
-  *This post will revert to an unclaimed state if it is not marked as ''Needs Review'' or ''Translated''
-  within 8 hours.*
+  [](#comment_claim)
 
-  [](#comment_claim)'
-COMMENT_CURRENTLY_CLAIMED: '
-
+COMMENT_CURRENTLY_CLAIMED: |
   This {language_name} (`{language_code}`) post has already been claimed by u/{claimer_name}. Their in-progress claim will expire in {remaining_time} minutes.
 
-  [](#comment_currently_claimed)'
-COMMENT_SELF_ALREADY_CLAIMED: "You've already claimed this post. [](#comment_self_already_claimed)"
-COMMENT_UNKNOWN: "\n**It looks like you have submitted a translation request tagged as 'Unknown.'** \n\
-  \n* Other community members may help you recategorize your post with the `!identify:` or the `!page:`\
-  \ [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).\n* Please\
-  \ refrain from posting short 'thank you' comments until your request has been fully translated.\n* Do\
-  \ *not* delete your post if it is identified as another language. We will automatically find people\
-  \ who can help you!\n\n*Note: Your post has NOT been removed. This is merely an automated advisory notice.*\n [](#comment_unknown)"
-COMMENT_DEFINED_MULTIPLE: "\n**It looks like you have submitted a translation request for multiple defined\
-  \ languages.** \n\n* Translators can use the `!translated` and `!doublecheck` status commands on this\
-  \ post by including the language name and command in their comment.\n* For example, if one is making\
-  \ a French translation, please include `French` and the command in the text. \n* This post's flair will\
-  \ automatically update to reflect the state of its requested languages.\n\n*Note: Your post has NOT\
-  \ been removed. This is merely an automated advisory notice.*\n [](#comment_defined_multiple)"
+  [](#comment_currently_claimed)
+
+COMMENT_SELF_ALREADY_CLAIMED: |
+  You've already claimed this post. [](#comment_self_already_claimed)
+COMMENT_UNKNOWN: |
+  **It looks like you have submitted a translation request tagged as 'Unknown.'** 
+
+  * Other community members may help you recategorize your post with the `!identify:` or the `!page:` [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).
+  * Please refrain from posting short 'thank you' comments until your request has been fully translated.
+  * Do *not* delete your post if it is identified as another language. We will automatically find people who can help you!
+
+  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
+  [](#comment_unknown)
+
+COMMENT_DEFINED_MULTIPLE: |
+  **It looks like you have submitted a translation request for multiple defined languages.** 
+
+  * Translators can use the `!translated` and `!doublecheck` status commands on this post by including the language and command in their comment.
+  * For example, if one is making a French translation, `!translated:french` will work.
+  * Multiple languages are also accepted, separated by a plus symbol. `!doublecheck:zh+ja` will also work. 
+  * This post's flair will automatically update to reflect the state of its requested languages.
+
+  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
+  [](#comment_defined_multiple)
 COMMENT_ADVANCED_IDENTIFY_ERROR: '
 
   Sorry, but [advanced *!identify* commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_advanced_.21identify)
@@ -212,7 +234,7 @@ COMMENT_ADVANCED_IDENTIFY_ERROR: '
   | Nastaliq        | *Aran* |
 
   [](#comment_advanced_identify_error)'
-COMMENT_VERIFICATION_RESPONSE: '{}, u/{}. I''ve taken note of your verification request. [](#comment_verification_response)'
+COMMENT_VERIFICATION_RESPONSE: '{}, u/{}. I''ve taken note of your verification request for {}. [](#comment_verification_response)'
 COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
   a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)
 COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
@@ -220,129 +242,98 @@ COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anythi
 COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
   Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
 
-COMMENT_DUPLICATE: "\nHey u/{author}! \n\nIt appears that this post may be a duplicate of another that\
-  \ you've recently submitted and I have removed it as a result.\n\nIf this is in error, please resubmit\
-  \ this post with a *unique* title giving\nmore context for translators, or message the r/translator\
-  \ moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{permalink}).\
-  \ Thank you.\n [](#duplicate_comment)"
+COMMENT_DUPLICATE: |
+  Hey u/{author}!
+  
+  It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you've recently submitted and I have removed it as a result.
+  
+  If this is in error, please resubmit this post with a *unique* title giving more context for translators, or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
+  
+  Thank you.
+  
+  [](#comment_duplicate)
 
 # ANCHORS - THESE ARE ADDED TO CONTENT GENERATED ELSEWHERE
-ANCHOR_WIKIPEDIA: '\n[](#comment_wikipedia)'
-ANCHOR_CJK: '\n[](#comment_cjk)'
+
+ANCHOR_WIKIPEDIA: |
+  [](#comment_wikipedia)
+ANCHOR_CJK: |
+  [](#comment_cjk)
 
 # POSTS - THESE ARE TEMPLATES FOR POSTS BY THE BOT OR PAGE EDITS
 
-WY_THREAD_BODY: '
-
+WEEKLY_UNKNOWN_THREAD: |
   Here are the posts from the last week still marked as "Unknown." Please help identify them if you can!
 
-
   | Date   | Title         | Author  |
-
   |:-------|:--------------|:--------|
-
   {unknown_content}
-
 
   *Please make any identifications on the individual request pages.*
 
-  '
-WY_MOD_NOTIFICATION_MESSAGE: '
-
+WY_MOD_NOTIFICATION_MESSAGE: |
   ##### Routine Tasks
 
-
   | Task | Status |
-
   |------|--------|
-
   | [Status Update](https://www.reddit.com/r/translatorBOT/wiki/status) | {} |
-
   | File Backup | {} |
-
 
   ##### Operations
 
-
   {}
 
-
   {}
-
 
   ##### Status Summary
 
-
   {}
-
 
   ---
 
-
   ###### Completed in {}.
 
-  '
-WY_NEW_HEADER: '
-
+WY_NEW_HEADER: |
   ## {language_name} ({language_family}) ![](%%statistics-h%%)
 
   *[Statistics](https://www.reddit.com/r/translator/wiki/statistics) for r/translator provided by [Wenyuan](https://www.reddit.com/r/translatorBOT/wiki/wenyuan)*
 
-
   Year | Month | Total Requests | Percent of All Requests | Untranslated Requests | Translation Percentage
   | RI | View Translated Requests
+  -----|-------|------|------|------|------|----|------
 
-  -----|-------|------|------|------|------|----|------'
-WY_STATUS_UPDATE: '
-
-  ### Due to {reason}, the bot will be down until around:
-
-
-  # [{utc_time} UTC](https://www.timeanddate.com/worldclock/fixedtime.html?iso={url_time}&msg=Ziwen+will+be+back+at+...)
-
-
-  During this time period the command monitoring, reference lookup, and crossposting functions will not
-  be available.
-
-
-  This status post will be deleted when the bot is back online. Thanks for your patience!
-
-  '
-WY_FULL_RETRIEVAL_DATA: '
-
-
+WY_FULL_RETRIEVAL_DATA: |
   | Info                                    | #             |
-
   |-----------------------------------------|--------------:|
-
   | Total number of processed posts         | {} posts      |
-
   | Number of non-supported CSS posts       | {} posts      |
-
   | Number of regional language posts       | {} posts      |
-
   | Number of problematic posts             | {} posts      |
-
   | Overall accuracy                        | {}%           |
-
   | Supported posts percentage              | {}%           |
-
   | Average processing time per post        | {} seconds    |
-
   | Total elapsed time                      | {} seconds    |
-
-  '
 
 # QUERIES FOR AI AGENTS
 
-TITLE_PARSING_QUERY: "\nAssess this Reddit post title which is for a translation request. Output what\
-  \ you assess to be the source language and target language, and the percentage confidence for your assessment\
-  \ in this JSON format:\n\n{{\n  \"source_language\": {{\n    \"name\": \"LANGUAGE_1\",\n    \"code\"\
-  : \"LANGUAGE_1_ISO_639-3_CODE\"\n  }},\n  \"target_language\": {{\n    \"name\": \"LANGUAGE_2\",\n \
-  \   \"code\": \"LANGUAGE_2_ISO_639-3_CODE\"\n  }},\n  \"confidence\": PERCENTAGE (out of 1.0)\n}}\n\n\
-  Use ISO 639-1 codes for the languages if they are available. If a source or target language cannot be\
-  \ assessed, return a blank dictionary ({{}}) for that language. Both source and target languages must\
-  \ have an ISO 639 code to be valid.\n\nThis is the post title: \n"
+TITLE_PARSING_QUERY: >
+  Assess this Reddit post title which is for a translation request. Output what you assess to be the source language and target language, and the percentage confidence for your assessment in this JSON format:
+
+  {{
+    "source_language": {{
+      "name": "LANGUAGE_1",
+      "code": "LANGUAGE_1_ISO_639-3_CODE"
+    }},
+    "target_language": {{
+      "name": "LANGUAGE_2",
+      "code": "LANGUAGE_2_ISO_639-3_CODE"
+    }},
+    "confidence": PERCENTAGE (out of 1.0)
+  }}
+
+  Use ISO 639-1 codes for the languages if they are available. If a source or target language cannot be assessed, return a blank dictionary ({{}}) for that language. Both source and target languages must have an ISO 639 code to be valid.
+
+  This is the post title:
 
 TITLE_REFORMATTING_QUERY: >
   Assess this malformed Reddit post title for a translation community.
@@ -360,6 +351,13 @@ TITLE_REFORMATTING_QUERY: >
   Do not reply with anything other than the new, suggested title.
   
   This is the post title: 
+
+IMAGE_DESCRIPTION_QUERY: >
+  Provide a brief description of what is shown in this image, 
+  suitable as alt text for accessibility. If text or written content is 
+  visible, describe its appearance and context (e.g., 
+  "handwritten note," "street sign in another language") 
+  but do not transcribe or translate it.
 
 BOT_DISCLAIMER: |
   
