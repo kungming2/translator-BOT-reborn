@@ -184,7 +184,8 @@ class Ajo:
         self.author_messaged = False
         self.type = "single"
         self.image_hash = None
-        self.is_defined_multiple = False  # New attribute
+        self.is_defined_multiple = False
+        self.closed_out = False
 
         self._lingvo = None  # initialized lazily from preferred_code
         self._submission = None  # cached PRAW submission
@@ -391,15 +392,16 @@ class Ajo:
             "preferred_code": self.preferred_code,
             "language_history": self.language_history or [],
             "status": self.status or "untranslated",
-            "output_post_flair_css": self.output_post_flair_css,  # solely for backwards compatability
-            "output_post_flair_text": self.output_post_flair_text,  # solely for backwards compatability
+            "output_post_flair_css": self.output_post_flair_css,
+            "output_post_flair_text": self.output_post_flair_text,
             "original_source_language_name": lingvo_list_to_names(self.original_source_language_name),
             "original_target_language_name": lingvo_list_to_names(self.original_target_language_name),
             "is_identified": bool(self.is_identified),
             "is_long": bool(self.is_long),
             "image_hash": self.image_hash,
-            "type": self.type or "single",  # default fallback
-            "is_defined_multiple": bool(self.is_defined_multiple)
+            "type": self.type or "single",
+            "is_defined_multiple": bool(self.is_defined_multiple),
+            "closed_out": bool(self.closed_out)
         }
 
     @classmethod
@@ -429,6 +431,7 @@ class Ajo:
         ajo.is_identified = data.get("is_identified", False)
         ajo.is_long = data.get("is_long", False)
         ajo.is_defined_multiple = data.get("is_defined_multiple", False)
+        ajo.closed_out = data.get("closed_out", False)
 
         # Normalize language name fields
         ajo.original_source_language_name = _normalize_lang_field(data.get("original_source_language_name"))
@@ -541,6 +544,10 @@ class Ajo:
 
         self.status = value
 
+        # Automatically set closed_out to True when status is 'translated' or 'doublecheck'
+        if value in {'translated', 'doublecheck'}:
+            self.closed_out = True
+
     def set_defined_multiple_status(self, language_code: str, status_value: str):
         """
         Set the status for a specific language in a defined multiple post.
@@ -586,6 +593,14 @@ class Ajo:
         """
         self.is_defined_multiple = not self.is_defined_multiple
         return self.is_defined_multiple
+
+    def set_closed_out(self, value: bool) -> None:
+        """
+        Set the closed_out flag indicating whether the post has been closed out.
+
+        :param value: Boolean indicating if the post is closed out.
+        """
+        self.closed_out = bool(value)
 
     def set_time(self, status, moment):
         """
