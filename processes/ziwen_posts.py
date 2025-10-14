@@ -12,6 +12,7 @@ from wasabi import msg
 from config import logger, SETTINGS
 from connection import REDDIT
 from database import db, record_filter_log
+from dupe_detector import duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import Diskuto, diskuto_writer
@@ -46,6 +47,18 @@ def ziwen_posts(post_limit=None):
     # Reverse order so that we start processing the older posts, with
     # newest ones last.
     posts.reverse()
+
+    # ========================================================================
+    # DUPLICATE DETECTION - Run before main processing
+    # ========================================================================
+    logger.info("[ZW] Running duplicate detection...")
+    dupes_removed = duplicate_detector(
+                    list_posts=posts,
+                    reddit_instance=REDDIT,
+                    testing_mode=SETTINGS['testing_mode'],
+                )
+    if dupes_removed:
+        logger.info(f"[ZW] Completed duplicate detection. Removed {dupes_removed} posts.")
 
     # Main processing logic.
     for post in posts:
@@ -118,6 +131,9 @@ def ziwen_posts(post_limit=None):
         # This is mainly for catching up with older posts for downtime;
         # we want to process them, but we don't want to send notes.
         messages_send_okay = post_age < 3600
+        if not messages_send_okay:
+            logger.info(f"[ZW] Posts: Post `{post_id}` is too old to "
+                        f"send notifications for.")
 
         # Apply a filtration test to make sure this post is valid.
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
