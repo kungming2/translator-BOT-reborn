@@ -1,9 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Request Closeout checks posts which are older than a week, have not been
+marked as translated or needs review, and have above a certain amount of
+comments/activity. It then messages the requester to remind them to mark
+the post as translated if their request has been properly fulfilled.
+"""
 import re
 import time
 
 import praw
 
-from config import logger
+from config import logger, SETTINGS
 from reddit_sender import message_send
 from responses import RESPONSE
 from tasks import WENJU_SETTINGS
