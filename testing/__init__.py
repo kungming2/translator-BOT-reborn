@@ -9,7 +9,6 @@ def log_testing_mode(output_text, title=None, metadata=None):
 
     Args:
         output_text (str): The body of the message or reply.
-        filepath (str): Full path to the .md file.
         title (str, optional): Section title to display as a Markdown heading.
         metadata (dict, optional): Key-value pairs to log before the content.
     """
