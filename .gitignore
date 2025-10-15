@@ -2,4 +2,7 @@
 /Data/Databases/ajo.db
 /Data/Databases/cache.db
 /Data/Databases/main.db
-/Settings/_log_counter.json
+/Data/_log_counter.json
+/Data/Archival/all_identified.md
+/Data/Archival/all_saved.md
+/Data/Settings/discord_settings.yaml

@@ -9050,6 +9050,21 @@ tcz:
   - Thado-Ubiphei
   - Thadou
   population: 346100
+tdc:
+  country: Colombia
+  family: Chocoan
+  language_code_3: tdc
+  link_ethnologue: https://www.ethnologue.com/language/tdc
+  link_wikipedia: https://en.wikipedia.org/wiki/Chami_language
+  name: Embera-Tado
+  name_alternates:
+  - Cholo
+  - Embena
+  - Embera
+  - Epena
+  - Katío
+  - Êpêra
+  population: 88700
 tdd:
   country: China
   family: Tai-Kadai
