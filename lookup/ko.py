@@ -95,7 +95,6 @@ def ko_word(korean_word):
     :param korean_word: A word in Korean.
     :return: A Markdown formatted string, or None.
     """
-    entries = []
     korean_word = korean_word.strip()
     data = ko_search_raw(korean_word)
     hangul_romanization = Romanizer(korean_word).romanize()
@@ -106,23 +105,33 @@ def ko_word(korean_word):
 
     lookup_header = f'# [{korean_word}](https://en.wiktionary.org/wiki/{korean_word}#Korean)'
 
+    # Group entries by part of speech
+    pos_groups = {}
     for entry in data:
-        definitions = []
-        for x in entry['definitions']:
-            for t in x.get('translations', []):
-                if t.get('language') == '영어':
-                    definitions.append(t.get('definition'))
-        definitions = '\n* '.join(definitions)
+        pos = translate_part_of_speech(entry['part_of_speech']).title()
+        if pos not in pos_groups:
+            pos_groups[pos] = []
+        pos_groups[pos].append(entry)
 
-        entry_text = (
-                f"\n\n##### *{translate_part_of_speech(entry['part_of_speech']).title()}*\n\n"
-                + (
-                    f"**Origin:** [{entry['origin']}](https://en.wiktionary.org/wiki/{entry['origin']})\n\n" if entry.get(
-                        'origin') else "")
-                + f"**Romanization:** *{hangul_romanization}*\n\n"
-                + f"**Meanings**:\n* {definitions}"
-        )
-        entries.append(entry_text)
+    # Build output for each POS group
+    entries = []
+    for pos, group in pos_groups.items():
+        pos_section = f"\n\n##### *{pos}*\n\n"
+
+        definitions_list = []
+        for entry in group:
+            for x in entry['definitions']:
+                for t in x.get('translations', []):
+                    if t.get('language') == '영어':
+                        definition_text = t.get('definition')
+                        origin = entry.get('origin')
+                        if origin:
+                            definition_text = f"[{origin}](https://en.wiktionary.org/wiki/{origin}): {definition_text}"
+                        definitions_list.append(definition_text)
+
+        definitions = '\n* '.join(definitions_list)
+        pos_section += f"**Romanization:** *{hangul_romanization}*\n\n**Meanings**:\n* {definitions}"
+        entries.append(pos_section)
 
     footer = (
         f"\n\n^Information ^from [^KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search?nation=eng&nationCode=6&ParaWordNo=&mainSearchWord={korean_word}&lang=eng) ^| "
@@ -130,7 +139,7 @@ def ko_word(korean_word):
         f"[^Collins](https://www.collinsdictionary.com/dictionary/korean-english/{korean_word})"
     )
 
-    final_comment = lookup_header + '\n'.join(entries) + footer
+    final_comment = lookup_header + ''.join(entries) + footer
 
     return final_comment
 
