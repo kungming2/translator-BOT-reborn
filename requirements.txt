@@ -26,8 +26,8 @@ random_user_agent
 scikit-learn
 selenium
 sentence-transformers
-unidic
-unidic-lite
+unidic  # Used by MeCab
+unidic-lite  # Used by MeCab
 wasabi
 waybackpy
 wikipedia
