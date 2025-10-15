@@ -1015,7 +1015,7 @@ async def zh_word(word):
         f'[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| '
         f'[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| '
         f'[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| '
-        f"[^(ZDIC)](https://www.zdic.net/hans/{simplify(word)})"
+        f"[^ZDIC](https://www.zdic.net/hans/{simplify(word)})"
     )
 
     result = lookup_header + meaning_section + "\n\n" + footer
