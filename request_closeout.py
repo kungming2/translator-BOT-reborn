@@ -100,6 +100,16 @@ def closeout_posts():
     for post in posts_to_process:
         # Check number of comments. If there are more than our minimum required, take action.
         post_praw = REDDIT.submission(id=post.id)
+
+        # Check if the post is deleted or removed
+        if (
+                post_praw.author is None or
+                post_praw.selftext in ("[deleted]", "[removed]") or
+                post_praw.removed_by_category is not None
+        ):
+            logger.info(f"Skipping post `{post.id}` for post closeout — deleted or removed.")
+            continue
+
         if post_praw.num_comments >= SETTINGS['close_out_comments_minimum']:
             logger.info(f"Post `{post.id}` has {post_praw.num_comments} comments "
                         f"(minimum: {SETTINGS['close_out_comments_minimum']}). "
