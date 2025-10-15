@@ -82,7 +82,7 @@ def closeout_posts():
             WHERE created_utc BETWEEN ? AND ? \
             """
     rows = db.fetchall_ajo(query, (lower, upper))
-    logger.info(f"Fetching posts between {lower_dt.isoformat()} and {upper_dt.isoformat()}")
+    logger.debug(f"Fetching posts between {lower_dt.isoformat()} and {upper_dt.isoformat()}")
     for row in rows:
         ajo = ajo_loader(row['id'])
         ajos_to_close.append(ajo)
@@ -95,7 +95,8 @@ def closeout_posts():
         and not post.closed_out
     ]
 
-    logger.info(f"Found {len(posts_to_process)} posts to examine...")
+    if posts_to_process:
+        logger.info(f"Found {len(posts_to_process)} posts to examine...")
     for post in posts_to_process:
         # Check number of comments. If there are more than our minimum required, take action.
         post_praw = REDDIT.submission(id=post.id)
