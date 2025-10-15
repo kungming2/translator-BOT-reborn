@@ -146,6 +146,10 @@ comment_edit_num_limit: 30
 # Search function uses... (Google or Reddit)
 search_engine: Reddit
 
+# Closeout settings
+close_out_age: 7  # age of posts (in days) that we inform people about.
+close_out_comments_minimum: 5
+
 # Duplicate detector settings
 duplicate_semantic_threshold: 0.85
 duplicate_fuzzy_threshold: 85
