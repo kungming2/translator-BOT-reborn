@@ -11,7 +11,7 @@ import jieba
 import MeCab
 import unidic_lite
 
-from config import logger, load_settings, Paths
+from config import load_settings, Paths
 from connection import get_random_useragent
 from title_handling import extract_lingvos_from_text
 from languages import converter
@@ -69,39 +69,51 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
 def lookup_matcher(content_text, language_code):
     """
     Evaluate a comment for lookup and return detected text keyed by language code.
-    Only text enclosed in backticks (`) is processed, excluding
-    triple-backtick code blocks.
+    Only text enclosed in backticks (`) is processed, excluding triple-backtick code blocks.
     Tokenizes Chinese ('zh'), Japanese ('ja'), and Korean ('ko') appropriately.
-    TODO crashes with !identify:ja+ko
+    Supports !identify or !id commands with multiple languages (e.g., !identify:zh+ja).
+
     :param content_text: Text of the comment to search.
-    :param language_code: Language code ('zh', 'ja', 'ko'), or None to return list of terms in backticks.
-    :return: Dict mapping language code to list of terms, or list if language_code is None.
+    :param language_code: Language code ('zh', 'ja', 'ko') or None. Can be a string like 'zh+ja'.
+    :return: Dict mapping language code to list of terms.
     """
     original_text = str(content_text)
+
     # Remove all triple-backtick blocks (```...```)
     content_text = re.sub(r'```.*?```', '', content_text, flags=re.DOTALL)
 
     cjk_languages = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
 
-    # Check for explicit !identify command
-    if "!identify:" in original_text:
-        match = re.search(r"!identify:\s*(\S+)", original_text)
-        if match:
-            parsed_code = converter(match.group(1)).preferred_code
+    # --- Handle !identify or !id command ---
+    match = re.search(r"!(?:identify|id):\s*(\S+)", original_text)
+    if match:
+        raw_codes = match.group(1).split("+")
+        language_codes = []
+        for code in raw_codes:
+            parsed = converter(code).preferred_code
+            # Map 4-letter SIL code to CJK if needed
             for key in ['zh', 'ja', 'ko']:
-                if len(parsed_code) == 4 and parsed_code in cjk_languages[key]:
-                    parsed_code = key
-            language_code = parsed_code
-
-    elif language_code is None:
+                if len(parsed) == 4 and parsed in cjk_languages[key]:
+                    parsed = key
+            if parsed not in language_codes:
+                language_codes.append(parsed)
+    elif language_code:
+        # Convert string with + to list
+        if isinstance(language_code, str):
+            language_codes = language_code.split("+")
+        else:
+            language_codes = [language_code]
+    else:
         mentions = extract_lingvos_from_text(content_text)
         if mentions and len(mentions) == 1:
-            language_code = mentions[0].preferred_code
+            language_codes = [mentions[0].preferred_code]
+        else:
+            language_codes = []
 
-    # Extract all segments between backticks
+    # --- Extract all segments between backticks ---
     matches = re.findall(r'`(.*?)`', content_text, re.DOTALL)
     if not matches:
-        return [] if language_code is None else {}
+        return {}
 
     combined_text = "".join(matches)
 
@@ -110,27 +122,21 @@ def lookup_matcher(content_text, language_code):
     has_kana = bool(re.search(r'[\u3041-\u309f\u30a0-\u30ff]', combined_text))
     has_hangul = bool(re.search(r'[\uac00-\ud7af]', combined_text))
 
-    if language_code is None:
-        # Instead of returning list, return dict with a default key, e.g. 'all' or 'default'
-        return {'lookup': matches}
-
     result = {}
 
-    # Chinese and Japanese handling
+    # --- Handle Chinese and Japanese ---
     if has_hanzi or has_kana:
         cjk_tokens = []
-        for match in matches:
-            segments = re.findall(r'[\u2E80-\u9FFF\U00020000-\U0002EBEF]+', match)
+        for match_text in matches:
+            segments = re.findall(r'[\u2E80-\u9FFF\U00020000-\U0002EBEF]+', match_text)
             cjk_tokens.extend(segments)
-
-        logger.debug(f"[ZW] Lookup_Matcher: Provisional: {cjk_tokens}")
 
         tokenized = []
         for token in cjk_tokens:
             if len(token) >= 2:
-                if language_code == "zh" and not has_kana:
+                if 'zh' in language_codes and not has_kana:
                     new_tokens = lookup_zh_ja_tokenizer(simplify(token), "zh")
-                elif language_code == "ja" or has_kana:
+                elif 'ja' in language_codes or has_kana:
                     new_tokens = lookup_zh_ja_tokenizer(token, "ja")
                 else:
                     new_tokens = [token]
@@ -138,26 +144,32 @@ def lookup_matcher(content_text, language_code):
             else:
                 tokenized.append(token)
 
-        lang_key = "ja" if has_kana else language_code
-        result[lang_key] = tokenized
+        # Assign tokenized text to all requested CJK languages
+        for code in language_codes:
+            if code in ['zh', 'ja']:
+                result[code] = tokenized
 
-    # Korean handling
+    # --- Handle Korean ---
     if has_hangul:
         hangul_tokens = []
-        for match in matches:
-            hangul_tokens.extend(re.findall(r'[\uac00-\ud7af]+', match))
-        result["ko"] = hangul_tokens
+        for match_text in matches:
+            hangul_tokens.extend(re.findall(r'[\uac00-\ud7af]+', match_text))
+        if 'ko' in language_codes:
+            result['ko'] = hangul_tokens
 
-    # Other languages (non-CJK)
+    # --- Handle non-CJK languages ---
     all_cjk_codes = {"zh", "ja", "ko"}
-    if not (has_hanzi or has_kana or has_hangul) and language_code not in all_cjk_codes:
+    non_cjk_codes = [code for code in language_codes if code not in all_cjk_codes]
+    if non_cjk_codes:
+        # Deduplicate terms
         seen = set()
         deduped = [term for term in matches if term not in seen and not seen.add(term)]
-        result[language_code] = deduped
+        for code in non_cjk_codes:
+            result[code] = deduped
 
     return result
 
 
 if __name__ == "__main__":
-    print(lookup_matcher("`舊世界打個落花流水`", "zh"))
-    print(lookup_matcher("`過去を叩きのめせ`", "ja"))
+    print(lookup_matcher("`就一定要实现！`", "zh"))
+    print(lookup_matcher("`連帯こそは普遍なれ`", "ja"))
