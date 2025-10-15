@@ -20,7 +20,7 @@ from models.ajo import ajo_loader, ajo_writer
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
 from responses import RESPONSE
-from wiki import fetch_wiki_statistics_page, fetch_most_requested_languages
+from wiki import fetch_wiki_statistics_page
 
 
 def points_retriever(username: str) -> str:
@@ -152,43 +152,6 @@ def points_worth_determiner(lingvo_object) -> int:
     logger.debug(f"[ZW] Points determiner: Multiplier for {language_code} is {final_point_value}")
 
     return final_point_value
-
-
-# noinspection SqlWithoutWhere
-def points_worth_cacher():
-    """
-    Caches the point values of frequently used languages into a local
-    database for fast access. This is run occasionally every week and at
-    the start of every month to populate the point values initially.
-    If the current month does not have entries, it'll purge the entries
-    from the previous month and replace it.
-    TODO add to some version of Wenju in the future.
-    """
-    # Get this month's representation.
-    current_month = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m')
-
-    # Check if cache already contains entries for the current month
-    query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
-    db.cursor_cache.execute(query, (current_month,))
-    cached_entries = db.cursor_cache.fetchall()
-
-    # There is no cached points data.
-    if not cached_entries:
-        # No up-to-date cache; clear old entries
-        db.cursor_cache.execute("DELETE FROM multiplier_cache")
-        db.conn_cache.commit()
-
-        most_requested = fetch_most_requested_languages()
-
-        # Retrieve point values and update the cache
-        for language_code in most_requested:
-            # This also handles inserting and committing to the DB
-            try:
-                points_worth_determiner(converter(language_code))
-            except ValueError:
-                continue
-
-    return
 
 
 def update_points_status(status_list, username, points):

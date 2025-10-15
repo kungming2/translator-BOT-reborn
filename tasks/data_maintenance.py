@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import datetime
 import json
 import re
+import time
 from pathlib import Path
 from typing import Union, Dict
 
@@ -13,8 +15,10 @@ from config import logger, Paths, SETTINGS
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from languages import converter
+from points import points_worth_determiner
 from tasks import WENJU_SETTINGS, task
 from time_handling import get_previous_month, messaging_months_elapsed
+from wiki import fetch_most_requested_languages
 
 
 @task(schedule='daily')
@@ -327,6 +331,43 @@ def get_language_pages() -> None:
 
     logger.info("[WJ] Statistics JSON file generated.")
     statistics_list_updater(language_family_dict)
+
+    return
+
+
+# noinspection SqlWithoutWhere
+@task(schedule='monthly')
+def points_worth_cacher():
+    """
+    Caches the point values of frequently used languages into a local
+    database for fast access. This is run occasionally every week and at
+    the start of every month to populate the point values initially.
+    If the current month does not have entries, it'll purge the entries
+    from the previous month and replace it.
+    """
+    # Get this month's representation.
+    current_month = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m')
+
+    # Check if cache already contains entries for the current month
+    query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
+    db.cursor_cache.execute(query, (current_month,))
+    cached_entries = db.cursor_cache.fetchall()
+
+    # There is no cached points data.
+    if not cached_entries:
+        # No up-to-date cache; clear old entries
+        db.cursor_cache.execute("DELETE FROM multiplier_cache")
+        db.conn_cache.commit()
+
+        most_requested = fetch_most_requested_languages()
+
+        # Retrieve point values and update the cache
+        for language_code in most_requested:
+            # This also handles inserting and committing to the DB
+            try:
+                points_worth_determiner(converter(language_code))
+            except ValueError:
+                continue
 
     return
 

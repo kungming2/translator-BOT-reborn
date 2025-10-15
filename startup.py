@@ -9,7 +9,7 @@ from typing import Dict, Any
 
 from config import logger
 from connection import REDDIT, credentials_source
-from points import points_worth_cacher
+from tasks.data_maintenance import points_worth_cacher
 
 
 @dataclass
@@ -63,7 +63,9 @@ def ziwen_startup() -> State:
 
     recent_submitters = most_recent_submitters()
 
-    points_worth_cacher()  # Does not return anything.
+    # Does not return anything. Run just to make sure there's data in
+    # the points cache.
+    points_worth_cacher()
     logger.debug("[ZW] # Points cache updated.")
 
     return State(
