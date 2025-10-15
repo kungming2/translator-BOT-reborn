@@ -828,7 +828,7 @@ def update_titolo_from_ai_result(result, ai_result):
 
         logger.info(f"AI updated source: {result.source}, target: {result.target}, direction: {result.direction}")
     except Exception as e:
-        logger.exception(f"Failed to update Titolo from AI result: {e}")
+        logger.error(f"Failed to update Titolo from AI result: {e}")
 
 
 def title_ai_parser(title, post=None):

@@ -5,8 +5,9 @@ Wrapper for Reddit functions to allow for testing without sending
 messages. This wraps functions for comment replies, message replies,
 and message sending.
 """
-from praw import exceptions
+from praw.exceptions import APIException
 from praw.models import Comment, Message, Submission
+from prawcore import NotFound
 
 from config import SETTINGS, logger
 from testing import log_testing_mode
@@ -23,7 +24,8 @@ def comment_reply(comment, reply_text):
         reply_text: Text to reply with.
     """
     if testing_mode:
-        logger.info(f"[TESTING MODE] Would reply to comment ID {comment.id} by {comment.author}:")
+        logger.info(f"[TESTING MODE] Would reply to comment ID "
+                    f"{comment.id} by {comment.author}:")
         logger.info(reply_text)
 
         log_testing_mode(
@@ -39,7 +41,7 @@ def comment_reply(comment, reply_text):
         try:
             comment.reply(reply_text)
             logger.info(f"Replied to comment ID {comment.id} successfully.")
-        except exceptions.RedditAPIException:  # Comment has been deleted.
+        except (APIException, NotFound):  # Comment has been deleted.
             logger.info(f"Comment ID {comment.id} has been deleted.")
             pass
 
@@ -72,8 +74,11 @@ def message_reply(msg_obj, reply_text):
 
     # Actual reply
     if isinstance(msg_obj, (Comment, Message, Submission)):
-        msg_obj.reply(reply_text)
-        logger.info(f"Replied to {target_id} successfully.")
+        try:
+            msg_obj.reply(reply_text)
+            logger.info(f"Replied to {target_id} successfully.")
+        except (APIException, NotFound):
+            logger.exception(f"Unexpected error replying to {target_id}: {e}")
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; "
@@ -107,5 +112,8 @@ def message_send(redditor_obj, subject, body):
             },
         )
     else:
-        redditor_obj.message(subject=subject, message=body)
-        logger.info(f"Sent a private message to u/{username} successfully.")
+        try:
+            redditor_obj.message(subject=subject, message=body)
+            logger.info(f"Sent a private message to u/{username} successfully.")
+        except APIException:
+            logger.error(f"Unable to send a private message to u/{username}.")

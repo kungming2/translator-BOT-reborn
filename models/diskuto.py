@@ -146,7 +146,7 @@ def diskuto_loader(post_id):
     try:
         diskuto_dict = orjson.loads(result["content"])
     except orjson.JSONDecodeError:
-        logger.exception(f"[Diskuto Loader] Failed to decode Diskuto JSON for id {post_id}.")
+        logger.error(f"[Diskuto Loader] Failed to decode Diskuto JSON for id {post_id}.")
         return None
 
     # Rebuild Diskuto object
