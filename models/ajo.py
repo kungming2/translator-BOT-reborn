@@ -52,7 +52,7 @@ def ajo_writer(new_ajo):
                     if not isinstance(stored_ajo_dict, dict):
                         raise ValueError("Fallback eval didn't yield a dict.")
                 except Exception as e:
-                    logger.exception("[ZW] ajo_writer: Failed to decode legacy Ajo format.")
+                    logger.error("[ZW] ajo_writer: Failed to decode legacy Ajo format.")
                     raise e
             if new_ajo.to_dict() != stored_ajo_dict:
                 cursor.execute(
@@ -122,7 +122,7 @@ def ajo_loader(ajo_id):
         logger.debug("[ZW] ajo_loader: Loaded Ajo from local database.")
         return ajo
     except Exception as e:
-        logger.exception(f"[ZW] ajo_loader: Failed to load or initialize Ajo: {e}")
+        logger.error(f"[ZW] ajo_loader: Failed to load or initialize Ajo: {e}")
         return None
 
 
