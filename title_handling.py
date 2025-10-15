@@ -878,8 +878,10 @@ def title_ai_parser(title, post=None):
 
     confidence = query_dict.get("confidence", 0.0)
     if confidence < 0.7:
+        logger.warning('AI confidence value too low for title.')
         return "error", "Confidence value too low"
 
+    logger.info('AI service returned data.')
     return query_dict
 
 
