@@ -407,6 +407,7 @@ def variant_character_search(search_term, retries=3):
             return None
 
         except (requests.RequestException, IndexError) as e:
+            logger.error(f"Encountered an error: {e}")
             # If not last attempt, wait a bit and retry
             if attempt < retries - 1:
                 sleep(1)
@@ -747,6 +748,7 @@ async def zh_character(character):
         f"[^(MDBG)](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=1&wdqb={character}) ^| "
         f"[^(MoE DICT)](https://www.moedict.tw/'{tradify(character)}) ^| "
         f"[^(MFCCD)](https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word={tradify(character)}) ^| "
+        f"[^(ZDIC)](https://www.zdic.net/hans/{simplify(character)}) ^| "
         f"[^(ZI)](https://zi.tools/zi/{tradify(character)})"
     )
 
@@ -1012,7 +1014,8 @@ async def zh_word(word):
         f'[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| '
         f'[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| '
         f'[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| '
-        f'[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index)'
+        f'[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| '
+        f"[^(ZDIC)](https://www.zdic.net/hans/{simplify(word)})"
     )
 
     result = lookup_header + meaning_section + "\n\n" + footer
