@@ -10247,6 +10247,21 @@ xct:
   link_wikipedia: https://en.wikipedia.org/wiki/Classical_Tibetan
   name: Classical Tibetan
   population: 0
+xdk:
+  country: Australia
+  family: Australian
+  language_code_3: xdk
+  link_ethnologue: https://www.ethnologue.com/language/xdk
+  link_wikipedia: https://en.wikipedia.org/wiki/Dharug_language
+  name: Dharuk
+  name_alternates:
+  - Darrook
+  - Darug
+  - Dhar’rook
+  - Dharrook
+  - Dharruk
+  - Dharug
+  population: 197
 xh:
   country: South Africa
   family: Niger-Congo

@@ -20,6 +20,63 @@ from connection import logger, get_random_useragent
 from languages import converter, get_lingvos, select_random_language
 
 
+def fetch_sil_language_data(language_code: str) -> dict | None:
+    """
+    Fetch language reference data from SIL ISO 639-3 as a fallback.
+    Raises a ValueError if the language code is in ISO 639-2 instead.
+
+    :param language_code: ISO 639-3 language code
+    :return: Dictionary with basic SIL data, or None if invalid
+    """
+    url = f"https://iso639-3.sil.org/code/{language_code.lower()}"
+    logger.debug(f"Fetching URL: {url}")
+
+    try:
+        response = requests.get(url, headers=get_random_useragent(),
+                                timeout=10)
+        response.raise_for_status()
+        logger.debug(f"Response status: {response.status_code}")
+    except requests.RequestException as e:
+        logger.error(f"[SIL DEBUG] Could not fetch page for `{language_code}`: {e}")
+        return None
+
+    tree = html.fromstring(response.content)
+
+    # Find the main <h2> element containing the language name and code dynamically
+    header_elements = tree.xpath('//div[contains(@class,"region-content")]//h2/text()')
+    logger.debug(f"[SIL DEBUG] Header elements found: {header_elements}")
+
+    if not header_elements:
+        logger.warning(f"[SIL DEBUG] Could not find header for `{language_code}`")
+        return None
+
+    header_text = header_elements[0].strip()
+    logger.debug(f"Found header: {header_text}")
+    name = header_text.split("[")[0].strip()
+
+    # Find the code sets table row dynamically
+    code_sets_elements = tree.xpath('//table//tr/td[4]/text()')
+    logger.debug(f"[SIL DEBUG] Code sets found: {code_sets_elements}")
+
+    if not code_sets_elements:
+        logger.warning(f"[SIL DEBUG] Could not find code sets for `{language_code}`")
+        return None
+
+    code_sets_text = code_sets_elements[0].strip()
+    logger.debug(f"Found code sets: {code_sets_text}")
+    if "639-2" in code_sets_text and "639-3" not in code_sets_text:
+        raise ValueError(f"[SIL] Code `{language_code}` is only 639-2, not 639-3")
+
+    sil_data = {
+        "language_code_3": language_code.lower(),
+        "name": name,
+        "link_sil": url
+    }
+
+    logger.info(f"Fetched SIL data for `{language_code}`: {sil_data}")
+    return sil_data
+
+
 def get_archived_ethnologue_page(language_code: str) -> str | None:
     """
     Retrieve an archived Ethnologue page for a given language code
@@ -37,9 +94,9 @@ def get_archived_ethnologue_page(language_code: str) -> str | None:
     try:
         archived_snapshot = cdx_api.near(year=2019, month=6, day=6, hour=12, minute=0)
     except (
-        waybackpy.exceptions.NoCDXRecordFound,
-        waybackpy.exceptions.WaybackError,
-        requests.exceptions.ConnectTimeout,
+            waybackpy.exceptions.NoCDXRecordFound,
+            waybackpy.exceptions.WaybackError,
+            requests.exceptions.ConnectTimeout,
     ):
         logger.error(f"[WY] Could not retrieve archived data for `{language_code}`.")
         return None
@@ -84,6 +141,15 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
         tree = html.fromstring(response.content)
     except requests.RequestException as e:
         logger.error(f"[Reference] Could not fetch Ethnologue page for `{language_code}`: {e}")
+
+        # SIL backup here. This is primarily for historical/extinct
+        # languages, like Tangut.
+        sil_data = fetch_sil_language_data(language_code)
+        if sil_data:
+            logger.info(f"[Reference] No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}")
+            ref_data.update(sil_data)
+            return ref_data
+
         return None
 
     # Check if the language exists on the page
