@@ -18,6 +18,7 @@ from models.ajo import Ajo, ajo_loader
 from models.diskuto import Diskuto, diskuto_writer
 from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
+from request_closeout import closeout_posts
 from responses import RESPONSE
 from statistics import action_counter
 from title_handling import Titolo, format_title_correction_comment, main_posts_filter, is_english_only
@@ -214,6 +215,9 @@ def ziwen_posts(post_limit=None):
         # Only update if we're not in testing mode.
         if not SETTINGS['testing_mode']:
             post_ajo.update_reddit()
+
+        # Run request closeout.
+        closeout_posts()
 
     return
 
