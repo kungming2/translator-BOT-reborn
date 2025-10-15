@@ -553,7 +553,7 @@ def notify_list_statistics_calculator() -> None:
         )
         code_count = row[0] if row else 0
         name = converter(code).name
-        format_lines.append(f"{name} | `{code}` | {code_count}")
+        format_lines.append(f"| {name} | `{code}` | {code_count} |")
 
     # Calculate statistics
     unique_langs = len(all_lang_codes)
@@ -573,7 +573,7 @@ def notify_list_statistics_calculator() -> None:
     )
 
     # Subscriber table section
-    header = "\n\nLanguage | Code | Subscribers\n------|------|-----\n"
+    header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
     total_table = header + "\n".join(format_lines)
     logger.debug(f"[WY] notify_list_statistics_calculator: Total = {total_subs:,}")
 
@@ -581,7 +581,7 @@ def notify_list_statistics_calculator() -> None:
     ignore_codes = {"bh", "en", "nn", "nb"}
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
-        f"`{code}` | {converter(code).name}"
+        f"`| {code}` | {converter(code).name} |"
         for code in iso_sorted
         if code not in all_lang_codes and len(code) == 2 and code not in ignore_codes
     ]
@@ -589,7 +589,7 @@ def notify_list_statistics_calculator() -> None:
 
     missing_section = (
         f"\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
-        "Code | Language Name\n---|----\n"
+        "| Code | Language Name |\n|---|----|\n"
         + "\n".join(missing_codes)
     )
 
