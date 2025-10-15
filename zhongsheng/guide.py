@@ -8,12 +8,13 @@ COMMAND_DESCRIPTIONS = {
     'lang': 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`)',
     'user': 'Search log files and database for a Reddit username (accepts strings and URLs)',
     'post': 'Search log files and database for a Reddit post ID (accepts strings and URLs)',
+    'comment': 'See relevant data for a Reddit comment with bot commands (accepts strings and URLs)',
     'title': 'Process a Reddit post title. Use the ``--ai`` flag for AI parsing',
     'cjk': 'Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `!cjk c 翻译`)',
     'error': 'Display the 3 most recent error log entries',
     'describe': 'Generate an AI alt-text description of an image from a URL',
     'office': 'Get a random quote from *The Office (US)*',
-    'info': 'Display this info message'
+    'guide': 'Display this informational guide about Zhongsheng commands'
 }
 
 # Role requirements for each command
@@ -25,15 +26,15 @@ COMMAND_ROLES = {
     'cjk': ['Moderator', 'Helper'],
     'error': ['Moderator'],
     'describe': ['Moderator', 'Helper'],
-    'info': ['Moderator', 'Helper'],
+    'guide': ['Moderator', 'Helper'],
     'office': ['Moderator', 'Helper']
 }
 
 
-@command(name='info',
+@command(name='guide',
          help_text='Display this informative message',
          roles=['Moderator', 'Helper'])
-async def info_command(ctx, command_name: str = None):
+async def guide_command(ctx, command_name: str = None):
     """
     Display help information for all commands or a specific command.
 

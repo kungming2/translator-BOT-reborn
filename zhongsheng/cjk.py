@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """CJK lookup command"""
-from . import command
+from . import command, send_long_message
 from languages import converter
 from commands.lookup_cjk import perform_cjk_lookups
 
@@ -37,6 +37,8 @@ async def cjk_lookup(ctx, language: str, *, search_terms: str):
             result = await perform_cjk_lookups(language_name, [search_terms.strip()])
             formatted_result = '\n\n'.join(result)
 
-        await ctx.send(formatted_result)
+        # Split and send if result exceeds Discord's 2000 char limit
+        await send_long_message(ctx, formatted_result)
+
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
