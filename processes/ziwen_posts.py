@@ -225,6 +225,7 @@ def ziwen_posts(post_limit=None):
 # Primary runtime.
 if __name__ == "__main__":
     msg.good("Launching Ziwen posts...")
+    # noinspection PyBroadException
     try:
         ziwen_posts(15)
     except Exception:  # intentionally broad: catch all exceptions for logging

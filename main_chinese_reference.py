@@ -73,6 +73,7 @@ REDDIT_CHINESE = chinese_reference_login(credentials_source)
 
 if __name__ == '__main__':
     msg.good("Launching Chinese Reference...")
+    # noinspection PyBroadException
     try:
         cc_ref()
     except Exception:  # intentionally broad: catch all exceptions for logging

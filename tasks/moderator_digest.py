@@ -141,7 +141,7 @@ def error_log_count():
         last_entry_time = datetime.datetime.fromisoformat(
             last_timestamp.replace("Z", "+00:00")
         ).strftime("%Y-%m-%d %H:%M:%S UTC")
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         last_entry_time = last_timestamp  # Fallback to raw value
 
     # Format for Markdown output.

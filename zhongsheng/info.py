@@ -6,13 +6,13 @@ from . import command
 # Custom command descriptions - edit these as needed
 COMMAND_DESCRIPTIONS = {
     'lang': 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`)',
-    'user': 'Search log files and database for a Reddit username',
-    'post': 'Search log files and database for a Reddit post ID',
-    'title': 'Process a Reddit post title. Use --ai flag for AI-powered parsing',
-    'cjk': 'Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `!cjk c 翻译`',
+    'user': 'Search log files and database for a Reddit username (accepts strings and URLs)',
+    'post': 'Search log files and database for a Reddit post ID (accepts strings and URLs)',
+    'title': 'Process a Reddit post title. Use the ``--ai`` flag for AI parsing',
+    'cjk': 'Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `!cjk c 翻译`)',
     'error': 'Display the 3 most recent error log entries',
     'describe': 'Generate an AI alt-text description of an image from a URL',
-    'office': 'Get a random quote from *The Office (US)* TV show',
+    'office': 'Get a random quote from *The Office (US)*',
     'info': 'Display this info message'
 }
 

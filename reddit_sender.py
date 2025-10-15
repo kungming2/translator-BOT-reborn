@@ -78,7 +78,7 @@ def message_reply(msg_obj, reply_text):
             msg_obj.reply(reply_text)
             logger.info(f"Replied to {target_id} successfully.")
         except (APIException, NotFound):
-            logger.exception(f"Unexpected error replying to {target_id}: {e}")
+            logger.exception(f"Unexpected error replying to {target_id}.")
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; "

@@ -52,6 +52,7 @@ def ziwen_messages():
 # Primary runtime.
 if __name__ == "__main__":
     msg.good("Launching Ziwen messages...")
+    # noinspection PyBroadException
     try:
         ziwen_messages()
     except Exception:  # intentionally broad: catch all exceptions for logging

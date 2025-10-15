@@ -555,12 +555,14 @@ def calligraphy_search(character):
 
 def zh_character_other_readings(character):
     """
-    Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese character
-    from the Chinese Character API.
+    Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
+    character from the Chinese Character Web API. Note that the Chinese
+    Character Web API does not currently use HTTPS.
 
     :param character: A single Chinese character.
     :return: None or a Markdown-formatted string with readings.
     """
+    # noinspection HttpUrlsUsage
     url = (
         "http://ccdb.hemiola.com/characters/string/{}"
         "?fields=kHangul,kKorean,kJapaneseKun,kJapaneseOn,kVietnamese"
@@ -860,6 +862,7 @@ async def zh_word_chengyu_supplement(chengyu):
     chengyu_gb_bytes = simplified_chengyu.encode('gb2312')
     chengyu_gb_hex = "".join(f"%{b:02X}" for b in chengyu_gb_bytes)
 
+    # noinspection HttpUrlsUsage
     search_url = f'http://cy.5156edu.com/serach.php?f_type=chengyu&f_type2=&f_key={chengyu_gb_hex}'
     logger.debug(f"ZH-Chengyu search URL: {search_url}")
 

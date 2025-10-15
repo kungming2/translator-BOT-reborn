@@ -1,86 +1,36 @@
-# Asynchronous HTTP client
-aiohttp
-
-# Asynchronous file operations
 aiofiles
-
-# HTML parsing
+aiohttp
 beautifulsoup4
-
-# Image processing
-Pillow
-
-# Image hashing
+discord.py
+googlesearch-python
+huggingface_hub[hf_xet]
 ImageHash
-
-# Chinese text processing
 jieba
-opencc
-
-# Korean romanization and lookup
-korean-romanizer
 krdict.py
-
-# Japanese text processing
-MeCab
-pykakasi
-unidic
-unidic-lite
-
-# HTML/XML parsing
+korean-romanizer
 lxml
-
-# OpenAI API
+MeCab
 openai
-
-# Fast JSON library
+opencc
 orjson
-
-# HTTP client
-httpx
-
-# System utilities
-psutil
-
-# Reddit API
+Pillow
 praw
 prawcore
-
-# YAML config
-pyyaml
-
-# Fuzzy matching
-rapidfuzz
-
-# Web automation
-selenium
-
-# HTTP requests
-requests
-
-# Country data
+psutil
 pycountry
-
-# Formatting messages
-wasabi
-
-# Wayback Machine
-waybackpy
-
-# Wikipedia API
-wikipedia
-
-# Google search
-googlesearch-python
-
-# Discord connection
-discord.py
-
-# Determing dates
+pykakasi
 python-dateutil
-
-yt-dlp
+pyyaml
+rapidfuzz
 random_user_agent
-huggingface_hub[hf_xet]
-sentence-transformers
 scikit-learn
+selenium
+sentence-transformers
+unidic
+unidic-lite
+wasabi
+waybackpy
+wikipedia
+httpx
+requests
+yt-dlp

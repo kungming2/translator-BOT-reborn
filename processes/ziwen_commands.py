@@ -176,6 +176,7 @@ def ziwen_commands():
 
 if __name__ == '__main__':
     msg.good("Launching Ziwen commands...")
+    # noinspection PyBroadException
     try:
         ziwen_commands()
     except Exception:  # intentionally broad: catch all exceptions for logging
