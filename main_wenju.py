@@ -3,10 +3,10 @@
 """
 Scheduled Task Runner
 
-This module provides a decorator-based system for scheduling tasks tasks.
+This module provides a decorator-based system for scheduling tasks.
 
 HOW TO ADD A NEW TASK:
-1. Create or open a task file in tasks/
+1. Create or open a task file in /tasks/
 2. Import the decorator: `from main_wenju import task`
 3. Decorate your function with the schedule:
 
@@ -17,51 +17,48 @@ HOW TO ADD A NEW TASK:
 
 4. Make sure the task module is imported at the top of this file
 
-AVAILABLE SCHEDULES:
-- 'hourly': Runs every hour
+AVAILABLE SCHEDULES (ALL IN LOCAL TIME):
+- 'hourly': Runs every hour (e.g. python main_wenju.py hourly)
+     - cron: 3 */1 * * * (At minute 3 past every hour)
 - 'daily': Runs once per day
+     - cron: 47 23 * * * (At 23:47 every day)
 - 'weekly': Runs once per week
+     - cron: 13 8 * * 3 (At 08:13 on Wednesday)
 - 'monthly': Runs once per month
+     - cron: 13 8 10 * * (At 08:13 on day-of-month 10)
+Times are slightly irregular to avoid running when Ziwen is running.
 
-EXAMPLE TASK FILE (tasks/database.py):
+EXAMPLE TASK FILE (tasks/task_category.py):
     from main_wenju import task
 
     @task(schedule='hourly')
-    def cleanup_temp_tables():
+    def placeholder():
         pass
 
     @task(schedule='daily')
-    def optimize_indexes():
+    def placeholder_2():
         pass
+
+MANUAL EXECUTION:
+You can run any schedule manually for testing:
+    python main_wenju.py hourly
+    python main_wenju.py daily
 """
 import sys
-from tasks import status_report
+
+from config import logger
+from tasks import run_schedule, get_tasks
 
 
-_tasks = {}
-
-
-def task(schedule):
-    """Decorator to register a task with a schedule"""
-    def decorator(func):
-        if schedule not in _tasks:
-            _tasks[schedule] = []
-        _tasks[schedule].append(func)
-        return func
-    return decorator
-
-
-def run_schedule(schedule_name):
-    """Run all tasks for a given schedule"""
-    tasks_to_run = _tasks.get(schedule_name, [])
-    for task_func in tasks_to_run:
-        print(f"Running {task_func.__name__}...")
-        try:
-            task_func()
-        except Exception as e:
-            print(f"Error in {task_func.__name__}: {e}")
+def wenju_runner():
+    if len(sys.argv) > 1:
+        schedule_name = sys.argv[1]
+        run_schedule(schedule_name)
+    else:
+        logger.info("Usage: python main_wenju.py <schedule_name>")
+        logger.info("Available schedules:", list(get_tasks().keys()))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        run_schedule(sys.argv[1])
+    wenju_runner()
