@@ -394,6 +394,93 @@ def search_database(search_term: str, search_type: str):
         return []
 
 
+async def search_logs(ctx, search_term: str, term_type: str):
+    """
+    Internal helper function to search through log files and the
+    Ajo database for a given term, which can be a username or a post ID.
+
+    Args:
+        ctx: Discord context
+        search_term: The term to search for (username or post_id)
+        term_type: Type of search ('user' or 'post') for display purposes
+    """
+    log_files = {
+        'FILTER': Paths.LOGS['FILTER'],
+        'EVENTS': Paths.LOGS['EVENTS'],
+        'ERROR': Paths.LOGS['ERROR'],
+    }
+
+    try:
+        log_lines = []
+
+        # Search through log files
+        for log_name, log_path in log_files.items():
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='replace') as log_file:
+                    for line in log_file:
+                        if search_term in line:
+                            log_lines.append(f"[{log_name}] {line.strip()}")
+            except FileNotFoundError:
+                await ctx.send(f"Warning: {log_name} log file not found at `{log_path}`")
+                continue
+
+        # Search database for historical information
+        db_results = search_database(search_term, term_type)
+
+        # Check if we have any results at all
+        if not log_lines and not db_results:
+            await ctx.send(f"No entries found for {term_type} `{search_term}` in log files or database.")
+            return
+
+        # Build response with sections
+        response = f"Search results for {term_type} `{search_term}`:\n```\n"
+
+        # Add log file results
+        if log_lines:
+            response += f"=== LOG FILES ({len(log_lines)} matches) ===\n"
+            for line in log_lines:
+                # Check if adding this line would exceed Discord's limit
+                if len(response) + len(line) + 10 > 1900:
+                    response += "```"
+                    await ctx.send(response)
+                    response = "```\n"
+
+                response += line + "\n"
+
+            response += "\n"  # Extra spacing between sections
+
+        # Add database results
+        if db_results:
+            response += f"=== DATABASE ({len(db_results)} records) ===\n"
+            for ajo in db_results:
+                # Format the Ajo object as a string
+                ajo_str = (
+                    f"Post ID: {ajo.id}\n"
+                    f"  Status: {ajo.status}\n"
+                    f"  Language: {ajo.language_name} ({ajo.preferred_code})\n"
+                    f"  Title: {ajo.title}\n"
+                    f"  Direction: {ajo.direction}\n"
+                    f"---"
+                )
+
+                # Check if adding this entry would exceed Discord's limit
+                if len(response) + len(ajo_str) + 10 > 1900:
+                    response += "```"
+                    await ctx.send(response)
+                    response = "```\n"
+
+                response += ajo_str + "\n"
+
+        response += "```"
+        print(response)
+        await ctx.send(response)
+
+    except Exception as e:
+        await ctx.send(f"An error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+
 def _show_menu():
     print("\nSelect a search to run:")
     print("1. Database search (enter your own query to test)")
