@@ -3,6 +3,8 @@
 """
 Contains functions that deal with Korean-language content.
 """
+import asyncio
+
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
@@ -31,6 +33,17 @@ def translate_part_of_speech(korean_pos):
 
 
 '''WORD LOOKUP'''
+
+
+async def ko_search_raw_async(target_word):
+    """
+    Async wrapper for ko_search_raw that runs the blocking call in a thread pool.
+
+    :param target_word: Word in Korean we're looking for.
+    :return:
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, ko_search_raw, target_word)
 
 
 def ko_search_raw(target_word):
