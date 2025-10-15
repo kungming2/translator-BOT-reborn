@@ -27,6 +27,21 @@ class Diskuto:
         return (f"<Diskuto: id={self.id}, type={self.post_type}, "
                 f"processed={self.processed} | {self.title_original}>")
 
+    def to_dict(self):
+        """
+        Convert Diskuto instance to a dictionary representation.
+
+        Returns:
+            dict: Dictionary with all Diskuto attributes
+        """
+        return {
+            "id": self.id,
+            "created_utc": self.created_utc,
+            "title_original": self.title_original,
+            "post_type": self.post_type,
+            "processed": self.processed
+        }
+
     def __str__(self):
         return (f"Diskuto(\n"
                 f"  id='{self.id}',\n"

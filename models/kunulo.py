@@ -41,6 +41,27 @@ class Kunulo:
     def __repr__(self):
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
+    def to_dict(self):
+        """
+        Convert Kunulo instance to a dictionary representation.
+
+        Returns:
+            dict: Dictionary with 'data' (tags and their entries) and 'op_thanks' flag
+        """
+        return {
+            "data": {
+                tag: [
+                    {
+                        "comment_id": self._normalize_entry(entry)[0],
+                        "associated_data": self._normalize_entry(entry)[1]
+                    }
+                    for entry in entries
+                ]
+                for tag, entries in self._data.items()
+            },
+            "op_thanks": self._op_thanks
+        }
+
     @staticmethod
     def _normalize_entry(entry):
         """

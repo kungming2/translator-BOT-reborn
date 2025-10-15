@@ -23,6 +23,12 @@ class Komando:
     def __repr__(self):
         return f"Komando(name={self.name!r}, data={self.data!r})"
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "data": self.data
+        }
+
 
 def split_arguments(arg_str):
     """Splits arguments respecting quoted substrings."""
