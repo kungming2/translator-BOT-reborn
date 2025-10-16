@@ -11,7 +11,7 @@ from praw.exceptions import RedditAPIException
 from praw.models import TextArea
 
 from config import SETTINGS, get_log_directory, logger
-from connection import REDDIT, REDDIT_HELPER, widget_update
+from connection import REDDIT, REDDIT_HELPER, widget_update, reddit_status_check
 from database import db
 from discord_utils import send_discord_alert
 from languages import (
@@ -25,6 +25,48 @@ from lookup.reference import get_language_reference
 from lookup.wp_utils import wikipedia_lookup
 from models.ajo import Ajo
 from tasks import WENJU_SETTINGS, task
+
+
+@task(schedule="hourly")
+def reddit_status_report():
+    """
+    Wrapper that calls reddit_status_check() and returns a Markdown-formatted summary.
+
+    :returns:
+        - Markdown text if incidents exist
+    """
+    incidents = reddit_status_check()
+
+    if incidents is None:
+        logger.warning("Unable to reach Reddit Status API.")
+        return
+
+    if not incidents:
+        logger.debug("No Reddit Status incidents found.")
+        return
+
+    lines = ["### ⚠️ Active Reddit Incidents\n"]
+    for incident in incidents:
+        name = incident.get("name", "Unknown")
+        status = incident.get("status", "N/A")
+        impact = incident.get("impact", "unknown")
+        created = incident.get("created_at", "N/A")
+        updated = incident.get("updated_at", "N/A")
+        shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
+
+        title = f"**[{name}]({shortlink})**" if shortlink else f"**{name}**"
+
+        lines.append(
+            f"- {title}  \n"
+            f"  - **Status:** {status} ({impact})  \n"
+            f"  - **Created:** {created}  \n"
+            f"  - **Updated:** {updated}"
+        )
+
+    alert_text = "\n".join(lines)
+    send_discord_alert("Active Reddit Incident", alert_text, "alert")
+
+    return
 
 
 @task(schedule="hourly")

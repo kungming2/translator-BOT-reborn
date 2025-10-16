@@ -51,12 +51,14 @@ def chinese_reference_login(credentials):
     return reddit
 
 
-def reddit_status_check():
+def reddit_status_check() -> list[dict] | None:
     """
-    Check if there are any unresolved Reddit incidents that may affect bot operation.
-    API documentation: https://www.redditstatus.com/api
+    Fetch unresolved Reddit incidents.
 
-    :returns: True if the site has no incidents, False otherwise.
+    :returns:
+        - list of incident dicts if incidents exist
+        - empty list if no incidents
+        - None if the API could not be reached
     """
     url = "https://www.redditstatus.com/api/v2/incidents/unresolved.json"
 
@@ -65,21 +67,19 @@ def reddit_status_check():
         response.raise_for_status()
     except requests.RequestException as e:
         logger.warning(f"Could not connect to Reddit Status API: {e}")
-        return False
+        return None
 
-    incidents = response.json().get("incidents", [])
+    incidents = response.json().get("incidents", []) or []
 
-    if incidents:
-        for incident in incidents:
-            logger.info(
-                f"[Reddit Incident] {incident.get('name')} | "
-                f"Status: {incident.get('status')} | "
-                f"Created: {incident.get('created_at')} | "
-                f"Updated: {incident.get('updated_at')}"
-            )
-        return False
+    for incident in incidents:
+        logger.info(
+            f"[Reddit Incident] {incident.get('name')} | "
+            f"Status: {incident.get('status')} | "
+            f"Created: {incident.get('created_at')} | "
+            f"Updated: {incident.get('updated_at')}"
+        )
 
-    return True
+    return incidents
 
 
 def get_random_useragent():
@@ -228,5 +228,5 @@ REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
 
 if __name__ == "__main__":
-    print(_fetch_removal_reasons())
+    print(reddit_status_check())
     print(is_mod(REDDIT.redditor("kungming2")))
