@@ -136,6 +136,52 @@ def generate_language_frequency_markdown(language_list):
     return header + "\n".join(lines)
 
 
+def generate_command_usage_report(start_time, end_time, days):
+    """
+    Generate a Markdown report summarizing average command usage within a time range.
+
+    This function reads data from the counter log file and aggregates command usage
+    between the given start and end times, then computes a daily average.
+
+    :param start_time: Start time as a Unix timestamp.
+    :param end_time: End time as a Unix timestamp.
+    :param days: Number of days to average the usage over.
+    :return: A Markdown-formatted string summarizing command usage.
+    """
+    formatted_content = "\n##### Commands (Daily Average)"
+    formatted_content += "\n| Command | Times Used |\n|----------|------------|\n"
+
+    try:
+        with open(Paths.LOGS['COUNTER'], "rb") as file:
+            counter_data = orjson.loads(file.read())
+    except (FileNotFoundError, orjson.JSONDecodeError):
+        # If file is missing or malformed, return just the header.
+        return formatted_content
+
+    # Aggregate command counts within the specified time range.
+    command_totals = {}
+    for date_text, command_counts in counter_data.items():
+        try:
+            unix_timestamp = time.mktime(time.strptime(date_text, "%Y-%m-%d"))
+        except ValueError:
+            continue  # Skip invalid date entries.
+
+        if start_time <= unix_timestamp <= end_time:
+            for command, count in command_counts.items():
+                command_totals[command] = command_totals.get(command, 0) + int(count)
+
+    # Format the results into a Markdown table.
+    rows = []
+    for command, total in sorted(command_totals.items()):
+        if command == "!translate":
+            continue  # Skip excluded command.
+        display_name = r"\`lookup\`" if command == "`" else command
+        daily_average = round(total / days, 2)
+        rows.append(f"| {display_name} | {daily_average} |")
+
+    return formatted_content + "\n".join(rows)
+
+
 """USER STATISTICS"""
 
 

@@ -229,4 +229,3 @@ REDDIT_HELPER = reddit_helper_login(credentials_source)
 
 if __name__ == "__main__":
     print(reddit_status_check())
-    print(is_mod(REDDIT.redditor("kungming2")))

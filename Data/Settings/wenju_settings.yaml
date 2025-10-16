@@ -1,2 +1,3 @@
 lines_to_keep: 20000
 max_queue: 5  # number of items we want to alert mods about.
+report_command_average: 3  # number of days to obtain average command usage data
