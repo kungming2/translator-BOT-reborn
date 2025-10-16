@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Handles the text matching functions for the other lookup functions.
-Serves as a consolidator of detecting matching strings.
+Handles the text matching and tokenizing functions for the other lookup
+functions. Serves as a consolidator of detecting matching strings.
 """
 import os
 import re
@@ -10,6 +10,7 @@ import re
 import jieba
 import MeCab
 import unidic_lite
+from kiwipiepy import Kiwi
 
 from config import load_settings, Paths
 from connection import get_random_useragent
@@ -18,7 +19,6 @@ from languages import converter
 from lookup.zh import simplify
 
 useragent = get_random_useragent()
-
 
 """MATCHING TEXT"""
 
@@ -64,6 +64,26 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
 
     # Filter out punctuation
     return [token for token in tokens if is_valid_token(token)]
+
+
+def lookup_ko_tokenizer(phrase):
+    """
+    Tokenizes a Korean phrase using Kiwi and returns only content words
+    (nouns, verbs, adjectives), excluding particles, grammatical endings, and punctuation.
+
+    :param phrase: Korean text to tokenize
+    :return: List of content words
+    """
+    kiwi = Kiwi()
+    # Tokenize with normalization to handle coda endings properly
+    tokens = kiwi.tokenize(phrase, normalize_coda=True)
+
+    # Keep only nouns (NN*), verbs (VV), and adjectives (VA)
+    content_tags = {"NNG", "NNP", "NNB", "VV", "VA"}
+
+    content_words = [token.form for token in tokens if token.tag in content_tags]
+
+    return content_words
 
 
 def lookup_matcher(content_text, language_code):
@@ -153,7 +173,9 @@ def lookup_matcher(content_text, language_code):
     if has_hangul:
         hangul_tokens = []
         for match_text in matches:
-            hangul_tokens.extend(re.findall(r'[\uac00-\ud7af]+', match_text))
+            # Use your tokenizer to get content words
+            hangul_tokens.extend(lookup_ko_tokenizer(match_text))
+
         if 'ko' in language_codes:
             result['ko'] = hangul_tokens
 
@@ -161,7 +183,6 @@ def lookup_matcher(content_text, language_code):
     all_cjk_codes = {"zh", "ja", "ko"}
     non_cjk_codes = [code for code in language_codes if code not in all_cjk_codes]
     if non_cjk_codes:
-        # Deduplicate terms
         seen = set()
         deduped = [term for term in matches if term not in seen and not seen.add(term)]
         for code in non_cjk_codes:
@@ -173,3 +194,4 @@ def lookup_matcher(content_text, language_code):
 if __name__ == "__main__":
     print(lookup_matcher("`就一定要实现！`", "zh"))
     print(lookup_matcher("`連帯こそは普遍なれ`", "ja"))
+    print(lookup_matcher("`민중이여 해방의 깃발 아래 서자`", "ko"))
