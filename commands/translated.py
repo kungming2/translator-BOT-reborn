@@ -5,10 +5,11 @@ Allows posts to be set as "Translated".
 This is generally used when a translator believes the post's
 request to be fulfilled.
 """
-from models.kunulo import Kunulo
-from . import update_status
 from config import logger
 from messaging import notify_op_translated_post
+from models.kunulo import Kunulo
+
+from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):

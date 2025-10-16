@@ -6,7 +6,7 @@ all their posts and comments. It can only be called by a mod.
 """
 from praw.models import Comment, Submission
 
-from connection import is_mod, logger, REDDIT
+from connection import REDDIT, is_mod, logger
 from reddit_sender import message_send
 
 

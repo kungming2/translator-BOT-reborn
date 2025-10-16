@@ -4,11 +4,12 @@
 !set is a mod-accessible means of setting the post flair. The mod's
 comment is removed by AutoModerator so it looks like nothing happened.
 """
-from . import update_language
 from config import logger
 from connection import is_mod
 from models.kunulo import Kunulo
 from reddit_sender import message_send
+
+from . import update_language
 
 
 def handle(comment, _instruo, komando, ajo):

@@ -4,7 +4,7 @@
 import asyncio
 import random
 
-from config import logger, load_settings, Paths
+from config import Paths, load_settings, logger
 from languages import converter
 from lookup.ja import ja_character, ja_word
 from lookup.ko import ko_word

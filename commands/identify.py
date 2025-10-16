@@ -4,11 +4,12 @@
 !identify is a public means of setting the post flair. This is also
 known by the short form !id, which is treated as a synonym.
 """
-from . import update_language
 from config import logger
 from models.kunulo import Kunulo
 from notifications import notifier
 from wiki import update_wiki_page
+
+from . import update_language
 
 
 def send_notifications_okay(instruo, ajo):

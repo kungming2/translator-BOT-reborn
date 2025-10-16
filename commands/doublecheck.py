@@ -5,9 +5,10 @@ Allows posts to be set as "Needs Review".
 This is generally used when asking for reviews of one's work.
 """
 
-from . import update_status
 from config import logger
 from models.kunulo import Kunulo
+
+from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):

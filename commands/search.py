@@ -10,7 +10,7 @@ import re
 
 import googlesearch
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT_HELPER, credentials_source
 from models.instruo import Instruo
 from reddit_sender import message_reply

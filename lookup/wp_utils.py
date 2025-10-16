@@ -40,7 +40,7 @@ def wikipedia_lookup(terms, language_code="en"):
     for term in terms[:5]:  # Limit to five terms.
         term_entry = None
         term = re.sub(r"[^\w\s]", "", term)  # Strip punctuation.
-        logger.info(f"[ZF]: > Now searching for '{term}'...")
+        logger.info(f"> Now searching for '{term}'...")
 
         # By default, turn off auto suggest.
         try:
@@ -61,7 +61,7 @@ def wikipedia_lookup(terms, language_code="en"):
             ):
                 # Still no dice.
                 logger.error(
-                    f"[ZF]: >> Unable to resolve '{term}' on Wikipedia. Skipping."
+                    f">> Unable to resolve '{term}' on Wikipedia. Skipping."
                 )
                 continue  # Exit.
 
@@ -74,15 +74,15 @@ def wikipedia_lookup(terms, language_code="en"):
         if not term_entry:
             term_entry = f"https://en.wikipedia.org/wiki/{term_format}"
         term_entry = term_entry.replace(")", r"\)")
-        logger.info(f"[ZF]: >> Text for {term} to be obtained from `{term_entry}`.")
+        logger.info(f">> Text for {term} to be obtained from `{term_entry}`.")
 
         # Form the entry text.
         entries.append(f"\n**[{term}]({term_entry})**\n\n> {term_summary}\n\n")
-        logger.info(f"[ZF]: >> Information for '{term}' retrieved.")
+        logger.info(f">> Information for '{term}' retrieved.")
 
     if entries:
         body_text = "\n".join(entries)
-        logger.info(f"[ZF]: > Wikipedia entry data obtained.")
+        logger.info("> Wikipedia entry data obtained.")
         action_counter(len(entries), "Wikipedia lookup")
         return body_text
 

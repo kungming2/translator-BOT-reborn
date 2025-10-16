@@ -69,7 +69,10 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
 def lookup_ko_tokenizer(phrase):
     """
     Tokenizes a Korean phrase using Kiwi and returns only content words
-    (nouns, verbs, adjectives), excluding particles, grammatical endings, and punctuation.
+    (nouns, verbs, adjectives), excluding particles, grammatical endings,
+    and punctuation. Historically, Korean tokenizers have been less
+    reliable, and this is kept separate from Chinese and Japanese so that
+    updating may be easier in the future.
 
     :param phrase: Korean text to tokenize
     :return: List of content words

@@ -22,7 +22,7 @@ from .zh import calligraphy_search
 
 useragent = get_random_useragent()
 
-"""PINYIN/ROMANIZATION HELPER"""
+"""ROMANIZATION HELPER"""
 
 
 def to_hepburn(input_text):

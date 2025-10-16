@@ -4,11 +4,12 @@
 This handles the !missing command, which designates a post as missing
 content to be translated and messages the OP about it.
 """
-from . import update_status
-from connection import REDDIT
 from config import logger
+from connection import REDDIT
 from reddit_sender import message_send
 from responses import RESPONSE
+
+from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):

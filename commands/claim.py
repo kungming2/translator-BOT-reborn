@@ -8,12 +8,13 @@ import re
 import time
 from datetime import datetime, timezone
 
-from . import update_status
-from connection import logger, REDDIT
+from connection import REDDIT, logger
 from languages import converter
 from models.kunulo import Kunulo
 from reddit_sender import comment_reply, message_reply
 from responses import RESPONSE
+
+from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):
@@ -32,8 +33,8 @@ def handle(comment, _instruo, komando, ajo):
     # claim comment with the translation, then marks it as !translated
     # or !doublecheck. We just want to ignore it then.
     if '!translated' in comment.body or '!doublecheck' in comment.body:
-        logger.info(f"[ZW] Bot: Claim comment contains a translated or "
-                    f"doublecheck status change.")
+        logger.info("[ZW] Bot: Claim comment contains a translated or "
+                    "doublecheck status change.")
         return
 
     # Fetch the kunulo and determine the languages we'll process claims for.

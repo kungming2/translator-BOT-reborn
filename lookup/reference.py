@@ -94,8 +94,8 @@ def get_archived_ethnologue_page(language_code: str) -> str | None:
     try:
         archived_snapshot = cdx_api.near(year=2019, month=6, day=6, hour=12, minute=0)
     except (
-            waybackpy.exceptions.NoCDXRecordFound,
-            waybackpy.exceptions.WaybackError,
+            exceptions.NoCDXRecordFound,
+            exceptions.WaybackError,
             requests.exceptions.ConnectTimeout,
     ):
         logger.error(f"[WY] Could not retrieve archived data for `{language_code}`.")
