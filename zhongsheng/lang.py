@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Language conversion command"""
+
 import importlib
 
 import languages
@@ -10,16 +11,18 @@ from lookup.reference import get_language_reference
 from . import command
 
 
-@command(name='lang',
-         help_text='Converts language input using the converter function',
-         roles=['Moderator', 'Helper'])
+@command(
+    name="lang",
+    help_text="Converts language input using the converter function",
+    roles=["Moderator", "Helper"],
+)
 async def lang_convert(ctx, *, language_input: str):
     try:
         # Handle special 'random' argument
-        if language_input.lower() == 'random':
+        if language_input.lower() == "random":
             random_lang_obj = select_random_language()
             lang_ref = get_language_reference(random_lang_obj)
-            language_input = lang_ref['language_code_3']
+            language_input = lang_ref["language_code_3"]
 
             # Reload the module to get fresh data
             importlib.reload(languages)

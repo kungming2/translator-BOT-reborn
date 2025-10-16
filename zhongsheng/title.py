@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Title processing command"""
+
 import asyncio
+import traceback
 
 from title_handling import process_title, title_ai_parser
 
 from . import command
 
 
-@command(name='title',
-         help_text='Processes a title and returns detailed information. Use --ai flag for AI parsing.',
-         roles=['Moderator'])
+@command(
+    name="title",
+    help_text="Processes a title and returns detailed information. Use --ai flag for AI parsing.",
+    roles=["Moderator"],
+)
 async def title_search(ctx, *, title: str):
     # Check if --ai flag is present
-    use_ai = title.endswith(' --ai')
+    use_ai = title.endswith(" --ai")
 
     # Remove the flag from the title if present
     if use_ai:
@@ -54,5 +58,4 @@ async def title_search(ctx, *, title: str):
 
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
-        import traceback
         traceback.print_exc()

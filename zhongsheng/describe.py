@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Image description command"""
+
 import asyncio
 
 from ai import fetch_image_description
@@ -9,9 +10,11 @@ from . import command
 
 
 # noinspection HttpUrlsUsage
-@command(name='describe',
-         help_text='Generates an AI description of an image from a URL',
-         roles=['Moderator', 'Helper'])
+@command(
+    name="describe",
+    help_text="Generates an AI description of an image from a URL",
+    roles=["Moderator", "Helper"],
+)
 async def describe_image(ctx, image_url: str):
     """
     Describe an image using AI for accessibility purposes.
@@ -21,8 +24,10 @@ async def describe_image(ctx, image_url: str):
     """
     try:
         # Validate URL format (http links are supported, just in case)
-        if not image_url.startswith(('http://', 'https://')):
-            await ctx.send("Error: Please provide a valid image URL starting with http:// or https://")
+        if not image_url.startswith(("http://", "https://")):
+            await ctx.send(
+                "Error: Please provide a valid image URL starting with http:// or https://"
+            )
             return
 
         # Show typing indicator while processing
@@ -32,7 +37,7 @@ async def describe_image(ctx, image_url: str):
                 None,
                 fetch_image_description,
                 image_url,
-                False  # nsfw_flag always False
+                False,  # nsfw_flag always False
             )
 
         # Format and send the response
