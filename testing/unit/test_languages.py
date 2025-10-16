@@ -4,11 +4,18 @@
 Test suite for languages.py module.
 Tests Lingvo class, converter functions, and language utilities.
 """
+
 import unittest
 
-from languages import (Lingvo, converter, country_converter,
-                       define_language_lists, get_lingvos, normalize,
-                       parse_language_list)
+from languages import (
+    Lingvo,
+    converter,
+    country_converter,
+    define_language_lists,
+    get_lingvos,
+    normalize,
+    parse_language_list,
+)
 
 
 class TestLingvoClass(unittest.TestCase):
@@ -22,7 +29,7 @@ class TestLingvoClass(unittest.TestCase):
             language_code_1="en",
             language_code_3="eng",
             supported=True,
-            thanks="Thanks"
+            thanks="Thanks",
         )
         self.mandarin = Lingvo(
             name="Mandarin Chinese",
@@ -30,12 +37,10 @@ class TestLingvoClass(unittest.TestCase):
             language_code_1="zh",
             language_code_3="cmn",
             script_code="Hans",
-            supported=True
+            supported=True,
         )
         self.unknown = Lingvo(
-            name="Unknown",
-            language_code_1="unknown",
-            language_code_3="unknown"
+            name="Unknown", language_code_1="unknown", language_code_3="unknown"
         )
 
     def test_lingvo_initialization(self):
@@ -54,9 +59,7 @@ class TestLingvoClass(unittest.TestCase):
     def test_preferred_code_with_script(self):
         """Test preferred_code fallback to script_code."""
         script_lingvo = Lingvo(
-            name="Cyrillic",
-            script_code="Cyrl",
-            language_code_1="unknown"
+            name="Cyrillic", script_code="Cyrl", language_code_1="unknown"
         )
         self.assertEqual(script_lingvo.preferred_code, "cyrl")
 
@@ -69,9 +72,7 @@ class TestLingvoClass(unittest.TestCase):
     def test_lingvo_equality(self):
         """Test equality comparison based on preferred_code."""
         english_copy = Lingvo(
-            name="English (variant)",
-            language_code_1="en",
-            language_code_3="eng"
+            name="English (variant)", language_code_1="en", language_code_3="eng"
         )
         self.assertEqual(self.english, english_copy)
 
@@ -94,7 +95,7 @@ class TestLingvoClass(unittest.TestCase):
             "Language Name": "Spanish",
             "ISO 639-1": "es",
             "ISO 639-3": "spa",
-            "Alternate Names": "Castilian; Español"
+            "Alternate Names": "Castilian; Español",
         }
         lingvo = Lingvo.from_csv_row(row)
         self.assertEqual(lingvo.name, "Spanish")
@@ -266,9 +267,15 @@ class TestLanguageLists(unittest.TestCase):
             lists = define_language_lists()
             self.assertIsInstance(lists, dict)
             expected_keys = {
-                "SUPPORTED_CODES", "SUPPORTED_LANGUAGES", "ISO_DEFAULT_ASSOCIATED",
-                "ISO_639_1", "ISO_639_2B", "ISO_639_3", "ISO_NAMES",
-                "MISTAKE_ABBREVIATIONS", "LANGUAGE_COUNTRY_ASSOCIATED"
+                "SUPPORTED_CODES",
+                "SUPPORTED_LANGUAGES",
+                "ISO_DEFAULT_ASSOCIATED",
+                "ISO_639_1",
+                "ISO_639_2B",
+                "ISO_639_3",
+                "ISO_NAMES",
+                "MISTAKE_ABBREVIATIONS",
+                "LANGUAGE_COUNTRY_ASSOCIATED",
             }
             for key in expected_keys:
                 self.assertIn(key, lists)
@@ -345,7 +352,7 @@ def run_all_tests():
         TestParseLanguageList,
         TestCountryConverter,
         TestLanguageLists,
-        TestGetLingvos
+        TestGetLingvos,
     ]
 
     for test_class in test_classes:

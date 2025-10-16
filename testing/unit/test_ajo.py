@@ -4,13 +4,20 @@
 Test suite for ajo.py module.
 Tests the Ajo class, serialization, state management, and related functions.
 """
+
 import unittest
 from unittest.mock import MagicMock
 
 from languages import Lingvo
+
 # noinspection PyProtectedMember
-from models.ajo import (Ajo, _convert_to_dict, _normalize_lang_field,
-                        ajo_defined_multiple_flair_former, parse_ajo_data)
+from models.ajo import (
+    Ajo,
+    _convert_to_dict,
+    _normalize_lang_field,
+    ajo_defined_multiple_flair_former,
+    parse_ajo_data,
+)
 
 
 class TestAjoInitialization(unittest.TestCase):
@@ -142,7 +149,13 @@ class TestAjoStatusManagement(unittest.TestCase):
 
     def test_set_status_valid(self):
         """Test setting valid status values."""
-        for status in ["translated", "doublecheck", "inprogress", "missing", "untranslated"]:
+        for status in [
+            "translated",
+            "doublecheck",
+            "inprogress",
+            "missing",
+            "untranslated",
+        ]:
             ajo = Ajo()
             ajo.set_status(status)
             self.assertEqual(ajo.status, status)
@@ -281,7 +294,7 @@ class TestAjoSerialization(unittest.TestCase):
             "id": "abc123",
             "preferred_code": "en",
             "title": "Test",
-            "status": "translated"
+            "status": "translated",
         }
         ajo = Ajo.from_dict(data)
         self.assertEqual(ajo.id, "abc123")
@@ -305,10 +318,7 @@ class TestAjoSerialization(unittest.TestCase):
 
     def test_from_dict_backward_compat(self):
         """Test from_dict handles legacy field names."""
-        data = {
-            "language_code_1": "en",
-            "title": "Test"
-        }
+        data = {"language_code_1": "en", "title": "Test"}
         ajo = Ajo.from_dict(data)
         self.assertIsNotNone(ajo)
 
@@ -317,7 +327,7 @@ class TestAjoSerialization(unittest.TestCase):
         data = {
             "preferred_code": "multiple",
             "status": {"en": "translated", "ja": "inprogress"},
-            "is_defined_multiple": True
+            "is_defined_multiple": True,
         }
         ajo = Ajo.from_dict(data)
         self.assertTrue(ajo.is_defined_multiple)
@@ -436,6 +446,7 @@ class TestUtilityFunctions(unittest.TestCase):
     def test_convert_to_dict_json(self):
         """Test _convert_to_dict with JSON string."""
         import json
+
         data = {"key": "value"}
         input_str = json.dumps(data)
         result = _convert_to_dict(input_str)
@@ -449,6 +460,7 @@ class TestUtilityFunctions(unittest.TestCase):
     def test_parse_ajo_data_json(self):
         """Test parse_ajo_data with JSON."""
         import json
+
         data = {"id": "123", "status": "translated"}
         json_str = json.dumps(data)
         result = parse_ajo_data(json_str)

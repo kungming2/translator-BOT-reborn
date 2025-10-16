@@ -4,10 +4,10 @@
 Test suite for other.py module.
 Tests tokenization, text matching, and language detection functions.
 """
+
 import unittest
 
-from lookup.other import (lookup_ko_tokenizer, lookup_matcher,
-                          lookup_zh_ja_tokenizer)
+from lookup.other import lookup_ko_tokenizer, lookup_matcher, lookup_zh_ja_tokenizer
 
 
 class TestZhJaTokenizer(unittest.TestCase):
@@ -238,7 +238,7 @@ class TestLookupMatcher(unittest.TestCase):
         """Test matcher parses !identify command with single language."""
         try:
             text = "`中文` !identify:zh"
-            result = lookup_matcher(text, language_code='zh')
+            result = lookup_matcher(text, language_code="zh")
             self.assertIsInstance(result, dict)
         except Exception as e:
             self.skipTest(f"Lookup matcher not available: {e}")
@@ -256,7 +256,7 @@ class TestLookupMatcher(unittest.TestCase):
         """Test matcher recognizes !id shorthand command."""
         try:
             text = "`文字` !id:zh"
-            result = lookup_matcher(text, language_code='zh')
+            result = lookup_matcher(text, language_code="zh")
             self.assertIsInstance(result, dict)
         except Exception as e:
             self.skipTest(f"Lookup matcher not available: {e}")
@@ -406,7 +406,7 @@ def run_all_tests():
         TestZhJaTokenizer,
         TestKoTokenizer,
         TestLookupMatcher,
-        TestTokenizerIntegration
+        TestTokenizerIntegration,
     ]
 
     for test_class in test_classes:

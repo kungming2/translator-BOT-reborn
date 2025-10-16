@@ -91,10 +91,7 @@ class TestKomando:
         result = komando.to_dict()
 
         # Then
-        expected = {
-            "name": "identify",
-            "data": None
-        }
+        expected = {"name": "identify", "data": None}
         assert result == expected
 
     def test_to_dict_with_data(self):
@@ -106,10 +103,7 @@ class TestKomando:
         result = komando.to_dict()
 
         # Then
-        expected = {
-            "name": "translated",
-            "data": ["la", "grc"]
-        }
+        expected = {"name": "translated", "data": ["la", "grc"]}
         assert result == expected
 
     def test_to_dict_preserves_data_structure(self):
@@ -133,13 +127,16 @@ class TestKomando:
             assert result["data"] == data
             assert isinstance(result["data"], type(data))
 
-    @pytest.mark.parametrize("name,data", [
-        ("identify", None),
-        ("translated", ["es"]),
-        ("lookup", ["search_term"]),
-        ("wiki", ["topic1", "topic2"]),
-        ("command", []),
-    ])
+    @pytest.mark.parametrize(
+        "name,data",
+        [
+            ("identify", None),
+            ("translated", ["es"]),
+            ("lookup", ["search_term"]),
+            ("wiki", ["topic1", "topic2"]),
+            ("command", []),
+        ],
+    )
     def test_round_trip_dict_conversion(self, name, data):
         """Test that to_dict preserves all data for potential reconstruction"""
         # Given
@@ -160,7 +157,7 @@ class TestKomando:
             "lookup",
             "wiki",
             "custom_command",
-            "another_command"
+            "another_command",
         ]
 
         for name in test_cases:
