@@ -87,7 +87,7 @@ async def guide_command(ctx, command_name: str = None):
 
         # Split if too long
         if len(response) > 2000:
-            chunks = [response[i : i + 1900] for i in range(0, len(response), 1900)]
+            chunks = [response[i:i + 1900] for i in range(0, len(response), 1900)]
             for chunk in chunks:
                 await ctx.send(chunk)
         else:
