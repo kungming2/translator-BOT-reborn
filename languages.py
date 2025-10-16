@@ -64,7 +64,10 @@ class Lingvo:
         return (self.script_code or "unknown").lower()
 
     def __repr__(self):
-        return f"<Lingvo: {self.name} ({self.preferred_code})>"
+        code = self.preferred_code
+        is_script = self.script_code is not None or len(code) == 4
+        script_label = " | (script)" if is_script else ""  # Denote scripts
+        return f"<Lingvo: {self.name} ({code}){script_label}>"
 
     def __str__(self):
         return self.preferred_code
@@ -384,7 +387,9 @@ def iso_codes_deep_search(search_term, script_search=False):
     return None
 
 
-def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
+def converter(
+    input_text: str, fuzzy: bool = True, specific_mode: bool = False
+) -> Lingvo | None:
     """
     Convert an input string to a Lingvo object.
     Input can be a language code, name, or compound like zh-MO or
@@ -397,6 +402,8 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
 
     :param input_text: The input string to resolve.
     :param fuzzy: Whether to apply fuzzy name matching.
+    :param specific_mode: If True, use strict lookups (ISO_639_3 for 3-char,
+                          ISO_15924 for 4-char).
     :return: A Lingvo instance or None if not found.
     """
     # Get the current (possibly refreshed) lingvos data
@@ -411,6 +418,38 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
         logger.debug(f"Skipping {input_text} as it's too short.")
         return None
 
+    # Specific mode: strict lookups only
+    if specific_mode:
+        if len(input_text) == 2:
+            # Only search in ISO 639-1
+            if input_lower in reference_lists.get("ISO_639_1", {}):
+                lingvo = lingvos.get(input_lower)
+                if lingvo:
+                    lingvo_copy = copy.deepcopy(lingvo)
+                    lingvo_copy.country = None
+                    return lingvo_copy
+            return None
+        elif len(input_text) == 3:
+            # Only search in ISO 639-3
+            iso_search = iso_codes_deep_search(input_text, script_search=False)
+            if iso_search:
+                lingvo_copy = copy.deepcopy(iso_search)
+                lingvo_copy.country = None
+                return lingvo_copy
+            return None
+        elif len(input_text) == 4:
+            # Only search in ISO 15924
+            iso_search = iso_codes_deep_search(input_text, script_search=True)
+            if iso_search:
+                lingvo_copy = copy.deepcopy(iso_search)
+                lingvo_copy.country = None
+                return lingvo_copy
+            return None
+        else:
+            # Invalid length for specific_mode
+            return None
+
+    # Normal mode: existing logic
     # Handle compound codes like zh-CN or unknown-Cyrl first,
     # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
