@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from config import Paths, load_settings
+from config import Paths, load_settings, logger
+from discord_utils import send_discord_alert
 
 _tasks = {}
 
@@ -27,12 +28,34 @@ def run_schedule(schedule_name):
     from . import community_digest, data_maintenance, moderator_digest, status_report
 
     tasks_to_run = _tasks.get(schedule_name, [])
+    executed_tasks = []
+
     for task_func in tasks_to_run:
         print(f"Running {task_func.__name__}...")
         try:
             task_func()
+            executed_tasks.append(task_func.__name__)
         except Exception as e:
             print(f"Error in {task_func.__name__}: {e}")
+
+    # Send Discord alert after all tasks have completed
+    if executed_tasks:
+        task_list = ", ".join(executed_tasks)
+        notify_message = (
+            f"The following functions on the **{schedule_name}** schedule have been run:\n"
+            f"> `{task_list}`"
+        )
+    else:
+        notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
+
+    send_discord_alert(
+        f"{schedule_name.title()} Actions Completed",
+        notify_message,
+        "alert",
+    )
+    logger.info(f"[WJ] Discord notification sent for ({schedule_name}).")
+
+    return
 
 
 def get_tasks():
