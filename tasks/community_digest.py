@@ -7,12 +7,12 @@ from datetime import date, datetime
 from config import logger
 from connection import REDDIT
 from database import db
-from tasks import task
 from notifications import notifier_internal
 from responses import RESPONSE
+from tasks import task
 
 
-@task(schedule='daily')
+@task(schedule="daily")
 def send_internal_post_digest():
     """
     Check for new posts in the last 24 hours and send
@@ -30,8 +30,8 @@ def send_internal_post_digest():
     posts = db.fetchall_main(query, (cutoff_time,))
 
     for post in posts:
-        post_id = post['id']
-        content_str = post['content']
+        post_id = post["id"]
+        content_str = post["content"]
 
         # Parse the content JSON
         try:
@@ -41,12 +41,12 @@ def send_internal_post_digest():
             continue
 
         # Skip if already processed
-        if content.get('processed', False):
+        if content.get("processed", False):
             continue
 
         # Get the post_type and submission ID
-        post_type = content.get('post_type')
-        submission_id = content.get('id')
+        post_type = content.get("post_type")
+        submission_id = content.get("id")
 
         if not post_type or not submission_id:
             logger.warning(f"Warning: Missing post_type or id for post {post_id}")
@@ -63,7 +63,7 @@ def send_internal_post_digest():
         notifier_internal(post_type, submission)
 
         # Update the processed flag in the database
-        content['processed'] = True
+        content["processed"] = True
         updated_content = json.dumps(content)
 
         update_query = """
@@ -78,13 +78,13 @@ def send_internal_post_digest():
     return
 
 
-@task(schedule='weekly')
+@task(schedule="weekly")
 def weekly_unknown_thread():
     """
     Posts the Weekly 'Unknown' thread: a round-up of all posts from the last
     seven days still marked as "Unknown".
     """
-    r = REDDIT.subreddit('translator')
+    r = REDDIT.subreddit("translator")
     today_str = date.today().strftime("%Y-%m-%d")
 
     # Get the current week number for the post title
@@ -97,7 +97,9 @@ def weekly_unknown_thread():
         if item.link_flair_css_class == "unknown":
             title_safe = item.title.replace("|", " ")  # Avoid Markdown table conflicts
             post_date = datetime.fromtimestamp(item.created_utc).strftime("%Y-%m-%d")
-            unknown_entries.append(f"| {post_date} | **[{title_safe}]({item.permalink})** | u/{item.author} |")
+            unknown_entries.append(
+                f"| {post_date} | **[{title_safe}]({item.permalink})** | u/{item.author} |"
+            )
 
     if not unknown_entries:
         logger.debug("[WJ] unknown_thread: No 'Unknown' posts found this week.")
@@ -113,6 +115,8 @@ def weekly_unknown_thread():
     # Submit and distinguish the post
     submission = r.submit(title=thread_title, selftext=body, send_replies=False)
     submission.mod.distinguish()
-    logger.info(f"[WJ] unknown_thread: Posted weekly 'Unknown' thread (Week {current_week}).")
+    logger.info(
+        f"[WJ] unknown_thread: Posted weekly 'Unknown' thread (Week {current_week})."
+    )
 
     return

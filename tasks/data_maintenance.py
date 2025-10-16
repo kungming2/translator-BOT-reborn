@@ -5,13 +5,13 @@ import json
 import re
 import time
 from pathlib import Path
-from typing import Union, Dict
+from typing import Dict, Union
 
+import prawcore
 import yaml
 from praw.models import WikiPage
-import prawcore
 
-from config import logger, Paths, SETTINGS
+from config import SETTINGS, Paths, logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from languages import converter
@@ -21,14 +21,14 @@ from time_handling import get_previous_month, messaging_months_elapsed
 from wiki import fetch_most_requested_languages
 
 
-@task(schedule='daily')
+@task(schedule="daily")
 def log_trimmer():
     """
     Trims the events log to keep only the last X entries,
     preventing the file from growing indefinitely.
     """
     events_path = Path(Paths.LOGS["EVENTS"])
-    lines_to_keep = WENJU_SETTINGS['lines_to_keep']
+    lines_to_keep = WENJU_SETTINGS["lines_to_keep"]
 
     # Read all lines safely.
     with events_path.open("r", encoding="utf-8", errors="ignore") as f:
@@ -39,14 +39,16 @@ def log_trimmer():
         trimmed = "\n".join(lines_entries[-lines_to_keep:])
         with events_path.open("w", encoding="utf-8") as f:
             f.write(trimmed)
-        logger.debug(f"[WJ] Trimmed the events log to keep the last {lines_to_keep} entries.")
+        logger.debug(
+            f"[WJ] Trimmed the events log to keep the last {lines_to_keep} entries."
+        )
     else:
         logger.debug("[WJ] Events log within limits; no trimming needed.")
 
     return
 
 
-@task(schedule='daily')
+@task(schedule="daily")
 def validate_all_yaml_files():
     """
     Scans the given Paths class for all attributes containing YAML file paths
@@ -91,10 +93,13 @@ def validate_all_yaml_files():
             logger.error(f"[YAML Validation] Error reading {file_path}: {e}")
             all_valid = False
 
+    if all_valid:
+        logger.info("All YAML files validated.")
+
     return all_valid
 
 
-@task(schedule='daily')
+@task(schedule="daily")
 def clean_processed_database():
     """
     Cleans up the processed comments and posts in the database by
@@ -109,25 +114,29 @@ def clean_processed_database():
 
     # Clean old_comments
     logger.info("Starting cleanup of 'old_comments' table...")
-    query_comments = '''
+    query_comments = """
         DELETE FROM old_comments
         WHERE id NOT IN (
             SELECT id FROM old_comments ORDER BY id DESC LIMIT ?
         )
-    '''
+    """
     cursor.execute(query_comments, (max_posts * 100,))
-    logger.info(f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_comments'.")
+    logger.info(
+        f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_comments'."
+    )
 
     # Clean old_posts
     logger.info("Starting cleanup of 'old_posts' table...")
-    query_posts = '''
+    query_posts = """
         DELETE FROM old_posts
         WHERE id NOT IN (
             SELECT id FROM old_posts ORDER BY id DESC LIMIT ?
         )
-    '''
+    """
     cursor.execute(query_posts, (max_posts * 100,))
-    logger.info(f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_posts'.")
+    logger.info(
+        f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_posts'."
+    )
 
     # Commit once after both operations
     db.conn_main.commit()
@@ -146,7 +155,7 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     :param page_content: Language name (str) or PRAW WikiPage object.
     :return: Dictionary containing language statistics.
     """
-    r = REDDIT_HELPER.subreddit('translator')
+    r = REDDIT_HELPER.subreddit("translator")
     language_data = {}
     monthly_totals = []
     months_elapsed = messaging_months_elapsed()
@@ -164,7 +173,8 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
 
     # Filter lines that start with a year
     entries = [
-        line for line in table_content.split("\n")
+        line
+        for line in table_content.split("\n")
         if line.startswith("20") and not line.startswith("~~")
     ]
     language_data["num_months"] = len(entries)
@@ -176,8 +186,9 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
         total = int(re.search(r"\[(.*?)]", cols[2]).group(1))
         monthly_totals.append(total)
         percentage_total = round(float(cols[3].rstrip("%")) * 0.01, 4)
-        num_untranslated = int(re.search(r"\[(.*?)]", cols[4]).group(1)
-                               if "[" in cols[4] else cols[4])
+        num_untranslated = int(
+            re.search(r"\[(.*?)]", cols[4]).group(1) if "[" in cols[4] else cols[4]
+        )
         percentage_translated = round(float(cols[5].rstrip("%")) * 0.01, 4)
         ri = None
         try:
@@ -228,7 +239,9 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     get_extremes("percentage_translated", "percentage_translated")
 
     # Compute average post rates
-    months_to_calc = 6 if months_elapsed == language_data["num_months"] else months_elapsed
+    months_to_calc = (
+        6 if months_elapsed == language_data["num_months"] else months_elapsed
+    )
     total_recent_posts = sum(monthly_totals[-months_to_calc:])
     language_data["rate_monthly"] = round(total_recent_posts / months_to_calc, 2)
     language_data["rate_daily"] = round(language_data["rate_monthly"] / 30, 2)
@@ -242,19 +255,27 @@ def statistics_list_updater(input_data: Dict[str, list]):
     Generate a Markdown list for wiki/statistics, grouped by language family,
     and update the wiki page.
     """
-    r = REDDIT.subreddit('translator')
+    r = REDDIT.subreddit("translator")
     total_data = []
     for family in sorted(input_data.keys()):
         total_data.append(f"\n###### {family}")
         for language, page_name, code in input_data[family]:
-            wiki_link = "" if "qaa" <= code <= "qtz" else f"([WP](https://en.wikipedia.org/wiki/ISO 639:{code}))"
-            total_data.append(f"* [{language}](https://www.reddit.com/r/translator/wiki/{page_name}) {wiki_link}")
+            wiki_link = (
+                ""
+                if "qaa" <= code <= "qtz"
+                else f"([WP](https://en.wikipedia.org/wiki/ISO 639:{code}))"
+            )
+            total_data.append(
+                f"* [{language}](https://www.reddit.com/r/translator/wiki/{page_name}) {wiki_link}"
+            )
 
     new_content = (
-            r.wiki["statistics"].content_md.split("## Individual Language Statistics")[0].strip()
-            + "\n\n## Individual Language Statistics\n\n"
-            + "\n".join(total_data)
-            + "\n\n"
+        r.wiki["statistics"]
+        .content_md.split("## Individual Language Statistics")[0]
+        .strip()
+        + "\n\n## Individual Language Statistics\n\n"
+        + "\n".join(total_data)
+        + "\n\n"
     )
 
     r.wiki["statistics"].edit(
@@ -263,7 +284,7 @@ def statistics_list_updater(input_data: Dict[str, list]):
     logger.info("[WJ] > Statistics table on the wiki updated.")
 
 
-@task(schedule='monthly')
+@task(schedule="monthly")
 def get_language_pages() -> None:
     """
     Collect all language wiki pages, parse statistics, and generate JSON.
@@ -273,7 +294,7 @@ def get_language_pages() -> None:
 
     :return: Nothing.
     """
-    r = REDDIT_HELPER.subreddit('translator')
+    r = REDDIT_HELPER.subreddit("translator")
 
     # The following pages have different formatting and should not be
     # assessed.
@@ -294,7 +315,9 @@ def get_language_pages() -> None:
             continue
 
         try:
-            language_name = re.search(r"##(.*?)\(", body).group(1).strip().replace("_", " ")
+            language_name = (
+                re.search(r"##(.*?)\(", body).group(1).strip().replace("_", " ")
+            )
         except AttributeError:
             logger.error(f"[WJ] Problem with {page.name} header.")
             continue
@@ -317,12 +340,14 @@ def get_language_pages() -> None:
 
         # Parse statistics
         stats = wikipage_statistics_parser(page)
-        stats.update({
-            "name": language_lingvo.name,
-            "code": language_code,
-            "family": language_family,
-            "permalink": f"https://www.reddit.com/r/translator/wiki/{language_name.lower().replace(' ', '_')}"
-        })
+        stats.update(
+            {
+                "name": language_lingvo.name,
+                "code": language_code,
+                "family": language_family,
+                "permalink": f"https://www.reddit.com/r/translator/wiki/{language_name.lower().replace(' ', '_')}",
+            }
+        )
         total_data[language_code] = stats
 
     # Save JSON and update wiki
@@ -336,7 +361,7 @@ def get_language_pages() -> None:
 
 
 # noinspection SqlWithoutWhere
-@task(schedule='monthly')
+@task(schedule="monthly")
 def points_worth_cacher():
     """
     Caches the point values of frequently used languages into a local
@@ -346,7 +371,7 @@ def points_worth_cacher():
     from the previous month and replace it.
     """
     # Get this month's representation.
-    current_month = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m')
+    current_month = datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m")
 
     # Check if cache already contains entries for the current month
     query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
@@ -372,7 +397,7 @@ def points_worth_cacher():
     return
 
 
-@task(schedule='monthly')
+@task(schedule="monthly")
 def archive_identified_saved():
     """
     Archive the wikipages of 'identified' and 'saved' to local Markdown
@@ -380,7 +405,7 @@ def archive_identified_saved():
     no longer actively used since the rewrite, but the code is kept
     here in case it is brought back.
     """
-    r = REDDIT.subreddit('translator')
+    r = REDDIT.subreddit("translator")
     splitter = "|-------"
 
     # Helper function to process a single wiki page
@@ -403,7 +428,7 @@ def archive_identified_saved():
     return
 
 
-@task(schedule='monthly')
+@task(schedule="monthly")
 def monthly_statistics_unpinner():
     """Unpins the statistics posts if it is still pinned when
     the monthly routine runs."""
@@ -424,12 +449,12 @@ def monthly_statistics_unpinner():
     for sticky in stickies:
         print(sticky.title)
         if (
-                "[META] r/translator Statistics" in sticky.title
-                and sticky.author  # In case the author is deleted or missing
-                and sticky.author.name == "translator-BOT"
+            "[META] r/translator Statistics" in sticky.title
+            and sticky.author  # In case the author is deleted or missing
+            and sticky.author.name == "translator-BOT"
         ):
             sticky.mod.sticky(state=False)
-            logger.info('Monthly Statistics Unpinner: Unpinned monthly post.')
+            logger.info("Monthly Statistics Unpinner: Unpinned monthly post.")
 
     return
 

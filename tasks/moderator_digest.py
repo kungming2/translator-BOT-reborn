@@ -4,13 +4,14 @@
 Formerly posted to a wiki "dashboard", this provides a daily digest of
 information and statistics to moderators via Discord.
 """
+
 import csv
 import datetime
 from pathlib import Path
 
 import yaml
 
-from config import logger, Paths, get_log_directory
+from config import Paths, get_log_directory, logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
@@ -62,14 +63,19 @@ def activity_csv_handler():
                 memory_data.append(float(cell))
             except ValueError:
                 continue
-    average_memory = round(sum(memory_data) / len(memory_data), 2) if memory_data else 0.0
+    average_memory = (
+        round(sum(memory_data) / len(memory_data), 2) if memory_data else 0.0
+    )
 
     # Cycle run time (minutes)
     cycle_times = [
-        float(row[6]) for row in main_lines
+        float(row[6])
+        for row in main_lines
         if len(row) > 6 and row[1] == "Cycle run" and row[6].strip()
     ]
-    average_cycle = round(sum(cycle_times) / len(cycle_times), 2) if cycle_times else 0.0
+    average_cycle = (
+        round(sum(cycle_times) / len(cycle_times), 2) if cycle_times else 0.0
+    )
     longest_cycles = sorted(cycle_times, reverse=True)[:3]
     longest_cycles = [round(x, 2) for x in longest_cycles]
 
@@ -88,7 +94,7 @@ def activity_csv_handler():
             writer = csv.writer(f_output)
             if header:
                 writer.writerow(header)
-            writer.writerows(main_lines[-WENJU_SETTINGS['lines_to_keep']:])
+            writer.writerows(main_lines[-WENJU_SETTINGS["lines_to_keep"] :])
     except Exception as e:
         logger.error(f"[WJ] csv_handler: Failed to write trimmed CSV — {e}")
         summary += "\n*Warning: Failed to trim log file.*"
@@ -151,8 +157,7 @@ def error_log_count():
         f"* **Last entry from**: {last_entry_time}"
     )
 
-    logger.debug(f"[WJ] error_log_count: Found {num_entries} "
-                 f"entries in the error log.")
+    logger.debug(f"[WJ] error_log_count: Found {num_entries} entries in the error log.")
 
     return formatted_template
 
@@ -179,7 +184,7 @@ def filter_log_tabulator():
 
     # Remove the header from consideration, and only keep the last X entries.
     entries = filter_logs.splitlines()[2:]
-    entries = entries[-WENJU_SETTINGS['lines_to_keep']:]
+    entries = entries[-WENJU_SETTINGS["lines_to_keep"] :]
 
     # Handle cases where there are too few entries.
     if len(entries) < 2:
@@ -226,7 +231,7 @@ def note_language_tags():
     flagged_submissions = []
 
     # Get the last 1000 submissions and check their flair tags.
-    for submission in REDDIT_HELPER.subreddit('translator').new(limit=1000):
+    for submission in REDDIT_HELPER.subreddit("translator").new(limit=1000):
         flair = submission.link_flair_text
         if flair is None or any(tag in flair for tag in malformed_tags):
             flagged_submissions.append(submission)
@@ -245,7 +250,9 @@ def note_language_tags():
     rows = []
     for post in flagged_submissions:
         # Convert timestamp to readable date.
-        submission_date = datetime.datetime.fromtimestamp(post.created_utc).strftime("%Y-%m-%d")
+        submission_date = datetime.datetime.fromtimestamp(post.created_utc).strftime(
+            "%Y-%m-%d"
+        )
 
         # Shorten the title if too long.
         title = post.title.strip()
@@ -266,7 +273,7 @@ def note_language_tags():
     return formatted_output
 
 
-@task(schedule='daily')
+@task(schedule="daily")
 def collate_moderator_digest():
     logger.info("Collating moderator digest...")
     today_date = datetime.date.today().strftime("%Y-%m-%d")
@@ -278,8 +285,9 @@ def collate_moderator_digest():
     noted_entries_data = note_language_tags()
 
     # Compile the full Markdown summary.
-    total_data = "\n".join([error_log_data, filter_log_data,
-                            activity_data, noted_entries_data])
+    total_data = "\n".join(
+        [error_log_data, filter_log_data, activity_data, noted_entries_data]
+    )
     subject_line = f"Log for {today_date}"
     digest_summary = f"# {subject_line}\n{total_data}"
 
@@ -292,8 +300,9 @@ def collate_moderator_digest():
     with output_path.open("w", encoding="utf-8") as f:
         f.write(digest_summary)
 
-    logger.info(f"[WJ] Daily administrative routine completed "
-                f"and saved to {output_path}")
+    logger.info(
+        f"[WJ] Daily administrative routine completed and saved to {output_path}"
+    )
 
     # Send as a Discord message.
     send_discord_alert(subject_line, total_data, "alert")
