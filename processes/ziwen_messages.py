@@ -4,6 +4,7 @@
 Main script to fetch and handle messages. Much of the logic for this
 module is in messaging.py.
 """
+
 import traceback
 
 from wasabi import msg
@@ -11,8 +12,14 @@ from wasabi import msg
 from config import logger
 from connection import REDDIT, is_mod, is_valid_user
 from error import error_log_extended
-from messaging import (handle_add, handle_points, handle_remove, handle_status,
-                       handle_subscribe, handle_unsubscribe)
+from messaging import (
+    handle_add,
+    handle_points,
+    handle_remove,
+    handle_status,
+    handle_subscribe,
+    handle_unsubscribe,
+)
 
 
 def ziwen_messages():
@@ -27,7 +34,7 @@ def ziwen_messages():
 
         # Invalid user (e.g. shadow-banned)
         if not is_valid_user(message.author):
-            logger.error('[ZW] Messages: Invalid author.')
+            logger.error("[ZW] Messages: Invalid author.")
             continue
 
         message_author = message.author  # Redditor object

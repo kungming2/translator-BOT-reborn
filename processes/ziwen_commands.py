@@ -3,6 +3,7 @@
 """
 Main script to fetch and handle commands called via comments.
 """
+
 import time
 import traceback
 
@@ -18,19 +19,19 @@ from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from points import points_tabulator
-from statistics import action_counter, user_statistics_writer
+from usage_statistics import action_counter, user_statistics_writer
 from title_handling import Titolo
 
 
 def mark_short_thanks_as_translated(comment, ajo):
     """Looks at the content of a comment and determines if the
-     submission author's thank you is sufficient to mark it as
-     translated, according to specific criteria.
+    submission author's thank you is sufficient to mark it as
+    translated, according to specific criteria.
     """
     author_name = comment.author.name
     comment_body = comment.body.lower()
-    has_translated = '!translated' in comment_body
-    exceptions_list = ['but', 'however', "no"]
+    has_translated = "!translated" in comment_body
+    exceptions_list = ["but", "however", "no"]
     short_body = len(comment.body) <= 20
 
     # Exit if it doesn't meet our criteria for assessing.
@@ -56,9 +57,11 @@ def mark_short_thanks_as_translated(comment, ajo):
     # Here, this means that the criteria has been met to mark the Ajo
     # and the post as being translated.
     current_time = int(time.time())
-    logger.info(f"[ZW] Bot: COMMAND: Short thanks from u/{author_name}. Sending user a message...")
-    ajo.set_status('translated')
-    ajo.set_time('translated', current_time)
+    logger.info(
+        f"[ZW] Bot: COMMAND: Short thanks from u/{author_name}. Sending user a message..."
+    )
+    ajo.set_status("translated")
+    ajo.set_time("translated", current_time)
 
 
 def ziwen_commands():
@@ -67,14 +70,14 @@ def ziwen_commands():
 
     :return: Nothing.
     """
-    subreddit = SETTINGS['subreddit']
-    thanks_keywords = SETTINGS['thanks_keywords']
-    username = credentials_source['USERNAME']
-    logger.debug(f'Fetching new r/{subreddit} comments...')
+    subreddit = SETTINGS["subreddit"]
+    thanks_keywords = SETTINGS["thanks_keywords"]
+    username = credentials_source["USERNAME"]
+    logger.debug(f"Fetching new r/{subreddit} comments...")
     r = REDDIT.subreddit(subreddit)
 
     try:
-        comments = list(r.comments(limit=SETTINGS['max_posts']))
+        comments = list(r.comments(limit=SETTINGS["max_posts"]))
     except exceptions.ServerError:
         # Server issues.
         logger.error("Encountered a server error.")
@@ -102,24 +105,27 @@ def ziwen_commands():
             continue
 
         # Check to see if the comment has already been acted upon.
-        if db.cursor_main.execute('SELECT 1 FROM old_comments WHERE ID = ?', (comment_id,)).fetchone():
+        if db.cursor_main.execute(
+            "SELECT 1 FROM old_comments WHERE ID = ?", (comment_id,)
+        ).fetchone():
             # Comment already processed
-            logger.debug(f'Comment `{comment_id}` has already been processed.')
+            logger.debug(f"Comment `{comment_id}` has already been processed.")
             continue
         else:  # Mark comment as processed in the database
             db.cursor_main.execute(
-                'INSERT INTO old_comments (ID) VALUES (?)',
-                (comment_id,)
+                "INSERT INTO old_comments (ID) VALUES (?)", (comment_id,)
             )
             db.conn_main.commit()
-            logger.debug(f'Comment `{comment_id}` is now being processed.')
+            logger.debug(f"Comment `{comment_id}` is now being processed.")
 
         # Load the ajo for the post from the database.
         original_ajo = ajo_loader(original_post.id)
         if not original_ajo:
             # On the off-chance that there is no Ajo associated...
-            logger.warning(f'Ajo for `{original_post.id}` does not exist. Creating...')
-            original_ajo = Ajo.from_titolo(Titolo.process_title(original_post), original_post)
+            logger.warning(f"Ajo for `{original_post.id}` does not exist. Creating...")
+            original_ajo = Ajo.from_titolo(
+                Titolo.process_title(original_post), original_post
+            )
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
@@ -127,7 +133,6 @@ def ziwen_commands():
         # Note that an Instruo can have multiple commands associated
         # with it.
         if comment_has_command(comment_body):
-
             # Initialize the variables the command handlers will require.
             instruo = Instruo.from_comment(comment)
 
@@ -145,7 +150,9 @@ def ziwen_commands():
                 # A matching handler for the command is found.
                 # Pass off the information for it to handle.
                 if handler:
-                    logger.info(f"Command `{komando}` detected for `{comment_id}`. Passing to handler.")
+                    logger.info(
+                        f"Command `{komando}` detected for `{comment_id}`. Passing to handler."
+                    )
                     handler(comment, instruo, komando, original_ajo)
                     # Record this action to the counter log
                     action_counter(1, komando.name)
@@ -162,7 +169,9 @@ def ziwen_commands():
             # Calculate points for the comment and write to database.
             points_tabulator(comment, original_ajo, original_ajo.lingvo())
         else:
-            logger.debug(f"[ZW] Bot: Post `{original_post.id}` does not contain any operational keywords.")
+            logger.debug(
+                f"[ZW] Bot: Post `{original_post.id}` does not contain any operational keywords."
+            )
 
         # Process THANKS keywords from original posters.
         if any(keyword in comment_body for keyword in thanks_keywords):
@@ -170,11 +179,11 @@ def ziwen_commands():
             mark_short_thanks_as_translated(comment, original_ajo)
 
         # Update the ajo if NOT in testing mode.
-        if not SETTINGS['testing_mode']:
+        if not SETTINGS["testing_mode"]:
             original_ajo.update_reddit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     msg.good("Launching Ziwen commands...")
     # noinspection PyBroadException
     try:
