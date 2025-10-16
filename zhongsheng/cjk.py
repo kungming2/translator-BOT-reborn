@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """CJK lookup command"""
-from . import command, send_long_message
-from languages import converter
 from commands.lookup_cjk import perform_cjk_lookups
+from languages import converter
+
+from . import command, send_long_message
 
 
 @command(name='cjk',

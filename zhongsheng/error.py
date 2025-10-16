@@ -2,10 +2,13 @@
 # -*- coding: UTF-8 -*-
 """Error log display command"""
 from io import BytesIO
+
 import discord
 import yaml
-from . import command
+
 from config import Paths
+
+from . import command
 
 
 @command(name='error',
@@ -29,7 +32,7 @@ async def error_logs(ctx):
             response += f"Bot Version: {entry.get('bot_version', 'N/A')}\n"
 
             if 'context' in entry:
-                response += f"\nContext:\n"
+                response += "\nContext:\n"
                 for key, value in entry['context'].items():
                     response += f"  {key}: {value}\n"
 

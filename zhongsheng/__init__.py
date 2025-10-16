@@ -34,8 +34,8 @@ def command(name, help_text, roles=None):
 def register_commands(bot):
     """Register all commands with the Discord bot"""
     # Import all command modules to trigger registration
-    from . import (office, lang, user, post, title, cjk, error, describe,
-                   guide, comment)
+    from . import (cjk, comment, describe, error, guide, lang, office, post,
+                   title, user)
 
     for cmd in _commands:
         # Start with the function

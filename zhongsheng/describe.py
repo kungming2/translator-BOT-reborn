@@ -2,8 +2,10 @@
 # -*- coding: UTF-8 -*-
 """Image description command"""
 import asyncio
-from . import command
+
 from ai import fetch_image_description
+
+from . import command
 
 
 # noinspection HttpUrlsUsage

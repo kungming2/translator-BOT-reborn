@@ -2,9 +2,11 @@
 # -*- coding: UTF-8 -*-
 """Comment search command"""
 import logging
-from . import command
+
 from connection import REDDIT_HELPER
 from models.instruo import Instruo
+
+from . import command
 
 # No need to worry about the PRAW async warning
 logging.getLogger("praw").setLevel(logging.CRITICAL)
@@ -60,7 +62,7 @@ async def comment_search(ctx, comment_input: str):
             response += f"**Body Preview:** {body_preview}\n"
 
         if instruo.commands:
-            response += f"\n**Commands:**\n"
+            response += "\n**Commands:**\n"
             for cmd in instruo.commands:
                 data_str = f": {cmd.data}" if cmd.data else ""
                 response += f"- {cmd.name}{data_str}\n"

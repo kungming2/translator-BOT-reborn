@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Post search command"""
-from . import command
 from database import search_logs
+
+from . import command
 
 
 @command(name='post',

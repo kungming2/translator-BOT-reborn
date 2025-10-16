@@ -2,10 +2,12 @@
 # -*- coding: UTF-8 -*-
 """Language conversion command"""
 import importlib
-from . import command
+
 import languages
 from languages import select_random_language
 from lookup.reference import get_language_reference
+
+from . import command
 
 
 @command(name='lang',

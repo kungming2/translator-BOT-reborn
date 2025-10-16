@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """Office quote command"""
 import aiohttp
+
 from . import command
 
 

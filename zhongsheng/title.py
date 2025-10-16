@@ -2,8 +2,10 @@
 # -*- coding: UTF-8 -*-
 """Title processing command"""
 import asyncio
-from . import command
+
 from title_handling import process_title, title_ai_parser
+
+from . import command
 
 
 @command(name='title',
