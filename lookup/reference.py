@@ -7,8 +7,8 @@ languages from Wikipedia and Ethnologue. This is usually called
 language data YAML file, among other things.
 """
 import re
-import requests
 
+import requests
 import waybackpy
 import wikipedia
 import yaml
@@ -16,7 +16,7 @@ from lxml import html
 from waybackpy import exceptions
 
 from config import Paths
-from connection import logger, get_random_useragent
+from connection import get_random_useragent, logger
 from languages import converter, get_lingvos, select_random_language
 
 

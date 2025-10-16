@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import pprint
-import requests
 import re
+
+import requests
 
 from connection import get_random_useragent
 from languages import converter

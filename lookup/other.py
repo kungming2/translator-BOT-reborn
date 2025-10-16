@@ -12,11 +12,11 @@ import MeCab
 import unidic_lite
 from kiwipiepy import Kiwi
 
-from config import load_settings, Paths
+from config import Paths, load_settings
 from connection import get_random_useragent
-from title_handling import extract_lingvos_from_text
 from languages import converter
 from lookup.zh import simplify
+from title_handling import extract_lingvos_from_text
 
 useragent = get_random_useragent()
 

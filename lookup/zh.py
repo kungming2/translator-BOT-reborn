@@ -3,27 +3,28 @@
 """
 Contains functions that deal with Chinese-language content.
 """
-import aiohttp
-import aiofiles
 import asyncio
 import csv
-import httpx
+import html as html_stdlib
 import random
 import re
-import requests
 from contextlib import suppress
-import html as html_stdlib
 from time import sleep
 
+import aiofiles
+import aiohttp
+import httpx
 import opencc
+import requests
 from bs4 import BeautifulSoup as Bs
 from korean_romanizer.romanizer import Romanizer
 from lxml import html
 
 from config import Paths, logger
 from connection import get_random_useragent
-from .async_helpers import maybe_async
 from responses import RESPONSE
+
+from .async_helpers import maybe_async
 
 useragent = get_random_useragent()
 

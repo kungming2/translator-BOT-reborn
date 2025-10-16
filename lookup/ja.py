@@ -4,19 +4,19 @@
 Contains functions that deal with Japanese-language content.
 """
 import asyncio
-
-import aiohttp
 import re
-import requests
 import time
 
+import aiohttp
+import pykakasi
+import requests
+from lxml import html
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-import pykakasi
-from lxml import html
 
 from config import logger
 from connection import get_random_useragent
+
 from .async_helpers import fetch_json, maybe_async
 from .zh import calligraphy_search
 
