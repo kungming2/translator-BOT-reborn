@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Simple command wrapper for Wikipedia lookup."""
+
 from config import logger
 from lookup.wp_utils import wikipedia_lookup
 from reddit_sender import comment_reply

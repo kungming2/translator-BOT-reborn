@@ -8,7 +8,6 @@ from verification import process_verification
 
 
 def handle(comment, _instruo, _komando, _ajo):
-
     process_verification(comment)
 
     return

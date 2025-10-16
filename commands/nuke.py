@@ -4,6 +4,7 @@
 This handles the !nuke command, which bans a username and removes
 all their posts and comments. It can only be called by a mod.
 """
+
 from praw.models import Comment, Submission
 
 from connection import REDDIT, is_mod, logger
@@ -40,8 +41,9 @@ def handle(comment, _instruo, _komando, _ajo):
         logger.info(f">> Parent submission: {parent.permalink}")
 
     # Ban the user.
-    REDDIT.subreddit('translator').banned.add(nuked_person,
-                                              ban_reason=f"Mod u/{mod_caller} nuked this user.")
+    REDDIT.subreddit("translator").banned.add(
+        nuked_person, ban_reason=f"Mod u/{mod_caller} nuked this user."
+    )
     logger.info(f">> Banned u/{nuked_person}.")
 
     # Helper function to remove all items in a generator (posts/comments).
@@ -60,10 +62,14 @@ def handle(comment, _instruo, _komando, _ajo):
     # Message the moderator who issued the command.
     # As this is a mod-only command, this does not require the testing
     # wrapper.
-    message_send(mod_caller, subject=f"Nuked u/{nuked_person}",
-                 body=(f"Banned and removed all comments and posts from u/{nuked_person}. "
-                       f"Command called by you [here](https://www.reddit.com{comment.permalink})."
-                       ))
+    message_send(
+        mod_caller,
+        subject=f"Nuked u/{nuked_person}",
+        body=(
+            f"Banned and removed all comments and posts from u/{nuked_person}. "
+            f"Command called by you [here](https://www.reddit.com{comment.permalink})."
+        ),
+    )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
 
     return

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """Command wrapper for CJK languages lookup."""
+
 import asyncio
 import random
 
@@ -15,8 +16,8 @@ from responses import RESPONSE
 
 def get_cjk_languages():
     """Load and return CJK language configuration."""
-    language_settings = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
-    return language_settings['CJK_LANGUAGES']
+    language_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
+    return language_settings["CJK_LANGUAGES"]
 
 
 def find_cjk_language(preferred_code):
@@ -57,10 +58,7 @@ async def _rate_limit_delay():
 def _get_lookup_language(instruo, ajo):
     """Determine the language to use for lookup."""
     # Check if there's an identify command that specifies the language
-    identify_komando = next(
-        (k for k in instruo.commands if k.name == 'identify'),
-        None
-    )
+    identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
 
     if identify_komando:
         logger.info(f"Found identify komando with data: {identify_komando.data}")
@@ -74,9 +72,9 @@ async def perform_cjk_lookups(cjk_language, search_terms):
     """Perform lookups based on CJK language type.
     search_terms must be a list of strings."""
     lookup_functions = {
-        'Chinese': _lookup_chinese_term,
-        'Japanese': _lookup_japanese_term,
-        'Korean': _lookup_korean_term
+        "Chinese": _lookup_chinese_term,
+        "Japanese": _lookup_japanese_term,
+        "Korean": _lookup_korean_term,
     }
 
     lookup_func = lookup_functions.get(cjk_language)
@@ -84,8 +82,7 @@ async def perform_cjk_lookups(cjk_language, search_terms):
         return []
 
     results = []
-    logger.info(f"Passing {search_terms} to the {cjk_language} "
-                f"lookup function...")
+    logger.info(f"Passing {search_terms} to the {cjk_language} lookup function...")
     for term in search_terms:
         result = await lookup_func(term)
         if result:
@@ -98,7 +95,7 @@ async def perform_cjk_lookups(cjk_language, search_terms):
 def _format_reply(lookup_results, ajo=None):
     """Format the reply body with lookup results."""
     anchor_tag = RESPONSE.ANCHOR_CJK
-    formatted_results = '\n\n'.join(lookup_results)
+    formatted_results = "\n\n".join(lookup_results)
 
     if not ajo:
         return formatted_results
@@ -139,7 +136,7 @@ def handle(comment, instruo, komando, ajo):
         logger.info(f"[ZW] Bot: >> Looked up the term(s) in {cjk_language}.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         my_language = input("Enter a CJK language code or name to use: ")
         my_input = input("Please enter a string to lookup: ")

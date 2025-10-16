@@ -5,6 +5,7 @@ Handler for the !search command, which looks for strings in other posts
 on r/translator and can also handle frequently requested translation
 lookups.
 """
+
 import datetime
 import re
 
@@ -23,14 +24,14 @@ def _extract_reddit_post_ids(search_term):
     Note this has temporarily been changed from Google search;
     that may be changed back post-deployment."""
     post_ids = []
-    search_engine = SETTINGS['search_engine']
+    search_engine = SETTINGS["search_engine"]
 
     if search_engine == "Reddit":
         logger.debug(f"Searching Reddit for: {search_term}")
 
         try:
             # Use Reddit's search directly
-            subreddit = REDDIT_HELPER.subreddit('translator')
+            subreddit = REDDIT_HELPER.subreddit("translator")
             search_results = subreddit.search(search_term, limit=5)
 
             for submission in search_results:
@@ -42,7 +43,7 @@ def _extract_reddit_post_ids(search_term):
 
         logger.debug(f"Total post IDs extracted: {len(post_ids)}")
     elif search_engine == "Google":
-        search_query = f'{search_term} site:reddit.com/r/translator'
+        search_query = f"{search_term} site:reddit.com/r/translator"
         logger.info(f"Searching Google for: {search_term}")
 
         try:
@@ -50,9 +51,9 @@ def _extract_reddit_post_ids(search_term):
             logger.info(f"Number of URLs returned in Google results: {len(results)}")
 
             for i, url in enumerate(results):
-                if 'comments' in url:
+                if "comments" in url:
                     logger.debug(f"URL {i + 1} contains 'comments'")
-                    match = re.search(r'comments/(.*?)/\w', url)
+                    match = re.search(r"comments/(.*?)/\w", url)
                     if match:
                         post_id = match.group(1)
                         logger.debug(f"Extracted post ID: {post_id}")
@@ -77,8 +78,12 @@ def _build_search_results(post_ids, search_term):
 
     for post_id in post_ids[:6]:  # Limit to 6 posts to avoid excessive length
         submission = REDDIT_HELPER.submission(id=post_id)
-        submission_date = datetime.datetime.fromtimestamp(submission.created_utc).strftime('%Y-%m-%d')
-        result_sections.append(f"**[{submission.title}]({submission.permalink})** ({submission_date})\n")
+        submission_date = datetime.datetime.fromtimestamp(
+            submission.created_utc
+        ).strftime("%Y-%m-%d")
+        result_sections.append(
+            f"**[{submission.title}]({submission.permalink})** ({submission_date})\n"
+        )
 
         # Process comments in submission
         submission.comments.replace_more(limit=None)
@@ -87,7 +92,7 @@ def _build_search_results(post_ids, search_term):
             if formatted_comment:
                 result_sections.append(formatted_comment)
 
-    return '\n\n'.join(result_sections)
+    return "\n\n".join(result_sections)
 
 
 def _extract_relevant_comment(comment, search_term):
@@ -97,7 +102,10 @@ def _extract_relevant_comment(comment, search_term):
     except AttributeError:
         return None  # Author deleted
 
-    if comment_author == credentials_source['USERNAME'] or '!search' in comment.body.lower():
+    if (
+        comment_author == credentials_source["USERNAME"]
+        or "!search" in comment.body.lower()
+    ):
         return None
 
     # Clean and format comment body
@@ -116,11 +124,11 @@ def handle(comment, _instruo, komando, _ajo):
     search_terms = komando.data  # This is a list of strings
 
     # Join search terms into a single query string
-    search_query = ' '.join(search_terms)
+    search_query = " ".join(search_terms)
 
     # Check for frequently-translated text and return advisories first
     frequently_translated_info = search_integration(search_query)
-    if frequently_translated_info and 'Advisory' in frequently_translated_info:
+    if frequently_translated_info and "Advisory" in frequently_translated_info:
         message_reply(comment, frequently_translated_info + RESPONSE.BOT_DISCLAIMER)
         return
 
@@ -137,18 +145,21 @@ def handle(comment, _instruo, komando, _ajo):
 
     # Format final reply with optional frequently-translated information
     results_header = f'## Search results on r/translator for "{search_query}":\n\n'
-    full_reply = (f"{frequently_translated_info}\n\n{results_header}{search_results_body}"
-                  if frequently_translated_info else f"{results_header}{search_results_body}")
+    full_reply = (
+        f"{frequently_translated_info}\n\n{results_header}{search_results_body}"
+        if frequently_translated_info
+        else f"{results_header}{search_results_body}"
+    )
     message_reply(comment, full_reply + RESPONSE.BOT_DISCLAIMER)
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     while True:
         # Get comment URL from user
         comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
 
         # Check for exit
-        if comment_url.lower() in ['quit', 'exit', 'q']:
+        if comment_url.lower() in ["quit", "exit", "q"]:
             break
 
         # Get comment from URL and process

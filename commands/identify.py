@@ -4,6 +4,7 @@
 !identify is a public means of setting the post flair. This is also
 known by the short form !id, which is treated as a synonym.
 """
+
 from config import logger
 from models.kunulo import Kunulo
 from notifications import notifier
@@ -18,11 +19,11 @@ def send_notifications_okay(instruo, ajo):
     or needs review.
     Returns True if it's okay to send messages, False otherwise."""
 
-    if ajo.status in ['translated', 'doublecheck']:
+    if ajo.status in ["translated", "doublecheck"]:
         return False
 
     for command in instruo.commands:
-        if command.name in ['translated', 'doublecheck']:
+        if command.name in ["translated", "doublecheck"]:
             return False
 
     return True
@@ -43,13 +44,13 @@ def handle(comment, instruo, komando, ajo):
         return
 
     logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author} on `{ajo.id}`.")
-    logger.info(f'[ZW] Bot: !identify data is: {komando.data}')
+    logger.info(f"[ZW] Bot: !identify data is: {komando.data}")
 
     # Update the Ajo's language(s) post.
     update_language(ajo, komando)
 
     # Handle notifications.
-    if ajo.type == 'single' or (ajo.type == 'multiple' and not ajo.is_defined_multiple):
+    if ajo.type == "single" or (ajo.type == "multiple" and not ajo.is_defined_multiple):
         original_language = ajo.lingvo
         new_language = komando.data[0]  # Lingvo
 
@@ -57,7 +58,7 @@ def handle(comment, instruo, komando, ajo):
         # list of people to notify for.
         if original_language != new_language:
             # Update the 'identified' wiki page for single languages.
-            if ajo.type == 'single':
+            if ajo.type == "single":
                 update_wiki_page(
                     save_or_identify=False,
                     formatted_date=ajo.created_utc,
@@ -65,11 +66,11 @@ def handle(comment, instruo, komando, ajo):
                     post_id=ajo.id,
                     flair_text=original_language,
                     new_flair=komando.data[0].name,
-                    user=ajo.author
+                    user=ajo.author,
                 )
             if permission_to_send:
                 logger.info("Now sending notifications...")
-                contacted = notifier(new_language, original_post, 'identify')
+                contacted = notifier(new_language, original_post, "identify")
                 ajo.add_notified(contacted)
     else:  # Defined multiple post.
         if ajo.is_defined_multiple:
@@ -80,11 +81,11 @@ def handle(comment, instruo, komando, ajo):
             for language in new_languages:
                 if permission_to_send:
                     logger.info(f"Now sending notifications for {language.name}...")
-                    contacted = notifier(language, original_post, 'identify')
+                    contacted = notifier(language, original_post, "identify")
                     ajo.add_notified(contacted)
 
     # Delete the 'Unknown' placeholder comment left by the bot.
     kunulo = Kunulo.from_submission(original_post)
-    kunulo.delete('comment_unknown')
+    kunulo.delete("comment_unknown")
 
     return

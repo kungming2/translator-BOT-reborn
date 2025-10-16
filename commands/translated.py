@@ -5,6 +5,7 @@ Allows posts to be set as "Translated".
 This is generally used when a translator believes the post's
 request to be fulfilled.
 """
+
 from config import logger
 from messaging import notify_op_translated_post
 from models.kunulo import Kunulo
@@ -14,7 +15,7 @@ from . import update_status
 
 def handle(comment, _instruo, komando, ajo):
     logger.info("Translated handler initiated.")
-    status_type = 'translated'
+    status_type = "translated"
     logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
 
     # Handler logic to update the post status.
@@ -24,7 +25,7 @@ def handle(comment, _instruo, komando, ajo):
     logger.info(f"[ZW] Bot: > Marked post `{ajo.id}` as {status_type}.")
 
     # Delete the claimed and long comments if present
-    delete_comments = ['comment_long', 'comment_claim']
+    delete_comments = ["comment_long", "comment_claim"]
     kunulo_object = Kunulo.from_submission(ajo.submission)
     for tag in delete_comments:
         kunulo_object.delete(tag)

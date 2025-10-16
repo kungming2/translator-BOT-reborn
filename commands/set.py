@@ -4,6 +4,7 @@
 !set is a mod-accessible means of setting the post flair. The mod's
 comment is removed by AutoModerator so it looks like nothing happened.
 """
+
 from config import logger
 from connection import is_mod
 from models.kunulo import Kunulo
@@ -20,22 +21,28 @@ def handle(comment, _instruo, komando, ajo):
         logger.debug(f"u/{comment.author} is not a mod. Skipping...")
         return
 
-    logger.info(f"[ZW] Bot: COMMAND: !set, from moderator u/{comment.author} on `{ajo.id}`.")
+    logger.info(
+        f"[ZW] Bot: COMMAND: !set, from moderator u/{comment.author} on `{ajo.id}`."
+    )
 
     # Update the Ajo's language(s) post.
     update_language(ajo, komando)
 
     # Delete any pre-existing defined multiple or "Unknown" comment.
-    delete_tags = ['comment_defined_multiple', 'comment_unknown']
+    delete_tags = ["comment_defined_multiple", "comment_unknown"]
     for tag in delete_tags:
         kunulo_object = Kunulo.from_submission(ajo.submission)
         kunulo_object.delete(tag)
 
     # Message the mod who called this command.
     new_language = komando.data[0]  # Lingvo
-    set_msg = (f"The [post](https://www.reddit.com{ajo.permalink}) has been set to the language "
-               f"`{new_language.preferred_code}` (`{new_language.name}`).")
-    message_send(comment.author, subject='[Notification] !set command successful', body=set_msg)
+    set_msg = (
+        f"The [post](https://www.reddit.com{ajo.permalink}) has been set to the language "
+        f"`{new_language.preferred_code}` (`{new_language.name}`)."
+    )
+    message_send(
+        comment.author, subject="[Notification] !set command successful", body=set_msg
+    )
     logger.info("Informed moderator of command success.")
 
     return
