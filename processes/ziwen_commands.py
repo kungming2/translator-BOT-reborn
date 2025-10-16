@@ -10,16 +10,16 @@ from prawcore import exceptions
 from wasabi import msg
 
 from commands import HANDLERS
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT, credentials_source
 from database import db
 from error import error_log_extended
-from models.ajo import ajo_loader, Ajo
+from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
-from title_handling import Titolo
-from statistics import user_statistics_writer, action_counter
 from points import points_tabulator
+from statistics import action_counter, user_statistics_writer
+from title_handling import Titolo
 
 
 def mark_short_thanks_as_translated(comment, ajo):

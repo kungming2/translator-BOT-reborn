@@ -11,7 +11,8 @@ from wasabi import msg
 from config import logger
 from connection import REDDIT, is_mod, is_valid_user
 from error import error_log_extended
-from messaging import handle_subscribe, handle_unsubscribe, handle_status, handle_points, handle_add, handle_remove
+from messaging import (handle_add, handle_points, handle_remove, handle_status,
+                       handle_subscribe, handle_unsubscribe)
 
 
 def ziwen_messages():

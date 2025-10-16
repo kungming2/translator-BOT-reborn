@@ -9,7 +9,7 @@ import traceback
 
 from wasabi import msg
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT
 from database import db, record_filter_log
 from dupe_detector import duplicate_detector
@@ -21,7 +21,8 @@ from reddit_sender import message_reply
 from request_closeout import closeout_posts
 from responses import RESPONSE
 from statistics import action_counter
-from title_handling import Titolo, format_title_correction_comment, main_posts_filter, is_english_only
+from title_handling import (Titolo, format_title_correction_comment,
+                            is_english_only, main_posts_filter)
 from utility import fetch_youtube_length
 
 
@@ -85,7 +86,7 @@ def ziwen_posts(post_limit=None):
         if re.match(diskuto_pattern, post_title, flags=re.I):
             diskuto_output = Diskuto.process_post(post)
             diskuto_writer(diskuto_output)
-            logger.info(f"> `post.id` post saved as an internal post for later processing.")
+            logger.info("> `post.id` post saved as an internal post for later processing.")
             continue  # Do not write to regular Ajo database.
 
         # Skip if post has already been processed
