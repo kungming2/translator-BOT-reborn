@@ -301,7 +301,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                     )
         elif name == "identify":
             points += 3
-        elif name in {"claim", "page", "search", "reference"}:
+        elif name in {"claim", "page", "search", "missing"}:
             points += 1
         elif name == "cjk_lookup":
             points += 2
