@@ -6,6 +6,7 @@ googlesearch-python
 huggingface_hub[hf_xet]
 ImageHash
 jieba
+kiwipiepy
 krdict.py
 korean-romanizer
 lxml
