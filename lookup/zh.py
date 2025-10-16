@@ -3,6 +3,7 @@
 """
 Contains functions that deal with Chinese-language content.
 """
+
 import asyncio
 import csv
 import html as html_stdlib
@@ -33,14 +34,14 @@ useragent = get_random_useragent()
 
 def simplify(input_text):
     """Returns a simplified version (if available) of the input."""
-    used_converter = opencc.OpenCC('t2s.json')
+    used_converter = opencc.OpenCC("t2s.json")
 
     return used_converter.convert(input_text)
 
 
 def tradify(input_text):
     """Returns a traditional version (if available) of the input."""
-    used_converter = opencc.OpenCC('s2tw.json')
+    used_converter = opencc.OpenCC("s2tw.json")
 
     return used_converter.convert(input_text)
 
@@ -53,10 +54,12 @@ def sanitize_pinyin_input(pinyin_string):
 
     Keeps only parts that are at least two characters long and end with a digit (tone number).
     """
-    cleaned = pinyin_string.lower().replace('-', ' ').replace("\\u00fc", "ü")
+    cleaned = pinyin_string.lower().replace("-", " ").replace("\\u00fc", "ü")
     # Split on whitespace, filter out short or tone-missing parts, then join with single spaces
-    return ' '.join(
-        part for part in cleaned.strip().split() if len(part) >= 2 and part[-1].isdigit()
+    return " ".join(
+        part
+        for part in cleaned.strip().split()
+        if len(part) >= 2 and part[-1].isdigit()
     )
 
 
@@ -71,37 +74,44 @@ def convert_numbered_pinyin(s):
     :return result: A string of pinyin with the tone marks properly applied (e.g. pīnyīn)
     """
 
-    pinyin_tone_mark = {0: "aoeiuv\u00fc",
-                        1: "\u0101\u014d\u0113\u012b\u016b\u01d6\u01d6",
-                        2: "\u00e1\u00f3\u00e9\u00ed\u00fa\u01d8\u01d8",
-                        3: "\u01ce\u01d2\u011b\u01d0\u01d4\u01da\u01da",
-                        4: "\u00e0\u00f2\u00e8\u00ec\u00f9\u01dc\u01dc", }
+    pinyin_tone_mark = {
+        0: "aoeiuv\u00fc",
+        1: "\u0101\u014d\u0113\u012b\u016b\u01d6\u01d6",
+        2: "\u00e1\u00f3\u00e9\u00ed\u00fa\u01d8\u01d8",
+        3: "\u01ce\u01d2\u011b\u01d0\u01d4\u01da\u01da",
+        4: "\u00e0\u00f2\u00e8\u00ec\u00f9\u01dc\u01dc",
+    }
 
     s = s.lower()
     result = ""
     t = ""
     for c in s:
-        if 'a' <= c <= 'z':
+        if "a" <= c <= "z":
             t += c
-        elif c == ':':
-            assert t[-1] == 'u'
+        elif c == ":":
+            assert t[-1] == "u"
             t = t[:-1] + "\u00fc"
         else:
-            if '0' <= c <= '5':
+            if "0" <= c <= "5":
                 tone = int(c) % 5
                 if tone != 0:
                     m = re.search("[aoeiuv\u00fc]+", t)
                     if m is None:
                         t += c
                     elif len(m.group(0)) == 1:
-                        t = t[:m.start(0)] + pinyin_tone_mark[tone][pinyin_tone_mark[0].index(m.group(0))] + t[
-                                                                                                             m.end(0):]
+                        t = (
+                            t[: m.start(0)]
+                            + pinyin_tone_mark[tone][
+                                pinyin_tone_mark[0].index(m.group(0))
+                            ]
+                            + t[m.end(0) :]
+                        )
                     else:
-                        if 'a' in t:
+                        if "a" in t:
                             t = t.replace("a", pinyin_tone_mark[tone][0])
-                        elif 'o' in t:
+                        elif "o" in t:
                             t = t.replace("o", pinyin_tone_mark[tone][1])
-                        elif 'e' in t:
+                        elif "e" in t:
                             t = t.replace("e", pinyin_tone_mark[tone][2])
                         elif t.endswith("ui"):
                             t = t.replace("i", pinyin_tone_mark[tone][3])
@@ -118,7 +128,7 @@ def convert_numbered_pinyin(s):
 
 def vowel_neighbor(letter, word):
     """Checks a letter to see if vowels are around it."""
-    vowels = 'aeiouy'
+    vowels = "aeiouy"
 
     for i in range(len(word)):
         if word[i] == letter:
@@ -131,7 +141,7 @@ def vowel_neighbor(letter, word):
 
 def vowel_preceder(letter, word):
     """Checks a letter to see if vowels precede it."""
-    vowels = 'aeiouy'
+    vowels = "aeiouy"
 
     for i in range(len(word)):
         if word[i] == letter and i > 0 and word[i - 1] in vowels:
@@ -146,7 +156,7 @@ def pair_syllables_with_tones(raw_syllables):
         syllable = raw_syllables[i]
         tone = raw_syllables[i + 1]
         pairs.append(f"{syllable}{tone}")
-    return ' '.join(pairs)
+    return " ".join(pairs)
 
 
 def process_gwoyeu_romatzyh(syllables, corresponding_dict):
@@ -159,9 +169,9 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
     """
 
     def split_initial_final(syllable_to_split):
-        if syllable_to_split.startswith(('w', 'y')):
+        if syllable_to_split.startswith(("w", "y")):
             return None, syllable_to_split[1:]
-        elif len(syllable_to_split) > 1 and syllable_to_split[1] == 'h':
+        elif len(syllable_to_split) > 1 and syllable_to_split[1] == "h":
             return syllable_to_split[:1], syllable_to_split[2:]
         else:
             return syllable_to_split[0], syllable_to_split[1:]
@@ -191,83 +201,96 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
 
         # GYRM tone transformation rules
         if tone == 1:
-            if initial in ['l', 'm', 'n', 'r']:
-                gr_equiv = gr_base[0] + 'h' + gr_base[1:]
+            if initial in ["l", "m", "n", "r"]:
+                gr_equiv = gr_base[0] + "h" + gr_base[1:]
             else:
                 gr_equiv = gr_base
 
         elif tone == 2:
-            if initial in ['l', 'm', 'n', 'r']:
+            if initial in ["l", "m", "n", "r"]:
                 gr_equiv = gr_base
-            elif 'i' in gr_base and final[-1] != 'i':
-                gr_equiv = gr_base.replace('i', 'y')
-            elif 'i' in gr_base and final[-1] == 'i':
-                gr_equiv = gr_base.replace('i', 'y') + 'i'
-            elif 'u' in gr_base and final[-1] != 'u':
-                gr_equiv = gr_base.replace('u', 'w')
-            elif 'u' in gr_base and final[-1] == 'u':
-                gr_equiv = gr_base.replace('u', 'w') + 'u'
+            elif "i" in gr_base and final[-1] != "i":
+                gr_equiv = gr_base.replace("i", "y")
+            elif "i" in gr_base and final[-1] == "i":
+                gr_equiv = gr_base.replace("i", "y") + "i"
+            elif "u" in gr_base and final[-1] != "u":
+                gr_equiv = gr_base.replace("u", "w")
+            elif "u" in gr_base and final[-1] == "u":
+                gr_equiv = gr_base.replace("u", "w") + "u"
             else:
-                last_vowel_index = max((i for i, c in enumerate(gr_base) if c in 'aeiou'), default=-1)
+                last_vowel_index = max(
+                    (i for i, c in enumerate(gr_base) if c in "aeiou"), default=-1
+                )
                 if last_vowel_index != -1:
-                    gr_equiv = gr_base[:last_vowel_index + 1] + 'r' + gr_base[last_vowel_index + 1:]
+                    gr_equiv = (
+                        gr_base[: last_vowel_index + 1]
+                        + "r"
+                        + gr_base[last_vowel_index + 1 :]
+                    )
                 else:
                     gr_equiv = gr_base
 
         elif tone == 3:
-            if gr_base[0] in 'iu':
-                if gr_base.startswith('i'):
-                    gr_equiv = gr_base.replace('i', 'ye', 1)
-                elif gr_base.startswith('u'):
-                    gr_equiv = gr_base.replace('u', 'wo', 1)
-            elif 'i' in gr_base and 'u' in gr_base:
-                if gr_base.index('i') < gr_base.index('u'):
-                    gr_equiv = gr_base.replace('i', 'e', 1)
+            if gr_base[0] in "iu":
+                if gr_base.startswith("i"):
+                    gr_equiv = gr_base.replace("i", "ye", 1)
+                elif gr_base.startswith("u"):
+                    gr_equiv = gr_base.replace("u", "wo", 1)
+            elif "i" in gr_base and "u" in gr_base:
+                if gr_base.index("i") < gr_base.index("u"):
+                    gr_equiv = gr_base.replace("i", "e", 1)
                 else:
-                    gr_equiv = gr_base.replace('u', 'o', 1)
-            elif 'i' in gr_base and vowel_neighbor('i', gr_base) and 'ei' not in gr_base:
-                gr_equiv = gr_base.replace('i', 'e', 1)
-            elif 'u' in gr_base and vowel_neighbor('u', gr_base) and 'ou' not in gr_base and 'uo' not in gr_base:
-                gr_equiv = gr_base.replace('u', 'o', 1)
+                    gr_equiv = gr_base.replace("u", "o", 1)
+            elif (
+                "i" in gr_base and vowel_neighbor("i", gr_base) and "ei" not in gr_base
+            ):
+                gr_equiv = gr_base.replace("i", "e", 1)
+            elif (
+                "u" in gr_base
+                and vowel_neighbor("u", gr_base)
+                and "ou" not in gr_base
+                and "uo" not in gr_base
+            ):
+                gr_equiv = gr_base.replace("u", "o", 1)
             else:
-                if 'uo' not in gr_base:
+                if "uo" not in gr_base:
                     doubled = False
                     result = []
                     for char in gr_base:
-                        if char in 'aeiouy' and not doubled:
+                        if char in "aeiouy" and not doubled:
                             result.append(char * 2)
                             doubled = True
                         else:
                             result.append(char)
-                    gr_equiv = ''.join(result)
+                    gr_equiv = "".join(result)
                 else:
-                    gr_equiv = gr_base.replace('o', 'oo')
+                    gr_equiv = gr_base.replace("o", "oo")
 
         elif tone == 4:
-            if 'i' in gr_base and vowel_preceder('i', gr_base):
-                gr_equiv = gr_base.replace('i', 'y', 1)
-            elif 'u' in gr_base and vowel_preceder('u', gr_base):
-                gr_equiv = gr_base.replace('u', 'w', 1)
-            elif gr_base.endswith('n') or gr_base.endswith('l'):
+            if "i" in gr_base and vowel_preceder("i", gr_base):
+                gr_equiv = gr_base.replace("i", "y", 1)
+            elif "u" in gr_base and vowel_preceder("u", gr_base):
+                gr_equiv = gr_base.replace("u", "w", 1)
+            elif gr_base.endswith("n") or gr_base.endswith("l"):
                 gr_equiv = gr_base + gr_base[-1]
-            elif gr_base.endswith('ng'):
-                gr_equiv = gr_base.replace('ng', 'nq')
+            elif gr_base.endswith("ng"):
+                gr_equiv = gr_base.replace("ng", "nq")
             else:
-                gr_equiv = gr_base + 'h'
+                gr_equiv = gr_base + "h"
 
             # Null-onset handling
-            if gr_equiv.startswith('i'):
-                if vowel_neighbor('i', gr_base):
-                    gr_equiv = gr_equiv.replace('i', 'y', 1)
+            if gr_equiv.startswith("i"):
+                if vowel_neighbor("i", gr_base):
+                    gr_equiv = gr_equiv.replace("i", "y", 1)
                 else:
-                    gr_equiv = 'y' + gr_equiv
-            elif gr_equiv.startswith('u'):
-                if vowel_neighbor('u', gr_base):
-                    gr_equiv = gr_equiv.replace('u', 'w', 1)
+                    gr_equiv = "y" + gr_equiv
+            elif gr_equiv.startswith("u"):
+                if vowel_neighbor("u", gr_base):
+                    gr_equiv = gr_equiv.replace("u", "w", 1)
                 else:
-                    gr_equiv = 'w' + gr_equiv
-            if gr_equiv.endswith('iw'):
-                gr_equiv = gr_equiv.replace('iw', 'iuh')
+                    gr_equiv = "w" + gr_equiv
+            if gr_equiv.endswith("iw"):
+                gr_equiv = gr_equiv.replace("iw", "iuh")
 
         elif tone == 5:
             if base_pinyin in {"me", "ge", "zi"}:
@@ -298,12 +321,14 @@ def zh_word_alternate_romanization(pinyin_string):
 
     # Load romanization mappings
     corresponding_dict = {}
-    with open(Paths.DATASETS['ZH_ROMANIZATION'], "rt", encoding="utf-8-sig") as f:
+    with open(Paths.DATASETS["ZH_ROMANIZATION"], "rt", encoding="utf-8-sig") as f:
         csv_file = csv.reader(f, delimiter=",")
         for row in csv_file:
             pinyin_p, yale_p, wadegiles_p, gr_p = row
             corresponding_dict[pinyin_p.strip().lower()] = [
-                yale_p.strip(), wadegiles_p.strip(), gr_p.strip()
+                yale_p.strip(),
+                wadegiles_p.strip(),
+                gr_p.strip(),
             ]
 
     pinyin_string = sanitize_pinyin_input(pinyin_string)
@@ -325,7 +350,9 @@ def zh_word_alternate_romanization(pinyin_string):
             continue
 
         if base not in corresponding_dict:
-            logger.error(f"❌ Missing key in dictionary: '{base}' from syllable '{syllable}'")
+            logger.error(
+                f"❌ Missing key in dictionary: '{base}' from syllable '{syllable}'"
+            )
             continue
 
         def add_tone(roman):
@@ -361,20 +388,19 @@ def old_chinese_search(character):
     """
     mc_oc_readings = {}
 
-    with open(Paths.DATASETS['OLD_CHINESE'], "r", encoding="utf-8") as f:
+    with open(Paths.DATASETS["OLD_CHINESE"], "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         for row in reader:
             ch = row[0]
             mc = row[2].strip()
-            oc = row[4].split('(', 1)[0].strip()
+            oc = row[4].split("(", 1)[0].strip()
             mc_oc_readings[ch] = (mc, oc)
 
     if character not in mc_oc_readings:
         return None
 
     mc, oc = mc_oc_readings[character]
-    return f"\n**Middle Chinese** | \\*{mc}*" \
-           f"\n**Old Chinese** | \\*{oc}*"
+    return f"\n**Middle Chinese** | \\*{mc}*\n**Old Chinese** | \\*{oc}*"
 
 
 def variant_character_search(search_term, retries=3):
@@ -383,7 +409,9 @@ def variant_character_search(search_term, retries=3):
     Returns the full URL if found, else None.
     """
     search_term = search_term.strip()
-    base_search_url = f"https://dict.variants.moe.edu.tw/search.jsp?QTP=0&WORD={search_term}#searchL"
+    base_search_url = (
+        f"https://dict.variants.moe.edu.tw/search.jsp?QTP=0&WORD={search_term}#searchL"
+    )
     base_site = "https://dict.variants.moe.edu.tw/"
 
     session = requests.Session()
@@ -396,10 +424,10 @@ def variant_character_search(search_term, retries=3):
             tree = html.fromstring(response.content)
 
             # XPath to the <a> element inside /html/body/main/div/form/div/a
-            link_elements = tree.xpath('/html/body/main/div/form/div/a')
+            link_elements = tree.xpath("/html/body/main/div/form/div/a")
 
             if link_elements:
-                href = link_elements[0].get('href')
+                href = link_elements[0].get("href")
                 if href:
                     full_url = base_site + href
                     return full_url
@@ -433,7 +461,9 @@ def min_hakka_readings(character):
         tree = html.fromstring(response.content)
 
         with suppress(IndexError):
-            annotation = tree.xpath('//ru[contains(@class,"rightangle") and contains(@order,"0")]/@annotation')[0]
+            annotation = tree.xpath(
+                '//ru[contains(@class,"rightangle") and contains(@order,"0")]/@annotation'
+            )[0]
             return f"\n**Southern Min** | *{annotation}*"
         return ""
 
@@ -442,15 +472,17 @@ def min_hakka_readings(character):
         response = requests.get(url, headers=useragent)
         tree = html.fromstring(response.content)
 
-        reading = tree.xpath('string(//span[contains(@data-reactid,"$0.6.2.1")])').strip()
+        reading = tree.xpath(
+            'string(//span[contains(@data-reactid,"$0.6.2.1")])'
+        ).strip()
         if not reading:
             return ""
 
         # Normalize and format superscript tones
-        reading = re.sub(r'(\d{1,4})([a-z])', r'\1 \2', reading)
+        reading = re.sub(r"(\d{1,4})([a-z])", r"\1 \2", reading)
         formatted = []
         for word in reading.split():
-            word = re.sub(r'([a-z])(\d)', r'\1^(\2)', word)
+            word = re.sub(r"([a-z])(\d)", r"\1^(\2)", word)
             formatted.append(word)
         return f"\n**Hakka (Sixian)** | *{' '.join(formatted)}*"
 
@@ -461,7 +493,7 @@ def min_hakka_readings(character):
 
 
 def contains_latin(text):
-    return bool(re.search(r'[a-zA-ZÀ-ÿĀ-ž]', text))
+    return bool(re.search(r"[a-zA-ZÀ-ÿĀ-ž]", text))
 
 
 def vietnamese_readings(character, max_readings=4):
@@ -484,7 +516,9 @@ def vietnamese_readings(character, max_readings=4):
     tree = html.fromstring(response.content)
 
     # Extract span texts
-    raw_spans = tree.xpath('//div[contains(@class,"whv") or contains(@class,"content")]//span/text()')
+    raw_spans = tree.xpath(
+        '//div[contains(@class,"whv") or contains(@class,"content")]//span/text()'
+    )
     decoded_spans = [html_stdlib.unescape(s.strip()) for s in raw_spans if s.strip()]
 
     # Keep only words that are mostly letters (including Vietnamese)
@@ -500,7 +534,7 @@ def vietnamese_readings(character, max_readings=4):
 
     han_viet_readings = list(set(han_viet_readings))
     han_viet_readings = [x for x in han_viet_readings if contains_latin(x)]
-    readings_formatted = ', '.join(han_viet_readings)
+    readings_formatted = ", ".join(han_viet_readings)
     logger.info("Looked up Vietnamese readings for Chinese character.")
 
     return readings_formatted
@@ -514,13 +548,19 @@ def calligraphy_search(character):
     :return: None if no image found; otherwise a formatted string with URLs and images.
     """
     character = simplify(character)
-    unicode_assignment = f"{ord(character):X}"  # Unicode in uppercase hex (no 0x prefix)
+    unicode_assignment = (
+        f"{ord(character):X}"  # Unicode in uppercase hex (no 0x prefix)
+    )
     gx_url = f"https://www.sfds.cn/{unicode_assignment}/"
 
     variant_link = variant_character_search(tradify(character))
-    variant_formatted = f"[YTZZD]({variant_link})" if variant_link else "[YTZZD](https://dict.variants.moe.edu.tw/)"
+    variant_formatted = (
+        f"[YTZZD]({variant_link})"
+        if variant_link
+        else "[YTZZD](https://dict.variants.moe.edu.tw/)"
+    )
 
-    formdata = {'sort': '7', 'wd': character}
+    formdata = {"sort": "7", "wd": character}
     try:
         with requests.Session() as session:
             response = session.post("https://www.shufazidian.com/", data=formdata)
@@ -539,7 +579,7 @@ def calligraphy_search(character):
         if len(url) < 20 or "gif" in url.lower():
             continue
         if "shufa6" in url:
-            complete_image = url.replace('shufa6/1', 'shufa6')
+            complete_image = url.replace("shufa6/1", "shufa6")
             break  # Assuming first matching image is enough
 
     if not complete_image:
@@ -579,8 +619,8 @@ def zh_character_other_readings(character):
     results = []
 
     # Japanese readings
-    ja_kun = data.get('kJapaneseKun') or ""
-    ja_on = data.get('kJapaneseOn') or ""
+    ja_kun = data.get("kJapaneseKun") or ""
+    ja_on = data.get("kJapaneseOn") or ""
     if ja_kun or ja_on:
         ja_kun = ja_kun.lower() + " " if ja_kun else ""
         ja_on = ja_on.upper() if ja_on else ""
@@ -588,7 +628,7 @@ def zh_character_other_readings(character):
         results.append(f"**Japanese** | *{ja_combined}*")
 
     # Korean readings
-    ko_hangul = data.get('kHangul')
+    ko_hangul = data.get("kHangul")
     if ko_hangul:
         ko_latin = Romanizer(ko_hangul).romanize().lower()
         ko_latin = ko_latin.replace(" ", ", ")
@@ -598,7 +638,7 @@ def zh_character_other_readings(character):
     # Vietnamese reading
     vi_latin = vietnamese_readings(character)
     if vi_latin is None:
-        vi_latin = data.get('kVietnamese')
+        vi_latin = data.get("kVietnamese")
     if vi_latin:
         results.append(f"**Vietnamese** | *{vi_latin.lower()}*")
 
@@ -618,11 +658,15 @@ async def zh_character(character):
     multi_mode = len(multi_character_list) > 1
 
     async with aiohttp.ClientSession(headers=useragent) as session:
-        resp = await session.get(f'https://www.mdbg.net/chinese/dictionary?page=chardict&cdcanoce=0&cdqchi={character}')
+        resp = await session.get(
+            f"https://www.mdbg.net/chinese/dictionary?page=chardict&cdcanoce=0&cdqchi={character}"
+        )
         content = await resp.text()
         tree = html.fromstring(content)
 
-        pronunciation = [div.text_content() for div in tree.xpath('//div[contains(@class,"pinyin")]')]
+        pronunciation = [
+            div.text_content() for div in tree.xpath('//div[contains(@class,"pinyin")]')
+        ]
         if not pronunciation:
             to_post = RESPONSE.COMMENT_INVALID_ZH_CHARACTER.format(character)
             logger.info(f"[ZW] ZH-Character: No results for {character}")
@@ -632,9 +676,11 @@ async def zh_character(character):
     cmn_pronunciation = pronunciation[::2]
 
     if not multi_mode:
-        cmn_pronunciation = ' / '.join(cmn_pronunciation)
-        yue_pronunciation_list = tree.xpath('//a[contains(@onclick,"pronounce-jyutping")]/text()')
-        yue_pronunciation = ' / '.join(yue_pronunciation_list)
+        cmn_pronunciation = " / ".join(cmn_pronunciation)
+        yue_pronunciation_list = tree.xpath(
+            '//a[contains(@onclick,"pronounce-jyutping")]/text()'
+        )
+        yue_pronunciation = " / ".join(yue_pronunciation_list)
 
         # Add superscript to numbers (format for Reddit)
         for i in range(10):
@@ -642,10 +688,12 @@ async def zh_character(character):
         for i in range(10):
             yue_pronunciation = yue_pronunciation.replace(str(i), f"{i})")
 
-        meaning = '/ '.join(tree.xpath('//div[contains(@class,"defs")]/text()')).strip()
+        meaning = "/ ".join(tree.xpath('//div[contains(@class,"defs")]/text()')).strip()
 
         if tradify(character) == simplify(character):
-            logger.debug(f'[ZW] ZH-Character: The two versions of {character} are identical.')
+            logger.debug(
+                f"[ZW] ZH-Character: The two versions of {character} are identical."
+            )
             lookup_line_1 = (
                 f"# [{character}](https://en.wiktionary.org/wiki/{character}#Chinese)\n\n"
                 "Language | Pronunciation\n"
@@ -656,7 +704,9 @@ async def zh_character(character):
         else:
             trad_char = tradify(character)
             simp_char = simplify(character)
-            logger.debug(f'[ZW] ZH-Character: The two versions of {character} are *not* identical.')
+            logger.debug(
+                f"[ZW] ZH-Character: The two versions of {character} are *not* identical."
+            )
             lookup_line_1 = (
                 f"# [{trad_char} / {simp_char}](https://en.wiktionary.org/wiki/{trad_char}#Chinese)\n\n"
                 "Language | Pronunciation\n"
@@ -670,14 +720,18 @@ async def zh_character(character):
 
         # Old Chinese readings
         try:
-            ocmc_pronunciation = await maybe_async(old_chinese_search, tradify(character))
+            ocmc_pronunciation = await maybe_async(
+                old_chinese_search, tradify(character)
+            )
             if ocmc_pronunciation:
                 lookup_line_1 += ocmc_pronunciation
         except IndexError:
             pass
 
         # Other Sino-Xenic readings
-        other_readings_data = await maybe_async(zh_character_other_readings, tradify(character))
+        other_readings_data = await maybe_async(
+            zh_character_other_readings, tradify(character)
+        )
         if other_readings_data:
             lookup_line_1 += f"\n{other_readings_data}"
 
@@ -704,16 +758,21 @@ async def zh_character(character):
         multi_character_dict = {}
 
         for wenzi in multi_character_list:
-            character_url = f'https://www.mdbg.net/chindict/chindict.php?page=chardict&cdcanoce=0&cdqchi={wenzi}'
+            character_url = f"https://www.mdbg.net/chindict/chindict.php?page=chardict&cdcanoce=0&cdqchi={wenzi}"
             resp = await session.get(character_url)
             content = await resp.text()
             new_tree = html.fromstring(content)
 
-            pronunciation = [div.text_content() for div in new_tree.xpath('//div[contains(@class,"pinyin")]')]
-            cmn_pronunciation = "*" + ' '.join(pronunciation[::2]) + "*"
+            pronunciation = [
+                div.text_content()
+                for div in new_tree.xpath('//div[contains(@class,"pinyin")]')
+            ]
+            cmn_pronunciation = "*" + " ".join(pronunciation[::2]) + "*"
 
-            yue_pronunciation_list = new_tree.xpath('//a[contains(@onclick,"pronounce-jyutping")]/text()')
-            yue_pronunciation = ' '.join(yue_pronunciation_list)
+            yue_pronunciation_list = new_tree.xpath(
+                '//a[contains(@onclick,"pronounce-jyutping")]/text()'
+            )
+            yue_pronunciation = " ".join(yue_pronunciation_list)
             for i in range(10):
                 yue_pronunciation = yue_pronunciation.replace(str(i), f"^{i} ")
             yue_pronunciation = "*" + yue_pronunciation.strip() + "*"
@@ -721,7 +780,9 @@ async def zh_character(character):
             multi_character_dict[wenzi]["mandarin"] = cmn_pronunciation
             multi_character_dict[wenzi]["cantonese"] = yue_pronunciation
 
-            meaning = '/ '.join(new_tree.xpath('//div[contains(@class,"defs")]/text()')).strip()
+            meaning = "/ ".join(
+                new_tree.xpath('//div[contains(@class,"defs")]/text()')
+            ).strip()
             multi_character_dict[wenzi]["meaning"] = f'"{meaning}."'
 
             # Random delay to respect server
@@ -731,7 +792,9 @@ async def zh_character(character):
         for key in multi_character_list:
             char_data = multi_character_dict[key]
             if tradify(key) == simplify(key):
-                duo_header += f" | [{key}](https://en.wiktionary.org/wiki/{key}#Chinese)"
+                duo_header += (
+                    f" | [{key}](https://en.wiktionary.org/wiki/{key}#Chinese)"
+                )
             else:
                 duo_header += f" | [{tradify(key)} ({simplify(key)})](https://en.wiktionary.org/wiki/{tradify(key)}#Chinese)"
             duo_separator += "---|"
@@ -739,7 +802,14 @@ async def zh_character(character):
             duo_cantonese += f" | {char_data['cantonese']}"
             duo_meaning += f" | {char_data['meaning']}"
 
-        lookup_line_1 = duo_key + duo_header + duo_separator + duo_mandarin + duo_cantonese + duo_meaning
+        lookup_line_1 = (
+            duo_key
+            + duo_header
+            + duo_separator
+            + duo_mandarin
+            + duo_cantonese
+            + duo_meaning
+        )
 
     lookup_line_2 = (
         f"\n\n\n^Information ^from "
@@ -756,7 +826,9 @@ async def zh_character(character):
     )
 
     to_post = lookup_line_1 + lookup_line_2
-    logger.info(f"[ZW] ZH-Character: Received lookup command for {character} in Chinese. Returned search results.")
+    logger.info(
+        f"[ZW] ZH-Character: Received lookup command for {character} in Chinese. Returned search results."
+    )
     return to_post
 
 
@@ -765,13 +837,13 @@ async def zh_character(character):
 
 async def zh_word_dictionary_search(chinese_word, dictionary_type):
     if dictionary_type == "buddhist":
-        file_address = Paths.DATASETS['ZH_BUDDHIST']
+        file_address = Paths.DATASETS["ZH_BUDDHIST"]
     elif dictionary_type == "cantonese":
-        file_address = Paths.DATASETS['ZH_CCANTO']
+        file_address = Paths.DATASETS["ZH_CCANTO"]
     else:
         raise ValueError("dictionary_type must be either 'buddhist' or 'cantonese'")
 
-    async with aiofiles.open(file_address, 'r', encoding='utf-8') as f:
+    async with aiofiles.open(file_address, "r", encoding="utf-8") as f:
         lines = await f.read()
     lines = lines.splitlines()
 
@@ -785,34 +857,38 @@ async def zh_word_dictionary_search(chinese_word, dictionary_type):
     if relevant_line is None:
         return None
 
-    meanings = relevant_line.partition('/')[2].replace("\"", "'").rstrip("/").strip().split("/")
-    pinyin = relevant_line.partition('[')[2].partition(']')[0]
+    meanings = (
+        relevant_line.partition("/")[2].replace('"', "'").rstrip("/").strip().split("/")
+    )
+    pinyin = relevant_line.partition("[")[2].partition("]")[0]
 
     if dictionary_type == "buddhist":
         if len(meanings) > 2:
             meanings = meanings[:2]
             meanings[-1] += "."
         formatted_meaning = (
-                '\n\n**Buddhist Meanings**: "{}"'.format("; ".join(meanings)) +
-                " ([Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms))"
+            '\n\n**Buddhist Meanings**: "{}"'.format("; ".join(meanings))
+            + " ([Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms))"
         )
-        return {'meaning': formatted_meaning, 'pinyin': pinyin}
+        return {"meaning": formatted_meaning, "pinyin": pinyin}
 
     else:
-        jyutping = relevant_line.partition('{')[2].partition('}')[0]
+        jyutping = relevant_line.partition("{")[2].partition("}")[0]
         for digit in map(str, range(10)):
             jyutping = jyutping.replace(digit, f"^{digit} ")
         jyutping = " ".join(jyutping.split())
         formatted_meaning = (
-                '\n\n**Cantonese Meanings**: "{}."'.format("; ".join(meanings)) +
-                f" ([CC-Canto](https://cantonese.org/search.php?q={chinese_word}))"
+            '\n\n**Cantonese Meanings**: "{}."'.format("; ".join(meanings))
+            + f" ([CC-Canto](https://cantonese.org/search.php?q={chinese_word}))"
         )
-        return {'meaning': formatted_meaning, 'pinyin': pinyin, 'jyutping': jyutping}
+        return {"meaning": formatted_meaning, "pinyin": pinyin, "jyutping": jyutping}
 
 
 async def zh_word_tea_dictionary_search(chinese_word):
     general_dictionary = {}
-    web_search = f"https://babelcarp.org/babelcarp/babelcarp.cgi?phrase={chinese_word}&define=1"
+    web_search = (
+        f"https://babelcarp.org/babelcarp/babelcarp.cgi?phrase={chinese_word}&define=1"
+    )
 
     try:
         async with httpx.AsyncClient() as client:
@@ -829,7 +905,7 @@ async def zh_word_tea_dictionary_search(chinese_word):
     pinyin_line_index = None
     pinyin = None
     for i, line in enumerate(text_nodes):
-        match = re.search(r'\(([\w\s]+)\)', line)
+        match = re.search(r"\(([\w\s]+)\)", line)
         if match:
             pinyin = match.group(1).lower()
             pinyin_line_index = i
@@ -838,15 +914,15 @@ async def zh_word_tea_dictionary_search(chinese_word):
     if pinyin_line_index is None or pinyin is None:
         return None
 
-    meaning_parts = text_nodes[pinyin_line_index + 1:]
+    meaning_parts = text_nodes[pinyin_line_index + 1 :]
     if not meaning_parts:
         return None
 
-    meaning = " ".join(meaning_parts).replace(' )', ' ').replace('  ', ' ').strip()
+    meaning = " ".join(meaning_parts).replace(" )", " ").replace("  ", " ").strip()
     formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
 
-    general_dictionary['meaning'] = formatted_line
-    general_dictionary['pinyin'] = convert_numbered_pinyin(pinyin)
+    general_dictionary["meaning"] = formatted_line
+    general_dictionary["pinyin"] = convert_numbered_pinyin(pinyin)
 
     return general_dictionary
 
@@ -860,11 +936,11 @@ async def zh_word_chengyu_supplement(chengyu):
     headers.update(useragent)
 
     simplified_chengyu = simplify(chengyu)
-    chengyu_gb_bytes = simplified_chengyu.encode('gb2312')
+    chengyu_gb_bytes = simplified_chengyu.encode("gb2312")
     chengyu_gb_hex = "".join(f"%{b:02X}" for b in chengyu_gb_bytes)
 
     # noinspection HttpUrlsUsage
-    search_url = f'http://cy.5156edu.com/serach.php?f_type=chengyu&f_type2=&f_key={chengyu_gb_hex}'
+    search_url = f"http://cy.5156edu.com/serach.php?f_type=chengyu&f_type2=&f_key={chengyu_gb_hex}"
     logger.debug(f"ZH-Chengyu search URL: {search_url}")
 
     try:
@@ -872,12 +948,12 @@ async def zh_word_chengyu_supplement(chengyu):
             response = await client.get(search_url, headers=headers)
             response.encoding = "gb2312"
             page_tree = html.fromstring(response.text)
-            chengyu_result_texts = page_tree.xpath('//table[2]//td//text()')
+            chengyu_result_texts = page_tree.xpath("//table[2]//td//text()")
     except (UnicodeEncodeError, UnicodeDecodeError, httpx.RequestError) as e:
         logger.error(f"[ZW] ZH-Chengyu: Unicode or connection error: {e}")
         return None
 
-    if '找到 0 个成语' in ''.join(chengyu_result_texts):
+    if "找到 0 个成语" in "".join(chengyu_result_texts):
         logger.info(f"[ZW] ZH-Chengyu: No chengyu results found for {chengyu}.")
         return None
 
@@ -885,7 +961,7 @@ async def zh_word_chengyu_supplement(chengyu):
     if not link_elements:
         return None
 
-    detail_url = link_elements[0].get('href')
+    detail_url = link_elements[0].get("href")
     logger.info(f"[ZW] > ZH-Chengyu: Found chengyu detail page at: {detail_url}")
 
     try:
@@ -897,13 +973,15 @@ async def zh_word_chengyu_supplement(chengyu):
         return None
 
     meaning_xpath = "//tr[td[1][contains(normalize-space(.), '解释：')]]/td[2]/text()"
-    literary_source_xpath = "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]/text()"
+    literary_source_xpath = (
+        "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]/text()"
+    )
 
     meaning_list = detail_tree.xpath(meaning_xpath)
     literary_source_list = detail_tree.xpath(literary_source_xpath)
 
-    meaning = meaning_list[0].strip() if meaning_list else ''
-    literary_source = literary_source_list[0].strip() if literary_source_list else ''
+    meaning = meaning_list[0].strip() if meaning_list else ""
+    literary_source = literary_source_list[0].strip() if literary_source_list else ""
     logger.debug(f" Found {meaning}, {literary_source}")
 
     return (
@@ -926,57 +1004,72 @@ async def zh_word(word):
 
     async with httpx.AsyncClient(timeout=10) as client:
         # MDBG dictionary lookup
-        mdbg_url = f'https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}'
+        mdbg_url = f"https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}"
         response = await client.get(mdbg_url, headers=useragent)
         tree = html.fromstring(response.content)
-        word_exists = str(tree.xpath('//p[contains(@class,"nonprintable")]/strong/text()'))
+        word_exists = str(
+            tree.xpath('//p[contains(@class,"nonprintable")]/strong/text()')
+        )
 
         # Basic Mandarin pinyin
-        cmn_pronunciation = ''.join(tree.xpath('//div[contains(@class,"pinyin")]/a/span/text()')[:len(word)])
+        cmn_pronunciation = "".join(
+            tree.xpath('//div[contains(@class,"pinyin")]/a/span/text()')[: len(word)]
+        )
 
-        if 'No results found' in word_exists:
+        if "No results found" in word_exists:
             trad_word, simp_word = tradify(word), simplify(word)
-            search_buddhist = await zh_word_dictionary_search(trad_word, 'buddhist')
+            search_buddhist = await zh_word_dictionary_search(trad_word, "buddhist")
             search_tea = await zh_word_tea_dictionary_search(simp_word)
-            search_cccanto = await zh_word_dictionary_search(trad_word, 'cantonese')
+            search_cccanto = await zh_word_dictionary_search(trad_word, "cantonese")
 
             if not any([search_buddhist, search_tea, search_cccanto]):
-                logger.info("[ZW] ZH-Word: No results found. Getting individual characters instead.")
+                logger.info(
+                    "[ZW] ZH-Word: No results found. Getting individual characters instead."
+                )
                 if len(word) < 2:
                     return await zh_character(word)
                 return "\n\n" + "\n\n".join([await zh_character(char) for char in word])
 
             for result in [search_buddhist, search_tea, search_cccanto]:
                 if result:
-                    alternate_meanings.append(result['meaning'])
-                    alternate_pinyin = result['pinyin']
-                    if 'jyutping' in result:
-                        alternate_jyutping = result['jyutping']
+                    alternate_meanings.append(result["meaning"])
+                    alternate_pinyin = result["pinyin"]
+                    if "jyutping" in result:
+                        alternate_jyutping = result["jyutping"]
 
-            logger.info(f"[ZW] ZH-Word: No results for '{word}', but specialty dictionaries returned matches.")
+            logger.info(
+                f"[ZW] ZH-Word: No results for '{word}', but specialty dictionaries returned matches."
+            )
 
         if not alternate_meanings:
             try:
                 onclick = tree.xpath('//div[contains(@class,"pinyin")]/a/@onclick')[0]
                 match = re.search(r'\|([^|]*)"', onclick)
-                py_split = match.group(1).strip() if match else ''
+                py_split = match.group(1).strip() if match else ""
                 logger.info(f">>> Pinyin string to look up: {py_split}")
                 alt_romanize = zh_word_alternate_romanization(py_split)
             except IndexError:
                 alt_romanize = ("---", "---", "---")
 
             # Definitions
-            meaning_blocks = [div.text_content() for div in tree.xpath('//div[contains(@class,"defs")]')]
-            meaning = '/ '.join(x.strip() for x in meaning_blocks if x.strip() not in {'', ', '}).strip()
+            meaning_blocks = [
+                div.text_content()
+                for div in tree.xpath('//div[contains(@class,"defs")]')
+            ]
+            meaning = "/ ".join(
+                x.strip() for x in meaning_blocks if x.strip() not in {"", ", "}
+            ).strip()
 
             # Cantonese.org pronunciation
-            yue_url = f'https://cantonese.org/search.php?q={word}'
+            yue_url = f"https://cantonese.org/search.php?q={word}"
             yue_response = await client.get(yue_url, headers=useragent)
             yue_tree = html.fromstring(yue_response.content)
-            yue_pronunciation_raw = yue_tree.xpath('//h3[contains(@class,"resulthead")]/small/strong//text()')
-            yue_syllables = yue_pronunciation_raw[:len(word) * 2]
+            yue_pronunciation_raw = yue_tree.xpath(
+                '//h3[contains(@class,"resulthead")]/small/strong//text()'
+            )
+            yue_syllables = yue_pronunciation_raw[: len(word) * 2]
             yue_pronunciation = pair_syllables_with_tones(yue_syllables)
-            yue_pronunciation = re.sub(r'(\d)', r'^(\1)', yue_pronunciation)
+            yue_pronunciation = re.sub(r"(\d)", r"^(\1)", yue_pronunciation)
         else:
             cmn_pronunciation = convert_numbered_pinyin(alternate_pinyin)
             alt_romanize = zh_word_alternate_romanization(alternate_pinyin)
@@ -984,8 +1077,11 @@ async def zh_word(word):
             meaning = "\n".join(alternate_meanings)
 
     is_same_script = tradify(word) == simplify(word)
-    lookup_header = f'# [{word}](https://en.wiktionary.org/wiki/{word}#Chinese)' if is_same_script else \
-        f'# [{tradify(word)} / {simplify(word)}](https://en.wiktionary.org/wiki/{tradify(word)}#Chinese)'
+    lookup_header = (
+        f"# [{word}](https://en.wiktionary.org/wiki/{word}#Chinese)"
+        if is_same_script
+        else f"# [{tradify(word)} / {simplify(word)}](https://en.wiktionary.org/wiki/{tradify(word)}#Chinese)"
+    )
 
     pronunciation_block = (
         "\n\nLanguage | Pronunciation\n---------|--------------"
@@ -1007,23 +1103,25 @@ async def zh_word(word):
                 logger.info("[ZW] ZH-Word: >> Added additional chengyu data.")
                 meaning_section += chengyu_info
 
-        buddhist_main = await zh_word_dictionary_search(tradify(word), 'buddhist')
+        buddhist_main = await zh_word_dictionary_search(tradify(word), "buddhist")
         if buddhist_main:
-            meaning_section += buddhist_main['meaning']
+            meaning_section += buddhist_main["meaning"]
     else:
-        meaning_section = f'\n{meaning}'
+        meaning_section = f"\n{meaning}"
 
     footer = (
-        '\n\n^Information ^from '
-        f'[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| '
-        f'[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| '
-        f'[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| '
-        f'[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| '
+        "\n\n^Information ^from "
+        f"[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| "
+        f"[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| "
+        f"[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| "
+        f"[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| "
         f"[^ZDIC](https://www.zdic.net/hans/{simplify(word)})"
     )
 
     result = lookup_header + meaning_section + "\n\n" + footer
-    logger.info(f"[ZW] ZH-Word: Received a lookup command for '{word}'. Returned search results.")
+    logger.info(
+        f"[ZW] ZH-Word: Received a lookup command for '{word}'. Returned search results."
+    )
     return result
 
 

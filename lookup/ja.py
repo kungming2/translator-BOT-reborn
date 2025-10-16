@@ -3,6 +3,7 @@
 """
 Contains functions that deal with Japanese-language content.
 """
+
 import asyncio
 import re
 import time
@@ -29,7 +30,7 @@ def to_hepburn(input_text):
     """Returns a Hepburn romanization of the input."""
     kks = pykakasi.kakasi()
     result = kks.convert(input_text)
-    return ' '.join([item['hepburn'] for item in result])
+    return " ".join([item["hepburn"] for item in result])
 
 
 def format_kun_on_readings(tree):
@@ -40,15 +41,21 @@ def format_kun_on_readings(tree):
         kun_chunk (str): formatted kun readings, e.g. "よみ (*yomi*)"
         on_chunk (str): formatted on readings, e.g. "ヨミ (*yomi*)"
     """
-    kun_readings = tree.xpath('//div[contains(@class,"kanji-details__main-readings")]/dl[1]/dd/a/text()')
+    kun_readings = tree.xpath(
+        '//div[contains(@class,"kanji-details__main-readings")]/dl[1]/dd/a/text()'
+    )
 
     if not kun_readings:
-        on_readings = tree.xpath('//*[@id="result_area"]/div/div[1]/div[2]/div/div[1]/div[2]/dl/dd/a/text()')
+        on_readings = tree.xpath(
+            '//*[@id="result_area"]/div/div[1]/div[2]/div/div[1]/div[2]/dl/dd/a/text()'
+        )
     else:
-        on_readings = tree.xpath('//div[contains(@class,"kanji-details__main-readings")]/dl[2]/dd/a/text()')
+        on_readings = tree.xpath(
+            '//div[contains(@class,"kanji-details__main-readings")]/dl[2]/dd/a/text()'
+        )
 
-    kun_chunk = ', '.join(f"{r} (*{to_hepburn(r)}*)" for r in kun_readings)
-    on_chunk = ', '.join(f"{r} (*{to_hepburn(r)}*)" for r in on_readings)
+    kun_chunk = ", ".join(f"{r} (*{to_hepburn(r)}*)" for r in kun_readings)
+    on_chunk = ", ".join(f"{r} (*{to_hepburn(r)}*)" for r in on_readings)
 
     return kun_chunk, on_chunk
 
@@ -67,37 +74,47 @@ def ja_character(character):
     multi_mode = len(character) > 1
     multi_character_dict = {}
 
-    kana_test = re.search('[\u3040-\u309f]', character)  # Hiragana Unicode block
+    kana_test = re.search("[\u3040-\u309f]", character)  # Hiragana Unicode block
 
     if kana_test:
         kana = kana_test.group(0)
-        response = requests.get(f'https://jisho.org/search/{character}%20%23particle', headers=useragent)
+        response = requests.get(
+            f"https://jisho.org/search/{character}%20%23particle", headers=useragent
+        )
         tree = html.fromstring(response.content)
         meaning_list = tree.xpath('//span[contains(@class,"meaning-meaning")]/text()')
-        meaning = ' / '.join(meaning_list)
+        meaning = " / ".join(meaning_list)
         is_kana = True
 
-        total_data = f'# [{kana}](https://en.wiktionary.org/wiki/{kana}#Japanese)'
+        total_data = f"# [{kana}](https://en.wiktionary.org/wiki/{kana}#Japanese)"
         total_data += f" (*{to_hepburn(kana)}*)"
         total_data += f'\n\n**Meanings**: "{meaning}."'
 
     elif not multi_mode:
         # Single kanji mode
-        response = requests.get(f'https://jisho.org/search/{character}%20%23kanji', headers=useragent)
+        response = requests.get(
+            f"https://jisho.org/search/{character}%20%23kanji", headers=useragent
+        )
         tree = html.fromstring(response.content)
 
-        meanings = tree.xpath('//div[contains(@class,"kanji-details__main-meanings")]/text()')
-        meaning = ' / '.join(meanings).strip()
+        meanings = tree.xpath(
+            '//div[contains(@class,"kanji-details__main-meanings")]/text()'
+        )
+        meaning = " / ".join(meanings).strip()
 
         if not meaning:
             logger.info(f"[ZW] JA-Character: No results for {character}")
-            return (f"There were no results for {character}. Please check to make sure it is a valid "
-                    "Japanese character or word.")
+            return (
+                f"There were no results for {character}. Please check to make sure it is a valid "
+                "Japanese character or word."
+            )
 
         kun_chunk, on_chunk = format_kun_on_readings(tree)
 
-        lookup_line_1 = f'# [{character}](https://en.wiktionary.org/wiki/{character}#Japanese)\n\n'
-        lookup_line_1 += f'**Kun-readings:** {kun_chunk}\n\n**On-readings:** {on_chunk}'
+        lookup_line_1 = (
+            f"# [{character}](https://en.wiktionary.org/wiki/{character}#Japanese)\n\n"
+        )
+        lookup_line_1 += f"**Kun-readings:** {kun_chunk}\n\n**On-readings:** {on_chunk}"
 
         # Attempt to include calligraphy image
         calligraphy_image = calligraphy_search(character)
@@ -117,18 +134,22 @@ def ja_character(character):
         ooi_meaning = "\n**Meanings**"
 
         for moji in character:
-            response = requests.get(f'https://jisho.org/search/{moji}%20%23kanji', headers=useragent)
+            response = requests.get(
+                f"https://jisho.org/search/{moji}%20%23kanji", headers=useragent
+            )
             tree = html.fromstring(response.content)
 
             kun_chunk, on_chunk = format_kun_on_readings(tree)
 
-            meanings = tree.xpath('//div[contains(@class,"kanji-details__main-meanings")]/text()')
+            meanings = tree.xpath(
+                '//div[contains(@class,"kanji-details__main-meanings")]/text()'
+            )
             meaning = f'"{" / ".join(meanings).strip()}."'
 
             multi_character_dict[moji] = {
                 "kun": kun_chunk,
                 "on": on_chunk,
-                "meaning": meaning
+                "meaning": meaning,
             }
 
         # Construct Markdown table from individual kanji
@@ -140,7 +161,9 @@ def ja_character(character):
             ooi_on += f" | {data['on']}"
             ooi_meaning += f" | {data['meaning']}"
 
-        total_data = ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
+        total_data = (
+            ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
+        )
 
     # Append resource links
     if is_kana:
@@ -156,7 +179,9 @@ def ja_character(character):
             f"[^(Weblio EJJE)](https://ejje.weblio.jp/content/{character})"
         )
 
-    logger.info(f"[ZW] JA-Character: Received lookup command for {character} in Japanese. Returned results.")
+    logger.info(
+        f"[ZW] JA-Character: Received lookup command for {character} in Japanese. Returned results."
+    )
     return total_data + lookup_line_3
 
 
@@ -164,7 +189,7 @@ def ja_character(character):
 
 
 def sfx_search(katakana_string):
-    if not re.search(r'[\u30A0-\u30FF]', katakana_string):
+    if not re.search(r"[\u30A0-\u30FF]", katakana_string):
         return None
 
     search_url = f"https://nsk.sh/tools/jp-onomatopoeia/?term={katakana_string}"
@@ -179,18 +204,24 @@ def sfx_search(katakana_string):
         tree = html.fromstring(driver.page_source)
 
         # Scope only to the first result container
-        container = tree.xpath('//main/div/div/div[1]/div')[0]
+        container = tree.xpath("//main/div/div/div[1]/div")[0]
 
         # Find the first <h3> and the following <ul> only within that container
-        h3_elem = container.xpath('.//h3[1]')
-        ul_elem = container.xpath('.//ul[1]')
+        h3_elem = container.xpath(".//h3[1]")
+        ul_elem = container.xpath(".//ul[1]")
 
         if not h3_elem or not ul_elem:
             return None
 
-        match_text = tree.xpath('/html/body/main/div/div/div[1]/div/div/div[1]/h3/text()')
+        match_text = tree.xpath(
+            "/html/body/main/div/div/div[1]/div/div/div[1]/h3/text()"
+        )
         match_text = match_text[0].strip() if match_text else None
-        meanings = [li.text_content().strip() for li in ul_elem[0].xpath('./li') if li.text_content().strip()]
+        meanings = [
+            li.text_content().strip()
+            for li in ul_elem[0].xpath("./li")
+            if li.text_content().strip()
+        ]
 
         if not meanings:
             return None
@@ -212,7 +243,9 @@ def sfx_search(katakana_string):
             f"\n\n##### *Sound effect*\n\n**Reading:** *{katakana_reading}*"
         )
         finished_comment = f"{header}{formatted_line}"
-        logger.info(f"[ZW] JA-Word-SFX: Found a dictionary entry for {katakana_string} at {search_url}")
+        logger.info(
+            f"[ZW] JA-Word-SFX: Found a dictionary entry for {katakana_string} at {search_url}"
+        )
 
         return finished_comment
 
@@ -248,14 +281,14 @@ def ja_name_search(ja_given_name):
         return None
 
     # Clean and split romaji readings
-    name_content = [x for x in name_content if x != '\xa0\xa0']
+    name_content = [x for x in name_content if x != "\xa0\xa0"]
     if name_content:
         name_content = name_content[0].split()
 
     # Pair hiragana and romaji readings
     for i, hira in enumerate(hiragana_content):
         hira_clean = hira.strip()
-        romaji = name_content[i].title() if i < len(name_content) else ''
+        romaji = name_content[i].title() if i < len(name_content) else ""
         names_with_readings.append(f"{hira_clean} (*{romaji}*)")
 
     readings_str = ", ".join(names_with_readings)
@@ -284,7 +317,7 @@ def ja_word_yojijukugo(yojijukugo):
     """
 
     try:
-        search_url = f'https://yoji.jitenon.jp/cat/search.php?getdata={yojijukugo}&search=part&page=1'
+        search_url = f"https://yoji.jitenon.jp/cat/search.php?getdata={yojijukugo}&search=part&page=1"
         logger.debug(f"Searching Yojijukugo at: {search_url}")
 
         search_resp = requests.get(search_url, headers=useragent, allow_redirects=True)
@@ -296,16 +329,22 @@ def ja_word_yojijukugo(yojijukugo):
         tree = html.fromstring(search_resp.text)
 
         # Extract reading.
-        reading_xpath = '/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td'
+        reading_xpath = (
+            "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td"
+        )
         reading_nodes = tree.xpath(reading_xpath)
         reading = None
         if reading_nodes:
             reading_raw = reading_nodes[0].text_content()
-            reading = reading_raw.replace('\r', '\n').strip()
-            reading = '\n'.join(line.strip() for line in reading.splitlines() if line.strip())
+            reading = reading_raw.replace("\r", "\n").strip()
+            reading = "\n".join(
+                line.strip() for line in reading.splitlines() if line.strip()
+            )
 
         # Extract Japanese Explanation
-        explanation_xpath = '/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td'
+        explanation_xpath = (
+            "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td"
+        )
         explanation_nodes = tree.xpath(explanation_xpath)
         if not explanation_nodes:
             logger.warning(f"No explanation found for {yojijukugo} at {entry_url}")
@@ -313,19 +352,25 @@ def ja_word_yojijukugo(yojijukugo):
 
         explanation_raw = explanation_nodes[0].text_content()
         # Normalize line breaks and clean empty lines
-        explanation = explanation_raw.replace('\r', '\n').strip()
-        explanation = ' '.join(line.strip() for line in explanation.splitlines() if line.strip())
+        explanation = explanation_raw.replace("\r", "\n").strip()
+        explanation = " ".join(
+            line.strip() for line in explanation.splitlines() if line.strip()
+        )
 
         # Check if the 4th row's <th> is 出典, then get literary source
-        th_xpath = '/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/th'
+        th_xpath = "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/th"
         th_nodes = tree.xpath(th_xpath)
         source = None
-        if th_nodes and th_nodes[0].text_content().strip() == '出典':
-            source_xpath = '/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td'
+        if th_nodes and th_nodes[0].text_content().strip() == "出典":
+            source_xpath = (
+                "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td"
+            )
             source_nodes = tree.xpath(source_xpath)
             if source_nodes:
                 source_raw = source_nodes[0].text_content()
-                source = '\n'.join(line.strip() for line in source_raw.splitlines() if line.strip())
+                source = "\n".join(
+                    line.strip() for line in source_raw.splitlines() if line.strip()
+                )
 
         logger.debug(f"Retrieved explanation and literary source for {yojijukugo}")
 
@@ -333,7 +378,8 @@ def ja_word_yojijukugo(yojijukugo):
         formatted_section = (
             f"# [{yojijukugo}](https://en.wiktionary.org/wiki/{yojijukugo}#Japanese)\n\n"
             f"**Reading:** {reading} (*{to_hepburn(reading)}*)\n\n"
-            f"**Japanese Explanation**: {explanation}.\n\n")
+            f"**Japanese Explanation**: {explanation}.\n\n"
+        )
         if source:
             formatted_section += f"**Literary Source**: {source}\n\n\n"
         formatted_section += (
@@ -357,7 +403,7 @@ async def ja_word(japanese_word):
     Falls back to other functions if no word data found.
     """
     japanese_word = japanese_word.strip()
-    url = f'https://jisho.org/api/v1/search/words?keyword={japanese_word}%20%23words'
+    url = f"https://jisho.org/api/v1/search/words?keyword={japanese_word}%20%23words"
 
     async with aiohttp.ClientSession() as session:
         word_data = await fetch_json(session, url)
@@ -374,7 +420,7 @@ async def ja_word(japanese_word):
     if not word_reading:
         logger.info(f"[ZW] JA-Word: No results for '{japanese_word}' on Jisho.")
 
-        katakana_test = re.search(r'[\u30a0-\u30ff]', japanese_word)
+        katakana_test = re.search(r"[\u30a0-\u30ff]", japanese_word)
         # Execute some searches asynchronously.
         name_data = None
         yojijukugo_data = None
@@ -386,7 +432,9 @@ async def ja_word(japanese_word):
 
         if not any([name_data, sfx_data, yojijukugo_data]):
             if not katakana_test:
-                logger.info("[ZW] JA-Word: No matches. Falling back to single-character lookup.")
+                logger.info(
+                    "[ZW] JA-Word: No matches. Falling back to single-character lookup."
+                )
                 return await maybe_async(ja_character, japanese_word)
             else:
                 logger.info("[ZW] JA-Word: Unknown katakana word.")
@@ -408,7 +456,7 @@ async def ja_word(japanese_word):
         # Format valid Jisho result
         word_reading_chunk = f"{word_reading} (*{to_hepburn(word_reading)}*)"
         word_meaning = f'"{", ".join(main_data["senses"][0]["english_definitions"])}."'
-        word_type = f'*{", ".join(main_data["senses"][0]["parts_of_speech"])}*'
+        word_type = f"*{', '.join(main_data['senses'][0]['parts_of_speech'])}*"
 
         return_comment = (
             f"# [{japanese_word}](https://en.wiktionary.org/wiki/{japanese_word}#Japanese)\n\n"
@@ -431,7 +479,7 @@ async def ja_word(japanese_word):
         return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         my_input = input("Please enter a string: ")
         print(asyncio.run(ja_word(my_input)))

@@ -6,6 +6,7 @@ languages from Wikipedia and Ethnologue. This is usually called
 'reference' data. This data is used to populate the main
 language data YAML file, among other things.
 """
+
 import re
 
 import requests
@@ -32,8 +33,7 @@ def fetch_sil_language_data(language_code: str) -> dict | None:
     logger.debug(f"Fetching URL: {url}")
 
     try:
-        response = requests.get(url, headers=get_random_useragent(),
-                                timeout=10)
+        response = requests.get(url, headers=get_random_useragent(), timeout=10)
         response.raise_for_status()
         logger.debug(f"Response status: {response.status_code}")
     except requests.RequestException as e:
@@ -55,7 +55,7 @@ def fetch_sil_language_data(language_code: str) -> dict | None:
     name = header_text.split("[")[0].strip()
 
     # Find the code sets table row dynamically
-    code_sets_elements = tree.xpath('//table//tr/td[4]/text()')
+    code_sets_elements = tree.xpath("//table//tr/td[4]/text()")
     logger.debug(f"[SIL DEBUG] Code sets found: {code_sets_elements}")
 
     if not code_sets_elements:
@@ -67,11 +67,7 @@ def fetch_sil_language_data(language_code: str) -> dict | None:
     if "639-2" in code_sets_text and "639-3" not in code_sets_text:
         raise ValueError(f"[SIL] Code `{language_code}` is only 639-2, not 639-3")
 
-    sil_data = {
-        "language_code_3": language_code.lower(),
-        "name": name,
-        "link_sil": url
-    }
+    sil_data = {"language_code_3": language_code.lower(), "name": name, "link_sil": url}
 
     logger.info(f"Fetched SIL data for `{language_code}`: {sil_data}")
     return sil_data
@@ -94,9 +90,9 @@ def get_archived_ethnologue_page(language_code: str) -> str | None:
     try:
         archived_snapshot = cdx_api.near(year=2019, month=6, day=6, hour=12, minute=0)
     except (
-            exceptions.NoCDXRecordFound,
-            exceptions.WaybackError,
-            requests.exceptions.ConnectTimeout,
+        exceptions.NoCDXRecordFound,
+        exceptions.WaybackError,
+        requests.exceptions.ConnectTimeout,
     ):
         logger.error(f"[WY] Could not retrieve archived data for `{language_code}`.")
         return None
@@ -140,13 +136,17 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
         response.raise_for_status()
         tree = html.fromstring(response.content)
     except requests.RequestException as e:
-        logger.error(f"[Reference] Could not fetch Ethnologue page for `{language_code}`: {e}")
+        logger.error(
+            f"[Reference] Could not fetch Ethnologue page for `{language_code}`: {e}"
+        )
 
         # SIL backup here. This is primarily for historical/extinct
         # languages, like Tangut.
         sil_data = fetch_sil_language_data(language_code)
         if sil_data:
-            logger.info(f"[Reference] No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}")
+            logger.info(
+                f"[Reference] No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}"
+            )
             ref_data.update(sil_data)
             return ref_data
 
@@ -154,7 +154,9 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
 
     # Check if the language exists on the page
     try:
-        language_exist = tree.xpath('//div[contains(@class,"view-display-id-page")]/div/text()')[0]
+        language_exist = tree.xpath(
+            '//div[contains(@class,"view-display-id-page")]/div/text()'
+        )[0]
         if not language_exist:
             return None
     except IndexError:
@@ -163,30 +165,47 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
     # Language names
     ref_data["name"] = converter(language_code).name
     try:
-        alt_names_raw = tree.xpath('//div[contains(@class,"alternate-names")]/div[2]/div/text()')[0]
-        alt_names = [name.strip() for name in alt_names_raw.split(",") if "pej." not in name]
-        alt_names = [x for x in alt_names if len(x) > 4]  # We want to avoid names which might be codes
+        alt_names_raw = tree.xpath(
+            '//div[contains(@class,"alternate-names")]/div[2]/div/text()'
+        )[0]
+        alt_names = [
+            name.strip() for name in alt_names_raw.split(",") if "pej." not in name
+        ]
+        alt_names = [
+            x for x in alt_names if len(x) > 4
+        ]  # We want to avoid names which might be codes
         ref_data["name_alternates"] = alt_names
     except IndexError:
         ref_data["name_alternates"] = []
 
     # Population
     try:
-        population_text = tree.xpath('//div[contains(@class,"field-population")]/div[2]/div/p/text()')[0]
-        numbers = [int(n.replace(",", "")) for n in re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', population_text)]
+        population_text = tree.xpath(
+            '//div[contains(@class,"field-population")]/div[2]/div/p/text()'
+        )[0]
+        numbers = [
+            int(n.replace(",", ""))
+            for n in re.findall(r"\d{1,3}(?:,\d{3})*(?:\.\d+)?", population_text)
+        ]
         ref_data["population"] = max(numbers) if numbers else 0
     except IndexError:
-        logger.warning(f"[Reference] Problem fetching population for `{language_code}`, defaulting to 0.")
+        logger.warning(
+            f"[Reference] Problem fetching population for `{language_code}`, defaulting to 0."
+        )
         ref_data["population"] = 0
 
     # Country - multiple fallback strategies
     try:
         # Try multiple XPath strategies
         country_list = (
-                tree.xpath('//div[contains(@class,"a-language-of")]/div/div/h2/a/text()') or
-                tree.xpath('//div[contains(@class,"field-ethnologue-language-of")]//h2/a/text()') or
-                tree.xpath('//div[contains(text(), "A language of")]/..//a[contains(@href, "/country/")]/text()') or
-                tree.xpath('//h2[contains(., "A language of")]/a/text()')
+            tree.xpath('//div[contains(@class,"a-language-of")]/div/div/h2/a/text()')
+            or tree.xpath(
+                '//div[contains(@class,"field-ethnologue-language-of")]//h2/a/text()'
+            )
+            or tree.xpath(
+                '//div[contains(text(), "A language of")]/..//a[contains(@href, "/country/")]/text()'
+            )
+            or tree.xpath('//h2[contains(., "A language of")]/a/text()')
         )
 
         if country_list:
@@ -195,19 +214,30 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
             logger.warning(f"[Reference] Could not find country for `{language_code}`.")
             ref_data["country"] = ""
     except Exception as e:
-        logger.warning(f"[Reference] Error retrieving country for `{language_code}`: {e}")
+        logger.warning(
+            f"[Reference] Error retrieving country for `{language_code}`: {e}"
+        )
         ref_data["country"] = ""
 
     # Language family
     try:
-        family_data = tree.xpath('//div[contains(@class,"field-name-language-classification-link")]//a/text()')[0]
-        ref_data["family"] = family_data.split(",")[0].strip() if family_data else "Unknown"
+        family_data = tree.xpath(
+            '//div[contains(@class,"field-name-language-classification-link")]//a/text()'
+        )[0]
+        ref_data["family"] = (
+            family_data.split(",")[0].strip() if family_data else "Unknown"
+        )
     except IndexError:
         ref_data["family"] = "Unknown"
 
     # Wikipedia link
     try:
-        wk_page = wikipedia.page(title=f"ISO 639:{language_code}", auto_suggest=False, redirect=True, preload=False)
+        wk_page = wikipedia.page(
+            title=f"ISO 639:{language_code}",
+            auto_suggest=False,
+            redirect=True,
+            preload=False,
+        )
         ref_data["link_wikipedia"] = wk_page.url
     except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
         ref_data["link_wikipedia"] = ""
@@ -244,13 +274,17 @@ def get_language_reference(language_code: str) -> dict | None:
     # Step 1: Get archived Ethnologue page URL
     archived_url = get_archived_ethnologue_page(language_code)
     if not archived_url:
-        logger.error(f"[Reference] Could not retrieve archived URL for `{language_code}`.")
+        logger.error(
+            f"[Reference] Could not retrieve archived URL for `{language_code}`."
+        )
         return None
 
     # Step 2: Fetch and parse reference data from the archived page
     reference_data = fetch_language_reference_data(archived_url, language_code)
     if not reference_data:
-        logger.error(f"[Reference] Could not retrieve reference data for `{language_code}`.")
+        logger.error(
+            f"[Reference] Could not retrieve reference data for `{language_code}`."
+        )
         return None
 
     return reference_data
@@ -280,5 +314,7 @@ if __name__ == "__main__":
             print(get_language_reference(my_input))
         elif choice == "2":
             random_selection = select_random_language()
-            logger.info(f"[Reference] Randomly selected {random_selection.name} (`{random_selection.preferred_code}`).")
+            logger.info(
+                f"[Reference] Randomly selected {random_selection.name} (`{random_selection.preferred_code}`)."
+            )
             print(get_language_reference(random_selection.language_code_3))

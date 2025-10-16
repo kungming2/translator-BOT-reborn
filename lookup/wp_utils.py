@@ -3,6 +3,7 @@
 """
 Contains functions that deal with Wikipedia access.
 """
+
 import re
 
 import wikipedia
@@ -28,7 +29,9 @@ def wikipedia_lookup(terms, language_code="en"):
     if isinstance(terms, str):
         terms = [terms]
     elif not isinstance(terms, list):
-        raise TypeError("Wikipedia lookup: 'terms' must be a string or a list of strings.")
+        raise TypeError(
+            "Wikipedia lookup: 'terms' must be a string or a list of strings."
+        )
 
     # Code for searching non-English Wikipedia, currently not needed.
     if language_code != "en":
@@ -48,21 +51,19 @@ def wikipedia_lookup(terms, language_code="en"):
                 term, auto_suggest=False, redirect=True, sentences=3
             )
         except (
-                wikipedia.exceptions.DisambiguationError,
-                wikipedia.exceptions.PageError,
+            wikipedia.exceptions.DisambiguationError,
+            wikipedia.exceptions.PageError,
         ):
             # No direct matches, try auto suggest.
             try:
                 term_summary = wikipedia.summary(term.strip(), sentences=3)
                 term_entry = wikipedia.page(term).url
             except (
-                    wikipedia.exceptions.DisambiguationError,
-                    wikipedia.exceptions.PageError,
+                wikipedia.exceptions.DisambiguationError,
+                wikipedia.exceptions.PageError,
             ):
                 # Still no dice.
-                logger.error(
-                    f">> Unable to resolve '{term}' on Wikipedia. Skipping."
-                )
+                logger.error(f">> Unable to resolve '{term}' on Wikipedia. Skipping.")
                 continue  # Exit.
 
         # Clean up the text for the entry.
@@ -92,4 +93,4 @@ def wikipedia_lookup(terms, language_code="en"):
 if "__main__" == __name__:
     while True:
         my_search = input("What would you like to search Wikipedia for? ")
-        print(wikipedia_lookup([my_search], 'en'))
+        print(wikipedia_lookup([my_search], "en"))

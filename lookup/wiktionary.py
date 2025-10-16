@@ -23,16 +23,16 @@ def parse_wiktionary(text, search_language=None):
         Returns None if the specified language is not found.
     """
     if search_language is None:
-        search_language = 'English'
+        search_language = "English"
 
     result = {
-        'word': None,
-        'etymology': None,
-        'pronunciation': None,
-        'definition': None
+        "word": None,
+        "etymology": None,
+        "pronunciation": None,
+        "definition": None,
     }
 
-    lines = text.strip().split('\n')
+    lines = text.strip().split("\n")
 
     # Find the language section
     in_target_language = False
@@ -46,12 +46,12 @@ def parse_wiktionary(text, search_language=None):
         line_stripped = line.strip()
 
         # Check for language headers (== Language ==)
-        if line_stripped.startswith('==') and line_stripped.endswith('=='):
-            level = len(line_stripped) - len(line_stripped.lstrip('='))
+        if line_stripped.startswith("==") and line_stripped.endswith("=="):
+            level = len(line_stripped) - len(line_stripped.lstrip("="))
 
             if level == 2:  # Top-level language section
                 # Extract language name
-                lang_name = line_stripped.strip('= ').strip()
+                lang_name = line_stripped.strip("= ").strip()
 
                 if lang_name.lower() == search_language.lower():
                     in_target_language = True
@@ -62,7 +62,7 @@ def parse_wiktionary(text, search_language=None):
                     in_target_language = False
 
             elif level == 3 and in_target_language:  # === Section ===
-                current_section = line_stripped.strip('= ').lower()
+                current_section = line_stripped.strip("= ").lower()
                 in_definition = False
 
             elif level == 4 and in_target_language:  # ==== Subsection ====
@@ -72,42 +72,73 @@ def parse_wiktionary(text, search_language=None):
 
         elif in_target_language:
             # Stop collecting definitions if we hit a subsection header
-            if line_stripped.startswith('====') and line_stripped.endswith('===='):
+            if line_stripped.startswith("====") and line_stripped.endswith("===="):
                 in_definition = False
 
             # Extract etymology
-            if current_section == 'etymology' or (current_section and current_section.startswith('etymology')):
-                if line_stripped and not line_stripped.startswith('==='):
+            if current_section == "etymology" or (
+                current_section and current_section.startswith("etymology")
+            ):
+                if line_stripped and not line_stripped.startswith("==="):
                     etymology_lines.append(line_stripped)
 
             # Extract pronunciation
-            elif current_section == 'pronunciation':
-                if line_stripped and not line_stripped.startswith('==='):
+            elif current_section == "pronunciation":
+                if line_stripped and not line_stripped.startswith("==="):
                     pronunciation_lines.append(line_stripped)
 
             # Extract definition (from Noun, Verb, Adjective, etc. sections)
-            elif current_section in ['noun', 'verb', 'adjective', 'adverb', 'pronoun',
-                                     'preposition', 'conjunction', 'interjection', 'article',
-                                     'romanization']:
-                if not in_definition and line_stripped and not line_stripped.startswith('===='):
+            elif current_section in [
+                "noun",
+                "verb",
+                "adjective",
+                "adverb",
+                "pronoun",
+                "preposition",
+                "conjunction",
+                "interjection",
+                "article",
+                "romanization",
+            ]:
+                if (
+                    not in_definition
+                    and line_stripped
+                    and not line_stripped.startswith("====")
+                ):
                     # Check if this looks like the word form line (e.g., "bandar (plural bandars)")
-                    if '(' in line_stripped and ')' in line_stripped:
+                    if "(" in line_stripped and ")" in line_stripped:
                         # This is likely the word form, extract the word
-                        word_match = re.match(r'^(\S+)', line_stripped)
-                        if word_match and not result['word']:
-                            result['word'] = word_match.group(1)
+                        word_match = re.match(r"^(\S+)", line_stripped)
+                        if word_match and not result["word"]:
+                            result["word"] = word_match.group(1)
                         in_definition = True
                     # Also check for simple word form without parentheses
-                    elif re.match(r'^[a-zA-Z]+$', line_stripped.split()[0] if line_stripped.split() else ''):
-                        word_match = re.match(r'^(\S+)', line_stripped)
-                        if word_match and not result['word']:
-                            result['word'] = word_match.group(1)
+                    elif re.match(
+                        r"^[a-zA-Z]+$",
+                        line_stripped.split()[0] if line_stripped.split() else "",
+                    ):
+                        word_match = re.match(r"^(\S+)", line_stripped)
+                        if word_match and not result["word"]:
+                            result["word"] = word_match.group(1)
                         in_definition = True
-                elif in_definition and line_stripped and not line_stripped.startswith('===='):
+                elif (
+                    in_definition
+                    and line_stripped
+                    and not line_stripped.startswith("====")
+                ):
                     # Stop if we hit synonym/antonym/descendant lines
-                    if line_stripped.startswith(('Synonym', 'Antonym', 'Descendant',
-                                                 'See also', 'Derived term', 'Related term',
-                                                 'Alternative form', 'Coordinate term')):
+                    if line_stripped.startswith(
+                        (
+                            "Synonym",
+                            "Antonym",
+                            "Descendant",
+                            "See also",
+                            "Derived term",
+                            "Related term",
+                            "Alternative form",
+                            "Coordinate term",
+                        )
+                    ):
                         in_definition = False
                     else:
                         definition_lines.append(line_stripped)
@@ -117,22 +148,22 @@ def parse_wiktionary(text, search_language=None):
         return None
 
     # If we didn't find the word yet, try to extract from any form line
-    if not result['word']:
+    if not result["word"]:
         for line in lines:
-            match = re.match(r'^([a-zA-Z]+)\s*\(', line.strip())
+            match = re.match(r"^([a-zA-Z]+)\s*\(", line.strip())
             if match:
-                result['word'] = match.group(1)
+                result["word"] = match.group(1)
                 break
 
     # Clean up and assign results
     if etymology_lines:
-        result['etymology'] = ' '.join(etymology_lines)
+        result["etymology"] = " ".join(etymology_lines)
 
     if pronunciation_lines:
-        result['pronunciation'] = '\n'.join(pronunciation_lines)
+        result["pronunciation"] = "\n".join(pronunciation_lines)
 
     if definition_lines:
-        result['definition'] = ' '.join(definition_lines)
+        result["definition"] = " ".join(definition_lines)
 
     return result
 
@@ -154,7 +185,7 @@ def wiktionary_search(search_term, language_name):
         "format": "json",
         "prop": "extracts",
         "explaintext": True,
-        "titles": search_term
+        "titles": search_term,
     }
 
     response = requests.get(api_url, headers=get_random_useragent(), params=params)
@@ -177,7 +208,7 @@ def wiktionary_search(search_term, language_name):
     return parsed_information
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         test_input = input("Enter a word to look up in Wiktionary: ")
         test_language = input("Enter a language to look up the previous word for: ")

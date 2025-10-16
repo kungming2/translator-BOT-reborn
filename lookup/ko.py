@@ -3,6 +3,7 @@
 """
 Contains functions that deal with Korean-language content.
 """
+
 import asyncio
 
 import krdict
@@ -11,28 +12,28 @@ from korean_romanizer.romanizer import Romanizer
 from connection import credentials_source
 
 # Set the API key to use.
-krdict.set_key(credentials_source['KRDICT_API_KEY'])
+krdict.set_key(credentials_source["KRDICT_API_KEY"])
 
 
 def translate_part_of_speech(korean_pos):
     mapping = {
-        '명사': 'noun',
-        '동사': 'verb',
-        '형용사': 'adjective',
-        '부사': 'adverb',
-        '대명사': 'pronoun',
-        '전치사': 'preposition',
-        '접속사': 'conjunction',
-        '감탄사': 'interjection',
-        '조사': 'particle',
-        '수사': 'numeral',
-        '관형사': 'determiner',
-        '의존 명사': 'dependent noun',
+        "명사": "noun",
+        "동사": "verb",
+        "형용사": "adjective",
+        "부사": "adverb",
+        "대명사": "pronoun",
+        "전치사": "preposition",
+        "접속사": "conjunction",
+        "감탄사": "interjection",
+        "조사": "particle",
+        "수사": "numeral",
+        "관형사": "determiner",
+        "의존 명사": "dependent noun",
     }
     return mapping.get(korean_pos, korean_pos)
 
 
-'''WORD LOOKUP'''
+"""WORD LOOKUP"""
 
 
 async def ko_search_raw_async(target_word):
@@ -55,10 +56,12 @@ def ko_search_raw(target_word):
     :return:
     """
     filtered_data = []
-    korean_input = krdict.search(query=target_word.strip(),
-                                 search_type=krdict.SearchType.WORD,
-                                 translation_language=krdict.TranslationLanguage.ENGLISH,
-                                 raise_api_errors=True)
+    korean_input = krdict.search(
+        query=target_word.strip(),
+        search_type=krdict.SearchType.WORD,
+        translation_language=krdict.TranslationLanguage.ENGLISH,
+        raise_api_errors=True,
+    )
 
     for entry in korean_input.data.results:
         if entry.word == target_word:
@@ -66,7 +69,7 @@ def ko_search_raw(target_word):
                 "word": entry.word,
                 "origin": entry.origin,
                 "part_of_speech": entry.part_of_speech,
-                "definitions": []
+                "definitions": [],
             }
             for definition in entry.definitions:
                 simplified_definition = {
@@ -75,10 +78,10 @@ def ko_search_raw(target_word):
                         {
                             "word": t.word,
                             "definition": t.definition,
-                            "language": t.language
+                            "language": t.language,
                         }
                         for t in definition.translations
-                    ]
+                    ],
                 }
                 simplified_entry["definitions"].append(simplified_definition)
 
@@ -103,12 +106,14 @@ def ko_word(korean_word):
     if not data:
         return None
 
-    lookup_header = f'# [{korean_word}](https://en.wiktionary.org/wiki/{korean_word}#Korean)'
+    lookup_header = (
+        f"# [{korean_word}](https://en.wiktionary.org/wiki/{korean_word}#Korean)"
+    )
 
     # Group entries by part of speech
     pos_groups = {}
     for entry in data:
-        pos = translate_part_of_speech(entry['part_of_speech']).title()
+        pos = translate_part_of_speech(entry["part_of_speech"]).title()
         if pos not in pos_groups:
             pos_groups[pos] = []
         pos_groups[pos].append(entry)
@@ -120,16 +125,16 @@ def ko_word(korean_word):
 
         definitions_list = []
         for entry in group:
-            for x in entry['definitions']:
-                for t in x.get('translations', []):
-                    if t.get('language') == '영어':
-                        definition_text = t.get('definition')
-                        origin = entry.get('origin')
+            for x in entry["definitions"]:
+                for t in x.get("translations", []):
+                    if t.get("language") == "영어":
+                        definition_text = t.get("definition")
+                        origin = entry.get("origin")
                         if origin:
                             definition_text = f"[{origin}](https://en.wiktionary.org/wiki/{origin}): {definition_text}"
                         definitions_list.append(definition_text)
 
-        definitions = '\n* '.join(definitions_list)
+        definitions = "\n* ".join(definitions_list)
         pos_section += f"**Romanization:** *{hangul_romanization}*\n\n**Meanings**:\n* {definitions}"
         entries.append(pos_section)
 
@@ -139,7 +144,7 @@ def ko_word(korean_word):
         f"[^Collins](https://www.collinsdictionary.com/dictionary/korean-english/{korean_word})"
     )
 
-    final_comment = lookup_header + ''.join(entries) + footer
+    final_comment = lookup_header + "".join(entries) + footer
 
     return final_comment
 
