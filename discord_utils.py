@@ -5,7 +5,7 @@ Handles simple functions to send one-way notifications for Discord.
 """
 import requests
 
-from config import load_settings, Paths, logger
+from config import Paths, load_settings, logger
 
 webhook_settings = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 

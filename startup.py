@@ -5,7 +5,7 @@ Initializes Ziwen's runtime state and caches key data on startup.
 """
 import time
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any, Dict
 
 from config import logger
 from connection import REDDIT, credentials_source

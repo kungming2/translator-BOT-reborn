@@ -10,12 +10,12 @@ from praw import models
 from wasabi import msg
 
 from commands.claim import parse_claim_comment
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from models.ajo import Ajo, ajo_loader
-from models.kunulo import Kunulo
 from models.instruo import comment_has_command
+from models.kunulo import Kunulo
 from title_handling import Titolo
 
 

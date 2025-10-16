@@ -8,11 +8,11 @@ watch for.
 import re
 import time
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT, REDDIT_HELPER, is_mod
 from discord_utils import send_discord_alert
 from languages import converter
-from reddit_sender import message_send, message_reply
+from reddit_sender import message_reply, message_send
 from responses import RESPONSE
 
 

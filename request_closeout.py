@@ -6,9 +6,9 @@ marked as translated or needs review, and have above a certain amount of
 comments/activity. It then messages the requester to remind them to mark
 the post as translated if their request has been properly fulfilled.
 """
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT
 from database import db
 from models.ajo import ajo_loader

@@ -3,14 +3,13 @@
 """
 Handles connections with Reddit.
 """
-import requests
-
 import praw
-from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import SoftwareName, OperatingSystem
+import requests
 from praw.exceptions import RedditAPIException
 from praw.models import Redditor
 from prawcore import exceptions
+from random_user_agent.params import OperatingSystem, SoftwareName
+from random_user_agent.user_agent import UserAgent
 
 from config import Paths, load_settings, logger
 

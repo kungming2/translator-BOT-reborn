@@ -15,9 +15,10 @@ from typing import List
 from rapidfuzz import fuzz
 
 from ai import ai_query, openai_access
-from config import Paths, logger, load_settings
+from config import Paths, load_settings, logger
 from connection import REDDIT_HELPER
-from languages import converter, country_converter, Lingvo, define_language_lists
+from languages import (Lingvo, converter, country_converter,
+                       define_language_lists)
 from responses import RESPONSE
 
 

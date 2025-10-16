@@ -5,8 +5,8 @@ Handles directing of paths as well as the logger.
 """
 import logging
 import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import yaml
 

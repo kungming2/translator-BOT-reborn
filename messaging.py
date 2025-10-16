@@ -4,20 +4,22 @@
 Handles messaging retrieval and sending functions.
 This is Reddit-native, rather than Discord.
 """
+from statistics import (action_counter, generate_language_frequency_markdown,
+                        user_statistics_loader)
+
 import praw
 from praw.exceptions import APIException
-
 from wasabi import msg
 
-from config import logger, load_settings, Paths
+from config import Paths, load_settings, logger
 from connection import REDDIT, is_valid_user
 from discord_utils import send_discord_alert
 from languages import parse_language_list
-from notifications import notifier_language_list_editor, notifier_language_list_retriever
+from notifications import (notifier_language_list_editor,
+                           notifier_language_list_retriever)
 from points import points_retriever
 from reddit_sender import message_reply, message_send
 from responses import RESPONSE
-from statistics import action_counter, generate_language_frequency_markdown, user_statistics_loader
 
 
 def notify_op_translated_post(author, permalink):
@@ -207,7 +209,7 @@ def handle_remove(message, message_author):
     if "USERNAME:" in body:
         remove_username = body.split("USERNAME:", 1)[1].strip()
     else:
-        logger.warning(f"[ZW] USERNAME: not found in message body; using full message instead.")
+        logger.warning("[ZW] USERNAME: not found in message body; using full message instead.")
         remove_username = body
 
     # Retrieve subscriptions from the database

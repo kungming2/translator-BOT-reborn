@@ -47,7 +47,7 @@ You can run any schedule manually for testing:
 import sys
 
 from config import logger
-from tasks import run_schedule, get_tasks
+from tasks import get_tasks, run_schedule
 
 
 def wenju_runner():

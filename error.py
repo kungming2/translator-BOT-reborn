@@ -3,13 +3,14 @@
 """
 Handles error logging and retrieval.
 """
-import yaml
+import os
 import time
 from datetime import datetime, timezone
-import os
 
-from connection import REDDIT
+import yaml
+
 from config import Paths, logger
+from connection import REDDIT
 
 
 def error_log_basic(entry, bot_version):

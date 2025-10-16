@@ -234,8 +234,8 @@ def search_integration(search_term):
         entry_keywords = entry['keywords']
         entry_keywords = [x.lower() for x in entry_keywords]
         if search_term in entry_keywords:
-            logger.info(f"[ZW] search_integration: Keyword found in "
-                        f"frequently requested translations.")
+            logger.info("[ZW] search_integration: Keyword found in "
+                        "frequently requested translations.")
             term_data = entry
             break
 

@@ -10,19 +10,19 @@ import time
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import combinations
+from statistics import action_counter
 
-# For semantic similarity
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 # For fuzzy matching (backup)
 from rapidfuzz import fuzz
+# For semantic similarity
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 from config import logger
-from connection import is_mod, REDDIT, search_removal_reasons
+from connection import REDDIT, is_mod, search_removal_reasons
 from reddit_sender import message_reply
 from responses import RESPONSE
-from statistics import action_counter
 
 
 class DuplicateDetector:
@@ -506,7 +506,7 @@ def test_duplicate_detection():
             author_posts = [p for p in posts if hasattr(p.author, 'name') and
                             p.author.name == author and p.id != post_id]
             if author_posts:
-                print(f"   Likely duplicate of:")
+                print("   Likely duplicate of:")
                 for orig in author_posts[:3]:  # Show up to 3 originals
                     print(f"     - {orig.title[:60]}... ({orig.id})")
 

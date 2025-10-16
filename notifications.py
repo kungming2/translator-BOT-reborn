@@ -7,24 +7,24 @@ the messaging system.
 import random
 import sqlite3
 import time
+from statistics import action_counter
 from typing import List
 
 import orjson
 from praw import exceptions
 
 from ai import fetch_image_description
-from config import logger, SETTINGS
-from connection import is_valid_user, REDDIT
+from config import SETTINGS, logger
+from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
-from languages import converter, Lingvo, language_module_settings, country_converter
-from startup import STATE
+from languages import (Lingvo, converter, country_converter,
+                       language_module_settings)
 from models.ajo import ajo_loader
 from reddit_sender import message_send
 from responses import RESPONSE
-from statistics import action_counter
+from startup import STATE
 from time_handling import time_convert_to_string
 from utility import check_url_extension
-
 
 """NOTIFICATIONS SUBSCRIPTIONS WITH DATABASE"""
 
@@ -628,7 +628,7 @@ def notifier_internal(post_type, submission):
 
     # Ensure only supported posts are acted upon.
     if post_type_search not in SETTINGS["internal_post_types"]:
-        logger.error(f"Notifier Internal: `post_type_search` is not a supported post type.")
+        logger.error(f"Notifier Internal: `{post_type_search}` is not a supported post type.")
         return []
 
     # Exit if the author's invalid.

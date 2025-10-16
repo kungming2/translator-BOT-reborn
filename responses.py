@@ -3,8 +3,9 @@
 """
 Contains functions related to formatting bot responses.
 """
-import yaml
 from types import SimpleNamespace
+
+import yaml
 
 from config import Paths
 

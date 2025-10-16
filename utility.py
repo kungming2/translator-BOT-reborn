@@ -5,14 +5,14 @@ A grab-bag of various simple utility functions.
 """
 import io
 import re
-import requests
 
 import imagehash
 import PIL
+import requests
+from PIL import Image
 from yt_dlp import YoutubeDL
 
 from config import logger
-from PIL import Image
 
 
 def check_url_extension(submission_url):

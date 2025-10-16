@@ -7,11 +7,11 @@ import traceback
 from praw import exceptions
 from wasabi import msg
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import chinese_reference_login, credentials_source
 from error import error_log_extended
 from lookup.other import lookup_zh_ja_tokenizer
-from lookup.zh import zh_word, zh_character
+from lookup.zh import zh_character, zh_word
 from reddit_sender import comment_reply
 from responses import RESPONSE
 
