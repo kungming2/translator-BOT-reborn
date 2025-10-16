@@ -12,7 +12,7 @@ import praw
 import prawcore
 from praw import exceptions, models
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT_HELPER
 from database import db
 from languages import converter

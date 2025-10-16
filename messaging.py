@@ -4,8 +4,8 @@
 Handles messaging retrieval and sending functions.
 This is Reddit-native, rather than Discord.
 """
-from statistics import (action_counter, generate_language_frequency_markdown,
-                        user_statistics_loader)
+from usage_statistics import (action_counter, generate_language_frequency_markdown,
+                              user_statistics_loader)
 
 import praw
 from praw.exceptions import APIException

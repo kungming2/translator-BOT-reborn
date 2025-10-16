@@ -15,7 +15,6 @@ from datetime import datetime
 
 from config import Paths, logger
 
-
 """SQLITE DATABASE ACCESS"""
 
 

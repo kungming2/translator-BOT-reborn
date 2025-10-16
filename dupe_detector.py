@@ -10,7 +10,7 @@ import time
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import combinations
-from statistics import action_counter
+from usage_statistics import action_counter
 
 import numpy as np
 # For fuzzy matching (backup)

@@ -7,7 +7,7 @@ the messaging system.
 import random
 import sqlite3
 import time
-from statistics import action_counter
+from usage_statistics import action_counter
 from typing import List
 
 import orjson
