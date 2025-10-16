@@ -3,6 +3,7 @@
 """
 Defines the Instruo comment structure and class, along with related functions.
 """
+
 import re
 
 from config import SETTINGS
@@ -20,7 +21,18 @@ class Instruo:
 
     instruo = Instruo.from_comment(comment)
     """
-    def __init__(self, id_comment, id_post, created_utc, author_comment, commands, languages, body=None, author_post=None):
+
+    def __init__(
+        self,
+        id_comment,
+        id_post,
+        created_utc,
+        author_comment,
+        commands,
+        languages,
+        body=None,
+        author_post=None,
+    ):
         self.id_comment = id_comment
         self.id_post = id_post
         self.created_utc = created_utc  # integer Unix timestamp
@@ -42,7 +54,7 @@ class Instruo:
             "author_post": self.author_post,
             "commands": [cmd.to_dict() for cmd in self.commands],
             "languages": [str(lang) for lang in self.languages],
-            "body": self.body
+            "body": self.body,
         }
 
     @classmethod
@@ -52,7 +64,9 @@ class Instruo:
         id_post = comment.submission.id
         created_utc = int(comment.created_utc)
         author_comment = str(comment.author) if comment.author else "[deleted]"
-        author_post = str(comment.submission.author) if comment.submission.author else "[deleted]"
+        author_post = (
+            str(comment.submission.author) if comment.submission.author else "[deleted]"
+        )
         commands = extract_commands_from_text(text)
         return cls(
             id_comment=id_comment,
@@ -62,7 +76,7 @@ class Instruo:
             author_post=author_post,
             commands=commands,
             languages=parent_languages or [],
-            body=text
+            body=text,
         )
 
 
@@ -86,15 +100,15 @@ def comment_has_command(comment):
     # Remove inline and multiline backtick content
     # This allows people to quote the commands (`!doublecheck`)
     # without triggering it.
-    text = re.sub(r'`[^`]*`', '', text)
+    text = re.sub(r"`[^`]*`", "", text)
 
     # Check commands with required arguments (e.g. !identify:lang)
-    for cmd in SETTINGS['commands_with_args']:
+    for cmd in SETTINGS["commands_with_args"]:
         if cmd in text:
             return True
 
     # Check commands with optional arguments (e.g. !translated or !translated:fr)
-    for cmd in SETTINGS['commands_optional_args']:
+    for cmd in SETTINGS["commands_optional_args"]:
         if cmd in text:
             return True
         try_colon = cmd + ":"
@@ -102,21 +116,21 @@ def comment_has_command(comment):
             return True
 
     # Check commands with no arguments
-    for cmd in SETTINGS['commands_no_args']:
+    for cmd in SETTINGS["commands_no_args"]:
         if cmd in text:
             return True
 
     return False
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     # test_instruo_on_r_translator_recent_comments()
     while True:
         # Get comment URL from user
         comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
 
         # Check for exit
-        if comment_url.lower() in ['quit', 'exit', 'q']:
+        if comment_url.lower() in ["quit", "exit", "q"]:
             break
 
         # Get comment from URL and process

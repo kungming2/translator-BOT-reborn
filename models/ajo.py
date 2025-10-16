@@ -3,6 +3,7 @@
 """
 Defines the Ajo post structure and class, along with related functions.
 """
+
 import ast
 import pprint
 from typing import List
@@ -46,7 +47,9 @@ def ajo_writer(new_ajo):
             try:
                 stored_ajo_dict = orjson.loads(row["ajo"])
             except orjson.JSONDecodeError:  # Stored in an old format.
-                logger.warning("[ZW] ajo_writer: Old Ajo format detected; trying literal_eval fallback.")
+                logger.warning(
+                    "[ZW] ajo_writer: Old Ajo format detected; trying literal_eval fallback."
+                )
                 try:
                     stored_ajo_dict = ast.literal_eval(row["ajo"])
                     if not isinstance(stored_ajo_dict, dict):
@@ -56,7 +59,8 @@ def ajo_writer(new_ajo):
                     raise e
             if new_ajo.to_dict() != stored_ajo_dict:
                 cursor.execute(
-                    "UPDATE ajo_database SET ajo = ? WHERE id = ?", (representation, ajo_id)
+                    "UPDATE ajo_database SET ajo = ? WHERE id = ?",
+                    (representation, ajo_id),
                 )
                 conn.commit()
                 logger.info("[ZW] ajo_writer: Ajo exists, data updated.")
@@ -65,7 +69,7 @@ def ajo_writer(new_ajo):
         else:
             cursor.execute(
                 "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
-                (ajo_id, created_time, representation)
+                (ajo_id, created_time, representation),
             )
             conn.commit()
             logger.info("[ZW] ajo_writer: New Ajo not found in the database.")
@@ -100,10 +104,14 @@ def ajo_loader(ajo_id):
 
         # Normalize language name fields to lists of Lingvo objects
         if "original_source_language_name" in data:
-            data["original_source_language_name"] = _normalize_lang_field(data["original_source_language_name"])
+            data["original_source_language_name"] = _normalize_lang_field(
+                data["original_source_language_name"]
+            )
 
         if "original_target_language_name" in data:
-            data["original_target_language_name"] = _normalize_lang_field(data["original_target_language_name"])
+            data["original_target_language_name"] = _normalize_lang_field(
+                data["original_target_language_name"]
+            )
 
         # Legacy compatibility patch
         if "output_oflair_css" in data and "output_post_flair_css" not in data:
@@ -310,7 +318,9 @@ class Ajo:
         ajo = cls()
 
         # Basic info
-        ajo.title_original = titolo.title_original or (submission.title if submission else None)
+        ajo.title_original = titolo.title_original or (
+            submission.title if submission else None
+        )
         ajo.title = titolo.title_actual
         ajo.direction = titolo.direction
 
@@ -329,7 +339,9 @@ class Ajo:
             if len(titolo.target) > 1:
                 ajo.language_history = [[lang.preferred_code for lang in titolo.target]]
                 # Create status dictionary with 'untranslated' for each language code
-                ajo.status = {lang.preferred_code: 'untranslated' for lang in titolo.target}
+                ajo.status = {
+                    lang.preferred_code: "untranslated" for lang in titolo.target
+                }
             else:
                 # Single language, keep as flat list
                 ajo.language_history = [titolo.final_code]
@@ -341,7 +353,7 @@ class Ajo:
         # Set is_defined_multiple if there are multiple target languages
         if titolo.target and len(titolo.target) > 1:
             ajo.is_defined_multiple = True
-            ajo.type = 'multiple'
+            ajo.type = "multiple"
 
         # Populate fields from Reddit submission if available
         if submission:
@@ -394,14 +406,18 @@ class Ajo:
             "status": self.status or "untranslated",
             "output_post_flair_css": self.output_post_flair_css,
             "output_post_flair_text": self.output_post_flair_text,
-            "original_source_language_name": lingvo_list_to_names(self.original_source_language_name),
-            "original_target_language_name": lingvo_list_to_names(self.original_target_language_name),
+            "original_source_language_name": lingvo_list_to_names(
+                self.original_source_language_name
+            ),
+            "original_target_language_name": lingvo_list_to_names(
+                self.original_target_language_name
+            ),
             "is_identified": bool(self.is_identified),
             "is_long": bool(self.is_long),
             "image_hash": self.image_hash,
             "type": self.type or "single",
             "is_defined_multiple": bool(self.is_defined_multiple),
-            "closed_out": bool(self.closed_out)
+            "closed_out": bool(self.closed_out),
         }
 
     @classmethod
@@ -409,7 +425,11 @@ class Ajo:
         ajo = cls()
 
         # Determine preferred_code early
-        preferred_code = data.get("preferred_code") or data.get("language_code_1") or data.get("language_code_3")
+        preferred_code = (
+            data.get("preferred_code")
+            or data.get("language_code_1")
+            or data.get("language_code_3")
+        )
         ajo.preferred_code = preferred_code
 
         # Initialize Lingvo before setting other fields to avoid property setter issues
@@ -419,8 +439,19 @@ class Ajo:
         read_only_properties = {"is_script", "script_code", "script_name"}
 
         for key, value in data.items():
-            if key in {"_lingvo", "language_code_1", "language_code_3", "language_name",
-                       "country_code", "is_supported", "preferred_code"} | read_only_properties:
+            if (
+                key
+                in {
+                    "_lingvo",
+                    "language_code_1",
+                    "language_code_3",
+                    "language_name",
+                    "country_code",
+                    "is_supported",
+                    "preferred_code",
+                }
+                | read_only_properties
+            ):
                 continue
             if hasattr(ajo, key):
                 setattr(ajo, key, value)
@@ -434,8 +465,12 @@ class Ajo:
         ajo.closed_out = data.get("closed_out", False)
 
         # Normalize language name fields
-        ajo.original_source_language_name = _normalize_lang_field(data.get("original_source_language_name"))
-        ajo.original_target_language_name = _normalize_lang_field(data.get("original_target_language_name"))
+        ajo.original_source_language_name = _normalize_lang_field(
+            data.get("original_source_language_name")
+        )
+        ajo.original_target_language_name = _normalize_lang_field(
+            data.get("original_target_language_name")
+        )
 
         return ajo
 
@@ -463,13 +498,13 @@ class Ajo:
                     lang_codes.append(item.preferred_code)
 
             # Set up as a defined multiple
-            self.preferred_code = 'multiple'
+            self.preferred_code = "multiple"
             self.initialize_lingvo()
-            self.type = 'multiple'
+            self.type = "multiple"
             self.is_defined_multiple = True
 
             # Initialize status as dictionary with all languages set to 'untranslated'
-            self.status = {code: 'untranslated' for code in lang_codes}
+            self.status = {code: "untranslated" for code in lang_codes}
 
             # Append the list of codes to language_history
             self.language_history.append(lang_codes)
@@ -527,25 +562,33 @@ class Ajo:
         """
         if self.is_defined_multiple:
             raise ValueError(
-                "Cannot use set_status() on a defined multiple post. Use set_defined_multiple_status() instead.")
+                "Cannot use set_status() on a defined multiple post. Use set_defined_multiple_status() instead."
+            )
 
         allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
         if value not in allowed:
             raise ValueError(f"Status must be one of {allowed}.")
 
         # Check if current status is 'translated' - cannot change from this state
-        if hasattr(self, 'status') and self.status == 'translated':
-            raise ValueError("Cannot change status once marked as 'translated'. Status is final.")
+        if hasattr(self, "status") and self.status == "translated":
+            raise ValueError(
+                "Cannot change status once marked as 'translated'. Status is final."
+            )
 
         # Check if current status is 'doublecheck' - can only transition to 'translated'
-        if hasattr(self, 'status') and self.status == 'doublecheck' and value != 'translated':
+        if (
+            hasattr(self, "status")
+            and self.status == "doublecheck"
+            and value != "translated"
+        ):
             raise ValueError(
-                "Once marked as 'doublecheck', status can only be changed to 'translated'.")
+                "Once marked as 'doublecheck', status can only be changed to 'translated'."
+            )
 
         self.status = value
 
         # Automatically set closed_out to True when status is 'translated' or 'doublecheck'
-        if value in {'translated', 'doublecheck'}:
+        if value in {"translated", "doublecheck"}:
             self.closed_out = True
 
     def set_defined_multiple_status(self, language_code: str, status_value: str):
@@ -562,7 +605,8 @@ class Ajo:
         """
         if not self.is_defined_multiple:
             raise ValueError(
-                "Cannot use set_defined_multiple_status() on a non-defined multiple post. Use set_status() instead.")
+                "Cannot use set_defined_multiple_status() on a non-defined multiple post. Use set_status() instead."
+            )
 
         allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
         if status_value not in allowed:
@@ -614,7 +658,7 @@ class Ajo:
         :param moment: The Unix UTC time when the action was taken (integer).
         """
 
-        if not hasattr(self, 'time_delta') or self.time_delta is None:
+        if not hasattr(self, "time_delta") or self.time_delta is None:
             self.time_delta = {}
 
         # Record the moment for this status only if it hasn't been recorded before.
@@ -636,7 +680,10 @@ class Ajo:
         :param translator_name: The name of the individual who made the translation.
         """
 
-        if not hasattr(self, 'recorded_translators') or self.recorded_translators is None:
+        if (
+            not hasattr(self, "recorded_translators")
+            or self.recorded_translators is None
+        ):
             self.recorded_translators = []
 
         if translator_name not in self.recorded_translators:
@@ -651,7 +698,7 @@ class Ajo:
         :param notified_list: List of usernames who have been contacted regarding the post.
         """
 
-        if not hasattr(self, 'notified') or self.notified is None:
+        if not hasattr(self, "notified") or self.notified is None:
             self.notified = []
 
         for name in notified_list:
@@ -744,7 +791,14 @@ def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
         used_code = lingvo_obj.language_code_1 or lang_code
 
         # Find the symbol corresponding to the status in the legend, default to empty string
-        symbol = next((sym for sym, val in SETTINGS['defined_multiple_legend'].items() if val == status), "")
+        symbol = next(
+            (
+                sym
+                for sym, val in SETTINGS["defined_multiple_legend"].items()
+                if val == status
+            ),
+            "",
+        )
 
         # Format language code + symbol, e.g. "DE✔"
         formatted_entries.append(f"{used_code.upper()}{symbol}")
@@ -760,7 +814,8 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     and update the Reddit submission flair.
     """
     from startup import STATE
-    testing_mode = SETTINGS['testing_mode']
+
+    testing_mode = SETTINGS["testing_mode"]
     post_templates = STATE.post_templates
     submission = REDDIT.submission(id=ajo.id)
 
@@ -770,8 +825,12 @@ def determine_flair_and_update(ajo: Ajo) -> None:
 
     unq_types = {"Unknown", "Generic"}
     language_name = ajo.language_name or ""
-    language_code_1 = ajo.language_code_1 if isinstance(ajo.language_code_1, str) else None
-    language_code_3 = ajo.language_code_3 if isinstance(ajo.language_code_3, str) else None
+    language_code_1 = (
+        ajo.language_code_1 if isinstance(ajo.language_code_1, str) else None
+    )
+    language_code_3 = (
+        ajo.language_code_3 if isinstance(ajo.language_code_3, str) else None
+    )
 
     # Helper to set code_tag and css for a given code and css
     def set_code_and_css(code, css):
@@ -807,7 +866,7 @@ def determine_flair_and_update(ajo: Ajo) -> None:
         else:
             output_flair_css = "multiple"
 
-            if not hasattr(ajo, 'status'):
+            if not hasattr(ajo, "status"):
                 ajo.status = {}
             if isinstance(ajo.status, dict):
                 code_tag = ajo_defined_multiple_flair_former(ajo.status)
@@ -818,7 +877,7 @@ def determine_flair_and_update(ajo: Ajo) -> None:
             "translated": ("translated", f"Translated {code_tag}"),
             "doublecheck": ("doublecheck", f"Needs Review {code_tag}"),
             "inprogress": ("inprogress", f"In Progress {code_tag}"),
-            "missing": ("missing", f"Missing Assets {code_tag}")
+            "missing": ("missing", f"Missing Assets {code_tag}"),
         }
         if isinstance(ajo.status, str) and ajo.status in status_map:
             output_flair_css, output_flair_text = status_map[ajo.status]
@@ -846,9 +905,13 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     # Update flair on Reddit if template exists
     if output_flair_css in post_templates:
         template_id = post_templates[output_flair_css]
-        logger.debug(f"[ZW] Update Reddit: Template for CSS `{output_flair_css}` is `{template_id}`.")
+        logger.debug(
+            f"[ZW] Update Reddit: Template for CSS `{output_flair_css}` is `{template_id}`."
+        )
         if not testing_mode:  # Regular mode.
-            submission.flair.select(flair_template_id=template_id, text=output_flair_text)
+            submission.flair.select(
+                flair_template_id=template_id, text=output_flair_text
+            )
         else:
             log_testing_mode(
                 output_text=output_flair_text,
@@ -857,11 +920,13 @@ def determine_flair_and_update(ajo: Ajo) -> None:
                     "Submission ID": ajo.id,
                     "Flair CSS": output_flair_css,
                     "Flair Template ID": template_id,
-                    "Submission Title": getattr(ajo, 'title_original', 'N/A'),
+                    "Submission Title": getattr(ajo, "title_original", "N/A"),
                     "Post Type": ajo.type,
-                }
+                },
             )
-        logger.info(f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` and text `{output_flair_text}`.")
+        logger.info(
+            f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` and text `{output_flair_text}`."
+        )
 
     # Sync flair output back to Ajo instance
     ajo.output_flair_css = output_flair_css
@@ -898,7 +963,7 @@ def _convert_to_dict(input_string):
     # Try parsing as JSON using orjson
     try:
         # orjson.loads expects bytes, so encode the string
-        result = orjson.loads(input_string.encode('utf-8'))
+        result = orjson.loads(input_string.encode("utf-8"))
         if isinstance(result, dict):
             return result
     except orjson.JSONDecodeError:
@@ -920,7 +985,6 @@ def show_menu():
 
 
 if __name__ == "__main__":
-
     while True:
         show_menu()
         choice = input("Enter your choice (1-3): ")
@@ -945,12 +1009,13 @@ if __name__ == "__main__":
             pprint.pprint(vars(post_ajo))
 
         elif choice == "2":
-            for submission_new in REDDIT_HELPER.subreddit('translator').new(limit=3):
+            for submission_new in REDDIT_HELPER.subreddit("translator").new(limit=3):
                 print(f"Title: {submission_new.title}")
-                ajo_new = Ajo.from_titolo(Titolo.process_title(submission_new),
-                                          submission_new)
+                ajo_new = Ajo.from_titolo(
+                    Titolo.process_title(submission_new), submission_new
+                )
                 pprint.pprint(vars(ajo_new))
-                print('------------------')
+                print("------------------")
 
         elif choice == "3":
             test_dict = input("Paste an Ajo as a Python dictionary or JSON: ")

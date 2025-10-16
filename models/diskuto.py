@@ -5,6 +5,7 @@ This Diskuto class covers posts that are *not* requests - e.g.
 Meta or Community posts. This is intended to make creating more granular
 types easier in the future.
 """
+
 import re
 
 import orjson
@@ -15,8 +16,14 @@ from database import db
 
 
 class Diskuto:
-    def __init__(self, title_original=None, post_type=None,
-                 id=None, created_utc=None, processed=False):
+    def __init__(
+        self,
+        title_original=None,
+        post_type=None,
+        id=None,
+        created_utc=None,
+        processed=False,
+    ):
         self.title_original = title_original
         self.post_type = post_type
         self.id = id
@@ -24,8 +31,10 @@ class Diskuto:
         self.processed = processed
 
     def __repr__(self):
-        return (f"<Diskuto: id={self.id}, type={self.post_type}, "
-                f"processed={self.processed} | {self.title_original}>")
+        return (
+            f"<Diskuto: id={self.id}, type={self.post_type}, "
+            f"processed={self.processed} | {self.title_original}>"
+        )
 
     def to_dict(self):
         """
@@ -39,17 +48,19 @@ class Diskuto:
             "created_utc": self.created_utc,
             "title_original": self.title_original,
             "post_type": self.post_type,
-            "processed": self.processed
+            "processed": self.processed,
         }
 
     def __str__(self):
-        return (f"Diskuto(\n"
-                f"  id='{self.id}',\n"
-                f"  created_utc={self.created_utc},\n"
-                f"  title_original='{self.title_original}',\n"
-                f"  post_type='{self.post_type}',\n"
-                f"  processed={self.processed}\n"
-                f")")
+        return (
+            f"Diskuto(\n"
+            f"  id='{self.id}',\n"
+            f"  created_utc={self.created_utc},\n"
+            f"  title_original='{self.title_original}',\n"
+            f"  post_type='{self.post_type}',\n"
+            f"  processed={self.processed}\n"
+            f")"
+        )
 
     @classmethod
     def process_post(cls, praw_submission):
@@ -73,7 +84,7 @@ class Diskuto:
             post_type=post_type,
             id=praw_submission.id,
             created_utc=int(praw_submission.created_utc),
-            processed=False
+            processed=False,
         )
 
     def toggle_processed(self):
@@ -130,7 +141,7 @@ def diskuto_writer(diskuto_obj):
         if existing_content != content_json:
             cursor.execute(
                 "UPDATE internal_posts SET created_utc = ?, content = ? WHERE id = ?",
-                (created_time, content_json, post_id)
+                (created_time, content_json, post_id),
             )
             conn.commit()
             logger.info(f"[Diskuto Writer] Diskuto {post_id} exists, data updated.")
@@ -139,7 +150,7 @@ def diskuto_writer(diskuto_obj):
     else:
         cursor.execute(
             "INSERT OR REPLACE INTO internal_posts (id, created_utc, content) VALUES (?, ?, ?)",
-            (post_id, created_time, content_json)
+            (post_id, created_time, content_json),
         )
         conn.commit()
         logger.info(f"[Diskuto Writer] New Diskuto {post_id} written to database.")
@@ -152,7 +163,9 @@ def diskuto_loader(post_id):
     :param post_id: The ID of the Diskuto to load
     :return: Diskuto object if found, else None
     """
-    result = db.fetch_main("SELECT content FROM internal_posts WHERE id = ?", (post_id,))
+    result = db.fetch_main(
+        "SELECT content FROM internal_posts WHERE id = ?", (post_id,)
+    )
 
     if result is None:
         logger.debug(f"[Diskuto Loader] No Diskuto found for id {post_id}.")
@@ -161,7 +174,9 @@ def diskuto_loader(post_id):
     try:
         diskuto_dict = orjson.loads(result["content"])
     except orjson.JSONDecodeError:
-        logger.error(f"[Diskuto Loader] Failed to decode Diskuto JSON for id {post_id}.")
+        logger.error(
+            f"[Diskuto Loader] Failed to decode Diskuto JSON for id {post_id}."
+        )
         return None
 
     # Rebuild Diskuto object
@@ -170,7 +185,7 @@ def diskuto_loader(post_id):
         post_type=diskuto_dict.get("post_type"),
         id=diskuto_dict.get("id"),
         created_utc=diskuto_dict.get("created_utc"),
-        processed=diskuto_dict.get("processed", False)
+        processed=diskuto_dict.get("processed", False),
     )
 
 

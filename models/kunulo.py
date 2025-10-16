@@ -10,6 +10,7 @@ comments, like: [](#tag)
 This is a companion to the Ajo class, as it tells the bot quickly what
 actions that are public-facing can be done.
 """
+
 import pprint
 import re
 
@@ -30,6 +31,7 @@ class Kunulo:
     Example output:
     <Kunulo: ({'comment_unknown': [('nijg7y3', None)]}) | OP Thanks: False>
     """
+
     anchor_pattern = re.compile(r"\[]\(#([a-zA-Z0-9_]+)\)")
 
     def __init__(self, data=None, op_thanks=False):
@@ -52,13 +54,13 @@ class Kunulo:
                 tag: [
                     {
                         "comment_id": self._normalize_entry(entry)[0],
-                        "associated_data": self._normalize_entry(entry)[1]
+                        "associated_data": self._normalize_entry(entry)[1],
                     }
                     for entry in entries
                 ]
                 for tag, entries in self._data.items()
             },
-            "op_thanks": self._op_thanks
+            "op_thanks": self._op_thanks,
         }
 
     @staticmethod
@@ -96,7 +98,7 @@ class Kunulo:
         cjk_chars = []
         # Pattern to match: # [characters (optional)](url)
         # Captures text between [ and either ( or ]
-        header_pattern = re.compile(r'^#\s+\[([^](\[]+?)(?:\s*\(|])', re.MULTILINE)
+        header_pattern = re.compile(r"^#\s+\[([^](\[]+?)(?:\s*\(|])", re.MULTILINE)
 
         for match in header_pattern.finditer(comment_body):
             char = match.group(1).strip()
@@ -123,7 +125,7 @@ class Kunulo:
         terms = []
         # Pattern to match: **[term](url)** or **[term]
         # Captures text between [ and ]
-        wiki_pattern = re.compile(r'\*\*\[([^]]+)]')
+        wiki_pattern = re.compile(r"\*\*\[([^]]+)]")
 
         for match in wiki_pattern.finditer(comment_body):
             term = match.group(1).strip()
@@ -154,8 +156,8 @@ class Kunulo:
         Returns:
             Kunulo: Instance populated with comment data from the submission
         """
-        thanks_keywords = SETTINGS['thanks_keywords']
-        thanks_negation_keywords = SETTINGS['thanks_negation_keywords']
+        thanks_keywords = SETTINGS["thanks_keywords"]
+        thanks_negation_keywords = SETTINGS["thanks_negation_keywords"]
         instance = cls()
         op_thanks = False
 
@@ -167,13 +169,13 @@ class Kunulo:
             comment_body = comment.body.lower()  # for easier matching
 
             # Gather bot's anchor tags
-            if comment_author == 'translator-BOT':
+            if comment_author == "translator-BOT":
                 for tag in cls.anchor_pattern.findall(comment.body):
                     # Extract associated data based on tag type
                     associated_data = None
-                    if tag == 'comment_cjk':
+                    if tag == "comment_cjk":
                         associated_data = cls._extract_cjk_characters(comment.body)
-                    elif tag == 'comment_wikipedia':
+                    elif tag == "comment_wikipedia":
                         associated_data = cls._extract_wikipedia_terms(comment.body)
                     instance._add_entry(tag, comment.id, associated_data)
 
@@ -181,7 +183,9 @@ class Kunulo:
             # Don't count as thanks if negation keywords are present
             if not op_thanks and comment_author == op_author:
                 has_thanks = any(kw in comment_body for kw in thanks_keywords)
-                has_negation = any(kw in comment_body for kw in thanks_negation_keywords)
+                has_negation = any(
+                    kw in comment_body for kw in thanks_negation_keywords
+                )
                 if has_thanks and not has_negation:
                     op_thanks = True
 
@@ -194,7 +198,7 @@ class Kunulo:
         Allow attribute-style access to tags.
         Returns list of (comment_id, data) tuples for backward compatibility.
         """
-        if tag == 'op_thanks':
+        if tag == "op_thanks":
             return self._op_thanks
         if tag in self._data:
             return self._data[tag]
@@ -289,7 +293,9 @@ class Kunulo:
                 comment = self._submission.reddit.comment(comment_id)
                 comment.delete()
                 deleted_count += 1
-                logger.info(f"[ZW] Kunulo: Deleted comment `{comment_id}` associated with {tag}.")
+                logger.info(
+                    f"[ZW] Kunulo: Deleted comment `{comment_id}` associated with {tag}."
+                )
             except Exception as e:
                 # Log the error but continue trying to delete other comments
                 print(f"Warning: Failed to delete comment {comment_id}: {e}")
@@ -319,7 +325,7 @@ def get_submission_from_comment(comment_reference):
     # Get comment object if input is an ID string
     if isinstance(comment_reference, str):
         comment = REDDIT_HELPER.comment(id=comment_reference)
-    elif hasattr(comment_reference, 'link_id'):  # Check if it's a Comment-like object
+    elif hasattr(comment_reference, "link_id"):  # Check if it's a Comment-like object
         comment = comment_reference
     else:
         raise ValueError("Input must be comment ID or Comment object")
