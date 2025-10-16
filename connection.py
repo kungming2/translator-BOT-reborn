@@ -3,6 +3,7 @@
 """
 Handles connections with Reddit.
 """
+
 import praw
 import requests
 from praw.exceptions import RedditAPIException
@@ -15,39 +16,36 @@ from config import Paths, load_settings, logger
 
 
 def reddit_login(credentials):
-
     reddit = praw.Reddit(
-        client_id=credentials['ZIWEN_APP_ID'],
-        client_secret=credentials['ZIWEN_APP_SECRET'],
-        username=credentials['USERNAME'],
-        password=credentials['PASSWORD'],
-        user_agent='An assistant for r/translator'
+        client_id=credentials["ZIWEN_APP_ID"],
+        client_secret=credentials["ZIWEN_APP_SECRET"],
+        username=credentials["USERNAME"],
+        password=credentials["PASSWORD"],
+        user_agent="An assistant for r/translator",
     )
 
     return reddit
 
 
 def reddit_helper_login(credentials):
-
     reddit = praw.Reddit(
-        client_id=credentials['HUIBAN_APP_ID'],
-        client_secret=credentials['HUIBAN_APP_SECRET'],
-        username=credentials['HUIBAN_USERNAME'],
-        password=credentials['HUIBAN_PASSWORD'],
-        user_agent='Another assistant for r/translator'
+        client_id=credentials["HUIBAN_APP_ID"],
+        client_secret=credentials["HUIBAN_APP_SECRET"],
+        username=credentials["HUIBAN_USERNAME"],
+        password=credentials["HUIBAN_PASSWORD"],
+        user_agent="Another assistant for r/translator",
     )
 
     return reddit
 
 
 def chinese_reference_login(credentials):
-
     reddit = praw.Reddit(
-        client_id=credentials['CHINESE_APP_ID'],
-        client_secret=credentials['CHINESE_APP_SECRET'],
-        username=credentials['CHINESE_USERNAME'],
-        password=credentials['CHINESE_PASSWORD'],
-        user_agent='Regular tasks on r/ChineseLanguage'
+        client_id=credentials["CHINESE_APP_ID"],
+        client_secret=credentials["CHINESE_APP_SECRET"],
+        username=credentials["CHINESE_USERNAME"],
+        password=credentials["CHINESE_PASSWORD"],
+        user_agent="Regular tasks on r/ChineseLanguage",
     )
 
     return reddit
@@ -92,19 +90,19 @@ def get_random_useragent():
     software_names = [SoftwareName.CHROME.value]
     operating_systems = [OperatingSystem.WINDOWS.value, OperatingSystem.LINUX.value]
 
-    user_agent_rotator = UserAgent(software_names=software_names,
-                                   operating_systems=operating_systems,
-                                   limit=1)
+    user_agent_rotator = UserAgent(
+        software_names=software_names, operating_systems=operating_systems, limit=1
+    )
 
     # Get Random User Agent String.
     user_agent = user_agent_rotator.get_random_user_agent()
 
     return {
-        'User-Agent': user_agent,
-        'Accept': (
+        "User-Agent": user_agent,
+        "Accept": (
             "text/html,application/json,application/xhtml+xml,"
             "application/xml;q=0.9,image/webp,*/*;q=0.8"
-        )
+        ),
     }
 
 
@@ -122,7 +120,9 @@ def is_mod(user) -> bool:
     else:
         raise TypeError("`user` must be a string or Redditor object")
 
-    return username.lower() in (mod.name.lower() for mod in REDDIT.subreddit("translator").moderator())
+    return username.lower() in (
+        mod.name.lower() for mod in REDDIT.subreddit("translator").moderator()
+    )
 
 
 def is_valid_user(username):
@@ -170,7 +170,7 @@ def widget_update(widget_id, new_text):
                     break
 
         if active_widget is None:
-            logger.info(f'Widget with ID {widget_id} not found.')
+            logger.info(f"Widget with ID {widget_id} not found.")
             return False
 
         # Update the widget
@@ -179,11 +179,11 @@ def widget_update(widget_id, new_text):
             logger.error(f"Successfully updated widget {widget_id}.")
             return True
         except RedditAPIException as e:
-            logger.error(f'Error updating widget {widget_id}: {e}')
+            logger.error(f"Error updating widget {widget_id}: {e}")
             return False
 
     except Exception as e:
-        logger.error(f'Unexpected error in widget_update: {e}')
+        logger.error(f"Unexpected error in widget_update: {e}")
         return False
 
 
@@ -196,7 +196,7 @@ def _fetch_removal_reasons():
 
     reasons = [
         (removal_reason.title, removal_reason.id, removal_reason.message)
-        for removal_reason in REDDIT.subreddit('translator').mod.removal_reasons
+        for removal_reason in REDDIT.subreddit("translator").mod.removal_reasons
     ]
 
     if reasons:
@@ -223,10 +223,10 @@ def search_removal_reasons(prompt):
     return None
 
 
-credentials_source = load_settings(Paths.AUTH['CREDENTIALS'])
+credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
 REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
 
 if __name__ == "__main__":
     print(_fetch_removal_reasons())
-    print(is_mod(REDDIT.redditor('kungming2')))
+    print(is_mod(REDDIT.redditor("kungming2")))

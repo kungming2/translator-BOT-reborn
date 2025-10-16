@@ -3,12 +3,13 @@
 """
 Handles interfacing for AI queries.
 """
+
 from openai import OpenAI  # Used for both DeepSeek and OpenAI
 
 from config import Paths, load_settings, logger
 from responses import RESPONSE
 
-access_credentials = load_settings(Paths.AUTH['CREDENTIALS'])
+access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
 
 
 def deepseek_access():
@@ -16,8 +17,9 @@ def deepseek_access():
     Function to authenticate with Deepseek.
     """
 
-    deepseek_client = OpenAI(api_key=access_credentials['DEEPSEEK_KEY'],
-                             base_url="https://api.deepseek.com")
+    deepseek_client = OpenAI(
+        api_key=access_credentials["DEEPSEEK_KEY"], base_url="https://api.deepseek.com"
+    )
 
     return deepseek_client
 
@@ -27,7 +29,7 @@ def openai_access():
     Function to authenticate with OpenAI.
     """
 
-    openai_client = OpenAI(api_key=access_credentials['OPENAI_KEY'])
+    openai_client = OpenAI(api_key=access_credentials["OPENAI_KEY"])
 
     return openai_client
 
@@ -45,7 +47,7 @@ def ai_query(service, client_object, behavior, query, image_url=None):
     """
 
     if service == "deepseek":
-        ai_model = access_credentials['DEEPSEEK_MODEL']
+        ai_model = access_credentials["DEEPSEEK_MODEL"]
 
         # DeepSeek does not support image input, so ignore image_url
         messages = [
@@ -54,13 +56,13 @@ def ai_query(service, client_object, behavior, query, image_url=None):
         ]
 
     elif service == "openai":
-        ai_model = access_credentials['OPENAI_MODEL']
+        ai_model = access_credentials["OPENAI_MODEL"]
 
         # Construct multimodal message if image is present
         if image_url:
             user_content = [
                 {"type": "text", "text": query},
-                {"type": "image_url", "image_url": {"url": image_url}}
+                {"type": "image_url", "image_url": {"url": image_url}},
             ]
             logger.debug("Image attached to input.")
         else:
@@ -75,9 +77,7 @@ def ai_query(service, client_object, behavior, query, image_url=None):
         raise ValueError("Service must be either 'deepseek' or 'openai'.")
 
     ai_response = client_object.chat.completions.create(
-        model=ai_model,
-        messages=messages,
-        stream=False
+        model=ai_model, messages=messages, stream=False
     )
     response_data = ai_response.choices[0].message.content
 
@@ -100,8 +100,10 @@ def fetch_image_description(image_url, nsfw_flag=False):
     """
     query = RESPONSE.IMAGE_DESCRIPTION_QUERY
     if nsfw_flag:
-        reply = ("Out of an abundance of caution, a description will "
-                 "not be provided for this NSFW image.")
+        reply = (
+            "Out of an abundance of caution, a description will "
+            "not be provided for this NSFW image."
+        )
         return reply
 
     # Define behavior/system instructions
@@ -112,9 +114,13 @@ def fetch_image_description(image_url, nsfw_flag=False):
 
     # Send to AI (needs to use OpenAI for image assessment)
     logger.debug("Fetching image description.")
-    description = ai_query(service='openai', client_object=openai_access(),
-                           behavior=behavior, query=query,
-                           image_url=image_url)
+    description = ai_query(
+        service="openai",
+        client_object=openai_access(),
+        behavior=behavior,
+        query=query,
+        image_url=image_url,
+    )
 
     return description
 
