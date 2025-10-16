@@ -422,8 +422,8 @@ def archive_identified_saved():
             logger.info(f"[WJ] {page_name} page archived.")
 
     # Process both pages
-    archive_page(r.wiki["identified"], Paths.LOGS["ALL_IDENTIFIED"], "Identified")
-    archive_page(r.wiki["saved"], Paths.LOGS["ALL_SAVED"], "Saved")
+    archive_page(r.wiki["identified"], Paths.ARCHIVAL["ALL_IDENTIFIED"], "Identified")
+    archive_page(r.wiki["saved"], Paths.ARCHIVAL["ALL_SAVED"], "Saved")
 
     return
 

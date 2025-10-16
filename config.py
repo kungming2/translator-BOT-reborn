@@ -85,9 +85,14 @@ class Paths:
 
     # Wenyuan output files
     WENYUAN = {
-        "STATISTICS": os.path.join(DATA_DIR, "wy_statistics_output.md"),
-        "TITLE_LOG": os.path.join(DATA_DIR, "wy_title_test_output.md"),
-        "WEEKLY_CHALLENGE": os.path.join(DATA_DIR, "wy_weekly_challenge.md"),
+        "MONTHLY_STATISTICS": os.path.join(
+            DATA_DIR, "Wenyuan", "monthly_statistics_output.md"
+        ),
+        "WEEKLY_CHALLENGE": os.path.join(DATA_DIR, "Wenyuan", "weekly_challenge.md"),
+    }
+
+    # Archival output files
+    ARCHIVAL = {
         "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
         "ALL_SAVED": os.path.join(DATA_DIR, "Archival", "all_saved.md"),
     }
