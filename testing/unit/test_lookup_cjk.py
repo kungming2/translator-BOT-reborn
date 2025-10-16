@@ -5,9 +5,9 @@ Test suite for other.py module.
 Tests tokenization, text matching, and language detection functions.
 """
 import unittest
-from lookup.other import (
-    lookup_zh_ja_tokenizer, lookup_ko_tokenizer, lookup_matcher
-)
+
+from lookup.other import (lookup_ko_tokenizer, lookup_matcher,
+                          lookup_zh_ja_tokenizer)
 
 
 class TestZhJaTokenizer(unittest.TestCase):

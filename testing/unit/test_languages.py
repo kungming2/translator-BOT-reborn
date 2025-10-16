@@ -5,10 +5,10 @@ Test suite for languages.py module.
 Tests Lingvo class, converter functions, and language utilities.
 """
 import unittest
-from languages import (
-    Lingvo, converter, parse_language_list, country_converter,
-    normalize, define_language_lists, get_lingvos
-)
+
+from languages import (Lingvo, converter, country_converter,
+                       define_language_lists, get_lingvos, normalize,
+                       parse_language_list)
 
 
 class TestLingvoClass(unittest.TestCase):

@@ -7,12 +7,10 @@ Tests the Ajo class, serialization, state management, and related functions.
 import unittest
 from unittest.mock import MagicMock
 
-# noinspection PyProtectedMember
-from models.ajo import (
-    Ajo, parse_ajo_data, _normalize_lang_field,
-    ajo_defined_multiple_flair_former, _convert_to_dict
-)
 from languages import Lingvo
+# noinspection PyProtectedMember
+from models.ajo import (Ajo, _convert_to_dict, _normalize_lang_field,
+                        ajo_defined_multiple_flair_former, parse_ajo_data)
 
 
 class TestAjoInitialization(unittest.TestCase):
