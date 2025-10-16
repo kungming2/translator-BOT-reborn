@@ -4,12 +4,12 @@
 Defines the Ajo post structure and class, along with related functions.
 """
 import ast
+import pprint
 from typing import List
 
 import orjson
-import pprint
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from languages import Lingvo, converter

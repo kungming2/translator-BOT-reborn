@@ -10,9 +10,8 @@ comments, like: [](#tag)
 This is a companion to the Ajo class, as it tells the bot quickly what
 actions that are public-facing can be done.
 """
-import re
-
 import pprint
+import re
 
 from config import SETTINGS, logger
 from connection import REDDIT_HELPER

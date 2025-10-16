@@ -6,7 +6,6 @@ Defines the Instruo comment structure and class, along with related functions.
 import re
 
 from config import SETTINGS
-
 from connection import REDDIT_HELPER
 from models.komando import extract_commands_from_text
 
