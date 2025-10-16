@@ -10,7 +10,7 @@ import wikipedia
 
 from config import logger
 from languages import converter
-from statistics import action_counter
+from usage_statistics import action_counter
 
 """WIKIPEDIA DETECTOR (COMMENTS)"""
 
