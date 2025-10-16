@@ -356,6 +356,7 @@ async def ja_word(japanese_word):
     Async version of ja_word. Uses Jisho's unlisted API to fetch Japanese word data.
     Falls back to other functions if no word data found.
     """
+    japanese_word = japanese_word.strip()
     url = f'https://jisho.org/api/v1/search/words?keyword={japanese_word}%20%23words'
 
     async with aiohttp.ClientSession() as session:

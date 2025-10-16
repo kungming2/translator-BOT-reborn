@@ -6,11 +6,11 @@ googlesearch-python
 huggingface_hub[hf_xet]
 ImageHash
 jieba
-kiwipiepy
 krdict.py
 korean-romanizer
 lxml
 MeCab
+numpy
 openai
 opencc
 orjson
@@ -27,6 +27,7 @@ random_user_agent
 scikit-learn
 selenium
 sentence-transformers
+setuptools<81  # To avoid issues with jieba
 unidic  # Used by MeCab
 unidic-lite  # Used by MeCab
 wasabi
@@ -35,3 +36,6 @@ wikipedia
 httpx
 requests
 yt-dlp
+# On RPI, install build tools and dependencies for kiwipiepy:
+# sudo apt install -y cmake build-essential python3-dev
+kiwipiepy  # Can be problematic, put last (see docs)
