@@ -4,6 +4,7 @@
 Interfaces with processes.ziwen_posts to help assess posts which might
 be duplicates from the same user.
 """
+
 import hashlib
 import re
 import time
@@ -13,8 +14,10 @@ from itertools import combinations
 from usage_statistics import action_counter
 
 import numpy as np
+
 # For fuzzy matching (backup)
 from rapidfuzz import fuzz
+
 # For semantic similarity
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -28,12 +31,14 @@ from responses import RESPONSE
 class DuplicateDetector:
     """Enhanced duplicate detection system for Reddit posts."""
 
-    def __init__(self,
-                 semantic_threshold=0.85,
-                 fuzzy_threshold=85,
-                 numerical_threshold=5,
-                 age_limit_hours=24,
-                 use_semantic=True):
+    def __init__(
+        self,
+        semantic_threshold=0.85,
+        fuzzy_threshold=85,
+        numerical_threshold=5,
+        age_limit_hours=24,
+        use_semantic=True,
+    ):
         """
         Initialize the duplicate detector.
 
@@ -54,7 +59,7 @@ class DuplicateDetector:
         if use_semantic:
             try:
                 # Use a lightweight but effective model
-                self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                self.model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.info("[DD] Semantic similarity model loaded successfully")
             except Exception as e:
                 logger.warning(f"[DD] Failed to load semantic model: {e}")
@@ -75,12 +80,12 @@ class DuplicateDetector:
         text = text.lower()
 
         # Remove excessive punctuation and whitespace
-        text = re.sub(r'[!?]{2,}', '!', text)
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"[!?]{2,}", "!", text)
+        text = re.sub(r"\s+", " ", text)
 
         # Remove common Reddit formatting
-        text = re.sub(r'\[.*?]\(.*?\)', '', text)  # Remove Markdown links
-        text = re.sub(r'https?://\S+', '', text)  # Remove URLs
+        text = re.sub(r"\[.*?]\(.*?\)", "", text)  # Remove Markdown links
+        text = re.sub(r"https?://\S+", "", text)  # Remove URLs
 
         return text.strip()
 
@@ -97,9 +102,9 @@ class DuplicateDetector:
         """
         # Match numbers with various contexts: #1, episode 5, part 3, pt 2, etc.
         patterns = [
-            r'(?:episode|ep|part|pt|chapter|ch|#|letter)\s*(\d+)',  # Contextual numbers
-            r'\((?:pt|part)\s*(\d+)\)',  # Numbers in parentheses: (pt 1), (part 2)
-            r'(?<=[\s\.\(\[\-])\d+(?=[\s\.\)\]\-]|$)',  # Standalone numbers
+            r"(?:episode|ep|part|pt|chapter|ch|#|letter)\s*(\d+)",  # Contextual numbers
+            r"\((?:pt|part)\s*(\d+)\)",  # Numbers in parentheses: (pt 1), (part 2)
+            r"(?<=[\s\.\(\[\-])\d+(?=[\s\.\)\]\-]|$)",  # Standalone numbers
         ]
 
         numbers = []
@@ -242,11 +247,14 @@ class DuplicateDetector:
         """
         normalized = self.normalize_text(title)
         # Remove all numbers and punctuation for hash
-        cleaned = re.sub(r'[^a-z\s]', '', normalized)
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(r"[^a-z\s]", "", normalized)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return hashlib.sha256(cleaned.encode()).hexdigest()
 
-    def detect_duplicates(self, list_posts, ):
+    def detect_duplicates(
+        self,
+        list_posts,
+    ):
         """
         Main duplicate detection function with enhanced algorithms.
 
@@ -283,12 +291,14 @@ class DuplicateDetector:
                 continue
 
             normalized_title = self.normalize_text(post.title)
-            author_posts[post_author].append({
-                'id': post.id,
-                'title': normalized_title,
-                'created_utc': post.created_utc,
-                'original_title': post.title
-            })
+            author_posts[post_author].append(
+                {
+                    "id": post.id,
+                    "title": normalized_title,
+                    "created_utc": post.created_utc,
+                    "original_title": post.title,
+                }
+            )
 
             # Process posts by the same author
             for author, posts in author_posts.items():
@@ -296,14 +306,16 @@ class DuplicateDetector:
                     continue
 
                 # Sort by creation time
-                posts.sort(key=lambda x: x['created_utc'])
-                titles = [p['title'] for p in posts]
+                posts.sort(key=lambda x: x["created_utc"])
+                titles = [p["title"] for p in posts]
 
                 logger.info(f"[DD] Analyzing {len(posts)} posts by u/{author}")
 
                 # Check if titles are part of a numbered sequence
                 if self.is_numerical_sequence(titles):
-                    logger.info(f"[DD] Posts by u/{author} appear to be a series. Skipping.")
+                    logger.info(
+                        f"[DD] Posts by u/{author} appear to be a series. Skipping."
+                    )
                     continue
 
                 # Calculate similarity using the best available method
@@ -338,12 +350,16 @@ class DuplicateDetector:
                 )
 
                 # Determine threshold based on method
-                threshold = self.semantic_threshold * 100 if method_used == "semantic" else self.fuzzy_threshold
+                threshold = (
+                    self.semantic_threshold * 100
+                    if method_used == "semantic"
+                    else self.fuzzy_threshold
+                )
 
                 # Flag duplicates if above threshold
                 if similarity_score >= threshold:
                     # Keep the oldest post, remove the rest
-                    duplicate_ids = [p['id'] for p in posts[1:]]
+                    duplicate_ids = [p["id"] for p in posts[1:]]
                     actionable_posts.extend(duplicate_ids)
                     logger.info(f"[DD] Flagged duplicates for removal: {duplicate_ids}")
 
@@ -374,7 +390,9 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
         logger.info("[DD] No duplicates detected.")
         return None
 
-    logger.info(f"[DD] Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}")
+    logger.info(
+        f"[DD] Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
+    )
 
     # Remove duplicates and notify authors
     successfully_removed = []
@@ -388,10 +406,12 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
             original_post = None
             for post in list_posts:
                 try:
-                    if (hasattr(post.author, 'name') and
-                            post.author.name == dupe_author and
-                            post.id != dupe_id and
-                            post.created_utc < dupe_post.created_utc):
+                    if (
+                        hasattr(post.author, "name")
+                        and post.author.name == dupe_author
+                        and post.id != dupe_id
+                        and post.created_utc < dupe_post.created_utc
+                    ):
                         original_post = post
                         break
                 except AttributeError:
@@ -400,8 +420,10 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
             # Remove the duplicate post
             if not testing_mode:
                 # Try to use removal reasons if available
-                removal_kwargs = {'reason_id': search_removal_reasons("duplicate"),
-                                  'mod_note': f"Duplicate of {original_post.id if original_post else 'earlier post'}"}
+                removal_kwargs = {
+                    "reason_id": search_removal_reasons("duplicate"),
+                    "mod_note": f"Duplicate of {original_post.id if original_post else 'earlier post'}",
+                }
                 dupe_post.mod.remove(**removal_kwargs)
 
             # Reply to the author
@@ -437,7 +459,7 @@ def test_duplicate_detection():
     print()
 
     # Fetch posts from r/translator
-    subreddit = REDDIT.subreddit('translator')
+    subreddit = REDDIT.subreddit("translator")
 
     # Get the most recent posts (adjust limit as needed)
     print("Fetching posts from r/translator...")
@@ -461,7 +483,9 @@ def test_duplicate_detection():
 
     if multiple_posts:
         print("Authors with multiple posts:")
-        for author, titles in sorted(multiple_posts.items(), key=lambda x: len(x[1]), reverse=True):
+        for author, titles in sorted(
+            multiple_posts.items(), key=lambda x: len(x[1]), reverse=True
+        ):
             print(f"  u/{author}: {len(titles)} posts")
             for i, title in enumerate(titles, 1):
                 print(f"    {i}. {title}...")
@@ -477,7 +501,7 @@ def test_duplicate_detection():
         image_hash_detector=None,  # No image hash detection for this test
         semantic_threshold=0.85,
         fuzzy_threshold=85,
-        age_limit_hours=48  # Look at last 48 hours
+        age_limit_hours=48,  # Look at last 48 hours
     )
 
     print("-" * 80)
@@ -503,8 +527,13 @@ def test_duplicate_detection():
 
             # Try to find what it's a duplicate of (the original kept post)
             # by looking for other posts by the same author
-            author_posts = [p for p in posts if hasattr(p.author, 'name') and
-                            p.author.name == author and p.id != post_id]
+            author_posts = [
+                p
+                for p in posts
+                if hasattr(p.author, "name")
+                and p.author.name == author
+                and p.id != post_id
+            ]
             if author_posts:
                 print("   Likely duplicate of:")
                 for orig in author_posts[:3]:  # Show up to 3 originals

@@ -4,8 +4,8 @@
 Handles database reading and writing. While the top-level stuff is
 all in SQLite, there are also some plain text recording functions here.
 """
+
 import csv
-import datetime
 import json
 import os
 import pprint
@@ -33,19 +33,19 @@ class DatabaseManager:
     @property
     def conn_cache(self):
         if self._conn_cache is None:
-            self._conn_cache = self._connect(Paths.DATABASE['CACHE'])
+            self._conn_cache = self._connect(Paths.DATABASE["CACHE"])
         return self._conn_cache
 
     @property
     def conn_main(self):
         if self._conn_main is None:
-            self._conn_main = self._connect(Paths.DATABASE['MAIN'])
+            self._conn_main = self._connect(Paths.DATABASE["MAIN"])
         return self._conn_main
 
     @property
     def conn_ajo(self):
         if self._conn_ajo is None:
-            self._conn_ajo = self._connect(Paths.DATABASE['AJO'])
+            self._conn_ajo = self._connect(Paths.DATABASE["AJO"])
         return self._conn_ajo
 
     @property
@@ -106,8 +106,7 @@ class DatabaseManager:
 
 
 def initialize_cache_db():
-
-    db_path = Paths.DATABASE['CACHE']
+    db_path = Paths.DATABASE["CACHE"]
 
     if os.path.exists(db_path):
         logger.debug(f"{db_path} already exists. Skipping cache.db.")
@@ -128,15 +127,14 @@ def initialize_cache_db():
             language_code TEXT,
             language_multiplier INTEGER
         )
-        """
+        """,
     ]
 
     _initialize_db(db_path, create_statements)
 
 
 def initialize_ajo_db():
-
-    db_path = Paths.DATABASE['AJO']
+    db_path = Paths.DATABASE["AJO"]
 
     if os.path.exists(db_path):
         logger.debug(f"{db_path} already exists. Skipping ajo.db.")
@@ -159,8 +157,7 @@ def initialize_ajo_db():
 
 
 def initialize_main_db():
-
-    db_path = Paths.DATABASE['MAIN']
+    db_path = Paths.DATABASE["MAIN"]
 
     if os.path.exists(db_path):
         logger.debug(f"{db_path} already exists. Skipping main.db.")
@@ -215,7 +212,7 @@ def initialize_main_db():
         """,
         """
         CREATE INDEX index_total_points_usernames ON total_points (username)
-        """
+        """,
     ]
 
     _initialize_db(db_path, create_statements)
@@ -256,7 +253,7 @@ def record_activity_csv(data_tuple):
 
     :param data_tuple: Tuple of data to write as a CSV row.
     """
-    with open(Paths.LOGS['ACTIVITY'], mode='a', newline='') as csv_file:
+    with open(Paths.LOGS["ACTIVITY"], mode="a", newline="") as csv_file:
         writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
         writer.writerow(data_tuple)
 
@@ -269,10 +266,10 @@ def record_filter_log(filtered_title, created_timestamp, filter_type):
     :param created_timestamp: Unix timestamp of when the post was created.
     :param filter_type: Code of the violated filter rule.
     """
-    timestamp_utc = datetime.datetime.fromtimestamp(created_timestamp).strftime("%Y-%m-%d")
+    timestamp_utc = datetime.fromtimestamp(created_timestamp).strftime("%Y-%m-%d")
     line = f"\n{timestamp_utc} | {filtered_title} | {filter_type}"
 
-    with open(Paths.LOGS['FILTER'], 'a', encoding='utf-8') as f:
+    with open(Paths.LOGS["FILTER"], "a", encoding="utf-8") as f:
         f.write(line)
 
 
@@ -291,9 +288,11 @@ def _parse_ajo_row(result):
     """
 
     try:
-        post_id = result['id'] if isinstance(result, sqlite3.Row) else result[0]
-        created_utc = result['created_utc'] if isinstance(result, sqlite3.Row) else result[1]
-        data_json = result['ajo'] if isinstance(result, sqlite3.Row) else result[2]
+        post_id = result["id"] if isinstance(result, sqlite3.Row) else result[0]
+        created_utc = (
+            result["created_utc"] if isinstance(result, sqlite3.Row) else result[1]
+        )
+        data_json = result["ajo"] if isinstance(result, sqlite3.Row) else result[2]
 
         # Parse the JSON/dict data
         if isinstance(data_json, dict):
@@ -323,9 +322,9 @@ def _parse_ajo_row(result):
     except (TypeError, KeyError, IndexError) as e:
         # Fixed: Handle both Row and tuple objects properly
         try:
-            row_id = result['id'] if isinstance(result, sqlite3.Row) else result[0]
+            row_id = result["id"] if isinstance(result, sqlite3.Row) else result[0]
         except (KeyError, IndexError):
-            row_id = 'unknown'
+            row_id = "unknown"
         logger.debug(f"Error parsing row for ID {row_id}: {e}")
         return None
 
@@ -347,7 +346,7 @@ def search_database(search_term: str, search_type: str):
     from models.ajo import Ajo
 
     try:
-        if search_type == 'post':
+        if search_type == "post":
             query = "SELECT id, created_utc, ajo FROM ajo_database WHERE id = ?"
             result = db.fetch_ajo(query, (search_term,))
 
@@ -362,7 +361,7 @@ def search_database(search_term: str, search_type: str):
             else:
                 return []
 
-        elif search_type == 'user':
+        elif search_type == "user":
             query = "SELECT id, created_utc, ajo FROM ajo_database"
             results = db.fetchall_ajo(query)
 
@@ -378,7 +377,10 @@ def search_database(search_term: str, search_type: str):
                 post_id, created_utc, data = parsed
 
                 # Check if this post matches the username
-                if data.get('author') == search_term or data.get('username') == search_term:
+                if (
+                    data.get("author") == search_term
+                    or data.get("username") == search_term
+                ):
                     matching_ajos.append(Ajo.from_dict(data))
 
             if parse_errors > 0:
@@ -389,6 +391,7 @@ def search_database(search_term: str, search_type: str):
     except Exception as db_error:
         logger.debug(f"Error querying database: {str(db_error)}")
         import traceback
+
         traceback.print_exc()
         return []
 
@@ -404,9 +407,9 @@ async def search_logs(ctx, search_term: str, term_type: str):
         term_type: Type of search ('user' or 'post') for display purposes
     """
     log_files = {
-        'FILTER': Paths.LOGS['FILTER'],
-        'EVENTS': Paths.LOGS['EVENTS'],
-        'ERROR': Paths.LOGS['ERROR'],
+        "FILTER": Paths.LOGS["FILTER"],
+        "EVENTS": Paths.LOGS["EVENTS"],
+        "ERROR": Paths.LOGS["ERROR"],
     }
 
     try:
@@ -415,12 +418,16 @@ async def search_logs(ctx, search_term: str, term_type: str):
         # Search through log files
         for log_name, log_path in log_files.items():
             try:
-                with open(log_path, 'r', encoding='utf-8', errors='replace') as log_file:
+                with open(
+                    log_path, "r", encoding="utf-8", errors="replace"
+                ) as log_file:
                     for line in log_file:
                         if search_term in line:
                             log_lines.append(f"[{log_name}] {line.strip()}")
             except FileNotFoundError:
-                await ctx.send(f"Warning: {log_name} log file not found at `{log_path}`")
+                await ctx.send(
+                    f"Warning: {log_name} log file not found at `{log_path}`"
+                )
                 continue
 
         # Search database for historical information
@@ -428,7 +435,9 @@ async def search_logs(ctx, search_term: str, term_type: str):
 
         # Check if we have any results at all
         if not log_lines and not db_results:
-            await ctx.send(f"No entries found for {term_type} `{search_term}` in log files or database.")
+            await ctx.send(
+                f"No entries found for {term_type} `{search_term}` in log files or database."
+            )
             return
 
         # Build response with sections
@@ -477,6 +486,7 @@ async def search_logs(ctx, search_term: str, term_type: str):
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -491,7 +501,6 @@ db = DatabaseManager()
 
 
 if __name__ == "__main__":
-
     while True:
         _show_menu()
         choice = input("Enter your choice (1-2): ")
@@ -510,7 +519,7 @@ if __name__ == "__main__":
             derived_ajos = search_database(term_to_search, type_to_search)
             for item in derived_ajos:
                 pprint.pprint(vars(item))
-                print('\n\n')
+                print("\n\n")
 
         elif choice == "2":
             initialize_all_databases()

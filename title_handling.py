@@ -5,6 +5,7 @@ This handles language processing from posts' titles and also
 filters out posts that do not match the community rules. The main class
 associated with requests is the Titolo class.
 """
+
 import json
 import logging
 import re
@@ -17,8 +18,7 @@ from rapidfuzz import fuzz
 from ai import ai_query, openai_access
 from config import Paths, load_settings, logger
 from connection import REDDIT_HELPER
-from languages import (Lingvo, converter, country_converter,
-                       define_language_lists)
+from languages import Lingvo, converter, country_converter, define_language_lists
 from responses import RESPONSE
 
 
@@ -42,19 +42,20 @@ class Titolo:
         return f"<Titolo: ({self.source} > {self.target}) | {self.title_original}>"
 
     def __str__(self):
-        return (f"Titolo(\n"
-                f"  source={self.source},\n"
-                f"  target={self.target},\n"
-                f"  final_code='{self.final_code}',\n"
-                f"  final_text='{self.final_text}',\n"
-                f"  title_original='{self.title_original}',\n"
-                f"  title_actual='{self.title_actual}',\n"
-                f"  title_processed='{self.title_processed}',\n"
-                f"  notify_languages={self.notify_languages},\n"
-                f"  language_country='{self.language_country}',\n"
-                f"  direction='{self.direction}'\n",
-                f"  ai_assessed={self.ai_assessed}\n"
-                f")")
+        return (
+            f"Titolo(\n"
+            f"  source={self.source},\n"
+            f"  target={self.target},\n"
+            f"  final_code='{self.final_code}',\n"
+            f"  final_text='{self.final_text}',\n"
+            f"  title_original='{self.title_original}',\n"
+            f"  title_actual='{self.title_actual}',\n"
+            f"  title_processed='{self.title_processed}',\n"
+            f"  notify_languages={self.notify_languages},\n"
+            f"  language_country='{self.language_country}',\n"
+            f"  direction='{self.direction}'\n",
+            f"  ai_assessed={self.ai_assessed}\n)",
+        )
 
     # Helper methods for flair setting.
     def add_final_code(self, code):
@@ -82,10 +83,12 @@ class Titolo:
 
 
 # Load the title module's settings.
-title_settings = load_settings(Paths.SETTINGS['TITLE_MODULE_SETTINGS'])
+title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
 
 
-def extract_lingvos_from_text(text: str, return_english: bool = False) -> List[Lingvo] | None:
+def extract_lingvos_from_text(
+    text: str, return_english: bool = False
+) -> List[Lingvo] | None:
     """
     Extracts Lingvo objects from a paragraph based on capitalized language-like words.
     Includes supported languages, and optionally 'English' even if unsupported.
@@ -94,7 +97,7 @@ def extract_lingvos_from_text(text: str, return_english: bool = False) -> List[L
     :param return_english: Whether to include 'English' even if unsupported.
     :return: A list of Lingvo objects, or None if nothing valid was found.
     """
-    matches = re.findall(r'\b[A-Z][a-z]+', text)
+    matches = re.findall(r"\b[A-Z][a-z]+", text)
     found = []
 
     for word in matches:
@@ -102,7 +105,9 @@ def extract_lingvos_from_text(text: str, return_english: bool = False) -> List[L
             continue
         lingvo = converter(word)
         if lingvo and lingvo.name:
-            if lingvo.supported or (return_english and lingvo.name.lower() == "english"):
+            if lingvo.supported or (
+                return_english and lingvo.name.lower() == "english"
+            ):
                 if lingvo not in found:
                     found.append(lingvo)
 
@@ -158,11 +163,11 @@ def build_required_title_keywords() -> dict[str, list[str]]:
         - 'total': All valid keyword combinations.
         - 'to_phrases': Only the "to LANGUAGE" style combinations.
     """
-    keywords = {'total': [], 'to_phrases': []}
-    supported_languages = define_language_lists()['SUPPORTED_LANGUAGES']
+    keywords = {"total": [], "to_phrases": []}
+    supported_languages = define_language_lists()["SUPPORTED_LANGUAGES"]
 
-    english_aliases = title_settings['ENGLISH_ALIASES']
-    connectors = title_settings['CONNECTORS']
+    english_aliases = title_settings["ENGLISH_ALIASES"]
+    connectors = title_settings["CONNECTORS"]
 
     # Generate combinations with English variants
     for eng in english_aliases:
@@ -171,8 +176,8 @@ def build_required_title_keywords() -> dict[str, list[str]]:
             if conn != "to":
                 pairs += [f"{conn}{eng}", f"{eng}{conn}"]
             else:
-                keywords['to_phrases'] += pairs
-            keywords['total'] += pairs
+                keywords["to_phrases"] += pairs
+            keywords["total"] += pairs
 
     # Generate combinations with supported languages
     for lang in supported_languages:
@@ -182,17 +187,26 @@ def build_required_title_keywords() -> dict[str, list[str]]:
             if conn != "to":
                 pairs += [f"{conn}{lang}", f"{lang}{conn}"]
             else:
-                keywords['to_phrases'] += pairs
-            keywords['total'] += pairs
+                keywords["to_phrases"] += pairs
+            keywords["total"] += pairs
 
     # Add additional valid tags and punctuation variants
-    keywords['total'] += ['>', '[unknown]', '[community]', '[meta]']
-    keywords['total'] += sorted(d.lower() for d in title_settings['ENGLISH_DASHES'])
+    keywords["total"] += [">", "[unknown]", "[community]", "[meta]"]
+    keywords["total"] += sorted(d.lower() for d in title_settings["ENGLISH_DASHES"])
 
     # Remove known false positives
-    bad_matches = {'ch to ', 'en to ', ' to en', ' to me', ' to mi', ' to my', ' to mr', ' to kn'}
-    keywords['to_phrases'] = [k for k in keywords['to_phrases'] if k not in bad_matches]
-    keywords['total'] = [k for k in keywords['total'] if k not in bad_matches]
+    bad_matches = {
+        "ch to ",
+        "en to ",
+        " to en",
+        " to me",
+        " to mi",
+        " to my",
+        " to mr",
+        " to kn",
+    }
+    keywords["to_phrases"] = [k for k in keywords["to_phrases"] if k not in bad_matches]
+    keywords["total"] = [k for k in keywords["total"] if k not in bad_matches]
 
     return keywords
 
@@ -207,13 +221,13 @@ def move_bracketed_tag_to_front(title: str) -> str:
     :param title: The original title, possibly with a bracketed tag.
     :return: The title with the bracketed tag moved to the front.
     """
-    match = re.search(r'\[.*?]', title)
+    match = re.search(r"\[.*?]", title)
     if match:
         tag = match.group(0)
-        remainder = title.replace(tag, '').strip()
+        remainder = title.replace(tag, "").strip()
     else:
         # Handle malformed title with unclosed bracket like "Title [JP"
-        parts = title.split('[', 1)
+        parts = title.split("[", 1)
         if len(parts) == 2:
             tag = f"[{parts[1].rstrip(']')}]"
             remainder = parts[0].strip()
@@ -235,7 +249,7 @@ def reformat_detected_languages_in_title(title: str) -> str | None:
     :param title: A potentially unstructured title containing language names.
     :return: A reformatted title like "[Lang1 > Lang2] Remainder", or None if reformatting fails.
     """
-    title_words = re.findall(r'\w+', title)
+    title_words = re.findall(r"\w+", title)
     if not title_words:
         return None
 
@@ -276,12 +290,12 @@ def reformat_detected_languages_in_title(title: str) -> str | None:
     # Remove the second language word to avoid duplication
     for original_word, lang_code in detected_languages.items():
         if lang_code == last_lang and lang_code != first_lang:
-            reformatted = reformatted.replace(original_word, '', 1)
+            reformatted = reformatted.replace(original_word, "", 1)
             break
 
     # Clean up "to" or "into" if still in the text
-    reformatted = re.sub(r'\b(to|into)\b', '>', reformatted, flags=re.IGNORECASE)
-    reformatted = re.sub(r'\s{2,}', ' ', reformatted).strip()
+    reformatted = re.sub(r"\b(to|into)\b", ">", reformatted, flags=re.IGNORECASE)
+    reformatted = re.sub(r"\s{2,}", " ", reformatted).strip()
 
     return reformatted
 
@@ -307,8 +321,8 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
 
     # Load required keyword sets
     keywords = build_required_title_keywords()
-    mandatory_keywords = keywords['total']
-    to_phrases = keywords['to_phrases']
+    mandatory_keywords = keywords["total"]
+    to_phrases = keywords["to_phrases"]
 
     # Rule 1: Check for required keywords
     if not any(kw in title_lower for kw in mandatory_keywords):
@@ -316,33 +330,40 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
         title_lower = title.lower()  # Update lowercased version
 
         if not any(kw in title_lower for kw in mandatory_keywords):
-            filter_reason = '1'
+            filter_reason = "1"
             logger.info(
-                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}")
+                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
+            )
             return False, None, filter_reason
 
     # Rule 1A and 1B: "to LANGUAGE" phrasing issues
     if ">" not in title_lower and any(phrase in title_lower for phrase in to_phrases):
         if not any(phrase in title_lower[:25] for phrase in to_phrases):
-            filter_reason = '1A'
+            filter_reason = "1A"
             logger.info(
-                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}")
+                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
+            )
             return False, None, filter_reason
 
-        if len(title) < 35 and '[' not in title:
+        if len(title) < 35 and "[" not in title:
             listed_lingvos = extract_lingvos_from_text(title.title()) or []
-            non_english_lingvos = [lingvo for lingvo in listed_lingvos if lingvo.name != 'English']
+            non_english_lingvos = [
+                lingvo for lingvo in listed_lingvos if lingvo.name != "English"
+            ]
 
             if not non_english_lingvos:
-                filter_reason = '1B'
-                logger.info(f"[L] Main_Posts_Filter: > Filtered a post with no valid language. Rule: #{filter_reason}")
+                filter_reason = "1B"
+                logger.info(
+                    f"[L] Main_Posts_Filter: > Filtered a post with no valid language. Rule: #{filter_reason}"
+                )
                 return False, None, filter_reason
 
     # Rule 2: '>' is present but poorly positioned
     if ">" in title and "]" not in title and ">" not in title[:50]:
-        filter_reason = '2'
+        filter_reason = "2"
         logger.info(
-            f"[L] Main_Posts_Filter: > Filtered a post due to incorrect placement of '>'. Rule: #{filter_reason}")
+            f"[L] Main_Posts_Filter: > Filtered a post due to incorrect placement of '>'. Rule: #{filter_reason}"
+        )
         return False, None, filter_reason
 
     # Passed all filters
@@ -360,7 +381,7 @@ def preprocess_title(post_title):
     title = re.sub(r"\(x-post.*", "", post_title).strip()
 
     # Correct spelling/alias issues
-    for spelling in converter('en').name_alternates:
+    for spelling in converter("en").name_alternates:
         title = title.replace(spelling, "English")
     title = title.replace("english", "English")
     title = title.replace("Old English", "Anglosaxon")
@@ -368,16 +389,18 @@ def preprocess_title(post_title):
     title = title.replace("Scots Gaelic", "Scottish Gaelic")
 
     # Replace unicode bracket/direction variants
-    for keyword in title_settings['WRONG_DIRECTIONS']:
+    for keyword in title_settings["WRONG_DIRECTIONS"]:
         title = title.replace(keyword, " > ")
-    for keyword in title_settings['WRONG_BRACKETS_LEFT']:
+    for keyword in title_settings["WRONG_BRACKETS_LEFT"]:
         title = title.replace(keyword, " [")
-    for keyword in title_settings['WRONG_BRACKETS_RIGHT']:
+    for keyword in title_settings["WRONG_BRACKETS_RIGHT"]:
         title = title.replace(keyword, "] ")
 
     # Normalize the case for "to" and fix malformed brackets
     title = re.sub(r"\b(To|TO|tO)\b", "to", title)
-    if not any(b in title for b in ["[", "]"]) and re.match(r"[({].+(>| to ).+[)}]", title):
+    if not any(b in title for b in ["[", "]"]) and re.match(
+        r"[({].+(>| to ).+[)}]", title
+    ):
         title = title.replace("(", "[", 1).replace(")", "]", 1)
         title = title.replace("{", "[", 1).replace("}", "]", 1)
 
@@ -388,26 +411,28 @@ def preprocess_title(post_title):
             title = reformatted
 
     # Normalize bracketed language tags and country suffixes
-    title = re.sub(r'(]\s*[>\\-]\s*\[)', ' > ', title)
-    if '{' in title and '}' in title and '[' in title:
+    title = re.sub(r"(]\s*[>\\-]\s*\[)", " > ", title)
+    if "{" in title and "}" in title and "[" in title:
         match = re.search(r"{(\D+)}", title)
         if match:
             country = match.group(1)
             code = country_converter(country)[0]
             if code:
                 title = title.split("{", 1)[0].strip() + title.split("}", 1)[1]
-    elif '{' in title and '[' not in title:
+    elif "{" in title and "[" not in title:
         title = title.replace("{", "[").replace("}", "]")
 
     # Handle special cases and cleanup
-    if '-' in title[:20] and any(k in title.title() for k in title_settings['ENGLISH_DASHES']):
+    if "-" in title[:20] and any(
+        k in title.title() for k in title_settings["ENGLISH_DASHES"]
+    ):
         title = title.replace("-", " > ")
-    if '[' in title and '[' not in title[:10]:
+    if "[" in title and "[" not in title[:10]:
         title = move_bracketed_tag_to_front(title.strip())
     title = title.replace("English.", "English] ").replace("_", " ")
 
     # Fix improperly hyphenated words
-    hyphen_match = re.search(r'((?:\w+-)+\w+)', title[:25])
+    hyphen_match = re.search(r"((?:\w+-)+\w+)", title[:25])
     if hyphen_match:
         converted = converter(hyphen_match.group(0))
         if converted is not None and not converted.name:
@@ -420,22 +445,22 @@ def preprocess_title(post_title):
         title = title.replace(compound, " > ")
 
     # Try to normalize missing brackets around 'English'
-    if '>' in title and 'English' in title and ']' not in title and '[' not in title:
+    if ">" in title and "English" in title and "]" not in title and "[" not in title:
         title = title.replace("English", "English]")
         title = "[" + title
 
     # Catch malformed directional hints
-    if '>' not in title:
+    if ">" not in title:
         if any(k in title[:25] for k in ["- Eng", "-Eng"]):
             title = title.replace("-", " > ")
         title = title.replace(" into ", ">")
 
     # Fix frequent false matches for "KR"
-    if 'KR ' in title.upper()[:10]:
+    if "KR " in title.upper()[:10]:
         title = title.replace("KR ", "Korean ")
 
     # Handle unknown or unclear entries
-    if '[Unknown]' in title.title() or title.lstrip().startswith('?'):
+    if "[Unknown]" in title.title() or title.lstrip().startswith("?"):
         return Titolo()  # Return empty object
 
     return title
@@ -455,9 +480,11 @@ def clean_text(text, preserve_commas=False):
 
     # Remove other punctuation (excluding brackets/parentheses)
     if preserve_commas:
-        text = re.sub(r"[.;@#?!&$""'\"•/]+ *", " ", text)  # Remove comma from the pattern
+        text = re.sub(
+            r"[.;@#?!&$" "'\"•/]+ *", " ", text
+        )  # Remove comma from the pattern
     else:
-        text = re.sub(r"[,.;@#?!&$""'\"•/]+ *", " ", text)
+        text = re.sub(r"[,.;@#?!&$" "'\"•/]+ *", " ", text)
 
     # Collapse multiple spaces into one
     text = re.sub(r"\s+", " ", text)
@@ -467,7 +494,7 @@ def clean_text(text, preserve_commas=False):
 
 def extract_source_chunk(title):
     """Extract the source language chunk from a processed title."""
-    for sep in ['>', ' to ', '-', '<']:
+    for sep in [">", " to ", "-", "<"]:
         if sep in title:
             return clean_text(title.split(sep)[0])
     return clean_text(title)
@@ -475,12 +502,12 @@ def extract_source_chunk(title):
 
 def extract_target_chunk(title):
     """Extract the target language chunk from a processed title."""
-    for sep in ['>', ' to ', '-', '<']:
+    for sep in [">", " to ", "-", "<"]:
         if sep in title:
             chunk = title.split(sep, 1)[1]
             # Stop at the closing bracket
-            if ']' in chunk:
-                chunk = chunk.split(']', 1)[0]
+            if "]" in chunk:
+                chunk = chunk.split("]", 1)[0]
             return clean_text(chunk, True)
     return ""
 
@@ -488,11 +515,12 @@ def extract_target_chunk(title):
 def clean_chunk(chunk: str) -> str:
     # Strip brackets and spaces
     chunk = chunk.strip()
-    chunk = chunk.lstrip('[').rstrip(']')
+    chunk = chunk.lstrip("[").rstrip("]")
     chunk = chunk.strip()
     # Remove trailing punctuation like '-' or ':' or spaces again
     import re
-    chunk = re.sub(r'\W+$', '', chunk.lower())
+
+    chunk = re.sub(r"\W+$", "", chunk.lower())
     return chunk
 
 
@@ -503,15 +531,15 @@ def resolve_languages(chunk, is_source):
 
     if cleaned in {"unknown", "unk", "???", "n/a"}:
         logger.debug("Handling 'unknown' chunk explicitly.")
-        return [converter('unknown')]
+        return [converter("unknown")]
 
     # Cut off after ']' if present
-    if ']' in chunk:
-        chunk = chunk.split(']', 1)[0]
+    if "]" in chunk:
+        chunk = chunk.split("]", 1)[0]
 
     # Split on commas first to handle multiple languages
-    if ',' in chunk:
-        language_parts = [part.strip() for part in chunk.split(',')]
+    if "," in chunk:
+        language_parts = [part.strip() for part in chunk.split(",")]
         resolved = []
         for part in language_parts:
             result = resolve_languages(part, is_source)  # Recursive call
@@ -535,22 +563,23 @@ def resolve_languages(chunk, is_source):
 
     logger.debug(f"Words before cleanup: {words}")
     cleaned_words = [
-        w for w in words
+        w
+        for w in words
         if not (
-                (len(w) == 2 and w.title() in title_settings['ENGLISH_2_WORDS']) or
-                (len(w) == 3 and w.title() in title_settings['ENGLISH_3_WORDS'])
+            (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
+            or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
         )
     ]
 
     logger.debug(f"Cleaned words: {cleaned_words}")
     resolved = []
     for word in cleaned_words[:5]:
-        if 'Eng' in word and len(word) <= 8:
-            word = 'English'
+        if "Eng" in word and len(word) <= 8:
+            word = "English"
         converter_result = converter(word)
 
         # Log differently for multi-word phrases
-        if ' ' in word:
+        if " " in word:
             logger.debug(f"Converted full phrase: {word} -> {converter_result}")
         else:
             logger.debug(f"Converted {word} -> {converter_result}")
@@ -558,7 +587,7 @@ def resolve_languages(chunk, is_source):
         if converter_result:
             resolved.append(converter_result)
             # If this was a successful multi-word phrase, stop processing individual words
-            if ' ' in word:
+            if " " in word:
                 break
 
     unique = {}
@@ -594,37 +623,37 @@ def determine_title_direction(source_languages, target_languages):
 
     # Remove 'English' from lists if all entries contain 'English' (like 'Middle English'),
     # and list length > 1 to avoid always returning 'english_both'
-    if all('English' in lang.name for lang in src) and len(src) > 1:
-        if 'English' in src:
-            src = [lang for lang in src if lang.name != 'English']
-    elif all('English' in lang.name for lang in tgt) and len(tgt) > 1:
-        if 'English' in tgt:
-            tgt = [lang for lang in tgt if lang.name != 'English']
+    if all("English" in lang.name for lang in src) and len(src) > 1:
+        if "English" in src:
+            src = [lang for lang in src if lang.name != "English"]
+    elif all("English" in lang.name for lang in tgt) and len(tgt) > 1:
+        if "English" in tgt:
+            tgt = [lang for lang in tgt if lang.name != "English"]
 
     # If 'English' appears in both source and target
     src_names = [lang.name for lang in src]
     tgt_names = [lang.name for lang in tgt]
 
-    if 'English' in src_names and 'English' in tgt_names:
+    if "English" in src_names and "English" in tgt_names:
         combined_len = len(src) + len(tgt)
         # If combined list is long, try to remove 'English' from the longer list to avoid bias
         if combined_len >= 3:
-            if len(src) >= 2 and 'English' in src_names:
-                src = [lang for lang in src if lang.name != 'English']
+            if len(src) >= 2 and "English" in src_names:
+                src = [lang for lang in src if lang.name != "English"]
                 src_names = [lang.name for lang in src]
-            elif len(tgt) >= 2 and 'English' in tgt_names:
-                tgt = [lang for lang in tgt if lang.name != 'English']
+            elif len(tgt) >= 2 and "English" in tgt_names:
+                tgt = [lang for lang in tgt if lang.name != "English"]
                 tgt_names = [lang.name for lang in tgt]
 
     # Determine direction based on presence of 'English'
-    if 'English' in src_names and 'English' not in tgt_names:
-        return 'english_from'
-    elif 'English' in tgt_names and 'English' not in src_names:
-        return 'english_to'
-    elif 'English' in src_names and 'English' in tgt_names:
-        return 'english_both'
+    if "English" in src_names and "English" not in tgt_names:
+        return "english_from"
+    elif "English" in tgt_names and "English" not in src_names:
+        return "english_to"
+    elif "English" in src_names and "English" in tgt_names:
+        return "english_both"
     else:
-        return 'english_none'
+        return "english_none"
 
 
 def get_notification_languages(assess_request):
@@ -676,7 +705,7 @@ def determine_flair(titolo_object):
             return lang_obj.language_code_1
         elif lang_obj.language_code_3 and lang_obj.supported:
             return lang_obj.language_code_3
-        return 'generic'
+        return "generic"
 
     def generate_final_text(language_codes, max_length=64):
         """Generate final_text with a character limit, abbreviating if needed."""
@@ -788,8 +817,11 @@ def process_title(title, post=None):
     # to our AI assessor.
     # Combine source and target, remove English lingvos, then assess
     combined_languages = (result.source or []) + (result.target or [])
-    combined_languages = [x for x in combined_languages if x.preferred_code != 'en']
-    logger.debug("Combined languages before filtering: " + str([x.preferred_code for x in combined_languages]))
+    combined_languages = [x for x in combined_languages if x.preferred_code != "en"]
+    logger.debug(
+        "Combined languages before filtering: "
+        + str([x.preferred_code for x in combined_languages])
+    )
     logger.debug("Language names: " + str([x.name for x in combined_languages]))
     if not combined_languages:
         logger.error("Could not make sense of this title at all. Asking AI...")
@@ -827,7 +859,9 @@ def update_titolo_from_ai_result(result, ai_result):
         result.notify_languages = get_notification_languages(result) or []
         result.ai_assessed = True  # Mark the Titolo as AI-assisted
 
-        logger.info(f"AI updated source: {result.source}, target: {result.target}, direction: {result.direction}")
+        logger.info(
+            f"AI updated source: {result.source}, target: {result.target}, direction: {result.direction}"
+        )
     except Exception as e:
         logger.error(f"Failed to update Titolo from AI result: {e}")
 
@@ -864,7 +898,7 @@ def title_ai_parser(title, post=None):
         "service": "openai",
         "behavior": "You are assessing a technical identification",
         "query": query_input,
-        "client_object": openai_access()
+        "client_object": openai_access(),
     }
 
     # Add image URL only if it's available
@@ -879,10 +913,10 @@ def title_ai_parser(title, post=None):
 
     confidence = query_dict.get("confidence", 0.0)
     if confidence < 0.7:
-        logger.warning('AI confidence value too low for title.')
+        logger.warning("AI confidence value too low for title.")
         return "error", "Confidence value too low"
 
-    logger.info('AI service returned data.')
+    logger.info("AI service returned data.")
     return query_dict
 
 
@@ -904,7 +938,7 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
         "service": "openai",
         "behavior": "You are checking data entry",
         "query": query_input,
-        "client_object": openai_access()
+        "client_object": openai_access(),
     }
 
     # Send to AI
@@ -915,15 +949,12 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
 
     # Build a URL-safe version of the suggested title
     url_safe_title = (
-        suggested_title
-        .replace(" ", "%20")
-        .replace(")", r"\)")
-        .replace(">", "%3E")
+        suggested_title.replace(" ", "%20").replace(")", r"\)").replace(">", "%3E")
     )
 
-    reformat_comment = RESPONSE.COMMENT_BAD_TITLE.format(author=author,
-                                                         new_url=url_safe_title,
-                                                         new_title=suggested_title)
+    reformat_comment = RESPONSE.COMMENT_BAD_TITLE.format(
+        author=author, new_url=url_safe_title, new_title=suggested_title
+    )
 
     return reformat_comment
 
@@ -938,10 +969,9 @@ def is_english_only(titolo_content: dict) -> bool:
     if not source or not target:
         return False
 
-    return (
-        all(getattr(lang, "preferred_code", None) == "en" for lang in source)
-        and all(getattr(lang, "preferred_code", None) == "en" for lang in target)
-    )
+    return all(
+        getattr(lang, "preferred_code", None) == "en" for lang in source
+    ) and all(getattr(lang, "preferred_code", None) == "en" for lang in target)
 
 
 """INQUIRY SECTION"""
@@ -956,7 +986,6 @@ def _show_menu():
 
 
 if __name__ == "__main__":
-
     while True:
         _show_menu()
         choice = input("Enter your choice (1-3): ")
@@ -976,12 +1005,12 @@ if __name__ == "__main__":
             pprint(vars(titolo_output))
         elif choice == "2":
             logger.setLevel(logging.INFO)
-            submissions = list(REDDIT_HELPER.subreddit('translator').new(limit=50))
+            submissions = list(REDDIT_HELPER.subreddit("translator").new(limit=50))
             for submission in submissions:
                 print(submission.title)
                 titolo_output = process_title(submission.title)
                 pprint(vars(titolo_output))
-                print('\n\n')
+                print("\n\n")
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
             print(title_ai_parser(my_test))

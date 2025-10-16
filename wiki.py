@@ -5,6 +5,7 @@ Handles subreddit wiki reading and writing.
 Note this is distinct from Wikipedia functions, which are in
 lookup/wp_utils.py.
 """
+
 import datetime
 import re
 
@@ -35,12 +36,12 @@ def fetch_wiki_statistics_page(lingvo_object):
 
     # Format the language name to match subreddit wiki naming conventions.
     # Replace dashes and apostrophes with underscores.
-    wiki_page_name = lingvo_object.name.replace(' ', '_').replace("'", '_')
+    wiki_page_name = lingvo_object.name.replace(" ", "_").replace("'", "_")
     logger.debug(f"Accessing wiki page at /{wiki_page_name.lower()}.")
     wiki_page = f"{wiki_page_name.lower()}"
 
     # Attempt to fetch the wiki page content
-    subreddit = REDDIT_HELPER.subreddit('translator')
+    subreddit = REDDIT_HELPER.subreddit("translator")
     try:
         page = subreddit.wiki[wiki_page]
         content = page.content_md.strip()
@@ -62,8 +63,8 @@ def extract_single_language_statistics_table(markdown_text):
     # Use regex to extract the table under "### Single-Language Requests"
     pattern = re.compile(
         r"### Single-Language Requests\s*\n"  # Match the header
-        r"(?:.+\|.+\n)+"                      # Match header and separator rows
-        r"(?:.+\|.+\n?)*"                     # Match all table rows
+        r"(?:.+\|.+\n)+"  # Match header and separator rows
+        r"(?:.+\|.+\n?)*"  # Match all table rows
     )
     match = pattern.search(markdown_text)
     return match.group(0).strip() if match else None
@@ -80,7 +81,7 @@ def assess_most_requested_languages(table_text):
     lang_dict = {}
 
     for line in data_lines:
-        columns = [col.strip() for col in line.split('|')]
+        columns = [col.strip() for col in line.split("|")]
         if len(columns) < 10:
             continue  # Skip malformed rows
 
@@ -96,7 +97,9 @@ def assess_most_requested_languages(table_text):
             lang_dict[lang_code] = total_requests
 
     # Sort by total_requests descending
-    sorted_dict = dict(sorted(lang_dict.items(), key=lambda item: item[1], reverse=True)[:15])
+    sorted_dict = dict(
+        sorted(lang_dict.items(), key=lambda item: item[1], reverse=True)[:15]
+    )
     return sorted_dict
 
 
@@ -111,9 +114,9 @@ def fetch_most_requested_languages():
     months_difference = SETTINGS["points_months_delta"]
 
     three_months_ago = datetime.datetime.now() - relativedelta(months=months_difference)
-    three_months_ago = three_months_ago.strftime('%Y_%m')  # Underscore is intentional
+    three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
 
-    reference_page = REDDIT_HELPER.subreddit('translator').wiki[three_months_ago]
+    reference_page = REDDIT_HELPER.subreddit("translator").wiki[three_months_ago]
     reference_page_content = reference_page.content_md.strip()
     reference_table = extract_single_language_statistics_table(reference_page_content)
     languages_frequency_sorted = assess_most_requested_languages(reference_table)
@@ -121,34 +124,47 @@ def fetch_most_requested_languages():
     return list(languages_frequency_sorted.keys())
 
 
-def update_wiki_page(save_or_identify, formatted_date, title, post_id, flair_text, new_flair=None, user=None, testing_mode=False):
+def update_wiki_page(
+    save_or_identify,
+    formatted_date,
+    title,
+    post_id,
+    flair_text,
+    new_flair=None,
+    user=None,
+    testing_mode=False,
+):
     if save_or_identify:
         # Adding to the "saved" wiki page
-        page = REDDIT.subreddit('translator').wiki["saved"]
+        page = REDDIT.subreddit("translator").wiki["saved"]
         new_entry = f"| {formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} |"
     else:
         # Adding to the "identified" wiki page
-        page = REDDIT.subreddit('translator').wiki["identified"]
+        page = REDDIT.subreddit("translator").wiki["identified"]
         new_entry = f"{formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} | {new_flair} | u/{user}"
 
     updated_content = f"{page.content_md}\n{new_entry}"
 
     if not testing_mode:
         try:
-            page.edit(content=updated_content,
-                      reason=f'Ziwen: updating the {"saved" if save_or_identify else "identified"} wiki page with a new link')
+            page.edit(
+                content=updated_content,
+                reason=f"Ziwen: updating the {'saved' if save_or_identify else 'identified'} wiki page with a new link",
+            )
         except (prawcore.exceptions.Forbidden, prawcore.exceptions.TooLarge):
             if not save_or_identify:
                 logger.warning("[ZW] Save_Wiki: The 'identified' wiki page is full.")
                 send_discord_alert(
                     "'identified' Wiki Page Full",
-                    RESPONSE.MSG_WIKIPAGE_FULL.format('identified'),
-                    'alert'
+                    RESPONSE.MSG_WIKIPAGE_FULL.format("identified"),
+                    "alert",
                 )
             else:
                 raise  # You can choose how to handle errors for the "saved" page
         else:
-            logger.info(f"[ZW] Save_Wiki: Updated the {'saved' if save_or_identify else 'identified'} wiki page.")
+            logger.info(
+                f"[ZW] Save_Wiki: Updated the {'saved' if save_or_identify else 'identified'} wiki page."
+            )
     else:
         # Testing mode: log instead of editing
         log_testing_mode(
@@ -160,18 +176,20 @@ def update_wiki_page(save_or_identify, formatted_date, title, post_id, flair_tex
                 "Flair Text": flair_text,
                 "New Flair": new_flair,
                 "User": user,
-            }
+            },
         )
-        logger.info(f"[ZW] Save_Wiki: Dry run for {'saved' if save_or_identify else 'identified'} wiki page update logged.")
+        logger.info(
+            f"[ZW] Save_Wiki: Dry run for {'saved' if save_or_identify else 'identified'} wiki page update logged."
+        )
 
 
-'''
+"""
 SEARCH FREQUENTLY-REQUESTED TRANSLATIONS
 
 These are functions associated with checking the YAML entries on the
 frequently-requested translations page. Currently, this is paired with
 the `!search` function.
-'''
+"""
 
 
 def frequently_requested_wiki():
@@ -181,13 +199,13 @@ def frequently_requested_wiki():
 
     :return: A Python dictionary of all entries.
     """
-    wiki_page = REDDIT_HELPER.subreddit('translator').wiki["frequently-requested"]
+    wiki_page = REDDIT_HELPER.subreddit("translator").wiki["frequently-requested"]
     processed_data = wiki_page.content_md
     alert_mods = False
 
     # Convert YAML text into a Python list.
     yaml_data = processed_data.split("### Entries")[1].strip()
-    yaml_data = yaml_data.replace("    ---", '---')
+    yaml_data = yaml_data.replace("    ---", "---")
     try:
         frt_data = yaml.safe_load_all(yaml_data)
     except yaml.YAMLError:
@@ -207,10 +225,12 @@ def frequently_requested_wiki():
 
     if alert_mods:
         # Send Discord alert.
-        message_body = ("The [FRT](https://www.reddit.com/r/translator/wiki/frequently-requested) "
-                        "wikipage seems to have problems with YAML data. Please check and correct "
-                        "the data's formatting with [YAMLLint](https://www.yamllint.com/).")
-        send_discord_alert('FRT YAML Malformed Syntax', message_body, 'alert')
+        message_body = (
+            "The [FRT](https://www.reddit.com/r/translator/wiki/frequently-requested) "
+            "wikipage seems to have problems with YAML data. Please check and correct "
+            "the data's formatting with [YAMLLint](https://www.yamllint.com/)."
+        )
+        send_discord_alert("FRT YAML Malformed Syntax", message_body, "alert")
 
     return frt_data
 
@@ -231,46 +251,52 @@ def search_integration(search_term):
 
     # Iterate over the entries, looking for the search term.
     for entry in frt_data:
-        entry_keywords = entry['keywords']
+        entry_keywords = entry["keywords"]
         entry_keywords = [x.lower() for x in entry_keywords]
         if search_term in entry_keywords:
-            logger.info("[ZW] search_integration: Keyword found in "
-                        "frequently requested translations.")
+            logger.info(
+                "[ZW] search_integration: Keyword found in "
+                "frequently requested translations."
+            )
             term_data = entry
             break
 
     if not term_data:
         # Exit if no keywords were found.
-        logger.info("[ZW] search_integration: No keywords found in "
-                    "frequently requested translations.")
+        logger.info(
+            "[ZW] search_integration: No keywords found in "
+            "frequently requested translations."
+        )
         return None
     else:
         # Format the header and the body text.
-        header = (f"## [Frequently-Requested Translation]"
-                  f"(https://www.reddit.com/r/translator/wiki/frequently-requested)"
-                  f"\n\n**{term_data['entry']}** (*{term_data['language']}*)\n\n")
-        keywords = [f'`{x}`' for x in term_data['keywords']]
-        header += "*Keywords*: " + ', '.join(keywords) + '\n\n'
+        header = (
+            f"## [Frequently-Requested Translation]"
+            f"(https://www.reddit.com/r/translator/wiki/frequently-requested)"
+            f"\n\n**{term_data['entry']}** (*{term_data['language']}*)\n\n"
+        )
+        keywords = [f"`{x}`" for x in term_data["keywords"]]
+        header += "*Keywords*: " + ", ".join(keywords) + "\n\n"
         body = f"> {term_data['explanation']}"
         body = body.replace("  ", " ")  # In case of extra spaces.
 
         # Format the external links.
-        if term_data.get('links')[0]:
-            for link in term_data['links']:
-                actual_index = term_data['links'].index(link) + 1
+        if term_data.get("links")[0]:
+            for link in term_data["links"]:
+                actual_index = term_data["links"].index(link) + 1
                 link_data.append(f"[Link {actual_index}]({link})")
-            link_data = ', '.join(link_data)
+            link_data = ", ".join(link_data)
         else:
-            link_data = ''
+            link_data = ""
 
         # Format the Reddit examples.
-        if term_data.get('examples')[0]:
-            for example in term_data['examples']:
-                example_index = term_data['examples'].index(example) + 1
+        if term_data.get("examples")[0]:
+            for example in term_data["examples"]:
+                example_index = term_data["examples"].index(example) + 1
                 example_data.append(f"[Example {example_index}]({example})")
-            example_data = ', '.join(example_data)
+            example_data = ", ".join(example_data)
         else:
-            example_data = ''
+            example_data = ""
 
         # Put everything together.
         total_term = f"{header}{body}\n"

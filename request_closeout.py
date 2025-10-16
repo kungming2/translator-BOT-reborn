@@ -6,6 +6,7 @@ marked as translated or needs review, and have above a certain amount of
 comments/activity. It then messages the requester to remind them to mark
 the post as translated if their request has been properly fulfilled.
 """
+
 from datetime import UTC, datetime, timedelta
 
 from config import SETTINGS, logger
@@ -65,7 +66,7 @@ def closeout_posts():
     ajos_map = {}  # Map post IDs to AJO objects
 
     # Configurable close-out age (in days)
-    days = SETTINGS['close_out_age']
+    days = SETTINGS["close_out_age"]
 
     # Define the time window: between N days ago + 1 hour and N days ago
     now = datetime.now(UTC)
@@ -82,17 +83,19 @@ def closeout_posts():
             WHERE created_utc BETWEEN ? AND ? \
             """
     rows = db.fetchall_ajo(query, (lower, upper))
-    logger.debug(f"Fetching posts between {lower_dt.isoformat()} and {upper_dt.isoformat()}")
+    logger.debug(
+        f"Fetching posts between {lower_dt.isoformat()} and {upper_dt.isoformat()}"
+    )
     for row in rows:
-        ajo = ajo_loader(row['id'])
+        ajo = ajo_loader(row["id"])
         ajos_to_close.append(ajo)
         ajos_map[ajo.id] = ajo
 
     # Check to make sure the statuses match.
     posts_to_process = [
-        post for post in ajos_to_close
-        if post.status not in ['translated', 'doublecheck']
-        and not post.closed_out
+        post
+        for post in ajos_to_close
+        if post.status not in ["translated", "doublecheck"] and not post.closed_out
     ]
 
     if posts_to_process:
@@ -103,17 +106,21 @@ def closeout_posts():
 
         # Check if the post is deleted or removed
         if (
-                post_praw.author is None or
-                post_praw.selftext in ("[deleted]", "[removed]") or
-                post_praw.removed_by_category is not None
+            post_praw.author is None
+            or post_praw.selftext in ("[deleted]", "[removed]")
+            or post_praw.removed_by_category is not None
         ):
-            logger.info(f"Skipping post `{post.id}` for post closeout — deleted or removed.")
+            logger.info(
+                f"Skipping post `{post.id}` for post closeout — deleted or removed."
+            )
             continue
 
-        if post_praw.num_comments >= SETTINGS['close_out_comments_minimum']:
-            logger.info(f"Post `{post.id}` has {post_praw.num_comments} comments "
-                        f"(minimum: {SETTINGS['close_out_comments_minimum']}). "
-                        f"Adding to actionable posts and marking as closed out.")
+        if post_praw.num_comments >= SETTINGS["close_out_comments_minimum"]:
+            logger.info(
+                f"Post `{post.id}` has {post_praw.num_comments} comments "
+                f"(minimum: {SETTINGS['close_out_comments_minimum']}). "
+                f"Adding to actionable posts and marking as closed out."
+            )
 
             actionable_posts.append(post_praw)
             post.set_closed_out(True)

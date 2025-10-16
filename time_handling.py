@@ -4,6 +4,7 @@
 Handles time-related conversion tasks.
 Adherence to ISO 8601 or timestamps is strongly emphasized.
 """
+
 import time
 from datetime import date, datetime, timezone
 
@@ -16,7 +17,9 @@ def time_convert_to_string(unix_integer):
     :return: ISO 8601 formatted UTC time string
              (e.g., '2025-07-11T03:21:00Z').
     """
-    return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
 
 
 def get_previous_month(year_month):

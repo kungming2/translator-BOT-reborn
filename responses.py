@@ -3,6 +3,7 @@
 """
 Contains functions related to formatting bot responses.
 """
+
 from types import SimpleNamespace
 
 import yaml
@@ -22,7 +23,7 @@ class ResponseLoader:
 
     @staticmethod
     def _load_yaml(path):
-        with open(path, 'r', encoding='utf-8') as file:
+        with open(path, "r", encoding="utf-8") as file:
             return yaml.safe_load(file)
 
     def __getattr__(self, item):
@@ -30,4 +31,4 @@ class ResponseLoader:
 
 
 # To use: RESPONSE.VARIABLE_NAME
-RESPONSE = ResponseLoader(Paths.RESPONSES['TEXT'])
+RESPONSE = ResponseLoader(Paths.RESPONSES["TEXT"])

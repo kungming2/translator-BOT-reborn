@@ -5,6 +5,7 @@ Wrapper for Reddit functions to allow for testing without sending
 messages. This wraps functions for comment replies, message replies,
 and message sending.
 """
+
 from praw.exceptions import APIException
 from praw.models import Comment, Message, Submission
 from prawcore import NotFound
@@ -12,7 +13,7 @@ from prawcore import NotFound
 from config import SETTINGS, logger
 from testing import log_testing_mode
 
-testing_mode = SETTINGS['testing_mode']
+testing_mode = SETTINGS["testing_mode"]
 
 
 def comment_reply(comment, reply_text):
@@ -24,8 +25,10 @@ def comment_reply(comment, reply_text):
         reply_text: Text to reply with.
     """
     if testing_mode:
-        logger.info(f"[TESTING MODE] Would reply to comment ID "
-                    f"{comment.id} by {comment.author}:")
+        logger.info(
+            f"[TESTING MODE] Would reply to comment ID "
+            f"{comment.id} by {comment.author}:"
+        )
         logger.info(reply_text)
 
         log_testing_mode(
@@ -34,8 +37,8 @@ def comment_reply(comment, reply_text):
             metadata={
                 "Comment ID": comment.id,
                 "Author": str(comment.author),
-                "Permalink": comment.permalink
-            }
+                "Permalink": comment.permalink,
+            },
         )
     else:
         try:
@@ -65,10 +68,7 @@ def message_reply(msg_obj, reply_text):
         log_testing_mode(
             output_text=reply_text,
             title="Reply",
-            metadata={
-                "Reply Target": target_id,
-                "Author": str(target_author)
-            },
+            metadata={"Reply Target": target_id, "Author": str(target_author)},
         )
         return
 
@@ -81,8 +81,7 @@ def message_reply(msg_obj, reply_text):
             logger.exception(f"Unexpected error replying to {target_id}.")
     else:
         logger.warning(
-            f"Unsupported object type {type(msg_obj).__name__}; "
-            "no reply attempted."
+            f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."
         )
 
 
@@ -96,7 +95,7 @@ def message_send(redditor_obj, subject, body):
         subject (str): The subject line of the message.
         body (str): The body text of the message.
     """
-    username = getattr(redditor_obj, 'name', 'unknown')
+    username = getattr(redditor_obj, "name", "unknown")
 
     if testing_mode:
         logger.info(f"[TESTING MODE] Would send a message to u/{username}")

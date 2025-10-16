@@ -22,9 +22,8 @@ def cc_ref():
     multireddit called 'chinese' and provides character and word lookups
     for requests marked by backticks, just like on r/translator.
     """
-    multireddit = REDDIT_CHINESE.multireddit(redditor='translator-BOT',
-                                             name='chinese')
-    comments = list(multireddit.comments(limit=SETTINGS['max_posts']))
+    multireddit = REDDIT_CHINESE.multireddit(redditor="translator-BOT", name="chinese")
+    comments = list(multireddit.comments(limit=SETTINGS["max_posts"]))
 
     for comment in comments:
         body = comment.body
@@ -34,8 +33,8 @@ def cc_ref():
             continue
 
         # Detected a possible match.
-        if '`' in body:
-            matches = re.findall(r'`([\u2E80-\u9FFF]+)`', body)
+        if "`" in body:
+            matches = re.findall(r"`([\u2E80-\u9FFF]+)`", body)
             comment.save()  # To mark as processed
             if not matches:
                 continue
@@ -43,8 +42,9 @@ def cc_ref():
             tokenized_matches = []
             for item in matches:
                 if len(item) >= 2:
-                    tokenized_matches.extend(lookup_zh_ja_tokenizer(item,
-                                                                    language_code="zh"))
+                    tokenized_matches.extend(
+                        lookup_zh_ja_tokenizer(item, language_code="zh")
+                    )
                 else:
                     tokenized_matches.append(item)
 
@@ -56,14 +56,18 @@ def cc_ref():
                     reply_parts.append(asyncio.run(zh_word(token)))
 
             if reply_parts:
-                reply_text = '\n\n'.join(reply_parts)
+                reply_text = "\n\n".join(reply_parts)
                 if len(reply_text) > 10000:
-                    reply_text = reply_text[:9900]  # shorten to Reddit max comment length
+                    reply_text = reply_text[
+                        :9900
+                    ]  # shorten to Reddit max comment length
 
                 try:
                     comment_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
-                    logger.info(f"[CC_REF]: Replied to lookup request for {tokenized_matches} "
-                                f"on a Chinese subreddit.")
+                    logger.info(
+                        f"[CC_REF]: Replied to lookup request for {tokenized_matches} "
+                        f"on a Chinese subreddit."
+                    )
                 except exceptions.RedditAPIException as ex:
                     logger.error(f"Encountered an API exception. `{ex}`")
 
@@ -71,7 +75,7 @@ def cc_ref():
 REDDIT_CHINESE = chinese_reference_login(credentials_source)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     msg.good("Launching Chinese Reference...")
     # noinspection PyBroadException
     try:

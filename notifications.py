@@ -4,6 +4,7 @@
 Handles translation notification-related functions for
 the messaging system.
 """
+
 import random
 import sqlite3
 import time
@@ -17,8 +18,7 @@ from ai import fetch_image_description
 from config import SETTINGS, logger
 from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
-from languages import (Lingvo, converter, country_converter,
-                       language_module_settings)
+from languages import Lingvo, converter, country_converter, language_module_settings
 from models.ajo import ajo_loader
 from reddit_sender import message_send
 from responses import RESPONSE
@@ -33,16 +33,17 @@ def process_language_code(code: str) -> str:
     """Process and validate language codes for database operations.
     The database stores values in a slightly different way."""
     if len(code) == 4:  # Script code case
-        return f'unknown-{code}'  # Script codes have a prefix.
-    if code == 'en':  # Skip English
-        return ''
+        return f"unknown-{code}"  # Script codes have a prefix.
+    if code == "en":  # Skip English
+        return ""
     if not code:  # Skip empty
-        return ''
+        return ""
     return code
 
 
-def notifier_duplicate_checker(code: str, username: str,
-                               internal: bool = False) -> bool:
+def notifier_duplicate_checker(
+    code: str, username: str, internal: bool = False
+) -> bool:
     """
     Check if a user is already signed up for a specific notification.
 
@@ -77,7 +78,9 @@ def notifier_duplicate_checker(code: str, username: str,
         raise
 
 
-def prune_deleted_user_notifications(username: str, internal_posts: bool = False) -> list[str] | None:
+def prune_deleted_user_notifications(
+    username: str, internal_posts: bool = False
+) -> list[str] | None:
     """
     Remove notification subscriptions for a user who no longer exists on Reddit.
 
@@ -93,10 +96,14 @@ def prune_deleted_user_notifications(username: str, internal_posts: bool = False
     """
 
     if is_valid_user(username):
-        logger.info(f"[ZW] prune_deleted_user_notifications: u/{username} exists. Skipping.")
+        logger.info(
+            f"[ZW] prune_deleted_user_notifications: u/{username} exists. Skipping."
+        )
         return None
 
-    logger.info(f"[ZW] prune_deleted_user_notifications: Pruning u/{username} from the database...")
+    logger.info(
+        f"[ZW] prune_deleted_user_notifications: Pruning u/{username} from the database..."
+    )
 
     cursor = db.cursor_main
     conn = db.conn_main
@@ -108,18 +115,26 @@ def prune_deleted_user_notifications(username: str, internal_posts: bool = False
     final_codes = [row[0] for row in subscriptions]
 
     if final_codes:
-        formatted_list = ', '.join(f'`{code}`' for code in final_codes)
+        formatted_list = ", ".join(f"`{code}`" for code in final_codes)
         cursor.execute(f"DELETE FROM {table_name} WHERE username = ?", (username,))
         conn.commit()
-        logger.info(f"[ZW] prune_deleted_user_notifications: Deleted subscription info for u/{username}.")
-        logger.info(f"[ZW] prune_deleted_user_notifications: User was subscribed to: {formatted_list}.")
+        logger.info(
+            f"[ZW] prune_deleted_user_notifications: Deleted subscription info for u/{username}."
+        )
+        logger.info(
+            f"[ZW] prune_deleted_user_notifications: User was subscribed to: {formatted_list}."
+        )
     else:
-        logger.info(f"[ZW] prune_deleted_user_notifications: No subscription info found for u/{username}.")
+        logger.info(
+            f"[ZW] prune_deleted_user_notifications: No subscription info found for u/{username}."
+        )
 
     return final_codes
 
 
-def notifier_language_list_editor(language_list: list, user_object, mode: str = "insert") -> None:
+def notifier_language_list_editor(
+    language_list: list, user_object, mode: str = "insert"
+) -> None:
     """
     Modify the notification database by inserting or deleting entries for a username.
 
@@ -133,8 +148,12 @@ def notifier_language_list_editor(language_list: list, user_object, mode: str = 
     # Purge all language notifications for this user (languages and internal)
     if mode == "purge":
         with db.conn_main:
-            db.cursor_main.execute("DELETE FROM notify_users WHERE username = ?", (username,))
-            db.cursor_main.execute("DELETE FROM notify_internal WHERE username = ?", (username,))
+            db.cursor_main.execute(
+                "DELETE FROM notify_users WHERE username = ?", (username,)
+            )
+            db.cursor_main.execute(
+                "DELETE FROM notify_internal WHERE username = ?", (username,)
+            )
         return
 
     if not language_list:  # Nothing to process
@@ -143,7 +162,7 @@ def notifier_language_list_editor(language_list: list, user_object, mode: str = 
     for item in language_list:
         # Determine if this is an internal type (meta/community) or a
         # Lingvo language object
-        if isinstance(item, str) and item.lower() in SETTINGS['internal_post_types']:
+        if isinstance(item, str) and item.lower() in SETTINGS["internal_post_types"]:
             processed_code = item.lower()
             table, column, internal_flag = "notify_internal", "post_type", True
         else:
@@ -153,20 +172,22 @@ def notifier_language_list_editor(language_list: list, user_object, mode: str = 
         if not processed_code:
             continue
 
-        exists = notifier_duplicate_checker(processed_code, username, internal=internal_flag)
+        exists = notifier_duplicate_checker(
+            processed_code, username, internal=internal_flag
+        )
         sql_params = (processed_code, username)
 
         if mode == "insert" and not exists:
             with db.conn_main:
                 db.cursor_main.execute(
                     f"INSERT INTO {table} ({column}, username) VALUES (?, ?)",
-                    sql_params
+                    sql_params,
                 )
         elif mode == "delete" and exists:
             with db.conn_main:
                 db.cursor_main.execute(
                     f"DELETE FROM {table} WHERE {column} = ? AND username = ?",
-                    sql_params
+                    sql_params,
                 )
 
     return
@@ -185,12 +206,18 @@ def notifier_language_list_retriever(user_object, internal: bool = False) -> Lis
 
     if internal:
         # Get internal subscriptions (meta, community)
-        cursor.execute("SELECT post_type FROM notify_internal WHERE username = ?", (username,))
+        cursor.execute(
+            "SELECT post_type FROM notify_internal WHERE username = ?", (username,)
+        )
         return [row[0] for row in cursor.fetchall()]
     else:
         # Get language subscriptions
-        cursor.execute("SELECT language_code FROM notify_users WHERE username = ?", (username,))
-        return [converter(row[0]) for row in cursor.fetchall()]  # Convert results to Lingvos
+        cursor.execute(
+            "SELECT language_code FROM notify_users WHERE username = ?", (username,)
+        )
+        return [
+            converter(row[0]) for row in cursor.fetchall()
+        ]  # Convert results to Lingvos
 
 
 def fetch_usernames_for_lingvo(lingvo, max_num=None) -> List[str]:
@@ -250,7 +277,9 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
     :param lingvo_object: A Lingvo object representing a regional variant.
     :return: List of usernames who prefer the specific variant only.
     """
-    language_country_associations = language_module_settings['ISO_LANGUAGE_COUNTRY_ASSOCIATED']
+    language_country_associations = language_module_settings[
+        "ISO_LANGUAGE_COUNTRY_ASSOCIATED"
+    ]
     lingvo_code = lingvo_object.preferred_code
     specific_usernames = set()
     broader_usernames = set()
@@ -262,8 +291,10 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
             return []
         language_region_code = f"{lingvo_code}-{country_code}"
         iso_associated_code = language_country_associations.get(language_region_code)
-        logger.info(f"Regional Lingvo: `{language_region_code}` "
-                    f"converted to ISO 639-3 code: `{iso_associated_code}`")
+        logger.info(
+            f"Regional Lingvo: `{language_region_code}` "
+            f"converted to ISO 639-3 code: `{iso_associated_code}`"
+        )
     else:
         language_region_code = None
         iso_associated_code = None
@@ -272,13 +303,20 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
     specific_usernames.update(fetch_usernames_for_lingvo(lingvo_object))
 
     # Only get users subscribed to ISO code if it exists and differs
-    if iso_associated_code and iso_associated_code.lower() != (language_region_code or "").lower():
-        specific_usernames.update(fetch_usernames_for_lingvo(Lingvo(language_code_3=iso_associated_code)))
+    if (
+        iso_associated_code
+        and iso_associated_code.lower() != (language_region_code or "").lower()
+    ):
+        specific_usernames.update(
+            fetch_usernames_for_lingvo(Lingvo(language_code_3=iso_associated_code))
+        )
 
     # Broader language code (e.g. 'pt' from 'pt-BR')
     broader_code = language_region_code.split("-")[0] if language_region_code else None
     if broader_code:
-        broader_usernames.update(fetch_usernames_for_lingvo(Lingvo(language_code_1=broader_code)))
+        broader_usernames.update(
+            fetch_usernames_for_lingvo(Lingvo(language_code_1=broader_code))
+        )
 
     return list(specific_usernames - broader_usernames)
 
@@ -286,7 +324,9 @@ def notifier_specific_language_filter(lingvo_object) -> list[str]:
 """NOTIFICATION LIMITS ENFORCING"""
 
 
-def update_user_notification_count(username: str, lingvo_object, num_notifications: int = 1) -> None:
+def update_user_notification_count(
+    username: str, lingvo_object, num_notifications: int = 1
+) -> None:
     """
     Updates the count of notifications a user has received for a specific language.
     If no record exists, a new one is created. Data is stored as an orjson-encoded dictionary.
@@ -299,7 +339,9 @@ def update_user_notification_count(username: str, lingvo_object, num_notificatio
     language_code = lingvo_object.preferred_code
 
     # Attempt to fetch existing notification records
-    cursor.execute("SELECT received FROM notify_cumulative WHERE username = ?", (username,))
+    cursor.execute(
+        "SELECT received FROM notify_cumulative WHERE username = ?", (username,)
+    )
     row = cursor.fetchone()
 
     if row:
@@ -320,18 +362,20 @@ def update_user_notification_count(username: str, lingvo_object, num_notificatio
     if row:
         cursor.execute(
             "UPDATE notify_cumulative SET received = ? WHERE username = ?",
-            (orjson_data, username)
+            (orjson_data, username),
         )
     else:
         cursor.execute(
             "INSERT INTO notify_cumulative (username, received) VALUES (?, ?)",
-            (username, orjson_data)
+            (username, orjson_data),
         )
 
     db.conn_main.commit()
 
 
-def notification_rate_limiter(subscribed_users: list, lingvo_object, monthly_limit: int) -> list:
+def notification_rate_limiter(
+    subscribed_users: list, lingvo_object, monthly_limit: int
+) -> list:
     """
     Equalizes notification volume for high-traffic languages to avoid
     spamming users.
@@ -351,7 +395,7 @@ def notification_rate_limiter(subscribed_users: list, lingvo_object, monthly_lim
         return []
 
     total_users = len(subscribed_users)
-    max_language_users = SETTINGS['notifications_user_limit']
+    max_language_users = SETTINGS["notifications_user_limit"]
     language_name = lingvo_object.name
 
     # Get the average number of posts per month for the language
@@ -364,11 +408,15 @@ def notification_rate_limiter(subscribed_users: list, lingvo_object, monthly_lim
 
     # Calculate how many users to notify per post
     if average_posts_per_month == 0:
-        num_users_to_notify = SETTINGS['notifications_user_limit']
+        num_users_to_notify = SETTINGS["notifications_user_limit"]
     else:
         total_allowed_notifications = total_users * monthly_limit
-        num_users_to_notify = round(total_allowed_notifications / average_posts_per_month)
-        num_users_to_notify = max(1, num_users_to_notify)  # Ensure at least one user is notified
+        num_users_to_notify = round(
+            total_allowed_notifications / average_posts_per_month
+        )
+        num_users_to_notify = max(
+            1, num_users_to_notify
+        )  # Ensure at least one user is notified
 
     # Randomly sample if too many users would be notified.
     if num_users_to_notify < total_users:
@@ -377,7 +425,9 @@ def notification_rate_limiter(subscribed_users: list, lingvo_object, monthly_lim
     # Final cap to avoid exceeding the maximum allowed per post
     if len(subscribed_users) > max_language_users:
         subscribed_users = random.sample(subscribed_users, max_language_users)
-        logger.info(f"[ZW] Notifier Equalizer: {max_language_users}+ users for {language_name} notifications. Randomized.")
+        logger.info(
+            f"[ZW] Notifier Equalizer: {max_language_users}+ users for {language_name} notifications. Randomized."
+        )
 
     # Alphabetize final list
     return sorted(subscribed_users, key=lambda u: str(u).lower())
@@ -398,7 +448,10 @@ def should_send_language_notification(lingvo, messaging_ajo_history):
 
     # Allow sending notification only if language is either not in history
     # or is the last classification (to prevent duplicate notifications).
-    if language_name in messaging_ajo_history and language_name != messaging_ajo_history[-1]:
+    if (
+        language_name in messaging_ajo_history
+        and language_name != messaging_ajo_history[-1]
+    ):
         return False
     return True
 
@@ -412,7 +465,7 @@ def is_user_over_submission_limit(username: str) -> bool:
 
     :return: True if user exceeded the limit, False otherwise.
     """
-    limit = SETTINGS['user_submission_limit']
+    limit = SETTINGS["user_submission_limit"]
     logger.debug(f"User submission limit: {limit}")
 
     # Count how many times the username appears in recent submitters
@@ -437,7 +490,7 @@ def notifier_title_cleaner(title: str) -> str:
     """
 
     # Common Markdown-sensitive characters that might need escaping
-    markdown_sensitive = ['[', ']', '(', ')', '*', '_', '~', '`']
+    markdown_sensitive = ["[", "]", "(", ")", "*", "_", "~", "`"]
 
     for char in markdown_sensitive:
         title = title.replace(char, f"\\{char}")
@@ -460,7 +513,7 @@ def notifier(lingvo, submission, mode="new_post"):
     :return: List of usernames that were notified.
     """
     notify_users_list = []
-    page_users_count = SETTINGS['num_users_page']
+    page_users_count = SETTINGS["num_users_page"]
     contacted = []  # Track users already contacted for this post
     post_type = "translation request"
 
@@ -481,9 +534,10 @@ def notifier(lingvo, submission, mode="new_post"):
     try:
         language_history = ajo_data.language_history
         contacted = ajo_data.notified
-        logger.debug(f'Notifier: Already contacted u/{contacted}')
-        permission_to_proceed = should_send_language_notification(lingvo,
-                                                                  language_history)
+        logger.debug(f"Notifier: Already contacted u/{contacted}")
+        permission_to_proceed = should_send_language_notification(
+            lingvo, language_history
+        )
     except AttributeError:  # In rare cases
         permission_to_proceed = True
 
@@ -493,14 +547,13 @@ def notifier(lingvo, submission, mode="new_post"):
 
     # This is a country-specific request or a script request.
     if lingvo.country or lingvo.script_code:
-
         # Mark script-based matches explicitly
         if lingvo.script_code:
-            search_code = f'unknown-{lingvo.preferred_code}'
+            search_code = f"unknown-{lingvo.preferred_code}"
 
         if lingvo.country:
             country_code = country_converter(lingvo.country)
-            search_code = f'{lingvo.preferred_code}-{country_code}'
+            search_code = f"{lingvo.preferred_code}-{country_code}"
 
         # Append users subscribed to script/regional variants
         regional_data = notifier_specific_language_filter(lingvo)
@@ -527,9 +580,9 @@ def notifier(lingvo, submission, mode="new_post"):
     notify_users_list = [user for user in notify_users_list if user not in contacted]
 
     # Equalize distribution across popular languages
-    notify_users_list = notification_rate_limiter(notify_users_list,
-                                                  lingvo,
-                                                  SETTINGS["notifications_user_limit"])
+    notify_users_list = notification_rate_limiter(
+        notify_users_list, lingvo, SETTINGS["notifications_user_limit"]
+    )
 
     # In 'page' mode, limit to `page_users_count` users maximum
     if mode == "page" and len(notify_users_list) > page_users_count:
@@ -551,7 +604,7 @@ def notifier(lingvo, submission, mode="new_post"):
         message_templates = {
             "identify": RESPONSE.MSG_NOTIFY_IDENTIFY,
             "page": RESPONSE.MSG_PAGE,
-            "new_post": RESPONSE.MSG_NOTIFY
+            "new_post": RESPONSE.MSG_NOTIFY,
         }
 
         # Default to "new_post" if mode is not found
@@ -573,7 +626,7 @@ def notifier(lingvo, submission, mode="new_post"):
             title=post_title,
             permalink=post_permalink,
             post_author=post_author,
-            image_description=image_description
+            image_description=image_description,
         )
 
         # Tack on an NSFW warning if necessary.
@@ -582,19 +635,23 @@ def notifier(lingvo, submission, mode="new_post"):
 
         try:
             # Send message to user via Reddit messages
-            message_subject = f"[Notification] New {language_name} request on r/translator"
+            message_subject = (
+                f"[Notification] New {language_name} request on r/translator"
+            )
             recipient = REDDIT.redditor(username)
-            full_message = f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
+            full_message = (
+                f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
+            )
             message_send(
-                redditor_obj=recipient,
-                subject=message_subject,
-                body=full_message
+                redditor_obj=recipient, subject=message_subject, body=full_message
             )
             # Update notification count for this user/language
             update_user_notification_count(username, lingvo)
 
         except exceptions.APIException as e:
-            logger.info(f"[Notifier] Error sending message to u/{username}. Removing user.")
+            logger.info(
+                f"[Notifier] Error sending message to u/{username}. Removing user."
+            )
             logger.error(f"API Exception for u/{username}: {e}")
             prune_deleted_user_notifications(username)
 
@@ -609,11 +666,13 @@ def notifier(lingvo, submission, mode="new_post"):
         None,
         language_name,
         round(messaging_mins, 2),
-        round(seconds_per_message, 2)
+        round(seconds_per_message, 2),
     )
     record_activity_csv(payload)
 
-    logger.info(f"[Notifier] Sent notifications to {len(notify_users_list)} users signed up for {language_name}.")
+    logger.info(
+        f"[Notifier] Sent notifications to {len(notify_users_list)} users signed up for {language_name}."
+    )
 
     return notify_users_list
 
@@ -628,7 +687,9 @@ def notifier_internal(post_type, submission):
 
     # Ensure only supported posts are acted upon.
     if post_type_search not in SETTINGS["internal_post_types"]:
-        logger.error(f"Notifier Internal: `{post_type_search}` is not a supported post type.")
+        logger.error(
+            f"Notifier Internal: `{post_type_search}` is not a supported post type."
+        )
         return []
 
     # Exit if the author's invalid.
@@ -645,29 +706,33 @@ def notifier_internal(post_type, submission):
         return []
 
     # Message people on the list.
-    logger.info(f"Sending internal notifications to {len(notify_targets)} users. | `{submission.id}`")
+    logger.info(
+        f"Sending internal notifications to {len(notify_targets)} users. | `{submission.id}`"
+    )
     for username in notify_targets:
         try:
-            message_subject = f"[Notification] New {post_type.title()} post on r/translator"
+            message_subject = (
+                f"[Notification] New {post_type.title()} post on r/translator"
+            )
             recipient = REDDIT.redditor(username)
             message_body = RESPONSE.MSG_NOTIFY.format(
                 username=username,
                 language_name=post_type,
-                post_type='post',
+                post_type="post",
                 title=submission.title,
                 permalink=submission.permalink,
-                post_author=original_post_author
+                post_author=original_post_author,
             )
             full_message = f"{message_body}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
             message_send(
-                redditor_obj=recipient,
-                subject=message_subject,
-                body=full_message
+                redditor_obj=recipient, subject=message_subject, body=full_message
             )
 
         except exceptions.APIException as e:
-            logger.info(f"[Notifier] Error sending internal message to "
-                        f"u/{username}. Removing user.")
+            logger.info(
+                f"[Notifier] Error sending internal message to "
+                f"u/{username}. Removing user."
+            )
             logger.error(f"API Exception for u/{username}: {e}")
             prune_deleted_user_notifications(username, True)
 
@@ -676,5 +741,7 @@ def notifier_internal(post_type, submission):
 
 if __name__ == "__main__":
     while True:
-        notifications_test = input("Please enter the language you'd like to retrieve notifications for: ")
+        notifications_test = input(
+            "Please enter the language you'd like to retrieve notifications for: "
+        )
         print(fetch_usernames_for_lingvo(converter(notifications_test)))

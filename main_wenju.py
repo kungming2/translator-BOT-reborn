@@ -44,6 +44,7 @@ You can run any schedule manually for testing:
     python main_wenju.py hourly
     python main_wenju.py daily
 """
+
 import sys
 
 from config import logger
@@ -60,5 +61,5 @@ def wenju_runner():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     wenju_runner()

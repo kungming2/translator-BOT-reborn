@@ -3,6 +3,7 @@
 """
 Handles simple functions to send one-way notifications for Discord.
 """
+
 import requests
 
 from config import Paths, load_settings, logger
@@ -36,7 +37,7 @@ def send_discord_alert(subject, message, webhook_name, roles=None):
     # Format the roles section. This must be included outside the
     # embed in order to work properly. Roles are sent as a list.
     if roles:
-        roles_content = ' '.join(f'<@&{role}>' for role in roles)
+        roles_content = " ".join(f"<@&{role}>" for role in roles)
         logger.debug(f"Roles: {roles_content}")
     else:
         roles_content = None
@@ -45,13 +46,12 @@ def send_discord_alert(subject, message, webhook_name, roles=None):
         "title": subject,
         "description": message,
         "color": color_decimal,  # Set the embed color
-        "thumbnail": {"url": image_url}  # Set the image as the thumbnail
+        "thumbnail": {"url": image_url},  # Set the image as the thumbnail
     }
 
     # Include a roles section before the embed.
     if roles_content:
-        payload = {"content": roles_content,
-                   "embeds": [embed]}
+        payload = {"content": roles_content, "embeds": [embed]}
     else:
         payload = {"embeds": [embed]}
 

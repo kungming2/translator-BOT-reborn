@@ -3,6 +3,7 @@
 """
 A grab-bag of various simple utility functions.
 """
+
 import io
 import re
 
@@ -64,16 +65,16 @@ def fetch_youtube_length(youtube_url):
     yt-dlp library.
     """
     ydl_opts = {
-        'quiet': True,
-        'skip_download': True,  # we only want metadata
+        "quiet": True,
+        "skip_download": True,  # we only want metadata
     }
 
     with YoutubeDL(ydl_opts) as ydl:
         try:
             info = ydl.extract_info(youtube_url, download=False)
-            return info.get('duration')  # duration in seconds
+            return info.get("duration")  # duration in seconds
         except Exception as e:
-            print(f"Error fetching video info: {e}")
+            logger.error(f"Error fetching video info: {e}")
             return None
 
 

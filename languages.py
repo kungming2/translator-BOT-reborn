@@ -3,6 +3,7 @@
 """
 A collection of database sets and language functions that all r/translator bots use.
 """
+
 import copy
 import csv
 import random
@@ -16,7 +17,7 @@ from rapidfuzz import fuzz
 from config import Paths, load_settings, logger
 
 # Load the language module's settings and parse the file's content
-language_module_settings = load_settings(Paths.SETTINGS['LANGUAGES_MODULE_SETTINGS'])
+language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 _lingvos_cache = None  # for reloading purposes when the data changes
 
 
@@ -46,7 +47,9 @@ class Lingvo:
         self.rate_daily = kwargs.get("rate_daily")
         self.rate_monthly = kwargs.get("rate_monthly")
         self.rate_yearly = kwargs.get("rate_yearly")
-        self.link_statistics = kwargs.get("permalink")  # Maps permalink → statistics_page
+        self.link_statistics = kwargs.get(
+            "permalink"
+        )  # Maps permalink → statistics_page
 
     # Define the preferred code to be used.
     @property
@@ -100,7 +103,6 @@ class Lingvo:
             supported=False,
             link_ethnologue=None,
             link_wikipedia=None,
-
             # Explicitly set statistics fields to None
             num_months=None,
             rate_daily=None,
@@ -130,7 +132,6 @@ class Lingvo:
             "link_ethnologue": self.link_ethnologue,
             "link_wikipedia": self.link_wikipedia,
             "preferred_code": self.preferred_code,
-
             # Export statistics fields
             "num_months": self.num_months,
             "rate_daily": self.rate_daily,
@@ -179,7 +180,9 @@ def _load_lingvo_dataset(debug=False):
         else:
             combined_data[code] = attrs.copy()
         if debug:
-            logger.debug(f"utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
+            logger.debug(
+                f"utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}"
+            )
 
     # Add statistics
     for code, stats in statistics_data.items():
@@ -191,7 +194,9 @@ def _load_lingvo_dataset(debug=False):
         else:
             combined_data[code] = filtered_stats.copy()
         if debug:
-            logger.debug(f"statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}")
+            logger.debug(
+                f"statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}"
+            )
 
     # Create Lingvo instances and track problematic codes
     lingvo_dict = {}
@@ -205,14 +210,20 @@ def _load_lingvo_dataset(debug=False):
         if not name or not lang_code:
             problematic_codes.append(code)
             if debug:
-                logger.warning(f"WARNING: {code} is missing required fields: name={name}, language_code={lang_code}")
+                logger.warning(
+                    f"WARNING: {code} is missing required fields: name={name}, language_code={lang_code}"
+                )
 
         # Create Lingvo with cleaned attrs
-        lingvo_dict[code] = Lingvo(language_code=lang_code, name=name or "unknown", **attrs)
+        lingvo_dict[code] = Lingvo(
+            language_code=lang_code, name=name or "unknown", **attrs
+        )
 
     if problematic_codes:
-        logger.warning(f"The following codes have issues in the "
-                       f"language database: `{problematic_codes}`")
+        logger.warning(
+            f"The following codes have issues in the "
+            f"language database: `{problematic_codes}`"
+        )
 
     return lingvo_dict
 
@@ -290,13 +301,13 @@ def define_language_lists():
 
 def normalize(text):
     text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text)
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
 def fuzzy_text(word, supported_languages, threshold=75):
-    exclude = language_module_settings['FUZZ_IGNORE_LANGUAGE_NAMES']
+    exclude = language_module_settings["FUZZ_IGNORE_LANGUAGE_NAMES"]
     word_norm = normalize(word)
 
     best_match = None
@@ -329,12 +340,12 @@ def iso_codes_deep_search(search_term, script_search=False):
     search_term = search_term.strip().lower()
 
     if script_search:
-        dataset_path = Paths.DATASETS['ISO_SCRIPT_CODES']
+        dataset_path = Paths.DATASETS["ISO_SCRIPT_CODES"]
         code_key = "Script Code"
         name_key = "Script Name"
         alt_key = "Alternate Names"
     else:
-        dataset_path = Paths.DATASETS['ISO_CODES']
+        dataset_path = Paths.DATASETS["ISO_CODES"]
         code_key = "ISO 639-3"
         name_key = "Language Name"
         alt_key = "Alternate Names"
@@ -349,7 +360,9 @@ def iso_codes_deep_search(search_term, script_search=False):
                 code = row.get(code_key, "").strip().lower()
                 name = row.get(name_key, "").strip()
                 alt_raw = row.get(alt_key) or ""
-                alternates = [alt.strip().lower() for alt in alt_raw.split(";") if alt.strip()]
+                alternates = [
+                    alt.strip().lower() for alt in alt_raw.split(";") if alt.strip()
+                ]
 
                 if search_term in {code, name.lower()} or search_term in alternates:
                     if script_search:
@@ -359,7 +372,7 @@ def iso_codes_deep_search(search_term, script_search=False):
                             language_code_1="unknown",
                             language_code_3="unknown",
                             script_code=row.get("Script Code"),
-                            supported=True
+                            supported=True,
                         )
                     else:
                         return Lingvo.from_csv_row(row)
@@ -422,9 +435,13 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
                 script_name = getattr(result, "name", None)
                 if not script_name:
                     return None
-                return Lingvo(name=script_name, language_code_1='unknown',
-                              language_code_3='unknown',
-                              script_code=specific.lower(), supported=True)
+                return Lingvo(
+                    name=script_name,
+                    language_code_1="unknown",
+                    language_code_3="unknown",
+                    script_code=specific.lower(),
+                    supported=True,
+                )
             except (AttributeError, TypeError):
                 return None
 
@@ -453,7 +470,7 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
             return lingvo_copy
 
     # Try to find a Lingvo by 2-letter code first
-    if input_lower in reference_lists['ISO_639_1']:
+    if input_lower in reference_lists["ISO_639_1"]:
         lingvo = lingvos.get(input_lower)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
@@ -493,8 +510,8 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
         return lingvo_copy
 
     # Special abbreviation fixes (like 'vn' meaning Vietnamese)
-    if input_lower in reference_lists['MISTAKE_ABBREVIATIONS']:
-        fixed = reference_lists['MISTAKE_ABBREVIATIONS'][input_lower]
+    if input_lower in reference_lists["MISTAKE_ABBREVIATIONS"]:
+        fixed = reference_lists["MISTAKE_ABBREVIATIONS"][input_lower]
         lingvo = lingvos.get(fixed)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
@@ -502,8 +519,8 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
             return lingvo_copy
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
-    if input_lower in reference_lists['ISO_639_2B']:
-        canonical_code = reference_lists['ISO_639_2B'][input_lower]
+    if input_lower in reference_lists["ISO_639_2B"]:
+        canonical_code = reference_lists["ISO_639_2B"][input_lower]
         lingvo = lingvos.get(canonical_code)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
@@ -511,8 +528,8 @@ def converter(input_text: str, fuzzy: bool = True) -> Lingvo | None:
             return lingvo_copy
 
     # Fuzzy match if nothing else worked
-    if fuzzy and input_title not in language_module_settings['FUZZ_IGNORE_WORDS']:
-        fuzzy_result = fuzzy_text(input_title, reference_lists['SUPPORTED_LANGUAGES'])
+    if fuzzy and input_title not in language_module_settings["FUZZ_IGNORE_WORDS"]:
+        fuzzy_result = fuzzy_text(input_title, reference_lists["SUPPORTED_LANGUAGES"])
         if fuzzy_result:
             return converter(fuzzy_result, fuzzy=False)
 
@@ -544,23 +561,23 @@ def parse_language_list(list_string):
         return []
 
     # Strip 'LANGUAGES:' prefix if present
-    if 'LANGUAGES:' in list_string:
-        list_string = list_string.rpartition('LANGUAGES:')[-1].strip()
+    if "LANGUAGES:" in list_string:
+        list_string = list_string.rpartition("LANGUAGES:")[-1].strip()
     else:
         list_string = list_string.strip()
 
     # Normalize various delimiters to commas
-    for delimiter in ['+', '\n', '/', ':', ';']:
-        list_string = list_string.replace(delimiter, ',')
+    for delimiter in ["+", "\n", "/", ":", ";"]:
+        list_string = list_string.replace(delimiter, ",")
 
     # Handle space-delimited case specially
-    if ',' not in list_string and ' ' in list_string:
+    if "," not in list_string and " " in list_string:
         match = converter(list_string)
         items = [list_string] if match is None else [match]
     else:
-        items = list_string.split(',')
+        items = list_string.split(",")
 
-    utility_codes = {'meta', 'community', 'all'}
+    utility_codes = {"meta", "community", "all"}
     final_lingvos = {}
 
     for item in items:
@@ -574,9 +591,13 @@ def parse_language_list(list_string):
         else:
             lang = converter(item)
             if lang:
-                final_lingvos[lang.preferred_code] = lang  # Deduplicate by preferred code
+                final_lingvos[lang.preferred_code] = (
+                    lang  # Deduplicate by preferred code
+                )
 
-    return sorted(final_lingvos.values(), key=lambda lingvo: lingvo.preferred_code.lower())
+    return sorted(
+        final_lingvos.values(), key=lambda lingvo: lingvo.preferred_code.lower()
+    )
 
 
 """MANAGING COUNTRIES DATA"""
@@ -585,7 +606,7 @@ def parse_language_list(list_string):
 def get_country_emoji(country_name):
     """Return the flag emoji for a given country name."""
     if not country_name:
-        return ''
+        return ""
 
     try:
         # Try direct name match first
@@ -613,7 +634,7 @@ def get_country_emoji(country_name):
         code = country.alpha_2
         return chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
     else:
-        return ''
+        return ""
 
 
 def load_country_list():
@@ -623,14 +644,16 @@ def load_country_list():
                           Keywords (semicolon-separated)
     """
     country_list = []
-    with open(Paths.DATASETS['COUNTRIES'], newline='', encoding='utf-8') as csvfile:
+    with open(Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             name = row[0].strip()
             alpha2 = row[1].strip()
             alpha3 = row[2].strip()
             numeric = row[3].strip()
-            keywords = row[4].strip().split(';') if len(row) > 4 and row[4].strip() else []
+            keywords = (
+                row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
+            )
             country_list.append((name, alpha2, alpha3, numeric, keywords))
     return country_list
 
@@ -701,16 +724,20 @@ def select_random_language(iso_639_1=False):
     Returns:
         Lingvo or None if no match found.
     """
-    pattern = r'^[a-z]{2}$' if iso_639_1 else r'^[a-z]{3}$'
+    pattern = r"^[a-z]{2}$" if iso_639_1 else r"^[a-z]{3}$"
 
-    with open(Paths.DATASETS['ISO_CODES'], 'r', newline='', encoding='utf-8') as csvfile:
+    with open(
+        Paths.DATASETS["ISO_CODES"], "r", newline="", encoding="utf-8"
+    ) as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None)  # Skip header
 
         filtered = [
-            row for row in reader
-            if row and re.match(pattern, row[1] if iso_639_1 else row[0])
-            and (iso_639_1 or not ('qaa' <= row[0].lower() <= 'qtz'))
+            row
+            for row in reader
+            if row
+            and re.match(pattern, row[1] if iso_639_1 else row[0])
+            and (iso_639_1 or not ("qaa" <= row[0].lower() <= "qtz"))
         ]
 
     if not filtered:
@@ -729,7 +756,9 @@ if __name__ == "__main__":
         converter_result = converter(my_test)
 
         if converter_result:
-            print(f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`")
+            print(
+                f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`"
+            )
             pprint(vars(converter_result))
         else:
             print("Did not match anything.")

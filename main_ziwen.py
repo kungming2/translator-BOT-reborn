@@ -4,6 +4,7 @@
 Handles the top-level functions that go through posts, messages, and
 comments. This is the actual module that is run.
 """
+
 import os
 import sys
 import time
@@ -22,7 +23,7 @@ from processes.ziwen_posts import ziwen_posts
 from time_handling import time_convert_to_string
 from verification import verification_parser
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start_time = time.time()
 
     try:
@@ -45,7 +46,7 @@ if __name__ == '__main__':
             verification_parser()
 
             # Record API usage limit.
-            probe = REDDIT.redditor(credentials_source['USERNAME']).created_utc
+            probe = REDDIT.redditor(credentials_source["USERNAME"]).created_utc
             used_calls = REDDIT.auth.limits["used"]
 
             # Record memory usage at the end of a run.
@@ -60,16 +61,22 @@ if __name__ == '__main__':
 
             # Format the error text.
             error_entry = traceback.format_exc()
-            error_log_extended(error_entry, 'Ziwen Main')
+            error_log_extended(error_entry, "Ziwen Main")
         else:
             # Package data for this run and write it to a record.
             elapsed_time = round((time.time() - start_time) / 60, 2)
             run_time = time_convert_to_string(start_time)
-            run_information = (run_time, "Cycle run", used_calls,
-                               None, mem_usage,
-                               None, elapsed_time)
+            run_information = (
+                run_time,
+                "Cycle run",
+                used_calls,
+                None,
+                mem_usage,
+                None,
+                elapsed_time,
+            )
             record_activity_csv(run_information)
             logger.info(f"[ZW] Main: Run {elapsed_time:.2f} minutes.")
     except KeyboardInterrupt:  # Manual termination of the script with Ctrl-C.
-        logger.info('Manual user shutdown.')
+        logger.info("Manual user shutdown.")
         sys.exit()

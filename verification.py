@@ -5,6 +5,7 @@ Functions that deal with the verification process on r/translator.
 There is usually only one valid verification post to analyze and
 watch for.
 """
+
 import re
 import time
 
@@ -42,12 +43,12 @@ def set_user_flair(user, verified_language):
     :param verified_language: The language name to verify the user for.
     :return:
     """
-    subreddit_object = REDDIT.subreddit(SETTINGS['subreddit'])
+    subreddit_object = REDDIT.subreddit(SETTINGS["subreddit"])
 
     # Retrieve the original flair's text.
     user_flairs = list(subreddit_object.flair(redditor=user))
     user_flair = user_flairs[0] if user_flairs else {}
-    user_original_flair = user_flair.get('flair_text') or ''
+    user_original_flair = user_flair.get("flair_text") or ""
     user_new_flair = str(user_original_flair)
     logger.info(f">> u/{user}'s original flair is `{user_new_flair}`.")
 
@@ -55,16 +56,19 @@ def set_user_flair(user, verified_language):
     # Then reconstitute the flair.
     verified_language_code = f":{converter(verified_language).preferred_code}:"
     if verified_language_code in user_original_flair:
-        user_new_flair = user_original_flair.replace(verified_language_code, '')
+        user_new_flair = user_original_flair.replace(verified_language_code, "")
     if verified_language in user_original_flair:
-        user_new_flair = user_new_flair.replace(verified_language, '')
+        user_new_flair = user_new_flair.replace(verified_language, "")
     verified_prefix = f":verified: [{verified_language_code} {verified_language}] "
     user_new_flair = verified_prefix + user_new_flair
-    user_new_flair = user_new_flair.replace('  ', '')
+    user_new_flair = user_new_flair.replace("  ", "")
 
     # Set the new flair.
-    subreddit_object.flair.set(user, text=user_new_flair,
-                               flair_template_id="1e041384-e741-11e9-9794-0e7e958770bc")
+    subreddit_object.flair.set(
+        user,
+        text=user_new_flair,
+        flair_template_id="1e041384-e741-11e9-9794-0e7e958770bc",
+    )
 
     logger.info(f">> Set u/{user}'s verified flair to `{user_new_flair}`.")
 
@@ -100,7 +104,9 @@ def process_verification(confirming_comment):
     logger.info(f"> User to verify: u/{verified_person}.")
 
     # Code to interact with user flair here.
-    language_to_verify = parent_comment.body.split('\n')[0].strip().title()  # Get the language name.
+    language_to_verify = (
+        parent_comment.body.split("\n")[0].strip().title()
+    )  # Get the language name.
     logger.info(f"> Language to verify them for: {language_to_verify}.")
 
     # Pass it to the function to set it.
@@ -108,9 +114,12 @@ def process_verification(confirming_comment):
     parent_comment.mod.approve()
 
     # Message the mod.
-    message_send(mod_caller, subject=f"Verified u/{verified_person}",
-                 body=f"Verified u/{verified_person} for {language_to_verify}. Command called by you "
-                      f"[here](https://www.reddit.com{confirming_comment.permalink}?context=10000).")
+    message_send(
+        mod_caller,
+        subject=f"Verified u/{verified_person}",
+        body=f"Verified u/{verified_person} for {language_to_verify}. Command called by you "
+        f"[here](https://www.reddit.com{confirming_comment.permalink}?context=10000).",
+    )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
     logger.info("> Verified procedure complete.")
 
@@ -152,10 +161,12 @@ def verification_parser():
             continue
 
         # Normalize comment body for parsing
-        normalized_body = comment_body.replace('\n', '|').replace('||', '|')
-        components = [comp.strip() for comp in normalized_body.split('|') if comp.strip()]
+        normalized_body = comment_body.replace("\n", "|").replace("||", "|")
+        components = [
+            comp.strip() for comp in normalized_body.split("|") if comp.strip()
+        ]
 
-        url_pattern = r'https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*)'
+        url_pattern = r"https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*)"
 
         try:
             language_name = components[0]
@@ -171,25 +182,32 @@ def verification_parser():
 
         # Format verification log entry
         entry = f"| {author_string} | {language_name} | [1]({url_1}), [2]({url_2}), [3]({url_3}) | {notes} |"
-        wiki_page = REDDIT.subreddit('translator').wiki["verification_log"]
+        wiki_page = REDDIT.subreddit("translator").wiki["verification_log"]
         updated_content = f"{wiki_page.content_md}\n{entry}"
 
-        wiki_page.edit(content=updated_content,
-                       reason=f'Updating verification log with a new request from {author_string}')
+        wiki_page.edit(
+            content=updated_content,
+            reason=f"Updating verification log with a new request from {author_string}",
+        )
 
         # Reply to the person who asked for verification.
-        reply_text = RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(language_lingvo.thanks,
-                                                                   author_name,
-                                                                   language_lingvo.name) + RESPONSE.BOT_DISCLAIMER
+        reply_text = (
+            RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(
+                language_lingvo.thanks, author_name, language_lingvo.name
+            )
+            + RESPONSE.BOT_DISCLAIMER
+        )
         message_reply(comment, reply_text)
 
         send_discord_alert(
-            f'New Verification Request for **{language_name}**',
+            f"New Verification Request for **{language_name}**",
             f"Please check [this verification request](https://www.reddit.com{comment.permalink}) "
             f"from [{author_string}](https://www.reddit.com/user/{author_name}).",
-            'verification'
+            "verification",
         )
-        logger.info(f'[ZW] Updated the verification log with a new request from {author_string}.')
+        logger.info(
+            f"[ZW] Updated the verification log with a new request from {author_string}."
+        )
 
     return
 

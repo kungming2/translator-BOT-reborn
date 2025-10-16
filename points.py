@@ -3,14 +3,15 @@
 """
 Handles points calculations for contributors to the subreddit.
 """
+
 import datetime
 import re
 import time
 from urllib.parse import urlparse
 
-import praw
 import prawcore
-from praw import exceptions, models
+from praw.exceptions import RedditAPIException
+from praw.models import Comment
 
 from config import SETTINGS, logger
 from connection import REDDIT_HELPER
@@ -32,22 +33,19 @@ def points_retriever(username: str) -> str:
     :return: A string summarizing the user's point activity on r/translator.
     """
     current_time = time.time()
-    current_month = datetime.datetime.fromtimestamp(current_time).strftime('%Y-%m')
+    current_month = datetime.datetime.fromtimestamp(current_time).strftime("%Y-%m")
 
     cursor = db.cursor_main
 
     # Get current month's points
     cursor.execute(
         "SELECT * FROM total_points WHERE username = ? AND month_year = ?",
-        (username, current_month)
+        (username, current_month),
     )
     month_rows = cursor.fetchall()
 
     # Get all historical points
-    cursor.execute(
-        "SELECT * FROM total_points WHERE username = ?",
-        (username,)
-    )
+    cursor.execute("SELECT * FROM total_points WHERE username = ?", (username,))
     all_rows = cursor.fetchall()
 
     if not all_rows:
@@ -75,7 +73,7 @@ def points_retriever(username: str) -> str:
     for month in recorded_months:
         cursor.execute(
             "SELECT * FROM total_points WHERE username = ? AND month_year = ?",
-            (username, month)
+            (username, month),
         )
         month_data = cursor.fetchall()
         points = sum(row[3] for row in month_data)
@@ -101,15 +99,17 @@ def points_worth_determiner(lingvo_object) -> int:
         return 4  # Normalized value for unknown languages
 
     # Check cache first
-    month_string = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m')
+    month_string = datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m")
     cursor = db.cursor_cache
     cursor.execute(
         "SELECT language_multiplier FROM multiplier_cache WHERE month_year = ? AND language_code = ?",
-        (month_string, language_code)
+        (month_string, language_code),
     )
     row = cursor.fetchone()
     if row:
-        logger.info(f"[ZW] Points determiner: Found cached multiplier for {language_code}: {row[0]}")
+        logger.info(
+            f"[ZW] Points determiner: Found cached multiplier for {language_code}: {row[0]}"
+        )
         return int(row[0])
 
     try:
@@ -121,35 +121,47 @@ def points_worth_determiner(lingvo_object) -> int:
 
         # Extract the wiki page name from the URL
         parsed = urlparse(page_url)
-        match = re.search(r'/wiki/([^/]+)$', parsed.path)
+        match = re.search(r"/wiki/([^/]+)$", parsed.path)
         if not match:
             raise ValueError("Could not extract wiki page name from URL.")
 
         wiki_page_name = match.group(1)
-        overall_page = REDDIT_HELPER.subreddit('translator').wiki[wiki_page_name]
+        overall_page = REDDIT_HELPER.subreddit("translator").wiki[wiki_page_name]
         overall_page_content = overall_page.content_md.strip()
-        last_month_data = overall_page_content.split('\n')[-1]
+        last_month_data = overall_page_content.split("\n")[-1]
 
         # Parse the percentage (e.g., "2017 | 08 | [Link] | 1%")
-        total_percent = float(last_month_data.split(' | ')[3].rstrip('%'))
+        total_percent = float(last_month_data.split(" | ")[3].rstrip("%"))
 
         # Calculate multiplier: (1 / percent) * 35
         raw_point_value = 35 * (1 / total_percent)
         final_point_value = int(round(raw_point_value))
         final_point_value = min(final_point_value, 20)
 
-    except (prawcore.exceptions.NotFound, praw.exceptions.RedditAPIException, ValueError, IndexError, ZeroDivisionError) as e:
-        logger.debug(f"[ZW] Points determiner: Fallback for `{language_code}` due to error: {e}")
+    except (
+        prawcore.exceptions.NotFound,
+        RedditAPIException,
+        ValueError,
+        IndexError,
+        ZeroDivisionError,
+    ) as e:
+        logger.debug(
+            f"[ZW] Points determiner: Fallback for `{language_code}` due to error: {e}"
+        )
         final_point_value = 20  # Max score for unknown/rare/missing wiki entries
 
     # Cache the result
     current_zeit = time.time()
-    month_string = datetime.datetime.fromtimestamp(current_zeit).strftime('%Y-%m')
+    month_string = datetime.datetime.fromtimestamp(current_zeit).strftime("%Y-%m")
     insert_data = (month_string, language_code, final_point_value)
-    db.cursor_cache.execute("INSERT INTO multiplier_cache VALUES (?, ?, ?)", insert_data)
+    db.cursor_cache.execute(
+        "INSERT INTO multiplier_cache VALUES (?, ?, ?)", insert_data
+    )
     db.conn_cache.commit()
 
-    logger.debug(f"[ZW] Points determiner: Multiplier for {language_code} is {final_point_value}")
+    logger.debug(
+        f"[ZW] Points determiner: Multiplier for {language_code} is {final_point_value}"
+    )
 
     return final_point_value
 
@@ -180,25 +192,34 @@ def points_tabulator(comment, original_post, original_post_lingvo):
     conn_main = db.conn_main
 
     current_time = time.time()
-    month_string = datetime.datetime.fromtimestamp(current_time).strftime('%Y-%m')
+    month_string = datetime.datetime.fromtimestamp(current_time).strftime("%Y-%m")
 
     instruo = Instruo.from_comment(comment, original_post_lingvo)
     op_author = original_post.author.name
     comment_author = instruo.author_comment  # String, not a PRAW object.
 
-    if not comment_author or comment_author.lower() in ("automoderator", "translator-bot"):
+    if not comment_author or comment_author.lower() in (
+        "automoderator",
+        "translator-bot",
+    ):
         # Ignore bot comments.
         logger.info(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
         return
 
     body = comment.body.strip().lower()
 
-    if comment_author == op_author and any(k in body for k in SETTINGS['thanks_keywords']) and len(body) < 20:
+    if (
+        comment_author == op_author
+        and any(k in body for k in SETTINGS["thanks_keywords"])
+        and len(body) < 20
+    ):
         logger.info(f"[ZW] Skipping short OP thank-you comment `{comment.id}`")
         return  # Short thank-you from the OP, not meaningful
 
     # Determine worth of the translation based on language
-    logger.info(f"[ZW] Processing comment by u/{comment_author} on post by u/{op_author} ({original_post_lingvo.name})")
+    logger.info(
+        f"[ZW] Processing comment by u/{comment_author} on post by u/{op_author} ({original_post_lingvo.name})"
+    )
     language_name = original_post_lingvo.name
     try:
         multiplier = points_worth_determiner(original_post_lingvo)
@@ -228,7 +249,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
         """
         try:
             parent = checked_comment.parent()
-            if isinstance(parent, praw.models.Comment) and parent.author:
+            if isinstance(parent, Comment) and parent.author:
                 return parent.author.name, parent.id
         except Exception as e:
             logger.warning(f"Failed to get parent author: {e}")
@@ -240,7 +261,11 @@ def points_tabulator(comment, original_post, original_post_lingvo):
 
         if name in {"translated", "doublecheck"}:
             if instruo.author_comment != op_author:
-                if len(body) < 60 and name == "translated" and any(k in body for k in SETTINGS['verifying_keywords']):
+                if (
+                    len(body) < 60
+                    and name == "translated"
+                    and any(k in body for k in SETTINGS["verifying_keywords"])
+                ):
                     # Likely a verification for another translation.
                     parent_author, parent_comment = get_parent_author(comment)
                     if parent_author:
@@ -248,7 +273,8 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                         final_translator_points += 1 + multiplier
                         points += 1
                         logger.debug(
-                            f"[ZW] Verify: u/{comment_author} confirms u/{final_translator} in {parent_comment}")
+                            f"[ZW] Verify: u/{comment_author} confirms u/{final_translator} in {parent_comment}"
+                        )
                 else:
                     translator_to_add = comment_author
                     points += 1 + multiplier
@@ -259,7 +285,9 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                 if parent_author and parent_author != op_author:
                     final_translator = parent_author
                     final_translator_points += 1 + multiplier
-                    logger.debug(f"[ZW] OP delegated !translated to u/{final_translator}")
+                    logger.debug(
+                        f"[ZW] OP delegated !translated to u/{final_translator}"
+                    )
             elif len(body) < 13:
                 # Very short cleanup !translated post
                 parent_author, parent_comment = get_parent_author(comment)
@@ -268,7 +296,9 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                     if final_translator != comment_author:
                         points += 1
                     final_translator_points += 1 + multiplier
-                    logger.debug(f"[ZW] Cleanup mark: u/{comment_author} marked u/{final_translator}'s work.")
+                    logger.debug(
+                        f"[ZW] Cleanup mark: u/{comment_author} marked u/{final_translator}'s work."
+                    )
         elif name == "identify":
             points += 3
         elif name in {"claim", "page", "search", "reference"}:
@@ -281,7 +311,8 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             logger.debug(f"[Points] No point value set for command: {name}")
     logger.info(
         f"[ZW] Commands processed for comment {comment.id}: {len(commands)} commands, "
-        f"total preliminary points {points}")
+        f"total preliminary points {points}"
+    )
 
     if len(body) > 120 and comment_author != op_author:
         # Long-form comments (not from OP)
@@ -289,9 +320,9 @@ def points_tabulator(comment, original_post, original_post_lingvo):
 
     # OP short thank-you cases.
     if (
-        comment_author == op_author and
-        any(k in body for k in SETTINGS['thanks_keywords']) and
-        len(body) < 20
+        comment_author == op_author
+        and any(k in body for k in SETTINGS["thanks_keywords"])
+        and len(body) < 20
     ):
         logger.debug(f"[ZW] OP short thank-you from u/{comment_author}")
         parent_author, parent_comment = get_parent_author(comment)
@@ -300,10 +331,13 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             final_translator_points += 1 + multiplier
             cursor_main.execute(
                 "SELECT points, oid FROM total_points WHERE username = ? AND oid = ?",
-                (final_translator, original_post.id)
+                (final_translator, original_post.id),
             )
             for rec_points, rec_oid in cursor_main.fetchall():
-                if int(rec_points) == final_translator_points and rec_oid == original_post.id:
+                if (
+                    int(rec_points) == final_translator_points
+                    and rec_oid == original_post.id
+                ):
                     final_translator_points = 0
 
     # Points assignment
@@ -324,12 +358,14 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             ajo_writer(ajo_w_points)
 
     # Write to DB
-    logger.info(f"[ZW] Writing {len(results)} point record(s) to DB for comment `{comment.id}`")
+    logger.info(
+        f"[ZW] Writing {len(results)} point record(s) to DB for comment `{comment.id}`"
+    )
     for username, user_points in results:
         logger.debug(f"[ZW] Writing: ({username}, {user_points})")
         cursor_main.execute(
             "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
-            (month_string, pid, username, str(user_points), original_post.id)
+            (month_string, pid, username, str(user_points), original_post.id),
         )
     conn_main.commit()
     logger.info(f"[ZW] Points tabulation complete for comment `{comment.id}`")
@@ -337,7 +373,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
     return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         my_search = input("Search query: ")
         print(points_worth_determiner(converter(my_search)))

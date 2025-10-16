@@ -3,6 +3,7 @@
 """
 Handles error logging and retrieval.
 """
+
 import os
 import time
 from datetime import datetime, timezone
@@ -24,12 +25,12 @@ def error_log_basic(entry, bot_version):
     log_entry = {
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "bot_version": bot_version,
-        "error": entry.strip()
+        "error": entry.strip(),
     }
 
     # Load existing entries (if any)
     if os.path.exists(Paths.LOGS["ERROR"]):
-        with open(Paths.LOGS["ERROR"], 'r', encoding='utf-8') as f:
+        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
             try:
                 existing_entries = yaml.safe_load(f) or []
             except yaml.YAMLError:
@@ -41,7 +42,7 @@ def error_log_basic(entry, bot_version):
     existing_entries.append(log_entry)
 
     # Save all entries back to the file
-    with open(Paths.LOGS["ERROR"], 'w', encoding='utf-8') as f:
+    with open(Paths.LOGS["ERROR"], "w", encoding="utf-8") as f:
         yaml.safe_dump(existing_entries, f, allow_unicode=True, sort_keys=False)
 
 
@@ -57,38 +58,44 @@ def record_last_post_and_comment():
     fallback_time = datetime.fromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     post_info = {
-        'timestamp': fallback_time,
-        'link': '',
+        "timestamp": fallback_time,
+        "link": "",
     }
 
     comment_info = {
-        'timestamp': fallback_time,
-        'link': '',
-        'body': '',
+        "timestamp": fallback_time,
+        "link": "",
+        "body": "",
     }
 
     # Get latest submission
-    for submission in REDDIT.subreddit('translator').new(limit=1):
-        post_time = datetime.fromtimestamp(submission.created_utc).strftime("%a, %b %d, %Y [%I:%M:%S %p]")
-        post_info['timestamp'] = post_time
-        post_info['link'] = f"https://www.reddit.com{submission.permalink}"
+    for submission in REDDIT.subreddit("translator").new(limit=1):
+        post_time = datetime.fromtimestamp(submission.created_utc).strftime(
+            "%a, %b %d, %Y [%I:%M:%S %p]"
+        )
+        post_info["timestamp"] = post_time
+        post_info["link"] = f"https://www.reddit.com{submission.permalink}"
         break
 
     # Get latest comment
-    for comment in REDDIT.subreddit('translator').comments(limit=1):
-        comment_time = datetime.fromtimestamp(comment.created_utc).strftime("%a, %b %d, %Y [%I:%M:%S %p]")
-        replaced_body = comment.body.replace('\n', '\n> ')
+    for comment in REDDIT.subreddit("translator").comments(limit=1):
+        comment_time = datetime.fromtimestamp(comment.created_utc).strftime(
+            "%a, %b %d, %Y [%I:%M:%S %p]"
+        )
+        replaced_body = comment.body.replace("\n", "\n> ")
         formatted_body = f"> {replaced_body}"
-        comment_info.update({
-            'timestamp': comment_time,
-            'link': f"https://www.reddit.com{comment.permalink}",
-            'body': formatted_body,
-        })
+        comment_info.update(
+            {
+                "timestamp": comment_time,
+                "link": f"https://www.reddit.com{comment.permalink}",
+                "body": formatted_body,
+            }
+        )
         break
 
     return {
-        'last_post': f"Last post     |   {post_info['timestamp']}:    {post_info['link']}",
-        'last_comment': f"Last comment  |   {comment_info['timestamp']}:    {comment_info['link']}\n              {comment_info['body']}"
+        "last_post": f"Last post     |   {post_info['timestamp']}:    {post_info['link']}",
+        "last_comment": f"Last comment  |   {comment_info['timestamp']}:    {comment_info['link']}\n              {comment_info['body']}",
     }
 
 
@@ -107,7 +114,7 @@ def error_log_extended(error_save_entry, bot_version):
     try:
         # Load existing YAML log (if file exists and is non-empty)
         try:
-            with open(error_log_path, 'r', encoding='utf-8') as f:
+            with open(error_log_path, "r", encoding="utf-8") as f:
                 existing_log = yaml.safe_load(f) or []
         except FileNotFoundError:
             existing_log = []
@@ -117,16 +124,16 @@ def error_log_extended(error_save_entry, bot_version):
 
         # Append new entry
         new_entry = {
-            'timestamp': timestamp,
-            'bot_version': bot_version,
-            'context': last_post_text,
-            'error': error_save_entry
+            "timestamp": timestamp,
+            "bot_version": bot_version,
+            "context": last_post_text,
+            "error": error_save_entry,
         }
 
         existing_log.append(new_entry)
 
         # Write back to file
-        with open(error_log_path, 'w', encoding='utf-8') as f:
+        with open(error_log_path, "w", encoding="utf-8") as f:
             yaml.safe_dump(existing_log, f, allow_unicode=True, sort_keys=False)
 
     except Exception as e:
@@ -141,7 +148,7 @@ def retrieve_error_log():
     """
     paragraphs = []
 
-    with open(Paths.LOGS["ERROR"], 'r', encoding='utf-8') as f:
+    with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     for entry in data:
@@ -152,19 +159,19 @@ def retrieve_error_log():
                 # For nested dict, print each subkey with indent
                 for subkey, subvalue in value.items():
                     # Replace newlines inside values with indented lines
-                    formatted_value = str(subvalue).replace('\n', '\n    ')
+                    formatted_value = str(subvalue).replace("\n", "\n    ")
                     lines.append(f"  - **{subkey}:** {formatted_value}")
             else:
                 # Replace newlines inside values with indented lines
-                formatted_value = str(value).replace('\n', '\n  ')
+                formatted_value = str(value).replace("\n", "\n  ")
                 lines.append(f"**{key.capitalize()}:** {formatted_value}")
 
         paragraph = "\n".join(lines)
         paragraphs.append(paragraph)
-    final_text = '\n---\n'.join(paragraphs)
+    final_text = "\n---\n".join(paragraphs)
 
     return final_text
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(retrieve_error_log())

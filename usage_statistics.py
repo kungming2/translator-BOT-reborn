@@ -3,6 +3,7 @@
 """
 Contains functions related to statistics tabulation.
 """
+
 import datetime
 import time
 
@@ -34,17 +35,19 @@ def action_counter(messages_number, action_type):
 
     # Load existing data
     try:
-        with open(Paths.LOGS['COUNTER'], 'rb') as f:
+        with open(Paths.LOGS["COUNTER"], "rb") as f:
             current_actions = orjson.loads(f.read())
     except (FileNotFoundError, orjson.JSONDecodeError):
         current_actions = {}
 
     # Update the count
     current_actions.setdefault(current_day, {})
-    current_actions[current_day][action_type] = current_actions[current_day].get(action_type, 0) + count
+    current_actions[current_day][action_type] = (
+        current_actions[current_day].get(action_type, 0) + count
+    )
 
     # Save the updated data
-    with open(Paths.LOGS['COUNTER'], 'wb') as f:
+    with open(Paths.LOGS["COUNTER"], "wb") as f:
         f.write(orjson.dumps(current_actions))
 
 
@@ -56,7 +59,7 @@ def load_statistics_data(language_code):
     :return: The corresponding language dictionary if found, otherwise None.
     """
     try:
-        with open(Paths.LOGS['STATISTICS'], 'rb') as f:
+        with open(Paths.LOGS["STATISTICS"], "rb") as f:
             stats_data = orjson.loads(f.read())
         return stats_data.get(language_code)
     except (FileNotFoundError, orjson.JSONDecodeError):
@@ -97,7 +100,9 @@ def generate_language_frequency_markdown(language_list):
         "| Language Name        | Average Number of Posts | Per   |\n"
         "|----------------------|--------------------------:|:------|\n"
     )
-    line_template = "| [{name}]({url})        | {rate:.2f} posts              | {freq} |"
+    line_template = (
+        "| [{name}]({url})        | {rate:.2f} posts              | {freq} |"
+    )
     no_data_template = "| {name:<21} | No recorded statistics     | ---   |"
 
     lines = []
@@ -120,7 +125,9 @@ def generate_language_frequency_markdown(language_list):
             else:
                 freq, rate = "year", yearly
 
-            line = line_template.format(name=language_name, url=permalink, rate=rate, freq=freq)
+            line = line_template.format(
+                name=language_name, url=permalink, rate=rate, freq=freq
+            )
         else:
             line = no_data_template.format(name=language_name)
 
@@ -159,7 +166,7 @@ def user_statistics_loader(username):
         return [
             f"| {'`lookup`' if cmd == '`' else cmd} | {count} |"
             for cmd, count in sorted(commands.items())
-            if cmd != 'Notifications'
+            if cmd != "Notifications"
         ]
 
     def format_notifications(notifications):
@@ -170,13 +177,17 @@ def user_statistics_loader(username):
 
     # Fetch and process both command and notification data
     commands_dict = fetch_data("SELECT * FROM total_commands WHERE username = ?")
-    notifications_dict = fetch_data("SELECT * FROM notify_cumulative WHERE username = ?")
+    notifications_dict = fetch_data(
+        "SELECT * FROM notify_cumulative WHERE username = ?"
+    )
 
     if not commands_dict and not notifications_dict:
         return None
 
     command_lines = format_commands(commands_dict) if commands_dict else []
-    notification_lines = format_notifications(notifications_dict) if notifications_dict else []
+    notification_lines = (
+        format_notifications(notifications_dict) if notifications_dict else []
+    )
 
     return header + "\n".join(command_lines + notification_lines)
 
@@ -197,7 +208,9 @@ def user_statistics_writer(instruo):
     conn = db.conn_main
 
     # Load existing record for the user
-    cursor.execute("SELECT commands FROM total_commands WHERE username = ?", (username,))
+    cursor.execute(
+        "SELECT commands FROM total_commands WHERE username = ?", (username,)
+    )
     row = cursor.fetchone()
 
     if row is None:
@@ -224,16 +237,18 @@ def user_statistics_writer(instruo):
     if already_saved:
         cursor.execute(
             "UPDATE total_commands SET commands = ? WHERE username = ?",
-            (str(commands_dictionary), username)
+            (str(commands_dictionary), username),
         )
     else:
         cursor.execute(
             "INSERT INTO total_commands (username, commands) VALUES (?, ?)",
-            (username, str(commands_dictionary))
+            (username, str(commands_dictionary)),
         )
 
     conn.commit()
-    logger.debug(f"[ZW] messaging_user_statistics_writer: Stats written for u/{username}.")
+    logger.debug(
+        f"[ZW] messaging_user_statistics_writer: Stats written for u/{username}."
+    )
 
 
 if "__main__" == __name__:
