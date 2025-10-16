@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from config import Paths
 
@@ -12,8 +12,8 @@ def log_testing_mode(output_text, title=None, metadata=None):
         title (str, optional): Section title to display as a Markdown heading.
         metadata (dict, optional): Key-value pairs to log before the content.
     """
-    filepath = Paths.LOGS['TESTING']
-    timestamp = datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S %Z')
+    filepath = Paths.LOGS["TESTING"]
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
     with open(filepath, "a", encoding="utf-8") as f:
         f.write("\n---\n")  # Markdown horizontal rule
         f.write(f"### {title or 'Testing Mode Log'}\n")
