@@ -20,13 +20,13 @@ class Diskuto:
         self,
         title_original=None,
         post_type=None,
-        id=None,
+        _id=None,
         created_utc=None,
         processed=False,
     ):
         self.title_original = title_original
         self.post_type = post_type
-        self.id = id
+        self.id = _id
         self.created_utc = created_utc
         self.processed = processed
 
@@ -82,7 +82,7 @@ class Diskuto:
         return cls(
             title_original=title,
             post_type=post_type,
-            id=praw_submission.id,
+            _id=praw_submission.id,
             created_utc=int(praw_submission.created_utc),
             processed=False,
         )
@@ -183,7 +183,7 @@ def diskuto_loader(post_id):
     return Diskuto(
         title_original=diskuto_dict.get("title_original"),
         post_type=diskuto_dict.get("post_type"),
-        id=diskuto_dict.get("id"),
+        _id=diskuto_dict.get("id"),
         created_utc=diskuto_dict.get("created_utc"),
         processed=diskuto_dict.get("processed", False),
     )
