@@ -79,6 +79,35 @@ class Instruo:
             body=text,
         )
 
+    @classmethod
+    def from_text(cls, text, parent_languages=None):
+        """
+        Creates an Instruo instance from a plain text string for testing purposes only.
+
+        WARNING: This method is NOT intended for production use. It creates an Instruo
+        with placeholder values for all PRAW comment properties (IDs, timestamps, author
+        information) since these cannot be obtained from raw text. Use this method only
+        for unit tests, manual testing, or debugging command extraction logic.
+
+        Args:
+            text: A string containing the comment text to parse for commands.
+            parent_languages: Optional list of Lingvo objects to associate with the Instruo.
+
+        Returns:
+            An Instruo instance with extracted commands and placeholder metadata.
+        """
+        commands = extract_commands_from_text(text)
+        return cls(
+            id_comment="TEST_ID",
+            id_post="TEST_POST_ID",
+            created_utc=0,
+            author_comment="[test_user]",
+            author_post="[test_post_author]",
+            commands=commands,
+            languages=parent_languages or [],
+            body=text,
+        )
+
 
 def comment_has_command(comment):
     """
