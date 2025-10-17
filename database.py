@@ -527,7 +527,7 @@ async def search_logs(ctx, search_term: str, term_type: str):
 
 def _show_menu():
     print("\nSelect a search to run:")
-    print("1. Database search (enter your own query to test)")
+    print("1. Database search (enter a query to test)")
     print("2. Initialize databases if they do not already exist")
 
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Test suite for other.py module.
+Test suite for match_helpers.py module.
 Tests tokenization, text matching, and language detection functions.
 """
 
 import unittest
 
-from lookup.other import lookup_ko_tokenizer, lookup_matcher, lookup_zh_ja_tokenizer
+from lookup.match_helpers import lookup_ko_tokenizer, lookup_matcher, lookup_zh_ja_tokenizer
 
 
 class TestZhJaTokenizer(unittest.TestCase):

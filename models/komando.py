@@ -204,7 +204,7 @@ def extract_commands_from_text(text):
 
     # Special: CJK lookup using lookup_matcher
     # Supports: `term`, `term`:lang formats
-    from lookup.other import lookup_matcher
+    from lookup.match_helpers import lookup_matcher
 
     if text.count("`") >= 1:
         cjk_lookup = lookup_matcher(original_text, None)

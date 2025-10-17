@@ -153,7 +153,6 @@ def comment_has_command(comment):
 
 
 if "__main__" == __name__:
-    # test_instruo_on_r_translator_recent_comments()
     while True:
         # Get comment URL from user
         comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()

@@ -80,8 +80,9 @@ def ajo_writer(new_ajo):
 
 
 def parse_ajo_data(data_str):
-    """For backwards compatability, since older Ajos are saved as
-    dictionary literals."""
+    """For backwards compatibility, since older Ajos are saved as
+    dictionary literals. This allows Ajo data to be passed in as a
+    regular dictionary string (old behavior) or JSON (new)."""
     try:
         # Try JSON first (orjson or json)
         return orjson.loads(data_str)
@@ -94,6 +95,7 @@ def parse_ajo_data(data_str):
 
 
 def ajo_loader(ajo_id):
+    """Loads Ajos from the local database."""
     result = db.fetch_ajo("SELECT * FROM ajo_database WHERE id = ?", (ajo_id,))
     if result is None:
         logger.debug("[ZW] ajo_loader: No local Ajo stored.")
@@ -754,7 +756,6 @@ class Ajo:
         ajo_writer(self)
 
 
-# Module-level utility function
 def _fetch_submission(post_id: str):
     """
     Fetch a PRAW submission by ID.
