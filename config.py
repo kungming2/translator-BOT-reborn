@@ -21,7 +21,9 @@ DATA_DIR = os.path.join(BASE_DIR, "Data")
 # Group related paths into dictionaries for better organization
 class Paths:
     """Centralized path configuration for all application files
-    Use like: Paths.SETTINGS['TITLE_MODULE_SETTINGS']
+    Use like:
+        Paths.CAT_NAME["KEY_NAME"]
+        Paths.SETTINGS["TITLE_MODULE_SETTINGS"]
     """
 
     # Core database files
@@ -120,6 +122,11 @@ def get_reports_directory(base_dir: Path | None = None) -> Path:
 
 
 def set_up_logger():
+    """
+    Set up the unified logger for all routines.
+
+    :return: A logger object.
+    """
     # Logging code, defining the basic logger.
     logformatter = "%(levelname)s: %(asctime)s - %(message)s"
     logging.basicConfig(
@@ -140,7 +147,11 @@ def set_up_logger():
 
 
 def load_settings(path):
-    """General function for loading settings from a YAML file."""
+    """
+    General function for loading settings from a YAML file.
+    :param path: Path to YAML file.
+    :return: Settings dictionary.
+    """
     with open(path, "r", encoding="utf-8") as f:
         settings = yaml.safe_load(f)  # Parse the file's content
 

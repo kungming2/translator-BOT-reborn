@@ -36,7 +36,8 @@ def openai_access():
 
 def ai_query(service, client_object, behavior, query, image_url=None):
     """
-    Function to pass a query to an AI service, optionally with image support.
+    Function to pass a query to an AI service, optionally with
+    image support. Image support requires the service to be "openai".
 
     :param service: 'deepseek' or 'openai'
     :param client_object: Client object that's authenticated.
@@ -96,7 +97,7 @@ def fetch_image_description(image_url, nsfw_flag=False):
                       automatically return a skip message. People
                       probably don't need a filthy description in their
                       inboxes.
-    :return: The AI-generated description of the image.
+    :return: The AI-generated short description of the image.
     """
     query = RESPONSE.IMAGE_DESCRIPTION_QUERY
     if nsfw_flag:

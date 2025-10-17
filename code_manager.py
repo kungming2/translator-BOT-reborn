@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Run independently and infrequently to update ISO 639-3 code points.
+"""
+
 import pandas as pd
 from pathlib import Path
 

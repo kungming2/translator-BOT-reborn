@@ -16,6 +16,9 @@ from config import SETTINGS, Paths, load_settings, logger
 
 
 def reddit_login(credentials):
+    """
+    Logs in to Reddit with the standard credentials.
+    """
     reddit = praw.Reddit(
         client_id=credentials["ZIWEN_APP_ID"],
         client_secret=credentials["ZIWEN_APP_SECRET"],
@@ -28,6 +31,10 @@ def reddit_login(credentials):
 
 
 def reddit_helper_login(credentials):
+    """
+    Logs in to Reddit with the helper credentials. This is used for non-
+    moderation tasks in order to reduce API calls.
+    """
     reddit = praw.Reddit(
         client_id=credentials["HUIBAN_APP_ID"],
         client_secret=credentials["HUIBAN_APP_SECRET"],
@@ -41,7 +48,7 @@ def reddit_helper_login(credentials):
 
 def reddit_status_check() -> list[dict] | None:
     """
-    Fetch unresolved Reddit incidents.
+    Fetch unresolved Reddit incidents from their API.
 
     :returns:
         - list of incident dicts if incidents exist
@@ -73,7 +80,8 @@ def reddit_status_check() -> list[dict] | None:
 def get_random_useragent():
     """
     Returns a dictionary with a random User-Agent and a
-    default Accept header.
+    default Accept header. Generally used with website accessing
+    requests.
     """
     software_names = [SoftwareName.CHROME.value]
     operating_systems = [OperatingSystem.WINDOWS.value, OperatingSystem.LINUX.value]
@@ -135,7 +143,7 @@ def is_valid_user(username):
 
 def widget_update(widget_id, new_text):
     """
-    Update a text widget on a subreddit with new content.
+    Update a text widget on the subreddit with new content.
 
     Args:
         widget_id: ID of the widget to update

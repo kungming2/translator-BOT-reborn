@@ -20,6 +20,9 @@ from config import Paths, logger, SETTINGS
 
 
 class DatabaseManager:
+    """
+    Unified class to handle writes and reads to the three databases.
+    """
     def __init__(self):
         self._conn_cache = None
         self._conn_main = None
@@ -106,7 +109,9 @@ class DatabaseManager:
 """CREATES DATABASES IF THEY DO NOT EXIST"""
 
 
-def initialize_cache_db():
+def _initialize_cache_db():
+    """Internal function to initialize the cache database if it
+    does not exist."""
     db_path = Paths.DATABASE["CACHE"]
 
     if os.path.exists(db_path):
@@ -134,7 +139,9 @@ def initialize_cache_db():
     _initialize_db(db_path, create_statements)
 
 
-def initialize_ajo_db():
+def _initialize_ajo_db():
+    """Internal function to initialize the Ajo database if it
+    does not exist."""
     db_path = Paths.DATABASE["AJO"]
 
     if os.path.exists(db_path):
@@ -157,7 +164,9 @@ def initialize_ajo_db():
     _initialize_db(db_path, create_statement)
 
 
-def initialize_main_db():
+def _initialize_main_db():
+    """Internal function to initialize the main database if it
+    does not exist."""
     db_path = Paths.DATABASE["MAIN"]
 
     if os.path.exists(db_path):
@@ -228,6 +237,7 @@ def initialize_main_db():
 
 
 def _initialize_db(db_path, statements):
+    """Internal function to run the table creation commands."""
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = None
     try:
@@ -245,9 +255,13 @@ def _initialize_db(db_path, statements):
 
 
 def initialize_all_databases():
-    initialize_cache_db()
-    initialize_ajo_db()
-    initialize_main_db()
+    """
+    Creates all three required databases if they do not exist.
+    This is unlikely to be often used as the databases should transfer over.
+    """
+    _initialize_cache_db()
+    _initialize_ajo_db()
+    _initialize_main_db()
 
 
 """NON-SQLITE FILE WRITING"""
