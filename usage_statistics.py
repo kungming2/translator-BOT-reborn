@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Contains functions related to statistics tabulation.
+Contains functions related to statistics tabulation. Many of these
+functions are used by Wenyuan, the statistics calculator routine.
 """
 
 import datetime
@@ -53,7 +54,8 @@ def action_counter(messages_number, action_type):
 
 def load_statistics_data(language_code):
     """
-    Loads language statistics from a saved JSON file.
+    Loads language statistics from a saved JSON file. This will primarily
+    be used by Wenyuan, but is currently unused.
 
     :param language_code: Language code as a string.
     :return: The corresponding language dictionary if found, otherwise None.
@@ -71,6 +73,7 @@ def months_since_redesign(start_year=2016, start_month=5) -> int:
     Calculate the number of months elapsed since the redesign start date.
     The redesign started in May 2016, and no archive data exists before that.
     This is used to help calculate statistics more accurately.
+    This will primarily be used by Wenyuan, but is currently unused.
 
     :param start_year: The starting year of the redesign (default 2016)
     :param start_month: The starting month of the redesign (default May, 5)
@@ -152,7 +155,7 @@ def generate_command_usage_report(start_time, end_time, days):
     formatted_content += "\n| Command | Times Used |\n|----------|------------|\n"
 
     try:
-        with open(Paths.LOGS['COUNTER'], "rb") as file:
+        with open(Paths.LOGS["COUNTER"], "rb") as file:
             counter_data = orjson.loads(file.read())
     except (FileNotFoundError, orjson.JSONDecodeError):
         # If file is missing or malformed, return just the header.

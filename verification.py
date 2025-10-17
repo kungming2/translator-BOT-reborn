@@ -35,7 +35,7 @@ def get_verified_thread():
     return None
 
 
-def set_user_flair(user, verified_language):
+def _set_user_flair(user, verified_language):
     """
     Checks a user's flair and sets it to the desired standards.
 
@@ -110,7 +110,7 @@ def process_verification(confirming_comment):
     logger.info(f"> Language to verify them for: {language_to_verify}.")
 
     # Pass it to the function to set it.
-    set_user_flair(verified_person, language_to_verify)
+    _set_user_flair(verified_person, language_to_verify)
     parent_comment.mod.approve()
 
     # Message the mod.
@@ -128,10 +128,9 @@ def process_verification(confirming_comment):
 
 def verification_parser():
     """
-    Top-level function to collect requests for verified flairs.
-    Ziwen will write their information into a log
-    and also report their comment to the moderators for inspection
-    and verification.
+    Top-level function to collect new requests for verified flairs.
+    Ziwen will write their information into a log  and also report their
+    comment to the moderators for inspection and verification.
 
     :return: None
     """

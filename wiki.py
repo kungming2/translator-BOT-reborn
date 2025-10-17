@@ -59,7 +59,7 @@ def fetch_wiki_statistics_page(lingvo_object):
         return None
 
 
-def extract_single_language_statistics_table(markdown_text):
+def _extract_single_language_statistics_table(markdown_text):
     # Use regex to extract the table under "### Single-Language Requests"
     pattern = re.compile(
         r"### Single-Language Requests\s*\n"  # Match the header
@@ -70,7 +70,7 @@ def extract_single_language_statistics_table(markdown_text):
     return match.group(0).strip() if match else None
 
 
-def assess_most_requested_languages(table_text):
+def _assess_most_requested_languages(table_text):
     """Used by fetch_most_requested_languages() below.
     Actual processing table logic."""
     lines = table_text.strip().splitlines()
@@ -109,7 +109,7 @@ def fetch_most_requested_languages():
     some lead time in case statistics updates are not timely, for some
     reason.
 
-    :return: A list of language codes, ordered by most requested to least.
+    :return: A list of language codes, ordered by most-requested to least.
     """
     months_difference = SETTINGS["points_months_delta"]
 
@@ -120,8 +120,8 @@ def fetch_most_requested_languages():
         three_months_ago
     ]
     reference_page_content = reference_page.content_md.strip()
-    reference_table = extract_single_language_statistics_table(reference_page_content)
-    languages_frequency_sorted = assess_most_requested_languages(reference_table)
+    reference_table = _extract_single_language_statistics_table(reference_page_content)
+    languages_frequency_sorted = _assess_most_requested_languages(reference_table)
 
     return list(languages_frequency_sorted.keys())
 
@@ -136,6 +136,13 @@ def update_wiki_page(
     user=None,
     testing_mode=False,
 ):
+    """
+    Updates a wiki page on the subreddit wiki with new data, based on
+    the save_or_identify argument. Primarily, this is only used for
+    identify now, in order to collate identified posts into a main
+    list of changes. Save is retained for compatability purposes and in
+    case it can be repurposed.
+    """
     if save_or_identify:
         # Adding to the "saved" wiki page
         page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["saved"]
@@ -194,10 +201,10 @@ the `!search` function.
 """
 
 
-def frequently_requested_wiki():
+def _frequently_requested_wiki():
     """
     Accesses the "Frequently Requested Translations" page on the wiki
-    and "reads" from it.
+    and "reads" from it. That page is in YAML.
 
     :return: A Python dictionary of all entries.
     """
@@ -248,7 +255,7 @@ def search_integration(search_term):
              a formatted string of the results if found.
     """
     search_term = search_term.lower()  # All keywords should be in lower-case.
-    frt_data = frequently_requested_wiki()
+    frt_data = _frequently_requested_wiki()
     term_data = {}
     link_data = []
     example_data = []
