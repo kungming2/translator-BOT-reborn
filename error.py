@@ -27,17 +27,17 @@ def _str_representer(dumper, data):
 CustomDumper.add_representer(str, _str_representer)
 
 
-def error_log_basic(entry, bot_version):
+def error_log_basic(entry, bot_routine):
     """
-    Logs an error in YAML format by appending every entry.
+    Logs an error in YAML format by appending a new entry.
 
     :param entry: The error text (e.g., a traceback).
-    :param bot_version: The version of the bot writing this error
+    :param bot_routine: The routine of the bot writing this error
                         (e.g., 'Ziwen', 'Wenyuan').
     """
     log_entry = {
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "bot_version": bot_version,
+        "bot_version": bot_routine,
         "error": entry.strip(),
     }
 
@@ -66,9 +66,10 @@ def error_log_basic(entry, bot_version):
         )
 
 
-def record_last_post_and_comment():
+def _record_last_post_and_comment():
     """
-    Retrieves the latest post and comment from r/translator for reference in error logging.
+    Retrieves the latest post and comment from r/translator for 
+    reference in error logging.
 
     :return: A dictionary with keys:
              - 'last_post': Formatted string of the last post's timestamp and link.
@@ -146,7 +147,7 @@ def error_log_extended(error_save_entry, bot_version):
             existing_log = []
 
         # Get contextual info
-        last_post_text = record_last_post_and_comment()
+        last_post_text = _record_last_post_and_comment()
 
         # Append new entry
         new_entry = {

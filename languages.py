@@ -304,13 +304,17 @@ def define_language_lists():
 
 
 def normalize(text):
+    """Cleans the text for processing. Lowercases it, and then
+    substitutes and strips whitespace."""
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
-def fuzzy_text(word, supported_languages, threshold=75):
+def _fuzzy_text(word, supported_languages, threshold=75):
+    """Attempts to fuzzy match the given word with language names,
+    and ignores common mistaken matches."""
     exclude = language_module_settings["FUZZ_IGNORE_LANGUAGE_NAMES"]
     word_norm = normalize(word)
 
@@ -387,7 +391,7 @@ def add_alt_language_name(language_code: str, alt_name: str):
 """MAIN CONVERTER FUNCTIONS"""
 
 
-def iso_codes_deep_search(search_term, script_search=False):
+def _iso_codes_deep_search(search_term, script_search=False):
     """
     Searches for a language or script code from a CSV of ISO 639-3 or
     ISO 15924 codes.
@@ -487,7 +491,7 @@ def converter(
             return None
         elif len(input_text) == 3:
             # Only search in ISO 639-3
-            iso_search = iso_codes_deep_search(input_text, script_search=False)
+            iso_search = _iso_codes_deep_search(input_text, script_search=False)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
                 lingvo_copy.country = None
@@ -495,7 +499,7 @@ def converter(
             return None
         elif len(input_text) == 4:
             # Only search in ISO 15924
-            iso_search = iso_codes_deep_search(input_text, script_search=True)
+            iso_search = _iso_codes_deep_search(input_text, script_search=True)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
                 lingvo_copy.country = None
@@ -526,7 +530,7 @@ def converter(
         # Step 2: Prefixed script code ("unknown-Cyrl")
         if broader.lower() == "unknown":
             try:
-                result = iso_codes_deep_search(specific, script_search=True)
+                result = _iso_codes_deep_search(specific, script_search=True)
                 script_name = getattr(result, "name", None)
                 if not script_name:
                     return None
@@ -593,12 +597,12 @@ def converter(
                 return lingvo_copy
 
     # First try language codes.
-    iso_search = iso_codes_deep_search(input_text)
+    iso_search = _iso_codes_deep_search(input_text)
     if not iso_search:
-        iso_search = iso_codes_deep_search(input_text, script_search=True)
+        iso_search = _iso_codes_deep_search(input_text, script_search=True)
 
     if iso_search:
-        # iso_codes_deep_search returns a Lingvo instance.
+        # _iso_codes_deep_search returns a Lingvo instance.
         # Copy it and clear country for simple inputs
         lingvo_copy = copy.deepcopy(iso_search)
         lingvo_copy.country = None
@@ -624,14 +628,14 @@ def converter(
 
     # Fuzzy match if nothing else worked
     if fuzzy and input_title not in language_module_settings["FUZZ_IGNORE_WORDS"]:
-        fuzzy_result = fuzzy_text(input_title, reference_lists["SUPPORTED_LANGUAGES"])
+        fuzzy_result = _fuzzy_text(input_title, reference_lists["SUPPORTED_LANGUAGES"])
         if fuzzy_result:
             return converter(fuzzy_result, fuzzy=False)
 
     # Final fallback: maybe a script code
     if len(input_text) == 4:
         try:
-            lingvo_script = iso_codes_deep_search(input_text, script_search=True)
+            lingvo_script = _iso_codes_deep_search(input_text, script_search=True)
             if lingvo_script:
                 lingvo_copy = copy.deepcopy(lingvo_script)
                 lingvo_copy.country = None
@@ -732,7 +736,7 @@ def get_country_emoji(country_name):
         return ""
 
 
-def load_country_list():
+def _load_country_list():
     """
     Load countries from a CSV file. Returns a list of tuples.
     Expected CSV columns: CountryName, Alpha2, Alpha3, NumericCode,
@@ -763,7 +767,7 @@ def country_converter(text_input, abbreviations_okay=True):
                                like 'CN' or 'MX'. Default is True.
     :return: (country_code, country_name)
     """
-    country_list = load_country_list()
+    country_list = _load_country_list()
 
     text = text_input.strip()
     if len(text) <= 1:
@@ -810,7 +814,7 @@ def country_converter(text_input, abbreviations_okay=True):
 
 def select_random_language(iso_639_1=False):
     """
-    Pick a random language code and name from a CSV file.
+    Pick a random language code and name from our CSV file.
 
     Args:
         iso_639_1 (bool): If True, select ISO 639-1 codes (2-letter).

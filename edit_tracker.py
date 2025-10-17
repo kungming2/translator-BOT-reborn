@@ -20,7 +20,7 @@ from models.kunulo import Kunulo
 from title_handling import Titolo
 
 
-def is_comment_within_edit_window(comment):
+def _is_comment_within_edit_window(comment):
     """Skip comments that are too old and unedited.
     The limit is defined in settings in hours."""
     time_diff = time.time() - comment.created_utc
@@ -29,7 +29,7 @@ def is_comment_within_edit_window(comment):
     return not time_diff > age_in_seconds
 
 
-def get_cached_comment(comment_id):
+def _get_cached_comment(comment_id):
     """Retrieve comment text from cache."""
     cursor = db.cursor_cache
     cursor.execute("SELECT content FROM comment_cache WHERE id = ?", (comment_id,))
@@ -37,7 +37,7 @@ def get_cached_comment(comment_id):
     return result[0] if result else None  # Just the body text, or None
 
 
-def update_comment_cache(comment_id, comment_body):
+def _update_comment_cache(comment_id, comment_body):
     """Replace old comment text with new version."""
     cursor = db.cursor_cache
     cursor.execute("DELETE FROM comment_cache WHERE id = ?", (comment_id,))
@@ -47,7 +47,7 @@ def update_comment_cache(comment_id, comment_body):
     db.conn_cache.commit()
 
 
-def remove_from_processed(comment_id):
+def _remove_from_processed(comment_id):
     """Force a reprocess by removing from the processed comment database."""
     cursor = db.cursor_main
     cursor.execute("DELETE FROM old_comments WHERE id = ?", (comment_id,))
@@ -57,7 +57,7 @@ def remove_from_processed(comment_id):
     )
 
 
-def cleanup_comment_cache(limit):
+def _cleanup_comment_cache(limit):
     """Remove oldest entries beyond comment limit."""
     cursor = db.cursor_cache
     cleanup = """
@@ -86,18 +86,18 @@ def edit_tracker():
         limit=total_fetch_num
     ):
         # Comment is beyond our time span for monitoring.
-        if not is_comment_within_edit_window(comment):
+        if not _is_comment_within_edit_window(comment):
             continue
 
         comment_id = comment.id
         comment_body = comment.body.strip()
 
         # Check against the pre-existing cache.
-        cached = get_cached_comment(comment_id)
+        cached = _get_cached_comment(comment_id)
 
         # If not in cache, insert it
         if not cached:
-            update_comment_cache(comment_id, comment_body)
+            _update_comment_cache(comment_id, comment_body)
             continue
 
     # Phase 2: Fetch only the edited comments from the subreddit.
@@ -114,7 +114,7 @@ def edit_tracker():
         comment_new_body = item.body.strip()
 
         # Check the comment's age.
-        if not is_comment_within_edit_window(item):
+        if not _is_comment_within_edit_window(item):
             continue
 
         # Comment has no actionable command.
@@ -122,7 +122,7 @@ def edit_tracker():
             continue
 
         # Fetch the old stored information.
-        cached = get_cached_comment(comment_id)
+        cached = _get_cached_comment(comment_id)
         comment_old_body = cached if cached else ""
         if comment_old_body == comment_new_body:
             logger.debug("The comment stored is the same.")
@@ -142,13 +142,13 @@ def edit_tracker():
             )
             # Remove the comment ID from the database so that
             # ziwen_commands will reprocess it.
-            remove_from_processed(comment_id)
+            _remove_from_processed(comment_id)
 
         # Update the cache.
-        update_comment_cache(comment_id, comment_new_body)
+        _update_comment_cache(comment_id, comment_new_body)
 
     # Phase 3: Cache cleanup
-    cleanup_comment_cache(total_keep_num)
+    _cleanup_comment_cache(total_keep_num)
 
     return
 
