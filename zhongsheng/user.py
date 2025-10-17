@@ -13,7 +13,7 @@ from . import command
     help_text="Searches for a username in log files and returns matching lines",
     roles=["Moderator"],
 )
-async def user_search(ctx, user_input: str):
+async def user_search(ctx, *, user_input: str):
     """Searches through the database and log files for a matching user
     ID for debugging or analysis."""
 
@@ -26,6 +26,7 @@ async def user_search(ctx, user_input: str):
         username = user_input
 
     # Search logs first
+    await ctx.send(f"🔎 Searching logs and database for `{username}`...")
     await search_logs(ctx, username, "user")
 
     # Get and append user statistics
