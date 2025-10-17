@@ -50,6 +50,7 @@ class Paths:
         ),
         "ISO_CODES": os.path.join(DATA_DIR, "Datasets", "iso_codes.csv"),
         "ISO_SCRIPT_CODES": os.path.join(DATA_DIR, "Datasets", "iso_script_codes.csv"),
+        "ISO_CODES_UPDATES": os.path.join(DATA_DIR, "Datasets", "iso_codes_updates.yaml"),
         "OLD_CHINESE": os.path.join(DATA_DIR, "Datasets", "old_chinese.csv"),
         "ZH_ROMANIZATION": os.path.join(
             DATA_DIR, "Datasets", "romanization_chinese.csv"
