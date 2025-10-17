@@ -166,7 +166,7 @@ def _load_lingvo_dataset(debug=False):
 
     raw_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
     utility_data = load_settings(Paths.DATASETS["UTILITY_LINGVO_DATA"])
-    with open(Paths.LOGS["STATISTICS"], "rb") as f:
+    with open(Paths.DATASETS["STATISTICS"], "rb") as f:
         statistics_data = orjson.loads(f.read())
 
     combined_data = {}

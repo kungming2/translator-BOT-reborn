@@ -59,7 +59,7 @@ def load_statistics_data(language_code):
     :return: The corresponding language dictionary if found, otherwise None.
     """
     try:
-        with open(Paths.LOGS["STATISTICS"], "rb") as f:
+        with open(Paths.DATASETS["STATISTICS"], "rb") as f:
             stats_data = orjson.loads(f.read())
         return stats_data.get(language_code)
     except (FileNotFoundError, orjson.JSONDecodeError):

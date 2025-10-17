@@ -8,7 +8,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict
 
-from config import logger
+from config import logger, SETTINGS
 from connection import REDDIT, credentials_source
 from tasks.data_maintenance import points_worth_cacher
 
@@ -31,7 +31,7 @@ def template_retriever():
     """
     return {
         template["css_class"]: template["id"]
-        for template in REDDIT.subreddit("translator").flair.link_templates
+        for template in REDDIT.subreddit(SETTINGS["subreddit"]).flair.link_templates
         if template.get("css_class") and template.get("id")
     }
 
@@ -46,7 +46,7 @@ def most_recent_submitters():
     cutoff = time.time() - 86400
     return [
         post.author.name
-        for post in REDDIT.subreddit("translator").new(limit=100)
+        for post in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=100)
         if post.created_utc > cutoff
         and post.author
         and post.author.name != credentials_source["USERNAME"]

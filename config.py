@@ -54,6 +54,7 @@ class Paths:
             DATA_DIR, "Datasets", "iso_codes_updates.yaml"
         ),
         "OLD_CHINESE": os.path.join(DATA_DIR, "Datasets", "old_chinese.csv"),
+        "STATISTICS": os.path.join(DATA_DIR, "Datasets", "_statistics.json"),
         "ZH_ROMANIZATION": os.path.join(
             DATA_DIR, "Datasets", "romanization_chinese.csv"
         ),
@@ -68,7 +69,6 @@ class Paths:
         "FILTER": os.path.join(DATA_DIR, "Logs", "_log_filter.md"),
         "EVENTS": os.path.join(DATA_DIR, "Logs", "_log_events.md"),
         "ACTIVITY": os.path.join(DATA_DIR, "Logs", "_log_activity.csv"),
-        "STATISTICS": os.path.join(DATA_DIR, "Logs", "_statistics.json"),
         "TESTING": os.path.join(DATA_DIR, "Logs", "_log_testing.md"),
     }
 

@@ -351,7 +351,7 @@ def get_language_pages() -> None:
         total_data[language_code] = stats
 
     # Save JSON and update wiki
-    with open(Paths.LOGS["STATISTICS"], "w") as fp:
+    with open(Paths.DATASETS["STATISTICS"], "w") as fp:
         json.dump(total_data, fp, sort_keys=True, indent=4)
 
     logger.info("[WJ] Statistics JSON file generated.")
