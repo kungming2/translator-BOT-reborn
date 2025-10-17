@@ -19,7 +19,7 @@ def fetch_search_reddit_posts(search_term):
     search_engine = SETTINGS["search_engine"]
 
     if search_engine == "Reddit":
-        logger.debug(f"Searching Reddit for: {search_term}")
+        logger.info(f"Searching Reddit for: {search_term}")
 
         try:
             # Use Reddit's search directly
@@ -76,7 +76,7 @@ def build_search_results(post_ids, search_term):
             submission.created_utc
         ).strftime("%Y-%m-%d")
         result_sections.append(
-            f"**[{submission.title}]({submission.permalink})** ({submission_date})\n"
+            f"**[{submission.title}](https://www.reddit.com{submission.permalink})** ({submission_date})\n"
         )
 
         # Process comments in submission
