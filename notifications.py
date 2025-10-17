@@ -671,7 +671,8 @@ def notifier(lingvo, submission, mode="new_post"):
     record_activity_csv(payload)
 
     logger.info(
-        f"[Notifier] Sent notifications to {len(notify_users_list)} users signed up for {language_name}."
+        f"[Notifier] Sent notifications to {len(notify_users_list)} "
+        f"users signed up for {language_name}."
     )
 
     return notify_users_list
