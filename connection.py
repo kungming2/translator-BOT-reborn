@@ -216,6 +216,7 @@ def search_removal_reasons(prompt):
 credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
 REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
+USERNAME = credentials_source["USERNAME"]
 
 if __name__ == "__main__":
     print(reddit_status_check())

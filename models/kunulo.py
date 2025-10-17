@@ -15,7 +15,7 @@ import pprint
 import re
 
 from config import SETTINGS, logger
-from connection import REDDIT_HELPER
+from connection import REDDIT_HELPER, USERNAME
 
 
 class Kunulo:
@@ -169,7 +169,7 @@ class Kunulo:
             comment_body = comment.body.lower()  # for easier matching
 
             # Gather bot's anchor tags
-            if comment_author == "translator-BOT":
+            if comment_author == USERNAME:
                 for tag in cls.anchor_pattern.findall(comment.body):
                     # Extract associated data based on tag type
                     associated_data = None

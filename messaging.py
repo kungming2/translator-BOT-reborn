@@ -10,7 +10,7 @@ from praw.exceptions import APIException
 from wasabi import msg
 
 from config import Paths, load_settings, logger
-from connection import REDDIT, is_valid_user
+from connection import REDDIT, USERNAME, is_valid_user
 from discord_utils import send_discord_alert
 from languages import parse_language_list
 from notifications import (
@@ -35,7 +35,7 @@ def notify_op_translated_post(author, permalink):
     :param permalink: Permalink of the OP's post.
     :return: None
     """
-    if author == "translator-BOT":
+    if author == USERNAME:
         return  # Don't message the bot itself
 
     subject = "[Notification] Your request has been translated on r/translator!"
@@ -253,8 +253,10 @@ def handle_add(message, message_author):
     if language_matches:
         notifier_language_list_editor(language_matches, add_username, "insert")
         match_codes_print = ", ".join(language_matches)
-        addition_message = (f"Added the language codes **{match_codes_print}** "
-                            f"for u/{add_username} into the notifications database.")
+        addition_message = (
+            f"Added the language codes **{match_codes_print}** "
+            f"for u/{add_username} into the notifications database."
+        )
         message_reply(message, reply_text=addition_message)
 
 

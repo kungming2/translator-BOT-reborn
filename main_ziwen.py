@@ -13,7 +13,7 @@ import traceback
 import psutil
 
 from config import logger
-from connection import REDDIT, credentials_source
+from connection import REDDIT, USERNAME
 from database import record_activity_csv
 from edit_tracker import edit_tracker, progress_tracker
 from error import error_log_extended
@@ -46,7 +46,7 @@ if __name__ == "__main__":
             verification_parser()
 
             # Record API usage limit.
-            probe = REDDIT.redditor(credentials_source["USERNAME"]).created_utc
+            probe = REDDIT.redditor(USERNAME).created_utc
             used_calls = REDDIT.auth.limits["used"]
 
             # Record memory usage at the end of a run.

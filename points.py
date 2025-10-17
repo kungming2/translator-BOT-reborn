@@ -14,7 +14,7 @@ from praw.exceptions import RedditAPIException
 from praw.models import Comment
 
 from config import SETTINGS, logger
-from connection import REDDIT_HELPER
+from connection import REDDIT_HELPER, USERNAME
 from database import db
 from languages import converter
 from models.ajo import ajo_loader, ajo_writer
@@ -202,7 +202,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
 
     if not comment_author or comment_author.lower() in (
         "automoderator",
-        "translator-bot",
+        USERNAME.lower(),
     ):
         # Ignore bot comments.
         logger.info(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")

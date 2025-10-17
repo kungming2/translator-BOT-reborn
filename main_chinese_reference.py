@@ -9,7 +9,7 @@ from asyncpraw import exceptions
 from wasabi import msg
 
 from config import SETTINGS, logger
-from connection import credentials_source
+from connection import credentials_source, USERNAME
 from error import error_log_extended
 from lookup.other import lookup_zh_ja_tokenizer
 from lookup.zh import zh_character, zh_word
@@ -22,7 +22,7 @@ async def cc_ref(reddit):
     multireddit called 'chinese' and provides character and word lookups
     for requests marked by backticks, just like on r/translator.
     """
-    multireddit = await reddit.multireddit(redditor="translator-BOT", name="chinese")
+    multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
     comments = []
 
     async for comment in multireddit.comments(limit=SETTINGS["max_posts"]):

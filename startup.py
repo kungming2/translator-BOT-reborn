@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict
 
 from config import logger, SETTINGS
-from connection import REDDIT, credentials_source
+from connection import REDDIT, USERNAME
 from tasks.data_maintenance import points_worth_cacher
 
 
@@ -49,7 +49,7 @@ def most_recent_submitters():
         for post in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=100)
         if post.created_utc > cutoff
         and post.author
-        and post.author.name != credentials_source["USERNAME"]
+        and post.author.name != USERNAME
     ]
 
 

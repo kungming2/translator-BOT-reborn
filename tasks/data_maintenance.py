@@ -12,7 +12,7 @@ import yaml
 from praw.models import WikiPage
 
 from config import SETTINGS, Paths, logger
-from connection import REDDIT, REDDIT_HELPER
+from connection import REDDIT, REDDIT_HELPER, USERNAME
 from database import db
 from languages import converter
 from points import points_worth_determiner
@@ -451,7 +451,7 @@ def monthly_statistics_unpinner():
         if (
             "[META] r/translator Statistics" in sticky.title
             and sticky.author  # In case the author is deleted or missing
-            and sticky.author.name == "translator-BOT"
+            and sticky.author.name == USERNAME
         ):
             sticky.mod.sticky(state=False)
             logger.info("Monthly Statistics Unpinner: Unpinned monthly post.")
