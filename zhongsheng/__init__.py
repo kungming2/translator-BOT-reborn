@@ -44,6 +44,7 @@ def register_commands(bot):
         title,
         user,
         search,
+        filter,
     )
 
     for cmd in _commands:

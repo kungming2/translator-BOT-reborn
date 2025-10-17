@@ -13,6 +13,7 @@ COMMAND_DESCRIPTIONS = {
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
     "Use the ``--text`` flag to check text directly",
     "title": "Process a Reddit post title. Use the ``--ai`` flag for AI parsing",
+    "filter": "Check if a Reddit post title would be approved or rejected by the title filtration routine",
     "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `/cjk c 翻译`)",
     "error": "Display the 3 most recent error log entries",
     "describe": "Generate an AI alt-text description of an image from a URL",
@@ -29,6 +30,7 @@ COMMAND_ROLES = {
     "cjk": ["Moderator", "Helper"],
     "error": ["Moderator"],
     "describe": ["Moderator", "Helper"],
+    "filter": ["Moderator", "Helper"],
     "guide": ["Moderator", "Helper"],
     "office": ["Moderator", "Helper"],
 }
