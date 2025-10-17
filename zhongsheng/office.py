@@ -5,6 +5,7 @@
 import aiohttp
 
 from . import command
+from connection import get_random_useragent
 
 
 @command(
@@ -16,7 +17,8 @@ async def office_quote(ctx):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                "https://officeapi.akashrajpurohit.com/quote/random"
+                "https://officeapi.akashrajpurohit.com/quote/random",
+                headers=get_random_useragent(),
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
