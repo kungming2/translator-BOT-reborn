@@ -143,8 +143,8 @@ comment_edit_age_max: 18  # in hours
 # search for.
 comment_edit_num_limit: 30
 
-# Search function uses... (Google or Reddit)
-search_engine: Reddit
+# Search function uses... (DDG or Reddit)
+search_engine: DDG
 
 # Closeout settings
 close_out_age: 7  # age of posts (in days) that we inform people about.
