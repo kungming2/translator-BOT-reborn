@@ -62,7 +62,7 @@ async def cc_ref(reddit):
             if reply_parts:
                 reply_text = "\n\n".join(reply_parts)
                 cc_bot_disclaimer = RESPONSE.BOT_DISCLAIMER.replace(
-                    "translator", comment.subreddit.display_name
+                    "r/translator ", f"{comment.subreddit.display_name} "
                 )
                 if len(reply_text) > 10000:
                     reply_text = reply_text[:9900]
