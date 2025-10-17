@@ -234,7 +234,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
     commands = extract_commands_from_text(body)  # Returns a List[Komando]
     translator_to_add = None
     points_status = []
-    pid = instruo.id_comment
+    comment_id = instruo.id_comment
 
     points = 0
     final_translator = None
@@ -332,13 +332,13 @@ def points_tabulator(comment, original_post, original_post_lingvo):
             final_translator = parent_author
             final_translator_points += 1 + multiplier
             cursor_main.execute(
-                "SELECT points, oid FROM total_points WHERE username = ? AND oid = ?",
+                "SELECT points, post_id FROM total_points WHERE username = ? AND post_id = ?",
                 (final_translator, original_post.id),
             )
-            for rec_points, rec_oid in cursor_main.fetchall():
+            for rec_points, rec_post_id in cursor_main.fetchall():
                 if (
                     int(rec_points) == final_translator_points
-                    and rec_oid == original_post.id
+                    and rec_post_id == original_post.id
                 ):
                     final_translator_points = 0
 
@@ -367,7 +367,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
         logger.debug(f"[ZW] Writing: ({username}, {user_points})")
         cursor_main.execute(
             "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
-            (month_string, pid, username, str(user_points), original_post.id),
+            (month_string, comment_id, username, str(user_points), original_post.id),
         )
     conn_main.commit()
     logger.info(f"[ZW] Points tabulation complete for comment `{comment.id}`")

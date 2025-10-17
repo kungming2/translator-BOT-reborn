@@ -213,10 +213,10 @@ def initialize_main_db():
         """
         CREATE TABLE total_points (
             month_year TEXT,
-            pid TEXT,
+            comment_id TEXT,
             username TEXT,
             points INTEGER,
-            oid TEXT
+            post_id TEXT
         )
         """,
         """
