@@ -3,6 +3,7 @@
 """User search command"""
 
 from database import search_logs
+from usage_statistics import user_statistics_loader
 
 from . import command
 
@@ -13,6 +14,9 @@ from . import command
     roles=["Moderator"],
 )
 async def user_search(ctx, user_input: str):
+    """Searches through the database and log files for a matching user
+    ID for debugging or analysis."""
+
     # Extract username from URL if provided, otherwise use as-is
     if "reddit.com/user/" in user_input or "reddit.com/u/" in user_input:
         # Extract username from URL
@@ -21,4 +25,10 @@ async def user_search(ctx, user_input: str):
         # Use the input directly as username
         username = user_input
 
+    # Search logs first
     await search_logs(ctx, username, "user")
+
+    # Get and append user statistics
+    stats = user_statistics_loader(username)
+    if stats:
+        await ctx.send(f"**User Statistics for {username}:**\n{stats}")
