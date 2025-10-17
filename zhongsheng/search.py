@@ -4,7 +4,7 @@
 
 from search_handling import build_search_results, fetch_search_reddit_posts
 
-from . import command
+from . import command, send_long_message
 
 
 @command(
@@ -30,27 +30,8 @@ async def search_posts(ctx, *, search_term: str):
             await ctx.send("No relevant comments found in matching posts.")
             return
 
-        # Discord message length limit is 2000 characters, so chunk if necessary
-        for chunk in _split_message(formatted_results):
-            await ctx.send(chunk)
+        # Use the helper to handle Discord message length limits
+        await send_long_message(ctx, formatted_results)
 
     except Exception as e:
         await ctx.send(f"⚠️ An error occurred during search: `{type(e).__name__}: {e}`")
-
-
-def _split_message(text, limit=2000):
-    """Splits long messages into chunks to stay within Discord's 2000-char limit."""
-    lines = text.split("\n")
-    chunks, current_chunk = [], ""
-
-    for line in lines:
-        if len(current_chunk) + len(line) + 1 > limit:
-            chunks.append(current_chunk)
-            current_chunk = line
-        else:
-            current_chunk += "\n" + line
-
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    return chunks

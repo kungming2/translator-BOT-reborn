@@ -15,7 +15,7 @@ def command(name, help_text, roles=None):
     Decorator to register a Discord bot command.
 
     Args:
-        name: Command name (used after !)
+        name: Command name (used after /)
         help_text: Help description for the command
         roles: List of required role names, or None for no restrictions
     """

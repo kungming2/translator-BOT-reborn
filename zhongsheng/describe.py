@@ -19,8 +19,8 @@ async def describe_image(ctx, image_url: str):
     """
     Describe an image using AI for accessibility purposes.
 
-    Usage: !describe <image_url>
-    Example: !describe https://example.com/image.jpg
+    Usage: /describe <image_url>
+    Example: /describe https://example.com/image.jpg
     """
     try:
         # Validate URL format (http links are supported, just in case)

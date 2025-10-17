@@ -6,14 +6,14 @@ from . import command
 
 # Custom command descriptions - edit these as needed
 COMMAND_DESCRIPTIONS = {
-    "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`). '
-    "Alternate names can be added as `!lang [code] --add_alt [new_name]",
+    "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
+    "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
     "user": "Search log files and database for a Reddit username (accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
     "Use the ``--text`` flag to check text directly",
     "title": "Process a Reddit post title. Use the ``--ai`` flag for AI parsing",
-    "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `!cjk c 翻译`)",
+    "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `/cjk c 翻译`)",
     "error": "Display the 3 most recent error log entries",
     "describe": "Generate an AI alt-text description of an image from a URL",
     "office": "Get a random quote from *The Office (US)*",
@@ -43,7 +43,7 @@ async def guide_command(ctx, command_name: str = None):
     """
     Display help information for all commands or a specific command.
 
-    Usage: !guide [command_name]
+    Usage: /guide [command_name]
     """
     if command_name:
         # Show help for a specific command
@@ -56,7 +56,7 @@ async def guide_command(ctx, command_name: str = None):
                 else "**No role restrictions**"
             )
 
-            response = f"**!{command_name}**\n{description}\n{role_text}"
+            response = f"**/{command_name}**\n{description}\n{role_text}"
             await ctx.send(response)
         else:
             await ctx.send(f"Command `{command_name}` not found.")
@@ -72,9 +72,9 @@ async def guide_command(ctx, command_name: str = None):
             roles = COMMAND_ROLES.get(cmd, [])
 
             if roles == ["Moderator"]:
-                moderator_only.append(f"**!{cmd}** - {desc}")
+                moderator_only.append(f"**/{cmd}** - {desc}")
             else:
-                helper_commands.append(f"**!{cmd}** - {desc}")
+                helper_commands.append(f"**/{cmd}** - {desc}")
 
         if helper_commands:
             response += "**Available to Moderators & Helpers:**\n"
@@ -85,7 +85,7 @@ async def guide_command(ctx, command_name: str = None):
             response += "**Moderator Only:**\n"
             response += "\n".join(moderator_only)
 
-        response += "\n\nUse `!guide <command>` for detailed information about a specific command."
+        response += "\n\nUse `/guide <command>` for detailed information about a specific command."
 
         # Split if too long
         if len(response) > 2000:

@@ -15,7 +15,7 @@ from zhongsheng import register_commands
 # Initialize the bot
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="/", intents=intents)
 DISCORD_TOKEN = load_settings(Paths.AUTH["CREDENTIALS"])["ZHONGSHENG_DISCORD_TOKEN"]
 
 
