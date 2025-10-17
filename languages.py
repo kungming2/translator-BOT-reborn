@@ -13,6 +13,7 @@ from pprint import pprint
 import orjson  # Using for faster performance
 import pycountry
 from rapidfuzz import fuzz
+import yaml
 
 from config import Paths, load_settings, logger
 
@@ -326,6 +327,61 @@ def fuzzy_text(word, supported_languages, threshold=75):
             best_match = language
 
     return best_match
+
+
+"""EDITING FUNCTIONS"""
+
+
+def add_alt_language_name(language_code: str, alt_name: str):
+    """
+    Adds an alternate name for a given language in the LANGUAGE_DATA YAML file.
+    If the language doesn't have a 'name_alternates' field, it is created.
+    If the alt_name already exists, nothing is changed.
+    """
+    try:
+        language_data_path = Paths.DATASETS["LANGUAGE_DATA"]
+
+        # Load the existing language data
+        with open(language_data_path, "r", encoding="utf-8") as f:
+            existing_data = yaml.safe_load(f) or {}
+
+        # Check if the language entry exists
+        if language_code not in existing_data:
+            logger.warning(
+                f"[AddAlt] Language code '{language_code}' not found in dataset."
+            )
+            return False
+
+        lang_entry = existing_data[language_code]
+
+        # Ensure 'name_alternates' exists and is a list
+        if "name_alternates" not in lang_entry or not isinstance(
+            lang_entry["name_alternates"], list
+        ):
+            lang_entry["name_alternates"] = []
+
+        # Add new alternate name if not already present
+        if alt_name not in lang_entry["name_alternates"]:
+            lang_entry["name_alternates"].append(alt_name.title().strip())
+            existing_data[language_code] = lang_entry
+
+            # Write updated YAML back to file
+            with open(language_data_path, "w", encoding="utf-8") as f:
+                yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
+
+            logger.info(
+                f"[AddAlt] Added alternate name '{alt_name}' to '{language_code}'."
+            )
+            return True
+        else:
+            logger.info(
+                f"[AddAlt] Alternate name '{alt_name}' already exists for '{language_code}'."
+            )
+            return False
+
+    except Exception as e:
+        logger.error(f"[AddAlt] Error while adding alternate name: {e}")
+        return False
 
 
 """MAIN CONVERTER FUNCTIONS"""

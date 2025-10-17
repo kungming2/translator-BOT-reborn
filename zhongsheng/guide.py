@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Custom help command"""
+"""Command that shows the information about Zhongsheng"""
 
 from . import command
 
 # Custom command descriptions - edit these as needed
 COMMAND_DESCRIPTIONS = {
-    "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`)',
+    "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`). '
+    "Alternate names can be added as `!lang [code] --add_alt [new_name]",
     "user": "Search log files and database for a Reddit username (accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
