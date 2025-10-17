@@ -10202,6 +10202,8 @@ wuu:
   - Wu
   - Wúyuèyǔ
   population: 81501290
+  greetings: 儂好
+  thanks: 謝謝
 wwa:
   country: Benin
   family: Niger-Congo
@@ -10777,7 +10779,7 @@ zh:
   population: 1091782930
   subreddit: chineselanguage
   supported: true
-  thanks: 謝謝
+  thanks: 谢谢
 zia:
   country: Papua New Guinea
   family: Trans-New Guinea
