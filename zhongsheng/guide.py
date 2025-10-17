@@ -7,9 +7,10 @@ from . import command
 # Custom command descriptions - edit these as needed
 COMMAND_DESCRIPTIONS = {
     "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `!lang random`)',
-    "user": "Search log files and database for a Reddit username (accepts strings and URLs)",
+    "user": "Search log files and database for a Reddit username (accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
-    "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs)",
+    "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
+    "Use the ``--text`` flag to check text directly",
     "title": "Process a Reddit post title. Use the ``--ai`` flag for AI parsing",
     "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `!cjk c 翻译`)",
     "error": "Display the 3 most recent error log entries",
@@ -87,7 +88,7 @@ async def guide_command(ctx, command_name: str = None):
 
         # Split if too long
         if len(response) > 2000:
-            chunks = [response[i:i + 1900] for i in range(0, len(response), 1900)]
+            chunks = [response[i : i + 1900] for i in range(0, len(response), 1900)]
             for chunk in chunks:
                 await ctx.send(chunk)
         else:
