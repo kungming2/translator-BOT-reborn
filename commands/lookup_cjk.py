@@ -119,6 +119,7 @@ def handle(comment, instruo, komando, ajo):
 
     # Determine which language to use for lookup
     lookup_lingvo = _get_lookup_language(instruo, ajo)
+    komando.remap_language(lookup_lingvo.preferred_code)  # remap the data if needed
 
     # Map the language code to a CJK language category
     cjk_language = find_cjk_language(lookup_lingvo.preferred_code)
@@ -126,8 +127,11 @@ def handle(comment, instruo, komando, ajo):
     if not cjk_language:
         return
 
+    # Extract all search terms from komando.data, ignoring language codes
+    search_terms = [term for lang_code, term in komando.data]
+
     # Perform lookups for all search terms
-    lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, komando.data))
+    lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, search_terms))
 
     # Reply if we have information to provide
     if lookup_results:

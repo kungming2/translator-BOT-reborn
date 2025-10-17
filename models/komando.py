@@ -32,6 +32,33 @@ class Komando:
             "specific_mode": self.specific_mode,
         }
 
+    def remap_language(self, target_lang_code):
+        """
+        Remap all language codes in self.data to a target language code.
+        Only works for 'cjk_lookup' komandos.
+
+        :param target_lang_code: Target language code (e.g., 'ja', 'ko')
+        :return: New Komando object with remapped language codes
+        :raises ValueError: If self.name is not 'cjk_lookup'
+        """
+        if self.name != 'cjk_lookup':
+            raise ValueError(f"remap_language only works with 'cjk_lookup' komandos, got '{self.name}'")
+
+        if not self.data:
+            return Komando(
+                name=self.name,
+                data=self.data,
+                specific_mode=self.specific_mode
+            )
+
+        remapped_data = [[target_lang_code, term] for _, term in self.data]
+
+        return Komando(
+            name=self.name,
+            data=remapped_data,
+            specific_mode=self.specific_mode
+        )
+
 
 def check_specific_mode(arg_str):
     """
@@ -64,7 +91,7 @@ def extract_commands_from_text(text):
     - Commands with required arguments: !command:"arg" or !command:arg1,arg2
     - Commands with optional arguments: !command or !command:"arg" or !command:arg
     - Commands with no arguments: !command
-    - CJK lookups using backticks: `term` or `lang:term`
+    - CJK lookups using backticks: `term`, `term`:lang
     - Wikipedia lookups using double braces: {{term}}
 
     Supports specific_mode via trailing exclamation: !command:la! activates specific_mode
@@ -176,11 +203,10 @@ def extract_commands_from_text(text):
             commands_dict.setdefault(canonical, [])
 
     # Special: CJK lookup using lookup_matcher
-    # Note that since the language code here is OPTIONAL, it won't
-    # tokenize. Call lookup_matcher directly to do that.
+    # Supports: `term`, `term`:lang formats
     from lookup.other import lookup_matcher
 
-    if text.count("`") > 1:
+    if text.count("`") >= 1:
         cjk_lookup = lookup_matcher(original_text, None)
         for lang, terms in cjk_lookup.items():
             if lang == "lookup":
@@ -213,5 +239,8 @@ if "__main__" == __name__:
             "Enter the comment text with commands you'd like to test here: "
         )
         commands_new = extract_commands_from_text(my_input)
-        for command_new in commands_new:
-            print(command_new)
+        if not commands_new:
+            print("No commands found.")
+        else:
+            for command_new in commands_new:
+                print(f"* {command_new}")
