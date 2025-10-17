@@ -14,7 +14,9 @@ HANDLERS = {}
 
 
 def discover_handlers():
-    # List all .py files under commands/ (excluding __init__.py)
+    """
+    List all .py files under commands/ (excluding __init__.py)
+    """
     files = [
         f
         for f in os.listdir(os.path.dirname(__file__))
@@ -89,7 +91,7 @@ def update_language(ajo, komando):
     return
 
 
-discover_handlers()
+discover_handlers()  # surface which commands are available
 
 
 if __name__ == "__main__":

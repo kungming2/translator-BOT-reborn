@@ -12,6 +12,7 @@ from reddit_sender import message_send
 
 
 def handle(comment, _instruo, _komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Reset handler initiated.")
     original_poster = comment.submission.author
 

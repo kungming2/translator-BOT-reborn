@@ -11,6 +11,7 @@ from models.kunulo import Kunulo
 
 
 def handle(comment, _instruo, _komando, ajo):
+    """Command handler called by ziwen_commands()."""
     print("Long handler initiated.")
 
     if is_mod(comment.author):

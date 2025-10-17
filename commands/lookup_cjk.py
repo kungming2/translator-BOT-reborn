@@ -14,15 +14,22 @@ from reddit_sender import comment_reply
 from responses import RESPONSE
 
 
-def get_cjk_languages():
-    """Load and return CJK language configuration."""
+def _get_cjk_languages():
+    """
+    Load and return CJK language configuration. This config is a
+    dictionary indexed by English-language names for CJK (e.g. Chinese)
+    and contains language codes associated with each name. This allows
+    topolects and dialects to be considered.
+    """
     language_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
     return language_settings["CJK_LANGUAGES"]
 
 
-def find_cjk_language(preferred_code):
-    """Find CJK language category from preferred language code."""
-    cjk_languages = get_cjk_languages()
+def _find_cjk_language(preferred_code):
+    """Find CJK language category from preferred language code.
+    E.g. `wuu` (for Wu Chinese) would return the English word 'Chinese'.
+    """
+    cjk_languages = _get_cjk_languages()
 
     for language, codes in cjk_languages.items():
         if preferred_code in codes:
@@ -109,9 +116,9 @@ def _format_reply(lookup_results, ajo=None):
 
 def handle(comment, instruo, komando, ajo):
     """
-    Handle CJK lookup commands.
+    Handle for CJK lookup commands.
 
-    Example:
+    Example of a Komando to process:
         Komando(name='cjk_lookup', data=['成功'])
     """
     logger.info("CJK Lookup handler initiated.")
@@ -122,7 +129,7 @@ def handle(comment, instruo, komando, ajo):
     komando.remap_language(lookup_lingvo.preferred_code)  # remap the data if needed
 
     # Map the language code to a CJK language category
-    cjk_language = find_cjk_language(lookup_lingvo.preferred_code)
+    cjk_language = _find_cjk_language(lookup_lingvo.preferred_code)
 
     if not cjk_language:
         return

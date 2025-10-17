@@ -13,7 +13,7 @@ from wiki import update_wiki_page
 from . import update_language
 
 
-def send_notifications_okay(instruo, ajo):
+def _send_notifications_okay(instruo, ajo):
     """Simple function that checks to see if the comment also
     includes another Komando that sets the setting to translated
     or needs review.
@@ -30,13 +30,14 @@ def send_notifications_okay(instruo, ajo):
 
 
 def handle(comment, instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Identify handler initiated.")
     original_post = comment.submission
 
     # Check against !translated or doublecheck also in the Instruo.
     # We don't want to alert people if the comment already included
     # a translation.
-    permission_to_send = send_notifications_okay(instruo, ajo)
+    permission_to_send = _send_notifications_okay(instruo, ajo)
 
     # Invalid identification data.
     if not komando.data:

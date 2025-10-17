@@ -14,6 +14,7 @@ from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     status_type = "missing"
     logger.info("Missing handler initiated.")
     logger.info(

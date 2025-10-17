@@ -16,7 +16,11 @@ from wiki import search_integration
 
 
 def handle(comment, _instruo, komando, _ajo):
-    """Sample input: [Komando(name='search', data=['allergy'])]"""
+    """
+    Command handler called by ziwen_commands().
+    Example data:
+        [Komando(name='search', data=['allergy'])]"""
+
     logger.info("Search handler initiated.")
     search_terms = komando.data  # This is a list of strings
 

@@ -14,6 +14,8 @@ from reddit_sender import message_send
 
 def handle(comment, _instruo, _komando, _ajo):
     """
+    Command handler called by ziwen_commands().
+
     Fetches a moderator's command comment to 'nuke' a user. This removes all
     comments and posts by the author of the parent item (post or comment)
     that the mod replied to, and bans the user. This extreme action should

@@ -9,8 +9,10 @@ from responses import RESPONSE
 
 
 def handle(comment, _instruo, komando, _ajo):
-    """Example:
-    Komando(name='wikipedia_lookup', data=['Sanxing (deities)'])]
+    """
+    Command handler called by ziwen_commands().
+    Example of data:
+        Komando(name='wikipedia_lookup', data=['Sanxing (deities)'])]
     """
     logger.info("Wikipedia Lookup handler initiated.")
     logger.info(f"[ZW] Bot: COMMAND: Wikipedia Lookup, from u/{comment.author}.")

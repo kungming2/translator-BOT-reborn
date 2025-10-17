@@ -8,6 +8,8 @@ from verification import process_verification
 
 
 def handle(comment, _instruo, _komando, _ajo):
+    """Command handler called by ziwen_commands()."""
+
     process_verification(comment)
 
     return

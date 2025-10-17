@@ -16,6 +16,7 @@ from responses import RESPONSE
 
 
 def handle(comment, _instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Page handler initiated.")
     replying_text = []
     current_time = time.time()

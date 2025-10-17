@@ -14,6 +14,7 @@ from . import update_language
 
 
 def handle(comment, _instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Set handler initiated.")
 
     # Check to see if the person calling this command is a moderator

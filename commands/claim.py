@@ -19,6 +19,7 @@ from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Claim handler initiated.")
     status_type = "inprogress"
 

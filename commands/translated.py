@@ -14,6 +14,7 @@ from . import update_status
 
 
 def handle(comment, _instruo, komando, ajo):
+    """Command handler called by ziwen_commands()."""
     logger.info("Translated handler initiated.")
     status_type = "translated"
     logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
