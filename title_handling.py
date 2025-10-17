@@ -114,7 +114,7 @@ def extract_lingvos_from_text(
     return sorted(found, key=lambda ling: ling.name) if found else None
 
 
-def english_fuzz(word):
+def _english_fuzz(word):
     """
     A quick function that detects if a word is likely to be "English."
     Used in replace_bad_english_typing below.
@@ -132,7 +132,7 @@ def english_fuzz(word):
         return False
 
 
-def normalize_misspelled_english(title: str) -> str:
+def _normalize_misspelled_english(title: str) -> str:
     """
     Replaces common misspellings of 'English' in a post title so that it
     passes title filter routines.
@@ -146,13 +146,13 @@ def normalize_misspelled_english(title: str) -> str:
     # Replace each word that fuzzy-matches "English"
     words = title.split()
     for word in words:
-        if english_fuzz(word):  # Assumes english_fuzz returns True for misspellings
+        if _english_fuzz(word):
             title = title.replace(word, "English")
 
     return title
 
 
-def build_required_title_keywords() -> dict[str, list[str]]:
+def _build_required_title_keywords() -> dict[str, list[str]]:
     """
     Generates keyword phrases for detecting valid post titles on r/translator.
 
@@ -211,7 +211,7 @@ def build_required_title_keywords() -> dict[str, list[str]]:
     return keywords
 
 
-def move_bracketed_tag_to_front(title: str) -> str:
+def _move_bracketed_tag_to_front(title: str) -> str:
     """
     Moves the first bracketed tag (e.g., [Tag]) in the title to the front.
 
@@ -237,7 +237,7 @@ def move_bracketed_tag_to_front(title: str) -> str:
     return f"{tag} {remainder}".strip()
 
 
-def reformat_detected_languages_in_title(title: str) -> str | None:
+def _reformat_detected_languages_in_title(title: str) -> str | None:
     """
     Attempts to reformat a poorly structured title into a
     standardized format with language tags.
@@ -320,13 +320,13 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
     title_lower = title.lower()
 
     # Load required keyword sets
-    keywords = build_required_title_keywords()
+    keywords = _build_required_title_keywords()
     mandatory_keywords = keywords["total"]
     to_phrases = keywords["to_phrases"]
 
     # Rule 1: Check for required keywords
     if not any(kw in title_lower for kw in mandatory_keywords):
-        title = normalize_misspelled_english(title)
+        title = _normalize_misspelled_english(title)
         title_lower = title.lower()  # Update lowercased version
 
         if not any(kw in title_lower for kw in mandatory_keywords):
@@ -373,7 +373,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
 """ASSESSING (SECOND ROUND)"""
 
 
-def preprocess_title(post_title):
+def _preprocess_title(post_title):
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
     misused language tags, and removing cross-post markers.
@@ -406,7 +406,7 @@ def preprocess_title(post_title):
 
     # Attempt recovery with language reformatter.
     if not any(b in title for b in ["[", "]"]):
-        reformatted = reformat_detected_languages_in_title(title)
+        reformatted = _reformat_detected_languages_in_title(title)
         if reformatted:
             title = reformatted
 
@@ -428,7 +428,7 @@ def preprocess_title(post_title):
     ):
         title = title.replace("-", " > ")
     if "[" in title and "[" not in title[:10]:
-        title = move_bracketed_tag_to_front(title.strip())
+        title = _move_bracketed_tag_to_front(title.strip())
     title = title.replace("English.", "English] ").replace("_", " ")
 
     # Fix improperly hyphenated words
@@ -466,14 +466,14 @@ def preprocess_title(post_title):
     return title
 
 
-def is_punctuation_only(s):
+def _is_punctuation_only(s):
     # Strip whitespace first
     s = s.strip()
     # Check if s is empty or all chars are punctuation
     return len(s) > 0 and all(c in string.punctuation for c in s)
 
 
-def clean_text(text, preserve_commas=False):
+def _clean_text(text, preserve_commas=False):
     """Insert spaces around brackets/parentheses and remove other punctuation with extra spaces."""
     # Insert spaces around brackets and parentheses
     text = re.sub(r"([\[\]()])", r" \1 ", text)
@@ -492,15 +492,15 @@ def clean_text(text, preserve_commas=False):
     return text.strip()
 
 
-def extract_source_chunk(title):
+def _extract_source_chunk(title):
     """Extract the source language chunk from a processed title."""
     for sep in [">", " to ", "-", "<"]:
         if sep in title:
-            return clean_text(title.split(sep)[0])
-    return clean_text(title)
+            return _clean_text(title.split(sep)[0])
+    return _clean_text(title)
 
 
-def extract_target_chunk(title):
+def _extract_target_chunk(title):
     """Extract the target language chunk from a processed title."""
     for sep in [">", " to ", "-", "<"]:
         if sep in title:
@@ -508,11 +508,11 @@ def extract_target_chunk(title):
             # Stop at the closing bracket
             if "]" in chunk:
                 chunk = chunk.split("]", 1)[0]
-            return clean_text(chunk, True)
+            return _clean_text(chunk, True)
     return ""
 
 
-def clean_chunk(chunk: str) -> str:
+def _clean_chunk(chunk: str) -> str:
     # Strip brackets and spaces
     chunk = chunk.strip()
     chunk = chunk.lstrip("[").rstrip("]")
@@ -524,9 +524,9 @@ def clean_chunk(chunk: str) -> str:
     return chunk
 
 
-def resolve_languages(chunk, is_source):
+def _resolve_languages(chunk, is_source):
     # Remove trailing punctuation like '-' or ':'
-    cleaned = clean_chunk(chunk)
+    cleaned = _clean_chunk(chunk)
     logger.debug(f"Cleaned Chunk: {cleaned}")
 
     if cleaned in {"unknown", "unk", "???", "n/a"}:
@@ -542,7 +542,7 @@ def resolve_languages(chunk, is_source):
         language_parts = [part.strip() for part in chunk.split(",")]
         resolved = []
         for part in language_parts:
-            result = resolve_languages(part, is_source)  # Recursive call
+            result = _resolve_languages(part, is_source)  # Recursive call
             if result:
                 resolved.extend(result)
 
@@ -555,7 +555,7 @@ def resolve_languages(chunk, is_source):
         return list(unique.values())
 
     words = chunk.split()
-    words = [w for w in words if not is_punctuation_only(w)]
+    words = [w for w in words if not _is_punctuation_only(w)]
 
     if 2 <= len(words) <= 3:
         joined = " ".join(words)
@@ -601,13 +601,13 @@ def resolve_languages(chunk, is_source):
     return final
 
 
-def extract_actual_title(title):
+def _extract_actual_title(title):
     """Return the post title content after language tag is stripped."""
     actual = title.split("]", 1)[1] if "]" in title else ""
     return actual.strip("].> ,:.") if actual else ""
 
 
-def determine_title_direction(source_languages, target_languages):
+def _determine_title_direction(source_languages, target_languages):
     """
     Determine the direction of English language usage based on source and target language lists.
     This info is used for statistics in Ajos and Wenyuan.
@@ -656,7 +656,7 @@ def determine_title_direction(source_languages, target_languages):
         return "english_none"
 
 
-def get_notification_languages(assess_request):
+def _get_notification_languages(assess_request):
     """
     Determine if the language request involves *only* non-English languages across
     source and target lists. If English appears in either, return None since it's
@@ -694,7 +694,7 @@ def get_notification_languages(assess_request):
     return list(combined) if len(combined) >= 1 else None
 
 
-def determine_flair(titolo_object):
+def _determine_flair(titolo_object):
     """
     Sets the final flair code and text on the titolo_object based on
     direction and language support. Handles multiple-language targets.
@@ -788,7 +788,7 @@ def process_title(title, post=None):
     Returns:
         Titolo: An object representing the parsed structure and flair decisions.
     """
-    processed = preprocess_title(title)
+    processed = _preprocess_title(title)
     if isinstance(processed, Titolo):  # Returned early due to bad input
         return processed
 
@@ -797,21 +797,21 @@ def process_title(title, post=None):
     result = Titolo()
     result.title_original = str(title)
     result.title_processed = processed
-    result.title_actual = extract_actual_title(processed)
+    result.title_actual = _extract_actual_title(processed)
 
     # Check the language before a separator.
-    source_chunk = extract_source_chunk(processed)
+    source_chunk = _extract_source_chunk(processed)
     logger.debug(f"Source chunk: {source_chunk}")
-    result.source = resolve_languages(source_chunk, is_source=True)
+    result.source = _resolve_languages(source_chunk, is_source=True)
 
-    target_chunk = extract_target_chunk(processed)
+    target_chunk = _extract_target_chunk(processed)
     logger.debug(f"Target chunk: {target_chunk}")
-    result.target = resolve_languages(target_chunk, is_source=False)
+    result.target = _resolve_languages(target_chunk, is_source=False)
 
-    result.direction = determine_title_direction(result.source, result.target)
+    result.direction = _determine_title_direction(result.source, result.target)
 
     # Figure out which languages we wish to notify people for.
-    result.notify_languages = get_notification_languages(result) or []
+    result.notify_languages = _get_notification_languages(result) or []
 
     # Last chance. If there are no matched languages, pass it on
     # to our AI assessor.
@@ -827,10 +827,10 @@ def process_title(title, post=None):
         logger.error("Could not make sense of this title at all. Asking AI...")
         ai_result = title_ai_parser(title, post)
         if isinstance(ai_result, dict):
-            update_titolo_from_ai_result(result, ai_result)
+            _update_titolo_from_ai_result(result, ai_result)
 
     # Update the Titolo with the best selection for flair.
-    determine_flair(result)
+    _determine_flair(result)
 
     return result
 
@@ -838,7 +838,7 @@ def process_title(title, post=None):
 """AI PROCESSING"""
 
 
-def update_titolo_from_ai_result(result, ai_result):
+def _update_titolo_from_ai_result(result, ai_result):
     """
     Update a Titolo object based on AI parser output.
 
@@ -855,8 +855,8 @@ def update_titolo_from_ai_result(result, ai_result):
         if tgt and "code" in tgt:
             result.target = [converter(tgt["code"])]
 
-        result.direction = determine_title_direction(result.source, result.target)
-        result.notify_languages = get_notification_languages(result) or []
+        result.direction = _determine_title_direction(result.source, result.target)
+        result.notify_languages = _get_notification_languages(result) or []
         result.ai_assessed = True  # Mark the Titolo as AI-assisted
 
         logger.info(
