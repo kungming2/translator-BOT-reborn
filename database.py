@@ -10,6 +10,7 @@ import json
 import os
 import pprint
 import sqlite3
+import time
 from ast import literal_eval
 from datetime import datetime
 
@@ -276,15 +277,16 @@ def record_filter_log(filtered_title, created_timestamp, filter_type):
 """SPECIFIC SEARCH/RETRIEVAL FUNCTIONS"""
 
 
-def _parse_ajo_row(result):
+def _parse_ajo_row(result, start_utc: int = None):
     """
     Parse a row from the AJO database.
 
     Args:
         result: Database row (sqlite3.Row or tuple)
+        start_utc: Optional UNIX timestamp filter. Only return if created_utc >= start_utc
 
     Returns:
-        Tuple of (post_id, created_utc, data_dict) or None if parsing fails
+        Tuple of (post_id, created_utc, data_dict) or None if parsing fails or filtered out
     """
 
     try:
@@ -292,6 +294,11 @@ def _parse_ajo_row(result):
         created_utc = (
             result["created_utc"] if isinstance(result, sqlite3.Row) else result[1]
         )
+
+        # Filter by time if start_utc is provided
+        if start_utc is not None and created_utc < start_utc:
+            return None
+
         data_json = result["ajo"] if isinstance(result, sqlite3.Row) else result[2]
 
         # Parse the JSON/dict data
@@ -329,7 +336,7 @@ def _parse_ajo_row(result):
         return None
 
 
-def search_database(search_term: str, search_type: str):
+def search_database(search_term: str, search_type: str, start_utc: int = None):
     """
     Search the AJO database for matching records. Note that this can
     take a while for username searches.
@@ -337,6 +344,7 @@ def search_database(search_term: str, search_type: str):
     Args:
         search_term: The term to search for (username or post_id)
         search_type: Type of search ('user' or 'post')
+        start_utc: Optional UNIX timestamp to filter results from this time onward
 
     Returns:
         - For 'post': A list containing single Ajo object or None
@@ -351,7 +359,7 @@ def search_database(search_term: str, search_type: str):
             result = db.fetch_ajo(query, (search_term,))
 
             if result:
-                parsed = _parse_ajo_row(result)
+                parsed = _parse_ajo_row(result, start_utc=start_utc)
                 if parsed is None:
                     logger.debug(f"Could not parse data for post {search_term}")
                     return None
@@ -369,7 +377,7 @@ def search_database(search_term: str, search_type: str):
             parse_errors = 0
 
             for result in results:
-                parsed = _parse_ajo_row(result)
+                parsed = _parse_ajo_row(result, start_utc=start_utc)
                 if parsed is None:
                     parse_errors += 1
                     continue
@@ -396,7 +404,7 @@ def search_database(search_term: str, search_type: str):
         return []
 
 
-async def search_logs(ctx, search_term: str, term_type: str):
+async def search_logs(ctx, search_term: str, term_type: str, days_back: int = 30):
     """
     Internal helper function to search through log files and the
     Ajo database for a given term, which can be a username or a post ID.
@@ -405,12 +413,16 @@ async def search_logs(ctx, search_term: str, term_type: str):
         ctx: Discord context
         search_term: The term to search for (username or post_id)
         term_type: Type of search ('user' or 'post') for display purposes
+        days_back: How many days back to search (default: 30 days)
     """
     log_files = {
         "FILTER": Paths.LOGS["FILTER"],
         "EVENTS": Paths.LOGS["EVENTS"],
         "ERROR": Paths.LOGS["ERROR"],
     }
+
+    # Calculate the cutoff time in UNIX seconds
+    cutoff_utc = int(time.time()) - (days_back * 86400)
 
     try:
         log_lines = []
@@ -430,18 +442,18 @@ async def search_logs(ctx, search_term: str, term_type: str):
                 )
                 continue
 
-        # Search database for historical information
-        db_results = search_database(search_term, term_type)
+        # Search database for historical information (with time filter)
+        db_results = search_database(search_term, term_type, start_utc=cutoff_utc)
 
         # Check if we have any results at all
         if not log_lines and not db_results:
             await ctx.send(
-                f"No entries found for {term_type} `{search_term}` in log files or database."
+                f"No entries found for {term_type} `{search_term}` in the last {days_back} days."
             )
             return
 
         # Build response with sections
-        response = f"Search results for {term_type} `{search_term}`:\n```\n"
+        response = f"Search results for {term_type} `{search_term}` (last {days_back} days):\n```\n"
 
         # Add log file results
         if log_lines:
@@ -464,6 +476,7 @@ async def search_logs(ctx, search_term: str, term_type: str):
                 # Format the Ajo object as a string
                 ajo_str = (
                     f"Post ID: {ajo.id}\n"
+                    f"  Author: u/{ajo.author}\n"
                     f"  Status: {ajo.status}\n"
                     f"  Language: {ajo.language_name} ({ajo.preferred_code})\n"
                     f"  Title: {ajo.title}\n"
