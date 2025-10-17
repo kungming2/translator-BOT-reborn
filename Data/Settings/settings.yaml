@@ -154,3 +154,6 @@ close_out_comments_minimum: 5
 duplicate_semantic_threshold: 0.85
 duplicate_fuzzy_threshold: 85
 duplicate_age_limit: 24  # in hours
+
+# Database settings
+log_search_days: 30  # How many days' worth of data we search for

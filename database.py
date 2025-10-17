@@ -14,7 +14,7 @@ import time
 from ast import literal_eval
 from datetime import datetime
 
-from config import Paths, logger
+from config import Paths, logger, SETTINGS
 
 """SQLITE DATABASE ACCESS"""
 
@@ -412,7 +412,7 @@ def search_database(search_term: str, search_type: str, start_utc: int = None):
         return []
 
 
-async def search_logs(ctx, search_term: str, term_type: str, days_back: int = 30):
+async def search_logs(ctx, search_term: str, term_type: str):
     """
     Internal helper function to search through log files and the
     Ajo database for a given term, which can be a username or a post ID.
@@ -421,8 +421,8 @@ async def search_logs(ctx, search_term: str, term_type: str, days_back: int = 30
         ctx: Discord context
         search_term: The term to search for (username or post_id)
         term_type: Type of search ('user' or 'post') for display purposes
-        days_back: How many days back to search (default: 30 days)
     """
+    days_back = SETTINGS["log_search_days"]  # How many days back to search
     log_files = {
         "FILTER": Paths.LOGS["FILTER"],
         "EVENTS": Paths.LOGS["EVENTS"],
