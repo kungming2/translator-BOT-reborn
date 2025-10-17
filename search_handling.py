@@ -23,7 +23,7 @@ def fetch_search_reddit_posts(search_term):
 
         try:
             # Use Reddit's search directly
-            subreddit = REDDIT_HELPER.subreddit("translator")
+            subreddit = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
             search_results = subreddit.search(search_term, limit=5)
 
             for submission in search_results:
@@ -35,7 +35,7 @@ def fetch_search_reddit_posts(search_term):
 
         logger.debug(f"Total post IDs extracted: {len(post_ids)}")
     elif search_engine == "DDG":
-        search_query = f"{search_term} site:reddit.com/r/translator"
+        search_query = f"{search_term} site:reddit.com/r/{SETTINGS['subreddit']}"
         logger.info(f"Searching DDG for: {search_term}")
 
         try:

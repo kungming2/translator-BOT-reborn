@@ -12,7 +12,7 @@ from prawcore import exceptions
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
 
-from config import Paths, load_settings, logger
+from config import SETTINGS, Paths, load_settings, logger
 
 
 def reddit_login(credentials):
@@ -109,7 +109,7 @@ def is_mod(user) -> bool:
         raise TypeError("`user` must be a string or Redditor object")
 
     return username.lower() in (
-        mod.name.lower() for mod in REDDIT.subreddit("translator").moderator()
+        mod.name.lower() for mod in REDDIT.subreddit(SETTINGS["subreddit"]).moderator()
     )
 
 
@@ -145,7 +145,7 @@ def widget_update(widget_id, new_text):
         bool: True if update was successful, False otherwise
     """
     try:
-        widgets = REDDIT.subreddit("translator").widgets
+        widgets = REDDIT.subreddit(SETTINGS["subreddit"]).widgets
         widgets.progressive_images = True
 
         # Search for the widget in the sidebar
@@ -184,7 +184,9 @@ def _fetch_removal_reasons():
 
     reasons = [
         (removal_reason.title, removal_reason.id, removal_reason.message)
-        for removal_reason in REDDIT.subreddit("translator").mod.removal_reasons
+        for removal_reason in REDDIT.subreddit(
+            SETTINGS["subreddit"]
+        ).mod.removal_reasons
     ]
 
     if reasons:

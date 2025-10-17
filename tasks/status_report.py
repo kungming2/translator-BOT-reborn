@@ -79,7 +79,7 @@ def monitor_controversial_comments():
     """
 
     # Iterate over the latest 100 comments in the subreddit
-    for comment in REDDIT.subreddit("translator").comments(limit=100):
+    for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(limit=100):
         # Extract comment info
         score = comment.score
         removed = comment.removed
@@ -188,7 +188,9 @@ def update_sidebar_statistics():
 
     # --- Update Old Reddit sidebar ---
     try:
-        sidebar_wikipage = REDDIT.subreddit("translator").wiki["config/sidebar"]
+        sidebar_wikipage = REDDIT.subreddit(SETTINGS["subreddit"]).wiki[
+            "config/sidebar"
+        ]
         sidebar_contents = sidebar_wikipage.content_md.rsplit("\n", 1)[0]
         new_sidebar_contents = f"{sidebar_contents}\n{sidebar_bit}"
 
@@ -203,7 +205,7 @@ def update_sidebar_statistics():
         return
 
     # --- Update New Reddit widget ---
-    widgets = REDDIT.subreddit("translator").widgets
+    widgets = REDDIT.subreddit(SETTINGS["subreddit"]).widgets
     target_widget_id = "widget_13r63qu7r63we"
 
     active_widget = next(
@@ -356,7 +358,9 @@ def modqueue_assessor():
     Checks how many items are in the modqueue and alerts Discord
     if the count exceeds a certain threshold.
     """
-    modqueue_items = list(REDDIT.subreddit("translator").mod.modqueue(limit=None))
+    modqueue_items = list(
+        REDDIT.subreddit(SETTINGS["subreddit"]).mod.modqueue(limit=None)
+    )
     total_items = len(modqueue_items)
 
     # Count comments and submissions by type prefix
@@ -400,7 +404,7 @@ def update_verified_list():
     users_by_flair = {}
 
     # Retrieve all users with flair on the subreddit.
-    for flair in REDDIT.subreddit("translator").flair(limit=None):
+    for flair in REDDIT.subreddit(SETTINGS["subreddit"]).flair(limit=None):
         flair_text = flair.get("flair_text")
         if flair_text:
             master_list[str(flair["user"])] = (
@@ -450,7 +454,7 @@ def update_verified_list():
         final_text += f"\n\nFor moderators, *check*: {users_to_fix}"
 
     # Prepare wiki page update.
-    verified_page = REDDIT.subreddit("translator").wiki["verified"]
+    verified_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["verified"]
     anchor = "## List of Verified Translators on r/translator"
 
     # Keep the upper portion of the page intact.

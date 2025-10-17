@@ -155,7 +155,7 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     :param page_content: Language name (str) or PRAW WikiPage object.
     :return: Dictionary containing language statistics.
     """
-    r = REDDIT_HELPER.subreddit("translator")
+    r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
     language_data = {}
     monthly_totals = []
     months_elapsed = messaging_months_elapsed()
@@ -255,7 +255,7 @@ def statistics_list_updater(input_data: Dict[str, list]):
     Generate a Markdown list for wiki/statistics, grouped by language family,
     and update the wiki page.
     """
-    r = REDDIT.subreddit("translator")
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
     total_data = []
     for family in sorted(input_data.keys()):
         total_data.append(f"\n###### {family}")
@@ -294,7 +294,7 @@ def get_language_pages() -> None:
 
     :return: Nothing.
     """
-    r = REDDIT_HELPER.subreddit("translator")
+    r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
 
     # The following pages have different formatting and should not be
     # assessed.
@@ -405,7 +405,7 @@ def archive_identified_saved():
     no longer actively used since the rewrite, but the code is kept
     here in case it is brought back.
     """
-    r = REDDIT.subreddit("translator")
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
     splitter = "|-------"
 
     # Helper function to process a single wiki page
@@ -433,7 +433,7 @@ def monthly_statistics_unpinner():
     """Unpins the statistics posts if it is still pinned when
     the monthly routine runs."""
 
-    sub = REDDIT.subreddit("translator")
+    sub = REDDIT.subreddit(SETTINGS["subreddit"])
     stickies = []
 
     # Iterate and check for the stickies.

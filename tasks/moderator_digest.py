@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from config import Paths, get_reports_directory, logger
+from config import SETTINGS, Paths, get_reports_directory, logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
@@ -233,7 +233,7 @@ def note_language_tags():
     flagged_submissions = []
 
     # Get the last 1000 submissions and check their flair tags.
-    for submission in REDDIT_HELPER.subreddit("translator").new(limit=1000):
+    for submission in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=1000):
         flair = submission.link_flair_text
         if flair is None or any(tag in flair for tag in malformed_tags):
             flagged_submissions.append(submission)

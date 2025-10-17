@@ -41,7 +41,7 @@ def fetch_wiki_statistics_page(lingvo_object):
     wiki_page = f"{wiki_page_name.lower()}"
 
     # Attempt to fetch the wiki page content
-    subreddit = REDDIT_HELPER.subreddit("translator")
+    subreddit = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
     try:
         page = subreddit.wiki[wiki_page]
         content = page.content_md.strip()
@@ -116,7 +116,9 @@ def fetch_most_requested_languages():
     three_months_ago = datetime.datetime.now() - relativedelta(months=months_difference)
     three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
 
-    reference_page = REDDIT_HELPER.subreddit("translator").wiki[three_months_ago]
+    reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
+        three_months_ago
+    ]
     reference_page_content = reference_page.content_md.strip()
     reference_table = extract_single_language_statistics_table(reference_page_content)
     languages_frequency_sorted = assess_most_requested_languages(reference_table)
@@ -136,11 +138,11 @@ def update_wiki_page(
 ):
     if save_or_identify:
         # Adding to the "saved" wiki page
-        page = REDDIT.subreddit("translator").wiki["saved"]
+        page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["saved"]
         new_entry = f"| {formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} |"
     else:
         # Adding to the "identified" wiki page
-        page = REDDIT.subreddit("translator").wiki["identified"]
+        page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["identified"]
         new_entry = f"{formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} | {new_flair} | u/{user}"
 
     updated_content = f"{page.content_md}\n{new_entry}"
@@ -199,7 +201,9 @@ def frequently_requested_wiki():
 
     :return: A Python dictionary of all entries.
     """
-    wiki_page = REDDIT_HELPER.subreddit("translator").wiki["frequently-requested"]
+    wiki_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
+        "frequently-requested"
+    ]
     processed_data = wiki_page.content_md
     alert_mods = False
 

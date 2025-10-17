@@ -126,7 +126,9 @@ def points_worth_determiner(lingvo_object) -> int:
             raise ValueError("Could not extract wiki page name from URL.")
 
         wiki_page_name = match.group(1)
-        overall_page = REDDIT_HELPER.subreddit("translator").wiki[wiki_page_name]
+        overall_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
+            wiki_page_name
+        ]
         overall_page_content = overall_page.content_md.strip()
         last_month_data = overall_page_content.split("\n")[-1]
 

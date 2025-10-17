@@ -11,7 +11,6 @@ import time
 from collections import defaultdict
 from difflib import SequenceMatcher
 from itertools import combinations
-from usage_statistics import action_counter
 
 import numpy as np
 
@@ -22,10 +21,11 @@ from rapidfuzz import fuzz
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from config import logger
+from config import SETTINGS, logger
 from connection import REDDIT, is_mod, search_removal_reasons
 from reddit_sender import message_reply
 from responses import RESPONSE
+from usage_statistics import action_counter
 
 
 class DuplicateDetector:
@@ -459,10 +459,11 @@ def test_duplicate_detection():
     print()
 
     # Fetch posts from r/translator
-    subreddit = REDDIT.subreddit("translator")
+    designated_subreddit = SETTINGS["subreddit"]
+    subreddit = REDDIT.subreddit(designated_subreddit)
 
     # Get the most recent posts (adjust limit as needed)
-    print("Fetching posts from r/translator...")
+    print(f"Fetching posts from r/{designated_subreddit}...")
     posts = list(subreddit.new(limit=100))  # Get last 100 posts
     print(f"Fetched {len(posts)} posts\n")
 

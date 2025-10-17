@@ -16,7 +16,7 @@ from typing import List
 from rapidfuzz import fuzz
 
 from ai import ai_query, openai_access
-from config import Paths, load_settings, logger
+from config import SETTINGS, Paths, load_settings, logger
 from connection import REDDIT_HELPER
 from languages import Lingvo, converter, country_converter, define_language_lists
 from responses import RESPONSE
@@ -1005,7 +1005,9 @@ if __name__ == "__main__":
             pprint(vars(titolo_output))
         elif choice == "2":
             logger.setLevel(logging.INFO)
-            submissions = list(REDDIT_HELPER.subreddit("translator").new(limit=50))
+            submissions = list(
+                REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=50)
+            )
             for submission in submissions:
                 print(submission.title)
                 titolo_output = process_title(submission.title)

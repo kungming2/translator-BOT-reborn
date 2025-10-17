@@ -4,7 +4,7 @@ import json
 import time
 from datetime import date, datetime
 
-from config import logger
+from config import logger, SETTINGS
 from connection import REDDIT
 from database import db
 from notifications import notifier_internal
@@ -84,7 +84,7 @@ def weekly_unknown_thread():
     Posts the Weekly 'Unknown' thread: a round-up of all posts from the last
     seven days still marked as "Unknown".
     """
-    r = REDDIT.subreddit("translator")
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
     today_str = date.today().strftime("%Y-%m-%d")
 
     # Get the current week number for the post title

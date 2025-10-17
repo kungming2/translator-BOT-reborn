@@ -24,7 +24,7 @@ def get_verified_thread():
 
     :return: The verification post ID as a string, or None if not found or author is not a mod.
     """
-    search = REDDIT.subreddit("translator").search(
+    search = REDDIT.subreddit(SETTINGS["subreddit"]).search(
         "title:verified AND flair:meta", time_filter="year", sort="new", limit=1
     )
 
@@ -182,7 +182,7 @@ def verification_parser():
 
         # Format verification log entry
         entry = f"| {author_string} | {language_name} | [1]({url_1}), [2]({url_2}), [3]({url_3}) | {notes} |"
-        wiki_page = REDDIT.subreddit("translator").wiki["verification_log"]
+        wiki_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["verification_log"]
         updated_content = f"{wiki_page.content_md}\n{entry}"
 
         wiki_page.edit(

@@ -1009,7 +1009,9 @@ if __name__ == "__main__":
             pprint.pprint(vars(post_ajo))
 
         elif choice == "2":
-            for submission_new in REDDIT_HELPER.subreddit("translator").new(limit=3):
+            for submission_new in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(
+                limit=3
+            ):
                 print(f"Title: {submission_new.title}")
                 ajo_new = Ajo.from_titolo(
                     Titolo.process_title(submission_new), submission_new

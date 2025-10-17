@@ -82,7 +82,7 @@ def edit_tracker():
     # the last 3 minutes and therefore do not have an 'edited' flag.
     total_fetch_num = SETTINGS["comment_edit_num_limit"] * 2
     total_keep_num = total_fetch_num * 5
-    for comment in REDDIT_HELPER.subreddit("translator").comments(
+    for comment in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).comments(
         limit=total_fetch_num
     ):
         # Comment is beyond our time span for monitoring.
@@ -103,7 +103,7 @@ def edit_tracker():
     # Phase 2: Fetch only the edited comments from the subreddit.
     # This produces a generator that includes both comments and
     # submissions.
-    for item in REDDIT.subreddit("translator").mod.edited(
+    for item in REDDIT.subreddit(SETTINGS["subreddit"]).mod.edited(
         limit=SETTINGS["comment_edit_num_limit"]
     ):
         # Skip submissions, keep only comments
@@ -162,7 +162,7 @@ def progress_tracker():
     """
     current_time = time.time()
     search_query = 'flair:"in progress"'
-    search_results = REDDIT_HELPER.subreddit("translator").search(
+    search_results = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).search(
         search_query, time_filter="week", sort="new"
     )
 

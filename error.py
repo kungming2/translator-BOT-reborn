@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 import yaml
 
-from config import Paths, logger
+from config import SETTINGS, Paths, logger
 from connection import REDDIT
 
 
@@ -89,7 +89,7 @@ def record_last_post_and_comment():
     }
 
     # Get latest submission
-    for submission in REDDIT.subreddit("translator").new(limit=1):
+    for submission in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=1):
         post_time = datetime.fromtimestamp(submission.created_utc).strftime(
             "%a, %b %d, %Y [%I:%M:%S %p]"
         )
@@ -98,7 +98,7 @@ def record_last_post_and_comment():
         break
 
     # Get latest comment
-    for comment in REDDIT.subreddit("translator").comments(limit=1):
+    for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(limit=1):
         comment_time = datetime.fromtimestamp(comment.created_utc).strftime(
             "%a, %b %d, %Y [%I:%M:%S %p]"
         )

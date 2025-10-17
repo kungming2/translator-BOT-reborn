@@ -7,6 +7,7 @@ all their posts and comments. It can only be called by a mod.
 
 from praw.models import Comment, Submission
 
+from config import SETTINGS
 from connection import REDDIT, is_mod, logger
 from reddit_sender import message_send
 
@@ -41,7 +42,7 @@ def handle(comment, _instruo, _komando, _ajo):
         logger.info(f">> Parent submission: {parent.permalink}")
 
     # Ban the user.
-    REDDIT.subreddit("translator").banned.add(
+    REDDIT.subreddit(SETTINGS["subreddit"]).banned.add(
         nuked_person, ban_reason=f"Mod u/{mod_caller} nuked this user."
     )
     logger.info(f">> Banned u/{nuked_person}.")
@@ -49,7 +50,7 @@ def handle(comment, _instruo, _komando, _ajo):
     # Helper function to remove all items in a generator (posts/comments).
     def remove_items(generator, item_type: str):
         for item in generator:
-            if item.subreddit.display_name.lower() == "translator":
+            if item.subreddit.display_name.lower() == SETTINGS["subreddit"]:
                 item.mod.remove()
         logger.info(f">> Removed all {item_type} from u/{nuked_person}.")
 
