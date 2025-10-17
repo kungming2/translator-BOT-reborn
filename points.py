@@ -168,7 +168,7 @@ def points_worth_determiner(lingvo_object) -> int:
     return final_point_value
 
 
-def update_points_status(status_list, username, points):
+def _update_points_status(status_list, username, points):
     """
     Adds or updates a user's points total in the list.
     """
@@ -343,10 +343,10 @@ def points_tabulator(comment, original_post, original_post_lingvo):
                     final_translator_points = 0
 
     # Points assignment
-    update_points_status(points_status, comment_author, points)
+    _update_points_status(points_status, comment_author, points)
 
     if final_translator_points:
-        update_points_status(points_status, final_translator, final_translator_points)
+        _update_points_status(points_status, final_translator, final_translator_points)
         translator_to_add = translator_to_add or final_translator
 
     # Filter out any 0-point entries

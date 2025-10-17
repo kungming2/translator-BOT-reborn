@@ -3,7 +3,7 @@
 """
 Wrapper for Reddit functions to allow for testing without sending
 messages. This wraps functions for comment replies, message replies,
-and message sending.
+and message sending. Testing mode is set in settings.yaml.
 """
 
 from praw.exceptions import APIException
@@ -18,7 +18,7 @@ testing_mode = SETTINGS["testing_mode"]
 
 def comment_reply(comment, reply_text):
     """
-    Send a reply to a PRAW comment object, or print it if dry-run.
+    Send a reply to a PRAW comment object, or logs it in testing mode.
 
     Args:
         comment: PRAW Comment object.

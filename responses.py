@@ -13,6 +13,9 @@ from config import Paths
 
 class ResponseLoader:
     """
+    Simple class to provide responses as an object attribute for use.
+    Responses are located in responses.yaml.
+
     Responses are generally formatted as:
     RESPONSE.ANCHOR_WIKIPEDIA
     """
