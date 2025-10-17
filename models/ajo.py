@@ -162,7 +162,7 @@ def _normalize_lang_field(value):
 
 class Ajo:
     """
-    The main class we work with that represents translation requests.
+    The primary class we work with that represents translation requests.
     """
 
     def __init__(self):
@@ -308,7 +308,7 @@ class Ajo:
     def from_titolo(cls, titolo: "Titolo", submission=None):
         """
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
-        This is the main way to construct an Ajo, as simple as:
+        This is the primary way to construct an Ajo, as simple as:
         Ajo.from_titolo(Titolo.process_title(submission.title))
 
         :param titolo: A Titolo instance containing parsed title information.

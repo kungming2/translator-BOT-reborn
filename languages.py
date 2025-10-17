@@ -455,11 +455,6 @@ def converter(
     Input can be a language code, name, or compound like zh-MO or
     unknown-cyrl.
 
-    Note that the converter will NOT convert language-country inputs
-    into their equivalent specific language codes (e.g. ar-DZ to arq);
-    title_handling's main function will do that. This is to increase
-    fidelity to the input by the user.
-
     :param input_text: The input string to resolve.
     :param fuzzy: Whether to apply fuzzy name matching.
     :param specific_mode: If True, use strict lookups (ISO_639_3 for 3-char,

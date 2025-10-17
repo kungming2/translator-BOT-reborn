@@ -33,7 +33,7 @@ from utility import fetch_youtube_length
 
 def ziwen_posts(post_limit=None):
     """
-    The main top-level post filtering runtime for r/translator.
+    The primary top-level post filtering runtime for r/translator.
     It removes posts that do not meet the subreddit's guidelines.
     It also assigns flair to posts, saves them as Ajos, and determines
     what to pass to the notification system.

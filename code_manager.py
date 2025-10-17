@@ -9,7 +9,7 @@ from pathlib import Path
 
 from config import Paths
 
-# Location of our main ISO dataset for codes
+# Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
 
 

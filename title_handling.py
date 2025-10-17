@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 This handles language processing from posts' titles and also
-filters out posts that do not match the community rules. The main class
+filters out posts that do not match the community rules. The primary class
 associated with requests is the Titolo class.
 """
 
