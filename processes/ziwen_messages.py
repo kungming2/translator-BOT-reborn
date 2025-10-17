@@ -2,7 +2,8 @@
 # -*- coding: UTF-8 -*-
 """
 Main script to fetch and handle messages. Much of the logic for this
-module is in messaging.py.
+module is in messaging.py; this function primarily reads the messages
+and then passes it on to that module.
 """
 
 import traceback

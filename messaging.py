@@ -319,7 +319,7 @@ def handle_points(message, message_author):
 
 
 if __name__ == "__main__":
-    user_check = is_valid_user("kungming2")
+    user_check = is_valid_user(USERNAME)
     if user_check:
         msg.good("This user exists!")
     else:
