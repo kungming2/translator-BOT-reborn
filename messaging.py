@@ -253,7 +253,8 @@ def handle_add(message, message_author):
     if language_matches:
         notifier_language_list_editor(language_matches, add_username, "insert")
         match_codes_print = ", ".join(language_matches)
-        addition_message = f"Added the language codes **{match_codes_print}** for u/{add_username} into the notifications database."
+        addition_message = (f"Added the language codes **{match_codes_print}** "
+                            f"for u/{add_username} into the notifications database.")
         message_reply(message, reply_text=addition_message)
 
 

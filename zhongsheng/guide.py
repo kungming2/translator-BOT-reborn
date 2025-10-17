@@ -8,7 +8,8 @@ from . import command
 COMMAND_DESCRIPTIONS = {
     "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
     "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
-    "user": "Search log files and database for a Reddit username (accepts strings and URLs). Data limited to the last month",
+    "user": "Search log files and database for a Reddit username "
+            "(accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
     "Use the ``--text`` flag to check text directly",

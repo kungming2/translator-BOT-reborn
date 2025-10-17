@@ -92,7 +92,8 @@ def monitor_controversial_comments():
             # Send alert to Discord
             send_discord_alert(
                 "Comment with Excessive Downvotes",
-                f"[This comment](https://www.reddit.com{permalink}) has many downvotes (`{score}`). Please check the thread.",
+                f"[This comment](https://www.reddit.com{permalink}) "
+                f"has many downvotes (`{score}`). Please check the thread.",
                 "alert",
             )
 

@@ -93,9 +93,15 @@ def record_last_post_and_comment():
         )
         break
 
+    last_post = f"Last post     |   {post_info['timestamp']}:    {post_info['link']}"
+    last_comment = (
+        f"Last comment  |   {comment_info['timestamp']}:    {comment_info['link']}\n"
+        f"              {comment_info['body']}"
+    )
+
     return {
-        "last_post": f"Last post     |   {post_info['timestamp']}:    {post_info['link']}",
-        "last_comment": f"Last comment  |   {comment_info['timestamp']}:    {comment_info['link']}\n              {comment_info['body']}",
+        "last_post": last_post,
+        "last_comment": last_comment,
     }
 
 

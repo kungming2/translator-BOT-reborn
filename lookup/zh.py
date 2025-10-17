@@ -100,11 +100,11 @@ def convert_numbered_pinyin(s):
                         t += c
                     elif len(m.group(0)) == 1:
                         t = (
-                                t[: m.start(0)]
-                                + pinyin_tone_mark[tone][
-                                    pinyin_tone_mark[0].index(m.group(0))
-                                ]
-                                + t[m.end(0):]
+                            t[: m.start(0)]
+                            + pinyin_tone_mark[tone][
+                                pinyin_tone_mark[0].index(m.group(0))
+                            ]
+                            + t[m.end(0) :]
                         )
                     else:
                         if "a" in t:
@@ -223,9 +223,9 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
                 )
                 if last_vowel_index != -1:
                     gr_equiv = (
-                            gr_base[: last_vowel_index + 1]
-                            + "r"
-                            + gr_base[last_vowel_index + 1:]
+                        gr_base[: last_vowel_index + 1]
+                        + "r"
+                        + gr_base[last_vowel_index + 1 :]
                     )
                 else:
                     gr_equiv = gr_base
@@ -242,14 +242,14 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
                 else:
                     gr_equiv = gr_base.replace("u", "o", 1)
             elif (
-                    "i" in gr_base and vowel_neighbor("i", gr_base) and "ei" not in gr_base
+                "i" in gr_base and vowel_neighbor("i", gr_base) and "ei" not in gr_base
             ):
                 gr_equiv = gr_base.replace("i", "e", 1)
             elif (
-                    "u" in gr_base
-                    and vowel_neighbor("u", gr_base)
-                    and "ou" not in gr_base
-                    and "uo" not in gr_base
+                "u" in gr_base
+                and vowel_neighbor("u", gr_base)
+                and "ou" not in gr_base
+                and "uo" not in gr_base
             ):
                 gr_equiv = gr_base.replace("u", "o", 1)
             else:
@@ -796,19 +796,22 @@ async def zh_character(character):
                     f" | [{key}](https://en.wiktionary.org/wiki/{key}#Chinese)"
                 )
             else:
-                duo_header += f" | [{tradify(key)} ({simplify(key)})](https://en.wiktionary.org/wiki/{tradify(key)}#Chinese)"
+                wt_link = f"https://en.wiktionary.org/wiki/{tradify(key)}"
+                duo_header += (
+                    f" | [{tradify(key)} ({simplify(key)})]({wt_link}#Chinese)"
+                )
             duo_separator += "---|"
             duo_mandarin += f" | {char_data['mandarin']}"
             duo_cantonese += f" | {char_data['cantonese']}"
             duo_meaning += f" | {char_data['meaning']}"
 
         lookup_line_1 = (
-                duo_key
-                + duo_header
-                + duo_separator
-                + duo_mandarin
-                + duo_cantonese
-                + duo_meaning
+            duo_key
+            + duo_header
+            + duo_separator
+            + duo_mandarin
+            + duo_cantonese
+            + duo_meaning
         )
 
     lookup_line_2 = (
@@ -867,8 +870,8 @@ async def zh_word_dictionary_search(chinese_word, dictionary_type):
             meanings = meanings[:2]
             meanings[-1] += "."
         formatted_meaning = (
-                '\n\n**Buddhist Meanings**: "{}"'.format("; ".join(meanings))
-                + " ([Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms))"
+            '\n\n**Buddhist Meanings**: "{}"'.format("; ".join(meanings))
+            + " ([Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms))"
         )
         return {"meaning": formatted_meaning, "pinyin": pinyin}
 
@@ -878,8 +881,8 @@ async def zh_word_dictionary_search(chinese_word, dictionary_type):
             jyutping = jyutping.replace(digit, f"^{digit} ")
         jyutping = " ".join(jyutping.split())
         formatted_meaning = (
-                '\n\n**Cantonese Meanings**: "{}."'.format("; ".join(meanings))
-                + f" ([CC-Canto](https://cantonese.org/search.php?q={chinese_word}))"
+            '\n\n**Cantonese Meanings**: "{}."'.format("; ".join(meanings))
+            + f" ([CC-Canto](https://cantonese.org/search.php?q={chinese_word}))"
         )
         return {"meaning": formatted_meaning, "pinyin": pinyin, "jyutping": jyutping}
 
@@ -914,7 +917,7 @@ async def zh_word_tea_dictionary_search(chinese_word):
     if pinyin_line_index is None or pinyin is None:
         return None
 
-    meaning_parts = text_nodes[pinyin_line_index + 1:]
+    meaning_parts = text_nodes[pinyin_line_index + 1 :]
     if not meaning_parts:
         return None
 

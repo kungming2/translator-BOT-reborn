@@ -139,7 +139,9 @@ def ko_word(korean_word):
         entries.append(pos_section)
 
     footer = (
-        f"\n\n^Information ^from [^KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search?nation=eng&nationCode=6&ParaWordNo=&mainSearchWord={korean_word}&lang=eng) ^| "
+        "\n\n^Information ^from "
+        f"[^KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search"
+        f"?nation=eng&nationCode=6&ParaWordNo=&mainSearchWord={korean_word}&lang=eng) ^| "
         f"[^Naver](https://korean.dict.naver.com/koendict/#/search?query={korean_word}) ^| "
         f"[^Collins](https://www.collinsdictionary.com/dictionary/korean-english/{korean_word})"
     )
