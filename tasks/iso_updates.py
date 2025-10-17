@@ -153,7 +153,7 @@ def post_iso_reports_to_reddit() -> None:
                 send_discord_alert(
                     subject="New ISO 639-3 Report",
                     message=discord_message,
-                    webhook_name="alert",
+                    webhook_name="notification",
                 )
                 logger.info(f"Sent an alert to Discord.")
 
