@@ -16,7 +16,7 @@ from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
 
 
-async def cc_ref(reddit):
+async def _cc_ref(reddit):
     """
     Runtime for Chinese language subreddits. The bot monitors a
     multireddit called 'chinese' and provides character and word lookups
@@ -79,7 +79,7 @@ async def cc_ref(reddit):
                     logger.error(f"[CC_REF]: Unexpected exception: {ex}")
 
 
-async def chinese_reference_login_async(credentials):
+async def _chinese_reference_login_async(credentials):
     """Async version of chinese_reference_login."""
     reddit = asyncpraw.Reddit(
         client_id=credentials["CHINESE_APP_ID"],
@@ -91,11 +91,11 @@ async def chinese_reference_login_async(credentials):
     return reddit
 
 
-async def main():
+async def cc_ref_main():
     """Initialize async PRAW and run the Chinese reference bot."""
-    reddit = await chinese_reference_login_async(credentials_source)
+    reddit = await _chinese_reference_login_async(credentials_source)
     try:
-        await cc_ref(reddit)
+        await _cc_ref(reddit)
     finally:
         await reddit.close()
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     msg.good("Launching Chinese Reference...")
     # noinspection PyBroadException
     try:
-        asyncio.run(main())
+        asyncio.run(cc_ref_main())
     except Exception:
         error_entry = traceback.format_exc()
         error_log_extended(error_entry, "Chinese Reference")
