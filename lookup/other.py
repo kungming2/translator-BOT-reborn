@@ -163,25 +163,27 @@ def lookup_matcher(content_text, language_code):
                 if len(parsed) == 4 and parsed in cjk_languages[key]:
                     parsed = key
             inline_language_codes.append(parsed)
-            logger.info(f"Inline language found: {inline_lang} → {parsed}")
+            logger.debug(f"Inline language found: {inline_lang} → {parsed}")
         else:
             inline_language_codes.append(None)
-            logger.info(f"No inline language for: {text}")
+            logger.debug(f"No inline language for: {text}")
 
     if not matches:
-        logger.info(f"No matches found after backtick extraction")
+        logger.debug(f"No matches found after backtick extraction")
         return {}
 
     combined_text = "".join(matches)
     logger.info(f"Combined text: {combined_text}")
-    logger.info(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
+    logger.debug(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
 
     # Unicode script detection
     has_hanzi = bool(re.search(r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]", combined_text))
     has_kana = bool(re.search(r"[\u3041-\u309f\u30a0-\u30ff]", combined_text))
     has_hangul = bool(re.search(r"[\uac00-\ud7af]", combined_text))
 
-    logger.info(f"Script detection - Hanzi: {has_hanzi}, Kana: {has_kana}, Hangul: {has_hangul}")
+    logger.info(
+        f"Script detection - Hanzi: {has_hanzi}, Kana: {has_kana}, Hangul: {has_hangul}"
+    )
     logger.info(f"Language codes to process: {language_codes}")
 
     result = {}
@@ -204,7 +206,7 @@ def lookup_matcher(content_text, language_code):
             elif has_hanzi:
                 seg_language_codes = ["zh"]
 
-        logger.info(f"Processing segment with language codes: {seg_language_codes}")
+        logger.debug(f"Processing segment with language codes: {seg_language_codes}")
 
         # --- Handle Chinese and Japanese ---
         if has_hanzi or has_kana:
@@ -249,7 +251,9 @@ def lookup_matcher(content_text, language_code):
 
         # --- Handle non-CJK languages ---
         all_cjk_codes = {"zh", "ja", "ko"}
-        non_cjk_codes = [code for code in seg_language_codes if code not in all_cjk_codes]
+        non_cjk_codes = [
+            code for code in seg_language_codes if code not in all_cjk_codes
+        ]
         if non_cjk_codes:
             for code in non_cjk_codes:
                 if code not in result:
