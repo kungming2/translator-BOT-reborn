@@ -1,5 +1,4 @@
 bot_name: Ziwen
-version_number: "2.0 beta"
 subreddit: translator
 testing_mode: true  # Very important variable!
 commands_with_args:

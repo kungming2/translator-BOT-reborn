@@ -16,18 +16,18 @@ MSG_NO_SUBSCRIPTIONS: Sorry, you're not currently subscribed to notifications fo
 MSG_CANNOT_PROCESS: Sorry, but I couldn't process the [language/language codes](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_language_codes.2Fnames_syntax)
   in your message. Please double-check your message to make sure they're accurate and [try again]({}).
 MSG_MISSING_ASSETS: |
-  Hey there u/{oauthor},
+  Hey there u/{author},
 
-  Another community member marked **[your post]({opermalink})** as missing assets (text, images, etc) to be translated. 
+  Another community member marked **[your post](https://www.reddit.com{permalink})** as missing assets (text, images, etc) to be translated. 
 
   Please update your post with content, or delete it and resubmit it with the material you want translated.
 
   You can re-open your translation request by commenting `!reset` on your post.
 
 MSG_TRANSLATED: |
-  Hey there u/{oauthor},
+  Hey there u/{author},
 
-  Another redditor on r/translator has marked **[your post]({opermalink})** as translated. 
+  Another redditor on r/translator has marked **[your post](https://www.reddit.com{permalink})** as translated. 
   If your request has been fulfilled, please leave a comment thanking the translator!
 
   *P.S. We encourage you to keep your post up as a useful resource for other people.*
@@ -38,7 +38,7 @@ MSG_SHORT_THANKS_TRANSLATED: |
   Thanks for submitting to r/translator! It looks like you left a short "thank you" comment on **[your post]({1})**. 
   Consequently, I've automatically marked your request as translated. 
 
-  If this is in error, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message=https://www.reddit.com{1}). Thank you.
+  If this is in error, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message={1}). Thank you.
 MSG_PAGE: >
 
   {greetings} u/{username},
@@ -81,7 +81,7 @@ MSG_WIKIPAGE_FULL: The [{0} wiki page](https://www.reddit.com/r/translatorBOT/wi
 MSG_NO_POINTS: You haven't earned any points on r/translator yet. You can earn points by helping identify
   or translate requests in our community!
 MSG_LANGUAGE_FREQUENCY: For your reference, our [statistics](https://www.reddit.com/r/translator/wiki/{})
-  indicate that approximately **{} requests are made per {}** for {}.
+  indicate that approximately **{} requests are made per {}** for {}.  # unused
 MSG_SUBSCRIBE: '{}! You have been subscribed to r/translator notifications for:
 
 
@@ -142,7 +142,7 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
   if you would like to be notified for future posts for it! [](#comment_no_language)\n\n'
 COMMENT_NO_RESULTS: Sorry, but that doesn't look like anything to me. [](#comment_no_results)
 COMMENT_ENGLISH_ONLY: |
-  Hey there u/{oauthor},
+  Hey there u/{author},
 
   * Your post above has been automatically removed because does not appear to be a request for a translation. 
   There are more focused communities for English-only requests.

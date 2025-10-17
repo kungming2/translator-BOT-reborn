@@ -20,6 +20,8 @@ from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from points import points_tabulator
 from usage_statistics import action_counter, user_statistics_writer
+from reddit_sender import message_send
+from responses import RESPONSE
 from title_handling import Titolo
 
 
@@ -62,6 +64,18 @@ def mark_short_thanks_as_translated(comment, ajo):
     )
     ajo.set_status("translated")
     ajo.set_time("translated", current_time)
+
+    # Notify the user.
+    message_body = RESPONSE.MSG_SHORT_THANKS_TRANSLATED.format(
+        comment.author, f"https://redd.it/{ajo.id}"
+    )
+    message_send(
+        comment.author,
+        "[Notification] A message about your translation request",
+        message_body,
+    )
+
+    return
 
 
 def ziwen_commands():

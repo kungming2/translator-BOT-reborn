@@ -5,12 +5,6 @@ Handles messaging retrieval and sending functions.
 This is Reddit-native, rather than Discord.
 """
 
-from usage_statistics import (
-    action_counter,
-    generate_language_frequency_markdown,
-    user_statistics_loader,
-)
-
 import praw
 from praw.exceptions import APIException
 from wasabi import msg
@@ -26,6 +20,11 @@ from notifications import (
 from points import points_retriever
 from reddit_sender import message_reply, message_send
 from responses import RESPONSE
+from usage_statistics import (
+    action_counter,
+    generate_language_frequency_markdown,
+    user_statistics_loader,
+)
 
 
 def notify_op_translated_post(author, permalink):
@@ -41,7 +40,7 @@ def notify_op_translated_post(author, permalink):
 
     subject = "[Notification] Your request has been translated on r/translator!"
     body = (
-        RESPONSE.MSG_TRANSLATED.format(oauthor=author, opermalink=permalink)
+        RESPONSE.MSG_TRANSLATED.format(author=author, permalink=permalink)
         + RESPONSE["BOT_DISCLAIMER"]
     )
 

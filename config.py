@@ -36,7 +36,7 @@ class Paths:
         "CREDENTIALS": os.path.join(DATA_DIR, "auth.yaml"),
     }
 
-    # Written responses by the bot
+    # Written responses and templates by the bot
     RESPONSES = {
         "TEXT": os.path.join(DATA_DIR, "responses.yaml"),
     }
@@ -65,7 +65,6 @@ class Paths:
         "FILTER": os.path.join(DATA_DIR, "_log_filter.md"),
         "EVENTS": os.path.join(DATA_DIR, "_log_events.md"),
         "ACTIVITY": os.path.join(DATA_DIR, "_log_activity.csv"),
-        "HASHES": os.path.join(DATA_DIR, "_log_hashes.json"),
         "STATISTICS": os.path.join(DATA_DIR, "_statistics.json"),
         "TESTING": os.path.join(DATA_DIR, "_log_testing.md"),
     }

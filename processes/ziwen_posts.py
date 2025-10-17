@@ -194,7 +194,7 @@ def ziwen_posts(post_limit=None):
             if not SETTINGS["testing_mode"]:
                 post.mod.remove()
             message_reply(
-                post, RESPONSE.COMMENT_ENGLISH_ONLY.format(oauthor=post_author)
+                post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author)
             )
 
             record_filter_log(post_title, post.created_utc, "EE")
@@ -215,7 +215,9 @@ def ziwen_posts(post_limit=None):
             # If the video is considered long by our settings,
             # but make an exception if someone posts the exact timestamp.
             if video_length > SETTINGS["video_long_seconds"] and "t=" not in post.url:
-                logger.info(f"[ZW] Posts: This is a long YouTube video ({video_length} seconds).")
+                logger.info(
+                    f"[ZW] Posts: This is a long YouTube video ({video_length} seconds)."
+                )
                 post_long_comment = True
 
         # This is a boolean that is True if the user has posted too much
