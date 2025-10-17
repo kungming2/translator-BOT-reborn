@@ -168,6 +168,14 @@ def initialize_main_db():
 
     create_statements = [
         """
+        CREATE TABLE internal_posts (
+            id TEXT,
+            created_utc INTEGER,
+            content TEXT,
+            PRIMARY KEY(id)
+        )
+        """,
+        """
         CREATE TABLE notify_cumulative (
             username TEXT,
             received TEXT,
