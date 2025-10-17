@@ -25,7 +25,7 @@ from config import Paths, logger
 from connection import get_random_useragent
 from responses import RESPONSE
 
-from .async_helpers import maybe_async
+from .async_helpers import call_sync_async
 
 useragent = get_random_useragent()
 
@@ -49,7 +49,7 @@ def tradify(input_text):
 """PINYIN/ROMANIZATION HELPERS"""
 
 
-def sanitize_pinyin_input(pinyin_string):
+def _sanitize_pinyin_input(pinyin_string):
     """Fix common issues with pinyin strings and filter out invalid parts.
 
     Keeps only parts that are at least two characters long and end with a digit (tone number).
@@ -63,7 +63,7 @@ def sanitize_pinyin_input(pinyin_string):
     )
 
 
-def convert_numbered_pinyin(s):
+def _convert_numbered_pinyin(s):
     """
     Function to convert numbered pin1 yin1 into proper tone marks.
     CC-CEDICT's format uses numerical pinyin.
@@ -139,7 +139,7 @@ def vowel_neighbor(letter, word):
     return False
 
 
-def vowel_preceder(letter, word):
+def _vowel_preceder(letter, word):
     """Checks a letter to see if vowels precede it."""
     vowels = "aeiouy"
 
@@ -149,7 +149,7 @@ def vowel_preceder(letter, word):
     return False
 
 
-def pair_syllables_with_tones(raw_syllables):
+def _pair_syllables_with_tones(raw_syllables):
     """Pairs Cantonese syllables and tone numbers correctly."""
     pairs = []
     for i in range(0, len(raw_syllables) - 1, 2):
@@ -159,7 +159,7 @@ def pair_syllables_with_tones(raw_syllables):
     return " ".join(pairs)
 
 
-def process_gwoyeu_romatzyh(syllables, corresponding_dict):
+def _process_gwoyeu_romatzyh(syllables, corresponding_dict):
     """
     Processes the syllables into Gwoyeu Romatzyh romanization.
 
@@ -267,9 +267,9 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
                     gr_equiv = gr_base.replace("o", "oo")
 
         elif tone == 4:
-            if "i" in gr_base and vowel_preceder("i", gr_base):
+            if "i" in gr_base and _vowel_preceder("i", gr_base):
                 gr_equiv = gr_base.replace("i", "y", 1)
-            elif "u" in gr_base and vowel_preceder("u", gr_base):
+            elif "u" in gr_base and _vowel_preceder("u", gr_base):
                 gr_equiv = gr_base.replace("u", "w", 1)
             elif gr_base.endswith("n") or gr_base.endswith("l"):
                 gr_equiv = gr_base + gr_base[-1]
@@ -304,7 +304,7 @@ def process_gwoyeu_romatzyh(syllables, corresponding_dict):
     return gr_list
 
 
-def zh_word_alternate_romanization(pinyin_string):
+def _zh_word_alternate_romanization(pinyin_string):
     """
     Takes a pinyin with tone-number string and returns a version of it in the
     legacy Yale, Wade-Giles, and Gwoyeu Romatzyh romanization schemes.
@@ -331,7 +331,7 @@ def zh_word_alternate_romanization(pinyin_string):
                 gr_p.strip(),
             ]
 
-    pinyin_string = sanitize_pinyin_input(pinyin_string)
+    pinyin_string = _sanitize_pinyin_input(pinyin_string)
     syllables = pinyin_string.split()
 
     yale_list, wadegiles_list = [], []
@@ -362,7 +362,7 @@ def zh_word_alternate_romanization(pinyin_string):
         wadegiles_list.append(add_tone(corresponding_dict[base][1]))
 
     # Process Gwoyeu Romatzyh romanization
-    gr_list = process_gwoyeu_romatzyh(syllables, corresponding_dict)
+    gr_list = _process_gwoyeu_romatzyh(syllables, corresponding_dict)
 
     yale_post = " ".join(yale_list)
     wadegiles_post = " ".join(wadegiles_list)
@@ -378,7 +378,7 @@ def zh_word_alternate_romanization(pinyin_string):
 """CHARACTER FUNCTIONS"""
 
 
-def old_chinese_search(character):
+def _old_chinese_search(character):
     """
     Retrieves Middle and Old Chinese readings for a character from a CSV
     using Baxter-Sagart's reconstruction.
@@ -446,7 +446,7 @@ def variant_character_search(search_term, retries=3):
     return None
 
 
-def min_hakka_readings(character):
+def _min_hakka_readings(character):
     """
     Returns Hokkien and Hakka (Sixian) readings for a given Chinese
     character or word using the ROC Ministry of Education dictionary.
@@ -492,16 +492,17 @@ def min_hakka_readings(character):
     return min_reading + hak_reading
 
 
-def contains_latin(text):
+def _contains_latin(text):
+    """Helper function used to help detect Vietnamese readings."""
     return bool(re.search(r"[a-zA-ZÀ-ÿĀ-ž]", text))
 
 
-def vietnamese_readings(character, max_readings=4):
+def _vietnamese_readings(character, max_readings=4):
     """
     Function to obtain more accurate readings for Chinese characters
     in Vietnamese. Unicode's standard listings include lots of
     problematic entries. What we're looking for in particular, is
-    Âm Hán Việt.
+    Âm Hán Việt (音漢越).
     Extracts up to `max_readings` readings from span text in the
     main content block.
     """
@@ -533,7 +534,7 @@ def vietnamese_readings(character, max_readings=4):
         return None
 
     han_viet_readings = list(set(han_viet_readings))
-    han_viet_readings = [x for x in han_viet_readings if contains_latin(x)]
+    han_viet_readings = [x for x in han_viet_readings if _contains_latin(x)]
     readings_formatted = ", ".join(han_viet_readings)
     logger.info("Looked up Vietnamese readings for Chinese character.")
 
@@ -542,7 +543,8 @@ def vietnamese_readings(character, max_readings=4):
 
 def calligraphy_search(character):
     """
-    Get an overall image of Chinese calligraphic styles from various sources.
+    Get an overall image of Chinese calligraphic styles from various
+    sources. This can also be called by the Japanese character routine.
 
     :param character: A single Chinese character.
     :return: None if no image found; otherwise a formatted string with URLs and images.
@@ -594,7 +596,7 @@ def calligraphy_search(character):
     return image_string
 
 
-def zh_character_other_readings(character):
+def _zh_character_other_readings(character):
     """
     Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
     character from the Chinese Character Web API. Note that the Chinese
@@ -636,7 +638,7 @@ def zh_character_other_readings(character):
         results.append(f"**Korean** | {ko_hangul_fmt} / *{ko_latin}*")
 
     # Vietnamese reading
-    vi_latin = vietnamese_readings(character)
+    vi_latin = _vietnamese_readings(character)
     if vi_latin is None:
         vi_latin = data.get("kVietnamese")
     if vi_latin:
@@ -716,12 +718,14 @@ async def zh_character(character):
             )
 
         # Add Hokkien and Hakka readings
-        lookup_line_1 += await maybe_async(min_hakka_readings, tradify(character)) or ""
+        lookup_line_1 += (
+            await call_sync_async(_min_hakka_readings, tradify(character)) or ""
+        )
 
         # Old Chinese readings
         try:
-            ocmc_pronunciation = await maybe_async(
-                old_chinese_search, tradify(character)
+            ocmc_pronunciation = await call_sync_async(
+                _old_chinese_search, tradify(character)
             )
             if ocmc_pronunciation:
                 lookup_line_1 += ocmc_pronunciation
@@ -729,14 +733,14 @@ async def zh_character(character):
             pass
 
         # Other Sino-Xenic readings
-        other_readings_data = await maybe_async(
-            zh_character_other_readings, tradify(character)
+        other_readings_data = await call_sync_async(
+            _zh_character_other_readings, tradify(character)
         )
         if other_readings_data:
             lookup_line_1 += f"\n{other_readings_data}"
 
         # Calligraphic examples
-        calligraphy_image = await maybe_async(calligraphy_search, character)
+        calligraphy_image = await call_sync_async(calligraphy_search, character)
         if calligraphy_image:
             lookup_line_1 += calligraphy_image
 
@@ -838,7 +842,9 @@ async def zh_character(character):
 """WORD FUNCTIONS"""
 
 
-async def zh_word_dictionary_search(chinese_word, dictionary_type):
+async def _zh_word_dictionary_search(chinese_word, dictionary_type):
+    """Searches the Buddhist and Cantonese local dictionaries for
+    definitions."""
     if dictionary_type == "buddhist":
         file_address = Paths.DATASETS["ZH_BUDDHIST"]
     elif dictionary_type == "cantonese":
@@ -887,7 +893,8 @@ async def zh_word_dictionary_search(chinese_word, dictionary_type):
         return {"meaning": formatted_meaning, "pinyin": pinyin, "jyutping": jyutping}
 
 
-async def zh_word_tea_dictionary_search(chinese_word):
+async def _zh_word_tea_dictionary_search(chinese_word):
+    """Searches the Babelcarp dictionary for tea definitions."""
     general_dictionary = {}
     web_search = (
         f"https://babelcarp.org/babelcarp/babelcarp.cgi?phrase={chinese_word}&define=1"
@@ -925,12 +932,14 @@ async def zh_word_tea_dictionary_search(chinese_word):
     formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
 
     general_dictionary["meaning"] = formatted_line
-    general_dictionary["pinyin"] = convert_numbered_pinyin(pinyin)
+    general_dictionary["pinyin"] = _convert_numbered_pinyin(pinyin)
 
     return general_dictionary
 
 
 async def zh_word_chengyu_supplement(chengyu):
+    """Searches the dictionaries for chengyu definitions to supplement
+    zh_word."""
     headers = {
         "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept-Encoding": "gzip, deflate, br",
@@ -1021,9 +1030,9 @@ async def zh_word(word):
 
         if "No results found" in word_exists:
             trad_word, simp_word = tradify(word), simplify(word)
-            search_buddhist = await zh_word_dictionary_search(trad_word, "buddhist")
-            search_tea = await zh_word_tea_dictionary_search(simp_word)
-            search_cccanto = await zh_word_dictionary_search(trad_word, "cantonese")
+            search_buddhist = await _zh_word_dictionary_search(trad_word, "buddhist")
+            search_tea = await _zh_word_tea_dictionary_search(simp_word)
+            search_cccanto = await _zh_word_dictionary_search(trad_word, "cantonese")
 
             if not any([search_buddhist, search_tea, search_cccanto]):
                 logger.info(
@@ -1050,7 +1059,7 @@ async def zh_word(word):
                 match = re.search(r'\|([^|]*)"', onclick)
                 py_split = match.group(1).strip() if match else ""
                 logger.info(f">>> Pinyin string to look up: {py_split}")
-                alt_romanize = zh_word_alternate_romanization(py_split)
+                alt_romanize = _zh_word_alternate_romanization(py_split)
             except IndexError:
                 alt_romanize = ("---", "---", "---")
 
@@ -1071,11 +1080,11 @@ async def zh_word(word):
                 '//h3[contains(@class,"resulthead")]/small/strong//text()'
             )
             yue_syllables = yue_pronunciation_raw[: len(word) * 2]
-            yue_pronunciation = pair_syllables_with_tones(yue_syllables)
+            yue_pronunciation = _pair_syllables_with_tones(yue_syllables)
             yue_pronunciation = re.sub(r"(\d)", r"^(\1)", yue_pronunciation)
         else:
-            cmn_pronunciation = convert_numbered_pinyin(alternate_pinyin)
-            alt_romanize = zh_word_alternate_romanization(alternate_pinyin)
+            cmn_pronunciation = _convert_numbered_pinyin(alternate_pinyin)
+            alt_romanize = _zh_word_alternate_romanization(alternate_pinyin)
             yue_pronunciation = alternate_jyutping or "---"
             meaning = "\n".join(alternate_meanings)
 
@@ -1095,7 +1104,7 @@ async def zh_word(word):
         f"\n**Cantonese** | *{yue_pronunciation}*"
     )
 
-    min_hak_data = min_hakka_readings(tradify(word))
+    min_hak_data = _min_hakka_readings(tradify(word))
     lookup_header += pronunciation_block + min_hak_data
 
     if not alternate_meanings:
@@ -1106,7 +1115,7 @@ async def zh_word(word):
                 logger.info("[ZW] ZH-Word: >> Added additional chengyu data.")
                 meaning_section += chengyu_info
 
-        buddhist_main = await zh_word_dictionary_search(tradify(word), "buddhist")
+        buddhist_main = await _zh_word_dictionary_search(tradify(word), "buddhist")
         if buddhist_main:
             meaning_section += buddhist_main["meaning"]
     else:

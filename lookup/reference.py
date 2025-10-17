@@ -21,7 +21,7 @@ from connection import get_random_useragent, logger
 from languages import converter, get_lingvos, select_random_language
 
 
-def fetch_sil_language_data(language_code: str) -> dict | None:
+def _fetch_sil_language_data(language_code: str) -> dict | None:
     """
     Fetch language reference data from SIL ISO 639-3 as a fallback.
     Raises a ValueError if the language code is in ISO 639-2 instead.
@@ -73,7 +73,7 @@ def fetch_sil_language_data(language_code: str) -> dict | None:
     return sil_data
 
 
-def get_archived_ethnologue_page(language_code: str) -> str | None:
+def _get_archived_ethnologue_page(language_code: str) -> str | None:
     """
     Retrieve an archived Ethnologue page for a given language code
     from the Wayback Machine.
@@ -103,7 +103,7 @@ def get_archived_ethnologue_page(language_code: str) -> str | None:
     return archived_snapshot.archive_url
 
 
-def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict | None:
+def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict | None:
     """
     Fetch reference data for a language from Ethnologue and Wikipedia.
 
@@ -142,7 +142,7 @@ def fetch_language_reference_data(lookup_url: str, language_code: str) -> dict |
 
         # SIL backup here. This is primarily for historical/extinct
         # languages, like Tangut.
-        sil_data = fetch_sil_language_data(language_code)
+        sil_data = _fetch_sil_language_data(language_code)
         if sil_data:
             logger.info(
                 f"[Reference] No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}"
@@ -272,7 +272,7 @@ def get_language_reference(language_code: str) -> dict | None:
     :return: Dictionary containing reference data, or None if unavailable
     """
     # Step 1: Get archived Ethnologue page URL
-    archived_url = get_archived_ethnologue_page(language_code)
+    archived_url = _get_archived_ethnologue_page(language_code)
     if not archived_url:
         logger.error(
             f"[Reference] Could not retrieve archived URL for `{language_code}`."
@@ -280,7 +280,7 @@ def get_language_reference(language_code: str) -> dict | None:
         return None
 
     # Step 2: Fetch and parse reference data from the archived page
-    reference_data = fetch_language_reference_data(archived_url, language_code)
+    reference_data = _fetch_language_reference_data(archived_url, language_code)
     if not reference_data:
         logger.error(
             f"[Reference] Could not retrieve reference data for `{language_code}`."

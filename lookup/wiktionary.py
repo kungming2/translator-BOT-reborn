@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+Unused Wiktionary parser (not feature-complete).
+"""
+
 import pprint
 import re
 

@@ -18,7 +18,7 @@ from selenium.webdriver.firefox.options import Options
 from config import logger
 from connection import get_random_useragent
 
-from .async_helpers import fetch_json, maybe_async
+from .async_helpers import call_sync_async, fetch_json
 from .zh import calligraphy_search
 
 useragent = get_random_useragent()
@@ -26,14 +26,14 @@ useragent = get_random_useragent()
 """ROMANIZATION HELPER"""
 
 
-def to_hepburn(input_text):
+def _to_hepburn(input_text):
     """Returns a Hepburn romanization of the input."""
     kks = pykakasi.kakasi()
     result = kks.convert(input_text)
     return " ".join([item["hepburn"] for item in result])
 
 
-def format_kun_on_readings(tree):
+def _format_kun_on_readings(tree):
     """
     Extract and format kun and on readings from the parsed HTML tree.
 
@@ -54,8 +54,8 @@ def format_kun_on_readings(tree):
             '//div[contains(@class,"kanji-details__main-readings")]/dl[2]/dd/a/text()'
         )
 
-    kun_chunk = ", ".join(f"{r} (*{to_hepburn(r)}*)" for r in kun_readings)
-    on_chunk = ", ".join(f"{r} (*{to_hepburn(r)}*)" for r in on_readings)
+    kun_chunk = ", ".join(f"{r} (*{_to_hepburn(r)}*)" for r in kun_readings)
+    on_chunk = ", ".join(f"{r} (*{_to_hepburn(r)}*)" for r in on_readings)
 
     return kun_chunk, on_chunk
 
@@ -67,7 +67,8 @@ def ja_character(character):
     """
     Looks up a Japanese kanji or hiragana character's readings and meanings.
 
-    :param character: A kanji or single hiragana. This function will not work with individual katakana.
+    :param character: A kanji or single hiragana. This function will not
+                      work with individual katakana.
     :return: A formatted string with readings, meanings, and resource links.
     """
     is_kana = False
@@ -87,7 +88,7 @@ def ja_character(character):
         is_kana = True
 
         total_data = f"# [{kana}](https://en.wiktionary.org/wiki/{kana}#Japanese)"
-        total_data += f" (*{to_hepburn(kana)}*)"
+        total_data += f" (*{_to_hepburn(kana)}*)"
         total_data += f'\n\n**Meanings**: "{meaning}."'
 
     elif not multi_mode:
@@ -109,7 +110,7 @@ def ja_character(character):
                 "Japanese character or word."
             )
 
-        kun_chunk, on_chunk = format_kun_on_readings(tree)
+        kun_chunk, on_chunk = _format_kun_on_readings(tree)
 
         lookup_line_1 = (
             f"# [{character}](https://en.wiktionary.org/wiki/{character}#Japanese)\n\n"
@@ -139,7 +140,7 @@ def ja_character(character):
             )
             tree = html.fromstring(response.content)
 
-            kun_chunk, on_chunk = format_kun_on_readings(tree)
+            kun_chunk, on_chunk = _format_kun_on_readings(tree)
 
             meanings = tree.xpath(
                 '//div[contains(@class,"kanji-details__main-meanings")]/text()'
@@ -188,7 +189,7 @@ def ja_character(character):
 """WORD FUNCTIONS"""
 
 
-def sfx_search(katakana_string):
+def _sfx_search(katakana_string):
     if not re.search(r"[\u30A0-\u30FF]", katakana_string):
         return None
 
@@ -230,7 +231,7 @@ def sfx_search(katakana_string):
             logger.info("Match not found in entry header.")
 
         # Format the Hepburn reading.
-        katakana_reading = to_hepburn(katakana_string)
+        katakana_reading = _to_hepburn(katakana_string)
 
         # Format the output message
         meanings_formatted = "\n".join(f"* {m}" for m in meanings)
@@ -253,7 +254,7 @@ def sfx_search(katakana_string):
         driver.quit()
 
 
-def ja_name_search(ja_given_name):
+def _ja_name_search(ja_given_name):
     """
     Gets the kanji readings of Japanese given names, including names not in dictionaries.
     Also returns readings for place names such as temples.
@@ -305,7 +306,7 @@ def ja_name_search(ja_given_name):
     return formatted_section
 
 
-def ja_word_yojijukugo(yojijukugo):
+def _ja_word_yojijukugo(yojijukugo):
     """
     Retrieves meaning and explanation for a four-kanji Japanese idiom (yojijukugo).
     Examples of such idioms can be found at this website:
@@ -377,7 +378,7 @@ def ja_word_yojijukugo(yojijukugo):
         # Build the final Markdown output
         formatted_section = (
             f"# [{yojijukugo}](https://en.wiktionary.org/wiki/{yojijukugo}#Japanese)\n\n"
-            f"**Reading:** {reading} (*{to_hepburn(reading)}*)\n\n"
+            f"**Reading:** {reading} (*{_to_hepburn(reading)}*)\n\n"
             f"**Japanese Explanation**: {explanation}.\n\n"
         )
         if source:
@@ -425,17 +426,17 @@ async def ja_word(japanese_word):
         name_data = None
         yojijukugo_data = None
         if len(japanese_word) == 2:
-            name_data = await maybe_async(ja_name_search, japanese_word)
+            name_data = await call_sync_async(_ja_name_search, japanese_word)
         elif len(japanese_word) == 4:
-            yojijukugo_data = await maybe_async(ja_word_yojijukugo, japanese_word)
-        sfx_data = await maybe_async(sfx_search, japanese_word)
+            yojijukugo_data = await call_sync_async(_ja_word_yojijukugo, japanese_word)
+        sfx_data = await call_sync_async(_sfx_search, japanese_word)
 
         if not any([name_data, sfx_data, yojijukugo_data]):
             if not katakana_test:
                 logger.info(
                     "[ZW] JA-Word: No matches. Falling back to single-character lookup."
                 )
-                return await maybe_async(ja_character, japanese_word)
+                return await call_sync_async(ja_character, japanese_word)
             else:
                 logger.info("[ZW] JA-Word: Unknown katakana word.")
                 return None
@@ -454,7 +455,7 @@ async def ja_word(japanese_word):
 
     if main_data:
         # Format valid Jisho result
-        word_reading_chunk = f"{word_reading} (*{to_hepburn(word_reading)}*)"
+        word_reading_chunk = f"{word_reading} (*{_to_hepburn(word_reading)}*)"
         word_meaning = f'"{", ".join(main_data["senses"][0]["english_definitions"])}."'
         word_type = f"*{', '.join(main_data['senses'][0]['parts_of_speech'])}*"
 

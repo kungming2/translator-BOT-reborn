@@ -11,7 +11,7 @@ from wasabi import msg
 from config import SETTINGS, logger
 from connection import credentials_source, USERNAME
 from error import error_log_extended
-from lookup.other import lookup_zh_ja_tokenizer
+from lookup.match_helpers import lookup_zh_ja_tokenizer
 from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
 

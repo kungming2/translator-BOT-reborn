@@ -169,7 +169,7 @@ def lookup_matcher(content_text, language_code):
             logger.debug(f"No inline language for: {text}")
 
     if not matches:
-        logger.debug(f"No matches found after backtick extraction")
+        logger.debug("No matches found after backtick extraction")
         return {}
 
     combined_text = "".join(matches)

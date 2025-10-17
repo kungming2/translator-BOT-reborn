@@ -4,8 +4,6 @@
 Contains functions that deal with Korean-language content.
 """
 
-import asyncio
-
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
@@ -15,7 +13,7 @@ from connection import credentials_source
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
 
 
-def translate_part_of_speech(korean_pos):
+def _translate_part_of_speech(korean_pos):
     mapping = {
         "명사": "noun",
         "동사": "verb",
@@ -36,18 +34,7 @@ def translate_part_of_speech(korean_pos):
 """WORD LOOKUP"""
 
 
-async def ko_search_raw_async(target_word):
-    """
-    Async wrapper for ko_search_raw that runs the blocking call in a thread pool.
-
-    :param target_word: Word in Korean we're looking for.
-    :return:
-    """
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, ko_search_raw, target_word)
-
-
-def ko_search_raw(target_word):
+def _ko_search_raw(target_word):
     """
     This function returns a list containing machine-readable
     dictionaries of data from the Korean look-up.
@@ -99,7 +86,7 @@ def ko_word(korean_word):
     :return: A Markdown formatted string, or None.
     """
     korean_word = korean_word.strip()
-    data = ko_search_raw(korean_word)
+    data = _ko_search_raw(korean_word)
     hangul_romanization = Romanizer(korean_word).romanize()
 
     # No valid results.
@@ -113,7 +100,7 @@ def ko_word(korean_word):
     # Group entries by part of speech
     pos_groups = {}
     for entry in data:
-        pos = translate_part_of_speech(entry["part_of_speech"]).title()
+        pos = _translate_part_of_speech(entry["part_of_speech"]).title()
         if pos not in pos_groups:
             pos_groups[pos] = []
         pos_groups[pos].append(entry)
