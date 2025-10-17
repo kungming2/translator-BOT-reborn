@@ -6,7 +6,8 @@ from discord_utils import send_discord_alert
 _tasks = {}
 
 
-def fetch_wenju_settings():
+def _fetch_wenju_settings():
+    """Fetches Wenju-specific settings."""
     return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
 
 
@@ -24,7 +25,9 @@ def task(schedule):
 
 def run_schedule(schedule_name):
     """Run all tasks for a given schedule"""
-    # Import task modules here to ensure they're registered
+
+    # Import task modules here, in order to register them. Everything in
+    # tasks/ should be placed here.
     from . import (
         community_digest,
         data_maintenance,
@@ -69,4 +72,4 @@ def get_tasks():
     return _tasks
 
 
-WENJU_SETTINGS = fetch_wenju_settings()
+WENJU_SETTINGS = _fetch_wenju_settings()

@@ -15,8 +15,9 @@ from tasks import task
 @task(schedule="daily")
 def send_internal_post_digest():
     """
-    Check for new posts in the last 24 hours and send
-    notifications for unprocessed ones.
+    Check for new internal posts in the last 24 hours and send
+    notifications for unprocessed ones. This is usually meta/community,
+    and this allows for messages to be sent en masse at once.
     """
     # Calculate timestamp for 24 hours ago
     cutoff_time = int(time.time()) - (24 * 60 * 60)

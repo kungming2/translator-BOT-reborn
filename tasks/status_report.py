@@ -30,7 +30,9 @@ from tasks import WENJU_SETTINGS, task
 @task(schedule="hourly")
 def reddit_status_report():
     """
-    Wrapper that calls reddit_status_check() and returns a Markdown-formatted summary.
+    Wrapper that calls reddit_status_check() and returns a
+    Markdown-formatted summary. This is an API that indicates whether
+    Reddit is having issues.
 
     :returns:
         - Markdown text if incidents exist

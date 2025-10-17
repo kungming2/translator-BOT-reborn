@@ -166,7 +166,8 @@ def error_log_count():
 
 def filter_log_tabulator():
     """
-    Calculate the filtration rate of bad titles based on the last LINES_TO_KEEP entries.
+    Calculate the filtration rate of bad titles based on the last
+    LINES_TO_KEEP entries.
 
     Reads the filter log, extracts the most recent entries, determines the
     time span between the oldest of those entries and today, and returns
@@ -277,6 +278,12 @@ def note_language_tags():
 
 @task(schedule="daily")
 def collate_moderator_digest():
+    """
+    Sends out an overall digest of the subreddit's state and things for
+    moderators to note. Uses Discord. The daily information is also
+    saved to a local Markdown file for archival purposes.
+    :return: None
+    """
     logger.info("Collating moderator digest...")
     today_date = datetime.date.today().strftime("%Y-%m-%d")
     days_ago = WENJU_SETTINGS["report_command_average"]
