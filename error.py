@@ -14,6 +14,19 @@ from config import Paths, logger
 from connection import REDDIT
 
 
+class CustomDumper(yaml.SafeDumper):
+    pass
+
+
+def _str_representer(dumper, data):
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+CustomDumper.add_representer(str, _str_representer)
+
+
 def error_log_basic(entry, bot_version):
     """
     Logs an error in YAML format by appending every entry.
@@ -43,7 +56,14 @@ def error_log_basic(entry, bot_version):
 
     # Save all entries back to the file
     with open(Paths.LOGS["ERROR"], "w", encoding="utf-8") as f:
-        yaml.safe_dump(existing_entries, f, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            existing_entries,
+            f,
+            Dumper=CustomDumper,
+            allow_unicode=True,
+            sort_keys=False,
+            default_flow_style=False,
+        )
 
 
 def record_last_post_and_comment():
@@ -140,7 +160,14 @@ def error_log_extended(error_save_entry, bot_version):
 
         # Write back to file
         with open(error_log_path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(existing_log, f, allow_unicode=True, sort_keys=False)
+            yaml.dump(
+                existing_log,
+                f,
+                Dumper=CustomDumper,
+                allow_unicode=True,
+                sort_keys=False,
+                default_flow_style=False,
+            )
 
     except Exception as e:
         logger.error(f"[{bot_version}] Error_Log: Failed to write error log: {e}")
