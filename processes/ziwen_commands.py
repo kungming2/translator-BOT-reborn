@@ -25,7 +25,7 @@ from responses import RESPONSE
 from title_handling import Titolo
 
 
-def mark_short_thanks_as_translated(comment, ajo):
+def _mark_short_thanks_as_translated(comment, ajo):
     """Looks at the content of a comment and determines if the
     submission author's thank you is sufficient to mark it as
     translated, according to specific criteria.
@@ -190,7 +190,7 @@ def ziwen_commands():
         # Process THANKS keywords from original posters.
         if any(keyword in comment_body for keyword in thanks_keywords):
             # Assess whether a thank-you comment can mark the post as translated.
-            mark_short_thanks_as_translated(comment, original_ajo)
+            _mark_short_thanks_as_translated(comment, original_ajo)
 
         # Update the ajo if NOT in testing mode.
         if not SETTINGS["testing_mode"]:
