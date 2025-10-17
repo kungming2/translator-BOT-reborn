@@ -31,20 +31,22 @@ def command(name, help_text, roles=None):
 
 def register_commands(bot):
     """Register all commands with the Discord bot"""
-    # Import all command modules to trigger registration
+
+    # Import all command modules to trigger registration.
+    # Everything in zhongsheng/ should be listed here.
     from . import (
         cjk,
         comment,
         describe,
         error,
+        filter,
         guide,
         lang,
         office,
         post,
+        search,
         title,
         user,
-        search,
-        filter,
     )
 
     for cmd in _commands:

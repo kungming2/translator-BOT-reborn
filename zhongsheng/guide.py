@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Command that shows the information about Zhongsheng"""
+"""Command that shows the information about Zhongsheng.
+This should be updated after addition of new features or commands."""
 
 from . import command
 
-# Custom command descriptions - edit these as needed
+# Custom command descriptions. Add one for each command.
 COMMAND_DESCRIPTIONS = {
     "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
     "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
     "user": "Search log files and database for a Reddit username "
-            "(accepts strings and URLs). Data limited to the last month",
+    "(accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
     "Use the ``--text`` flag to check text directly",
@@ -22,7 +23,7 @@ COMMAND_DESCRIPTIONS = {
     "guide": "Display this informational guide about Zhongsheng commands",
 }
 
-# Role requirements for each command
+# Role requirements for each command.
 COMMAND_ROLES = {
     "lang": ["Moderator", "Helper"],
     "user": ["Moderator"],

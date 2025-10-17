@@ -6,7 +6,7 @@ import importlib
 import shlex
 
 import languages
-from languages import select_random_language, converter, add_alt_language_name
+from languages import add_alt_language_name, converter, select_random_language
 from lookup.reference import get_language_reference
 
 from . import command
@@ -18,6 +18,7 @@ from . import command
     roles=["Moderator", "Helper"],
 )
 async def lang_convert(ctx, *, language_input: str):
+    """Discord wrapper for Lingvo creation."""
     try:
         # Safely split input (handles quoted text)
         tokens = shlex.split(language_input.strip())

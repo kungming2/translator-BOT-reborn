@@ -8,7 +8,6 @@ from title_handling import main_posts_filter
 
 from . import command
 
-
 # Filter reason descriptions
 FILTER_REASONS = {
     "1": "Missing required keywords",
@@ -26,6 +25,7 @@ FILTER_REASONS = {
 async def filter_post(ctx, *, title: str):
     """
     Filter a post title based on r/translator formatting guidelines.
+    Tests whether it would pass or fail.
 
     Usage: /filter <title>
     Example: /filter [English > French] Help translating this phrase

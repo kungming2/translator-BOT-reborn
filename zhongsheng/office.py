@@ -4,8 +4,9 @@
 
 import aiohttp
 
-from . import command
 from connection import get_random_useragent
+
+from . import command
 
 
 @command(

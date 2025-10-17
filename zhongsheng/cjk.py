@@ -14,6 +14,7 @@ from . import command, send_long_message
     roles=["Moderator", "Helper"],
 )
 async def cjk_lookup(ctx, language: str, *, search_terms: str):
+    """Discord wrapper for the CJK lookup command."""
     try:
         # Map initials to full language names
         initial_map = {"c": "Chinese", "j": "Japanese", "k": "Korean"}

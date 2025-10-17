@@ -18,6 +18,7 @@ from . import command
     roles=["Moderator"],
 )
 async def error_logs(ctx):
+    """Returns the last few error log entries for analysis."""
     try:
         # Read the YAML file
         with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Post search command"""
+"""Post search command. Used for database inquiry."""
 
 from database import search_logs
 
@@ -13,6 +13,9 @@ from . import command
     roles=["Moderator"],
 )
 async def post_search(ctx, post_input: str):
+    """Searches through the database and log files for a matching Reddit
+    post ID for debugging or analysis."""
+
     # Extract post ID from various formats
     post_id = None
 

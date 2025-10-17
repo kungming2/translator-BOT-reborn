@@ -17,7 +17,8 @@ from . import command
 )
 async def describe_image(ctx, image_url: str):
     """
-    Describe an image using AI for accessibility purposes.
+    Describe an image using AI for accessibility purposes. Shows the
+    caller how the bot would describe an image in a notification.
 
     Usage: /describe <image_url>
     Example: /describe https://example.com/image.jpg

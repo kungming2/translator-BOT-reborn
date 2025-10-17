@@ -16,6 +16,7 @@ from . import command
     roles=["Moderator"],
 )
 async def title_search(ctx, *, title: str):
+    """Discord wrapper for Titulo creation."""
     # Check if --ai flag is present
     use_ai = title.endswith(" --ai")
 

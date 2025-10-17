@@ -32,6 +32,7 @@ def _format_commands(commands):
     roles=["Moderator"],
 )
 async def comment_search(ctx, *, comment_input: str):
+    """Discord wrapper for the Instruo parsing."""
     # Check if --text flag is present
     if comment_input.strip().endswith("--text"):
         # Remove the --text flag and get the text content
