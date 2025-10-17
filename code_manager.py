@@ -4,14 +4,14 @@ from pathlib import Path
 from config import Paths
 
 # Location of our main ISO dataset for codes
-CSV_PATH = Path(Paths.DATASETS['ISO_CODES'])
+CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
 
 
 def load_csv():
     """Load the CSV file and return as DataFrame."""
     try:
         # Try different encodings
-        encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+        encodings = ["utf-8", "latin-1", "iso-8859-1", "cp1252"]
         df = None
         for encoding in encodings:
             try:
@@ -31,7 +31,7 @@ def load_csv():
 def save_csv(df):
     """Save DataFrame back to CSV file."""
     try:
-        df.to_csv(CSV_PATH, index=False, encoding='utf-8')
+        df.to_csv(CSV_PATH, index=False, encoding="utf-8")
         print("✓ File saved successfully.")
     except Exception as e:
         print(f"Error saving file: {e}")
@@ -46,7 +46,7 @@ def create_entry():
     iso_639_3 = input("Enter ISO 639-3 code: ").strip()
 
     # Check if code already exists
-    if iso_639_3 in df['ISO 639-3'].values:
+    if iso_639_3 in df["ISO 639-3"].values:
         print(f"Error: ISO 639-3 code '{iso_639_3}' already exists.")
         return
 
@@ -58,10 +58,10 @@ def create_entry():
 
     # Create new row with empty ISO 639-1 and Alternate Names
     new_row = {
-        'ISO 639-3': iso_639_3,
-        'ISO 639-1': '',
-        'Language Name': language_name,
-        'Alternate Names': ''
+        "ISO 639-3": iso_639_3,
+        "ISO 639-1": "",
+        "Language Name": language_name,
+        "Alternate Names": "",
     }
 
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
@@ -77,11 +77,11 @@ def update_entry():
 
     iso_639_3 = input("Enter ISO 639-3 code to update: ").strip()
 
-    if iso_639_3 not in df['ISO 639-3'].values:
+    if iso_639_3 not in df["ISO 639-3"].values:
         print(f"Error: ISO 639-3 code '{iso_639_3}' not found.")
         return
 
-    current_name = df[df['ISO 639-3'] == iso_639_3]['Language Name'].values[0]
+    current_name = df[df["ISO 639-3"] == iso_639_3]["Language Name"].values[0]
     print(f"Current Language Name: {current_name}")
 
     new_name = input("Enter updated Language Name: ").strip()
@@ -90,7 +90,7 @@ def update_entry():
         print("Error: Language Name cannot be empty.")
         return
 
-    df.loc[df['ISO 639-3'] == iso_639_3, 'Language Name'] = new_name
+    df.loc[df["ISO 639-3"] == iso_639_3, "Language Name"] = new_name
     save_csv(df)
     print(f"✓ Updated {iso_639_3}: {current_name} → {new_name}")
 

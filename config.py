@@ -50,7 +50,9 @@ class Paths:
         ),
         "ISO_CODES": os.path.join(DATA_DIR, "Datasets", "iso_codes.csv"),
         "ISO_SCRIPT_CODES": os.path.join(DATA_DIR, "Datasets", "iso_script_codes.csv"),
-        "ISO_CODES_UPDATES": os.path.join(DATA_DIR, "Datasets", "iso_codes_updates.yaml"),
+        "ISO_CODES_UPDATES": os.path.join(
+            DATA_DIR, "Datasets", "iso_codes_updates.yaml"
+        ),
         "OLD_CHINESE": os.path.join(DATA_DIR, "Datasets", "old_chinese.csv"),
         "ZH_ROMANIZATION": os.path.join(
             DATA_DIR, "Datasets", "romanization_chinese.csv"
@@ -61,13 +63,13 @@ class Paths:
 
     # Log files that are frequently written to
     LOGS = {
-        "ERROR": os.path.join(DATA_DIR, "_log_error.yaml"),
-        "COUNTER": os.path.join(DATA_DIR, "_log_counter.json"),
-        "FILTER": os.path.join(DATA_DIR, "_log_filter.md"),
-        "EVENTS": os.path.join(DATA_DIR, "_log_events.md"),
-        "ACTIVITY": os.path.join(DATA_DIR, "_log_activity.csv"),
-        "STATISTICS": os.path.join(DATA_DIR, "_statistics.json"),
-        "TESTING": os.path.join(DATA_DIR, "_log_testing.md"),
+        "ERROR": os.path.join(DATA_DIR, "Logs", "_log_error.yaml"),
+        "COUNTER": os.path.join(DATA_DIR, "Logs", "_log_counter.json"),
+        "FILTER": os.path.join(DATA_DIR, "Logs", "_log_filter.md"),
+        "EVENTS": os.path.join(DATA_DIR, "Logs", "_log_events.md"),
+        "ACTIVITY": os.path.join(DATA_DIR, "Logs", "_log_activity.csv"),
+        "STATISTICS": os.path.join(DATA_DIR, "Logs", "_statistics.json"),
+        "TESTING": os.path.join(DATA_DIR, "Logs", "_log_testing.md"),
     }
 
     # Settings files. No private information should be in these.
@@ -98,21 +100,21 @@ class Paths:
     }
 
 
-def get_log_directory(base_dir: Path | None = None) -> Path:
+def get_reports_directory(base_dir: Path | None = None) -> Path:
     """
-    Return the Path object for the current month's log directory.
+    Return the Path object for the current month's reports directory.
     This used for digest reports by tasks in the tasks folder.
 
     :param base_dir: Optional base path for data storage.
                      Defaults to the "Data" folder next to this file.
     :return: A Path object for the monthly log directory, e.g.:
-             /path/to/Data/Logs/2025-10
+             /path/to/Data/Reports/2025-10
     """
     if base_dir is None:
         base_dir = Path(__file__).resolve().parent / "Data"
 
     current_month = datetime.now().strftime("%Y-%m")
-    log_dir = base_dir / "Logs" / current_month
+    log_dir = base_dir / "Reports" / current_month
 
     return log_dir
 

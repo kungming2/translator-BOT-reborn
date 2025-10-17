@@ -10,7 +10,7 @@ from collections import Counter
 from praw.exceptions import RedditAPIException
 from praw.models import TextArea
 
-from config import SETTINGS, get_log_directory, logger
+from config import SETTINGS, get_reports_directory, logger
 from connection import REDDIT, REDDIT_HELPER, widget_update, reddit_status_check
 from database import db
 from discord_utils import send_discord_alert
@@ -477,7 +477,7 @@ def deleted_posts_assessor(
     :param end_time: Ending boundary as a UNIX timestamp.
     :return: None — saves the report to a Markdown log file.
     """
-    log_directory = get_log_directory()
+    reports_directory = get_reports_directory()
     today = datetime.date.today().strftime("%Y-%m-%d")
 
     # Default to the last 7 days if no time range provided
@@ -567,7 +567,7 @@ def deleted_posts_assessor(
     )
 
     # Save the report to Markdown
-    log_path = f"{log_directory}/{today}_Deleted.md"
+    log_path = f"{reports_directory}/{today}_Deleted.md"
     with open(log_path, "w", encoding="utf-8") as f:
         f.write(report)
 
@@ -584,7 +584,7 @@ def notify_list_statistics_calculator() -> None:
 
     :return: None
     """
-    log_directory = get_log_directory()
+    reports_directory = get_reports_directory()
     today = datetime.date.today().strftime("%Y-%m-%d")
     # Fetch ISO 639-1 languages and ensure they are all strings
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
@@ -663,7 +663,7 @@ def notify_list_statistics_calculator() -> None:
     final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"
 
     # Write to file
-    output_path = f"{log_directory}/{today}_Notifications.md"
+    output_path = f"{reports_directory}/{today}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_text)
 

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from config import Paths, get_log_directory, logger
+from config import Paths, get_reports_directory, logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
@@ -96,7 +96,7 @@ def activity_csv_handler():
             writer = csv.writer(f_output)
             if header:
                 writer.writerow(header)
-            writer.writerows(main_lines[-WENJU_SETTINGS["lines_to_keep"]:])
+            writer.writerows(main_lines[-WENJU_SETTINGS["lines_to_keep"] :])
     except Exception as e:
         logger.error(f"[WJ] csv_handler: Failed to write trimmed CSV — {e}")
         summary += "\n*Warning: Failed to trim log file.*"
@@ -186,7 +186,7 @@ def filter_log_tabulator():
 
     # Remove the header from consideration, and only keep the last X entries.
     entries = filter_logs.splitlines()[2:]
-    entries = entries[-WENJU_SETTINGS["lines_to_keep"]:]
+    entries = entries[-WENJU_SETTINGS["lines_to_keep"] :]
 
     # Handle cases where there are too few entries.
     if len(entries) < 2:
@@ -287,19 +287,26 @@ def collate_moderator_digest():
     error_log_data = error_log_count()
     filter_log_data = filter_log_tabulator()
     activity_data = activity_csv_handler()
-    command_data = generate_command_usage_report(current_time - time_delta, current_time, days_ago
-                                                 )
+    command_data = generate_command_usage_report(
+        current_time - time_delta, current_time, days_ago
+    )
     noted_entries_data = note_language_tags()
 
     # Compile the full Markdown summary.
     total_data = "\n".join(
-        [error_log_data, filter_log_data, activity_data, command_data, noted_entries_data]
+        [
+            error_log_data,
+            filter_log_data,
+            activity_data,
+            command_data,
+            noted_entries_data,
+        ]
     )
     subject_line = f"Log for {today_date}"
     digest_summary = f"# {subject_line}\n{total_data}"
 
     # Resolve the output file path.
-    folder_to_save = get_log_directory()
+    folder_to_save = get_reports_directory()
     output_path = Path(folder_to_save) / f"{today_date}.md"
 
     # Write to a file safely.
