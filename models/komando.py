@@ -41,22 +41,20 @@ class Komando:
         :return: New Komando object with remapped language codes
         :raises ValueError: If self.name is not 'cjk_lookup'
         """
-        if self.name != 'cjk_lookup':
-            raise ValueError(f"remap_language only works with 'cjk_lookup' komandos, got '{self.name}'")
+        if self.name != "cjk_lookup":
+            raise ValueError(
+                f"remap_language only works with 'cjk_lookup' komandos, got '{self.name}'"
+            )
 
         if not self.data:
             return Komando(
-                name=self.name,
-                data=self.data,
-                specific_mode=self.specific_mode
+                name=self.name, data=self.data, specific_mode=self.specific_mode
             )
 
         remapped_data = [[target_lang_code, term] for _, term in self.data]
 
         return Komando(
-            name=self.name,
-            data=remapped_data,
-            specific_mode=self.specific_mode
+            name=self.name, data=remapped_data, specific_mode=self.specific_mode
         )
 
 
@@ -139,7 +137,7 @@ def extract_commands_from_text(text):
     # Commands with required arguments
     for cmd in SETTINGS["commands_with_args"]:
         cmd_lower = cmd.lower()
-        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|([^\s]+))"
+        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|[ ]?([^\s]+))"
         matches = re.findall(pattern, text)
 
         for match in matches:
@@ -170,7 +168,7 @@ def extract_commands_from_text(text):
     for cmd in SETTINGS["commands_optional_args"]:
         cmd_lower = cmd.lower()
         base = cmd_lower.lstrip("!")
-        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|:([^\s]+))?"
+        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|:[ ]?([^\s]+))?"
         matches = re.findall(pattern, text)
 
         for match in matches:
