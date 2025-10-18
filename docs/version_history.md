@@ -1,23 +1,27 @@
+#  Version History
 
-## Version History
+[← Back to Home](./index.md)
 
-|  Tag | Description |
-|---------------------|----|
- | 🚀 **Feature**      | A key new feature or change of the bot, one that usually merits its own announcement post.| 
- | ✨ **Addition**      | Refinements to existing features of the bot  to improve usability, usually noticeable by users.| 
- | 🔄 **Change**       | Changes to how the bot operates, usually not noticeable by users.| 
- | 🛠️ **Bug Fix**     | Bug fixes for issues.| 
+## Legend
 
+| Tag             | Description |
+|-----------------|----|
+| 🚀 **Feature**  | A key new feature or change of the bot, one that usually merits its own announcement post.| 
+| ✨ **Addition**  | Refinements to existing features of the bot  to improve usability, usually noticeable by users.| 
+| 🔄 **Change**   | Changes to how the bot operates, usually not noticeable by users.| 
+| 🛠️ **Bug Fix** | Bug fixes for issues.| 
+
+*Entries which are crossed out indicate [deprecated or irrelevant functionality](deprecated.md).*
 
 ###### 2.0 "The Reborn Update" (2025-10-XX)
 
 
 ###### 1.8 "The Restoration Update" (2019-10-05)
-* 🚀 FEATURE: Individuals who provided a translation for a deleted text-only post can use the `!restore` command to ask Ziwen to retrieve the now-deleted text.
-    * Ziwen will attempt to retrieve the text from [Pushshift](http://pushshift.io/). If successful, Ziwen will send the retrieved text as a private message to the translator.
-    * Calling the `!restore` command on a link/image post will result in a error reply from Ziwen.
+* 🚀 FEATURE: ~~Individuals who provided a translation for a deleted text-only post can use the `!restore` command to ask Ziwen to retrieve the now-deleted text.~~
+    * ~~Ziwen will attempt to retrieve the text from [Pushshift](http://pushshift.io/). If successful, Ziwen will send the retrieved text as a private message to the translator.~~
+    * ~~Calling the `!restore` command on a link/image post will result in a error reply from Ziwen.~~
 * ✨ ADDITION: Ziwen now maintains a per-post list of usernames it has already notified. This means that a user *should not* receive a second notification message for a post if they had already received one.
-    * An example scenario is one where a `!page` command was used on a post, and then `!identify` for the same language. 
+    * An example of such a scenario is one where a `!page` command was used on a post, and then `!identify` for the same language. 
 * 🔄 CHANGE: Cleaned up Chinese and Japanese dictionaries footer and Cantonese/Hakka tones to account for differences between Markdown rendering on Old and New Reddit.
 * 🔄 CHANGE: Changed romanization of hangul in Chinese character results to Yale.
 
@@ -27,9 +31,9 @@
 * 🚀 FEATURE: Ziwen can now process country codes as well to provide services for regional languages. 
 * ✨ ADDITION: Ziwen now calculates approximately how often languages are requested on the subreddit and includes that information in new subscription confirmations. (For frequently requested languages, data from the last 12 months is used to provide more accurate data, credit to u/dudds4 for the suggestion.)
 * ✨ ADDITION: Ziwen can send notifications for posts classified as scripts.
-* ✨ ADDITION: Ziwen can now crosspost posts from English to another language (using the syntax `<` at the end of the command).
+* ✨ ADDITION: ~~Ziwen can now crosspost posts from English to another language (using the syntax `<` at the end of the command).~~
 * ✨ ADDITION: Ziwen should be able to "replace" its word/character lookup comments when the source data changes.
-* ✨ ADDITION: The "App" post category is now treated as a subset of "Multiple Languages" and will be automatically applied to titles which have keywords that indicate that they are for an app request.
+* ✨ ADDITION: ~~The "App" post category is now treated as a subset of "Multiple Languages" and will be automatically applied to titles which have keywords that indicate that they are for an app request.~~
 * ✨ ADDITION: The title format routine can determine a post's direction (to English, from English, etc.).
 * ✨ ADDITION: Ziwen stores all *Ajos* in a local cache. This enables Ajos to be used independently of Reddit's data and track how many posts get deleted, among other things.
 * ✨ ADDITION: Ziwen will now add Korean, Japanese, and Vietnamese readings of characters to individual Chinese character lookups.
@@ -45,25 +49,25 @@
 * ✨ ADDITION: Ziwen can now record the time-delta (time difference) between states in its Ajo. This allows Wenyuan to calculate the average amount of time it takes a request to be translated and the time difference between "needs review" and translated, among others.
 * ✨ ADDITION: Addition of specialized dictionaries (Buddhist and tea terms) to the Chinese word `lookup`. They can be used as a last resort and also to serve as supplementary information.
 * ✨ ADDITION: Added sound effects and given name search to the `lookup` results for Japanese words.
-* 🔄 CHANGE: This is a "feature-freeze" version of Ziwen; that is, there will no more major features introduced in the near future. Any bugs will of course be fixed as they pop up, and refinements will still be made.
+* 🔄 CHANGE: ~~This is a "feature-freeze" version of Ziwen; that is, there will no more major features introduced in the near future. Any bugs will of course be fixed as they pop up, and refinements will still be made.~~
 * 🔄 CHANGE: Ziwen can now process languages in submitted posts whose names are multiple words. (e.g. `[American Sign Language > English]`)
 * 🔄 CHANGE: Ziwen supports a limited number of conlangs on a local basis (using unallocated space in the ISO 639-3 code list) - including Dothraki, Valyrian, etc. 
 * 🔄 CHANGE: The `!page` function is now fully integrated with the notifications database and no longer relies on its own database. It also fully supports all languages now.
 * 🔄 CHANGE: Ziwen will send a message to the mods of this subreddit when a title fails the post categorizing routine.
 * 🔄 CHANGE: Ziwen will filter out posts that AutoModerator let through but should have been removed.
 * 🔄 CHANGE: Ziwen will automatically remove users from its database that have deleted their accounts.
-* 🔄 CHANGE: The sidebar update routine and weekly unknown thread posting routine has been moved back to Wenyuan, which now has an active component that runs every hour. 
+* 🔄 CHANGE: ~~The sidebar update routine and weekly unknown thread posting routine has been moved back to Wenyuan, which now has an active component that runs every hour.~~
 * 🔄 CHANGE: The verification parser now splits requests by newlines instead of pipes.
 * 🔄 CHANGE: Added a function that tries to make one last attempt at categorizing a title even if everything else has failed.
-* 🔄 CHANGE: Unified the language identification function on crossposting commands. All commands now use the same language identification function. 
+* 🔄 CHANGE: ~~Unified the language identification function on crossposting commands. All commands now use the same language identification function.~~ 
 * 🔄 CHANGE: Ziwen will alphabetize and remove duplicates from the list of subscribed languages before replying to a subscription status message. 
 * 🔄 CHANGE: If there are more than fifty people signed up for a language's notifications, Ziwen will randomly select fifty users to get notifications. 
-* 🔄 CHANGE: Added a dynamic "blacklist" for the crosspost function to help prevent abuse of the function.
+* 🔄 CHANGE: ~~Added a dynamic "blacklist" for the crosspost function to help prevent abuse of the function.~~
 * 🔄 CHANGE: Ziwen will prioritize ISO 639-1 codes (if they exist) over ISO 639-3 ones; so `!identify:deu` will still result in the output being `de` instead of `deu`. 
-* 🔄 CHANGE: Addition of a new "Nonlanguage" flair for posts that are not considered to contain linguistic content (CSS code: `zxx`). 
+* 🔄 CHANGE: Addition of a new "Nonlanguage" flair for posts that are not considered to contain linguistic content (ISO 639-3 code: `zxx`). 
 * 🔄 CHANGE: Ziwen caches language reference data locally and can return it much quicker if it's been referenced before (now shared with Wenyuan). 
 * 🔄 CHANGE: Refinements to Korean and Wiktionary lookup searches.
-* 🔄 CHANGE: Disabled the Japanese tokenizer for now as its output was not working as well as it should.
+* 🔄 CHANGE: ~~Disabled the Japanese tokenizer for now as its output was not working as well as it should.~~
 * 🔄 CHANGE: Users can now `!identify` a post as a script from anywhere (previously was limited to 'Unknown' posts)
 * 🔄 CHANGE: Advanced `!identify` mode is no longer required for script identification. Ziwen will automatically attempt to look for a script code that matches ISO 15924. 
 * 🔄 CHANGE: Added support for [Linguist Lists's local use codes](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_used_locally_by_Linguist_List).
@@ -79,14 +83,14 @@
 * 🔄 CHANGE: Ziwen can now process multiple `!page` commands in a single comment. 
 * 🔄 CHANGE: Rewrote certain routines to no longer use the deprecated *submissions* method of PRAW.
 * 🔄 CHANGE: Improved comment matching when using the `!search` command. Ziwen will also remove commands from comments it quotes. 
-* 🔄 CHANGE: Added support for legacy (largely deprecated) [ISO 639-2/B codes](https://en.wikipedia.org/wiki/ISO_639-2#B_and_T_codes).
+* 🔄 CHANGE: Added support for legacy (largely unused) [ISO 639-2/B codes](https://en.wikipedia.org/wiki/ISO_639-2#B_and_T_codes).
 * 🔄 CHANGE: Updated the Middle Chinese and Old Chinese pronunciations to the [Baxter-Sagart 2014 reconstruction](http://ocbaxtersagart.lsait.lsa.umich.edu). (credit to u/sauihdik)
 * 🔄 CHANGE: Added handling for backslashes `\` in the word lookup command (the redesign will include those slashes if one is using the rich text editor).
 * 🔄 CHANGE: Streamlined the posts filtering routine and added an automated advisory comment for defined multiple posts.
-* 🔄 CHANGE: Ziwen will now limit language notifications for a single language to around 100 messages per username per month.
-* 🔄 CHANGE: Streamlined and cleaned up language reference comments by the bot. 
+* 🔄 CHANGE: ~~Ziwen will now limit language notifications for a single language to around 100 messages per username per month.~~
+* 🔄 CHANGE: ~~Streamlined and cleaned up language reference comments by the bot.~~ 
 * 🔄 CHANGE: Refinements made to "short thanks" marking posts as translated. The criteria is more stringent now.
-* 🔄 CHANGE: Further refinements and formatting adaptations for Wiktionary results. Ziwen will also automatically tokenize sentences if they have spaces.
+* 🔄 CHANGE: ~~Further refinements and formatting adaptations for Wiktionary results.~~ Ziwen will also automatically tokenize sentences if they have spaces.
 * 🔄 CHANGE: Ziwen will automatically add a permalink to the post for its response to an invalid `!identify` command.
 * 🔄 CHANGE: Ziwen will send a message letting OPs who make a "short thanks" comment know. (credit to u/Darayavaush)
 * 🔄 CHANGE: Added [Guoxuedashi](http://shufa.guoxuedashi.com/) and [MFCCD](http://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/) links to lookup results for Chinese characters.
@@ -135,9 +139,9 @@
 * ✨ ADDITION: Support for flairing incoming posts as scripts instead of languages (for example, Cuneiform, Braille, etc.) These posts have the "Unknown" flair. 
 * ✨ ADDITION: "Multiple Language" requests for specific languages will now have those language tags included in their linkflair, separated by commas. (e.g. `Multiple Languages [AR, DA, UZ]`)
 * 🔄 CHANGE: Japanese surname results will now have capitalized romaji readings. 
-* 🔄 CHANGE: Ziwen will now post a more informative response to an invalid advanced `!identify` command. 
-* 🔄 CHANGE: Ziwen now *automatically* backs up its database files to Box every day. (It relied on manual backups before)
-* 🔄 CHANGE: Ziwen Streamer now writes to the same error log as the main routine.
+* 🔄 CHANGE: ~~Ziwen will now post a more informative response to an invalid advanced `!identify` command.~~ 
+* 🔄 CHANGE: ~~Ziwen now *automatically* backs up its database files to Box every day. (It relied on manual backups before)~~
+* 🔄 CHANGE: ~~Ziwen Streamer now writes to the same error log as the main routine.~~
 * 🔄 CHANGE: Refinements to the way the bot makes sense of requests for more than one language. The bot should be able to differentiate situations where the user has listed more than one target language. 
 * 🔄 CHANGE: Quality of life adjustments for title formatting - alternate names for English (Ingles, Ingerris, etc) is now supported. The bot also has a hard list of words that it won't apply fuzzy spelling matching to - for example, Javanese posts kept getting corrected to Japanese. 
 * 🔄 CHANGE: Notifications will now be sent to people signed up for both languages if a request is for two non-English languages (e.g. Dutch to Indonesian). 
@@ -146,10 +150,10 @@
 
 ###### 1.5 "The Progress Update" (2017-07-22)
 * 🚀 FEATURE: New claiming/in progress function (`!claim`): Users can now claim an individual translation thread as something they're working on. Ziwen will automatically reset the flair if no translation is given after a certain amount of time. (credit to u/songluck)
-* 🚀 FEATURE: Cross-posting now works from everywhere on Reddit. This is run by a separate script and is no longer part of the main Ziwen runtime.
-* 🚀 FEATURE: People often accidentally link to the subreddit by listing r/translate - the bot will now post a reply that corrects this. 
+* 🚀 FEATURE: ~~Cross-posting now works from everywhere on Reddit. This is run by a separate script and is no longer part of the main Ziwen runtime.~~
+* 🚀 FEATURE: ~~People often accidentally link to the subreddit by listing r/translate - the bot will now post a reply that corrects this.~~ 
 * ✨ ADDITION: Full support for all [ISO 639-3 languages](https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes) for commands and notifications. 
-* ✨ ADDITION: Full support for Reddit's [native cross-posting feature](https://www.reddit.com/r/modnews/comments/6vths0/beta_crossposting_better_attribution_for_cat/) (which is still in beta). 
+* ✨ ADDITION: ~~Full support for Reddit's [native cross-posting feature](https://www.reddit.com/r/modnews/comments/6vths0/beta_crossposting_better_attribution_for_cat/) (which is still in beta).~~
 * ✨ ADDITION: Support for identification of [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) script codes on "Unknown" posts. 
 * ✨ ADDITION: Added a notifications status link to all notification messages (previously, it was only sent when someone signed up for a new language). 
 * ✨ ADDITION: Added an automatic link to message this subreddit in the comment Ziwen posts when someone tries to use a language code or name it cannot make sense of. 
@@ -157,32 +161,32 @@
 * ✨ ADDITION: Reconstructed pronunciations for Old Chinese and Middle Chinese is now available for individual Chinese character lookup. 
 * ✨ ADDITION: Pronunciations for Sinitic languages has been reformatted into a cleaner-looking table. 
 * ✨ ADDITION: If a multiple request is for two or more *defined* languages, Ziwen will send notifications to those signed up for those languages, not those listed for "multiple."
-* ✨ ADDITION: Also allow the requester of a crosspost to remove it with `!delete`.
+* ✨ ADDITION: ~~Also allow the requester of a crosspost to remove it with `!delete`.~~
 * ✨ ADDITION: If a crosspost request is made from a known language learning subreddit (e.g. r/LearnJapanese) but has no specified language, the bot will crosspost it as that subreddit's language instead of "Unknown."
-* ✨ ADDITION: Ziwen's crosspost response will now include a native "thank you" for CSS-supported languages (e.g. ขอบคุณ for a Thai request)
+* ✨ ADDITION: Ziwen's crosspost response will now include a native "thank you" for many languages (e.g. ขอบคุณ for a Thai request)
 * 🔄 CHANGE: The sidebar update routine has been renamed to the hourly routine and can now post the weekly 'Unknown' threads automatically. 
 * 🔄 CHANGE: Tweaks and refinements to the title formatting routine. 
-* 🔄 CHANGE: Tweaks to the formatting of the language reference output to include ISO 639-1 codes for languages which are specified in that standard, and include [MultiTree](http://www.multitree.org) links. 
-* 🔄 CHANGE: The language reference output also will include the language's subreddit if available. (e.g. r/french for French)
+* 🔄 CHANGE: ~~Tweaks to the formatting of the language reference output to include ISO 639-1 codes for languages which are specified in that standard, and include [MultiTree](http://www.multitree.org) links.~~ 
+* 🔄 CHANGE: ~~The language reference output also will include the language's subreddit if available. (e.g. r/french for French)~~
 * 🔄 CHANGE: Integrated an action counter into Ziwen so that it can record how many times various commands are called and actions are completed. 
-* 🔄 CHANGE: Moderator `ping` now also returns the counters for that day.
+* 🔄 CHANGE: ~~Moderator `ping` now also returns the counters for that day.~~
 * 🔄 CHANGE: Adapted the notifications language routine to be more tolerant of formatting errors. Now also accepts spaces, slashes, and returns as separators. The routine will also no longer write English as a code to the database, though it will still appear to users as a subscribed language. (There are almost no English-only posts on r/translator)
 * 🔄 CHANGE: Character lookup supports the search of [CJK Unified Ideographs Extension B-F](https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_Extension_B) characters. There are no online dictionaries that contain info for these *extremely* rare characters, so the result will still be "not found", however. (If an online dictionary is available that supports these characters, support will be added)
 * 🔄 CHANGE: Refinements to the `!search` function results, mostly to exclude previous `!search` requests from showing up as results.
 * 🛠️ BUG FIX: Fixed a syntax change that was preventing the bot from deleting its "long" warning messages.
 * 🛠️ BUG FIX: Fixed an error that would pop up when attempting to warn a user of a long post, and that post was not a supported language. 
-* 🛠️ BUG FIX: Fixed a "too long" error that would occur if a moderator pinged and the errors were too long for a Reddit message (>10K characters). 
-* 🛠️ BUG FIX: Fixed accidental cross-posting of `!translated` commands used *outside* of r/translator. 
-* 🛠️ BUG FIX: Ziwen will now replace language reference information if there is a newer `!identify` command called on a post. 
+* 🛠️ BUG FIX: ~~Fixed a "too long" error that would occur if a moderator pinged and the errors were too long for a Reddit message (>10K characters).~~ 
+* 🛠️ BUG FIX: ~~Fixed accidental cross-posting of `!translated` commands used *outside* of r/translator.~~ 
+* 🛠️ BUG FIX: ~~Ziwen will now replace language reference information if there is a newer `!identify` command called on a post.~~ 
 * 🛠️ BUG FIX: Fixed an out of place reference "information" comment for identified "Multiple Languages" posts. 
-* 🛠️ BUG FIX: Fixed a bug where false matches would popup for the re-post checker routine of cross-posting. (Thanks u/ScanianMoose)
+* 🛠️ BUG FIX: ~~Fixed a bug where false matches would popup for the re-post checker routine of cross-posting.~~ (Thanks u/ScanianMoose)
 * 🛠️ BUG FIX: Fixed a situation where the notifications language routine would write the same language multiple times in a subscription message to the database if the requester used different names for the same language (anti-duplicate code for *sending* already existed). 
 * 🛠️ BUG FIX: Added an error exception for processing regional YouTube videos that are not available at the bot's location. 
 * 🛠️ BUG FIX: Quick fix for verification requests that *don't* have notes.
-* 🛠️ BUG FIX: Further refinement for the duplicate check when crossposting text-only posts.
+* 🛠️ BUG FIX: ~~Further refinement for the duplicate check when crossposting text-only posts.~~
 * 🛠️ BUG FIX: Fixed a bug in the Japanese 四字熟語 *yojijukugo* routine. 
-* 🛠️ BUG FIX: Added stronger validation for the r/translate detector function. 
-* 🛠️ BUG FIX: Added a means to gracefully handle situations where the original post that was crossposted was deleted (this prevents the bot from editing its earlier comment). 
+* 🛠️ BUG FIX: ~~Added stronger validation for the r/translate detector function.~~ 
+* 🛠️ BUG FIX: ~~Added a means to gracefully handle situations where the original post that was crossposted was deleted (this prevents the bot from editing its earlier comment).~~ 
 
 ###### 1.4 "The Maintenance Update" (2017-05-18)
 * 🚀 FEATURE: Emergency update to the latest version of PRAW (v4.5.1), as some change on Reddit's backend stopped Ziwen, which was written in PRAW3, from connecting to Reddit. 
@@ -190,60 +194,60 @@
 * ✨ ADDITION: Added ability to unsubscribe from specific language notifications (previously it was all or nothing).
 * ✨ ADDITION: Added ability to subscribe to 'Meta' and 'Community' posts. 
 * ✨ ADDITION: Ziwen will now reply directly to notification messages instead of sending an entirely new message. 
-* ✨ ADDITION: Added function so OPs of cross-posts can now comment `!delete` to remove their cross-post from r/translator.
-* ✨ ADDITION: Ziwen will now edit its first reply comment to a cross-post request if it received a `!translated` command. 
-* ✨ ADDITION: Added a more robust function to prevent double-posting of cross-posts. Ziwen will check against previous submitted text as well as links.
+* ✨ ADDITION: ~~Added function so OPs of cross-posts can now comment `!delete` to remove their cross-post from r/translator.~~
+* ✨ ADDITION: ~~Ziwen will now edit its first reply comment to a cross-post request if it received a `!translated` command.~~ 
+* ✨ ADDITION: ~~Added a more robust function to prevent double-posting of cross-posts. Ziwen will check against previous submitted text as well as links.~~
 * ✨ ADDITION: Posts removed by Ziwen during post filtering will have a custom comment that will help OPs resubmit their translation request, properly formatted, with just one click. 
-* ✨ ADDITION: Ziwen will now include the last two errors logged when pinged by a moderator for a status update. 
+* ✨ ADDITION: ~~Ziwen will now include the last two errors logged when pinged by a moderator for a status update.~~ 
 * 🔄 CHANGE: Simple fix to improve matches for r/translator `!search` commands.
-* 🔄 CHANGE: Fix to ensure r/languagelearning `!search` results don't exceed 10K characters. 
+* 🔄 CHANGE: ~~Fix to ensure r/languagelearning `!search` results don't exceed 10K characters.~~ 
 * 🔄 CHANGE: Moderators check is now retrieved dynamically from Reddit.
-* 🔄 CHANGE: Wikipedia summaries for reference commands now consist of the first 3 sentences (previously first 500 characters)
-* 🔄 CHANGE: Ziwen posts gets the posts from the last three minutes instead of the last one due to Reddit's slowness. 
+* 🔄 CHANGE: ~~Wikipedia summaries for reference commands now consist of the first 3 sentences (previously first 500 characters)~~
+* 🔄 CHANGE: ~~Ziwen posts gets the posts from the last three minutes instead of the last one due to Reddit's slowness.~~ 
 * 🔄 CHANGE: The link in most messages and comments has been changed to use Reddit permalinks instead of redd.it short-form URLs. This is better for mobile compatibility. 
-* 🔄 CHANGE: The romanization of Japanese *kana* has been changed to use inline italics text instead, as our furigana format is dependent on CSS and not readable on mobile. 
+* 🔄 CHANGE: The romanization of Japanese *kana* has been changed to use inline italics text instead, as our furigana format is dependent on CSS formatting and is not readable on mobile. 
 * 🔄 CHANGE: Ziwen will now write its runtime errors to a text file as a log. 
 * 🔄 CHANGE: Ziwen can now account for an extra space after the colon in `identify` commands. (this often happens on mobile) 
 * 🛠️ BUG FIX: Bug fix for marking non-ISO 639-1 language posts as translated. 
 * 🛠️ BUG FIX: Bug fix for handling incorrectly formatted notification subscription messages, or messages that contain non-existent languages. 
 * 🛠️ BUG FIX: Bug fix for extra punctuation characters being part of the language match in the cross-posting command. 
-* 🛠️ BUG FIX: Bug fix when Ziwen would try to lookup commands quoted in `!search` results. 
+* 🛠️ BUG FIX: Bug fix when Ziwen would try to look up commands quoted in `!search` results. 
 * 🛠️ BUG FIX: Bug fix for Wiktionary links, which were not included for JapanTools data lookups. 
-* 🛠️ BUG FIX: Bug fix for cross-posting titles which were almost at 300 characters (Reddit's maximum). (thanks to u/donbarich)
-* 🛠️ BUG FIX: Bug fix for some ISO 639-3 languages' Wikipedia summaries not showing up in the reference output. 
+* 🛠️ BUG FIX: ~~Bug fix for cross-posting titles which were almost at 300 characters (Reddit's maximum).~~ (thanks to u/donbarich)
+* 🛠️ BUG FIX: ~~Bug fix for some ISO 639-3 languages' Wikipedia summaries not showing up in the reference output.~~ 
 * 🛠️ BUG FIX: Bug fix for people getting paged twice. 
 * 🛠️ BUG FIX: Bug fix for Ziwen editing the cross-post comment more than once to indicate it's been translated. 
 * 🛠️ BUG FIX: Bug fix for notifications when the user has deleted their account. 
 * 🛠️ BUG FIX: Bug fix for marking a post without any flair as translated and various QOL fixes. 
 
 ###### 1.3 "The Cross-posting Update" (2017-04-25)
-* 🚀 FEATURE: New cross-posting function: Ziwen can cross-post requests from selected subreddits to r/translator. 
+* 🚀 FEATURE: ~~New cross-posting function: Ziwen can cross-post requests from selected subreddits to r/translator.~~ 
 * ✨ ADDITION: Lookups for Chinese and Japanese *sentences* are now supported - Ziwen will automatically segment sentences and return word data based on that segmentation.
 * ✨ ADDITION: Japanese character lookup now supports individual hiragana particles (e.g. `は`, `え`, etc)
 * 🔄 CHANGE: Better formatting of Wiktionary lookup results. 
-* 🔄 CHANGE: The default "Unknown" identification boilerplate comment has been moved to Ziwen from AutoModerator. 
+* 🔄 CHANGE: ~~The default "Unknown" identification boilerplate comment has been moved to Ziwen from AutoModerator.~~ 
 * 🔄 CHANGE: Turned *off* the link between the paging function and the `!doublecheck` command. 
 * 🛠️ BUG FIX: Bug fix for Arabic reference information (bot was referencing the wrong ISO 639-3 code). 
 
 ###### 1.2 "The Statistics Update" (2017-04-05)
 * 🚀 FEATURE: Ziwen now incorporates language tags into *Translated* and *Needs Review* posts for better statistics recording by Wenyuan. 
-* ✨ ADDITION: Ziwen now uses [Fuzzywuzzy](https://pypi.python.org/pypi/fuzzywuzzy) to better account for misspelling of language names in titles (e.g. "Japanase" will be correctly identified as "Japanese," and so on.)
+* ✨ ADDITION: Ziwen now uses fuzzy matching with ~~[Fuzzywuzzy](https://pypi.python.org/pypi/fuzzywuzzy)~~ to better account for misspelling of language names in titles (e.g. "Japanase" will be correctly identified as "Japanese," and so on.)
 * ✨ ADDITION: Better integration with the language tags (e.g. "[ZH]") for CJK lookup in translated posts.
 * 🔄 CHANGE: Implemented a rewritten Chinese calligraphy search function that's much more consistent and reliable. 
-* 🔄 CHANGE: More consistent retrieval of Wiktionary lookup for non-CJK languages. 
+* 🔄 CHANGE: ~~More consistent retrieval of Wiktionary lookup for non-CJK languages.~~
 * 🔄 CHANGE: Commands are now more "stackable;" that is, one can more consistently use a few of them at the same time. 
 * 🛠️ BUG FIX: Bug fixes to better integrate with Wenyuan's statistics-gathering functions. 
 * 🛠️ BUG FIX: Bug fix for Korean lookup with no results. 
 
 ###### 1.1 "The Notifications Update" (2017-03-01)
 * 🚀 FEATURE: Added support for receiving notifications from Ziwen about specific language posts. 
-* 🔄 CHANGE: Page lists have been moved to a single CSV file instead of multiple text files. 
+* 🔄 CHANGE: ~~Page lists have been moved to a single CSV file instead of multiple text files.~~ 
 
 ###### 1.0 "The Reference Update" (2017-02-09)
 * 🚀 FEATURE: Full release of Ziwen with language reference lookup, search functionality, and Chinese/Japanese character/word lookup.
 
 ###### 0.8 (2016-12-20)
-* 🔄 CHANGE: Addition of the mod-accessible `!note` and `!set` commands.
+* 🔄 CHANGE: Addition of the mod-accessible ~~`!note`~~ and `!set` commands.
 
 ###### 0.6 (2016-11-18)
 * 🚀 FEATURE: Initial release with paging functions for languages.
