@@ -25,7 +25,7 @@ from config import Paths, logger
 from connection import get_random_useragent
 from responses import RESPONSE
 
-from .async_helpers import call_sync_async
+from lookup.async_helpers import call_sync_async
 
 useragent = get_random_useragent()
 
@@ -929,6 +929,9 @@ async def _zh_word_tea_dictionary_search(chinese_word):
         return None
 
     meaning = " ".join(meaning_parts).replace(" )", " ").replace("  ", " ").strip()
+    if 'Don′t know' in meaning:
+        return None
+
     formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
 
     general_dictionary["meaning"] = formatted_line
@@ -1146,19 +1149,20 @@ def show_menu():
     print("2. zh_word (search for a Chinese word)")
     print("3. zh_word_chengyu_supplement (search for a chengyu addition)")
     print("4. variant_character_search (search for a variant character)")
+    print("5. tea dictionary search ")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         show_menu()
-        choice = input("Enter your choice (0-4): ")
+        choice = input("Enter your choice (0-5): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3", "4"]:
+        if choice not in ["1", "2", "3", "4", "5"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1172,3 +1176,5 @@ if __name__ == "__main__":
             print(zh_word_chengyu_supplement(my_test))
         elif choice == "4":
             print(variant_character_search(my_test))
+        elif choice == "5":
+            print(asyncio.run(_zh_word_tea_dictionary_search(my_test)))
