@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This document details the primary commands that work on the [r/translator Oversight Discord](https://discord.gg/VBAqzmw9WH), which is a Discord server to help with moderation and management of r/translator. The routine **Zhongsheng** interfaces with the server to provide reference information for both mods and users alike, and surfaces many of Ziwen's query functions for easy access.
+This document details the primary commands that work on the [r/translator Oversight Discord](https://discord.gg/VBAqzmw9WH), which is a Discord server to help with moderation and management of r/translator. The routine **[Zhongsheng](https://en.wikipedia.org/wiki/Ban_Chao)** interfaces with the server to provide reference information for both mods and users alike, and surfaces many of Ziwen's query functions for easy access.
 
 Commands on the server are prefixed with a slash (`/`) in order to differentiate them from the commands on the subreddit, which are prefixed with an exclamation mark (`!`).
 
