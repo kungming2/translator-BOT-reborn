@@ -8,4 +8,4 @@ This bot was rewritten in 2025 to improve code readability, functions, and poten
 
 # Documentation
 
-Documentation for Ziwen's various commands can be found in the `/docs` folder of this repo.
+Documentation for Ziwen's various commands and functions can be found in the **[docs](/docs/index.md)** folder of this repo.
