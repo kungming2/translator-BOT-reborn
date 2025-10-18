@@ -129,7 +129,7 @@ def process_verification(confirming_comment):
 def verification_parser():
     """
     Top-level function to collect new requests for verified flairs.
-    Ziwen will write their information into a log  and also report their
+    Ziwen will write their information into a log and also report their
     comment to the moderators for inspection and verification.
 
     :return: None
@@ -169,25 +169,15 @@ def verification_parser():
 
         try:
             language_name = components[0]
-            url_1 = re.search(url_pattern, components[1]).group(0)
-            url_2 = re.search(url_pattern, components[2]).group(0)
-            url_3 = re.search(url_pattern, components[3]).group(0)
+            _ = re.search(url_pattern, components[1]).group(0)
+            _ = re.search(url_pattern, components[2]).group(0)
+            _ = re.search(url_pattern, components[3]).group(0)
             notes = components[4] if len(components) > 4 else ""
         except (IndexError, AttributeError):
             # Malformed comment - ignore and stop processing
             return
 
         language_lingvo = converter(language_name)
-
-        # Format verification log entry
-        entry = f"| {author_string} | {language_name} | [1]({url_1}), [2]({url_2}), [3]({url_3}) | {notes} |"
-        wiki_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["verification_log"]
-        updated_content = f"{wiki_page.content_md}\n{entry}"
-
-        wiki_page.edit(
-            content=updated_content,
-            reason=f"Updating verification log with a new request from {author_string}",
-        )
 
         # Reply to the person who asked for verification.
         reply_text = (
@@ -201,11 +191,12 @@ def verification_parser():
         send_discord_alert(
             f"New Verification Request for **{language_name}**",
             f"Please check [this verification request](https://www.reddit.com{comment.permalink}) "
-            f"from [{author_string}](https://www.reddit.com/user/{author_name}).",
+            f"from [{author_string}](https://www.reddit.com/user/{author_name})."
+            f"\n\nIncluded notes from user: '{notes}'",
             "verification",
         )
         logger.info(
-            f"[ZW] Updated the verification log with a new request from {author_string}."
+            f"[ZW] Notified moderators about a new verification request from u/{author_string}."
         )
 
     return
