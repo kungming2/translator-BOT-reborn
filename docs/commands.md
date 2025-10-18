@@ -1,5 +1,7 @@
 # Commands (Reddit)
 
+[← Back to Home](./index.md)
+
 ## Introduction
 
 This document details the primary commands that work on r/translator and serve to help requesters and translators keep the community organized.

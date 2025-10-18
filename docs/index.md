@@ -33,4 +33,9 @@ For information on language processing can be found at the relevant page below.
 * [Points](./points.md)
 * [Technical Information](./technical.md)
 * [Verification](./verification.md)
+* [Wenju](./wenju.md)
+
+**Other**
+
+* [Deprecated](./deprecated.md)
 * [Version History](./version_history.md)
