@@ -33,8 +33,18 @@ The `converter()` function in `languages.py` is the most used function in the co
 
 The converter returns language identifications as `Lingvo` objects ([Esperanto](https://en.wikipedia.org/wiki/Esperanto) for "[language](https://en.wiktionary.org/wiki/lingvo)"), which contain practically all the information needed for a language's details, including its name and code, but also statistical information from the subreddit and some reference data.
 
-All `Lingvo` objects also have a `preferred_code`, which is what is used most often in the code. For non-script languages, the `preferred_code` is the ISO 639-1 code if it exists, or the ISO 639-3 code if an ISO 639-1 does not exist. 
+All `Lingvo` objects also have a `preferred_code`, which is what is used most often in the code. For non-script languages, the `preferred_code` is the ISO 639-1 code if it exists, or the ISO 639-3 code if an ISO 639-1 does not exist. In previous documentation for translator-BOT 1.0 this was often referred to as the "CSS code".
 
 Therefore, [German's](https://en.wikipedia.org/wiki/German_language) `preferred_code` is `de` (not `deu`), while [Cantonese](https://en.wikipedia.org/wiki/Cantonese), which does not have an ISO 639-1 code, has a `preferred_code` of `yue`. 
+
+Three non-language `preferred_code` are non-standard due to the need for backwards compatibility:
+
+| Name               | Preferred Code | [Standard ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3#Special_codes) Code |
+|--------------------|----------------|----------------------------------------------------------------------------------|
+| Generic            | `generic`      | `mis`                                                                            |
+| Unknown            | `unknown`      | `und`                                                                            |
+| Multiple Languages | `multiple`     | `mul`                                                                            |
+
+In all of these cases, the standard code will also work in `converter()`.
 
 Scripts' `preferred_code` are their ISO 15924 codes in lowercase. As an example, [Siddham's](https://en.wikipedia.org/wiki/Siddha%E1%B9%83_script) `preferred_code` is `sidd`.
