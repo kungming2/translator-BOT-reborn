@@ -237,10 +237,11 @@ def update_sidebar_statistics():
 @task(schedule="daily")
 def language_of_the_day(selected_language=None):
     """
-    Formats text for a randomly selected language of the day (ISO 639-3)
-    in Markdown for inclusion in the sidebar of the subreddit as a
-    widget (New Reddit). If the random language is invalid (e.g. a dead
-    language) the function will return `None` and fail gracefully.
+    Formats text for a randomly selected language of the day (ISO 639-3
+    by default) in Markdown for inclusion in the sidebar of the
+    subreddit as a widget (New Reddit). If the random language is
+    invalid (e.g. a dead language) the function will return `None`
+    and fail gracefully.
 
     :param selected_language: A selected language to override the random
                               selection of languages.
@@ -453,7 +454,17 @@ def update_verified_list():
     final_text = "\n".join(formatted_text)
 
     if users_to_fix:
-        final_text += f"\n\nFor moderators, *check*: {users_to_fix}"
+        # Create Markdown list with user links
+        user_links = [
+            f"* [u/{username}](https://www.reddit.com/user/{username})"
+            for username in users_to_fix
+        ]
+        user_list = "\n".join(user_links)
+
+        mod_fix_alert = (
+            f"The following users have irregular verified flairs:\n{user_list}"
+        )
+        send_discord_alert("Irregular Verified User Flairs", mod_fix_alert, "alert")
 
     # Prepare wiki page update.
     verified_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["verified"]
