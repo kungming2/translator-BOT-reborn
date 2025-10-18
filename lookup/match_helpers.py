@@ -3,6 +3,14 @@
 """
 Handles the text matching and tokenizing functions for the other lookup
 functions. Serves as a consolidator of detecting matching strings.
+
+For Japanese, The full UniDic provides more comprehensive linguistic
+information, but it requires a separate larger download.
+
+To install it, run:
+
+pip install unidic
+python -m unidic download
 """
 
 import os
@@ -10,7 +18,7 @@ import re
 
 import jieba
 import MeCab
-import unidic_lite
+import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
 
 from config import Paths, load_settings
@@ -47,7 +55,7 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
         tokens = list(jieba.cut(phrase, cut_all=False))
 
     elif language_code == "ja":
-        dic_dir = unidic_lite.DICDIR
+        dic_dir = unidic.DICDIR  # or unidic-lite
         mecab_rc_path = os.path.join(dic_dir, "mecabrc")
         tagger = MeCab.Tagger(f'-r "{mecab_rc_path}" -d "{dic_dir}"')
         tagger.parse(phrase)  # Workaround for Unicode bug in MeCab
