@@ -584,7 +584,7 @@ def notifier(lingvo, submission, mode="new_post"):
         notify_users_list, lingvo, SETTINGS["notifications_user_limit"]
     )
 
-    # In 'page' mode, limit to `page_users_count` users maximum
+    # In 'page' mode, further limit to `page_users_count` users maximum
     if mode == "page" and len(notify_users_list) > page_users_count:
         notify_users_list = random.sample(notify_users_list, page_users_count)
 
