@@ -22,6 +22,7 @@ from reddit_sender import message_reply
 from request_closeout import closeout_posts
 from responses import RESPONSE
 from usage_statistics import action_counter
+from time_handling import get_current_utc_date
 from title_handling import (
     Titolo,
     format_title_correction_comment,
@@ -29,6 +30,7 @@ from title_handling import (
     main_posts_filter,
 )
 from utility import fetch_youtube_length
+from wiki import update_wiki_page
 
 
 def ziwen_posts(post_limit=None):
@@ -243,6 +245,16 @@ def ziwen_posts(post_limit=None):
             long_comment = RESPONSE.COMMENT_LONG + RESPONSE.BOT_DISCLAIMER
             message_reply(post, long_comment)
             logger.info("[ZW] Posts: Left a comment informing that the post is long.")
+
+        # Add to the saved wiki page if it's not a commonly requested language.
+        if not post_ajo.lingvo.supported:
+            update_wiki_page(
+                "save",
+                get_current_utc_date(),
+                post_title,
+                post_id,
+                post_ajo.lingvo.name,
+            )
 
         # Update the Ajo with the Titolo data. This takes care of writing
         # the Ajo to the local database as well as updating the Reddit
