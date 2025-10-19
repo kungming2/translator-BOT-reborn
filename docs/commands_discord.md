@@ -110,7 +110,7 @@ Similar to `/post`, this command looks through the logs and the database for men
 
 ### Command: */title*
 
-This command accepts a text string, usually the title of a post, and attempts to derive a [Titulo](./models.md) from it. Adding the `--ai` flag at the end processes the title through a function intended to interpret the source and target language from the title, even if the function could not make sense of it.
+This command accepts a text string, usually the title of a post, and attempts to derive a [Titolo](./models.md) from it. Adding the `--ai` flag at the end processes the title through a function intended to interpret the source and target language from the title, even if the function could not make sense of it.
 
 ```
 /title [text]
