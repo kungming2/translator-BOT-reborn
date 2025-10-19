@@ -61,7 +61,7 @@ def handle(comment, instruo, komando, ajo):
             # Update the 'identified' wiki page for single languages.
             if ajo.type == "single":
                 update_wiki_page(
-                    save_or_identify=False,
+                    action="identify",
                     formatted_date=ajo.created_utc,
                     title=ajo.title_original,
                     post_id=ajo.id,

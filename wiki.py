@@ -17,7 +17,6 @@ from yaml import parser
 from config import SETTINGS
 from connection import REDDIT, REDDIT_HELPER, logger
 from discord_utils import send_discord_alert
-from testing import log_testing_mode
 from responses import RESPONSE
 
 
@@ -113,7 +112,9 @@ def fetch_most_requested_languages():
     """
     months_difference = SETTINGS["points_months_delta"]
 
-    three_months_ago = datetime.now(timezone.utc) - relativedelta(months=months_difference)
+    three_months_ago = datetime.now(timezone.utc) - relativedelta(
+        months=months_difference
+    )
     three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
 
     reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
@@ -127,69 +128,68 @@ def fetch_most_requested_languages():
 
 
 def update_wiki_page(
-    save_or_identify,
+    action,
     formatted_date,
     title,
     post_id,
     flair_text,
     new_flair=None,
     user=None,
-    testing_mode=False,
 ):
     """
     Updates a wiki page on the subreddit wiki with new data, based on
-    the save_or_identify argument. Primarily, this is only used for
-    identify now, in order to collate identified posts into a main
-    list of changes. Save is retained for compatability purposes and in
-    case it can be repurposed.
+    the action argument. Primarily, this is only used for identify now,
+    in order to collate identified posts into a main list of changes.
+    Save is retained for compatibility purposes and in case it can be
+    repurposed.
+
+    Args:
+        action: Either "save" or "identify" to determine which wiki page to update
+        formatted_date: The formatted date string for the entry
+        title: The post title
+        post_id: The Reddit post ID
+        flair_text: The current flair text
+        new_flair: The new flair (for identify action)
+        user: The username (for identify action)
     """
-    if save_or_identify:
+    if action == "save":
         # Adding to the "saved" wiki page
         page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["saved"]
         new_entry = f"| {formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} |"
-    else:
+    elif action == "identify":
         # Adding to the "identified" wiki page
         page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["identified"]
-        new_entry = f"{formatted_date} | [{title}](https://redd.it/{post_id}) | {flair_text} | {new_flair} | u/{user}"
+        new_entry = (
+            f"| {formatted_date} | [{title}](https://redd.it/{post_id}) | "
+            f"{flair_text} | {new_flair} | u/{user} |"
+        )
+    else:
+        raise ValueError(f"Invalid action: {action}. Must be 'save' or 'identify'")
 
     updated_content = f"{page.content_md}\n{new_entry}"
 
-    if not testing_mode:
-        try:
-            page.edit(
-                content=updated_content,
-                reason=f"Ziwen: updating the {'saved' if save_or_identify else 'identified'} wiki page with a new link",
-            )
-        except (prawcore.exceptions.Forbidden, prawcore.exceptions.TooLarge):
-            if not save_or_identify:
-                logger.warning("[ZW] Save_Wiki: The 'identified' wiki page is full.")
-                send_discord_alert(
-                    "'identified' Wiki Page Full",
-                    RESPONSE.MSG_WIKIPAGE_FULL.format("identified"),
-                    "alert",
-                )
-            else:
-                raise  # You can choose how to handle errors for the "saved" page
+    try:
+        page.edit(
+            content=updated_content,
+            reason=f"Ziwen: updating the {action} wiki page with a new link",
+        )
+    except (prawcore.exceptions.Forbidden, prawcore.exceptions.TooLarge) as e:
+        logger.warning(f"[ZW] Save_Wiki: The {action} wiki page is full.")
+        send_discord_alert(
+            f"'{action}' Wiki Page Full",
+            RESPONSE.MSG_WIKIPAGE_FULL.format(action),
+            "alert",
+        )
+        # For permission issues
+        if isinstance(e, prawcore.exceptions.Forbidden):
+            raise PermissionError("Insufficient permissions to edit the wiki page")
+        # For size issues
         else:
-            logger.info(
-                f"[ZW] Save_Wiki: Updated the {'saved' if save_or_identify else 'identified'} wiki page."
-            )
+            raise ValueError("Content too large for the wiki page")
     else:
-        # Testing mode: log instead of editing
-        log_testing_mode(
-            output_text=updated_content,
-            title=f"Wiki Update Dry Run: {'saved' if save_or_identify else 'identified'} page",
-            metadata={
-                "Post ID": post_id,
-                "Title": title,
-                "Flair Text": flair_text,
-                "New Flair": new_flair,
-                "User": user,
-            },
-        )
-        logger.info(
-            f"[ZW] Save_Wiki: Dry run for {'saved' if save_or_identify else 'identified'} wiki page update logged."
-        )
+        logger.info(f"[ZW] Save_Wiki: Updated the {action} wiki page.")
+
+    return
 
 
 """
