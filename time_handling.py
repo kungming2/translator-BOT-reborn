@@ -40,7 +40,7 @@ def convert_to_day(unix_integer) -> str:
 
 
 def get_current_local_date() -> str:
-    """Return the current local date in YYYY-MM-DD format."""
+    """Return the current local date in YYYY-MM-DD format. Unused."""
     return datetime.now().strftime("%Y-%m-%d")
 
 

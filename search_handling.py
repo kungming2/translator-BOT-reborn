@@ -4,8 +4,8 @@
 Handles search tasks for frequently requested translations.
 """
 
-import datetime
 import re
+from datetime import datetime, timezone
 
 import ddgs
 
@@ -72,8 +72,8 @@ def build_search_results(post_ids, search_term):
 
     for post_id in post_ids[:6]:  # Limit to 6 posts to avoid excessive length
         submission = REDDIT_HELPER.submission(id=post_id)
-        submission_date = datetime.datetime.fromtimestamp(
-            submission.created_utc
+        submission_date = datetime.fromtimestamp(
+            submission.created_utc, tz=timezone.utc
         ).strftime("%Y-%m-%d")
         result_sections.append(
             f"**[{submission.title}](https://www.reddit.com{submission.permalink})** ({submission_date})\n"

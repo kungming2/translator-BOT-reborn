@@ -5,13 +5,12 @@ Handles error logging and retrieval.
 """
 
 import os
-from datetime import datetime
 
 import yaml
 
 from config import SETTINGS, Paths, logger
 from connection import REDDIT
-from time_handling import get_current_utc_time
+from time_handling import get_current_utc_time, time_convert_to_string
 
 
 class CustomDumper(yaml.SafeDumper):
@@ -68,7 +67,7 @@ def error_log_basic(entry, bot_routine):
 
 def _record_last_post_and_comment():
     """
-    Retrieves the latest post and comment from r/translator for 
+    Retrieves the latest post and comment from r/translator for
     reference in error logging.
 
     :return: A dictionary with keys:
@@ -90,18 +89,14 @@ def _record_last_post_and_comment():
 
     # Get latest submission
     for submission in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=1):
-        post_time = datetime.fromtimestamp(submission.created_utc).strftime(
-            "%a, %b %d, %Y [%I:%M:%S %p]"
-        )
+        post_time = time_convert_to_string(submission.created_utc)
         post_info["timestamp"] = post_time
         post_info["link"] = f"https://www.reddit.com{submission.permalink}"
         break
 
     # Get latest comment
     for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(limit=1):
-        comment_time = datetime.fromtimestamp(comment.created_utc).strftime(
-            "%a, %b %d, %Y [%I:%M:%S %p]"
-        )
+        comment_time = time_convert_to_string(comment.created_utc)
         replaced_body = comment.body.replace("\n", "\n> ")
         formatted_body = f"> {replaced_body}"
         comment_info.update(

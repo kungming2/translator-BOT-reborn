@@ -12,9 +12,9 @@ import pprint
 import sqlite3
 import time
 from ast import literal_eval
-from datetime import datetime
 
 from config import Paths, logger, SETTINGS
+from time_handling import convert_to_day
 
 """SQLITE DATABASE ACCESS"""
 
@@ -289,8 +289,8 @@ def record_filter_log(filtered_title, created_timestamp, filter_type):
     :param created_timestamp: Unix timestamp of when the post was created.
     :param filter_type: Code of the violated filter rule.
     """
-    timestamp_utc = datetime.fromtimestamp(created_timestamp).strftime("%Y-%m-%d")
-    line = f"\n{timestamp_utc} | {filtered_title} | {filter_type}"
+    timestamp_utc = convert_to_day(created_timestamp)
+    line = f"\n| {timestamp_utc} | {filtered_title} | {filter_type} |"
 
     with open(Paths.LOGS["FILTER"], "a", encoding="utf-8") as f:
         f.write(line)

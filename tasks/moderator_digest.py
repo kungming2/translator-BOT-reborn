@@ -8,7 +8,7 @@ information and statistics to moderators via Discord.
 import csv
 import time
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 import yaml
 
@@ -176,7 +176,7 @@ def filter_log_tabulator():
     """
 
     # Current day stamp.
-    today = datetime.strptime(get_current_utc_date(), "%Y-%m-%d").date()
+    today = datetime.now(timezone.utc).date()
 
     # Read the filter log file.
     try:

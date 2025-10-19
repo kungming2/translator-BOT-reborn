@@ -6,8 +6,8 @@ Note this is distinct from Wikipedia functions, which are in
 lookup/wp_utils.py.
 """
 
-import datetime
 import re
+from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
 import prawcore
@@ -113,7 +113,7 @@ def fetch_most_requested_languages():
     """
     months_difference = SETTINGS["points_months_delta"]
 
-    three_months_ago = datetime.datetime.now() - relativedelta(months=months_difference)
+    three_months_ago = datetime.now(timezone.utc) - relativedelta(months=months_difference)
     three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
 
     reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[

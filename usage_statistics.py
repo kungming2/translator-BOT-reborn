@@ -5,14 +5,13 @@ Contains functions related to statistics tabulation. Many of these
 functions are used by Wenyuan, the statistics calculator routine.
 """
 
-import datetime
-import time
+from datetime import datetime, timezone
 
 import orjson
 
 from config import Paths, logger
 from database import db
-from time_handling import get_current_local_date
+from time_handling import get_current_utc_date
 
 
 def action_counter(messages_number, action_type):
@@ -33,7 +32,7 @@ def action_counter(messages_number, action_type):
     if action_type == "!id:":
         action_type = "!identify:"
 
-    current_day = get_current_local_date()
+    current_day = get_current_utc_date()
 
     # Load existing data
     try:
@@ -84,7 +83,7 @@ def months_since_redesign(start_year=2016, start_month=5) -> int:
     start_total_months = (start_year * 12) + start_month
 
     # Get current year and month
-    now = datetime.datetime.fromtimestamp(time.time())
+    now = datetime.now(timezone.utc)  # datetime object
     current_total_months = (now.year * 12) + now.month
 
     # Calculate elapsed months
@@ -166,7 +165,8 @@ def generate_command_usage_report(start_time, end_time, days):
     command_totals = {}
     for date_text, command_counts in counter_data.items():
         try:
-            unix_timestamp = time.mktime(time.strptime(date_text, "%Y-%m-%d"))
+            dt = datetime.strptime(date_text, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            unix_timestamp = int(dt.timestamp())
         except ValueError:
             continue  # Skip invalid date entries.
 

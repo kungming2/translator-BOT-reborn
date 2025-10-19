@@ -4,9 +4,7 @@
 Handles points calculations for contributors to the subreddit.
 """
 
-import datetime
 import re
-import time
 from urllib.parse import urlparse
 
 import prawcore
@@ -99,7 +97,7 @@ def points_worth_determiner(lingvo_object) -> int:
         return 4  # Normalized value for unknown languages
 
     # Check cache first
-    month_string = datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m")
+    month_string = get_current_month()
     cursor = db.cursor_cache
     cursor.execute(
         "SELECT language_multiplier FROM multiplier_cache WHERE month_year = ? AND language_code = ?",
@@ -153,8 +151,6 @@ def points_worth_determiner(lingvo_object) -> int:
         final_point_value = 20  # Max score for unknown/rare/missing wiki entries
 
     # Cache the result
-    current_zeit = time.time()
-    month_string = datetime.datetime.fromtimestamp(current_zeit).strftime("%Y-%m")
     insert_data = (month_string, language_code, final_point_value)
     db.cursor_cache.execute(
         "INSERT INTO multiplier_cache VALUES (?, ?, ?)", insert_data
@@ -193,8 +189,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
     cursor_main = db.cursor_main
     conn_main = db.conn_main
 
-    current_time = time.time()
-    month_string = datetime.datetime.fromtimestamp(current_time).strftime("%Y-%m")
+    month_string = get_current_month()
 
     instruo = Instruo.from_comment(comment, original_post_lingvo)
     op_author = original_post.author.name
