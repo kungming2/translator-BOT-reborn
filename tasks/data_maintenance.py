@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-import datetime
 import json
 import re
-import time
 from pathlib import Path
 from typing import Dict, Union
 
@@ -17,7 +15,7 @@ from database import db
 from languages import converter
 from points import points_worth_determiner
 from tasks import WENJU_SETTINGS, task
-from time_handling import get_previous_month, messaging_months_elapsed
+from time_handling import get_current_month, get_previous_month, messaging_months_elapsed
 from wiki import fetch_most_requested_languages
 
 
@@ -371,11 +369,11 @@ def points_worth_cacher():
     from the previous month and replace it.
     """
     # Get this month's representation.
-    current_month = datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m")
+    month_entry = get_current_month()
 
     # Check if cache already contains entries for the current month
     query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
-    db.cursor_cache.execute(query, (current_month,))
+    db.cursor_cache.execute(query, (month_entry,))
     cached_entries = db.cursor_cache.fetchall()
 
     # There is no cached points data.
@@ -418,7 +416,9 @@ def archive_identified_saved():
             with open(file_path, "a+", encoding="utf-8") as f:
                 f.write(lines.strip() + "\n")  # Add newline for separation
 
-            wiki_page.edit(content=top, reason="Archived tabular data.")
+            wiki_page.edit(
+                content=top, reason=f"Archived tabular data for {get_current_month()}."
+            )
             logger.info(f"[WJ] {page_name} page archived.")
 
     # Process both pages
