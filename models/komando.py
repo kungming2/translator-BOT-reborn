@@ -242,3 +242,4 @@ if "__main__" == __name__:
         else:
             for command_new in commands_new:
                 print(f"* {command_new}")
+                print("=" * 10)
