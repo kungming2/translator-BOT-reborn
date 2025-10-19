@@ -2,15 +2,15 @@
 # -*- coding: UTF-8 -*-
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
-from config import logger, SETTINGS
+from config import SETTINGS, logger
 from connection import REDDIT
 from database import db
 from notifications import notifier_internal
 from responses import RESPONSE
 from tasks import task
-from time_handling import get_current_local_date
+from time_handling import get_current_utc_date
 
 
 @task(schedule="daily")
@@ -87,10 +87,10 @@ def weekly_unknown_thread():
     seven days still marked as "Unknown".
     """
     r = REDDIT.subreddit(SETTINGS["subreddit"])
-    today_str = get_current_local_date()
+    today_str = get_current_utc_date()
 
     # Get the current week number for the post title
-    current_week = datetime.now().strftime("%U")
+    current_week_utc = datetime.now(timezone.utc).strftime("%U")
 
     unknown_entries = []
 
@@ -111,14 +111,17 @@ def weekly_unknown_thread():
     unknown_entries.reverse()  # Oldest first
     unknown_content = "\n".join(unknown_entries)
 
-    thread_title = f'[META] Weekly "Unknown" Identification Thread — {today_str} (Week {current_week})'
+    thread_title = (
+        f'[META] Weekly "Unknown" Identification Thread — {today_str} '
+        f"(Week {current_week_utc})"
+    )
     body = RESPONSE.WEEKLY_UNKNOWN_THREAD.format(unknown_content=unknown_content)
 
     # Submit and distinguish the post
     submission = r.submit(title=thread_title, selftext=body, send_replies=False)
     submission.mod.distinguish()
     logger.info(
-        f"[WJ] unknown_thread: Posted weekly 'Unknown' thread (Week {current_week})."
+        f"[WJ] unknown_thread: Posted weekly 'Unknown' thread (Week {current_week_utc})."
     )
 
     return

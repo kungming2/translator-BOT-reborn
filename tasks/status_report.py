@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-import datetime
 import re
 import sqlite3
 import time
 from ast import literal_eval
 from collections import Counter
+from datetime import date
 
 from praw.exceptions import RedditAPIException
 from praw.models import TextArea
 
 from config import SETTINGS, get_reports_directory, logger
-from connection import REDDIT, REDDIT_HELPER, widget_update, reddit_status_check
+from connection import REDDIT, REDDIT_HELPER, reddit_status_check, widget_update
 from database import db
 from discord_utils import send_discord_alert
 from languages import (
@@ -25,7 +25,7 @@ from lookup.reference import get_language_reference
 from lookup.wp_utils import wikipedia_lookup
 from models.ajo import Ajo
 from tasks import WENJU_SETTINGS, task
-from time_handling import get_current_local_date, get_current_utc_time
+from time_handling import get_current_utc_date, get_current_utc_time
 
 
 @task(schedule="hourly")
@@ -249,7 +249,7 @@ def language_of_the_day(selected_language=None):
              unable to be obtained.
     """
     # Get today's date
-    today = datetime.date.today()
+    today = date.today()
 
     # Check if today is an even day. Post ISO 639-1 languages on even
     # days in order to give some more familiar languages.
@@ -472,7 +472,7 @@ def update_verified_list():
 
     # Keep the upper portion of the page intact.
     upper_portion = verified_page.content_md.split(anchor, 1)[0]
-    date_stamp = f"\n*Last Updated {get_current_local_date()}*\n"
+    date_stamp = f"\n*Last Updated {get_current_utc_date()}*\n"
     final_update = "\n".join([upper_portion, anchor, date_stamp, final_text])
 
     # Commit the edit.
@@ -495,7 +495,7 @@ def deleted_posts_assessor(
     :return: None — saves the report to a Markdown log file.
     """
     reports_directory = get_reports_directory()
-    today = get_current_local_date()
+    today = get_current_utc_date()
 
     # Default to the last 7 days if no time range provided
     if start_time is None or end_time is None:
@@ -602,7 +602,7 @@ def notify_list_statistics_calculator() -> None:
     :return: None
     """
     reports_directory = get_reports_directory()
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = get_current_utc_date()
     # Fetch ISO 639-1 languages and ensure they are all strings
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
     iso_639_1_languages: list[str] = [

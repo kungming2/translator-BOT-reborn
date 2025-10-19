@@ -6,9 +6,9 @@ information and statistics to moderators via Discord.
 """
 
 import csv
-import datetime
 import time
 from pathlib import Path
+from datetime import datetime
 
 import yaml
 
@@ -16,6 +16,7 @@ from config import SETTINGS, Paths, get_reports_directory, logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
+from time_handling import get_current_utc_date, convert_to_day
 from usage_statistics import generate_command_usage_report
 
 
@@ -146,7 +147,7 @@ def error_log_count():
     # This is an exception to the formal that's usually saved, since
     # this is display-only.
     try:
-        last_entry_time = datetime.datetime.fromisoformat(
+        last_entry_time = datetime.fromisoformat(
             last_timestamp.replace("Z", "+00:00")
         ).strftime("%Y-%m-%d %H:%M:%S UTC")
     except (ValueError, TypeError, AttributeError):
@@ -175,7 +176,7 @@ def filter_log_tabulator():
     """
 
     # Current day stamp.
-    today = datetime.date.today()
+    today = datetime.strptime(get_current_utc_date(), "%Y-%m-%d").date()
 
     # Read the filter log file.
     try:
@@ -199,7 +200,7 @@ def filter_log_tabulator():
     # Parse the first (oldest) entry’s date.
     try:
         first_date_str = entries[0].split("|")[0].strip()
-        first_date = datetime.datetime.strptime(first_date_str, "%Y-%m-%d").date()
+        first_date = datetime.strptime(first_date_str, "%Y-%m-%d").date()
     except Exception as e:
         logger.error(f"[WJ] filter_log_tabulator: Failed to parse first date — {e}")
         return "* **Filter rate**: Unknown (date parse error)"
@@ -253,9 +254,7 @@ def note_language_tags():
     rows = []
     for post in flagged_submissions:
         # Convert timestamp to readable date.
-        submission_date = datetime.datetime.fromtimestamp(post.created_utc).strftime(
-            "%Y-%m-%d"
-        )
+        submission_date = convert_to_day(post.created_utc)
 
         # Shorten the title if too long.
         title = post.title.strip()
@@ -285,7 +284,7 @@ def collate_moderator_digest():
     :return: None
     """
     logger.info("Collating moderator digest...")
-    today_date = datetime.date.today().strftime("%Y-%m-%d")
+    today_date = get_current_utc_date
     days_ago = WENJU_SETTINGS["report_command_average"]
     time_delta = 86400 * days_ago
     current_time = int(time.time())

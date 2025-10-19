@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List
 
 import requests
@@ -9,7 +9,7 @@ from lxml import html
 from praw.exceptions import PRAWException
 
 from config import Paths
-from connection import get_random_useragent, logger, REDDIT
+from connection import REDDIT, get_random_useragent, logger
 from discord_utils import send_discord_alert
 from tasks import task
 
@@ -74,7 +74,7 @@ def fetch_iso_reports() -> None:
 
         # Check if contents have changed
         if existing_data == reports:
-            logger.debug(f"No changes detected. ISO Codes Updates dataset not updated.")
+            logger.debug("No changes detected. ISO Codes Updates dataset not updated.")
             return
 
         # Write to YAML file
@@ -99,7 +99,7 @@ def post_iso_reports_to_reddit() -> None:
     in the YAML file after successful posting.
     """
     subreddit_name = "translatorBOT"
-    current_year = datetime.now().year
+    current_year_utc = datetime.now(timezone.utc).year
 
     try:
         # Load the YAML file
@@ -107,15 +107,15 @@ def post_iso_reports_to_reddit() -> None:
             reports = yaml.safe_load(f) or []
 
         # Filter reports for the current year and previous year
-        previous_year = current_year - 1
+        previous_year = current_year_utc - 1
         current_and_previous_reports = [
             r
             for r in reports
-            if r.get("year") in (str(current_year), str(previous_year))
+            if r.get("year") in (str(current_year_utc), str(previous_year))
         ]
 
         if not current_and_previous_reports:
-            logger.info(f"No reports found for the current or previous year.")
+            logger.info("No reports found for the current or previous year.")
             return
 
         subreddit = REDDIT.subreddit(subreddit_name)
@@ -155,7 +155,7 @@ def post_iso_reports_to_reddit() -> None:
                     message=discord_message,
                     webhook_name="notification",
                 )
-                logger.info(f"Sent an alert to Discord.")
+                logger.info("Sent an alert to Discord.")
 
         # Write updated reports back to YAML file if any were posted
         if updated:

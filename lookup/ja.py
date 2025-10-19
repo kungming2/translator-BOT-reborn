@@ -6,7 +6,7 @@ Contains functions that deal with Japanese-language content.
 
 import asyncio
 import re
-import time
+from time import sleep
 
 import aiohttp
 import pykakasi
@@ -200,7 +200,7 @@ def _sfx_search(katakana_string):
 
     try:
         driver.get(search_url)
-        time.sleep(2)  # Let JS render
+        sleep(2)  # Let JS render
 
         tree = html.fromstring(driver.page_source)
 

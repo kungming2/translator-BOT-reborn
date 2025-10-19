@@ -7,13 +7,14 @@ that they are currently working on translating a request.
 
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 
 from connection import REDDIT, logger
 from languages import converter
 from models.kunulo import Kunulo
 from reddit_sender import comment_reply, message_reply
 from responses import RESPONSE
+from time_handling import get_current_utc_time
 
 from . import update_status
 
@@ -25,8 +26,7 @@ def handle(comment, _instruo, komando, ajo):
 
     # Set time variables.
     current_time = int(time.time())
-    utc_time = datetime.fromtimestamp(current_time, tz=timezone.utc)
-    time_formatted = utc_time.isoformat(timespec="seconds").replace("+00:00", "Z")
+    time_formatted = get_current_utc_time()
 
     logger.info(f"[ZW] Bot: COMMAND: !claim ({status_type}), from u/{comment.author}.")
 

@@ -27,6 +27,18 @@ def time_convert_to_string(unix_integer) -> str:
     )
 
 
+def convert_to_day(unix_integer) -> str:
+    """
+    Converts a UNIX timestamp to a UTC date string (YYYY-MM-DD).
+
+    :param unix_integer: UNIX time as an int or float.
+    :return: UTC date string, e.g., '2025-07-11'.
+    """
+    return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime(
+        "%Y-%m-%d"
+    )
+
+
 def get_current_local_date() -> str:
     """Return the current local date in YYYY-MM-DD format."""
     return datetime.now().strftime("%Y-%m-%d")
