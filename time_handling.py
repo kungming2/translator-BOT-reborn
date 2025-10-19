@@ -9,12 +9,12 @@ import time
 from datetime import date, datetime, timezone
 
 
-def get_current_utc_time():
+def get_current_utc_time() -> str:
     """Returns the current UTC time as a string"""
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def time_convert_to_string(unix_integer):
+def time_convert_to_string(unix_integer) -> str:
     """
     Converts a UNIX timestamp to an ISO 8601 UTC time string.
 
@@ -27,15 +27,22 @@ def time_convert_to_string(unix_integer):
     )
 
 
-def get_current_local_date():
+def get_current_local_date() -> str:
+    """Return the current local date in YYYY-MM-DD format."""
     return datetime.now().strftime("%Y-%m-%d")
 
 
+def get_current_utc_date() -> str:
+    """Return the current UTC date in YYYY-MM-DD format."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 def get_current_month() -> str:
+    """Return the current UTC month in YYYY-MM format."""
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
-def get_previous_month(year_month):
+def get_previous_month(year_month) -> str:
     """Give this function a year-month string, and it will return the
     previous month as a string in the same format."""
 
