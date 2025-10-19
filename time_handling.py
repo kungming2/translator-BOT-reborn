@@ -22,6 +22,10 @@ def time_convert_to_string(unix_integer):
     )
 
 
+def get_current_month() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m")
+
+
 def get_previous_month(year_month):
     """Give this function a year-month string, and it will return the
     previous month as a string in the same format."""

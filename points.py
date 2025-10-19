@@ -21,6 +21,7 @@ from models.ajo import ajo_loader, ajo_writer
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
 from responses import RESPONSE
+from time_handling import get_current_month
 from wiki import fetch_wiki_statistics_page
 
 
@@ -32,8 +33,7 @@ def points_retriever(username: str) -> str:
     :param username: The Reddit username as a string.
     :return: A string summarizing the user's point activity on r/translator.
     """
-    current_time = time.time()
-    current_month = datetime.datetime.fromtimestamp(current_time).strftime("%Y-%m")
+    current_month = get_current_month()
 
     cursor = db.cursor_main
 

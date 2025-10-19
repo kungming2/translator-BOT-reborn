@@ -6,10 +6,11 @@ Handles directing of paths as well as the logger.
 
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+from time_handling import get_current_month
 
 # Base directory configuration
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -115,7 +116,7 @@ def get_reports_directory(base_dir: Path | None = None) -> Path:
     if base_dir is None:
         base_dir = Path(__file__).resolve().parent / "Data"
 
-    current_month = datetime.now().strftime("%Y-%m")
+    current_month = get_current_month()
     log_dir = base_dir / "Reports" / current_month
 
     return log_dir
