@@ -12,6 +12,7 @@ import orjson
 
 from config import Paths, logger
 from database import db
+from time_handling import get_current_local_date
 
 
 def action_counter(messages_number, action_type):
@@ -32,7 +33,7 @@ def action_counter(messages_number, action_type):
     if action_type == "!id:":
         action_type = "!identify:"
 
-    current_day = time.strftime("%Y-%m-%d")
+    current_day = get_current_local_date()
 
     # Load existing data
     try:

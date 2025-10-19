@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 import json
 import time
-from datetime import date, datetime
+from datetime import datetime
 
 from config import logger, SETTINGS
 from connection import REDDIT
@@ -10,6 +10,7 @@ from database import db
 from notifications import notifier_internal
 from responses import RESPONSE
 from tasks import task
+from time_handling import get_current_local_date
 
 
 @task(schedule="daily")
@@ -86,7 +87,7 @@ def weekly_unknown_thread():
     seven days still marked as "Unknown".
     """
     r = REDDIT.subreddit(SETTINGS["subreddit"])
-    today_str = date.today().strftime("%Y-%m-%d")
+    today_str = get_current_local_date()
 
     # Get the current week number for the post title
     current_week = datetime.now().strftime("%U")

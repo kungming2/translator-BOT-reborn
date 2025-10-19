@@ -5,13 +5,13 @@ Handles error logging and retrieval.
 """
 
 import os
-import time
-from datetime import datetime, timezone
+from datetime import datetime
 
 import yaml
 
 from config import SETTINGS, Paths, logger
 from connection import REDDIT
+from time_handling import get_current_utc_time
 
 
 class CustomDumper(yaml.SafeDumper):
@@ -36,7 +36,7 @@ def error_log_basic(entry, bot_routine):
                         (e.g., 'Ziwen', 'Wenyuan').
     """
     log_entry = {
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": get_current_utc_time(),
         "bot_version": bot_routine,
         "error": entry.strip(),
     }
@@ -75,8 +75,7 @@ def _record_last_post_and_comment():
              - 'last_post': Formatted string of the last post's timestamp and link.
              - 'last_comment': Formatted string of the last comment's timestamp, link, and body.
     """
-    now = time.time()
-    fallback_time = datetime.fromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
+    fallback_time = get_current_utc_time()
 
     post_info = {
         "timestamp": fallback_time,
@@ -136,7 +135,6 @@ def error_log_extended(error_save_entry, bot_version):
     :return: None
     """
     error_log_path = Paths.LOGS["ERROR"]
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     try:
         # Load existing YAML log (if file exists and is non-empty)
@@ -151,7 +149,7 @@ def error_log_extended(error_save_entry, bot_version):
 
         # Append new entry
         new_entry = {
-            "timestamp": timestamp,
+            "timestamp": get_current_utc_time(),
             "bot_version": bot_version,
             "context": last_post_text,
             "error": error_save_entry,

@@ -1,6 +1,8 @@
-from datetime import UTC, datetime
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
 
 from config import Paths
+from time_handling import get_current_utc_time
 
 
 def log_testing_mode(output_text, title=None, metadata=None):
@@ -13,7 +15,7 @@ def log_testing_mode(output_text, title=None, metadata=None):
         metadata (dict, optional): Key-value pairs to log before the content.
     """
     filepath = Paths.LOGS["TESTING"]
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
+    timestamp = get_current_utc_time()
     with open(filepath, "a", encoding="utf-8") as f:
         f.write("\n---\n")  # Markdown horizontal rule
         f.write(f"### {title or 'Testing Mode Log'}\n")

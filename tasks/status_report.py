@@ -25,6 +25,7 @@ from lookup.reference import get_language_reference
 from lookup.wp_utils import wikipedia_lookup
 from models.ajo import Ajo
 from tasks import WENJU_SETTINGS, task
+from time_handling import get_current_local_date, get_current_utc_time
 
 
 @task(schedule="hourly")
@@ -173,8 +174,7 @@ def update_sidebar_statistics():
 
     :return: None
     """
-    current_time = datetime.datetime.now()
-    current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    current_time_str = get_current_utc_time()
 
     try:
         sidebar_bit = _generate_24h_statistics_snippet()
@@ -472,7 +472,7 @@ def update_verified_list():
 
     # Keep the upper portion of the page intact.
     upper_portion = verified_page.content_md.split(anchor, 1)[0]
-    date_stamp = f"\n*Last Updated {datetime.date.today():%Y-%m-%d}*\n"
+    date_stamp = f"\n*Last Updated {get_current_local_date()}*\n"
     final_update = "\n".join([upper_portion, anchor, date_stamp, final_text])
 
     # Commit the edit.
@@ -495,7 +495,7 @@ def deleted_posts_assessor(
     :return: None — saves the report to a Markdown log file.
     """
     reports_directory = get_reports_directory()
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = get_current_local_date()
 
     # Default to the last 7 days if no time range provided
     if start_time is None or end_time is None:

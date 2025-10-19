@@ -9,6 +9,11 @@ import time
 from datetime import date, datetime, timezone
 
 
+def get_current_utc_time():
+    """Returns the current UTC time as a string"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def time_convert_to_string(unix_integer):
     """
     Converts a UNIX timestamp to an ISO 8601 UTC time string.
@@ -20,6 +25,10 @@ def time_convert_to_string(unix_integer):
     return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
+
+
+def get_current_local_date():
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 def get_current_month() -> str:
