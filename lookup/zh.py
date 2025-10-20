@@ -400,9 +400,9 @@ def _old_chinese_search(character):
         return None
 
     mc, oc = mc_oc_readings[character]
-    result = f"\n**Middle Chinese** | \\*{mc}*"
+    result = f"\n| **Middle Chinese** | \\*{mc}* |"
     if oc:  # only include Old Chinese if it exists
-        result += f"\n**Old Chinese** | \\*{oc}*"
+        result += f"\n| **Old Chinese** | \\*{oc}* |"
     return result
 
 
@@ -467,7 +467,7 @@ def _min_hakka_readings(character):
             annotation = tree.xpath(
                 '//ru[contains(@class,"rightangle") and contains(@order,"0")]/@annotation'
             )[0]
-            return f"\n**Southern Min** | *{annotation}*"
+            return f"\n| **Southern Min** | *{annotation}* |"
         return ""
 
     def get_hak_reading(char):
@@ -487,7 +487,7 @@ def _min_hakka_readings(character):
         for word in reading.split():
             word = re.sub(r"([a-z])(\d)", r"\1^(\2)", word)
             formatted.append(word)
-        return f"\n**Hakka (Sixian)** | *{' '.join(formatted)}*"
+        return f"\n**| Hakka (Sixian)** | *{' '.join(formatted)}* |"
 
     min_reading = get_min_reading(character)
     hak_reading = get_hak_reading(character)
@@ -703,7 +703,7 @@ async def zh_character(character):
                 f"# [{character}](https://en.wiktionary.org/wiki/{character}#Chinese)\n\n"
                 "| Language | Pronunciation |\n"
                 "|----------|---------------|\n"
-                f"| **Mandarin** | *{cmn_pronunciation}*\n |"
+                f"| **Mandarin** | *{cmn_pronunciation}* |\n"
                 f"| **Cantonese** | *{yue_pronunciation[:-1]}* |"
             )
         else:
