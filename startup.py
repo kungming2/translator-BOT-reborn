@@ -6,7 +6,7 @@ Initializes Ziwen's runtime state and caches key data on startup.
 
 import time
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from config import logger, SETTINGS
 from connection import REDDIT, USERNAME
@@ -18,11 +18,11 @@ class State:
     """A simple state container for Ziwen constants that are called
     upon startup."""
 
-    post_templates: Dict[str, Any]
-    recent_submitters: list
+    post_templates: dict[str, Any]
+    recent_submitters: list[str]
 
 
-def template_retriever():
+def template_retriever() -> dict[str, str]:
     """
     Retrieve the current link flair templates on r/translator.
 
@@ -36,14 +36,14 @@ def template_retriever():
     }
 
 
-def most_recent_submitters():
+def most_recent_submitters() -> list[str]:
     """
     Return a list of usernames who submitted to r/translator in the
     last 24 hours.
 
     Ignores deleted users and the bot account.
     """
-    cutoff = time.time() - 86400
+    cutoff: float = time.time() - 86400
     return [
         post.author.name
         for post in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=100)
@@ -60,12 +60,12 @@ def ziwen_startup() -> State:
 
     :return: A State object containing the current tasks state.
     """
-    post_templates = template_retriever()
+    post_templates: dict[str, str] = template_retriever()
     logger.debug(
         "[ZW] # Current post templates retrieved: %d templates", len(post_templates)
     )
 
-    recent_submitters = most_recent_submitters()
+    recent_submitters: list[str] = most_recent_submitters()
 
     # Does not return anything. Run just to make sure there's data in
     # the points cache.
@@ -75,7 +75,7 @@ def ziwen_startup() -> State:
     return State(post_templates=post_templates, recent_submitters=recent_submitters)
 
 
-STATE = ziwen_startup()
+STATE: State = ziwen_startup()
 
 
 if __name__ == "__main__":

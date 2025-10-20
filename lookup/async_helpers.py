@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""ASYNC FUNCTIONS"""
+"""Async helper functions for lookup scripts."""
 
 import asyncio
+from typing import Any, Callable
 
 from config import logger
 
 
-async def fetch_json(session, url):
+async def fetch_json(session, url: str) -> dict | list | None:
     """
     Fetch and parse a JSON response asynchronously.
 
@@ -33,7 +34,7 @@ async def fetch_json(session, url):
         return None
 
 
-async def call_sync_async(func, *args, **kwargs):
+async def call_sync_async(func: Callable, *args: Any, **kwargs: Any) -> Any:
     """
     Execute a function that may be synchronous or asynchronous.
 

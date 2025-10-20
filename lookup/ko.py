@@ -13,8 +13,8 @@ from connection import credentials_source
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
 
 
-def _translate_part_of_speech(korean_pos):
-    mapping = {
+def _translate_part_of_speech(korean_pos: str) -> str:
+    mapping: dict[str, str] = {
         "명사": "noun",
         "동사": "verb",
         "형용사": "adjective",
@@ -34,15 +34,15 @@ def _translate_part_of_speech(korean_pos):
 """WORD LOOKUP"""
 
 
-def _ko_search_raw(target_word):
+def _ko_search_raw(target_word: str) -> list[dict]:
     """
     This function returns a list containing machine-readable
     dictionaries of data from the Korean look-up.
 
     :param target_word: Word in Korean we're looking for.
-    :return:
+    :return: List of simplified entry dictionaries.
     """
-    filtered_data = []
+    filtered_data: list[dict] = []
     korean_input = krdict.search(
         query=target_word.strip(),
         search_type=krdict.SearchType.WORD,
@@ -52,14 +52,14 @@ def _ko_search_raw(target_word):
 
     for entry in korean_input.data.results:
         if entry.word == target_word:
-            simplified_entry = {
+            simplified_entry: dict = {
                 "word": entry.word,
                 "origin": entry.origin,
                 "part_of_speech": entry.part_of_speech,
                 "definitions": [],
             }
             for definition in entry.definitions:
-                simplified_definition = {
+                simplified_definition: dict = {
                     "definition": definition.definition,
                     "translations": [
                         {
@@ -77,7 +77,7 @@ def _ko_search_raw(target_word):
     return filtered_data
 
 
-def ko_word(korean_word):
+def ko_word(korean_word: str) -> str | None:
     """
     This function passes on a search for a Korean word, and then
     if there is a result, formats in Markdown.
@@ -86,46 +86,46 @@ def ko_word(korean_word):
     :return: A Markdown formatted string, or None.
     """
     korean_word = korean_word.strip()
-    data = _ko_search_raw(korean_word)
-    hangul_romanization = Romanizer(korean_word).romanize()
+    data: list[dict] = _ko_search_raw(korean_word)
+    hangul_romanization: str = Romanizer(korean_word).romanize()
 
     # No valid results.
     if not data:
         return None
 
-    lookup_header = (
+    lookup_header: str = (
         f"# [{korean_word}](https://en.wiktionary.org/wiki/{korean_word}#Korean)"
     )
 
     # Group entries by part of speech
-    pos_groups = {}
+    pos_groups: dict[str, list[dict]] = {}
     for entry in data:
-        pos = _translate_part_of_speech(entry["part_of_speech"]).title()
+        pos: str = _translate_part_of_speech(entry["part_of_speech"]).title()
         if pos not in pos_groups:
             pos_groups[pos] = []
         pos_groups[pos].append(entry)
 
     # Build output for each POS group
-    entries = []
+    entries: list[str] = []
     for pos, group in pos_groups.items():
-        pos_section = f"\n\n##### *{pos}*\n\n"
+        pos_section: str = f"\n\n##### *{pos}*\n\n"
 
-        definitions_list = []
+        definitions_list: list[str] = []
         for entry in group:
             for x in entry["definitions"]:
                 for t in x.get("translations", []):
                     if t.get("language") == "영어":
-                        definition_text = t.get("definition")
-                        origin = entry.get("origin")
+                        definition_text: str = t.get("definition")
+                        origin: str | None = entry.get("origin")
                         if origin:
                             definition_text = f"[{origin}](https://en.wiktionary.org/wiki/{origin}): {definition_text}"
                         definitions_list.append(definition_text)
 
-        definitions = "\n* ".join(definitions_list)
+        definitions: str = "\n* ".join(definitions_list)
         pos_section += f"**Romanization:** *{hangul_romanization}*\n\n**Meanings**:\n* {definitions}"
         entries.append(pos_section)
 
-    footer = (
+    footer: str = (
         "\n\n^Information ^from "
         f"[^KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search"
         f"?nation=eng&nationCode=6&ParaWordNo=&mainSearchWord={korean_word}&lang=eng) ^| "
@@ -133,7 +133,7 @@ def ko_word(korean_word):
         f"[^Collins](https://www.collinsdictionary.com/dictionary/korean-english/{korean_word})"
     )
 
-    final_comment = lookup_header + "".join(entries) + footer
+    final_comment: str = lookup_header + "".join(entries) + footer
 
     return final_comment
 

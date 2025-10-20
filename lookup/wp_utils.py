@@ -15,7 +15,7 @@ from usage_statistics import action_counter
 """WIKIPEDIA DETECTOR (COMMENTS)"""
 
 
-def wikipedia_lookup(terms, language_code="en"):
+def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str | None:
     """
     Basic function to look up terms on Wikipedia.
 
@@ -25,7 +25,7 @@ def wikipedia_lookup(terms, language_code="en"):
     :return: A properly formatted paragraph of entries if there are
              results, otherwise `None`.
     """
-    entries = []
+    entries: list[str] = []
     if isinstance(terms, str):
         terms = [terms]
     elif not isinstance(terms, list):
@@ -35,19 +35,19 @@ def wikipedia_lookup(terms, language_code="en"):
 
     # Code for searching non-English Wikipedia, currently not needed.
     if language_code != "en":
-        lang_code = converter(language_code).preferred_code
+        lang_code: str = converter(language_code).preferred_code
         wikipedia.set_lang(lang_code)
     logger.info(f"[ZF] Looking up term {terms} on the `{language_code}` Wikipedia.")
 
     # Look up the terms and format them appropriately.
     for term in terms[:5]:  # Limit to five terms.
-        term_entry = None
-        term = re.sub(r"[^\w\s]", "", term)  # Strip punctuation.
+        term_entry: str | None = None
+        term: str = re.sub(r"[^\w\s]", "", term)  # Strip punctuation.
         logger.info(f"> Now searching for '{term}'...")
 
         # By default, turn off auto suggest.
         try:
-            term_summary = wikipedia.summary(
+            term_summary: str = wikipedia.summary(
                 term, auto_suggest=False, redirect=True, sentences=3
             )
         except (
@@ -56,8 +56,8 @@ def wikipedia_lookup(terms, language_code="en"):
         ):
             # No direct matches, try auto suggest.
             try:
-                term_summary = wikipedia.summary(term.strip(), sentences=3)
-                term_entry = wikipedia.page(term).url
+                term_summary: str = wikipedia.summary(term.strip(), sentences=3)
+                term_entry: str = wikipedia.page(term).url
             except (
                 wikipedia.exceptions.DisambiguationError,
                 wikipedia.exceptions.PageError,
@@ -67,7 +67,7 @@ def wikipedia_lookup(terms, language_code="en"):
                 continue  # Exit.
 
         # Clean up the text for the entry.
-        term_format = term.replace(" ", "_")
+        term_format: str = term.replace(" ", "_")
         if "\n" in term_summary:
             term_summary = term_summary.split("\n")[0].strip()
         if "==" in term_summary:
@@ -82,7 +82,7 @@ def wikipedia_lookup(terms, language_code="en"):
         logger.info(f">> Information for '{term}' retrieved.")
 
     if entries:
-        body_text = "\n".join(entries)
+        body_text: str = "\n".join(entries)
         logger.info("> Wikipedia entry data obtained.")
         action_counter(len(entries), "Wikipedia lookup")
         return body_text

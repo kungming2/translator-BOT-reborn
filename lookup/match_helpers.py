@@ -15,6 +15,7 @@ python -m unidic download
 
 import os
 import re
+from typing import Any
 
 import jieba
 import MeCab
@@ -32,7 +33,7 @@ useragent = get_random_useragent()
 """MATCHING TEXT"""
 
 
-def lookup_zh_ja_tokenizer(phrase, language_code):
+def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
     """
     Tokenizes a given phrase in Chinese or Japanese using appropriate libraries:
     - Chinese ('zh'): Uses Jieba.
@@ -45,25 +46,25 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
     :return: A list of tokenized words, excluding kana (optional) and punctuation.
     """
 
-    def is_valid_token(token):
+    def is_valid_token(token: str) -> bool:
         """Returns True if the token is not a punctuation character."""
         return not re.match(
-            r"[.!/_,$%^*+\"\'\[\]—！，。？、~@#￥…&（）：“”《》»〔〕「」％]+", token
+            r"[.!/_,$%^*+\"\'\[\]—！，。？、~@#￥…&（）：" "《》»〔〕「」％]+", token
         )
 
     if language_code == "zh":
-        tokens = list(jieba.cut(phrase, cut_all=False))
+        tokens: list[str] = list(jieba.cut(phrase, cut_all=False))
 
     elif language_code == "ja":
-        dic_dir = unidic.DICDIR  # or unidic-lite
-        mecab_rc_path = os.path.join(dic_dir, "mecabrc")
-        tagger = MeCab.Tagger(f'-r "{mecab_rc_path}" -d "{dic_dir}"')
+        dic_dir: str = unidic.DICDIR  # or unidic-lite
+        mecab_rc_path: str = os.path.join(dic_dir, "mecabrc")
+        tagger: MeCab.Tagger = MeCab.Tagger(f'-r "{mecab_rc_path}" -d "{dic_dir}"')
         tagger.parse(phrase)  # Workaround for Unicode bug in MeCab
-        node = tagger.parseToNode(phrase.strip())
+        node: Any = tagger.parseToNode(phrase.strip())
 
-        tokens = []
+        tokens: list[str] = []
         while node:
-            surface = node.surface
+            surface: str = node.surface
             if surface:
                 # Exclude single-character kana
                 if not (len(surface) == 1 and re.match(r"[\u3040-\u309f]", surface)):
@@ -77,7 +78,7 @@ def lookup_zh_ja_tokenizer(phrase, language_code):
     return [token for token in tokens if is_valid_token(token)]
 
 
-def lookup_ko_tokenizer(phrase):
+def lookup_ko_tokenizer(phrase: str) -> list[str]:
     """
     Tokenizes a Korean phrase using Kiwi and returns only content words
     (nouns, verbs, adjectives), excluding particles, grammatical endings,
@@ -88,20 +89,24 @@ def lookup_ko_tokenizer(phrase):
     :param phrase: Korean text to tokenize
     :return: List of content words
     """
-    kiwi = Kiwi()
+    kiwi: Kiwi = Kiwi()
     # Tokenize with normalization to handle coda endings properly
     tokens = kiwi.tokenize(phrase, normalize_coda=True)
 
     # Keep nouns (NN*), verbs (VV), adjectives (VA),
     # foreign words (SL), and exclamations (IC)
-    content_tags = {"NNG", "NNP", "NNB", "VV", "VA", "SL", "IC"}
+    content_tags: set[str] = {"NNG", "NNP", "NNB", "VV", "VA", "SL", "IC"}
 
-    content_words = [token.form for token in tokens if token.tag in content_tags]
+    content_words: list[str] = [
+        token.form for token in tokens if token.tag in content_tags
+    ]
 
     return content_words
 
 
-def lookup_matcher(content_text, language_code):
+def lookup_matcher(
+    content_text: str, language_code: str | None
+) -> dict[str, list[str]]:
     """
     Evaluate a comment for lookup and return detected text keyed by language code.
     Only text enclosed in backticks (`) is processed, excluding triple-backtick code blocks.
@@ -113,20 +118,20 @@ def lookup_matcher(content_text, language_code):
     :param language_code: Language code ('zh', 'ja', 'ko') or None. Can be a string like 'zh+ja'.
     :return: Dict mapping language code to list of terms.
     """
-    original_text = str(content_text)
+    original_text: str = str(content_text)
 
     # Remove all triple-backtick blocks (```...```)
     content_text = re.sub(r"```.*?```", "", content_text, flags=re.DOTALL)
 
-    cjk_languages = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
+    cjk_languages: dict = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 
     # --- Handle !identify or !id command ---
-    match = re.search(r"!(?:identify|id):\s*(\S+)", original_text)
+    match: re.Match | None = re.search(r"!(?:identify|id):\s*(\S+)", original_text)
     if match:
-        raw_codes = match.group(1).split("+")
-        language_codes = []
+        raw_codes: list[str] = match.group(1).split("+")
+        language_codes: list[str] = []
         for code in raw_codes:
-            parsed = converter(code).preferred_code
+            parsed: str = converter(code).preferred_code
             # Map 4-letter SIL code to CJK if needed
             for key in ["zh", "ja", "ko"]:
                 if len(parsed) == 4 and parsed in cjk_languages[key]:
@@ -136,36 +141,38 @@ def lookup_matcher(content_text, language_code):
     elif language_code:
         # Convert string with + to list
         if isinstance(language_code, str):
-            language_codes = language_code.split("+")
+            language_codes: list[str] = language_code.split("+")
         else:
-            language_codes = [language_code]
+            language_codes: list[str] = [language_code]
     else:
         mentions = extract_lingvos_from_text(content_text)
         if mentions and len(mentions) == 1:
-            language_codes = [mentions[0].preferred_code]
+            language_codes: list[str] = [mentions[0].preferred_code]
         else:
-            language_codes = []
+            language_codes: list[str] = []
 
     # --- Extract all segments between backticks with optional inline language spec ---
     # Matches: `text` or `text`:language_code
-    backtick_pattern = r"`([^`]+?)`(?::(\S+))?"
-    backtick_matches = list(re.finditer(backtick_pattern, content_text))
+    backtick_pattern: str = r"`([^`]+?)`(?::(\S+))?"
+    backtick_matches: list[re.Match] = list(re.finditer(backtick_pattern, content_text))
 
-    match_details = [(m.group(1), m.group(2)) for m in backtick_matches]
+    match_details: list[tuple[str, str | None]] = [
+        (m.group(1), m.group(2)) for m in backtick_matches
+    ]
     logger.info(f"Backtick matches: {match_details}.")
     logger.info(f"Match count: {len(backtick_matches)}. Content text: {content_text}")
 
-    matches = []
-    inline_language_codes = []
+    matches: list[str] = []
+    inline_language_codes: list[str | None] = []
 
     for match_obj in backtick_matches:
-        text = match_obj.group(1)
-        inline_lang = match_obj.group(2)
+        text: str = match_obj.group(1)
+        inline_lang: str | None = match_obj.group(2)
         matches.append(text)
 
         if inline_lang:
             # Convert inline language specification to preferred code
-            parsed = converter(inline_lang).preferred_code
+            parsed: str = converter(inline_lang).preferred_code
             # Map 4-letter SIL code to CJK if needed
             for key in ["zh", "ja", "ko"]:
                 if len(parsed) == 4 and parsed in cjk_languages[key]:
@@ -180,30 +187,32 @@ def lookup_matcher(content_text, language_code):
         logger.debug("No matches found after backtick extraction")
         return {}
 
-    combined_text = "".join(matches)
+    combined_text: str = "".join(matches)
     logger.info(f"Combined text: {combined_text}")
     logger.debug(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
 
     # Unicode script detection
-    has_hanzi = bool(re.search(r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]", combined_text))
-    has_kana = bool(re.search(r"[\u3041-\u309f\u30a0-\u30ff]", combined_text))
-    has_hangul = bool(re.search(r"[\uac00-\ud7af]", combined_text))
+    has_hanzi: bool = bool(
+        re.search(r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]", combined_text)
+    )
+    has_kana: bool = bool(re.search(r"[\u3041-\u309f\u30a0-\u30ff]", combined_text))
+    has_hangul: bool = bool(re.search(r"[\uac00-\ud7af]", combined_text))
 
     logger.info(
         f"Script detection - Hanzi: {has_hanzi}, Kana: {has_kana}, Hangul: {has_hangul}"
     )
     logger.info(f"Language codes to process: {language_codes}")
 
-    result = {}
+    result: dict[str, list[str]] = {}
 
     # Process each backtick segment
     for match_text, inline_lang in zip(matches, inline_language_codes):
         # Determine which language codes apply to this segment
         if inline_lang:
             # Inline specification overrides global language_codes
-            seg_language_codes = [inline_lang]
+            seg_language_codes: list[str] = [inline_lang]
         else:
-            seg_language_codes = language_codes
+            seg_language_codes: list[str] = language_codes
 
         # If no language codes determined yet, infer from script detection
         if not seg_language_codes:
@@ -218,19 +227,23 @@ def lookup_matcher(content_text, language_code):
 
         # --- Handle Chinese and Japanese ---
         if has_hanzi or has_kana:
-            cjk_tokens = []
-            segments = re.findall(r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]+", match_text)
+            cjk_tokens: list[str] = []
+            segments: list[str] = re.findall(
+                r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]+", match_text
+            )
             cjk_tokens.extend(segments)
 
-            tokenized = []
+            tokenized: list[str] = []
             for token in cjk_tokens:
                 if len(token) >= 2:
                     if "zh" in seg_language_codes and not has_kana:
-                        new_tokens = lookup_zh_ja_tokenizer(simplify(token), "zh")
+                        new_tokens: list[str] = lookup_zh_ja_tokenizer(
+                            simplify(token), "zh"
+                        )
                     elif "ja" in seg_language_codes or has_kana:
-                        new_tokens = lookup_zh_ja_tokenizer(token, "ja")
+                        new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "ja")
                     else:
-                        new_tokens = [token]
+                        new_tokens: list[str] = [token]
                     tokenized.extend(new_tokens)
                 else:
                     tokenized.append(token)
@@ -245,10 +258,10 @@ def lookup_matcher(content_text, language_code):
         # --- Handle Korean ---
         if has_hangul:
             # Extract Hangul segments from match_text
-            hangul_segments = re.findall(r"[\uac00-\ud7af]+", match_text)
-            hangul_tokens = []
+            hangul_segments: list[str] = re.findall(r"[\uac00-\ud7af]+", match_text)
+            hangul_tokens: list[str] = []
             for segment in hangul_segments:
-                tokens = lookup_ko_tokenizer(segment)
+                tokens: list[str] = lookup_ko_tokenizer(segment)
                 hangul_tokens.extend(tokens)
 
             if "ko" in seg_language_codes:
@@ -258,8 +271,8 @@ def lookup_matcher(content_text, language_code):
                 logger.info(f"Added Korean tokens: {hangul_tokens}")
 
         # --- Handle non-CJK languages ---
-        all_cjk_codes = {"zh", "ja", "ko"}
-        non_cjk_codes = [
+        all_cjk_codes: set[str] = {"zh", "ja", "ko"}
+        non_cjk_codes: list[str] = [
             code for code in seg_language_codes if code not in all_cjk_codes
         ]
         if non_cjk_codes:
