@@ -8,6 +8,7 @@ that they are currently working on translating a request.
 import re
 import time
 from datetime import datetime
+from typing import Dict, List, Optional
 
 from connection import REDDIT, logger
 from languages import converter
@@ -19,7 +20,7 @@ from time_handling import get_current_utc_time
 from . import update_status
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Claim handler initiated.")
     status_type = "inprogress"
@@ -44,7 +45,7 @@ def handle(comment, _instruo, komando, ajo):
     parent_submission = ajo.submission
     kunulo_object = Kunulo.from_submission(parent_submission)
     included_languages = komando.data  # Lingvos attached with the command.
-    claimed_languages = []
+    claimed_languages: List = []
 
     # A generic !claim for posts is reduced to a single-item list.
     languages_to_check = included_languages or [ajo.lingvo]
@@ -104,7 +105,7 @@ def handle(comment, _instruo, komando, ajo):
     return
 
 
-def parse_claim_comment(comment_text, current_time):
+def parse_claim_comment(comment_text: str, current_time: int) -> Dict[str, Optional]:
     """
     Parse a claim comment to extract claimer username, time,
     and language code.
@@ -120,7 +121,7 @@ def parse_claim_comment(comment_text, current_time):
               in the future, negative if in the past)
     """
 
-    result = {
+    result: Dict[str, Optional] = {
         "claimer": None,
         "time": None,
         "language": None,

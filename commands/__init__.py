@@ -7,13 +7,14 @@ Handles processing commands by users.
 import importlib
 import os
 import time
+from typing import Callable, Dict, List, Optional
 
 from connection import logger
 
-HANDLERS = {}
+HANDLERS: Dict[str, Callable] = {}
 
 
-def discover_handlers():
+def discover_handlers() -> None:
     """
     List all .py files under commands/ (excluding __init__.py)
     """
@@ -28,8 +29,15 @@ def discover_handlers():
         if hasattr(mod, "handle"):
             HANDLERS[cmd_name] = mod.handle
 
+    return
 
-def update_status(ajo, komando, status_type, specific_languages=None):
+
+def update_status(
+    ajo,
+    komando,
+    status_type: str,
+    specific_languages: Optional[List] = None,
+) -> None:
     """
     Shared function to handle status updates for different post types.
     This function is used by: !translated, !doublecheck, !missing,
@@ -70,8 +78,10 @@ def update_status(ajo, komando, status_type, specific_languages=None):
             logger.debug("Regular multiple post. Skipping...")
             pass
 
+    return
 
-def update_language(ajo, komando):
+
+def update_language(ajo, komando) -> None:
     """
     Shared function used to set a language. This will automatically
     handle single and defined multiple posts. The data package will
