@@ -12,29 +12,35 @@ from responses import RESPONSE
 access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
 
 
-def deepseek_access():
+def deepseek_access() -> OpenAI:
     """
     Function to authenticate with Deepseek.
     """
 
-    deepseek_client = OpenAI(
+    deepseek_client: OpenAI = OpenAI(
         api_key=access_credentials["DEEPSEEK_KEY"], base_url="https://api.deepseek.com"
     )
 
     return deepseek_client
 
 
-def openai_access():
+def openai_access() -> OpenAI:
     """
     Function to authenticate with OpenAI.
     """
 
-    openai_client = OpenAI(api_key=access_credentials["OPENAI_KEY"])
+    openai_client: OpenAI = OpenAI(api_key=access_credentials["OPENAI_KEY"])
 
     return openai_client
 
 
-def ai_query(service, client_object, behavior, query, image_url=None):
+def ai_query(
+    service: str,
+    client_object: OpenAI,
+    behavior: str,
+    query: str,
+    image_url: str | None = None,
+) -> str:
     """
     Function to pass a query to an AI service, optionally with
     image support. Image support requires the service to be "openai".
@@ -48,28 +54,28 @@ def ai_query(service, client_object, behavior, query, image_url=None):
     """
 
     if service == "deepseek":
-        ai_model = access_credentials["DEEPSEEK_MODEL"]
+        ai_model: str = access_credentials["DEEPSEEK_MODEL"]
 
         # DeepSeek does not support image input, so ignore image_url
-        messages = [
+        messages: list[dict] = [
             {"role": "system", "content": behavior},
             {"role": "user", "content": query},
         ]
 
     elif service == "openai":
-        ai_model = access_credentials["OPENAI_MODEL"]
+        ai_model: str = access_credentials["OPENAI_MODEL"]
 
         # Construct multimodal message if image is present
         if image_url:
-            user_content = [
+            user_content: list[dict] | str = [
                 {"type": "text", "text": query},
                 {"type": "image_url", "image_url": {"url": image_url}},
             ]
             logger.debug("Image attached to input.")
         else:
-            user_content = query
+            user_content: list[dict] | str = query
 
-        messages = [
+        messages: list[dict] = [
             {"role": "system", "content": behavior},
             {"role": "user", "content": user_content},
         ]
@@ -77,10 +83,13 @@ def ai_query(service, client_object, behavior, query, image_url=None):
     else:
         raise ValueError("Service must be either 'deepseek' or 'openai'.")
 
+    # noinspection PyTypeChecker
     ai_response = client_object.chat.completions.create(
-        model=ai_model, messages=messages, stream=False
+        model=ai_model,
+        messages=messages,
+        stream=False,  # type: ignore
     )
-    response_data = ai_response.choices[0].message.content
+    response_data: str = ai_response.choices[0].message.content
 
     return response_data
 
@@ -88,7 +97,7 @@ def ai_query(service, client_object, behavior, query, image_url=None):
 """IMAGE DESCRIPTION"""
 
 
-def fetch_image_description(image_url, nsfw_flag=False):
+def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
     """
     Fetches a brief description of an image suitable for alt text.
 
@@ -99,23 +108,23 @@ def fetch_image_description(image_url, nsfw_flag=False):
                       inboxes.
     :return: The AI-generated short description of the image.
     """
-    query = RESPONSE.IMAGE_DESCRIPTION_QUERY
+    query: str = RESPONSE.IMAGE_DESCRIPTION_QUERY
     if nsfw_flag:
-        reply = (
+        reply: str = (
             "Out of an abundance of caution, a description will "
             "not be provided for this NSFW image."
         )
         return reply
 
     # Define behavior/system instructions
-    behavior = (
+    behavior: str = (
         "You are an assistant that provides concise, accurate image descriptions "
         "for accessibility purposes."
     )
 
     # Send to AI (needs to use OpenAI for image assessment)
     logger.debug("Fetching image description.")
-    description = ai_query(
+    description: str = ai_query(
         service="openai",
         client_object=openai_access(),
         behavior=behavior,
@@ -130,5 +139,7 @@ if __name__ == "__main__":
     deepseek_access()
     openai_access()
     while True:
-        image_test = input("Please enter the image URL you'd like a description of: ")
+        image_test: str = input(
+            "Please enter the image URL you'd like a description of: "
+        )
         print(fetch_image_description(image_test))

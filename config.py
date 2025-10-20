@@ -13,10 +13,10 @@ import yaml
 from time_handling import get_current_month
 
 # Base directory configuration
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 # Note that since this is a storage folder and not a module,
 # it is capitalized in my logic.
-DATA_DIR = os.path.join(BASE_DIR, "Data")
+DATA_DIR: str = os.path.join(BASE_DIR, "Data")
 
 
 # Group related paths into dictionaries for better organization
@@ -28,24 +28,24 @@ class Paths:
     """
 
     # Core database files
-    DATABASE = {
+    DATABASE: dict[str, str] = {
         "AJO": os.path.join(DATA_DIR, "Databases", "ajo.db"),
         "MAIN": os.path.join(DATA_DIR, "Databases", "main.db"),
         "CACHE": os.path.join(DATA_DIR, "Databases", "cache.db"),
     }
 
     # Authentication and configuration files
-    AUTH = {
+    AUTH: dict[str, str] = {
         "CREDENTIALS": os.path.join(DATA_DIR, "auth.yaml"),
     }
 
     # Written responses and templates by the bot
-    RESPONSES = {
+    RESPONSES: dict[str, str] = {
         "TEXT": os.path.join(DATA_DIR, "responses.yaml"),
     }
 
     # Language reference datasets (infrequently changed)
-    DATASETS = {
+    DATASETS: dict[str, str] = {
         "COUNTRIES": os.path.join(DATA_DIR, "Datasets", "countries.csv"),
         "LANGUAGE_DATA": os.path.join(DATA_DIR, "Datasets", "language_data.yaml"),
         "UTILITY_LINGVO_DATA": os.path.join(
@@ -66,7 +66,7 @@ class Paths:
     }
 
     # Log files that are frequently written to
-    LOGS = {
+    LOGS: dict[str, str] = {
         "ERROR": os.path.join(DATA_DIR, "Logs", "_log_error.yaml"),
         "COUNTER": os.path.join(DATA_DIR, "Logs", "_log_counter.json"),
         "FILTER": os.path.join(DATA_DIR, "Logs", "_log_filter.md"),
@@ -76,7 +76,7 @@ class Paths:
     }
 
     # Settings files. No private information should be in these.
-    SETTINGS = {
+    SETTINGS: dict[str, str] = {
         "SETTINGS": os.path.join(DATA_DIR, "Settings", "settings.yaml"),
         "WENJU_SETTINGS": os.path.join(DATA_DIR, "Settings", "wenju_settings.yaml"),
         "DISCORD_SETTINGS": os.path.join(DATA_DIR, "Settings", "discord_settings.yaml"),
@@ -89,7 +89,7 @@ class Paths:
     }
 
     # Wenyuan output files
-    WENYUAN = {
+    WENYUAN: dict[str, str] = {
         "MONTHLY_STATISTICS": os.path.join(
             DATA_DIR, "Wenyuan", "monthly_statistics_output.md"
         ),
@@ -97,7 +97,7 @@ class Paths:
     }
 
     # Archival output files
-    ARCHIVAL = {
+    ARCHIVAL: dict[str, str] = {
         "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
         "ALL_SAVED": os.path.join(DATA_DIR, "Archival", "all_saved.md"),
     }
@@ -116,49 +116,51 @@ def get_reports_directory(base_dir: Path | None = None) -> Path:
     if base_dir is None:
         base_dir = Path(__file__).resolve().parent / "Data"
 
-    current_month = get_current_month()
-    log_dir = base_dir / "Reports" / current_month
+    current_month: str = get_current_month()
+    log_dir: Path = base_dir / "Reports" / current_month
 
     return log_dir
 
 
-def set_up_logger():
+def set_up_logger() -> logging.Logger:
     """
     Set up the unified logger for all routines.
 
     :return: A logger object.
     """
     # Logging code, defining the basic logger.
-    logformatter = "%(levelname)s: %(asctime)s - %(message)s"
+    logformatter: str = "%(levelname)s: %(asctime)s - %(message)s"
     logging.basicConfig(
         format=logformatter, level=logging.INFO
     )  # By default, only show INFO or higher levels.
-    logger_object = logging.getLogger(__name__)
+    logger_object: logging.Logger = logging.getLogger(__name__)
 
     # Define the logging handler (the file to write to with formatting.)
-    handler = logging.FileHandler(Paths.LOGS["EVENTS"])
+    handler: logging.FileHandler = logging.FileHandler(Paths.LOGS["EVENTS"])
     handler.setLevel(
         logging.INFO
     )  # Change this level for debugging or to display more information.
-    handler_format = logging.Formatter(logformatter, datefmt="%Y-%m-%d [%I:%M:%S %p]")
+    handler_format: logging.Formatter = logging.Formatter(
+        logformatter, datefmt="%Y-%m-%d [%I:%M:%S %p]"
+    )
     handler.setFormatter(handler_format)
     logger_object.addHandler(handler)
 
     return logger_object
 
 
-def load_settings(path):
+def load_settings(path: str | Path) -> dict:
     """
     General function for loading settings from a YAML file.
     :param path: Path to YAML file.
     :return: Settings dictionary.
     """
     with open(path, "r", encoding="utf-8") as f:
-        settings = yaml.safe_load(f)  # Parse the file's content
+        settings: dict = yaml.safe_load(f)  # Parse the file's content
 
     return settings
 
 
-logger = set_up_logger()
+logger: logging.Logger = set_up_logger()
 # To use, SETTINGS['variable_name']
-SETTINGS = load_settings(Paths.SETTINGS["SETTINGS"])
+SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])

@@ -160,7 +160,7 @@ def progress_tracker():
     'Untranslated' state. This supports both single and defined multiple
     posts.
     """
-    current_time = time.time()
+    current_time = int(time.time())
     search_query = 'flair:"in progress"'
     search_results = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).search(
         search_query, time_filter="week", sort="new"
