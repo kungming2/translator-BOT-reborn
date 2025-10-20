@@ -400,7 +400,10 @@ def _old_chinese_search(character):
         return None
 
     mc, oc = mc_oc_readings[character]
-    return f"\n**Middle Chinese** | \\*{mc}*\n**Old Chinese** | \\*{oc}*"
+    result = f"\n**Middle Chinese** | \\*{mc}*"
+    if oc:  # only include Old Chinese if it exists
+        result += f"\n**Old Chinese** | \\*{oc}*"
+    return result
 
 
 def variant_character_search(search_term, retries=3):
@@ -698,10 +701,10 @@ async def zh_character(character):
             )
             lookup_line_1 = (
                 f"# [{character}](https://en.wiktionary.org/wiki/{character}#Chinese)\n\n"
-                "Language | Pronunciation\n"
-                "---------|--------------\n"
-                f"**Mandarin** | *{cmn_pronunciation}*\n"
-                f"**Cantonese** | *{yue_pronunciation[:-1]}*"
+                "| Language | Pronunciation |\n"
+                "|----------|---------------|\n"
+                f"| **Mandarin** | *{cmn_pronunciation}*\n |"
+                f"| **Cantonese** | *{yue_pronunciation[:-1]}* |"
             )
         else:
             trad_char = tradify(character)
@@ -711,10 +714,10 @@ async def zh_character(character):
             )
             lookup_line_1 = (
                 f"# [{trad_char} / {simp_char}](https://en.wiktionary.org/wiki/{trad_char}#Chinese)\n\n"
-                "Language | Pronunciation\n"
-                "---------|--------------\n"
-                f"**Mandarin** | *{cmn_pronunciation}*\n"
-                f"**Cantonese** | *{yue_pronunciation[:-1]}*"
+                "| Language | Pronunciation |\n"
+                "|----------|---------------|\n"
+                f"| **Mandarin** | *{cmn_pronunciation}* |\n"
+                f"| **Cantonese** | *{yue_pronunciation[:-1]}* |"
             )
 
         # Add Hokkien and Hakka readings
@@ -929,7 +932,7 @@ async def _zh_word_tea_dictionary_search(chinese_word):
         return None
 
     meaning = " ".join(meaning_parts).replace(" )", " ").replace("  ", " ").strip()
-    if 'Don′t know' in meaning:
+    if "Don′t know" in meaning:
         return None
 
     formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
@@ -1099,12 +1102,13 @@ async def zh_word(word):
     )
 
     pronunciation_block = (
-        "\n\nLanguage | Pronunciation\n---------|--------------"
-        f"\n**Mandarin** (Pinyin) | *{cmn_pronunciation}*"
-        f"\n**Mandarin** (Wade-Giles) | *{alt_romanize[1]}*"
-        f"\n**Mandarin** (Yale) | *{alt_romanize[0]}*"
-        f"\n**Mandarin** (GR) | *{alt_romanize[2]}*"
-        f"\n**Cantonese** | *{yue_pronunciation}*"
+        "\n\n| Language | Pronunciation |"
+        "\n|---------|--------------|"
+        f"\n| **Mandarin** (Pinyin) | *{cmn_pronunciation}* |"
+        f"\n| **Mandarin** (Wade-Giles) | *{alt_romanize[1]}* |"
+        f"\n| **Mandarin** (Yale) | *{alt_romanize[0]}* |"
+        f"\n| **Mandarin** (GR) | *{alt_romanize[2]}* |"
+        f"\n| **Cantonese** | *{yue_pronunciation}* |"
     )
 
     min_hak_data = _min_hakka_readings(tradify(word))
