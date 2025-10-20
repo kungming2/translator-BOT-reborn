@@ -27,6 +27,15 @@ def time_convert_to_string(unix_integer) -> str:
     )
 
 
+def time_convert_to_utc(iso_str: str) -> str:
+    """Convert an ISO-8601 timestamp (with offset) to UTC ISO string."""
+    try:
+        dt = datetime.fromisoformat(iso_str)
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError, AttributeError):
+        return iso_str  # fallback if malformed or missing
+
+
 def convert_to_day(unix_integer) -> str:
     """
     Converts a UNIX timestamp to a UTC date string (YYYY-MM-DD).

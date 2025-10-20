@@ -25,7 +25,11 @@ from lookup.reference import get_language_reference
 from lookup.wp_utils import wikipedia_lookup
 from models.ajo import Ajo
 from tasks import WENJU_SETTINGS, task
-from time_handling import get_current_utc_date, get_current_utc_time
+from time_handling import (
+    get_current_utc_date,
+    get_current_utc_time,
+    time_convert_to_utc,
+)
 
 
 @task(schedule="hourly")
@@ -53,8 +57,8 @@ def reddit_status_report():
         name = incident.get("name", "Unknown")
         status = incident.get("status", "N/A")
         impact = incident.get("impact", "unknown")
-        created = incident.get("created_at", "N/A")
-        updated = incident.get("updated_at", "N/A")
+        created = time_convert_to_utc(incident.get("created_at", "N/A"))
+        updated = time_convert_to_utc(incident.get("updated_at", "N/A"))
         shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
 
         latest_update = None
@@ -70,7 +74,8 @@ def reddit_status_report():
 
         logger.info(
             f"[Reddit Incident] {name} — {status.upper()} ({impact})\n"
-            f"Created: {created} | Updated: {updated}\n"
+            f"Created: {created} | "
+            f"Updated: {updated}\n"
             f"{('Latest update: ' + latest_update) if latest_update else 'No update text.'}\n"
             f"Link: {shortlink or 'N/A'}"
         )
@@ -79,13 +84,13 @@ def reddit_status_report():
 
         lines.append(
             f"- {title}  \n"
-            f"  - **Status:** {status} ({impact})  \n"
-            f"  - **Created:** {created}  \n"
-            f"  - **Updated:** {updated}"
+            f"  - **Status:** {status.title()} ({impact})  \n"
+            f"  - **Created:** [{created}](https://time.lol/#{created})  \n"
+            f"  - **Updated:** [{updated}](https://time.lol/#{updated})"
         )
 
     alert_text = "\n".join(lines)
-    send_discord_alert("Reddit Status", alert_text, "alert")
+    send_discord_alert("Reddit Status", alert_text, "reddit_status")
 
     return
 
