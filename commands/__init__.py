@@ -7,11 +7,11 @@ Handles processing commands by users.
 import importlib
 import os
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 
 from connection import logger
 
-HANDLERS: Dict[str, Callable] = {}
+HANDLERS: dict[str, Callable] = {}
 
 
 def discover_handlers() -> None:
@@ -29,14 +29,12 @@ def discover_handlers() -> None:
         if hasattr(mod, "handle"):
             HANDLERS[cmd_name] = mod.handle
 
-    return
-
 
 def update_status(
     ajo,
     komando,
     status_type: str,
-    specific_languages: Optional[List] = None,
+    specific_languages: list | None = None,
 ) -> None:
     """
     Shared function to handle status updates for different post types.
@@ -78,8 +76,6 @@ def update_status(
             logger.debug("Regular multiple post. Skipping...")
             pass
 
-    return
-
 
 def update_language(ajo, komando) -> None:
     """
@@ -97,8 +93,6 @@ def update_language(ajo, komando) -> None:
 
     # Update the Ajo's language.
     ajo.set_language(languages_to_set)
-
-    return
 
 
 discover_handlers()  # surface which commands are available

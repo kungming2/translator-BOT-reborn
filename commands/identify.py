@@ -13,7 +13,7 @@ from wiki import update_wiki_page
 from . import update_language
 
 
-def _send_notifications_okay(instruo, ajo):
+def _send_notifications_okay(instruo, ajo) -> bool:
     """Simple function that checks to see if the comment also
     includes another Komando that sets the setting to translated
     or needs review.
@@ -29,7 +29,7 @@ def _send_notifications_okay(instruo, ajo):
     return True
 
 
-def handle(comment, instruo, komando, ajo):
+def handle(comment, instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Identify handler initiated.")
     original_post = comment.submission
@@ -37,7 +37,7 @@ def handle(comment, instruo, komando, ajo):
     # Check against !translated or doublecheck also in the Instruo.
     # We don't want to alert people if the comment already included
     # a translation.
-    permission_to_send = _send_notifications_okay(instruo, ajo)
+    permission_to_send: bool = _send_notifications_okay(instruo, ajo)
 
     # Invalid identification data.
     if not komando.data:
@@ -86,7 +86,5 @@ def handle(comment, instruo, komando, ajo):
                     ajo.add_notified(contacted)
 
     # Delete the 'Unknown' placeholder comment left by the bot.
-    kunulo = Kunulo.from_submission(original_post)
+    kunulo: Kunulo = Kunulo.from_submission(original_post)
     kunulo.delete("comment_unknown")
-
-    return

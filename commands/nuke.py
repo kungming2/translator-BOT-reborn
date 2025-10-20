@@ -12,7 +12,7 @@ from connection import REDDIT, is_mod, logger
 from reddit_sender import message_send
 
 
-def handle(comment, _instruo, _komando, _ajo):
+def handle(comment, _instruo, _komando, _ajo) -> None:
     """
     Command handler called by ziwen_commands().
 
@@ -33,7 +33,7 @@ def handle(comment, _instruo, _komando, _ajo):
     logger.info(f"> Nuke command called by u/{mod_caller}.")
 
     # Fetch the person to be nuked by looking at the parent of the comment.
-    parent = comment.parent()
+    parent: Comment | Submission = comment.parent()
     nuked_person = parent.author
     logger.info(f"> User to nuke: u/{nuked_person}.")
 
@@ -50,7 +50,7 @@ def handle(comment, _instruo, _komando, _ajo):
     logger.info(f">> Banned u/{nuked_person}.")
 
     # Helper function to remove all items in a generator (posts/comments).
-    def remove_items(generator, item_type: str):
+    def remove_items(generator, item_type: str) -> None:
         for item in generator:
             if item.subreddit.display_name.lower() == SETTINGS["subreddit"]:
                 item.mod.remove()
@@ -74,5 +74,3 @@ def handle(comment, _instruo, _komando, _ajo):
         ),
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
-
-    return

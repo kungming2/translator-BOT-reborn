@@ -13,7 +13,7 @@ from reddit_sender import message_send
 from . import update_language
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Set handler initiated.")
 
@@ -30,20 +30,18 @@ def handle(comment, _instruo, komando, ajo):
     update_language(ajo, komando)
 
     # Delete any pre-existing defined multiple or "Unknown" comment.
-    delete_tags = ["comment_defined_multiple", "comment_unknown"]
+    delete_tags: list[str] = ["comment_defined_multiple", "comment_unknown"]
     for tag in delete_tags:
-        kunulo_object = Kunulo.from_submission(ajo.submission)
+        kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
         kunulo_object.delete(tag)
 
     # Message the mod who called this command.
     new_language = komando.data[0]  # Lingvo
-    set_msg = (
+    set_msg: str = (
         f"The [post](https://www.reddit.com{ajo.permalink}) has been set to the language "
         f"`{new_language.preferred_code}` (`{new_language.name}`)."
     )
     message_send(
         comment.author, subject="[Notification] !set command successful", body=set_msg
     )
-    logger.info("Informed moderator of command success.")
-
-    return
+    logger.info(f"Informed moderator u/{comment.author} of command success.")

@@ -11,7 +11,7 @@ from models.kunulo import Kunulo
 from . import update_status
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Doublecheck handler initiated.")
     status_type = "doublecheck"
@@ -26,7 +26,5 @@ def handle(comment, _instruo, komando, ajo):
     )
 
     # Delete any previously claimed comment.
-    kunulo_object = Kunulo.from_submission(ajo.submission)
+    kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
     kunulo_object.delete("comment_claim")
-
-    return

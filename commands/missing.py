@@ -13,9 +13,9 @@ from responses import RESPONSE
 from . import update_status
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
-    status_type = "missing"
+    status_type: str = "missing"
     logger.info("Missing handler initiated.")
     logger.info(
         f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author} on `{ajo.id}`."
@@ -26,7 +26,7 @@ def handle(comment, _instruo, komando, ajo):
     update_status(ajo, komando, status_type)
 
     # Format and send the message to the OP letting them know.
-    total_message = RESPONSE.MSG_MISSING_ASSETS.format(
+    total_message: str = RESPONSE.MSG_MISSING_ASSETS.format(
         author=original_poster, permalink=ajo.permalink
     )
     message_send(
@@ -39,5 +39,3 @@ def handle(comment, _instruo, komando, ajo):
         f"[ZW] Bot: > Marked post `{ajo.id}` by u/{original_poster} "
         f"as missing assets and messaged them."
     )
-
-    return

@@ -15,20 +15,20 @@ from search_handling import fetch_search_reddit_posts, build_search_results
 from wiki import search_integration
 
 
-def handle(comment, _instruo, komando, _ajo):
+def handle(comment, _instruo, komando, _ajo) -> None:
     """
     Command handler called by ziwen_commands().
     Example data:
         [Komando(name='search', data=['allergy'])]"""
 
     logger.info("Search handler initiated.")
-    search_terms = komando.data  # This is a list of strings
+    search_terms: list[str] = komando.data  # This is a list of strings
 
     # Join search terms into a single query string
     search_query = " ".join(search_terms)
 
     # Check for frequently-translated text and return advisories first
-    frequently_translated_info = search_integration(search_query)
+    frequently_translated_info: str | None = search_integration(search_query)
     if frequently_translated_info and "Advisory" in frequently_translated_info:
         message_reply(comment, frequently_translated_info + RESPONSE.BOT_DISCLAIMER)
         return
@@ -42,11 +42,11 @@ def handle(comment, _instruo, komando, _ajo):
     logger.info(f"[ZW] Bot: > Results found for '{search_query}'...")
 
     # Build reply from Reddit submissions
-    search_results_body = build_search_results(post_ids, search_query)
+    search_results_body: str = build_search_results(post_ids, search_query)
 
     # Format final reply with optional frequently-translated information
-    results_header = f'## Search results on r/translator for "{search_query}":\n\n'
-    full_reply = (
+    results_header: str = f'## Search results on r/translator for "{search_query}":\n\n'
+    full_reply: str = (
         f"{frequently_translated_info}\n\n{results_header}{search_results_body}"
         if frequently_translated_info
         else f"{results_header}{search_results_body}"
@@ -57,7 +57,7 @@ def handle(comment, _instruo, komando, _ajo):
 if "__main__" == __name__:
     while True:
         # Get comment URL from user
-        comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
+        comment_url: str = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
 
         # Check for exit
         if comment_url.lower() in ["quit", "exit", "q"]:
@@ -65,6 +65,6 @@ if "__main__" == __name__:
 
         # Get comment from URL and process
         test_comment = REDDIT_HELPER.comment(url=comment_url)
-        test_instruo = Instruo.from_comment(test_comment)
+        test_instruo: Instruo = Instruo.from_comment(test_comment)
         print(f"Instruo created: {test_instruo}\n")
         print(handle(test_comment, test_instruo, test_instruo.commands[0], None))

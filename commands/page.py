@@ -15,15 +15,15 @@ from reddit_sender import comment_reply
 from responses import RESPONSE
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Page handler initiated.")
-    replying_text = []
-    current_time = time.time()
+    replying_text: list[str] = []
+    current_time: float = time.time()
     original_poster = comment.author
 
-    minimum_account_age_days = SETTINGS["user_age_page"]
-    minimum_account_age_seconds = minimum_account_age_days * 86400
+    minimum_account_age_days: int = SETTINGS["user_age_page"]
+    minimum_account_age_seconds: int = minimum_account_age_days * 86400
 
     # Checks to see if the user account is old enough to use the
     # paging system.
@@ -32,7 +32,7 @@ def handle(comment, _instruo, komando, ajo):
             f"[ZW] Bot: > u/{original_poster}'s account is "
             f"younger than {minimum_account_age_days} days."
         )
-        reply_text = RESPONSE.COMMENT_PAGE_DISALLOWED + RESPONSE.BOT_DISCLAIMER
+        reply_text: str = RESPONSE.COMMENT_PAGE_DISALLOWED + RESPONSE.BOT_DISCLAIMER
         comment_reply(comment, reply_text)
         return
 
@@ -41,7 +41,7 @@ def handle(comment, _instruo, komando, ajo):
     for language in paging_languages:  # This will be a Lingvo.
         # Send messages out.
         original_post = REDDIT_HELPER.submission(ajo.id)
-        people_messaged = notifier(language, original_post, mode="page")
+        people_messaged: list = notifier(language, original_post, mode="page")
         logger.info(
             f"[ZW] Bot: >> Messaged {len(people_messaged)} people for {language.name}."
         )
@@ -61,11 +61,9 @@ def handle(comment, _instruo, komando, ajo):
 
     # Collate the languages for which there is nobody on file.
     if replying_text:
-        lacking_page_languages_text = "\n\n".join(replying_text)
+        lacking_page_languages_text: str = "\n\n".join(replying_text)
         comment_reply(comment, lacking_page_languages_text + RESPONSE.BOT_DISCLAIMER)
         logger.info(
             "Left a comment letting users know which languages "
             "have no notifications coverage."
         )
-
-    return

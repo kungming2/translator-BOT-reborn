@@ -8,7 +8,7 @@ that they are currently working on translating a request.
 import re
 import time
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any
 
 from connection import REDDIT, logger
 from languages import converter
@@ -45,7 +45,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     parent_submission = ajo.submission
     kunulo_object = Kunulo.from_submission(parent_submission)
     included_languages = komando.data  # Lingvos attached with the command.
-    claimed_languages: List = []
+    claimed_languages: list = []
 
     # A generic !claim for posts is reduced to a single-item list.
     languages_to_check = included_languages or [ajo.lingvo]
@@ -105,7 +105,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     return
 
 
-def parse_claim_comment(comment_text: str, current_time: int) -> Dict[str, Optional]:
+def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
     """
     Parse a claim comment to extract claimer username, time,
     and language code.
@@ -121,7 +121,7 @@ def parse_claim_comment(comment_text: str, current_time: int) -> Dict[str, Optio
               in the future, negative if in the past)
     """
 
-    result: Dict[str, Optional] = {
+    result: dict[str, Any] = {
         "claimer": None,
         "time": None,
         "language": None,

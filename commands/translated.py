@@ -13,10 +13,10 @@ from models.kunulo import Kunulo
 from . import update_status
 
 
-def handle(comment, _instruo, komando, ajo):
+def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Translated handler initiated.")
-    status_type = "translated"
+    status_type: str = "translated"
     logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
 
     # Handler logic to update the post status.
@@ -26,8 +26,8 @@ def handle(comment, _instruo, komando, ajo):
     logger.info(f"[ZW] Bot: > Marked post `{ajo.id}` as {status_type}.")
 
     # Delete the claimed and long comments if present
-    delete_comments = ["comment_long", "comment_claim"]
-    kunulo_object = Kunulo.from_submission(ajo.submission)
+    delete_comments: list[str] = ["comment_long", "comment_claim"]
+    kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
     for tag in delete_comments:
         kunulo_object.delete(tag)
 
@@ -36,5 +36,3 @@ def handle(comment, _instruo, komando, ajo):
         # Message the OP, letting them know that their request has been
         # fulfilled.
         notify_op_translated_post(ajo.author, ajo.permalink)
-
-    return

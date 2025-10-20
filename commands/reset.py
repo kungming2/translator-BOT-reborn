@@ -11,7 +11,7 @@ from connection import is_mod
 from reddit_sender import message_send
 
 
-def handle(comment, _instruo, _komando, ajo):
+def handle(comment, _instruo, _komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Reset handler initiated.")
     original_poster = comment.submission.author
@@ -23,7 +23,7 @@ def handle(comment, _instruo, _komando, ajo):
         ajo.reset()
 
         # Message the person who called it.
-        reset_msg = (
+        reset_msg: str = (
             f"The [post](https://redd.it/{ajo.id})'s state has been reset to its original state. "
             f"This command was called by you [here](https://www.reddit.com{comment.permalink})."
         )
@@ -34,5 +34,3 @@ def handle(comment, _instruo, _komando, ajo):
         )
 
         logger.info(f"[ZW] Bot: > Reset everything for the designated post `{ajo.id}`.")
-
-    return
