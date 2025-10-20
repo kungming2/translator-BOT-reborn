@@ -57,6 +57,24 @@ def reddit_status_report():
         updated = incident.get("updated_at", "N/A")
         shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
 
+        latest_update = None
+
+        updates = incident.get("incident_updates") or []
+        if updates:
+            # Take the most recent update by created_at timestamp
+            latest_update = (
+                sorted(updates, key=lambda u: u.get("created_at", ""), reverse=True)[0]
+                .get("body", "")
+                .strip()
+            )
+
+        logger.info(
+            f"[Reddit Incident] {name} — {status.upper()} ({impact})\n"
+            f"Created: {created} | Updated: {updated}\n"
+            f"{('Latest update: ' + latest_update) if latest_update else 'No update text.'}\n"
+            f"Link: {shortlink or 'N/A'}"
+        )
+
         title = f"**[{name}]({shortlink})**" if shortlink else f"**{name}**"
 
         lines.append(
@@ -67,7 +85,7 @@ def reddit_status_report():
         )
 
     alert_text = "\n".join(lines)
-    send_discord_alert("Active Reddit Incident", alert_text, "alert")
+    send_discord_alert("Reddit Status", alert_text, "alert")
 
     return
 
@@ -690,4 +708,4 @@ def notify_list_statistics_calculator() -> None:
 
 
 if __name__ == "__main__":
-    print(notify_list_statistics_calculator())
+    print(reddit_status_report())
