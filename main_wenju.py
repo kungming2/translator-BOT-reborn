@@ -19,13 +19,9 @@ HOW TO ADD A NEW TASK:
 
 AVAILABLE SCHEDULES (ALL IN LOCAL TIME):
 - 'hourly': Runs every hour (e.g. python main_wenju.py hourly)
-     - cron: 3 */1 * * * (At minute 3 past every hour)
 - 'daily': Runs once per day
-     - cron: 47 23 * * * (At 23:47 every day)
 - 'weekly': Runs once per week
-     - cron: 13 8 * * 3 (At 08:13 on Wednesday)
 - 'monthly': Runs once per month
-     - cron: 13 8 10 * * (At 08:13 on day-of-month 10)
 Times are slightly irregular to avoid running when Ziwen is running.
 
 EXAMPLE TASK FILE (tasks/task_category.py):
