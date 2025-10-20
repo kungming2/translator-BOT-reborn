@@ -57,12 +57,13 @@ def run_schedule(schedule_name):
     else:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
 
-    send_discord_alert(
-        f"{schedule_name.title()} Actions Completed",
-        notify_message,
-        "alert",
-    )
-    logger.info(f"[WJ] Discord notification sent for ({schedule_name}).")
+    if schedule_name != "hourly":
+        send_discord_alert(
+            f"{schedule_name.title()} Actions Completed",
+            notify_message,
+            "alert",
+        )
+        logger.info(f"[WJ] Discord notification sent for ({schedule_name}).")
 
     return
 
