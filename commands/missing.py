@@ -27,7 +27,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
     # Format and send the message to the OP letting them know.
     total_message: str = RESPONSE.MSG_MISSING_ASSETS.format(
-        author=original_poster, permalink=ajo.permalink
+        author=original_poster, permalink=ajo.submission.permalink
     )
     message_send(
         original_poster,

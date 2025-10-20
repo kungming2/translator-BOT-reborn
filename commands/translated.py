@@ -35,4 +35,4 @@ def handle(comment, _instruo, komando, ajo) -> None:
     if not kunulo_object.op_thanks:
         # Message the OP, letting them know that their request has been
         # fulfilled.
-        notify_op_translated_post(ajo.author, ajo.permalink)
+        notify_op_translated_post(ajo.author, ajo.submission.permalink)
