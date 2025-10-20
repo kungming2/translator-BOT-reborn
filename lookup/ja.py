@@ -164,7 +164,7 @@ def ja_character(character: str) -> str:
             ooi_separator += "---|"
             ooi_kun += f" | {data['kun']}"
             ooi_on += f" | {data['on']}"
-            ooi_meaning += f" | {data['meaning']}"
+            ooi_meaning += f" | {data['meaning']} |"
 
         total_data: str = (
             ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
