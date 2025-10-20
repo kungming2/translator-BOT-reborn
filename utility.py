@@ -6,7 +6,6 @@ A grab-bag of various simple utility functions.
 
 import io
 import re
-from typing import List, Optional
 
 import imagehash
 import PIL
@@ -31,13 +30,13 @@ def check_url_extension(submission_url: str) -> bool:
         return False
 
 
-def extract_text_within_curly_braces(text: str) -> List[str]:
+def extract_text_within_curly_braces(text: str) -> list[str]:
     """Extracts all content inside {{...}} blocks, with whitespace stripped."""
     pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
     return [match.strip() for match in re.findall(pattern, text)]
 
 
-def generate_image_hash(image_url: str) -> Optional[str]:
+def generate_image_hash(image_url: str) -> str | None:
     """
     Generates an image hash from a linked URL for later comparison.
     :param image_url: A direct link to a URL containing an image.
@@ -60,7 +59,7 @@ def generate_image_hash(image_url: str) -> Optional[str]:
     return hash_value
 
 
-def fetch_youtube_length(youtube_url: str) -> Optional[int]:
+def fetch_youtube_length(youtube_url: str) -> int | None:
     """
     Returns the length of a YouTube video in seconds using the
     yt-dlp library. Returns None if unable to fetch.
