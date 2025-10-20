@@ -60,6 +60,7 @@ def ziwen_posts(post_limit=None):
     # ========================================================================
     # DUPLICATE DETECTION - Run before main processing
     # ========================================================================
+    '''
     logger.info("[ZW] Running duplicate detection...")
     dupes_removed = duplicate_detector(
         list_posts=posts,
@@ -70,6 +71,7 @@ def ziwen_posts(post_limit=None):
         logger.info(
             f"[ZW] Completed duplicate detection. Removed {dupes_removed} posts."
         )
+    '''
 
     # Main processing logic.
     for post in posts:
