@@ -6,6 +6,7 @@ A grab-bag of various simple utility functions.
 
 import io
 import re
+from typing import List, Optional
 
 import imagehash
 import PIL
@@ -16,7 +17,7 @@ from yt_dlp import YoutubeDL
 from config import logger
 
 
-def check_url_extension(submission_url):
+def check_url_extension(submission_url: str) -> bool:
     """Checks to see if a URL extension matches an image file.
     Returns True if it is, False otherwise."""
 
@@ -30,17 +31,17 @@ def check_url_extension(submission_url):
         return False
 
 
-def extract_text_within_curly_braces(text):
+def extract_text_within_curly_braces(text: str) -> List[str]:
     """Extracts all content inside {{...}} blocks, with whitespace stripped."""
     pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
     return [match.strip() for match in re.findall(pattern, text)]
 
 
-def generate_image_hash(image_url):
+def generate_image_hash(image_url: str) -> Optional[str]:
     """
     Generates an image hash from a linked URL for later comparison.
     :param image_url: A direct link to a URL containing an image.
-    :return: The hash of the image.
+    :return: The hash of the image, or None if unable to hash.
     """
 
     # Download the image from the URL
@@ -59,10 +60,10 @@ def generate_image_hash(image_url):
     return hash_value
 
 
-def fetch_youtube_length(youtube_url):
+def fetch_youtube_length(youtube_url: str) -> Optional[int]:
     """
     Returns the length of a YouTube video in seconds using the
-    yt-dlp library.
+    yt-dlp library. Returns None if unable to fetch.
     """
     ydl_opts = {
         "quiet": True,
