@@ -41,7 +41,7 @@ def notify_op_translated_post(author, permalink):
     subject = "[Notification] Your request has been translated on r/translator!"
     body = (
         RESPONSE.MSG_TRANSLATED.format(author=author, permalink=permalink)
-        + RESPONSE["BOT_DISCLAIMER"]
+        + RESPONSE.BOT_DISCLAIMER
     )
 
     try:
