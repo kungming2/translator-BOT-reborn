@@ -6,15 +6,19 @@ Handles search tasks for frequently requested translations.
 
 import re
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import ddgs
 
 from config import SETTINGS
 from connection import REDDIT_HELPER, credentials_source, logger
 
+if TYPE_CHECKING:
+    from praw.models import Comment
 
-def fetch_search_reddit_posts(search_term):
-    """Extract Reddit post IDs from Reddit/DDG search."""
+
+def fetch_search_reddit_posts(search_term: str) -> list[str]:
+    """Extract Reddit post IDs from Reddit/DuckDuckGo search."""
     post_ids = []
     search_engine = SETTINGS["search_engine"]
 
@@ -66,7 +70,7 @@ def fetch_search_reddit_posts(search_term):
     return post_ids
 
 
-def build_search_results(post_ids, search_term):
+def build_search_results(post_ids: list[str], search_term: str) -> str:
     """Build formatted search results from Reddit submissions."""
     result_sections = []
 
@@ -89,7 +93,7 @@ def build_search_results(post_ids, search_term):
     return "\n\n".join(result_sections)
 
 
-def _extract_relevant_comment(comment, search_term):
+def _extract_relevant_comment(comment: "Comment", search_term: str) -> str | None:
     """Extract and format a comment if it contains the search term."""
     try:
         comment_author = comment.author.name

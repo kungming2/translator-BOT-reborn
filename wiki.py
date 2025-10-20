@@ -8,6 +8,7 @@ lookup/wp_utils.py.
 
 import re
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any
 
 from dateutil.relativedelta import relativedelta
 import prawcore
@@ -19,8 +20,11 @@ from connection import REDDIT, REDDIT_HELPER, logger
 from discord_utils import send_discord_alert
 from responses import RESPONSE
 
+if TYPE_CHECKING:
+    from languages import Lingvo
 
-def fetch_wiki_statistics_page(lingvo_object):
+
+def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
     """Fetches the relevant statistics page from the subreddit wiki.
     This will account for the limitations that are inherent in the
     wiki naming schema, as well as any redirects the mods have
@@ -58,7 +62,7 @@ def fetch_wiki_statistics_page(lingvo_object):
         return None
 
 
-def _extract_single_language_statistics_table(markdown_text):
+def _extract_single_language_statistics_table(markdown_text: str) -> str | None:
     # Use regex to extract the table under "### Single-Language Requests"
     pattern = re.compile(
         r"### Single-Language Requests\s*\n"  # Match the header
@@ -69,7 +73,7 @@ def _extract_single_language_statistics_table(markdown_text):
     return match.group(0).strip() if match else None
 
 
-def _assess_most_requested_languages(table_text):
+def _assess_most_requested_languages(table_text: str) -> dict[str, int]:
     """Used by fetch_most_requested_languages() below.
     Actual processing table logic."""
     lines = table_text.strip().splitlines()
@@ -102,7 +106,7 @@ def _assess_most_requested_languages(table_text):
     return sorted_dict
 
 
-def fetch_most_requested_languages():
+def fetch_most_requested_languages() -> list[str]:
     """This function will return the most requested languages
     based on the statistics post from x months ago. This allows for
     some lead time in case statistics updates are not timely, for some
@@ -128,14 +132,14 @@ def fetch_most_requested_languages():
 
 
 def update_wiki_page(
-    action,
-    formatted_date,
-    title,
-    post_id,
-    flair_text,
-    new_flair=None,
-    user=None,
-):
+    action: str,
+    formatted_date: str,
+    title: str,
+    post_id: str,
+    flair_text: str,
+    new_flair: str | None = None,
+    user: str | None = None,
+) -> None:
     """
     Updates a wiki page on the subreddit wiki with new data, based on
     the action argument. Primarily, this is only used for identify now,
@@ -201,7 +205,7 @@ the `!search` function.
 """
 
 
-def _frequently_requested_wiki():
+def _frequently_requested_wiki() -> list[dict[str, Any]] | None:
     """
     Accesses the "Frequently Requested Translations" page on the wiki
     and "reads" from it. That page is in YAML.
@@ -246,7 +250,7 @@ def _frequently_requested_wiki():
     return frt_data
 
 
-def search_integration(search_term):
+def search_integration(search_term: str) -> str | None:
     """
     Searches the frequently-requested translation wikipage for a term.
 

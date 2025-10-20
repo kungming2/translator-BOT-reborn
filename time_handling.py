@@ -5,7 +5,6 @@ Handles time-related conversion tasks.
 Adherence to ISO 8601 or timestamps is strongly emphasized.
 """
 
-import time
 from datetime import date, datetime, timezone
 
 
@@ -14,7 +13,7 @@ def get_current_utc_time() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def time_convert_to_string(unix_integer) -> str:
+def time_convert_to_string(unix_integer: int | float) -> str:
     """
     Converts a UNIX timestamp to an ISO 8601 UTC time string.
 
@@ -36,7 +35,7 @@ def time_convert_to_utc(iso_str: str) -> str:
         return iso_str  # fallback if malformed or missing
 
 
-def convert_to_day(unix_integer) -> str:
+def convert_to_day(unix_integer: int | float) -> str:
     """
     Converts a UNIX timestamp to a UTC date string (YYYY-MM-DD).
 
@@ -63,7 +62,7 @@ def get_current_month() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
-def get_previous_month(year_month) -> str:
+def get_previous_month(year_month: str) -> str:
     """Give this function a year-month string, and it will return the
     previous month as a string in the same format."""
 
@@ -97,6 +96,3 @@ def messaging_months_elapsed() -> int:
     total_current_months = today.year * 12 + today.month
 
     return total_current_months - month_beginning
-
-
-YEAR_MONTH_NOW = time.strftime("%Y-%m")

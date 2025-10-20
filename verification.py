@@ -3,11 +3,13 @@
 """
 Functions that deal with the verification process on r/translator.
 There is usually only one valid verification post to analyze and
-watch for.
+watch for, and verification requests are submitted as comment replies
+to that post.
 """
 
 import re
 import time
+from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
 from connection import REDDIT, REDDIT_HELPER, is_mod
@@ -16,8 +18,11 @@ from languages import converter
 from reddit_sender import message_reply, message_send
 from responses import RESPONSE
 
+if TYPE_CHECKING:
+    from praw.models import Comment, Redditor
 
-def get_verified_thread():
+
+def get_verified_thread() -> str | None:
     """
     Return the ID of the most recent 'Verified' meta thread in r/translator
     that was posted by a moderator.
@@ -35,7 +40,7 @@ def get_verified_thread():
     return None
 
 
-def _set_user_flair(user, verified_language):
+def _set_user_flair(user: "Redditor", verified_language: str) -> None:
     """
     Checks a user's flair and sets it to the desired standards.
 
@@ -67,7 +72,7 @@ def _set_user_flair(user, verified_language):
     subreddit_object.flair.set(
         user,
         text=user_new_flair,
-        flair_template_id="1e041384-e741-11e9-9794-0e7e958770bc",
+        flair_template_id="1e041384-e741-11e9-9794-0e7e958770bc",  # verified flair template
     )
 
     logger.info(f">> Set u/{user}'s verified flair to `{user_new_flair}`.")
@@ -75,7 +80,7 @@ def _set_user_flair(user, verified_language):
     return
 
 
-def process_verification(confirming_comment):
+def process_verification(confirming_comment: "Comment") -> None:
     """
     A function that checks for a !verify command to verify a user in a
     language, and then assigns them the appropriate flair while
@@ -126,7 +131,7 @@ def process_verification(confirming_comment):
     return
 
 
-def verification_parser():
+def verification_parser() -> None:
     """
     Top-level function to collect new requests for verified flairs.
     Ziwen will write their information into a log and also report their

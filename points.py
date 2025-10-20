@@ -2,9 +2,24 @@
 # -*- coding: UTF-8 -*-
 """
 Handles points calculations for contributors to the subreddit.
+
+This module manages the entire points system for r/translator:
+- Calculates point values based on language rarity (using wiki statistics)
+- Tracks user contributions and awards points for various actions:
+  * Translations and verifications (base + language multiplier)
+  * Language identifications (3 points)
+  * Helper commands like !claim, !page (1-2 points)
+  * Long-form helpful comments (bonus points)
+- Maintains monthly and all-time point records in the database
+- Provides point summaries for users upon request
+
+Point values are cached monthly and range from 4-20 depending on language
+frequency. Rarer languages receive higher multipliers to encourage diverse
+language support.
 """
 
 import re
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import prawcore
@@ -21,6 +36,11 @@ from models.komando import extract_commands_from_text
 from responses import RESPONSE
 from time_handling import get_current_month
 from wiki import fetch_wiki_statistics_page
+
+if TYPE_CHECKING:
+    from praw.models import Submission
+
+    from languages import Lingvo
 
 
 def points_retriever(username: str) -> str:
@@ -83,7 +103,7 @@ def points_retriever(username: str) -> str:
     return to_post
 
 
-def points_worth_determiner(lingvo_object) -> int:
+def points_worth_determiner(lingvo_object: "Lingvo") -> int:
     """
     Determines the point value for translating a given language.
     This tops out at a max value of 20.
@@ -164,7 +184,9 @@ def points_worth_determiner(lingvo_object) -> int:
     return final_point_value
 
 
-def _update_points_status(status_list, username, points):
+def _update_points_status(
+    status_list: list[list[str | int]], username: str, points: int
+) -> None:
     """
     Adds or updates a user's points total in the list.
     """
@@ -175,7 +197,11 @@ def _update_points_status(status_list, username, points):
     status_list.append([username, points])
 
 
-def points_tabulator(comment, original_post, original_post_lingvo):
+def points_tabulator(
+    comment: Comment,
+    original_post: "Submission",
+    original_post_lingvo: "Lingvo",
+) -> None:
     """
     Tabulates points for a Reddit comment based on detected translation
     actions and commands.
@@ -235,7 +261,7 @@ def points_tabulator(comment, original_post, original_post_lingvo):
     final_translator = None
     final_translator_points = 0
 
-    def get_parent_author(checked_comment):
+    def get_parent_author(checked_comment: Comment) -> tuple[str | None, str | None]:
         """
         Given a PRAW comment object, returns the author's name and
         ID of the parent comment (if applicable).

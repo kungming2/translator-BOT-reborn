@@ -3,9 +3,33 @@
 """
 Tracks changes in comments' edits. This works by caching comments and
 checking against them later.
+
+This module provides two main tracking functions:
+
+1. edit_tracker():
+   - Monitors recent comments for edits that add new commands
+   - Detects both "ninja edits" (within 3 minutes, no edit flag) and
+     regular edits (with edit flag)
+   - Caches comment content and compares against new versions
+   - Triggers reprocessing when new commands are added via edits
+   - Uses a three-phase approach:
+     * Phase 1: Cache all recent comments
+     * Phase 2: Check edited comments for new commands
+     * Phase 3: Clean up old cache entries
+
+2. progress_tracker():
+   - Monitors posts marked as "In Progress"
+   - Checks if claim periods have expired (based on settings)
+   - Automatically resets expired claims to "Untranslated" status
+   - Supports both single-language and multi-language posts
+   - Removes claim comments when resetting posts
+
+Both functions help maintain data integrity by catching changes that
+might otherwise be missed in normal processing.
 """
 
 import time
+from typing import TYPE_CHECKING
 
 from praw import models
 from wasabi import msg
@@ -19,17 +43,20 @@ from models.instruo import comment_has_command
 from models.kunulo import Kunulo
 from title_handling import Titolo
 
+if TYPE_CHECKING:
+    from praw.models import Comment
 
-def _is_comment_within_edit_window(comment):
+
+def _is_comment_within_edit_window(comment: "Comment") -> bool:
     """Skip comments that are too old and unedited.
-    The limit is defined in settings in hours."""
+    The limit is defined in settings as hours."""
     time_diff = time.time() - comment.created_utc
     age_in_seconds = SETTINGS["comment_edit_age_max"] * 3600
 
     return not time_diff > age_in_seconds
 
 
-def _get_cached_comment(comment_id):
+def _get_cached_comment(comment_id: str) -> str | None:
     """Retrieve comment text from cache."""
     cursor = db.cursor_cache
     cursor.execute("SELECT content FROM comment_cache WHERE id = ?", (comment_id,))
@@ -37,7 +64,7 @@ def _get_cached_comment(comment_id):
     return result[0] if result else None  # Just the body text, or None
 
 
-def _update_comment_cache(comment_id, comment_body):
+def _update_comment_cache(comment_id: str, comment_body: str) -> None:
     """Replace old comment text with new version."""
     cursor = db.cursor_cache
     cursor.execute("DELETE FROM comment_cache WHERE id = ?", (comment_id,))
@@ -47,7 +74,7 @@ def _update_comment_cache(comment_id, comment_body):
     db.conn_cache.commit()
 
 
-def _remove_from_processed(comment_id):
+def _remove_from_processed(comment_id: str) -> None:
     """Force a reprocess by removing from the processed comment database."""
     cursor = db.cursor_main
     cursor.execute("DELETE FROM old_comments WHERE id = ?", (comment_id,))
@@ -57,7 +84,7 @@ def _remove_from_processed(comment_id):
     )
 
 
-def _cleanup_comment_cache(limit):
+def _cleanup_comment_cache(limit: int) -> None:
     """Remove oldest entries beyond comment limit."""
     cursor = db.cursor_cache
     cleanup = """
@@ -71,7 +98,7 @@ def _cleanup_comment_cache(limit):
     logger.debug("[ZW] Edit Finder: Cleaned up the edited comments cache.")
 
 
-def edit_tracker():
+def edit_tracker() -> None:
     """
     Detects edited r/translator comments that involve commands or
     lookup items. If a meaningful change is detected, the comment is
@@ -153,7 +180,7 @@ def edit_tracker():
     return
 
 
-def progress_tracker():
+def progress_tracker() -> None:
     """
     Checks Reddit for posts marked as "In Progress" and determines
     if their claim period has expired. If expired, resets them to the

@@ -3,6 +3,27 @@
 """
 Handles database reading and writing. While the top-level stuff is
 all in SQLite, there are also some plain text recording functions here.
+
+This module provides a unified interface for all database operations across
+the bot's three SQLite databases:
+
+1. cache.db - Temporary data and caching:
+   - comment_cache: Stores comment content for edit detection
+   - multiplier_cache: Caches language point multipliers by month
+
+2. main.db - Core operational data:
+   - internal_posts: Subreddit internal announcements
+   - notify_*: User notification preferences and tracking
+   - old_comments/old_posts: Processed item tracking
+   - total_commands: User command usage statistics
+   - total_points: Monthly point accumulation records
+
+3. ajo.db - Post/translation request data:
+   - ajo_database: Serialized Ajo objects with metadata
+
+The DatabaseManager class provides lazy-loaded connections and cursor access
+with convenient query methods. Additional functions handle CSV/text logging
+and complex search operations across the databases.
 """
 
 import csv
@@ -12,9 +33,15 @@ import pprint
 import sqlite3
 import time
 from ast import literal_eval
+from typing import TYPE_CHECKING, Any
 
-from config import Paths, logger, SETTINGS
+from config import SETTINGS, Paths, logger
 from time_handling import convert_to_day
+
+if TYPE_CHECKING:
+    from discord.ext.commands import Context
+
+    from models.ajo import Ajo
 
 """SQLITE DATABASE ACCESS"""
 
@@ -23,53 +50,54 @@ class DatabaseManager:
     """
     Unified class to handle writes and reads to the three databases.
     """
-    def __init__(self):
-        self._conn_cache = None
-        self._conn_main = None
-        self._conn_ajo = None
+
+    def __init__(self) -> None:
+        self._conn_cache: sqlite3.Connection | None = None
+        self._conn_main: sqlite3.Connection | None = None
+        self._conn_ajo: sqlite3.Connection | None = None
 
     @staticmethod
-    def _connect(file_path):
+    def _connect(file_path: str) -> sqlite3.Connection:
         conn = sqlite3.connect(file_path)
         conn.row_factory = sqlite3.Row  # Optional: allows dictionary-like row access
         return conn
 
     @property
-    def conn_cache(self):
+    def conn_cache(self) -> sqlite3.Connection:
         if self._conn_cache is None:
             self._conn_cache = self._connect(Paths.DATABASE["CACHE"])
         return self._conn_cache
 
     @property
-    def conn_main(self):
+    def conn_main(self) -> sqlite3.Connection:
         if self._conn_main is None:
             self._conn_main = self._connect(Paths.DATABASE["MAIN"])
         return self._conn_main
 
     @property
-    def conn_ajo(self):
+    def conn_ajo(self) -> sqlite3.Connection:
         if self._conn_ajo is None:
             self._conn_ajo = self._connect(Paths.DATABASE["AJO"])
         return self._conn_ajo
 
     @property
-    def cursor_cache(self):
+    def cursor_cache(self) -> sqlite3.Cursor:
         return self.conn_cache.cursor()
 
     @property
-    def cursor_main(self):
+    def cursor_main(self) -> sqlite3.Cursor:
         return self.conn_main.cursor()
 
     @property
-    def cursor_ajo(self):
+    def cursor_ajo(self) -> sqlite3.Cursor:
         return self.conn_ajo.cursor()
 
-    def close_all(self):
+    def close_all(self) -> None:
         for conn in (self._conn_cache, self._conn_main, self._conn_ajo):
             if conn:
                 conn.close()
 
-    def fetch_ajo(self, query: str, params: tuple = ()):
+    def fetch_ajo(self, query: str, params: tuple = ()) -> sqlite3.Row | None:
         """
         Execute a SELECT query and return a single row from the AJO database.
 
@@ -81,7 +109,7 @@ class DatabaseManager:
         cursor.execute(query, params)
         return cursor.fetchone()
 
-    def fetchall_ajo(self, query: str, params: tuple = ()):
+    def fetchall_ajo(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
         """
         Execute a SELECT query and return all matching rows from the AJO database.
 
@@ -93,13 +121,13 @@ class DatabaseManager:
         cursor.execute(query, params)
         return cursor.fetchall()
 
-    def fetch_main(self, query: str, params: tuple = ()):
+    def fetch_main(self, query: str, params: tuple = ()) -> sqlite3.Row | None:
         """Return a single row from the MAIN database."""
         cursor = self.cursor_main
         cursor.execute(query, params)
         return cursor.fetchone()
 
-    def fetchall_main(self, query: str, params: tuple = ()):
+    def fetchall_main(self, query: str, params: tuple = ()) -> list[sqlite3.Row]:
         """Return all rows from the MAIN database."""
         cursor = self.cursor_main
         cursor.execute(query, params)
@@ -109,7 +137,7 @@ class DatabaseManager:
 """CREATES DATABASES IF THEY DO NOT EXIST"""
 
 
-def _initialize_cache_db():
+def _initialize_cache_db() -> None:
     """Internal function to initialize the cache database if it
     does not exist."""
     db_path = Paths.DATABASE["CACHE"]
@@ -139,7 +167,7 @@ def _initialize_cache_db():
     _initialize_db(db_path, create_statements)
 
 
-def _initialize_ajo_db():
+def _initialize_ajo_db() -> None:
     """Internal function to initialize the Ajo database if it
     does not exist."""
     db_path = Paths.DATABASE["AJO"]
@@ -164,7 +192,7 @@ def _initialize_ajo_db():
     _initialize_db(db_path, create_statement)
 
 
-def _initialize_main_db():
+def _initialize_main_db() -> None:
     """Internal function to initialize the main database if it
     does not exist."""
     db_path = Paths.DATABASE["MAIN"]
@@ -236,7 +264,7 @@ def _initialize_main_db():
     _initialize_db(db_path, create_statements)
 
 
-def _initialize_db(db_path, statements):
+def _initialize_db(db_path: str, statements: list[str]) -> None:
     """Internal function to run the table creation commands."""
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = None
@@ -254,7 +282,7 @@ def _initialize_db(db_path, statements):
             conn.close()
 
 
-def initialize_all_databases():
+def initialize_all_databases() -> None:
     """
     Creates all three required databases if they do not exist.
     This is unlikely to be often used as the databases should transfer over.
@@ -267,7 +295,7 @@ def initialize_all_databases():
 """NON-SQLITE FILE WRITING"""
 
 
-def record_activity_csv(data_tuple):
+def record_activity_csv(data_tuple: tuple) -> None:
     """
     Append a tuple of data to a CSV file. The tuple should start with
     an activity type, followed by date and time, etc. This CSV file is
@@ -281,7 +309,9 @@ def record_activity_csv(data_tuple):
         writer.writerow(data_tuple)
 
 
-def record_filter_log(filtered_title, created_timestamp, filter_type):
+def record_filter_log(
+    filtered_title: str, created_timestamp: int | float, filter_type: str
+) -> None:
     """
     Append an entry to the filter log file as a Markdown table row.
 
@@ -299,7 +329,9 @@ def record_filter_log(filtered_title, created_timestamp, filter_type):
 """SPECIFIC SEARCH/RETRIEVAL FUNCTIONS"""
 
 
-def _parse_ajo_row(result, start_utc: int = None):
+def _parse_ajo_row(
+    result: sqlite3.Row | tuple, start_utc: int | None = None
+) -> tuple[str, int, dict[str, Any]] | None:
     """
     Parse a row from the AJO database.
 
@@ -358,7 +390,9 @@ def _parse_ajo_row(result, start_utc: int = None):
         return None
 
 
-def search_database(search_term: str, search_type: str, start_utc: int = None):
+def search_database(
+    search_term: str, search_type: str, start_utc: int | None = None
+) -> list["Ajo"]:
     """
     Search the AJO database for matching records. Note that this can
     take a while for username searches.
@@ -369,8 +403,7 @@ def search_database(search_term: str, search_type: str, start_utc: int = None):
         start_utc: Optional UNIX timestamp to filter results from this time onward
 
     Returns:
-        - For 'post': A list containing single Ajo object or None
-        - For 'user': List of Ajo objects (empty list if none found)
+        List of Ajo objects (empty list if none found)
     """
     # Import here to avoid circular import
     from models.ajo import Ajo
@@ -384,7 +417,7 @@ def search_database(search_term: str, search_type: str, start_utc: int = None):
                 parsed = _parse_ajo_row(result, start_utc=start_utc)
                 if parsed is None:
                     logger.debug(f"Could not parse data for post {search_term}")
-                    return None
+                    return []
 
                 post_id, created_utc, data = parsed
                 return [Ajo.from_dict(data)]
@@ -418,6 +451,10 @@ def search_database(search_term: str, search_type: str, start_utc: int = None):
 
             return matching_ajos
 
+        else:
+            # Unknown search type, return empty list
+            return []
+
     except Exception as db_error:
         logger.debug(f"Error querying database: {str(db_error)}")
         import traceback
@@ -426,7 +463,7 @@ def search_database(search_term: str, search_type: str, start_utc: int = None):
         return []
 
 
-async def search_logs(ctx, search_term: str, term_type: str):
+async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
     """
     Internal helper function to search through log files and the
     Ajo database for a given term, which can be a username or a post ID.
@@ -525,7 +562,7 @@ async def search_logs(ctx, search_term: str, term_type: str):
         traceback.print_exc()
 
 
-def _show_menu():
+def _show_menu() -> None:
     print("\nSelect a search to run:")
     print("1. Database search (enter a query to test)")
     print("2. Initialize databases if they do not already exist")

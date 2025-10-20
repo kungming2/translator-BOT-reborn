@@ -1,22 +1,46 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+Chinese Reference Bot for Chinese language learning subreddits.
+
+This asynchronous bot monitors a multireddit of Chinese language communities
+and provides automated character and word lookups. Users can request lookups
+by wrapping Chinese text in backticks (e.g., `汉字`).
+
+Features:
+- Monitors multiple Chinese language subreddits via a multireddit
+- Detects Chinese characters/words marked with backticks
+- Provides detailed lookups for:
+  * Single characters (pronunciation, meanings, components)
+  * Multi-character words (definitions, usage)
+- Uses asyncpraw for efficient async processing
+- Automatically tokenizes longer text into meaningful segments
+
+The bot uses a separate Reddit account from the main translator bot
+and is configured via CHINESE_* credentials in the config.
+"""
+
 import asyncio
 import re
 import traceback
+from typing import TYPE_CHECKING
 
 import asyncpraw
 from asyncpraw import exceptions
 from wasabi import msg
 
 from config import SETTINGS, logger
-from connection import credentials_source, USERNAME
+from connection import USERNAME, credentials_source
 from error import error_log_extended
 from lookup.match_helpers import lookup_zh_ja_tokenizer
 from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
 
+if TYPE_CHECKING:
+    from asyncpraw import Reddit
 
-async def _cc_ref(reddit):
+
+async def _cc_ref(reddit: "Reddit") -> None:
     """
     Runtime for Chinese language subreddits. The bot monitors a
     multireddit called 'chinese' and provides character and word lookups
@@ -62,7 +86,7 @@ async def _cc_ref(reddit):
             if reply_parts:
                 reply_text = "\n\n".join(reply_parts)
                 cc_bot_disclaimer = RESPONSE.BOT_DISCLAIMER.replace(
-                    "r/translator ", f"{comment.subreddit.display_name} "
+                    "r/translator ", f"r/{comment.subreddit.display_name} "
                 )
                 if len(reply_text) > 10000:
                     reply_text = reply_text[:9900]
@@ -79,7 +103,7 @@ async def _cc_ref(reddit):
                     logger.error(f"[CC_REF]: Unexpected exception: {ex}")
 
 
-async def _chinese_reference_login_async(credentials):
+async def _chinese_reference_login_async(credentials: dict[str, str]) -> "Reddit":
     """Async version of chinese_reference_login."""
     reddit = asyncpraw.Reddit(
         client_id=credentials["CHINESE_APP_ID"],
@@ -91,7 +115,7 @@ async def _chinese_reference_login_async(credentials):
     return reddit
 
 
-async def cc_ref_main():
+async def cc_ref_main() -> None:
     """Initialize async PRAW and run the Chinese reference bot."""
     reddit = await _chinese_reference_login_async(credentials_source)
     try:

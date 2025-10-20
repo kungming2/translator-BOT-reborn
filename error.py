@@ -2,9 +2,33 @@
 # -*- coding: UTF-8 -*-
 """
 Handles error logging and retrieval.
+
+This module provides a comprehensive error logging system that stores errors
+in YAML format with contextual information. It supports two logging modes:
+
+1. Basic logging (error_log_basic):
+   - Simple error logging with timestamp and bot version
+   - Quick error capture without additional context
+
+2. Extended logging (error_log_extended):
+   - Full error logging with Reddit context
+   - Captures the last post and comment from r/translator
+   - Provides rich context for debugging
+
+Error logs are stored in YAML format with custom formatting for multi-line
+strings (using pipe notation) for better readability. The retrieve_error_log
+function can format these logs as Markdown for easy review.
+
+Typical usage:
+    from error import error_log_extended
+    try:
+        # risky operation
+    except Exception:
+        error_log_extended(traceback.format_exc(), "Ziwen")
 """
 
 import os
+from typing import Any
 
 import yaml
 
@@ -14,10 +38,16 @@ from time_handling import get_current_utc_time, time_convert_to_string
 
 
 class CustomDumper(yaml.SafeDumper):
+    """Custom YAML dumper that uses pipe notation for multi-line strings."""
+
     pass
 
 
-def _str_representer(dumper, data):
+def _str_representer(dumper: yaml.SafeDumper, data: str) -> yaml.ScalarNode:
+    """
+    Custom string representer for YAML that formats multi-line strings
+    with pipe notation (|) for better readability in error logs.
+    """
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
@@ -26,7 +56,7 @@ def _str_representer(dumper, data):
 CustomDumper.add_representer(str, _str_representer)
 
 
-def error_log_basic(entry, bot_routine):
+def error_log_basic(entry: str, bot_routine: str) -> None:
     """
     Logs an error in YAML format by appending a new entry.
 
@@ -65,7 +95,7 @@ def error_log_basic(entry, bot_routine):
         )
 
 
-def _record_last_post_and_comment():
+def _record_last_post_and_comment() -> dict[str, str]:
     """
     Retrieves the latest post and comment from r/translator for
     reference in error logging.
@@ -120,13 +150,13 @@ def _record_last_post_and_comment():
     }
 
 
-def error_log_extended(error_save_entry, bot_version):
+def error_log_extended(error_save_entry: str, bot_version: str) -> None:
     """
     Logs an error in YAML format. This will include the last post
     and comment that happened when the error happened.
 
     :param error_save_entry: The traceback text to log.
-    :param bot_version: Bot version string (e.g., 'Ziwen', 'Wenyuan').
+    :param bot_version: Bot version string (e.g., 'Ziwen', 'Wenju').
     :return: None
     """
     error_log_path = Paths.LOGS["ERROR"]
@@ -167,7 +197,7 @@ def error_log_extended(error_save_entry, bot_version):
         logger.error(f"[{bot_version}] Error_Log: Failed to write error log: {e}")
 
 
-def retrieve_error_log():
+def retrieve_error_log() -> str:
     """
     Retrieves the error log from the error log file and formats it
     in a human-readable format (Markdown).
@@ -176,7 +206,7 @@ def retrieve_error_log():
     paragraphs = []
 
     with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+        data: list[dict[str, Any]] = yaml.safe_load(f)
 
     for entry in data:
         lines = []

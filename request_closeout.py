@@ -8,6 +8,7 @@ the post as translated if their request has been properly fulfilled.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
 from connection import REDDIT
@@ -16,15 +17,24 @@ from models.ajo import ajo_loader
 from reddit_sender import message_send
 from responses import RESPONSE
 
+if TYPE_CHECKING:
+    from praw.models import Submission
 
-def _send_closeout_messages(actionable_posts, ajos_map, time_delta):
+    from models.ajo import Ajo
+
+
+def _send_closeout_messages(
+    actionable_posts: list["Submission"],
+    ajos_map: dict[str, "Ajo"],
+    time_delta: float,
+) -> None:
     """
     Send close-out notification messages to post authors.
 
     Args:
         actionable_posts: List of PRAW submission objects to close out.
-        ajos_map: Dictionary mapping post IDs to their corresponding AJO objects.
-        time_delta (float): Days since post creation.
+        ajos_map: Dictionary mapping post IDs to their corresponding Ajo objects.
+        time_delta: Days since post creation.
     """
     time_delta = round(time_delta, 1)
 
@@ -57,13 +67,13 @@ def _send_closeout_messages(actionable_posts, ajos_map, time_delta):
     return
 
 
-def closeout_posts():
+def closeout_posts() -> None:
     """This functions looks back at posts, checks their age and their
     processed status, and reaches out to their posters if there's a
     minimum number of comments."""
     ajos_to_close = []
     actionable_posts = []
-    ajos_map = {}  # Map post IDs to AJO objects
+    ajos_map = {}  # Map post IDs to Ajo objects
 
     # Configurable close-out age (in days)
     days = SETTINGS["close_out_age"]

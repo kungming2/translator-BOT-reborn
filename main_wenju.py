@@ -51,9 +51,9 @@ from config import logger
 from tasks import get_tasks, run_schedule
 
 
-def wenju_runner():
+def wenju_runner() -> None:
     if len(sys.argv) > 1:
-        schedule_name = sys.argv[1]
+        schedule_name: str = sys.argv[1]
         run_schedule(schedule_name)
     else:
         logger.info("Usage: python main_wenju.py <schedule_name>")

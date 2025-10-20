@@ -3,10 +3,28 @@
 """
 A bot that can listen and respond to Discord server commands, primarily
 to look up data and reference information.
+
+Zhongsheng is a Discord bot for the r/Translator
+moderation team. It provides various utility commands for:
+- Looking up translation statistics and data
+- Querying database information
+- Accessing reference materials
+- Managing subreddit-related tasks
+
+The bot listens to slash commands (/) and provides responses within the
+Discord server. All commands are registered via the zhongsheng module,
+which contains the actual command implementations.
+
+Bot features:
+- Restricted to authorized Discord server
+- Role-based permission checking
+- Comprehensive logging of all command invocations
+- Async command processing via discord.py
 """
 
 import discord
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from config import Paths, load_settings
 from connection import logger
@@ -20,7 +38,7 @@ DISCORD_TOKEN = load_settings(Paths.AUTH["CREDENTIALS"])["ZHONGSHENG_DISCORD_TOK
 
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     guild = discord.utils.get(bot.guilds, name="r/Translator Oversight")
     print(
         f"{bot.user} is connected to the following guild:\n"
@@ -29,13 +47,13 @@ async def on_ready():
 
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.errors.CheckFailure):
         await ctx.send("You do not have the correct role for this command.")
 
 
 @bot.event
-async def on_command_completion(ctx):
+async def on_command_completion(ctx: Context) -> None:
     """Log command usage when a command completes successfully."""
     logger.info(
         f"Command `/{ctx.command.name}` called by user {ctx.author} "
@@ -44,7 +62,7 @@ async def on_command_completion(ctx):
 
 
 @bot.before_invoke
-async def before_command(ctx):
+async def before_command(ctx: Context) -> None:
     """Log command invocation before it runs."""
     logger.info(
         f"Invoking command `/{ctx.command.name}` by user {ctx.author} "

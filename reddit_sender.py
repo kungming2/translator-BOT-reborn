@@ -4,10 +4,20 @@
 Wrapper for Reddit functions to allow for testing without sending
 messages. This wraps functions for comment replies, message replies,
 and message sending. Testing mode is set in settings.yaml.
+
+This module provides a safe abstraction layer for Reddit interactions:
+- In production mode, it sends actual Reddit comments/messages
+- In testing mode, it logs the content instead of sending to Reddit
+- All functions handle common exceptions (APIException, NotFound) gracefully
+
+Functions:
+    comment_reply: Reply to a Reddit comment
+    message_reply: Reply to a Comment, Message, or Submission
+    message_send: Send a private message to a Redditor
 """
 
 from praw.exceptions import APIException
-from praw.models import Comment, Message, Submission
+from praw.models import Comment, Message, Redditor, Submission
 from prawcore import NotFound
 
 from config import SETTINGS, logger
@@ -16,7 +26,7 @@ from testing import log_testing_mode
 testing_mode = SETTINGS["testing_mode"]
 
 
-def comment_reply(comment, reply_text):
+def comment_reply(comment: Comment, reply_text: str) -> None:
     """
     Send a reply to a PRAW comment object, or logs it in testing mode.
 
@@ -49,7 +59,7 @@ def comment_reply(comment, reply_text):
             pass
 
 
-def message_reply(msg_obj, reply_text):
+def message_reply(msg_obj: Comment | Message | Submission, reply_text: str) -> None:
     """
     Reply to a Reddit object (Comment, Message, or Submission).
     In testing mode, logs the reply instead of sending it.
@@ -85,15 +95,15 @@ def message_reply(msg_obj, reply_text):
         )
 
 
-def message_send(redditor_obj, subject, body):
+def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
     """
     Send a private message to a Reddit user.
     In testing mode, logs the message instead of sending it.
 
     Args:
         redditor_obj: A PRAW Redditor object representing the recipient.
-        subject (str): The subject line of the message.
-        body (str): The body text of the message.
+        subject: The subject line of the message.
+        body: The body text of the message.
     """
     username = getattr(redditor_obj, "name", "unknown")
 

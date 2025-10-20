@@ -2,6 +2,13 @@
 # -*- coding: UTF-8 -*-
 """
 A grab-bag of various simple utility functions.
+
+
+This module contains general-purpose utility functions for:
+- URL validation and extension checking
+- Text parsing and extraction
+- Image processing and hashing
+- YouTube video metadata retrieval
 """
 
 import io
