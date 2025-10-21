@@ -181,7 +181,7 @@ def ziwen_commands():
             logger.debug("[ZW] Bot: Recorded user commands in database.")
 
             # Calculate points for the comment and write to database.
-            points_tabulator(comment, original_ajo, original_ajo.lingvo)
+            points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             logger.debug(
                 f"[ZW] Bot: Post `{original_post.id}` does not contain any operational keywords."
