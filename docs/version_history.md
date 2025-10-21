@@ -4,7 +4,7 @@
 
 ## Introduction
 
-TEXT HERE
+This page records the version history of the various routines of translator-BOT. Version logging was much more verbose in the bot's earlier days, especially for bugfixes. 
 
 ## Legend
 
