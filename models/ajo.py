@@ -855,6 +855,12 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     output_flair_css = "generic"
 
     unq_types = {"Unknown", "Generic"}
+
+    if not ajo.lingvo:
+        logger.error(
+            f"[ZW] No lingvo associated with `{ajo.id}`. Will not update flair."
+        )
+
     language_name = ajo.lingvo.name or ""
     language_code_1 = (
         ajo.lingvo.language_code_1

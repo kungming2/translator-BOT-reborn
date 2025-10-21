@@ -110,10 +110,6 @@ def ziwen_commands():
         except AttributeError:
             continue
 
-        # Skip the bot's own comments.
-        if author_name == username:
-            continue
-
         # Skip internal posts (e.g. meta/community).
         if diskuto_exists(original_post.id) or is_internal_post(original_post):
             continue
@@ -131,6 +127,11 @@ def ziwen_commands():
             )
             db.conn_main.commit()
             logger.debug(f"Comment `{comment_id}` is now being processed.")
+
+        # Skip the bot's own comments.
+        if author_name == username:
+            logger.info(f"`{comment_id} is from myself. Skipping...")
+            continue
 
         # Load the ajo for the post from the database.
         original_ajo = ajo_loader(original_post.id)
