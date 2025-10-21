@@ -122,9 +122,9 @@ def comment_has_command(comment):
         bool
     """
     if isinstance(comment, str):
-        text = comment.lower()
+        text = comment.lower().strip()
     else:
-        text = comment.body.lower()
+        text = comment.body.lower().strip()
 
     # Remove multiline code blocks (triple backticks)
     text = re.sub(r"```[\s\S]*?```", "", text)  # non-greedy, removes across lines
@@ -160,20 +160,37 @@ def comment_has_command(comment):
     return False
 
 
+def show_menu():
+    print("\nSelect a query to run:")
+    print("1. Enter Reddit comment URL to parse ")
+    print("2. Enter text to parse for commands ")
+
+
 if "__main__" == __name__:
     while True:
-        # Get comment URL from user
-        comment_url = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
+        show_menu()
+        choice = input("Enter your choice (1-2): ")
 
-        # Check for exit
-        if comment_url.lower() in ["quit", "exit", "q"]:
+        if choice == "x":
+            print("Exiting...")
             break
 
-        # Get comment from URL and process
-        try:
-            test_comment = REDDIT_HELPER.comment(url=comment_url)
-            test_instruo = Instruo.from_comment(test_comment)
-            print(f"Instruo created: {test_instruo}\n")
-            print(vars(test_instruo))
-        except Exception as ex:
-            print(f"Error: {ex}\n")
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            # Get comment URL from user
+            comment_url = input("Enter Reddit comment URL: ").strip()
+
+            # Get comment from URL and process
+            try:
+                test_comment = REDDIT_HELPER.comment(url=comment_url)
+                test_instruo = Instruo.from_comment(test_comment)
+                print(f"Instruo created: {test_instruo}\n")
+                print(vars(test_instruo))
+            except Exception as ex:
+                print(f"Error: {ex}\n")
+        elif choice == "2":
+            testing_text = input("Enter text to parse for commands: ")
+            print(comment_has_command(testing_text.strip()))
