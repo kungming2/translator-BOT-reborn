@@ -40,7 +40,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     set_msg: str = (
         f"{new_language.greetings} moderator u/{comment.author},\n\n"
         f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
-        f"`{new_language.preferred_code}` (`{new_language.name}`)."
+        f"{new_language.name} (`{new_language.preferred_code}`)."
     )
     message_send(
         comment.author, subject="[Notification] !set command successful", body=set_msg

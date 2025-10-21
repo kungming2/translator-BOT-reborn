@@ -248,7 +248,7 @@ COMMENT_INVALID_VERIFICATION_RESPONSE: |
   
   Please check your comment against the requirements and reply again with a new comment. If you're still encountering issues, please message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=About+My+Verification+Request&message=https://www.reddit.com{request_link}). 
   
-  [](#comment_invalid_verification_response)"
+  [](#comment_invalid_verification_response)
 COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
   a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)
 COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
