@@ -72,7 +72,7 @@ def message_reply(msg_obj: Comment | Message | Submission, reply_text: str) -> N
     target_author = getattr(msg_obj, "author", "unknown")
 
     if testing_mode:
-        logger.info(f"[TESTING MODE] Would reply to {target_id} by {target_author}:")
+        logger.info(f"[TESTING MODE] Would reply to `{target_id}` by {target_author}:")
         logger.info(reply_text)
 
         log_testing_mode(
@@ -86,9 +86,9 @@ def message_reply(msg_obj: Comment | Message | Submission, reply_text: str) -> N
     if isinstance(msg_obj, (Comment, Message, Submission)):
         try:
             msg_obj.reply(reply_text)
-            logger.info(f"Replied to {target_id} successfully.")
+            logger.info(f"Replied to `{target_id}` successfully.")
         except (APIException, NotFound):
-            logger.exception(f"Unexpected error replying to {target_id}.")
+            logger.exception(f"Unexpected error replying to `{target_id}`.")
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."
