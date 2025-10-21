@@ -96,7 +96,7 @@ def validate_all_yaml_files():
             all_valid = False
 
     if all_valid:
-        logger.info("All YAML files validated.")
+        logger.info("[WJ] All YAML files validated.")
 
     return all_valid
 
@@ -104,7 +104,8 @@ def validate_all_yaml_files():
 @task(schedule="daily")
 def clean_processed_database():
     """
-    Cleans up old entries in old_comments and old_posts, keeping only the most recent ones.
+    Cleans up old entries in old_comments and old_posts,
+    keeping only the most recent ones.
     """
     data_max_posts = SETTINGS["max_posts"] * 100
     cursor = db.cursor_main
@@ -398,8 +399,7 @@ def archive_identified_saved():
     """
     Archive the wikipages of 'identified' and 'saved' to local Markdown
     files to prevent the wikipages from getting too large. 'Saved' is
-    no longer actively used since the rewrite, but the code is kept
-    here in case it is brought back.
+    less actively used since the rewrite.
     """
     r = REDDIT.subreddit(SETTINGS["subreddit"])
     splitter = "|-------"
