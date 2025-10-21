@@ -130,6 +130,11 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 logger.warning(
                     f"Cannot send message to u/{username}: user has disabled PMs or has not whitelisted the bot."
                 )
+            elif ex.error_type == "RATELIMIT":
+                # Rate limited by the API.
+                logger.warning(
+                    f"Reddit API rate limit reached. Cannot send message to u/{username}."
+                )
             else:
                 logger.error(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"

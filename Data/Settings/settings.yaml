@@ -115,7 +115,7 @@ claim_period: 28800
 notifications_limit: 100
 # A number that defines how many MAX number of people we message for
 # a single language post.
-notifications_user_limit: 10
+notifications_user_limit: 7
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
