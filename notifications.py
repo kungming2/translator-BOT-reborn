@@ -602,6 +602,13 @@ def notifier(lingvo, submission, mode="new_post"):
     # Shuffle username list in place
     random.shuffle(notify_users_list)
 
+    # If the post has an image, get a description.
+    if check_url_extension(submission.url):
+        image_description = fetch_image_description(submission.url, post_nsfw)
+        image_description = f"\n\nImage description: *{image_description}*"
+    else:
+        image_description = ""
+
     for username in notify_users_list:
         # Choose the message template based on mode
         message_templates = {
@@ -612,13 +619,6 @@ def notifier(lingvo, submission, mode="new_post"):
 
         # Default to "new_post" if mode is not found
         template = message_templates.get(mode, message_templates["new_post"])
-
-        # If the post has an image, get a description.
-        if check_url_extension(submission.url):
-            image_description = fetch_image_description(submission.url, post_nsfw)
-            image_description = f"Image description: *{image_description}*"
-        else:
-            image_description = ""
 
         # Format the message we wish to send.
         message = template.format(
