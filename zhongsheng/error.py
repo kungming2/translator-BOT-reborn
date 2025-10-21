@@ -26,7 +26,7 @@ async def error_logs(ctx):
 
         # Handle empty or None error log
         if not error_data:
-            await ctx.send("No error logs found.")
+            await ctx.send("✅ No error logs found.")
             return
 
         # Get the last 3 entries
