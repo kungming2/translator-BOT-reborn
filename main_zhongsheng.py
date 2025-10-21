@@ -28,6 +28,7 @@ from discord.ext.commands import Context
 
 from config import Paths, load_settings
 from connection import logger
+from error import error_log_extended
 from zhongsheng import register_commands
 
 # Initialize the bot
@@ -50,6 +51,14 @@ async def on_ready() -> None:
 async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.errors.CheckFailure):
         await ctx.send("You do not have the correct role for this command.")
+    else:
+        # Log the error.
+        logger.error(
+            f"Error in command `/{ctx.command.name}` by user {ctx.author} "
+            f"(ID: {ctx.author.id}): {type(error).__name__}: {error}",
+            exc_info=error,  # This includes the full traceback
+        )
+        error_log_extended(str(error), "Zhongsheng")
 
 
 @bot.event
