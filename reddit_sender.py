@@ -125,6 +125,12 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
             redditor_obj.message(subject=subject, message=body)
             logger.info(f"Sent a private message to u/{username} successfully.")
         except APIException as ex:
-            logger.error(
-                f"Unable to send a private message to u/{username}: Error: {ex}."
-            )
+            if ex.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
+                # Specific Reddit PM restriction
+                logger.warning(
+                    f"Cannot send message to u/{username}: user has disabled PMs or has not whitelisted the bot."
+                )
+            else:
+                logger.error(
+                    f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"
+                )
