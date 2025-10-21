@@ -130,7 +130,7 @@ def ziwen_commands():
 
         # Skip the bot's own comments.
         if author_name == username:
-            logger.info(f"`{comment_id} is from myself. Skipping...")
+            logger.info(f"`{comment_id}` is from myself. Skipping...")
             continue
 
         # Load the ajo for the post from the database.

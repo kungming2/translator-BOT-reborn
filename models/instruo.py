@@ -126,17 +126,25 @@ def comment_has_command(comment):
     else:
         text = comment.body.lower()
 
-    # Remove inline and multiline backtick content
-    # This allows people to quote the commands (`!doublecheck`)
-    # without triggering it.
-    text = re.sub(r"`[^`]*`", "", text)
+    # Remove multiline code blocks (triple backticks)
+    text = re.sub(r"```[\s\S]*?```", "", text)  # non-greedy, removes across lines
 
-    # Check commands with required arguments (e.g. !identify:lang)
+    # Then remove inline *quoted* commands (like `!doublecheck`) —
+    # but keep single backticks that look like CJK lookups (`享受`)
+    # We'll only strip inline code *if* it contains a command marker inside.
+    text = re.sub(r"`![^`]*`", "", text)
+
+    # Detect lookup commands (e.g. `word` or {{term}})
+    for lookup in SETTINGS.get("lookup_commands", []):
+        if lookup in text:
+            return True
+
+    # Check commands with required arguments
     for cmd in SETTINGS["commands_with_args"]:
         if cmd in text:
             return True
 
-    # Check commands with optional arguments (e.g. !translated or !translated:fr)
+    # Check commands with optional arguments
     for cmd in SETTINGS["commands_optional_args"]:
         if cmd in text:
             return True
