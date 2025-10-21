@@ -667,7 +667,7 @@ def notifier(lingvo, submission, mode="new_post"):
         None,
         len(notify_users_list),
         None,
-        language_name,
+        search_code,
         round(messaging_mins, 2),
         round(seconds_per_message, 2),
     )
