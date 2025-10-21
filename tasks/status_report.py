@@ -98,7 +98,7 @@ def reddit_status_report():
 def monitor_controversial_comments():
     """
     Checks r/translator hourly for heavily downvoted comments
-    and flags them for review via the bot's own reports.
+    and flags them for review via a Discord alert.
 
     :return: None
     """
@@ -113,7 +113,8 @@ def monitor_controversial_comments():
         permalink = comment.permalink
 
         # Criteria: score <= -25, not removed, not reported, not already saved
-        if score <= -25 and not removed and not mod_reports and not saved:
+        score_threshold = WENJU_SETTINGS["controversial_score_threshold"]
+        if score <= score_threshold and not removed and not mod_reports and not saved:
             # Send alert to Discord
             send_discord_alert(
                 "Comment with Excessive Downvotes",
