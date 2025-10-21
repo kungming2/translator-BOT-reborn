@@ -48,7 +48,8 @@ def ajo_writer(new_ajo):
                 stored_ajo_dict = orjson.loads(row["ajo"])
             except orjson.JSONDecodeError:  # Stored in an old format.
                 logger.warning(
-                    f"[ZW] ajo_writer: Old Ajo format detected for `{ajo_id}`; trying literal_eval fallback."
+                    f"[ZW] ajo_writer: Old Ajo format detected for `{ajo_id}`; "
+                    f"trying literal_eval fallback."
                 )
                 try:
                     stored_ajo_dict = ast.literal_eval(row["ajo"])
@@ -65,7 +66,9 @@ def ajo_writer(new_ajo):
                 conn.commit()
                 logger.info(f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, data updated.")
             else:
-                logger.debug(f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, but no change in data.")
+                logger.debug(
+                    f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, but no change in data."
+                )
         else:
             cursor.execute(
                 "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
@@ -779,8 +782,8 @@ class Ajo:
         Thin wrapper that calls the external flair update function.
         It also writes changes to the database.
         """
-        determine_flair_and_update(self)
         ajo_writer(self)
+        determine_flair_and_update(self)
 
 
 def _fetch_submission(post_id: str):
@@ -852,12 +855,16 @@ def determine_flair_and_update(ajo: Ajo) -> None:
     output_flair_css = "generic"
 
     unq_types = {"Unknown", "Generic"}
-    language_name = ajo.language_name or ""
+    language_name = ajo.lingvo.name or ""
     language_code_1 = (
-        ajo.language_code_1 if isinstance(ajo.language_code_1, str) else None
+        ajo.lingvo.language_code_1
+        if isinstance(ajo.lingvo.language_code_1, str)
+        else None
     )
     language_code_3 = (
-        ajo.language_code_3 if isinstance(ajo.language_code_3, str) else None
+        ajo.lingvo.language_code_3
+        if isinstance(ajo.lingvo.language_code_3, str)
+        else None
     )
 
     # Helper to set code_tag and css for a given code and css
@@ -1057,4 +1064,6 @@ if __name__ == "__main__":
             test_ajo = input("Enter the ID of the Ajo: ")
             test_info = ajo_loader(test_ajo)
             print(test_info)
+            print(test_info.lingvo)
+            print(test_info.language_name)
             pprint.pp(vars(test_info))
