@@ -38,7 +38,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     # Message the mod who called this command.
     new_language = komando.data[0]  # Lingvo
     set_msg: str = (
-        f"The [post](https://www.reddit.com{ajo.permalink}) has been set to the language "
+        f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
         f"`{new_language.preferred_code}` (`{new_language.name}`)."
     )
     message_send(
