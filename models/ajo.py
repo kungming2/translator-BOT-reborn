@@ -48,7 +48,7 @@ def ajo_writer(new_ajo):
                 stored_ajo_dict = orjson.loads(row["ajo"])
             except orjson.JSONDecodeError:  # Stored in an old format.
                 logger.warning(
-                    "[ZW] ajo_writer: Old Ajo format detected; trying literal_eval fallback."
+                    f"[ZW] ajo_writer: Old Ajo format detected for `{ajo_id}`; trying literal_eval fallback."
                 )
                 try:
                     stored_ajo_dict = ast.literal_eval(row["ajo"])
@@ -63,9 +63,9 @@ def ajo_writer(new_ajo):
                     (representation, ajo_id),
                 )
                 conn.commit()
-                logger.info("[ZW] ajo_writer: Ajo exists, data updated.")
+                logger.info(f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, data updated.")
             else:
-                logger.info("[ZW] ajo_writer: Ajo exists, but no change in data.")
+                logger.debug(f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, but no change in data.")
         else:
             cursor.execute(
                 "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
@@ -129,10 +129,12 @@ def ajo_loader(ajo_id):
         if hasattr(ajo, "preferred_code") and ajo.preferred_code:
             ajo._lingvo = converter(ajo.preferred_code)
 
-        logger.debug("[ZW] ajo_loader: Loaded Ajo from local database.")
+        logger.debug(f"[ZW] ajo_loader: Loaded Ajo `{ajo_id}` from local database.")
         return ajo
     except Exception as e:
-        logger.error(f"[ZW] ajo_loader: Failed to load or initialize Ajo: {e}")
+        logger.error(
+            f"[ZW] ajo_loader: Failed to load or initialize Ajo `{ajo_id}`: {e}"
+        )
         return None
 
 
@@ -140,23 +142,35 @@ def _normalize_lang_field(value):
     """
     Normalize the original_[source|target]_language_name field to
     always be a list of Lingvo objects.
+
     Supports:
       - [<Lingvo: ...>] (already normalized)
-      - 'Japanese' (single string)
+      - ['Dari', 'Pashto'] (list of strings)
+      - 'English' (single string)
       - None or other types -> empty list
     """
+
     if isinstance(value, list):
-        # Check if already a list of Lingvo or empty list
-        if all(isinstance(x, Lingvo) for x in value):
-            return value
-        # If list of strings, convert each to Lingvo
-        if all(isinstance(x, str) for x in value):
-            return [Lingvo(name=x) for x in value]
-        # Mixed or unknown types - fallback empty list or raise
+        normalized = []
+        for i, x in enumerate(value):
+            if isinstance(x, Lingvo):
+                normalized.append(x)
+            elif isinstance(x, str) and x.strip():
+                lingvo_obj = converter(x.strip())
+                normalized.append(lingvo_obj)
+            else:
+                logger.debug(f"[DEBUG] skipping element {i}: {x}")
+        logger.debug("[DEBUG] normalized list result:", normalized)
+        return normalized
+
+    elif isinstance(value, str) and value.strip():
+        lingvo_obj = converter(value.strip())
+        logger.debug(f"[DEBUG] single string converted to Lingvo: {lingvo_obj}")
+        return [lingvo_obj]
+
+    else:
+        logger.debug("[DEBUG] value is None or invalid, returning empty list")
         return []
-    if isinstance(value, str):
-        return [Lingvo(name=value)]
-    return []
 
 
 """MAIN AJO CLASS"""
@@ -427,19 +441,33 @@ class Ajo:
         ajo = cls()
 
         # Determine preferred_code early
-        preferred_code = (
-            data.get("preferred_code")
-            or data.get("language_code_1")
-            or data.get("language_code_3")
-        )
+        preferred_code = data.get("preferred_code")
+
+        language_codes_3 = data.get("language_code_3", [])
+        if isinstance(language_codes_3, list) and len(language_codes_3) > 1:
+            preferred_code = "multiple"
+            ajo.is_defined_multiple = True
+            ajo.type = "multiple"
+        elif not preferred_code:
+            # fallback to language_code_1 for single language
+            code1 = data.get("language_code_1")
+            if isinstance(code1, list):
+                valid_codes = [c for c in code1 if isinstance(c, str) and c.strip()]
+                preferred_code = valid_codes[0] if valid_codes else None
+            elif isinstance(code1, str) and code1.strip():
+                preferred_code = code1
+            else:
+                preferred_code = None
+
         ajo.preferred_code = preferred_code
 
-        # Initialize Lingvo before setting other fields to avoid property setter issues
-        if ajo.preferred_code:
+        # Initialize Lingvo only if not multiple
+        if ajo.preferred_code and ajo.preferred_code != "multiple":
             ajo.initialize_lingvo()
 
         read_only_properties = {"is_script", "script_code", "script_name"}
 
+        # Set other fields
         for key, value in data.items():
             if (
                 key
@@ -458,12 +486,11 @@ class Ajo:
             if hasattr(ajo, key):
                 setattr(ajo, key, value)
 
-        # Apply compatibility defaults if not already set
+        # Compatibility defaults
         ajo.language_history = data.get("language_history", [])
         ajo.status = data.get("status", "untranslated")
         ajo.is_identified = data.get("is_identified", False)
         ajo.is_long = data.get("is_long", False)
-        ajo.is_defined_multiple = data.get("is_defined_multiple", False)
         ajo.closed_out = data.get("closed_out", False)
 
         # Normalize language name fields
@@ -982,19 +1009,20 @@ def show_menu():
     print("1. Ajo testing (enter a URL of a Reddit post to test)")
     print("2. Reddit posts (retrieve the last few Reddit posts to test against)")
     print("3. Text testing (paste a dictionary of an Ajo to test)")
+    print("4. Load an Ajo (paste an ID to test)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         show_menu()
-        choice = input("Enter your choice (1-3): ")
+        choice = input("Enter your choice (1-4): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3"]:
+        if choice not in ["1", "2", "3", "4"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1024,3 +1052,9 @@ if __name__ == "__main__":
             test_dict = input("Paste an Ajo as a Python dictionary or JSON: ")
             test_dict = _convert_to_dict(test_dict)
             pprint.pp(vars(Ajo.from_dict(test_dict)))
+
+        elif choice == "4":
+            test_ajo = input("Enter the ID of the Ajo: ")
+            test_info = ajo_loader(test_ajo)
+            print(test_info)
+            pprint.pp(vars(test_info))
