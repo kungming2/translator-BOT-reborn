@@ -185,14 +185,21 @@ def verification_parser() -> None:
             notes = components[4] if len(components) > 4 else ""
         except (IndexError, AttributeError):
             # Malformed comment - stop processing
-            redo_reply = RESPONSE.COMMENT_INVALID_VERIFICATION_RESPONSE.format(
-                username=author_name,
-                request_link=comment.permalink,
-            )
-            message_reply(comment, redo_reply)
-            logger.info(f"Unable to parse verification request at https://www.reddit.com{comment.permalink}. "
-                        f"Replied to {author_string} requesting them to start over.")
-            return
+            if comment.is_root:
+                redo_reply = RESPONSE.COMMENT_INVALID_VERIFICATION_RESPONSE.format(
+                    username=author_name,
+                    request_link=comment.permalink,
+                )
+                message_reply(comment, redo_reply)
+                logger.info(
+                    f"Unable to parse verification request at https://www.reddit.com{comment.permalink}. "
+                    f"Replied to {author_string} requesting them to start over."
+                )
+            else:
+                logger.debug(
+                    f"Skipping nested comment by {author_string} at https://www.reddit.com{comment.permalink}."
+                )
+            continue
 
         language_lingvo = converter(language_name)
 
