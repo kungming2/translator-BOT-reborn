@@ -599,6 +599,9 @@ def notifier(lingvo, submission, mode="new_post"):
     # Start timing the notification run
     messaging_start = time.time()
 
+    # Shuffle username list in place
+    random.shuffle(notify_users_list)
+
     for username in notify_users_list:
         # Choose the message template based on mode
         message_templates = {
