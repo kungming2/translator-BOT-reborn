@@ -890,7 +890,7 @@ def determine_flair_and_update(ajo: Ajo) -> None:
             if language_name == "Unknown":
                 code_tag = "[?]"
                 output_flair_css = "unknown"
-                print(f">>> Update Reddit: Unknown post `{ajo.id}`.")
+                logger.debug(f">>> Update Reddit: Unknown post `{ajo.id}`.")
             else:  # None, Generic, or empty
                 code_tag = "[--]"
                 output_flair_css = "generic"
