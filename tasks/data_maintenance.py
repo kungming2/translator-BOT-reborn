@@ -15,7 +15,11 @@ from database import db
 from languages import converter
 from points import points_worth_determiner
 from tasks import WENJU_SETTINGS, task
-from time_handling import get_current_month, get_previous_month, messaging_months_elapsed
+from time_handling import (
+    get_current_month,
+    get_previous_month,
+    messaging_months_elapsed,
+)
 from wiki import fetch_most_requested_languages
 
 
@@ -100,46 +104,40 @@ def validate_all_yaml_files():
 @task(schedule="daily")
 def clean_processed_database():
     """
-    Cleans up the processed comments and posts in the database by
-    pruning old entries from the 'old_comments' and 'old_posts' tables,
-    keeping only the most recent ones.
-
-    :return: None
+    Cleans up old entries in old_comments and old_posts, keeping only the most recent ones.
     """
-    max_posts = SETTINGS["max_posts"]
-
+    data_max_posts = SETTINGS["max_posts"] * 100
     cursor = db.cursor_main
 
     # Clean old_comments
     logger.info("Starting cleanup of 'old_comments' table...")
     query_comments = """
-        DELETE FROM old_comments
-        WHERE id NOT IN (
+        WITH recent AS (
             SELECT id FROM old_comments ORDER BY id DESC LIMIT ?
         )
+        DELETE FROM old_comments
+        WHERE id NOT IN (SELECT id FROM recent);
     """
-    cursor.execute(query_comments, (max_posts * 100,))
+    cursor.execute(query_comments, (data_max_posts,))
     logger.info(
-        f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_comments'."
+        f"Cleanup complete. Kept latest {data_max_posts} entries in 'old_comments'."
     )
 
     # Clean old_posts
     logger.info("Starting cleanup of 'old_posts' table...")
     query_posts = """
-        DELETE FROM old_posts
-        WHERE id NOT IN (
+        WITH recent AS (
             SELECT id FROM old_posts ORDER BY id DESC LIMIT ?
         )
+        DELETE FROM old_posts
+        WHERE id NOT IN (SELECT id FROM recent);
     """
-    cursor.execute(query_posts, (max_posts * 100,))
+    cursor.execute(query_posts, (data_max_posts,))
     logger.info(
-        f"Cleanup complete. Kept latest {max_posts * 100} entries in 'old_posts'."
+        f"Cleanup complete. Kept latest {data_max_posts} entries in 'old_posts'."
     )
 
-    # Commit once after both operations
     db.conn_main.commit()
-
-    return
 
 
 """STATISTICS WIKIPAGE MAINTAINER"""
