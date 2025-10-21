@@ -4,6 +4,8 @@
 Handles connections with Reddit.
 """
 
+import re
+
 import praw
 import requests
 from praw.exceptions import RedditAPIException
@@ -139,6 +141,32 @@ def is_valid_user(username):
     except (exceptions.NotFound, AttributeError):
         logger.error(f"User {username} not found.")
         return False
+
+
+def is_internal_post(submission: "praw.models.Submission") -> bool:
+    """
+    Determines whether a PRAW submission is considered an internal post.
+
+    Internal post if:
+    1. Title starts with one of the internal post types in SETTINGS (case-insensitive), e.g. [META].
+    2. Title contains 'translation challenge' (case-insensitive) AND the author is a mod.
+
+    :param submission: PRAW Submission object.
+    :return: True if submission is an internal post, False otherwise.
+    """
+    title = submission.title
+
+    # Check for internal post types
+    diskuto_pattern = r"^\s*\[(" + "|".join(SETTINGS["internal_post_types"]) + r")\]"
+    if re.match(diskuto_pattern, title, flags=re.I):
+        return True
+
+    # Alternate condition: 'translation challenge' + mod author
+    if "translation challenge" in title.lower():
+        if is_mod(submission.author):
+            return True
+
+    return False
 
 
 def widget_update(widget_id, new_text):

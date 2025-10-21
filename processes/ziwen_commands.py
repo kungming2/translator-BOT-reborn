@@ -12,17 +12,17 @@ from wasabi import msg
 
 from commands import HANDLERS
 from config import SETTINGS, logger
-from connection import REDDIT, credentials_source
+from connection import REDDIT, credentials_source, is_internal_post
 from database import db
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from points import points_tabulator
-from usage_statistics import action_counter, user_statistics_writer
 from reddit_sender import message_send
 from responses import RESPONSE
 from title_handling import Titolo
+from usage_statistics import action_counter, user_statistics_writer
 
 
 def _mark_short_thanks_as_translated(comment, ajo):
@@ -115,7 +115,7 @@ def ziwen_commands():
             continue
 
         # Skip internal posts (e.g. meta/community).
-        if diskuto_exists(original_post.id):
+        if diskuto_exists(original_post.id) or is_internal_post(original_post):
             continue
 
         # Check to see if the comment has already been acted upon.
