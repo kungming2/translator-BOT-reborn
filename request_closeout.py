@@ -123,6 +123,7 @@ def closeout_posts() -> None:
             logger.info(
                 f"Skipping post `{post.id}` for post closeout — deleted or removed."
             )
+            post.set_closed_out(True)  # Mark it as closed.
             continue
 
         if post_praw.num_comments >= SETTINGS["close_out_comments_minimum"]:
