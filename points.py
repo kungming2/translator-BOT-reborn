@@ -218,7 +218,10 @@ def points_tabulator(
     month_string = get_current_month()
 
     instruo = Instruo.from_comment(comment, original_post_lingvo)
-    op_author = original_post.author.name
+    if original_post and original_post.author:
+        op_author = original_post.author.name
+    else:
+        op_author = '[deleted]'
     comment_author = instruo.author_comment  # String, not a PRAW object.
 
     if not comment_author or comment_author.lower() in (
