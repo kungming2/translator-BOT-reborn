@@ -24,6 +24,11 @@ async def error_logs(ctx):
         with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
             error_data = yaml.safe_load(f)
 
+        # Handle empty or None error log
+        if not error_data:
+            await ctx.send("No error logs found.")
+            return
+
         # Get the last 3 entries
         recent_errors = error_data[-3:] if len(error_data) >= 3 else error_data
 
