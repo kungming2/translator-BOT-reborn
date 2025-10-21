@@ -150,8 +150,13 @@ def ziwen_commands():
             # Initialize the variables the command handlers will require.
             instruo = Instruo.from_comment(comment)
 
-            logger.info(f"> Derived instruo and ajo for `comment.id` as: `{instruo}`.")
-            logger.info(f"> Comment can be viewed at `{comment.permalink}`.")
+            logger.info(
+                f"> Derived instruo and ajo for `{comment.id}` on "
+                f"post {original_post.id} as: `{instruo}`."
+            )
+            logger.info(
+                f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
+            )
 
             # Pass off to handling functions depending on the command.
             # e.g. an identify command will pass off to the handler
@@ -165,7 +170,8 @@ def ziwen_commands():
                 # Pass off the information for it to handle.
                 if handler:
                     logger.info(
-                        f"Command `{komando}` detected for `{comment_id}`. Passing to handler."
+                        f"Command `{komando}` detected for `{comment_id}` on "
+                        f"post {original_post.id}. Passing to handler."
                     )
                     handler(comment, instruo, komando, original_ajo)
                     # Record this action to the counter log
@@ -184,7 +190,8 @@ def ziwen_commands():
             points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             logger.debug(
-                f"[ZW] Bot: Post `{original_post.id}` does not contain any operational keywords."
+                f"[ZW] Bot: Post `{original_post.id}` does not contain "
+                "any operational keywords and commands."
             )
 
         # Process THANKS keywords from original posters.

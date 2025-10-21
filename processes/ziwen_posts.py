@@ -268,10 +268,10 @@ def ziwen_posts(post_limit=None):
         # the Ajo to the local database as well as updating the Reddit
         # flair.
         logger.debug(
-            "[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`"
+            f"[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`"
         )
-        logger.info(f"[ZW] Post Ajo ID: {post_ajo.id}")
-        logger.info(f"[ZW] Post Ajo data: {vars(post_ajo)}")
+        logger.info(f"[ZW] Post Ajo ID: `{post_ajo.id}`")
+        logger.info(f"[ZW] Post Ajo initial data: `{vars(post_ajo)}`")
 
         # Only update if we're not in testing mode.
         if not SETTINGS["testing_mode"]:
