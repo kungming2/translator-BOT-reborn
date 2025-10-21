@@ -13,6 +13,7 @@ from wasabi import msg
 from config import SETTINGS, logger
 from connection import REDDIT
 from database import db, record_filter_log
+
 # from dupe_detector import duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
