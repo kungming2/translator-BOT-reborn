@@ -952,7 +952,7 @@ def determine_flair_and_update(ajo: Ajo) -> None:
                     "Post Type": ajo.type,
                 },
             )
-        logger.info(
+        logger.debug(
             f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` and text `{output_flair_text}`."
         )
 
