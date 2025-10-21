@@ -124,7 +124,7 @@ def handle(comment, instruo, komando, ajo) -> None:
     Handle for CJK lookup commands.
 
     Example of a Komando to process:
-        Komando(name='cjk_lookup', data=['成功'])
+        Komando(name='lookup_cjk', data=['成功'])
     """
     logger.info("CJK Lookup handler initiated.")
     logger.info(f"[ZW] Bot: COMMAND: CJK Lookup, from u/{comment.author}.")

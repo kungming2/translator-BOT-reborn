@@ -53,9 +53,9 @@ def comment_reply(comment: Comment, reply_text: str) -> None:
     else:
         try:
             comment.reply(reply_text)
-            logger.info(f"Replied to comment ID {comment.id} successfully.")
+            logger.info(f"Replied to comment ID `{comment.id}` successfully.")
         except (APIException, NotFound):  # Comment has been deleted.
-            logger.info(f"Comment ID {comment.id} has been deleted.")
+            logger.info(f"Comment ID `{comment.id}` has been deleted.")
             pass
 
 

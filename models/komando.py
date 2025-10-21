@@ -35,15 +35,15 @@ class Komando:
     def remap_language(self, target_lang_code):
         """
         Remap all language codes in self.data to a target language code.
-        Only works for 'cjk_lookup' komandos.
+        Only works for 'lookup_cjk' komandos.
 
         :param target_lang_code: Target language code (e.g., 'ja', 'ko')
         :return: New Komando object with remapped language codes
-        :raises ValueError: If self.name is not 'cjk_lookup'
+        :raises ValueError: If self.name is not 'lookup_cjk'
         """
-        if self.name != "cjk_lookup":
+        if self.name != "lookup_cjk":
             raise ValueError(
-                f"remap_language only works with 'cjk_lookup' komandos, got '{self.name}'"
+                f"remap_language only works with 'lookup_cjk' komandos, got '{self.name}'"
             )
 
         if not self.data:
@@ -205,19 +205,19 @@ def extract_commands_from_text(text):
     from lookup.match_helpers import lookup_matcher
 
     if text.count("`") >= 1:
-        cjk_lookup = lookup_matcher(original_text, None)
-        for lang, terms in cjk_lookup.items():
+        lookup_cjk = lookup_matcher(original_text, None)
+        for lang, terms in lookup_cjk.items():
             if lang == "lookup":
-                commands_dict["cjk_lookup"].extend(terms)
+                commands_dict["lookup_cjk"].extend(terms)
             else:
                 for term in terms:
-                    commands_dict["cjk_lookup"].append([lang, term])
+                    commands_dict["lookup_cjk"].append([lang, term])
 
     # Special: Wikipedia lookup using {{braces}}
     if text.count("{{") > 0 and text.count("}}") > 0:
         wiki_terms = extract_text_within_curly_braces(original_text)
         if wiki_terms:
-            commands_dict["wikipedia_lookup"].extend(wiki_terms)
+            commands_dict["lookup_wp"].extend(wiki_terms)
 
     # Finalize Komando list
     commands = []

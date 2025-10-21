@@ -12,7 +12,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     """
     Command handler called by ziwen_commands().
     Example of data:
-        Komando(name='wikipedia_lookup', data=['Sanxing (deities)'])]
+        Komando(name='lookup_wp', data=['Sanxing (deities)'])]
     """
     logger.info("Wikipedia Lookup handler initiated.")
     logger.info(f"[ZW] Bot: COMMAND: Wikipedia Lookup, from u/{comment.author}.")

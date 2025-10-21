@@ -326,14 +326,14 @@ def points_tabulator(
             points += 3
         elif name in {"claim", "page", "search", "missing"}:
             points += 1
-        elif name == "cjk_lookup":
+        elif name == "lookup_cjk":
             points += 2
-        elif name == "wikipedia_lookup":
+        elif name == "lookup_wp":
             points += 1
         else:
             logger.debug(f"[Points] No point value set for command: {name}")
     logger.info(
-        f"[ZW] Commands processed for comment {comment.id}: {len(commands)} commands, "
+        f"[ZW] Commands processed for comment `{comment.id}`: {len(commands)} commands, "
         f"total preliminary points {points}"
     )
 

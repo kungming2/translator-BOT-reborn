@@ -1,6 +1,6 @@
 bot_name: Ziwen
 subreddit: translator
-testing_mode: true  # Very important variable!
+testing_mode: false  # Very important variable!
 commands_with_args:
   - "!id:"
   - "!identify:"
@@ -36,8 +36,8 @@ command_points:
   page: 1
   search: 1
   reference: 1
-  cjk_lookup: 2
-  wikipedia_lookup: 1
+  lookup_cjk: 2
+  lookup_wp: 1
 
 thanks_keywords:  # Must be lowercase.
   - appreciate
