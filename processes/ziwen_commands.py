@@ -92,9 +92,9 @@ def ziwen_commands():
 
     try:
         comments = list(r.comments(limit=SETTINGS["max_posts"]))
-    except exceptions.ServerError:
+    except exceptions.ServerError as ex:
         # Server issues.
-        logger.error("Encountered a server error.")
+        logger.error(f"Encountered a server error: {ex}")
         return
 
     # Start processing comments.
@@ -140,7 +140,7 @@ def ziwen_commands():
             original_ajo = Ajo.from_titolo(
                 Titolo.process_title(original_post), original_post
             )
-        logger.debug(f"Ajo lingvo is {original_ajo.lingvo}")  # to load
+        logger.debug(f"> Ajo lingvo is {original_ajo.lingvo}")  # loaded lazily
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
@@ -153,7 +153,7 @@ def ziwen_commands():
 
             logger.info(
                 f"> Derived instruo and ajo for `{comment.id}` on "
-                f"post {original_post.id} as: `{instruo}`."
+                f"post `{original_post.id}` as: `{instruo}`."
             )
             logger.info(
                 f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
@@ -187,7 +187,7 @@ def ziwen_commands():
             user_statistics_writer(instruo)
             logger.debug("[ZW] Bot: Recorded user commands in database.")
 
-            # Calculate points for the comment and write to database.
+            # Calculate points for the comment and write them to database.
             points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             logger.debug(
@@ -200,7 +200,8 @@ def ziwen_commands():
             # Assess whether a thank-you comment can mark the post as translated.
             _mark_short_thanks_as_translated(comment, original_ajo)
 
-        # Update the ajo if NOT in testing mode.
+        # Update the ajo if NOT in testing mode. This updates both the
+        # flair on the site as well as the local database.
         if not SETTINGS["testing_mode"]:
             original_ajo.update_reddit()
 
