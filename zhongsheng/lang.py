@@ -24,7 +24,7 @@ async def lang_convert(ctx, *, language_input: str):
         tokens = shlex.split(language_input.strip())
         add_alt_flag = False
         alt_value = None
-        main_lang_input = None
+        main_lang_tokens = []
 
         # Parse arguments in any order
         i = 0
@@ -39,15 +39,17 @@ async def lang_convert(ctx, *, language_input: str):
                     j += 1
                 alt_value = " ".join(alt_tokens)
                 i = j - 1  # skip processed tokens
-            elif main_lang_input is None:
-                main_lang_input = token
+            else:
+                # Collect all non-flag tokens as part of language name
+                main_lang_tokens.append(token)
             i += 1
 
-        if not main_lang_input:
+        if not main_lang_tokens:
             await ctx.send("You must specify a language code or 'random'.")
             return
 
-        language_input = main_lang_input
+        # Join all main language tokens back together
+        language_input = " ".join(main_lang_tokens)
 
         # Handle 'random' argument
         if language_input.lower() == "random":
