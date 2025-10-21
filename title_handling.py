@@ -764,6 +764,16 @@ def _determine_flair(titolo_object):
             titolo_object.add_final_code("multiple")
             titolo_object.add_final_text(generate_final_text(preferred_codes))
             return
+        elif len(targets) == 0:
+            # No target languages, try to use source language
+            if titolo_object.source and len(titolo_object.source) > 0:
+                lang = titolo_object.source[0]
+                flair_code = resolve_flair_code(lang)
+                titolo_object.add_final_code(flair_code)
+                titolo_object.add_final_text(lang.name)
+                return
+            else:
+                return  # No valid languages at all
 
         else:
             return  # No valid target languages
