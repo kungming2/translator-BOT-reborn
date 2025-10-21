@@ -3,7 +3,6 @@
 import re
 import sqlite3
 import time
-from ast import literal_eval
 from collections import Counter
 from datetime import date
 
@@ -23,7 +22,7 @@ from languages import (
 )
 from lookup.reference import get_language_reference
 from lookup.wp_utils import wikipedia_lookup
-from models.ajo import Ajo
+from models.ajo import Ajo, ajo_loader
 from tasks import WENJU_SETTINGS, task
 from time_handling import (
     get_current_utc_date,
@@ -156,12 +155,15 @@ def _generate_24h_statistics_snippet():
 
     # Extract statuses safely.
     statuses = []
-    for _, _, data, *rest in stored_ajos:
+    for post_id, _, data, *rest in stored_ajos:
         try:
-            ajo_data = literal_eval(data)
-            statuses.append(ajo_data.get("status"))
+            ajo_data = ajo_loader(post_id)
+            if ajo_data is not None:
+                statuses.append(ajo_data.status)
+            else:
+                logger.warning(f"Ajo `{post_id}` could not be loaded, skipping")
         except Exception as e:
-            logger.warning(f"Skipping malformed entry: {e}")
+            logger.warning(f"Skipping malformed entry: {e}: {data}")
 
     if not statuses:
         logger.info("generate_24h_statistics_snippet: No valid statuses found.")
@@ -713,4 +715,4 @@ def notify_list_statistics_calculator() -> None:
 
 
 if __name__ == "__main__":
-    print(reddit_status_report())
+    print(_generate_24h_statistics_snippet())
