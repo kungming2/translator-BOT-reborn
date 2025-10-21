@@ -37,7 +37,7 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
     if language_code != "en":
         lang_code: str = converter(language_code).preferred_code
         wikipedia.set_lang(lang_code)
-    logger.info(f"[ZF] Looking up term {terms} on the `{language_code}` Wikipedia.")
+    logger.info(f"Looking up term {terms} on the `{language_code}` Wikipedia.")
 
     # Look up the terms and format them appropriately.
     for term in terms[:5]:  # Limit to five terms.

@@ -60,7 +60,7 @@ def _send_closeout_messages(
             body=closeout_message,
         )
         logger.info(
-            f"[ZF]: >> Messaged u/{post_praw.author} about "
+            f"Messaged u/{post_praw.author} about "
             f"closing out their post at {post_praw.permalink}."
         )
 
