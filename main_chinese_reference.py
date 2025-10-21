@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 Chinese Reference Bot for Chinese language learning subreddits.
+Often referred to as cc_ref for short.
 
 This asynchronous bot monitors a multireddit of Chinese language communities
 and provides automated character and word lookups. Users can request lookups
