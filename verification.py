@@ -12,7 +12,7 @@ import time
 from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
-from connection import REDDIT, REDDIT_HELPER, is_mod
+from connection import REDDIT, is_mod
 from discord_utils import send_discord_alert
 from languages import converter
 from reddit_sender import message_reply, message_send
@@ -142,7 +142,7 @@ def verification_parser() -> None:
     if not VERIFIED_POST_ID:
         return
 
-    submission = REDDIT_HELPER.submission(id=VERIFIED_POST_ID)
+    submission = REDDIT.submission(id=VERIFIED_POST_ID)
     try:
         submission.comments.replace_more(limit=None)
     except ValueError:
@@ -158,10 +158,15 @@ def verification_parser() -> None:
             # Author is deleted; skip this comment
             continue
 
-        comment.save()  # Mark comment as processed on Reddit (bot ignores saved comments)
+        # Mark comment as processed on Reddit (bot ignores saved comments)
+        comment.save()
 
-        # Skip old comments (>5 minutes) or already saved (processed) comments
-        if int(time.time()) - int(comment.created_utc) >= 300 or comment.saved:
+        # Skip old comments past our window or already saved (processed) comments
+        verification_request_age = SETTINGS["verification_request_age"] * 60
+        if (
+            int(time.time()) - int(comment.created_utc) >= verification_request_age
+            or comment.saved
+        ):
             continue
 
         # Normalize comment body for parsing
@@ -179,7 +184,14 @@ def verification_parser() -> None:
             _ = re.search(url_pattern, components[3]).group(0)
             notes = components[4] if len(components) > 4 else ""
         except (IndexError, AttributeError):
-            # Malformed comment - ignore and stop processing
+            # Malformed comment - stop processing
+            redo_reply = RESPONSE.COMMENT_INVALID_VERIFICATION_RESPONSE.format(
+                username=author_name,
+                request_link=comment.permalink,
+            )
+            message_reply(comment, redo_reply)
+            logger.info(f"Unable to parse verification request at https://www.reddit.com{comment.permalink}. "
+                        f"Replied to {author_string} requesting them to start over.")
             return
 
         language_lingvo = converter(language_name)

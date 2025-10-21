@@ -156,3 +156,6 @@ duplicate_age_limit: 24  # in hours
 
 # Database settings
 log_search_days: 30  # How many days' worth of data we search for
+
+# Verification parser will not consider requests older than this age
+verification_request_age: 15  # in minutes
