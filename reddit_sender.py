@@ -124,5 +124,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
         try:
             redditor_obj.message(subject=subject, message=body)
             logger.info(f"Sent a private message to u/{username} successfully.")
-        except APIException:
-            logger.error(f"Unable to send a private message to u/{username}.")
+        except APIException as ex:
+            logger.error(
+                f"Unable to send a private message to u/{username}: Error: {ex}."
+            )
