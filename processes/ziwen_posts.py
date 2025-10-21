@@ -13,7 +13,7 @@ from wasabi import msg
 from config import SETTINGS, logger
 from connection import REDDIT
 from database import db, record_filter_log
-from dupe_detector import duplicate_detector
+# from dupe_detector import duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import Diskuto, diskuto_writer
@@ -60,7 +60,7 @@ def ziwen_posts(post_limit=None):
     # ========================================================================
     # DUPLICATE DETECTION - Run before main processing
     # ========================================================================
-    '''
+    """
     logger.info("[ZW] Running duplicate detection...")
     dupes_removed = duplicate_detector(
         list_posts=posts,
@@ -71,7 +71,7 @@ def ziwen_posts(post_limit=None):
         logger.info(
             f"[ZW] Completed duplicate detection. Removed {dupes_removed} posts."
         )
-    '''
+    """
 
     # Main processing logic.
     for post in posts:
@@ -146,9 +146,15 @@ def ziwen_posts(post_limit=None):
 
         # Continue work on post.
         logger.info(f"[ZW] Posts: Processing post `{post_id}`.")
-        logger.info(
-            f"[ZW] Posts: New {post_ajo.language_name} post submitted by u/{post_author} | `{post_id}`."
-        )
+        if post_ajo.language_name:
+            logger.info(
+                f"[ZW] Posts: New {post_ajo.language_name} post submitted by "
+                f"u/{post_author} | `{post_id}`."
+            )
+        else:
+            logger.warning(
+                f"[ZW] Posts: Post with ID `{post_id}` has no language name."
+            )
 
         # Check post age to be younger than a period of time.
         # This is to speed up rare cases where there is a huge backlog
