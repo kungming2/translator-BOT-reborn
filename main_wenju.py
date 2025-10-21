@@ -52,8 +52,9 @@ def wenju_runner() -> None:
         schedule_name: str = sys.argv[1]
         run_schedule(schedule_name)
     else:
+        logger.warning("No time parameter specified as a system argument.")
         logger.info("Usage: python main_wenju.py <schedule_name>")
-        logger.info("Available schedules:", list(get_tasks().keys()))
+        logger.info("Available schedules: %s", list(get_tasks().keys()))
         sys.exit(1)
 
 
