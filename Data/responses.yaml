@@ -176,7 +176,7 @@ COMMENT_BAD_TITLE: |
   [](#comment_bad_title)
 
 COMMENT_CLAIM: |
-  **Claimer:** u/{claimer} at {time} UTC
+  **Claimer:** u/{claimer} at [{time} UTC](https://time.lol/#{time})
   
   **Language:** {language_name} (`{language_code}`)
 

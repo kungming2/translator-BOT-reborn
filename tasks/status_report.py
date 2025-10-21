@@ -223,7 +223,7 @@ def update_sidebar_statistics():
 
         sidebar_wikipage.edit(
             content=new_sidebar_contents,
-            reason=f"Updating sidebar on {current_time_str}",
+            reason=f"Updating sidebar at {current_time_str}",
         )
 
         logger.info(f"Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit}")
