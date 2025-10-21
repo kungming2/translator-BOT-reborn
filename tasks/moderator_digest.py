@@ -266,8 +266,8 @@ def note_language_tags():
 
         # Add a Markdown bullet instead of a table row.
         rows.append(
-            f"* [{title}]({post_url}) ({submission_date} | "
-            f"`{flair_display}` | {post.num_comments} comments)"
+            f"* [{title}]({post_url}) ({submission_date}) | "
+            f"`{flair_display}` | {post.num_comments} comments"
         )
 
     formatted_output = header + "\n".join(rows)
@@ -284,7 +284,7 @@ def collate_moderator_digest():
     :return: None
     """
     logger.info("Collating moderator digest...")
-    today_date = get_current_utc_date
+    today_date = get_current_utc_date()
     days_ago = WENJU_SETTINGS["report_command_average"]
     time_delta = 86400 * days_ago
     current_time = int(time.time())
