@@ -140,6 +140,7 @@ def ziwen_commands():
             original_ajo = Ajo.from_titolo(
                 Titolo.process_title(original_post), original_post
             )
+        logger.debug(f"Ajo lingvo is {original_ajo.lingvo}")  # to load
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
