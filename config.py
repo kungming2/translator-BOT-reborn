@@ -6,6 +6,7 @@ Handles directing of paths as well as the logger.
 
 import logging
 import os
+import time
 from pathlib import Path
 
 import yaml
@@ -140,9 +141,12 @@ def set_up_logger() -> logging.Logger:
     handler.setLevel(
         logging.INFO
     )  # Change this level for debugging or to display more information.
+
+    # Use UTC time in the formatter
     handler_format: logging.Formatter = logging.Formatter(
-        logformatter, datefmt="%Y-%m-%d [%I:%M:%S %p]"
+        logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ"
     )
+    handler_format.converter = time.gmtime  # Use UTC time
     handler.setFormatter(handler_format)
     logger_object.addHandler(handler)
 
