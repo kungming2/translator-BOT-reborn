@@ -84,10 +84,10 @@ async def _cc_ref(reddit: "Reddit") -> None:
                     reply_parts.append(await zh_word(token))
 
             if reply_parts:
-                reply_text = "\n\n".join(reply_parts)
+                reply_text = "\n\n".join(reply_parts) + f"  {RESPONSE.ANCHOR_CJK}"
                 cc_bot_disclaimer = RESPONSE.BOT_DISCLAIMER.replace(
                     "r/translator ", f"r/{comment.subreddit.display_name} "
-                )
+                )  # Adapt the disclaimer to whatever subreddit the bot is posting on
                 if len(reply_text) > 10000:
                     reply_text = reply_text[:9900]
 
