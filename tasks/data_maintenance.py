@@ -38,7 +38,7 @@ def log_trimmer():
 
     # Truncate if necessary.
     if len(lines_entries) > lines_to_keep:
-        trimmed = "\n".join(lines_entries[-lines_to_keep:])
+        trimmed = "\n".join(lines_entries[-lines_to_keep:]) + "\n"
         with events_path.open("w", encoding="utf-8") as f:
             f.write(trimmed)
         logger.debug(
