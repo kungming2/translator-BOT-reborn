@@ -4,14 +4,13 @@
 Main script to fetch posts and act upon them.
 """
 
-import re
 import time
 import traceback
 
 from wasabi import msg
 
 from config import SETTINGS, logger
-from connection import REDDIT
+from connection import REDDIT, is_internal_post
 from database import db, record_filter_log
 
 # from dupe_detector import duplicate_detector
@@ -22,7 +21,6 @@ from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
 from request_closeout import closeout_posts
 from responses import RESPONSE
-from usage_statistics import action_counter
 from time_handling import get_current_utc_date
 from title_handling import (
     Titolo,
@@ -30,6 +28,7 @@ from title_handling import (
     is_english_only,
     main_posts_filter,
 )
+from usage_statistics import action_counter
 from utility import fetch_youtube_length
 from wiki import update_wiki_page
 
@@ -94,12 +93,11 @@ def ziwen_posts(post_limit=None):
         # Build regex dynamically from the list, then passes to external
         # handling for internal notifications at designated intervals
         # by Wenju
-        diskuto_pattern = r"^\s*\[(" + "|".join(SETTINGS["internal_post_types"]) + r")]"
-        if re.match(diskuto_pattern, post_title, flags=re.I):
+        if is_internal_post(post):
             diskuto_output = Diskuto.process_post(post)
             diskuto_writer(diskuto_output)
             logger.info(
-                "> `post.id` post saved as an internal post for later processing."
+                f"> `{post.id}` post saved as an internal post for later processing."
             )
             continue  # Do not write to regular Ajo database.
 
