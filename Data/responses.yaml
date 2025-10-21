@@ -2,9 +2,9 @@
 
 # MESSAGES - THESE ARE SENT PRIVATELY
 
-MSG_UNSUBSCRIBE_BUTTON: ' ^| ^[Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
-  ^| ^[Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
-  ^| ^[Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
+MSG_UNSUBSCRIBE_BUTTON: ' | [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
+  | [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
+  | [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
 MSG_NSFW_WARNING: '
 
 
