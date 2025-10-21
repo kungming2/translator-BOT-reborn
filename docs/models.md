@@ -165,12 +165,12 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
   'specific_mode': False}  
 
 # CJK lookup
-{'name': 'cjk_lookup',
+{'name': 'lookup_cjk',
  'data': [['zh', '中文']], 
  'specific_mode': False}
 
 # Wikipedia lookup
-{'name': 'wikipedia_lookup', 
+{'name': 'lookup_wp', 
  'data': ['Volapuk'], 
  'specific_mode': False}
 ```
@@ -179,7 +179,7 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 
 | Attribute | Type | Description                                                                                                                                                                                                                |
 |------------|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name` | `str` | The command keyword or identifier being executed (e.g. `"translated"`, `"identify"`, `"cjk_lookup"`, `"wikipedia_lookup"`).                                                                                                |
+| `name` | `str` | The command keyword or identifier being executed (e.g. `"translated"`, `"identify"`, `"lookup_cjk"`, `"lookup_wp"`).                                                                                                |
 | `data` | `list` | Argument(s) passed to the command. Can contain `Lingvo` objects, strings, or lists of values depending on the command type.                                                                                                |
 | `specific_mode` | `bool` | Indicates that a specific string or value within `data` was explicitly requested by the user, rather than inferred automatically. (e.g. `Latn` to specifically request the script identification rather than the language. |
 
@@ -187,7 +187,7 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 
 From Esperanto *[instruo](https://en.wiktionary.org/wiki/instruo#Esperanto)*, "instruction".
 
-This class represents a Reddit comment *containing* commands as Komandos. For example, if a comment contains both `!identify:ja` and `{{Meiji Emperor}}` in it, it would be equivalent to an Instruo with both an `identify` Komando and a `wikipedia_lookup` Komando.
+This class represents a Reddit comment *containing* commands as Komandos. For example, if a comment contains both `!identify:ja` and `{{Meiji Emperor}}` in it, it would be equivalent to an Instruo with both an `identify` Komando and a `lookup_wp` Komando.
 
 ### Example
 

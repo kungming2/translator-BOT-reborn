@@ -4,19 +4,47 @@
 
 ## Legend
 
-| Tag             | Description |
-|-----------------|----|
-| 🚀 **Feature**  | A key new feature or change of the bot, one that usually merits its own announcement post.| 
-| ✨ **Addition**  | Refinements to existing features of the bot  to improve usability, usually noticeable by users.| 
-| 🔄 **Change**   | Changes to how the bot operates, usually not noticeable by users.| 
-| 🛠️ **Bug Fix** | Bug fixes for issues.| 
+| Tag             | Description                                                                                     |
+|-----------------|-------------------------------------------------------------------------------------------------|
+| 🚀 **Feature**  | A key new feature or change of the bot, one that usually merits its own announcement post.      | 
+| ✨ **Addition**  | Refinements to existing features of the bot  to improve usability, usually noticeable by users. | 
+| 🔄 **Change**   | Changes to how the bot operates, usually not noticeable by users.                               | 
+| 🛠️ **Bug Fix** | Bug fixes for issues.                                                                           | 
+| 🕯️ **Removed** | Features or code handling that was removed.                                                     |
 
-*Entries which are crossed out indicate [deprecated or irrelevant functionality](deprecated.md).*
+*Entries which are crossed out indicate [removed or irrelevant functionality](deprecated.md).*
 
-###### 2.0 "The Reborn Update" (2025-10-XX)
+##### 2.0 "The Reborn Update" (2025-10-20)
 
+* 🚀 FEATURE: Complete rewrite and re-rationalization of all routines that use the u/translator-BOT account, intended to make everything much more efficient and future changes/bugfixes/additions easier. Code for the rewritten bot may be found on [Github](https://github.com/kungming2/translator-BOT-reborn). 
+    * Consequently, some functions which ran outside of Ziwen in a separate routine called Zifang have been reincorporated into the main bot Ziwen. This [includes](https://www.reddit.com/r/translator/comments/14k4xf3/meta_new_bot_features_including_wikipedia_lookup/) Wikipedia lookup, closing out posts, and duplicate detection for new posts.
+* 🚀 FEATURE: A new bot named **[Zhongsheng](https://en.wikipedia.org/wiki/Ban_Chao)** can now work with subreddit data to provide useful information and lookups on the [subreddit Discord](https://discord.gg/wabv5NYzdV). More information about its commands and functionality can be found there with the command `/guide`.  
+* ✨ ADDITION: Full support for language chaining for all state commands in defined multiple posts (posts where the OP has defined a certain number of languages they want). `!translated:zh`, `!doublecheck:ja+ko`, etc. will work with defined multiple posts.
+* ✨ ADDITION: Messages from the bot can now include language-specific greetings to users.
+* ✨ ADDITION: Better Korean-language lookup results and output, including tokenization of Korean sentences.
+* ✨ ADDITION: If it's a request for a image translation, a short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
+* 🔄 CHANGE: Time handling bot-wide has been standardized to [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
+* 🔄 CHANGE: Signing up for language notifications is more tolerant of non-standard formatting.
+* 🔄 CHANGE: More accurate and relevant Sino-Vietnamese readings of single Han characters in the lookup. (credit to u/TheDeadlyZebra for the suggestion)
+* 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. 王后 will never be the nonsensical 王後 now).
+* 🔄 CHANGE: The `!search` function now uses [DuckDuckGo](https://duckduckgo.com/). Frankly, its results aren't as good as Google, but the [module](https://pypi.org/project/googlesearch-python/) we usually use for Google is currently inoperational. 
+* 🔄 CHANGE: All [2024-2025 updates to ISO 639-3](https://iso639-3.sil.org/code_changes/change_management) have been added to the dataset. New updates will be automatically recorded by the bot and posted to r/translatorBOT.
+* 🔄 CHANGE: Number of notification messages sent for posts has been lowered to 10 in order to work with Reddit's more stringent API rate limits.
 
-###### 1.8 "The Restoration Update" (2019-10-05)
+###### Deprecated Features
+
+* 🕯️ REMOVED: (for now) Wiktionary search for non-CJK languages. Most Wiktionary parser modules have stopped working and Wiktionary data is so unstructured that it may take some time to build a proper parser that works across a wide range of languages.
+* 🕯️ REMOVED: The `App` classification for non-defined `Multiple Languages` posts. This was almost never used even after it was introduced, and with the modern interpretation of Rule #R2, there's no need for it. Its three-letter "special" code also clashed with the language-based categories we use. 
+* 🕯️ REMOVED: [Goo](https://help.goo.ne.jp/help/article/2889/) shut down their monolingual Japanese dictionary, so links to their site have been removed from Japanese-lookup results.
+* 🕯️ REMOVED: Code for long-defunct commands that were no longer used.
+    *  `!reference`: This returned information about a language and has been long removed. There is now an equivalent on the Discord server, `/lang`. 
+    *  `!restore`: Formerly sent an archived copy of a text-only post if the OP had deleted it to the translator. It has been non-functional since [Pushshift got taken over by Reddit](https://www.reddit.com/r/pushshift/comments/14ei799/pushshift_live_again_and_how_moderators_can/) and its API was sunsetted.
+    * `!translate`/`!translator`: These command formerly allowed you to ask the bot to cross-post posts to r/translator.
+    * `!delete`: Formerly allowed OPs or mods to delete bot cross-posts. 
+    * `!note`: A rarely used mod-only command, it manually saved a post with a generic post flair to the [saved languages log](https://www.reddit.com/r/translator/wiki/saved). This has become completely automated now and is no longer necessary. 
+    * `+`: Allowed users to manually award a point to a user.
+
+##### 1.8 "The Restoration Update" (2019-10-05)
 * 🚀 FEATURE: ~~Individuals who provided a translation for a deleted text-only post can use the `!restore` command to ask Ziwen to retrieve the now-deleted text.~~
     * ~~Ziwen will attempt to retrieve the text from [Pushshift](http://pushshift.io/). If successful, Ziwen will send the retrieved text as a private message to the translator.~~
     * ~~Calling the `!restore` command on a link/image post will result in a error reply from Ziwen.~~
@@ -25,7 +53,7 @@
 * 🔄 CHANGE: Cleaned up Chinese and Japanese dictionaries footer and Cantonese/Hakka tones to account for differences between Markdown rendering on Old and New Reddit.
 * 🔄 CHANGE: Changed romanization of hangul in Chinese character results to Yale.
 
-###### 1.7 "The Ajo Update" (2017-12-09)
+##### 1.7 "The Ajo Update" (2017-12-09)
 * 🚀 FEATURE: Though not externally visible, the backend of Ziwen has been completely revamped. Ziwen now builds a Python class called *[Ajo](https://en.wiktionary.org/wiki/-a%C4%B5o#Esperanto)* from each r/translator post, and the bot will make changes to each *Ajo* before pushing the changes to Reddit. This should result in fewer calls to Reddit, and has resulted in much cleaner code.
 * 🚀 FEATURE: Ziwen can now process commands made in edits, up to a two-hour buffer.
 * 🚀 FEATURE: Ziwen can now process country codes as well to provide services for regional languages. 
@@ -130,7 +158,7 @@
 * 🛠️ BUG FIX: Fixed a bug where a `!search` result was longer than Reddit's maximum of 10,000 characters.
 * 🛠️ BUG FIX: Fixed a bug in retrieving calligraphy overall image.
 
-###### 1.6 "The Points Update" (2017-10-07)
+##### 1.6 "The Points Update" (2017-10-07)
 * 🚀 FEATURE: New points system: Contributors to r/translator will automatically get points for making translations, helping keep the community organized, and using bot functions. 
 * 🚀 FEATURE: Users can message the bot with `Points` in the subject to get a rundown of how many points they've earned this month, as well as overall.
 * ✨ ADDITION: Ziwen's notification response will now include a native-language "thank you" for subscriptions.  
@@ -148,7 +176,7 @@
 * 🛠️ BUG FIX: Fixed a situation where Ziwen would delete its attribution comment on one of its crossposts. 
 * 🛠️ BUG FIX: Fixed a situation where Ziwen would delete processed posts' id from its database (a relic from the ReplyBot routine). Posts and comments are now stored on separate tables.  
 
-###### 1.5 "The Progress Update" (2017-07-22)
+##### 1.5 "The Progress Update" (2017-07-22)
 * 🚀 FEATURE: New claiming/in progress function (`!claim`): Users can now claim an individual translation thread as something they're working on. Ziwen will automatically reset the flair if no translation is given after a certain amount of time. (credit to u/songluck)
 * 🚀 FEATURE: ~~Cross-posting now works from everywhere on Reddit. This is run by a separate script and is no longer part of the main Ziwen runtime.~~
 * 🚀 FEATURE: ~~People often accidentally link to the subreddit by listing r/translate - the bot will now post a reply that corrects this.~~ 
@@ -188,7 +216,7 @@
 * 🛠️ BUG FIX: ~~Added stronger validation for the r/translate detector function.~~ 
 * 🛠️ BUG FIX: ~~Added a means to gracefully handle situations where the original post that was crossposted was deleted (this prevents the bot from editing its earlier comment).~~ 
 
-###### 1.4 "The Maintenance Update" (2017-05-18)
+##### 1.4 "The Maintenance Update" (2017-05-18)
 * 🚀 FEATURE: Emergency update to the latest version of PRAW (v4.5.1), as some change on Reddit's backend stopped Ziwen, which was written in PRAW3, from connecting to Reddit. 
 * 🚀 FEATURE: The use of PRAW4 has also resulted in a substantial speed boost. 
 * ✨ ADDITION: Added ability to unsubscribe from specific language notifications (previously it was all or nothing).
@@ -220,7 +248,7 @@
 * 🛠️ BUG FIX: Bug fix for notifications when the user has deleted their account. 
 * 🛠️ BUG FIX: Bug fix for marking a post without any flair as translated and various QOL fixes. 
 
-###### 1.3 "The Cross-posting Update" (2017-04-25)
+##### 1.3 "The Cross-posting Update" (2017-04-25)
 * 🚀 FEATURE: ~~New cross-posting function: Ziwen can cross-post requests from selected subreddits to r/translator.~~ 
 * ✨ ADDITION: Lookups for Chinese and Japanese *sentences* are now supported - Ziwen will automatically segment sentences and return word data based on that segmentation.
 * ✨ ADDITION: Japanese character lookup now supports individual hiragana particles (e.g. `は`, `え`, etc)
@@ -229,7 +257,7 @@
 * 🔄 CHANGE: Turned *off* the link between the paging function and the `!doublecheck` command. 
 * 🛠️ BUG FIX: Bug fix for Arabic reference information (bot was referencing the wrong ISO 639-3 code). 
 
-###### 1.2 "The Statistics Update" (2017-04-05)
+##### 1.2 "The Statistics Update" (2017-04-05)
 * 🚀 FEATURE: Ziwen now incorporates language tags into *Translated* and *Needs Review* posts for better statistics recording by Wenyuan. 
 * ✨ ADDITION: Ziwen now uses fuzzy matching with ~~[Fuzzywuzzy](https://pypi.python.org/pypi/fuzzywuzzy)~~ to better account for misspelling of language names in titles (e.g. "Japanase" will be correctly identified as "Japanese," and so on.)
 * ✨ ADDITION: Better integration with the language tags (e.g. "[ZH]") for CJK lookup in translated posts.
@@ -239,15 +267,15 @@
 * 🛠️ BUG FIX: Bug fixes to better integrate with Wenyuan's statistics-gathering functions. 
 * 🛠️ BUG FIX: Bug fix for Korean lookup with no results. 
 
-###### 1.1 "The Notifications Update" (2017-03-01)
+##### 1.1 "The Notifications Update" (2017-03-01)
 * 🚀 FEATURE: Added support for receiving notifications from Ziwen about specific language posts. 
 * 🔄 CHANGE: ~~Page lists have been moved to a single CSV file instead of multiple text files.~~ 
 
-###### 1.0 "The Reference Update" (2017-02-09)
+##### 1.0 "The Reference Update" (2017-02-09)
 * 🚀 FEATURE: Full release of Ziwen with language reference lookup, search functionality, and Chinese/Japanese character/word lookup.
 
-###### 0.8 (2016-12-20)
+##### 0.8 (2016-12-20)
 * 🔄 CHANGE: Addition of the mod-accessible ~~`!note`~~ and `!set` commands.
 
-###### 0.6 (2016-11-18)
+##### 0.6 (2016-11-18)
 * 🚀 FEATURE: Initial release with paging functions for languages.
