@@ -238,64 +238,128 @@ def _move_bracketed_tag_to_front(title: str) -> str:
 
 
 def _reformat_detected_languages_in_title(title: str) -> str | None:
-    """
-    Attempts to reformat a poorly structured title into a
-    standardized format with language tags.
+    """Attempts to reformat a poorly structured title."""
+    logger.debug(f"Initial title: '{title}'")
 
-    Example:
-        Input:  "English to Chinese Lorem Ipsum"
-        Output: "[English > Chinese] Lorem Ipsum"
-
-    :param title: A potentially unstructured title containing language names.
-    :return: A reformatted title like "[Lang1 > Lang2] Remainder", or None if reformatting fails.
-    """
     title_words = re.findall(r"\w+", title)
+    logger.debug(f"Extracted words: {title_words}")
+
     if not title_words:
+        logger.debug("No words found in title, returning None")
         return None
 
-    # Track detected languages at the beginning and end of the title
     detected_languages = {}
     first_lang = last_lang = None
+    last_lang_word = None  # Track which word contains the last language
 
     # Scan first ~5 words for languages
+    logger.debug(f"Scanning first 5 words: {title_words[:5]}")
     for word in title_words[:5]:
         if word.lower() == "to":
+            logger.debug(f"Skipping word 'to': {word}")
             continue
         match = extract_lingvos_from_text(word.title())
         if match:
             detected_languages[word] = match[0].name
+            logger.debug(f"Found language in word '{word}': {match[0].name}")
             if not first_lang:
                 first_lang = match[0].name
+                logger.debug(f"Set first_lang: {first_lang}")
 
     # Scan last ~5 words (reversed) for target language
+    # NEW: Don't reuse the same language unless it appears multiple times
+    logger.debug(
+        f"Scanning last 5 words (reversed): {list(reversed(title_words[-5:]))}"
+    )
     for word in reversed(title_words[-5:]):
         match = extract_lingvos_from_text(word.title(), True)
         if match:
-            last_lang = match[0].name
-            break
+            potential_lang = match[0].name
+            logger.debug(
+                f"Found potential last language in word '{word}': {potential_lang}"
+            )
+
+            # If different from source, use it
+            if potential_lang != first_lang:
+                last_lang = potential_lang
+                last_lang_word = word  # Store the actual word
+                logger.debug(
+                    f"Different from first_lang, set last_lang: {last_lang}, word: {word}"
+                )
+                break
+            # If same as source, check if it appears multiple times in title
+            elif sum(1 for w in title_words if potential_lang.lower() in w.lower()) > 1:
+                last_lang = potential_lang
+                last_lang_word = word  # Store the actual word
+                logger.debug(
+                    f"Same as first_lang but appears multiple times, set last_lang: {last_lang}, word: {word}"
+                )
+                break
+            else:
+                logger.debug(f"Same as first_lang and only appears once, skipping")
+
+    logger.debug(
+        f"Final detected languages: first_lang={first_lang}, last_lang={last_lang}, last_lang_word={last_lang_word}"
+    )
+    logger.debug(f"All detected_languages: {detected_languages}")
 
     if not first_lang or not last_lang:
+        logger.debug(
+            f"Missing language (first_lang={first_lang}, last_lang={last_lang}), returning None"
+        )
         return None
 
-    # Build the new tag
     lang_tag = f"[{first_lang} > {last_lang}]"
+    logger.debug(f"Created lang_tag: '{lang_tag}'")
 
-    # Replace the first language with the tag
     reformatted = title
+    logger.debug(f"Starting reformatted: '{reformatted}'")
+
+    # Remove the last language word first (if different from first)
+    if first_lang != last_lang and last_lang_word:
+        logger.debug(
+            f"Languages are different, removing last_lang word '{last_lang_word}' first"
+        )
+        old_reformatted = reformatted
+        reformatted = reformatted.replace(last_lang_word, "", 1)
+        logger.debug(f"Removed last language word '{last_lang_word}'")
+        logger.debug(f"Title after removal: '{old_reformatted}' -> '{reformatted}'")
+    else:
+        logger.debug(
+            "Languages are the same or no last_lang_word found, skipping last_lang removal"
+        )
+
+    # Now replace the first language word with the tag
     for original_word, lang_code in detected_languages.items():
         if lang_code == first_lang:
+            old_reformatted = reformatted
             reformatted = reformatted.replace(original_word, lang_tag, 1)
+            logger.debug(
+                f"Replaced first language word '{original_word}' with '{lang_tag}'"
+            )
+            logger.debug(
+                f"Title after replacement: '{old_reformatted}' -> '{reformatted}'"
+            )
             break
 
-    # Remove the second language word to avoid duplication
-    for original_word, lang_code in detected_languages.items():
-        if lang_code == last_lang and lang_code != first_lang:
-            reformatted = reformatted.replace(original_word, "", 1)
-            break
-
-    # Clean up "to" or "into" if still in the text
+    old_reformatted = reformatted
     reformatted = re.sub(r"\b(to|into)\b", ">", reformatted, flags=re.IGNORECASE)
+    logger.debug(
+        f"After replacing 'to/into' with '>': '{old_reformatted}' -> '{reformatted}'"
+    )
+
+    old_reformatted = reformatted
     reformatted = re.sub(r"\s{2,}", " ", reformatted).strip()
+    logger.debug(f"After whitespace cleanup: '{old_reformatted}' -> '{reformatted}'")
+
+    # Clean up any trailing separators (>, -, etc.) that may be left over
+    old_reformatted = reformatted
+    reformatted = re.sub(r"\s*[>-]\s*$", "", reformatted).strip()
+    logger.debug(
+        f"After removing trailing separators: '{old_reformatted}' -> '{reformatted}'"
+    )
+
+    logger.debug(f"Final reformatted title: '{reformatted}'")
 
     return reformatted
 
@@ -494,6 +558,19 @@ def _clean_text(text, preserve_commas=False):
 
 def _extract_source_chunk(title):
     """Extract the source language chunk from a processed title."""
+    # If title has proper bracket format [Source > Target], extract from within brackets
+    if "[" in title and "]" in title:
+        bracket_content = title[title.index("[") + 1 : title.index("]")]
+        if ">" in bracket_content:
+            # Get everything before the first > within brackets
+            return _clean_text(bracket_content.split(">")[0])
+        elif " to " in bracket_content:
+            return _clean_text(bracket_content.split(" to ")[0])
+        else:
+            # No separator, entire bracket content is source
+            return _clean_text(bracket_content)
+
+    # Fallback to original logic for malformed titles
     for sep in [">", " to ", "-", "<"]:
         if sep in title:
             return _clean_text(title.split(sep)[0])
@@ -502,6 +579,18 @@ def _extract_source_chunk(title):
 
 def _extract_target_chunk(title):
     """Extract the target language chunk from a processed title."""
+    # If title has proper bracket format [Source > Target], extract from within brackets
+    if "[" in title and "]" in title:
+        bracket_content = title[title.index("[") + 1 : title.index("]")]
+        if ">" in bracket_content:
+            # Get everything after the last > within brackets
+            parts = bracket_content.split(">")
+            return _clean_text(parts[-1], True)
+        elif " to " in bracket_content:
+            parts = bracket_content.split(" to ")
+            return _clean_text(parts[-1], True)
+
+    # Fallback to original logic for malformed titles
     for sep in [">", " to ", "-", "<"]:
         if sep in title:
             chunk = title.split(sep, 1)[1]
@@ -525,7 +614,7 @@ def _clean_chunk(chunk: str) -> str:
 
 
 def _resolve_languages(chunk, is_source):
-    # Remove trailing punctuation like '-' or ':'
+    """Resolve language objects from a text chunk."""
     cleaned = _clean_chunk(chunk)
     logger.debug(f"Cleaned Chunk: {cleaned}")
 
@@ -533,25 +622,20 @@ def _resolve_languages(chunk, is_source):
         logger.debug("Handling 'unknown' chunk explicitly.")
         return [converter("unknown")]
 
-    # Cut off after ']' if present
     if "]" in chunk:
         chunk = chunk.split("]", 1)[0]
 
-    # Split on commas first to handle multiple languages
     if "," in chunk:
         language_parts = [part.strip() for part in chunk.split(",")]
         resolved = []
         for part in language_parts:
-            result = _resolve_languages(part, is_source)  # Recursive call
+            result = _resolve_languages(part, is_source)
             if result:
                 resolved.extend(result)
-
-        # Deduplicate
         unique = {}
         for lang in resolved:
             key = lang.name if hasattr(lang, "name") else lang.language_code_3
             unique[key] = lang
-
         return list(unique.values())
 
     words = chunk.split()
@@ -572,13 +656,16 @@ def _resolve_languages(chunk, is_source):
     ]
 
     logger.debug(f"Cleaned words: {cleaned_words}")
+
+    # KEY FIX: Limit words checked for target languages
+    max_words_to_check = 5 if is_source else 2
+
     resolved = []
-    for word in cleaned_words[:5]:
+    for word in cleaned_words[:max_words_to_check]:
         if "Eng" in word and len(word) <= 8:
             word = "English"
         converter_result = converter(word)
 
-        # Log differently for multi-word phrases
         if " " in word:
             logger.debug(f"Converted full phrase: {word} -> {converter_result}")
         else:
@@ -586,7 +673,6 @@ def _resolve_languages(chunk, is_source):
 
         if converter_result:
             resolved.append(converter_result)
-            # If this was a successful multi-word phrase, stop processing individual words
             if " " in word:
                 break
 
@@ -1019,7 +1105,7 @@ if __name__ == "__main__":
                 REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=50)
             )
             for submission in submissions:
-                print(submission.title)
+                print(f"POST TITLE: {submission.title}")
                 titolo_output = process_title(submission.title)
                 pprint(vars(titolo_output))
                 print("\n\n")
