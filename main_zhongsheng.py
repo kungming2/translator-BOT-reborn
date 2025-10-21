@@ -63,7 +63,13 @@ async def on_command_completion(ctx: Context) -> None:
 
 @bot.before_invoke
 async def before_command(ctx: Context) -> None:
-    """Log command invocation before it runs."""
+    """Log command invocation and clean arguments before it runs."""
+    # Clean arguments by stripping backticks and extra whitespace
+    if ctx.kwargs:
+        for key, value in ctx.kwargs.items():
+            if isinstance(value, str):
+                ctx.kwargs[key] = value.strip().strip("`").strip()
+
     logger.info(
         f"Invoking command `/{ctx.command.name}` by user {ctx.author} "
         f"with args: {ctx.args[2:]} kwargs: {ctx.kwargs}"
