@@ -40,12 +40,12 @@ def run_schedule(schedule_name):
     executed_tasks = []
 
     for task_func in tasks_to_run:
-        print(f"Running {task_func.__name__}...")
+        logger.info(f"> Running {task_func.__name__}...")
         try:
             task_func()
             executed_tasks.append(task_func.__name__)
         except Exception as e:
-            print(f"Error in {task_func.__name__}: {e}")
+            logger.error(f"> Error in {task_func.__name__}: {e}")
 
     # Send Discord alert after all tasks have completed
     if executed_tasks:
@@ -57,6 +57,7 @@ def run_schedule(schedule_name):
     else:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
 
+    # Don't send hourly alerts, though.
     if schedule_name != "hourly":
         send_discord_alert(
             f"{schedule_name.title()} Actions Completed",
