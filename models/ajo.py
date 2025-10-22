@@ -975,16 +975,37 @@ def determine_flair_and_update(ajo: Ajo) -> None:
         else:
             output_flair_text = f"Multiple Languages {code_tag}"
 
-    # Update flair on Reddit if template exists
+        # Update flair on Reddit if template exists
     if output_flair_css in post_templates:
         template_id = post_templates[output_flair_css]
         logger.debug(
             f"[ZW] Update Reddit: Template for CSS `{output_flair_css}` is `{template_id}`."
         )
-        if not testing_mode:  # Regular mode.
-            submission.flair.select(
-                flair_template_id=template_id, text=output_flair_text
-            )
+
+        # Get current flair info
+        current_flair: str | None = getattr(submission, "link_flair_text", None)
+        current_flair_template_id: str | None = getattr(submission, "link_flair_template_id", None)
+
+        # Only update flair if something actually changed
+        flair_changed: bool = (
+            current_flair != output_flair_text
+            or current_flair_template_id != template_id
+        )
+
+        if not testing_mode:
+            if flair_changed:
+                submission.flair.select(
+                    flair_template_id=template_id, text=output_flair_text
+                )
+                logger.debug(
+                    f"[ZW] Updated post `{ajo.id}` flair to `{output_flair_text}` "
+                    f"(template `{template_id}`)."
+                )
+            else:
+                logger.debug(
+                    f"[ZW] Skipped flair update for `{ajo.id}` "
+                    f"(already `{output_flair_text}` / `{template_id}`)."
+                )
         else:
             log_testing_mode(
                 output_text=output_flair_text,
