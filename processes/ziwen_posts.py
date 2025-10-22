@@ -148,7 +148,7 @@ def ziwen_posts(post_limit=None):
 
         # Continue work on post.
         logger.info(f"[ZW] Posts: Processing post `{post_id}`.")
-        if post_ajo.language_name:
+        if post_ajo.lingvo:
             logger.info(
                 f"[ZW] Posts: New {post_ajo.language_name} post submitted by "
                 f"u/{post_author} | `{post_id}`."

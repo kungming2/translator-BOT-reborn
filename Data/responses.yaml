@@ -50,8 +50,6 @@ MSG_PAGE: >
 
   {image_description}
 
-  Feel free to disregard the post or [message Ziwen]({removal_link}) if you wish to unsubscribe from {language_name}.
-
 MSG_NOTIFY: >
 
   {greetings} u/{username},
