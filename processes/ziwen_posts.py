@@ -103,7 +103,7 @@ def ziwen_posts(post_limit=None):
 
         # Skip if post has already been processed
         if db.cursor_main.execute(
-            "SELECT 1 FROM old_posts WHERE ID = ?", (post_id,)
+            "SELECT 1 FROM old_posts WHERE id = ?", (post_id,)
         ).fetchone():
             logger.debug(
                 f"[ZW] Posts: This post {post_id} already exists in the processed database."
@@ -128,7 +128,10 @@ def ziwen_posts(post_limit=None):
             post_ajo = Ajo.from_titolo(titolo_content, post)
 
         # Mark post as processed
-        db.cursor_main.execute("INSERT INTO old_posts (ID) VALUES (?)", (post_id,))
+        db.cursor_main.execute(
+            "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
+            (post_id, int(post.created_utc))
+        )
         db.conn_main.commit()
 
         # Check on Ajo status. We only want to deal with untranslated new posts.
@@ -169,7 +172,7 @@ def ziwen_posts(post_limit=None):
         # notifications to people. Otherwise, we won't.
         # This is mainly for catching up with older posts for downtime;
         # we want to process them, but we don't want to send notes.
-        messages_send_okay = post_age < 3600
+        messages_send_okay = post_age < 3600  # TODO put into settings
         if not messages_send_okay:
             logger.info(
                 f"[ZW] Posts: Post `{post_id}` is too old to send notifications for."
@@ -251,7 +254,9 @@ def ziwen_posts(post_limit=None):
 
             long_comment = RESPONSE.COMMENT_LONG + RESPONSE.BOT_DISCLAIMER
             message_reply(post, long_comment)
-            logger.info("[ZW] Posts: Left a comment informing that the post is long.")
+            logger.info(
+                f"[ZW] Posts: Left a comment informing that the post `{post_id}` is long."
+            )
 
         # Add to the saved wiki page if it's not a commonly requested language.
         if not post_ajo.lingvo.supported:

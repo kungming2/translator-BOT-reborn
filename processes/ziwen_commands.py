@@ -116,14 +116,15 @@ def ziwen_commands():
 
         # Check to see if the comment has already been acted upon.
         if db.cursor_main.execute(
-            "SELECT 1 FROM old_comments WHERE ID = ?", (comment_id,)
+            "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
         ).fetchone():
             # Comment already processed
             logger.debug(f"Comment `{comment_id}` has already been processed.")
             continue
         else:  # Mark comment as processed in the database
             db.cursor_main.execute(
-                "INSERT INTO old_comments (ID) VALUES (?)", (comment_id,)
+                "INSERT INTO old_comments (id, created_utc) VALUES (?, ?)",
+                (comment_id, int(comment.created_utc))
             )
             db.conn_main.commit()
             logger.debug(f"Comment `{comment_id}` is now being processed.")
@@ -173,7 +174,7 @@ def ziwen_commands():
                 if handler:
                     logger.info(
                         f"Command `{komando}` detected for `{comment_id}` on "
-                        f"post {original_post.id}. Passing to handler."
+                        f"post `{original_post.id}`. Passing to handler."
                     )
                     handler(comment, instruo, komando, original_ajo)
                     # Record this action to the counter log

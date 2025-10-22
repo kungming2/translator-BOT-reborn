@@ -233,12 +233,14 @@ def _initialize_main_db() -> None:
         """,
         """
         CREATE TABLE old_comments (
-            id TEXT
+            id TEXT,
+            created_utc INTEGER
         )
         """,
         """
         CREATE TABLE old_posts (
-            id TEXT PRIMARY KEY
+            id TEXT PRIMARY KEY,
+            created_utc INTEGER
         )
         """,
         """
@@ -249,7 +251,7 @@ def _initialize_main_db() -> None:
         """,
         """
         CREATE TABLE total_points (
-            month_year TEXT,
+            year_month TEXT,
             comment_id TEXT,
             username TEXT,
             points INTEGER,

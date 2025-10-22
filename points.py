@@ -57,7 +57,7 @@ def points_retriever(username: str) -> str:
 
     # Get current month's points
     cursor.execute(
-        "SELECT * FROM total_points WHERE username = ? AND month_year = ?",
+        "SELECT * FROM total_points WHERE username = ? AND year_month = ?",
         (username, current_month),
     )
     month_rows = cursor.fetchall()
@@ -90,7 +90,7 @@ def points_retriever(username: str) -> str:
 
     for month in recorded_months:
         cursor.execute(
-            "SELECT * FROM total_points WHERE username = ? AND month_year = ?",
+            "SELECT * FROM total_points WHERE username = ? AND year_month = ?",
             (username, month),
         )
         month_data = cursor.fetchall()
