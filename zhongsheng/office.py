@@ -29,7 +29,7 @@ async def office_quote(ctx):
                     await ctx.send(response)
                 else:
                     await ctx.send(
-                        f"Failed to fetch quote. API returned status code {resp.status}"
+                        f"⚠️ Failed to fetch quote. API returned status code {resp.status}"
                     )
     except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred: {str(e)}")

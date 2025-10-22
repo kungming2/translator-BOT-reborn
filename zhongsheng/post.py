@@ -36,7 +36,7 @@ async def post_search(ctx, post_input: str):
         post_id = post_input
 
     if not post_id:
-        await ctx.send("Could not extract post ID from the provided input.")
+        await ctx.send("⚠️ Could not extract post ID from the provided input.")
         return
 
     await search_logs(ctx, post_id, "post")

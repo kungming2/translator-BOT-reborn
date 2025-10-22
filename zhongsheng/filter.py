@@ -33,7 +33,7 @@ async def filter_post(ctx, *, title: str):
     try:
         # Validate that a title was provided
         if not title or not title.strip():
-            await ctx.send("Error: Please provide a post title to filter.")
+            await ctx.send("⚠️ Error: Please provide a post title to filter.")
             return
 
         # Run the blocking function in a thread pool
@@ -62,4 +62,4 @@ async def filter_post(ctx, *, title: str):
         await ctx.send(response)
 
     except Exception as e:
-        await ctx.send(f"An error occurred while filtering the post: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred while test filtering the post: {str(e)}")

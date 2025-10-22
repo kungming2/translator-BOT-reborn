@@ -56,9 +56,9 @@ async def error_logs(ctx):
             file = discord.File(
                 BytesIO(file_content.encode("utf-8")), filename="recent_errors.txt"
             )
-            await ctx.send("Error logs are too long, sending as file:", file=file)
+            await ctx.send("🗂️ Error logs are too long, sending as file:", file=file)
         else:
             await ctx.send(response)
 
     except Exception as e:
-        await ctx.send(f"An error occurred while reading error logs: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred while reading error logs: {str(e)}")

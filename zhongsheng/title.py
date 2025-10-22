@@ -53,10 +53,10 @@ async def title_search(ctx, *, title: str):
                 for key, value in vars(result).items():
                     formatted_output += f"**{key}:** {value}\n"
         else:
-            formatted_output = f"No valid title processing results for `{title}`"
+            formatted_output = f"🈚 No valid title processing results for `{title}`"
 
         await ctx.send(formatted_output)
 
     except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred: {str(e)}")
         traceback.print_exc()

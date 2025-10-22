@@ -91,4 +91,4 @@ async def lang_convert(ctx, *, language_input: str):
         await ctx.send(formatted_output)
 
     except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred: {str(e)}")

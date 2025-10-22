@@ -27,7 +27,7 @@ async def describe_image(ctx, image_url: str):
         # Validate URL format (http links are supported, just in case)
         if not image_url.startswith(("http://", "https://")):
             await ctx.send(
-                "Error: Please provide a valid image URL starting with http:// or https://"
+                "⚠️ Error: Please provide a valid image URL starting with http:// or https://"
             )
             return
 
@@ -51,4 +51,4 @@ async def describe_image(ctx, image_url: str):
         await ctx.send(response)
 
     except Exception as e:
-        await ctx.send(f"An error occurred while describing the image: {str(e)}")
+        await ctx.send(f"⚠️ An error occurred while describing the image: {str(e)}")

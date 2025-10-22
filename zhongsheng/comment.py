@@ -40,7 +40,7 @@ async def comment_search(ctx, *, comment_input: str):
 
         if not text_content:
             await ctx.send(
-                "No text provided. Please provide text before the --text flag."
+                "⚠️ No text provided. Please provide text before the --text flag."
             )
             return
 
@@ -55,7 +55,7 @@ async def comment_search(ctx, *, comment_input: str):
             await ctx.send(response)
 
         except Exception as e:
-            await ctx.send(f"Error processing text: {str(e)}")
+            await ctx.send(f"⚠️ Error processing text: {str(e)}")
             return
     else:
         # Original behavior: extract comment ID from various formats
@@ -81,7 +81,7 @@ async def comment_search(ctx, *, comment_input: str):
         if (
             not comment_id or len(comment_id) < 6
         ):  # Reddit IDs are typically 6+ characters
-            await ctx.send("Could not extract comment ID from the provided input.")
+            await ctx.send("⚠️ Could not extract comment ID from the provided input.")
             return
 
         try:
@@ -118,5 +118,5 @@ async def comment_search(ctx, *, comment_input: str):
             await ctx.send(response)
 
         except Exception as e:
-            await ctx.send(f"Error retrieving comment: {str(e)}")
+            await ctx.send(f"⚠️ Error retrieving comment: {str(e)}")
             return
