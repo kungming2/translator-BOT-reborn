@@ -37,6 +37,7 @@ async def error_logs(ctx):
 
         for i, entry in enumerate(reversed(recent_errors), 1):
             response += f"**Error #{i}:**\n```\n"
+            response += f"**Status:** {entry.get('resolved', 'N/A')}\n"
             response += f"Timestamp: {entry.get('timestamp', 'N/A')}\n"
             response += f"Bot Version: {entry.get('bot_version', 'N/A')}\n"
 
