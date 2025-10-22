@@ -71,6 +71,11 @@ def handle_subscribe(message, message_author):
     language_matches = parse_language_list(body_text)  # Returns Lingvo objects.
     lingvo_names_formatted = []
 
+    # Remove commonly excluded 3-letter words.
+    language_matches = [
+        x for x in language_matches if x.preferred_code not in commonly_excluded
+    ]
+
     # No valid matches.
     if not language_matches:  # There are no valid codes to subscribe.
         message_reply(
@@ -78,13 +83,10 @@ def handle_subscribe(message, message_author):
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
             + RESPONSE.BOT_DISCLAIMER,
         )
-        logger.info("[ZW] Messages: Subscription languages listed are not valid.")
+        logger.warning(
+            f"[ZW] Messages: Subscription languages listed are not valid: {body_text}"
+        )
         return
-
-    # Remove commonly excluded 3-letter words.
-    language_matches = [
-        x for x in language_matches if x.preferred_code not in commonly_excluded
-    ]
 
     # Insert the relevant codes.
     notifier_language_list_editor(language_matches, message_author, "insert")
