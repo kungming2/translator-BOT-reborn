@@ -844,15 +844,41 @@ def select_random_language(iso_639_1=False):
     return selected_language
 
 
+def show_menu():
+    print("\nSelect a test to run:")
+    print("1. Converter test (enter a string to test with the converter)")
+    print("2. Parse language list (enter a language list string to parse)")
+    print("x. Exit")
+
+
 if __name__ == "__main__":
     while True:
-        my_test = input("Enter the string you wish to test with the converter: ")
-        converter_result = converter(my_test)
+        show_menu()
+        choice = input("Enter your choice (1-2 or x): ")
 
-        if converter_result:
-            print(
-                f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`"
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            my_test = input("Enter the string you wish to test with the converter: ")
+            converter_result = converter(my_test)
+
+            if converter_result:
+                print(
+                    f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`"
+                )
+                pprint(vars(converter_result))
+            else:
+                print("Did not match anything.")
+
+        elif choice == "2":
+            language_list_input = input(
+                "Enter the language list from a subscription message to parse: "
             )
-            pprint(vars(converter_result))
-        else:
-            print("Did not match anything.")
+            parse_result = parse_language_list(language_list_input)
+            pprint(parse_result)
