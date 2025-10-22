@@ -178,6 +178,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
             "bot_version": bot_version,
             "context": last_post_text,
             "error": error_save_entry,
+            "resolved": False,
         }
 
         existing_log.append(new_entry)
