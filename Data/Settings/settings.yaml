@@ -108,6 +108,9 @@ internal_post_types:
 # This is how many posts or comments Ziwen will retrieve all at once.
 # PRAW can download 100 at a time.
 max_posts: 100
+# This is how many days' worth of processed post and comments ID we
+# wish to keep.
+max_old_age: 180
 # How long do we allow people to `!claim` a post? This is defined in seconds.
 claim_period: 28800
 # A number that defines the soft number of notifications an individual

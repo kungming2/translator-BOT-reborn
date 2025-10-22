@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 import json
 import re
+import time
 from pathlib import Path
 from typing import Dict, Union
 
@@ -101,42 +102,46 @@ def validate_all_yaml_files():
     return all_valid
 
 
-@task(schedule="daily")
 def clean_processed_database():
     """
     Cleans up old entries in old_comments and old_posts,
-    keeping only the most recent ones.
+    keeping only entries from the last 180 days based on the
+    created_utc column in each table.
     """
-    data_max_posts = SETTINGS["max_posts"] * 100
+    max_age_days = SETTINGS["max_old_age"]
     cursor = db.cursor_main
 
+    # Calculate the cutoff timestamp (current time - max_age_days)
+    cutoff_timestamp = int(time.time()) - (max_age_days * 24 * 60 * 60)
+
     # Clean old_comments
-    logger.info("Starting cleanup of 'old_comments' table...")
-    query_comments = """
-        WITH recent AS (
-            SELECT id FROM old_comments ORDER BY id DESC LIMIT ?
-        )
-        DELETE FROM old_comments
-        WHERE id NOT IN (SELECT id FROM recent);
-    """
-    cursor.execute(query_comments, (data_max_posts,))
     logger.info(
-        f"Cleanup complete. Kept latest {data_max_posts} entries in 'old_comments'."
+        f"Starting cleanup of 'old_comments' table (removing "
+        f"entries older than {max_age_days} days)..."
+    )
+    query_comments = """
+                     DELETE \
+                     FROM old_comments
+                     WHERE created_utc < ?; \
+                     """
+    cursor.execute(query_comments, (cutoff_timestamp,))
+    deleted_comments = cursor.rowcount
+    logger.info(
+        f"Cleanup complete. Deleted {deleted_comments} entries from 'old_comments'."
     )
 
     # Clean old_posts
-    logger.info("Starting cleanup of 'old_posts' table...")
-    query_posts = """
-        WITH recent AS (
-            SELECT id FROM old_posts ORDER BY id DESC LIMIT ?
-        )
-        DELETE FROM old_posts
-        WHERE id NOT IN (SELECT id FROM recent);
-    """
-    cursor.execute(query_posts, (data_max_posts,))
     logger.info(
-        f"Cleanup complete. Kept latest {data_max_posts} entries in 'old_posts'."
+        f"Starting cleanup of 'old_posts' table (removing entries older than {max_age_days} days)..."
     )
+    query_posts = """
+                  DELETE \
+                  FROM old_posts
+                  WHERE created_utc < ?; \
+                  """
+    cursor.execute(query_posts, (cutoff_timestamp,))
+    deleted_posts = cursor.rowcount
+    logger.info(f"Cleanup complete. Deleted {deleted_posts} entries from 'old_posts'.")
 
     db.conn_main.commit()
 

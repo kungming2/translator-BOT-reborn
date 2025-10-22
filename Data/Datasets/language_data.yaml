@@ -9881,6 +9881,20 @@ ur:
   subreddit: urdu
   supported: true
   thanks: شكريه
+urk:
+  country: Thailand
+  family: Austronesian
+  language_code_3: urk
+  link_ethnologue: https://www.ethnologue.com/language/urk
+  link_wikipedia: https://en.wikipedia.org/wiki/Urak_Lawoi%CA%BC_language
+  name: Urak Lawoi'
+  name_alternates:
+  - Chaw Talay
+  - Chawnam
+  - Lawoi
+  - Lawta
+  - Orak Lawoi’
+  population: 5000
 ute:
   country: United States
   family: Uto-Aztecan
