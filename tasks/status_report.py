@@ -296,6 +296,7 @@ def language_of_the_day(selected_language=None):
         today_language = converter(selected_language)
 
     wikipedia_search_term = f"ISO_639:{today_language.language_code_3}"
+    wikipedia_redirect_link = f"https://en.wikipedia.org/wiki/{wikipedia_search_term}"
     logger.info(
         f"Language of the day is: {today_language.name} "
         f"(`{today_language.language_code_3}`)."
@@ -369,7 +370,8 @@ def language_of_the_day(selected_language=None):
 
         # Notify Discord.
         language_blurb = (
-            f"The language of the day is **{today_language.name}** ({code_string}), "
+            f"The language of the day is **[{today_language.name}]"
+            f"({wikipedia_redirect_link})** ({code_string}), "
             f"{article} {today_language.family} language. {language_entry_summary}"
         )
         send_discord_alert(
