@@ -16,7 +16,7 @@ from database import db, record_filter_log
 # from dupe_detector import duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
-from models.diskuto import Diskuto, diskuto_writer
+from models.diskuto import Diskuto, diskuto_writer, diskuto_exists
 from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
 from request_closeout import closeout_posts
@@ -92,14 +92,18 @@ def ziwen_posts(post_limit=None):
         # Handle internal posts (such as meta or community ones).
         # Build regex dynamically from the list, then passes to external
         # handling for internal notifications at designated intervals
-        # by Wenju
+        # by Wenju.
         if is_internal_post(post):
-            diskuto_output = Diskuto.process_post(post)
-            diskuto_writer(diskuto_output)
-            logger.info(
-                f"> `{post.id}` post saved as an internal post for later processing."
-            )
-            continue  # Do not write to regular Ajo database.
+            if not diskuto_exists(post_id):  # Already saved
+                logger.debug(f"> Internal post `{post_id}` has already been processed.")
+                continue
+            else:
+                diskuto_output = Diskuto.process_post(post)
+                diskuto_writer(diskuto_output)
+                logger.info(
+                    f"> `{post.id}` post saved as an internal post for later processing."
+                )
+                continue  # Do not write to regular Ajo database.
 
         # Skip if post has already been processed
         if db.cursor_main.execute(
@@ -130,7 +134,7 @@ def ziwen_posts(post_limit=None):
         # Mark post as processed
         db.cursor_main.execute(
             "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
-            (post_id, int(post.created_utc))
+            (post_id, int(post.created_utc)),
         )
         db.conn_main.commit()
 

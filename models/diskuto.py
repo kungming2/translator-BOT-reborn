@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-This Diskuto class covers posts that are *not* requests - e.g.
+This Diskuto class covers internal posts that are *not* requests - e.g.
 Meta or Community posts. This is intended to make creating more granular
 types easier in the future.
 """
@@ -94,7 +94,7 @@ class Diskuto:
         self.processed = not self.processed
 
 
-def diskuto_exists(post_id):
+def diskuto_exists(post_id: str) -> bool:
     """
     Check if a Diskuto post exists in the internal_posts table.
 
@@ -144,16 +144,16 @@ def diskuto_writer(diskuto_obj):
                 (created_time, content_json, post_id),
             )
             conn.commit()
-            logger.info(f"[Diskuto Writer] Diskuto {post_id} exists, data updated.")
+            logger.info(f"[Diskuto Writer] Diskuto `{post_id}` exists, data updated.")
         else:
-            logger.info(f"[Diskuto Writer] Diskuto {post_id} exists, no change.")
+            logger.info(f"[Diskuto Writer] Diskuto `{post_id}` exists, no change.")
     else:
         cursor.execute(
             "INSERT OR REPLACE INTO internal_posts (id, created_utc, content) VALUES (?, ?, ?)",
             (post_id, created_time, content_json),
         )
         conn.commit()
-        logger.info(f"[Diskuto Writer] New Diskuto {post_id} written to database.")
+        logger.info(f"[Diskuto Writer] New Diskuto `{post_id}` written to database.")
 
 
 def diskuto_loader(post_id):
@@ -168,14 +168,14 @@ def diskuto_loader(post_id):
     )
 
     if result is None:
-        logger.debug(f"[Diskuto Loader] No Diskuto found for id {post_id}.")
+        logger.debug(f"[Diskuto Loader] No Diskuto found for id `{post_id}`.")
         return None
 
     try:
         diskuto_dict = orjson.loads(result["content"])
     except orjson.JSONDecodeError:
         logger.error(
-            f"[Diskuto Loader] Failed to decode Diskuto JSON for id {post_id}."
+            f"[Diskuto Loader] Failed to decode Diskuto JSON for id `{post_id}`."
         )
         return None
 
