@@ -787,6 +787,9 @@ def _determine_flair(titolo_object):
     """
 
     def resolve_flair_code(lang_obj):
+        # Add null check
+        if lang_obj is None:
+            return "generic"
         if lang_obj.language_code_1 and lang_obj.supported:
             return lang_obj.language_code_1
         elif lang_obj.language_code_3 and lang_obj.supported:
@@ -838,7 +841,7 @@ def _determine_flair(titolo_object):
                 # proceed normally for single, non-multiple language
                 flair_code = resolve_flair_code(lang)
                 titolo_object.add_final_code(flair_code)
-                titolo_object.add_final_text(lang.name)
+                titolo_object.add_final_text(lang.name if lang else "Unknown")
                 return
         elif len(targets) > 1:  # Defined multiple post
             preferred_codes = [
@@ -856,10 +859,17 @@ def _determine_flair(titolo_object):
                 lang = titolo_object.source[0]
                 flair_code = resolve_flair_code(lang)
                 titolo_object.add_final_code(flair_code)
-                titolo_object.add_final_text(lang.name)
+                titolo_object.add_final_text(lang.name if lang else "Unknown")
                 return
             else:
-                return  # No valid languages at all
+                # Set generic flair when no languages found. This
+                # should ideally be extremely rare.
+                titolo_object.add_final_code("generic")
+                titolo_object.add_final_text("Generic")
+                logger.warning(
+                    f"Determine Flair: Set completely generic: {titolo_object}"
+                )
+                return
 
         else:
             return  # No valid target languages

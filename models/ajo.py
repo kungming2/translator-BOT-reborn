@@ -860,6 +860,38 @@ def determine_flair_and_update(ajo: Ajo) -> None:
         logger.error(
             f"[ZW] No lingvo associated with `{ajo.id}`. Will not update flair."
         )
+        # Set generic flair and return early
+        output_flair_css = "generic"
+        output_flair_text = "Unknown"
+
+        if output_flair_css in post_templates:
+            template_id = post_templates[output_flair_css]
+            if not testing_mode:
+                submission.flair.select(
+                    flair_template_id=template_id, text=output_flair_text
+                )
+            else:
+                log_testing_mode(
+                    output_text=output_flair_text,
+                    title=f"Flair Update Dry Run for Submission {ajo.id}",
+                    metadata={
+                        "Submission ID": ajo.id,
+                        "Flair CSS": output_flair_css,
+                        "Flair Template ID": template_id,
+                        "Submission Title": getattr(ajo, "title_original", "N/A"),
+                        "Post Type": ajo.type,
+                        "Note": "No lingvo object available",
+                    },
+                )
+            logger.warning(
+                f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` "
+                f"and text `{output_flair_text}` (no lingvo)."
+            )
+
+        # Sync flair output back to Ajo instance
+        ajo.output_flair_css = output_flair_css
+        ajo.output_flair_text = output_flair_text
+        return  # Early return to prevent AttributeError
 
     language_name = ajo.lingvo.name or ""
     language_code_1 = (
