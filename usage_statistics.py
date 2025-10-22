@@ -151,7 +151,7 @@ def generate_command_usage_report(start_time, end_time, days):
     :param days: Number of days to average the usage over.
     :return: A Markdown-formatted string summarizing command usage.
     """
-    formatted_content = "\n##### Commands (Daily Average)"
+    formatted_content = "\n## Commands (Daily Average)"
     formatted_content += "\n| Command | Times Used |\n|----------|------------|\n"
 
     try:

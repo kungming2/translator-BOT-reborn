@@ -23,6 +23,9 @@ from yt_dlp import YoutubeDL
 from config import logger
 
 
+"""MEDIA FUNCTIONS"""
+
+
 def check_url_extension(submission_url: str) -> bool:
     """Checks to see if a URL extension matches an image file.
     Returns True if it is, False otherwise."""
@@ -83,6 +86,66 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
         except Exception as e:
             logger.error(f"Error fetching video info: {e}")
             return None
+
+
+"""MARKDOWN FUNCTIONS"""
+
+
+def format_markdown_table_for_discord(table_text: str) -> str:
+    """
+    Formats a Markdown table (with optional header above it)
+    into a neatly aligned triple-backtick code block for Discord.
+    Basically, this pads out the rows to look more even.
+    """
+    lines = [line.rstrip() for line in table_text.strip().splitlines() if line.strip()]
+
+    # Split header and table parts
+    header_lines = []
+    table_lines = []
+    found_table = False
+
+    for line in lines:
+        if "|" in line:
+            found_table = True
+        if found_table:
+            table_lines.append(line)
+        else:
+            header_lines.append(line)
+
+    if not table_lines:
+        return "```\n(No valid table found)\n```"
+
+    # Parse table rows
+    rows = []
+    for line in table_lines:
+        parts = [cell.strip() for cell in line.split("|")]
+        if parts and parts[0] == "":
+            parts = parts[1:]
+        if parts and parts[-1] == "":
+            parts = parts[:-1]
+        rows.append(parts)
+
+    # Compute column widths
+    num_cols = max(len(row) for row in rows)
+    col_widths = [0] * num_cols
+    for row in rows:
+        for i, cell in enumerate(row):
+            col_widths[i] = max(col_widths[i], len(cell))
+
+    # Rebuild table with alignment
+    formatted_table = []
+    for row in rows:
+        padded = [
+            cell.ljust(col_widths[i]) if "---" not in cell else "-" * col_widths[i]
+            for i, cell in enumerate(row)
+        ]
+        formatted_table.append("| " + " | ".join(padded) + " |")
+
+    # Header outside the code block
+    header_block = "\n".join(header_lines)
+    table_block = "```\n" + "\n".join(formatted_table) + "\n```"
+
+    return f"{header_block}\n\n{table_block}"
 
 
 if __name__ == "__main__":
