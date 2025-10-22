@@ -45,7 +45,7 @@ async def lang_convert(ctx, *, language_input: str):
             i += 1
 
         if not main_lang_tokens:
-            await ctx.send("You must specify a language code or 'random'.")
+            await ctx.send("⚠️ You must specify a language code or 'random'.")
             return
 
         # Join all main language tokens back together
@@ -60,7 +60,11 @@ async def lang_convert(ctx, *, language_input: str):
 
         # Run conversion
         result = languages.converter(language_input)
-        result_vars = vars(result)
+        if not result:  # No results from converter
+            await ctx.send("🈚 No matching results found by converter.")
+            return
+        else:
+            result_vars = vars(result)
 
         # Handle --add_alt flag only for Moderators
         added_alt = False
