@@ -42,7 +42,7 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
     # Look up the terms and format them appropriately.
     for term in terms[:5]:  # Limit to five terms.
         term_entry: str | None = None
-        term: str = re.sub(r"[^\w\s]", "", term)  # Strip punctuation.
+        term: str = re.sub(r"[^\w\s:]", "", term)  # Strip punctuation but allow colons
         logger.info(f"> Now searching for '{term}'...")
 
         # By default, turn off auto suggest.

@@ -716,4 +716,4 @@ def notify_list_statistics_calculator() -> None:
 
 
 if __name__ == "__main__":
-    print(_generate_24h_statistics_snippet())
+    print(language_of_the_day())
