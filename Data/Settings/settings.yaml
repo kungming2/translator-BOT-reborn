@@ -111,6 +111,9 @@ max_posts: 100
 # This is how many days' worth of processed post and comments ID we
 # wish to keep.
 max_old_age: 180
+# Do not send notifications messages for posts processed that are older
+# than this age in ziwen_posts().
+notification_cutoff_age: 60 # in minutes
 # How long do we allow people to `!claim` a post? This is defined in seconds.
 claim_period: 28800
 # A number that defines the soft number of notifications an individual

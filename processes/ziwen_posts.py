@@ -94,7 +94,7 @@ def ziwen_posts(post_limit=None):
         # handling for internal notifications at designated intervals
         # by Wenju.
         if is_internal_post(post):
-            if not diskuto_exists(post_id):  # Already saved
+            if diskuto_exists(post_id):  # Already saved
                 logger.debug(f"> Internal post `{post_id}` has already been processed.")
                 continue
             else:
@@ -176,7 +176,10 @@ def ziwen_posts(post_limit=None):
         # notifications to people. Otherwise, we won't.
         # This is mainly for catching up with older posts for downtime;
         # we want to process them, but we don't want to send notes.
-        messages_send_okay = post_age < 3600  # TODO put into settings
+        # notification_cutoff_age is in MINUTES, converted to seconds
+        # for comparison
+        notifications_cutoff = SETTINGS["notification_cutoff_age"] * 60
+        messages_send_okay = post_age < notifications_cutoff
         if not messages_send_okay:
             logger.info(
                 f"[ZW] Posts: Post `{post_id}` is too old to send notifications for."
