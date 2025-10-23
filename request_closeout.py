@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
-from connection import REDDIT
+from connection import REDDIT, is_valid_user
 from database import db
 from models.ajo import ajo_loader
 from reddit_sender import message_send
@@ -42,10 +42,25 @@ def _send_closeout_messages(
         ajo = ajos_map[post_praw.id]
         language = ajo.lingvo.name
 
+        author = post_praw.author
+        if author is None:
+            logger.warning(
+                f"Skipping post `{post_praw.id}` for closeout. "
+                "Author is deleted or unavailable."
+            )
+            continue
+
+        # Validate the user before messaging them.
+        if not is_valid_user(author.name):
+            logger.warning(
+                f"Skipping message to u/{author.name} (invalid or suspended)."
+            )
+            continue
+
         # Build subject and message
         subject_line = RESPONSE.MSG_CLOSING_OUT_SUBJECT.format(language=language)
         closeout_message = RESPONSE.MSG_CLOSING_OUT.format(
-            author=post_praw.author.name,
+            author=author.name,
             days=time_delta,
             language=language,
             permalink=post_praw.permalink,
@@ -55,12 +70,12 @@ def _send_closeout_messages(
 
         # Send the message
         message_send(
-            redditor_obj=post_praw.author,
+            redditor_obj=author,
             subject=subject_line,
             body=closeout_message,
         )
         logger.info(
-            f"Messaged u/{post_praw.author} about "
+            f"Messaged u/{author} about "
             f"closing out their post at {post_praw.permalink}."
         )
 
