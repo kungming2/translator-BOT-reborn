@@ -10,7 +10,7 @@ import wikipedia
 
 from config import logger
 from languages import converter
-from usage_statistics import action_counter
+
 
 """WIKIPEDIA DETECTOR (COMMENTS)"""
 
@@ -84,7 +84,6 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
     if entries:
         body_text: str = "\n".join(entries)
         logger.info("> Wikipedia entry data obtained.")
-        action_counter(len(entries), "Wikipedia lookup")
         return body_text
 
     return None
