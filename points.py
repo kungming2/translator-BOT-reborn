@@ -126,7 +126,7 @@ def points_worth_determiner(lingvo_object: "Lingvo") -> int:
     row = cursor.fetchone()
     if row:
         logger.info(
-            f"[ZW] Points determiner: Found cached multiplier for {language_code}: {row[0]}"
+            f"[ZW] Points determiner: Found cached multiplier for `{language_code}`: {row[0]}"
         )
         return int(row[0])
 
@@ -221,7 +221,7 @@ def points_tabulator(
     if original_post and original_post.author:
         op_author = original_post.author.name
     else:
-        op_author = '[deleted]'
+        op_author = "[deleted]"
     comment_author = instruo.author_comment  # String, not a PRAW object.
 
     if not comment_author or comment_author.lower() in (
@@ -229,7 +229,7 @@ def points_tabulator(
         USERNAME.lower(),
     ):
         # Ignore bot comments.
-        logger.info(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
+        logger.debug(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
         return
 
     body = comment.body.strip().lower()
