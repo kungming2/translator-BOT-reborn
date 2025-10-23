@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from typing import Dict, Union
 
+import orjson
 import prawcore
 import yaml
 from praw.models import WikiPage
@@ -13,7 +14,8 @@ from praw.models import WikiPage
 from config import SETTINGS, Paths, logger
 from connection import REDDIT, REDDIT_HELPER, USERNAME
 from database import db
-from languages import converter
+from discord_utils import send_discord_alert
+from languages import converter, validate_lingvo_dataset
 from points import points_worth_determiner
 from tasks import WENJU_SETTINGS, task
 from time_handling import (
@@ -29,15 +31,15 @@ def log_trimmer():
     """
     Trims the events log to keep only the last X entries,
     preventing the file from growing indefinitely.
+    Also trims the activity CSV to keep only the last X entries (plus header).
     """
-    events_path = Path(Paths.LOGS["EVENTS"])
     lines_to_keep = WENJU_SETTINGS["lines_to_keep"]
 
-    # Read all lines safely.
+    # Trim events log
+    events_path = Path(Paths.LOGS["EVENTS"])
     with events_path.open("r", encoding="utf-8", errors="ignore") as f:
         lines_entries = f.read().splitlines()
 
-    # Truncate if necessary.
     if len(lines_entries) > lines_to_keep:
         trimmed = "\n".join(lines_entries[-lines_to_keep:]) + "\n"
         with events_path.open("w", encoding="utf-8") as f:
@@ -48,56 +50,127 @@ def log_trimmer():
     else:
         logger.debug("[WJ] Events log within limits; no trimming needed.")
 
+    # Trim activity CSV
+    activity_path = Path(Paths.LOGS["ACTIVITY"])
+    csv_lines_to_keep = lines_to_keep // 5
+    with activity_path.open("r", encoding="utf-8", errors="ignore") as f:
+        csv_lines = f.read().splitlines()
+
+    if len(csv_lines) > csv_lines_to_keep + 1:  # +1 for header
+        header = csv_lines[0]
+        trimmed_data = csv_lines[-csv_lines_to_keep:]
+        trimmed_csv = "\n".join([header] + trimmed_data) + "\n"
+        with activity_path.open("w", encoding="utf-8") as f:
+            f.write(trimmed_csv)
+        logger.debug(
+            f"[WJ] Trimmed the activity CSV to keep the last {csv_lines_to_keep} entries (plus header)."
+        )
+    else:
+        logger.debug("[WJ] Activity CSV within limits; no trimming needed.")
+
     return
 
 
 @task(schedule="daily")
-def validate_all_yaml_files():
+def validate_data_files():
     """
-    Scans the given Paths class for all attributes containing YAML file paths
+    Scans the given Paths class for all attributes containing YAML and JSON file paths
     and validates them.
 
-    :return: True if all YAML files are valid, False otherwise.
+    :return: Tuple of (all_valid: bool, failed_files: list of str)
     """
-    yaml_files = []
+    config_files = []
     paths_class = Paths
 
-    # Collect all paths ending with .yaml from dictionaries in the Paths class
+    # Collect all paths ending with .yaml or .json from dictionaries in the Paths class
     for attr_name in dir(paths_class):
         attr_value = getattr(paths_class, attr_name)
         if isinstance(attr_value, dict):
             for key, path in attr_value.items():
-                if isinstance(path, str) and path.lower().endswith(".yaml"):
-                    yaml_files.append(path)
+                if isinstance(path, str) and (
+                    path.lower().endswith(".yaml") or path.lower().endswith(".json")
+                ):
+                    config_files.append(path)
 
-    if not yaml_files:
-        logger.warning("[YAML Validation] No YAML files found in Paths.")
-        return True
+    if not config_files:
+        logger.warning("[Config Validation] No YAML or JSON files found in Paths.")
+        return True, []
 
-    logger.info(f"[YAML Validation] Found {len(yaml_files)} YAML files to check.")
+    logger.info(f"[Config Validation] Found {len(config_files)} config files to check.")
 
     all_valid = True
-    for file_path in yaml_files:
+    failed_files = []
+
+    for file_path in config_files:
         path_obj = Path(file_path)
 
         if not path_obj.exists():
-            logger.error(f"[YAML Validation] File not found: {file_path}")
+            logger.error(f"[Config Validation] File not found: {file_path}")
             all_valid = False
+            failed_files.append(file_path)
             continue
 
         try:
             with open(path_obj, "r", encoding="utf-8") as f:
-                yaml.safe_load(f)
-            logger.debug(f"[YAML Validation] Valid YAML: {file_path}")
+                if file_path.lower().endswith(".yaml"):
+                    yaml.safe_load(f)
+                    logger.debug(f"[Config Validation] Valid YAML: {file_path}")
+                elif file_path.lower().endswith(".json"):
+                    try:
+                        content = f.read()
+                        orjson.loads(content)
+                    except ImportError:
+                        f.seek(0)
+                        json.load(f)
+                    logger.debug(f"[Config Validation] Valid JSON: {file_path}")
         except yaml.YAMLError as e:
-            logger.error(f"[YAML Validation] Invalid YAML in {file_path}: {e}")
+            logger.error(f"[Config Validation] Invalid YAML in {file_path}: {e}")
             all_valid = False
+            failed_files.append(path_obj.name)
+        except (orjson.JSONDecodeError, json.JSONDecodeError, ValueError) as e:
+            logger.error(f"[Config Validation] Invalid JSON in {file_path}: {e}")
+            all_valid = False
+            failed_files.append(path_obj.name)
         except Exception as e:
-            logger.error(f"[YAML Validation] Error reading {file_path}: {e}")
+            logger.error(f"[Config Validation] Error reading {file_path}: {e}")
             all_valid = False
+            failed_files.append(path_obj.name)
+
+    # Test and validate the general Lingvo dataset.
+    try:
+        problematic_langs = validate_lingvo_dataset()
+        if problematic_langs:
+            logger.error(
+                f"[Config Validation] Lingvo dataset validation failed "
+                f"for {len(problematic_langs)} language(s): {problematic_langs}"
+            )
+            all_valid = False
+        else:
+            logger.info("[Config Validation] Lingvo dataset validated successfully.")
+    except Exception as e:
+        logger.error(f"[Config Validation] Error running validate_lingvo_dataset: {e}")
+        all_valid = False
+        problematic_langs = ["<validation error>"]
 
     if all_valid:
-        logger.info("[WJ] All YAML files validated.")
+        logger.info("[Config Validation] All config files validated successfully.")
+    else:
+        details = []
+        if failed_files:
+            details.append(
+                f"The following {len(failed_files)} files failed validation:\n\n"
+                + "\n".join(f"* `{file_name}`" for file_name in failed_files)
+            )
+
+        if problematic_langs:
+            details.append(
+                f"The following {len(problematic_langs)} language codes failed Lingvo dataset validation:\n\n"
+                + "\n".join(f"* `{code}`" for code in problematic_langs)
+            )
+
+        information_msg = "\n\n".join(details)
+        send_discord_alert("Data Files Failed Validation", information_msg, "alert")
+        logger.info("Messaged mods on Discord about validation failure.")
 
     return all_valid
 
@@ -463,4 +536,4 @@ def monthly_statistics_unpinner():
 
 
 if __name__ == "__main__":
-    print(get_language_pages())
+    print(validate_data_files())
