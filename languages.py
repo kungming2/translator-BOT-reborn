@@ -148,13 +148,11 @@ class Lingvo:
 """MAIN LOADER"""
 
 
-def _load_lingvo_dataset(debug=False):
+def _combine_language_data():
     """
-    Loads the language dataset by combining raw language data and
-    utility language data, then returns a dictionary of Lingvo instances.
-    Also returns a list of language codes missing required fields.
+    Helper function to combine raw language data, utility data, and statistics.
 
-    :return: tuple[dict[str, Lingvo], list[str]]
+    :return: dict - Combined language data dictionary
     """
     allowed_keys = {
         "num_months",
@@ -174,8 +172,6 @@ def _load_lingvo_dataset(debug=False):
     # Process raw data
     for code, attrs in raw_data.items():
         combined_data[code] = attrs.copy()
-        if debug:
-            logger.debug(f"raw_data[{code}] = {attrs}")
 
     # Overlay utility data
     for code, attrs in utility_data.items():
@@ -183,10 +179,6 @@ def _load_lingvo_dataset(debug=False):
             combined_data[code].update(attrs)
         else:
             combined_data[code] = attrs.copy()
-        if debug:
-            logger.debug(
-                f"utility_data[{code}] applied, combined_data[{code}] = {combined_data[code]}"
-            )
 
     # Add statistics
     for code, stats in statistics_data.items():
@@ -197,36 +189,55 @@ def _load_lingvo_dataset(debug=False):
             combined_data[code].update(filtered_stats)
         else:
             combined_data[code] = filtered_stats.copy()
-        if debug:
-            logger.debug(
-                f"statistics_data[{code}] applied, combined_data[{code}] = {combined_data[code]}"
-            )
 
-    # Create Lingvo instances and track problematic codes
-    lingvo_dict = {}
+    return combined_data
+
+
+def validate_lingvo_dataset():
+    """
+    Validates the language dataset by checking for codes missing required fields.
+
+    :return: list[str] - List of language codes missing required fields
+                         (name or language_code)
+    """
+    combined_data = _combine_language_data()
+
+    # Check for problematic codes
     problematic_codes = []
+    for code, attrs in combined_data.items():
+        name = attrs.get("name")
+        lang_code = attrs.get("language_code", code)
+
+        if not name or not lang_code:
+            problematic_codes.append(code)
+            logger.debug(f"Problematic code: `{code}`")
+
+    return problematic_codes
+
+
+def _load_lingvo_dataset(debug=False):
+    """
+    Loads the language dataset by combining raw language data and
+    utility language data, then returns a dictionary of Lingvo instances.
+
+    :return: dict[str, Lingvo]
+    """
+    combined_data = _combine_language_data()
+
+    # Create Lingvo instances
+    lingvo_dict = {}
 
     for code, attrs in combined_data.items():
+        if debug:
+            logger.debug(f"combined_data[{code}] = {attrs}")
+
         # Get values and remove from attrs so they are not passed twice
         name = attrs.pop("name", None)
         lang_code = attrs.pop("language_code", code)
 
-        if not name or not lang_code:
-            problematic_codes.append(code)
-            if debug:
-                logger.warning(
-                    f"WARNING: {code} is missing required fields: name={name}, language_code={lang_code}"
-                )
-
         # Create Lingvo with cleaned attrs
         lingvo_dict[code] = Lingvo(
             language_code=lang_code, name=name or "unknown", **attrs
-        )
-
-    if problematic_codes:
-        logger.warning(
-            f"The following codes have issues in the "
-            f"language database: `{problematic_codes}`"
         )
 
     return lingvo_dict
