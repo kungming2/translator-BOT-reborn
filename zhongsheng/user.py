@@ -4,7 +4,7 @@
 
 from database import search_logs
 from usage_statistics import user_statistics_loader
-from utility import format_markdown_table_for_discord
+from utility import format_markdown_table_with_padding
 
 from . import command
 
@@ -33,7 +33,7 @@ async def user_search(ctx, *, user_input: str):
     # Get and append user statistics
     stats = user_statistics_loader(username)
     if stats:
-        stats_table = format_markdown_table_for_discord(stats)
+        stats_table = format_markdown_table_with_padding(stats)
         await ctx.send(f"**User Statistics for {username}:**\n{stats_table}")
     else:
         await ctx.send(f"🈚 No results for {username}.")
