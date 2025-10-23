@@ -49,10 +49,10 @@ def run_schedule(schedule_name):
 
     # Send Discord alert after all tasks have completed
     if executed_tasks:
-        task_list = ", ".join(executed_tasks)
+        task_list = "\n".join(f"* `{task_run}`" for task_run in sorted(executed_tasks))
         notify_message = (
             f"The following functions on the **{schedule_name}** schedule have been run:\n"
-            f"> `{task_list}`"
+            f"{task_list}"
         )
     else:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
