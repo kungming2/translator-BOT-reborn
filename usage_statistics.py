@@ -19,7 +19,9 @@ def action_counter(messages_number, action_type):
     Records the number of actions performed by type and date in a JSON file.
 
     :param messages_number: The number of actions to record (typically 1).
-    :param action_type: A string representing the type of action (e.g., "command").
+    :param action_type: A string representing the type of action
+                        (e.g., "!translated"). This is usually the Komando
+                        name.
     """
     try:
         count = int(messages_number)
@@ -177,11 +179,8 @@ def generate_command_usage_report(start_time, end_time, days):
     # Format the results into a Markdown table.
     rows = []
     for command, total in sorted(command_totals.items()):
-        if command == "!translate":
-            continue  # Skip excluded command.
-        display_name = r"\`lookup\`" if command == "`" else command
         daily_average = round(total / days, 2)
-        rows.append(f"| {display_name} | {daily_average} |")
+        rows.append(f"| {command} | {daily_average} |")
 
     return formatted_content + "\n".join(rows)
 
