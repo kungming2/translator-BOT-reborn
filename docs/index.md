@@ -26,6 +26,7 @@ For information on language processing can be found at the relevant page below.
 
 * [Commands (Reddit)](./commands.md)
 * [Commands (Discord)](./commands_discord.md)
+* [Data Files](./data_files.md)
 * [Language Processing](./language_processing.md)
 * [Title Processing](./title_processing.md)
 * [Lookup Functions](./lookup.md)
