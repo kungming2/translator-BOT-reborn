@@ -344,8 +344,12 @@ class Ajo:
         ajo.direction = titolo.direction
 
         # Set the language via preferred code
-        ajo.preferred_code = titolo.final_code
-        ajo.initialize_lingvo()  # Build the Lingvo object
+        # Use final_text to get the actual language, not final_code which is for CSS
+        if titolo.final_text:
+            ajo.preferred_code = converter(titolo.final_text).preferred_code
+        else:
+            ajo.preferred_code = titolo.final_code  # fallback
+        ajo.initialize_lingvo()
 
         # Additional info
         ajo.original_source_language_name = titolo.source
