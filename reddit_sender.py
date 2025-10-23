@@ -19,6 +19,7 @@ Functions:
 from praw.exceptions import APIException
 from praw.models import Comment, Message, Redditor, Submission
 from prawcore import NotFound
+from prawcore.exceptions import ServerError
 
 from config import SETTINGS, logger
 from testing import log_testing_mode
@@ -123,7 +124,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
     else:
         try:
             redditor_obj.message(subject=subject, message=body)
-            logger.info(f"Sent a private message to u/{username} successfully.")
+            logger.info(f"Successfully sent a private message to u/{username}.")
         except APIException as ex:
             if ex.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
                 # Specific Reddit PM restriction
@@ -132,10 +133,12 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 )
             elif ex.error_type == "RATELIMIT":
                 # Rate limited by the API.
-                logger.warning(
+                logger.info(
                     f"Reddit API rate limit reached. Cannot send message to u/{username}."
                 )
             else:
                 logger.error(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"
                 )
+        except ServerError as ex:  # Server-side issue.
+            logger.exception(f"Encountered server error: {ex}.")
