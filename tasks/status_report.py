@@ -29,6 +29,7 @@ from time_handling import (
     get_current_utc_time,
     time_convert_to_utc,
 )
+from utility import format_markdown_table_with_padding
 
 
 @task(schedule="hourly")
@@ -687,13 +688,14 @@ def notify_list_statistics_calculator() -> None:
     # Subscriber table section
     header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
     total_table = header + "\n".join(format_lines)
+    total_table = format_markdown_table_with_padding(total_table)
     logger.debug(f"[WY] notify_list_statistics_calculator: Total = {total_subs:,}")
 
     # Calculate missing ISO 639-1 languages (type-safe)
     ignore_codes = {"bh", "en", "nn", "nb"}
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
-        f"`| {code}` | {converter(code).name} |"
+        f"| `{code}` | {converter(code).name} |"
         for code in iso_sorted
         if code not in all_lang_codes and len(code) == 2 and code not in ignore_codes
     ]
@@ -703,6 +705,7 @@ def notify_list_statistics_calculator() -> None:
         f"\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
         "| Code | Language Name |\n|---|----|\n" + "\n".join(missing_codes)
     )
+    missing_section = format_markdown_table_with_padding(missing_section)
 
     # Combine into final Markdown
     final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"

@@ -91,7 +91,7 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
 """MARKDOWN FUNCTIONS"""
 
 
-def format_markdown_table_for_discord(table_text: str) -> str:
+def format_markdown_table_with_padding(table_text: str) -> str:
     """
     Formats a Markdown table (with optional header above it)
     into a neatly aligned triple-backtick code block for Discord.

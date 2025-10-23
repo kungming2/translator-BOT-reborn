@@ -18,7 +18,7 @@ from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
 from time_handling import get_current_utc_date, convert_to_day
 from usage_statistics import generate_command_usage_report
-from utility import format_markdown_table_for_discord
+from utility import format_markdown_table_with_padding
 
 
 def activity_csv_handler():
@@ -297,7 +297,7 @@ def collate_moderator_digest():
     command_data = generate_command_usage_report(
         current_time - time_delta, current_time, days_ago
     )
-    command_data = format_markdown_table_for_discord(command_data)
+    command_data = format_markdown_table_with_padding(command_data)
     noted_entries_data = note_language_tags()
 
     # Compile the full Markdown summary.
