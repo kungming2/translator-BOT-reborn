@@ -267,8 +267,8 @@ def note_language_tags():
 
         # Add a Markdown bullet instead of a table row.
         rows.append(
-            f"* [{title}]({post_url}) ({submission_date}) | "
-            f"`{flair_display}` | {post.num_comments} comments"
+            f"* [{title}]({post_url}) ({submission_date}) • "
+            f"`{flair_display}` • {post.num_comments} comments"
         )
 
     formatted_output = header + "\n".join(rows)
