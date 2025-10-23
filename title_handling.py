@@ -53,8 +53,8 @@ class Titolo:
             f"  title_processed='{self.title_processed}',\n"
             f"  notify_languages={self.notify_languages},\n"
             f"  language_country='{self.language_country}',\n"
-            f"  direction='{self.direction}'\n",
-            f"  ai_assessed={self.ai_assessed}\n)",
+            f"  direction='{self.direction}',\n"
+            f"  ai_assessed={self.ai_assessed}\n)"
         )
 
     # Helper methods for flair setting.
