@@ -109,7 +109,7 @@ def closeout_posts() -> None:
     ]
 
     if posts_to_process:
-        logger.info(f"Found {len(posts_to_process)} posts to examine...")
+        logger.debug(f"Found {len(posts_to_process)} posts to examine...")
     for post in posts_to_process:
         # Check number of comments. If there are more than our minimum required, take action.
         post_praw = REDDIT.submission(id=post.id)
@@ -120,22 +120,22 @@ def closeout_posts() -> None:
             or post_praw.selftext in ("[deleted]", "[removed]")
             or post_praw.removed_by_category is not None
         ):
-            logger.info(
+            logger.debug(
                 f"Skipping post `{post.id}` for post closeout — deleted or removed."
             )
-            post.set_closed_out(True)  # Mark it as closed.
-            continue
 
         if post_praw.num_comments >= SETTINGS["close_out_comments_minimum"]:
             logger.info(
                 f"Post `{post.id}` has {post_praw.num_comments} comments "
                 f"(minimum: {SETTINGS['close_out_comments_minimum']}). "
-                f"Adding to actionable posts and marking as closed out."
+                f"Adding to actionable posts."
             )
 
             actionable_posts.append(post_praw)
-            post.set_closed_out(True)
-            post.update_reddit()
+
+        # Mark as done, regardless of actionable status.
+        post.set_closed_out(True)
+        post.update_reddit()
 
     # Send close-out messages to authors
     time_delta = (datetime.now(UTC) - lower_dt).days
