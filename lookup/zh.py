@@ -1091,7 +1091,7 @@ async def zh_word(word):
         else:
             cmn_pronunciation = _convert_numbered_pinyin(alternate_pinyin)
             alt_romanize = _zh_word_alternate_romanization(alternate_pinyin)
-            yue_pronunciation = alternate_jyutping or "---"
+            yue_pronunciation = alternate_jyutping or None
             meaning = "\n".join(alternate_meanings)
 
     is_same_script = tradify(word) == simplify(word)
@@ -1108,8 +1108,11 @@ async def zh_word(word):
         f"\n| **Mandarin** (Wade-Giles) | *{alt_romanize[1]}* |"
         f"\n| **Mandarin** (Yale) | *{alt_romanize[0]}* |"
         f"\n| **Mandarin** (GR) | *{alt_romanize[2]}* |"
-        f"\n| **Cantonese** | *{yue_pronunciation}* |"
     )
+
+    # Only add Cantonese row if we have valid pronunciation
+    if yue_pronunciation and yue_pronunciation != "---":
+        pronunciation_block += f"\n| **Cantonese** | *{yue_pronunciation}* |"
 
     min_hak_data = _min_hakka_readings(tradify(word))
     lookup_header += pronunciation_block + min_hak_data
