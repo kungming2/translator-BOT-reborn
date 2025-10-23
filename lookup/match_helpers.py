@@ -159,8 +159,8 @@ def lookup_matcher(
     match_details: list[tuple[str, str | None]] = [
         (m.group(1), m.group(2)) for m in backtick_matches
     ]
-    logger.info(f"Backtick matches: {match_details}.")
-    logger.info(f"Match count: {len(backtick_matches)}. Content text: {content_text}")
+    logger.debug(f"Backtick matches: {match_details}.")
+    logger.debug(f"Match count: {len(backtick_matches)}. Content text: {content_text}")
 
     matches: list[str] = []
     inline_language_codes: list[str | None] = []
@@ -188,7 +188,7 @@ def lookup_matcher(
         return {}
 
     combined_text: str = "".join(matches)
-    logger.info(f"Combined text: {combined_text}")
+    logger.debug(f"Combined text: {combined_text}")
     logger.debug(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
 
     # Unicode script detection
@@ -198,10 +198,10 @@ def lookup_matcher(
     has_kana: bool = bool(re.search(r"[\u3041-\u309f\u30a0-\u30ff]", combined_text))
     has_hangul: bool = bool(re.search(r"[\uac00-\ud7af]", combined_text))
 
-    logger.info(
+    logger.debug(
         f"Script detection - Hanzi: {has_hanzi}, Kana: {has_kana}, Hangul: {has_hangul}"
     )
-    logger.info(f"Language codes to process: {language_codes}")
+    logger.debug(f"Language codes to process: {language_codes}")
 
     result: dict[str, list[str]] = {}
 
@@ -268,7 +268,7 @@ def lookup_matcher(
                 if "ko" not in result:
                     result["ko"] = []
                 result["ko"].extend(hangul_tokens)
-                logger.info(f"Added Korean tokens: {hangul_tokens}")
+                logger.debug(f"Added Korean tokens: {hangul_tokens}")
 
         # --- Handle non-CJK languages ---
         all_cjk_codes: set[str] = {"zh", "ja", "ko"}
@@ -280,6 +280,8 @@ def lookup_matcher(
                 if code not in result:
                     result[code] = []
                 result[code].append(match_text)
+
+    logger.info(f"Lookup Matcher Result: {result}")
 
     return result
 
