@@ -286,7 +286,7 @@ def ziwen_posts(post_limit=None):
 
         # Only update if we're not in testing mode.
         if not SETTINGS["testing_mode"]:
-            post_ajo.update_reddit()
+            post_ajo.update_reddit(initial_update=True)
 
         # Run request closeout.
         closeout_posts()

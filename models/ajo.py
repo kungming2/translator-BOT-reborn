@@ -781,13 +781,18 @@ class Ajo:
         titolo = process_title(submission.title)
         self.update_from_titolo(titolo)
 
-    def update_reddit(self):
+    def update_reddit(self, initial_update: bool = False):
         """
         Thin wrapper that calls the external flair update function.
         It also writes changes to the database.
+
+        Args:
+            initial_update: If True, sets flair even if unchanged
+                            (default: False). This is used in initial
+                            processing of posts.
         """
         ajo_writer(self)
-        determine_flair_and_update(self)
+        determine_flair_and_update(self, initial_update=initial_update)
 
 
 def _fetch_submission(post_id: str):
@@ -843,10 +848,16 @@ def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
     return f"[{joined}]"
 
 
-def determine_flair_and_update(ajo: Ajo) -> None:
+def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
     """
     Determine the correct flair CSS and text based on ajo attributes
     and update the Reddit submission flair.
+
+    Args:
+        ajo: The Ajo object containing post information
+        initial_update: If True, always sets flair even if unchanged
+                        (default: False). Used when processing a post
+                        for the very first time.
     """
     from startup import STATE
 
@@ -1003,6 +1014,14 @@ def determine_flair_and_update(ajo: Ajo) -> None:
                 )
                 logger.debug(
                     f"[ZW] Updated post `{ajo.id}` flair to `{output_flair_text}` "
+                    f"(template `{template_id}`)."
+                )
+            elif initial_update:
+                submission.flair.select(
+                    flair_template_id=template_id, text=output_flair_text
+                )
+                logger.info(
+                    f"[ZW] Initial flair set for post `{ajo.id}` to `{output_flair_text}` "
                     f"(template `{template_id}`)."
                 )
             else:
