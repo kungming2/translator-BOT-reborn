@@ -27,7 +27,7 @@ MSG_MISSING_ASSETS: |
 MSG_TRANSLATED: |
   Hey there u/{author},
 
-  Another redditor on r/translator has marked **[your post](https://www.reddit.com{permalink})** as translated. 
+  Another user on r/translator has marked **[your post](https://www.reddit.com{permalink})** as translated. 
   If your request has been fulfilled, please leave a comment thanking the translator!
 
   *P.S. We encourage you to keep your post up as a useful resource for other people.*
