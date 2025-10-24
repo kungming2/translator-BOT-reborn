@@ -31,9 +31,9 @@ def run_schedule(schedule_name):
     from . import (
         community_digest,
         data_maintenance,
+        iso_updates,
         moderator_digest,
         status_report,
-        iso_updates,
     )
 
     tasks_to_run = _tasks.get(schedule_name, [])
@@ -51,16 +51,16 @@ def run_schedule(schedule_name):
     if executed_tasks:
         task_list = "\n".join(f"* `{task_run}`" for task_run in sorted(executed_tasks))
         notify_message = (
-            f"The following functions on the **{schedule_name}** schedule have been run:\n"
+            f"The following tasks on the **{schedule_name}** schedule have been run:\n"
             f"{task_list}"
         )
     else:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
 
     # Don't send hourly alerts, though.
-    if schedule_name != "hourly":
+    if schedule_name not in ["hourly", "daily"]:
         send_discord_alert(
-            f"{schedule_name.title()} Actions Completed",
+            f"{schedule_name.title()} Tasks Completed",
             notify_message,
             "alert",
         )
