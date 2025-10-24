@@ -153,8 +153,8 @@ def generate_command_usage_report(start_time, end_time, days):
     :param days: Number of days to average the usage over.
     :return: A Markdown-formatted string summarizing command usage.
     """
-    formatted_content = "\n## Commands (Daily Average)"
-    formatted_content += "\n| Command | Times Used |\n|----------|------------|\n"
+    formatted_content = "\n## Actions (Daily Average)"
+    formatted_content += "\n| Action | Recorded Count |\n|----------|------------|\n"
 
     try:
         with open(Paths.LOGS["COUNTER"], "rb") as file:
