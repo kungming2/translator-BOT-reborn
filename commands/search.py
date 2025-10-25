@@ -57,7 +57,9 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 if "__main__" == __name__:
     while True:
         # Get comment URL from user
-        comment_url: str = input("Enter Reddit comment URL (or 'quit' to exit): ").strip()
+        comment_url: str = input(
+            "Enter Reddit comment URL (or 'quit' to exit): "
+        ).strip()
 
         # Check for exit
         if comment_url.lower() in ["quit", "exit", "q"]:
