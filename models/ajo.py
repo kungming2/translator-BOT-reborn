@@ -781,7 +781,7 @@ class Ajo:
         titolo = process_title(submission.title)
         self.update_from_titolo(titolo)
 
-    def update_reddit(self, initial_update: bool = False):
+    def update_reddit(self, initial_update: bool = False, moderator_set: bool = False):
         """
         Thin wrapper that calls the external flair update function.
         It also writes changes to the database.
@@ -790,9 +790,14 @@ class Ajo:
             initial_update: If True, sets flair even if unchanged
                             (default: False). This is used in initial
                             processing of posts.
+            moderator_set: If True, indicates the language was set by a moderator
+                           and skips adding "(Identified)" to the flair text
+                           (default: False).
         """
         ajo_writer(self)
-        determine_flair_and_update(self, initial_update=initial_update)
+        determine_flair_and_update(
+            self, initial_update=initial_update, moderator_set=moderator_set
+        )
 
 
 def _fetch_submission(post_id: str):
@@ -848,7 +853,9 @@ def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
     return f"[{joined}]"
 
 
-def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
+def determine_flair_and_update(
+    ajo: Ajo, initial_update: bool = False, moderator_set: bool = False
+) -> None:
     """
     Determine the correct flair CSS and text based on ajo attributes
     and update the Reddit submission flair.
@@ -858,6 +865,9 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
         initial_update: If True, always sets flair even if unchanged
                         (default: False). Used when processing a post
                         for the very first time.
+        moderator_set: If True, indicates the language was set by a moderator
+                       and skips adding "(Identified)" to the flair text
+                       (default: False).
     """
     from startup import STATE
 
@@ -973,7 +983,8 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
             if ajo.country_code:
                 output_flair_text += f" {{{ajo.country_code}}}"
             if language_name != "Unknown":
-                if getattr(ajo, "is_identified", False):
+                # Only add "(Identified)" if NOT moderator_set
+                if getattr(ajo, "is_identified", False) and not moderator_set:
                     output_flair_text += " (Identified)"
                 if getattr(ajo, "is_long", False):
                     output_flair_text += " (Long)"
@@ -997,12 +1008,14 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
 
         # Get current flair info
         current_flair: str | None = getattr(submission, "link_flair_text", None)
-        current_flair_template_id: str | None = getattr(submission, "link_flair_template_id", None)
+        current_flair_template_id: str | None = getattr(
+            submission, "link_flair_template_id", None
+        )
 
         # Only update flair if something actually changed
         flair_changed: bool = (
-                current_flair != output_flair_text
-                or current_flair_template_id != template_id
+            current_flair != output_flair_text
+            or current_flair_template_id != template_id
         )
 
         if not testing_mode:

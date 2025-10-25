@@ -82,6 +82,24 @@ def ziwen_commands():
     """
     Main runtime for r/translator that checks for keywords and commands.
 
+    This function processes comments in the subreddit, looking for bot commands
+    and keywords. It handles command execution, user statistics, points calculation,
+    and flair updates based on comment content.
+
+    The function performs the following operations:
+    - Fetches recent comments from the subreddit
+    - Skips already processed, deleted, or internal post comments
+    - Loads or creates Ajo objects for each post
+    - Detects and processes bot commands (e.g., !identify, !set, !claim)
+    - Records user statistics and calculates translation points
+    - Processes thank-you keywords from original posters
+    - Updates post flairs based on status changes
+
+    Special handling for the !set command:
+    When a moderator uses the !set command to change a post's language, the
+    flair update will not include the "(Identified)" suffix, as this indicates
+    a direct moderator action rather than community identification.
+
     :return: Nothing.
     """
     subreddit = SETTINGS["subreddit"]
@@ -124,7 +142,7 @@ def ziwen_commands():
         else:  # Mark comment as processed in the database
             db.cursor_main.execute(
                 "INSERT INTO old_comments (id, created_utc) VALUES (?, ?)",
-                (comment_id, int(comment.created_utc))
+                (comment_id, int(comment.created_utc)),
             )
             db.conn_main.commit()
             logger.debug(f"Comment `{comment_id}` is now being processed.")
@@ -149,6 +167,7 @@ def ziwen_commands():
         # subreddit-specific commands and instructions in it.
         # Note that an Instruo can have multiple commands associated
         # with it.
+        instruo = None
         if comment_has_command(comment_body):
             # Initialize the variables the command handlers will require.
             instruo = Instruo.from_comment(comment)
@@ -202,10 +221,17 @@ def ziwen_commands():
             # Assess whether a thank-you comment can mark the post as translated.
             _mark_short_thanks_as_translated(comment, original_ajo)
 
+        # Check if there was a 'set' command in this comment
+        moderator_set = False
+        if instruo and comment_has_command(comment_body):
+            moderator_set = any(
+                komando.name.lower() == "set" for komando in instruo.commands
+            )
+
         # Update the ajo if NOT in testing mode. This updates both the
         # flair on the site as well as the local database.
         if not SETTINGS["testing_mode"]:
-            original_ajo.update_reddit()
+            original_ajo.update_reddit(moderator_set=moderator_set)
 
 
 if __name__ == "__main__":
