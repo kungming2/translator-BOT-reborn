@@ -64,14 +64,23 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Generates a monthly JSON backup of all the language statistics data on our wiki.
 * 🔄 CHANGE: Copies and clears the "[identified](www.reddit.com/r/translator/wiki/identified)" and "[saved](https://www.reddit.com/r/translator/wiki/saved)" wikipages so they don't get too full. (new function)
 
+##### Zifang 1.0 (2023-06-26)
+* 🚀 FEATURE: [Wikipedia lookup](https://www.reddit.com/r/translator/comments/14k4xf3/meta_new_bot_features_including_wikipedia_lookup/) for terms by enclosing them with `{{curly braces}}`.
+* 🚀 FEATURE: Duplicate detection for posts submitted in a short period of time with similar titles and images.
+* 🚀 FEATURE: Closing out posts: when a post is more than a week old, and has quite a few comments, but hasn't been marked as "translated" or "needs review" yet, the bot will message their authors asking them to "close out" and mark their posts as translated.
+
+
 ##### Ziwen 1.8 "The Restoration Update" (2019-10-05)
 * 🚀 FEATURE: ~~Individuals who provided a translation for a deleted text-only post can use the `!restore` command to ask Ziwen to retrieve the now-deleted text.~~
     * ~~Ziwen will attempt to retrieve the text from [Pushshift](http://pushshift.io/). If successful, Ziwen will send the retrieved text as a private message to the translator.~~
     * ~~Calling the `!restore` command on a link/image post will result in a error reply from Ziwen.~~
 * ✨ ADDITION: Ziwen now maintains a per-post list of usernames it has already notified. This means that a user *should not* receive a second notification message for a post if they had already received one.
-    * An example of such a scenario is one where a `!page` command was used on a post, and then `!identify` for the same language. 
+    * An example of such a scenario is one where a `!page` command was used on a post, and then `!identify` for the same language.
+* ✨ ADDITION: [Added Chinese character variants](https://www.reddit.com/r/translator/comments/xu3k2q/meta_updates_to_ziwens_lookup_routines/) link to lookup results.
+* ✨ ADDITION: [Integration](https://www.reddit.com/r/translator/comments/1chs5k3/meta_improvements_to_search_and/) of YAML on the [Frequently Requested Translations](https://www.reddit.com/r/translator/wiki/frequently-requested) page with the `!search` command.
 * 🔄 CHANGE: Cleaned up Chinese and Japanese dictionaries footer and Cantonese/Hakka tones to account for differences between Markdown rendering on Old and New Reddit.
-* 🔄 CHANGE: Changed romanization of hangul in Chinese character results to Yale.
+* 🔄 CHANGE: ~~Changed romanization of hangul in Chinese character results to Yale.~~
+* 🔄 CHANGE: Changed romanization of hangul in Chinese character results to [Revised Romanization](https://en.wikipedia.org/wiki/Revised_Romanization_of_Korean). (suggestion made by u/zombiegojaejin)
 
 ##### Wenyuan 3.0 (2018-04-01)
 * ✨ ADDITION: Second complete rewrite of the bot. The rewritten statistics routine uses data from Ziwen's databases for even more accuracy.
@@ -80,8 +89,8 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 
 ##### Ziwen 1.7 "The Ajo Update" (2017-12-09)
 * 🚀 FEATURE: Though not externally visible, the backend of Ziwen has been completely revamped. Ziwen now builds a Python class called *[Ajo](https://en.wiktionary.org/wiki/-a%C4%B5o#Esperanto)* from each r/translator post, and the bot will make changes to each *Ajo* before pushing the changes to Reddit. This should result in fewer calls to Reddit, and has resulted in much cleaner code.
-* 🚀 FEATURE: Ziwen can now process commands made in edits, up to a two-hour buffer.
-* 🚀 FEATURE: Ziwen can now process country codes as well to provide services for regional languages. 
+* 🚀 FEATURE: [Ziwen can now process commands made in edits](https://www.reddit.com/r/translator/comments/7e2ryc/meta_ziwens_oneyear_anniversary_and_some_small/), up to a two-hour buffer.
+* 🚀 FEATURE: [Ziwen can now process country codes as well](https://www.reddit.com/r/translator/comments/7id9m9/meta_bot_support_for_languagecountry_combos_and/) to provide services for regional languages. 
 * ✨ ADDITION: Ziwen now calculates approximately how often languages are requested on the subreddit and includes that information in new subscription confirmations. (For frequently requested languages, data from the last 12 months is used to provide more accurate data, credit to u/dudds4 for the suggestion.)
 * ✨ ADDITION: Ziwen can send notifications for posts classified as scripts.
 * ✨ ADDITION: ~~Ziwen can now crosspost posts from English to another language (using the syntax `<` at the end of the command).~~
@@ -140,7 +149,7 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Updated the Middle Chinese and Old Chinese pronunciations to the [Baxter-Sagart 2014 reconstruction](http://ocbaxtersagart.lsait.lsa.umich.edu). (credit to u/sauihdik)
 * 🔄 CHANGE: Added handling for backslashes `\` in the word lookup command (the redesign will include those slashes if one is using the rich text editor).
 * 🔄 CHANGE: Streamlined the posts filtering routine and added an automated advisory comment for defined multiple posts.
-* 🔄 CHANGE: ~~Ziwen will now limit language notifications for a single language to around 100 messages per username per month.~~
+* 🔄 CHANGE: ~~[Ziwen will now limit language notifications](https://www.reddit.com/r/translator/comments/8nceh7/meta_proposed_update_to_notifications_for/) for a single language to around 100 messages per username per month.~~
 * 🔄 CHANGE: ~~Streamlined and cleaned up language reference comments by the bot.~~ 
 * 🔄 CHANGE: Refinements made to "short thanks" marking posts as translated. The criteria is more stringent now.
 * 🔄 CHANGE: ~~Further refinements and formatting adaptations for Wiktionary results.~~ Ziwen will also automatically tokenize sentences if they have spaces.
@@ -196,7 +205,7 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🕯️ REMOVED: Removed all `timestamp` links that were based on cloudsearch, as Reddit has deprecated the system for user-facing interfaces. 
 
 ##### Ziwen 1.6 "The Points Update" (2017-10-07)
-* 🚀 FEATURE: New points system: Contributors to r/translator will automatically get points for making translations, helping keep the community organized, and using bot functions. 
+* 🚀 FEATURE: [New points system](https://www.reddit.com/r/translator/comments/74xgy5/meta_earn_points_on_rtranslator/): Contributors to r/translator will automatically get points for making translations, helping keep the community organized, and using bot functions. 
 * 🚀 FEATURE: Users can message the bot with `Points` in the subject to get a rundown of how many points they've earned this month, as well as overall.
 * ✨ ADDITION: Ziwen's notification response will now include a native-language "thank you" for subscriptions.  
 * ✨ ADDITION: Added more dictionary links for Chinese word lookup results. 
@@ -217,11 +226,12 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * ✨ ADDITION: ~~Added the ability to submit posts on the status of the bot to the profile. Also added the ability to delete those statuses.~~
 
 ##### 1.5 "The Progress Update" (2017-07-22)
-* 🚀 FEATURE: New claiming/in progress function (`!claim`): Users can now claim an individual translation thread as something they're working on. Ziwen will automatically reset the flair if no translation is given after a certain amount of time. (credit to u/songluck)
-* 🚀 FEATURE: ~~Cross-posting now works from everywhere on Reddit. This is run by a separate script and is no longer part of the main Ziwen runtime.~~
+* 🚀 FEATURE:[ New claiming/in progress function](https://www.reddit.com/r/translator/comments/6pdjn0/meta_new_feature_claim_translation_requests_youre/) (`!claim`): Users can now claim an individual translation thread as something they're working on. Ziwen will automatically reset the flair if no translation is given after a certain amount of time. (credit to u/songluck)
+* 🚀 FEATURE: ~~[Cross-posting now works from everywhere on Reddit](https://www.reddit.com/r/translator/comments/6sni74/meta_now_you_can_crosspost_translation_requests/). This is run by a separate script and is no longer part of the main Ziwen runtime.~~
 * 🚀 FEATURE: ~~People often accidentally link to the subreddit by listing r/translate - the bot will now post a reply that corrects this.~~ 
-* ✨ ADDITION: Full support for all [ISO 639-3 languages](https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes) for commands and notifications. 
+* ✨ ADDITION: [Full support](https://www.reddit.com/r/translator/comments/6vomng/meta_rtranslator_commands_and_notifications_now/) for all [ISO 639-3 languages](https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes) for commands and notifications. 
 * ✨ ADDITION: ~~Full support for Reddit's [native cross-posting feature](https://www.reddit.com/r/modnews/comments/6vths0/beta_crossposting_better_attribution_for_cat/) (which is still in beta).~~
+* ✨ ADDITION: ~~Now uses [Pushshift to power cross-posting behavior](https://www.reddit.com/r/translator/comments/b1z1n9/meta_update_to_improve_the_reliability_and/).~~
 * ✨ ADDITION: Support for identification of [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) script codes on "Unknown" posts. 
 * ✨ ADDITION: Added a notifications status link to all notification messages (previously, it was only sent when someone signed up for a new language). 
 * ✨ ADDITION: Added an automatic link to message this subreddit in the comment Ziwen posts when someone tries to use a language code or name it cannot make sense of. 
@@ -296,7 +306,7 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * ✨ ADDITION: Wenyuan now uses Ziwen's language reference function to dynamically retrieve population and language family data for non-supported languages.
 
 ##### Ziwen 1.3 "The Cross-posting Update" (2017-04-25)
-* 🚀 FEATURE: ~~New cross-posting function: Ziwen can cross-post requests from selected subreddits to r/translator.~~ 
+* 🚀 FEATURE: ~~[New cross-posting function](https://www.reddit.com/r/translator/comments/6b74rw/meta_easily_crosspost_translation_requests_from/): Ziwen can cross-post requests from selected subreddits to r/translator.~~ 
 * ✨ ADDITION: Lookups for Chinese and Japanese *sentences* are now supported - Ziwen will automatically segment sentences and return word data based on that segmentation.
 * ✨ ADDITION: Japanese character lookup now supports individual hiragana particles (e.g. `は`, `え`, etc)
 * 🔄 CHANGE: Better formatting of Wiktionary lookup results. 
@@ -319,14 +329,16 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Integration with Ziwen's new *translated* flair language tags for greater accuracy and speed.
 
 ###### Wenyuan 1.0 (2017-03-14)
+* 🔄 CHANGE: `!wronglanguage` changed to `!identify` after a [public request for feedback](https://www.reddit.com/r/translator/comments/61m09r/meta_proposal_to_change_the_wronglanguage_command/).
 * 🛠️ BUG FIX: Bug fixes.
 
-##### Ziwen 1.1 "The Notifications Update" (2017-03-01)
-* 🚀 FEATURE: Added support for receiving notifications from Ziwen about specific language posts. 
+##### Ziwen 1.1 "The Notifications Update" (2017-02-21)
+* 🚀 FEATURE: [Added support for receiving notifications](https://www.reddit.com/r/translator/comments/5vhc4s/meta_introducing_language_notifications_on/) from Ziwen about specific language posts. 
 * 🔄 CHANGE: ~~Page lists have been moved to a single CSV file instead of multiple text files.~~ 
 
 ##### Ziwen 1.0 "The Reference Update" (2017-02-09)
-* 🚀 FEATURE: Full release of Ziwen with language reference lookup, search functionality, and Chinese/Japanese character/word lookup.
+* 🚀 FEATURE: [Full release of Ziwen](https://www.reddit.com/r/translator/comments/5mbj29/meta_new_bot_functions_hanzikanji_lookup_language/) with language reference lookup, search functionality, and Chinese/Japanese character/word lookup.
+* ✨ ADDITION: [Wiktionary lookup and title processing added](https://www.reddit.com/r/translator/comments/5ukxfg/meta_bot_upgrades_lookup_function_for_all/).
 
 ###### Wenyuan 0.9 (2017-01-11)
 * 🚀 FEATURE: Added function to post a weekly post summing up all remaining unidentified "Unknown" posts. (Note: now part of Wenju)
@@ -335,7 +347,7 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Addition of the mod-accessible ~~`!note`~~ and `!set` commands.
 
 ##### Ziwen 0.6 (2016-11-18)
-* 🚀 FEATURE: Initial release with paging functions for languages.
+* 🚀 FEATURE: [Initial release with paging functions](https://www.reddit.com/r/translator/comments/5dl40d/meta_new_page_function_for_rtranslator_and_more/) for languages.
 
 ###### Wenyuan 0.7 (2016-11-13)
 * ✨ ADDITION: Added language family data.  
@@ -344,5 +356,5 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Bot rewritten to allow for targeted month output (for example, to retrieve data for July 2016 only).
 * 🔄 CHANGE: ~~Added [Bojie](https://en.wikipedia.org/wiki/Cai_Yong) subroutine to retrieve data from months prior to the subreddit redesign.~~
 
-###### Wenyuan 0.6 (2016-10-24)
+###### [Wenyuan 0.6](https://www.reddit.com/r/translator/comments/5ahwgr/meta_rtranslator_language_statistics_october_2016/) (2016-10-24)
 * 🚀 FEATURE:  [Initial version written by u/doug89](https://www.reddit.com/r/RequestABot/comments/591mch/requesting_a_bot_that_can_tabulate_number_of/) with terminal-only output. The bot could only search for data a month prior to its run time (later termed the [Pingzi](https://en.wikipedia.org/wiki/Zhang_Heng) subroutine)
