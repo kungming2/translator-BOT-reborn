@@ -266,13 +266,17 @@ def ziwen_posts(post_limit=None):
             )
 
         # Add to the saved wiki page if it's not a commonly requested language.
-        if not post_ajo.lingvo.supported:
+        # Handle case where lingvo might be None
+        if post_ajo.lingvo is None or not post_ajo.lingvo.supported:
+            # Get language name, handling None case
+            language_name = post_ajo.lingvo.name if post_ajo.lingvo else "Unparsed"
+
             update_wiki_page(
                 "save",
                 get_current_utc_date(),
                 post_title,
                 post_id,
-                post_ajo.lingvo.name,
+                language_name,
             )
 
         # Update the Ajo with the Titolo data. This takes care of writing
