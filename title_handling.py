@@ -650,8 +650,8 @@ def _resolve_languages(chunk, is_source):
         w
         for w in words
         if not (
-            (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
-            or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
+                (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
+                or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
         )
     ]
 
@@ -662,6 +662,9 @@ def _resolve_languages(chunk, is_source):
 
     resolved = []
     for word in cleaned_words[:max_words_to_check]:
+        # **FIX: Strip trailing punctuation before conversion**
+        word = word.rstrip('-_.,;:!?')
+
         if "Eng" in word and len(word) <= 8:
             word = "English"
         converter_result = converter(word)
