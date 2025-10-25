@@ -188,7 +188,7 @@ This function also serves as a simple way to find thematically similar posts tha
 #### Notes
 
 * This function is also integrated with the [frequently-requested translations page](www.reddit.com/r/translator/wiki/frequently-requested) and can return information saved on that page. 
-* If there are no results for the search term, Ziwen will leave a comment letting the redditor know.
+* If there are no results for the search term, Ziwen will leave a comment letting the user know.
 * Ziwen will *not* automatically mark a thread as translated even if the quoted comment contains `!translated`. It'll be up to the person who called the `!search` function to check if the displayed results contain accurate translations.
 
 #### Function
