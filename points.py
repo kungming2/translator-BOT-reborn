@@ -211,7 +211,7 @@ def create_mod_note(
     :return: True if note was created successfully, False otherwise.
     """
     try:
-        included_note = f"Helped translate `{post_id}` ({language_name})"
+        included_note = f"Helped translate https://redd.it/{post_id} ({language_name})"
 
         REDDIT.subreddit(SETTINGS["subreddit"]).mod.notes.create(
             label="HELPFUL_USER",
