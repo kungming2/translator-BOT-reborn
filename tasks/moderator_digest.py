@@ -114,19 +114,25 @@ def activity_csv_handler():
     return summary
 
 
-def error_log_count():
+def error_log_count() -> str:
     """
     Count how many entries exist in the YAML-formatted error log.
 
+    Reads a YAML file containing error log entries, each with a timestamp,
+    bot_version, context, error traceback, and resolved status. Returns a
+    Markdown-formatted summary with the total count and details about the
+    most recent entry.
+
     :return: A Markdown-formatted snippet detailing how many entries
-             are in the error log.
+             are in the error log, including the timestamp and resolved
+             status of the most recent entry.
     """
-    header = "\n# General Information\n"
+    header: str = "\n# General Information\n"
 
     # Try to access and parse the error log file.
     try:
         with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
-            error_logs = yaml.safe_load(f) or []
+            error_logs: list[dict] | None = yaml.safe_load(f) or []
     except FileNotFoundError:
         logger.warning("[WJ] error_log_count: Error log file not found.")
         return f"{header}\n* **Error log entries**: 0 (file missing)"
@@ -138,27 +144,29 @@ def error_log_count():
     if not isinstance(error_logs, list) or not error_logs:
         return f"{header}\n* **Error log entries**: 0"
 
-    num_entries = len(error_logs)
+    num_entries: int = len(error_logs)
 
-    # Safely get the last entry's timestamp.
-    last_entry = error_logs[-1]
-    last_timestamp = last_entry.get("timestamp", "Unknown time")
+    # Safely get the last entry's timestamp and resolved status.
+    last_entry: dict = error_logs[-1]
+    last_timestamp: str = last_entry.get("timestamp", "Unknown time")
+    last_resolved: bool = last_entry.get("resolved", False)
+    last_entry_resolved_status: str = " (resolved)" if last_resolved else ""
 
     # Convert timestamp to readable local format if possible.
     # This is an exception to the formal that's usually saved, since
     # this is display-only.
     try:
-        last_entry_time = datetime.fromisoformat(
+        last_entry_time: str = datetime.fromisoformat(
             last_timestamp.replace("Z", "+00:00")
         ).strftime("%Y-%m-%d %H:%M:%S UTC")
     except (ValueError, TypeError, AttributeError):
         last_entry_time = last_timestamp  # Fallback to raw value
 
     # Format for Markdown output.
-    formatted_template = (
+    formatted_template: str = (
         f"{header}\n"
         f"* **Error log entries**: {num_entries}\n"
-        f"* **Last entry from**: {last_entry_time}"
+        f"* **Last entry from**: {last_entry_time}{last_entry_resolved_status}"
     )
 
     logger.debug(f"[WJ] error_log_count: Found {num_entries} entries in the error log.")
@@ -334,4 +342,4 @@ def collate_moderator_digest():
 
 
 if __name__ == "__main__":
-    print(collate_moderator_digest())
+    print(error_log_count())
