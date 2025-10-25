@@ -459,7 +459,10 @@ def _iso_codes_deep_search(search_term, script_search=False):
 
 
 def converter(
-    input_text: str, fuzzy: bool = True, specific_mode: bool = False
+    input_text: str,
+    fuzzy: bool = True,
+    specific_mode: bool = False,
+    preserve_country: bool = False,
 ) -> Lingvo | None:
     """
     Convert an input string to a Lingvo object.
@@ -470,6 +473,8 @@ def converter(
     :param fuzzy: Whether to apply fuzzy name matching.
     :param specific_mode: If True, use strict lookups (ISO_639_3 for 3-char,
                           ISO_15924 for 4-char).
+    :param preserve_country: If True, keep the country field from YAML data.
+                            If False (default), clear country for simple lookups.
     :return: A Lingvo instance or None if not found.
     """
     # Get the current (possibly refreshed) lingvos data
@@ -492,7 +497,8 @@ def converter(
                 lingvo = lingvos.get(input_lower)
                 if lingvo:
                     lingvo_copy = copy.deepcopy(lingvo)
-                    lingvo_copy.country = None
+                    if not preserve_country:
+                        lingvo_copy.country = None
                     return lingvo_copy
             return None
         elif len(input_text) == 3:
@@ -500,7 +506,8 @@ def converter(
             iso_search = _iso_codes_deep_search(input_text, script_search=False)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
-                lingvo_copy.country = None
+                if not preserve_country:
+                    lingvo_copy.country = None
                 return lingvo_copy
             return None
         elif len(input_text) == 4:
@@ -508,7 +515,8 @@ def converter(
             iso_search = _iso_codes_deep_search(input_text, script_search=True)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
-                lingvo_copy.country = None
+                if not preserve_country:
+                    lingvo_copy.country = None
                 return lingvo_copy
             return None
         else:
@@ -530,7 +538,8 @@ def converter(
             lingvo = lingvos.get(mapped_code)
             if lingvo:
                 lingvo_copy = copy.deepcopy(lingvo)
-                lingvo_copy.country = None
+                if not preserve_country:
+                    lingvo_copy.country = None
                 return lingvo_copy
 
         # Step 2: Prefixed script code ("unknown-Cyrl")
@@ -567,11 +576,13 @@ def converter(
         if input_title == lingvo.name:
             # Return a copy with no country info since input has no region
             lingvo_copy = copy.deepcopy(lingvo)
-            lingvo_copy.country = None
+            if not preserve_country:
+                lingvo_copy.country = None
             return lingvo_copy
         if input_title in (alt.title() for alt in lingvo.name_alternates or []):
             lingvo_copy = copy.deepcopy(lingvo)
-            lingvo_copy.country = None
+            if not preserve_country:
+                lingvo_copy.country = None
             return lingvo_copy
 
     # Try to find a Lingvo by 2-letter code first
@@ -580,7 +591,8 @@ def converter(
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
             # Clear country info for simple 2-letter code inputs
-            lingvo_copy.country = None
+            if not preserve_country:
+                lingvo_copy.country = None
             return lingvo_copy
 
     # If input is 3 letters, check if it maps to a 2-letter code, then prefer that Lingvo
@@ -589,17 +601,20 @@ def converter(
             if lingvo.language_code_3 == input_lower:
                 if code_1 in lingvos:
                     lingvo_copy = copy.deepcopy(lingvos[code_1])
-                    lingvo_copy.country = None
+                    if not preserve_country:
+                        lingvo_copy.country = None
                     return lingvo_copy
                 else:
                     lingvo_copy = copy.deepcopy(lingvo)
-                    lingvo_copy.country = None
+                    if not preserve_country:
+                        lingvo_copy.country = None
                     return lingvo_copy
 
         for lingvo in lingvos.values():
             if input_lower == lingvo.language_code_3:
                 lingvo_copy = copy.deepcopy(lingvo)
-                lingvo_copy.country = None
+                if not preserve_country:
+                    lingvo_copy.country = None
                 return lingvo_copy
 
     # First try language codes.
@@ -611,7 +626,8 @@ def converter(
         # _iso_codes_deep_search returns a Lingvo instance.
         # Copy it and clear country for simple inputs
         lingvo_copy = copy.deepcopy(iso_search)
-        lingvo_copy.country = None
+        if not preserve_country:
+            lingvo_copy.country = None
         return lingvo_copy
 
     # Special abbreviation fixes (like 'vn' meaning Vietnamese)
@@ -620,7 +636,8 @@ def converter(
         lingvo = lingvos.get(fixed)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
-            lingvo_copy.country = None
+            if not preserve_country:
+                lingvo_copy.country = None
             return lingvo_copy
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
@@ -629,14 +646,17 @@ def converter(
         lingvo = lingvos.get(canonical_code)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
-            lingvo_copy.country = None
+            if not preserve_country:
+                lingvo_copy.country = None
             return lingvo_copy
 
     # Fuzzy match if nothing else worked
     if fuzzy and input_title not in language_module_settings["FUZZ_IGNORE_WORDS"]:
         fuzzy_result = _fuzzy_text(input_title, reference_lists["SUPPORTED_LANGUAGES"])
         if fuzzy_result:
-            return converter(fuzzy_result, fuzzy=False)
+            return converter(
+                fuzzy_result, fuzzy=False, preserve_country=preserve_country
+            )
 
     # Final fallback: maybe a script code
     if len(input_text) == 4:
@@ -644,7 +664,8 @@ def converter(
             lingvo_script = _iso_codes_deep_search(input_text, script_search=True)
             if lingvo_script:
                 lingvo_copy = copy.deepcopy(lingvo_script)
-                lingvo_copy.country = None
+                if not preserve_country:
+                    lingvo_copy.country = None
                 return lingvo_copy
             else:
                 return None

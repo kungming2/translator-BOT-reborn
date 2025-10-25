@@ -294,7 +294,7 @@ def language_of_the_day(selected_language=None):
         today_language = select_random_language(True)
         logger.info("Selecting an ISO 639-1 language today.")
     else:
-        today_language = converter(selected_language)
+        today_language = converter(selected_language, preserve_country=True)
 
     wikipedia_search_term = f"ISO_639:{today_language.language_code_3}"
     wikipedia_redirect_link = f"https://en.wikipedia.org/wiki/{wikipedia_search_term}"

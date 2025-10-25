@@ -59,7 +59,7 @@ async def lang_convert(ctx, *, language_input: str):
             importlib.reload(languages)
 
         # Run conversion
-        result = languages.converter(language_input)
+        result = languages.converter(language_input, preserve_country=True)
         if not result:  # No results from converter
             await ctx.send("🈚 No matching results found by converter.")
             return
