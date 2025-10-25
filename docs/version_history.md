@@ -8,19 +8,19 @@ This page records the version history of the various routines of translator-BOT.
 
 ## Legend
 
-| Tag             | Description                                                                                     |
-|-----------------|-------------------------------------------------------------------------------------------------|
-| 🚀 **Feature**  | A key new feature or change of the bot, one that usually merits its own announcement post.      | 
-| ✨ **Addition**  | Refinements to existing features of the bot  to improve usability, usually noticeable by users. | 
-| 🔄 **Change**   | Changes to how the bot operates, usually not noticeable by users.                               | 
-| 🛠️ **Bug Fix** | Bug fixes for issues.                                                                           | 
-| 🕯️ **Removed** | Features or code handling that was removed.                                                     |
+| Tag             | Description                                                                                    |
+|-----------------|------------------------------------------------------------------------------------------------|
+| 🚀 **Feature**  | A key new feature or change of the bot, one that usually merits its own announcement post.     | 
+| ✨ **Addition**  | Refinements to existing features of the bot to improve usability, usually noticeable by users. | 
+| 🔄 **Change**   | Changes to how the bot operates, usually not noticeable by users.                              | 
+| 🛠️ **Bug Fix** | Bug fixes for issues.                                                                          | 
+| 🕯️ **Removed** | Features or code handling that was removed.                                                    |
 
 *Entries which are crossed out indicate [removed or irrelevant functionality](deprecated.md).*
 
 ##### translator-BOT 2.0 "The Reborn Update" (2025-10-20)
 
-The various routines (Ziwen, Wenyuan, Wenju) no longer have separate version numbers as of this update. since all of them fully share the same code.
+The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have separate version numbers as of this update, since all of them fully share the same code.
 
 * 🚀 FEATURE: Complete rewrite and re-rationalization of all routines that use the u/translator-BOT account, intended to make everything much more efficient and future changes/bugfixes/additions easier. Code for the rewritten bot may be found on [Github](https://github.com/kungming2/translator-BOT-reborn). 
     * Consequently, some functions which ran outside of Ziwen in a separate routine called Zifang have been reincorporated into the main bot Ziwen. This [includes](https://www.reddit.com/r/translator/comments/14k4xf3/meta_new_bot_features_including_wikipedia_lookup/) Wikipedia lookup, closing out posts, and duplicate detection for new posts.
@@ -31,12 +31,14 @@ The various routines (Ziwen, Wenyuan, Wenju) no longer have separate version num
 * ✨ ADDITION: If it's a request for a image translation, a very short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
 * 🔄 CHANGE: Time handling bot-wide has been standardized to [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
 * 🔄 CHANGE: Signing up for language notifications is more tolerant of non-standard formatting.
-* 🔄 CHANGE: More accurate and relevant Sino-Vietnamese readings of single Han characters in the lookup. (credit to u/TheDeadlyZebra for the suggestion)
+* 🔄 CHANGE: More accurate and relevant [Sino-Vietnamese](https://en.wikipedia.org/wiki/Sino-Vietnamese) readings of single Han characters in the lookup. (credit to u/TheDeadlyZebra for the suggestion)
 * 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. [王后](https://en.wiktionary.org/wiki/%E7%8E%8B%E5%90%8E) will never be the nonsensical 王後 now).
 * 🔄 CHANGE: The `!search` function now uses [DuckDuckGo](https://duckduckgo.com/). Frankly, its results aren't as good as Google, but the [module](https://pypi.org/project/googlesearch-python/) we usually use for Google is [currently inoperational](https://github.com/Nv7-GitHub/googlesearch/issues). 
 * 🔄 CHANGE: All [2024-2025 updates to ISO 639-3](https://iso639-3.sil.org/code_changes/change_management) have been added to the dataset. New updates will be automatically recorded by the bot and posted to r/translatorBOT.
+* 🔄 CHANGE: Chinese subreddit character/word lookup has been transferred to u/ChineseLanguageMods. It uses the same backend as Ziwen.
 * 🔄 CHANGE: Number of notification messages sent for posts has been lowered to 7 in order to work with Reddit's more stringent API rate limits.
 * 🔄 CHANGE: Content in multi-line triple backtick sections (`\`\`\``) will be ignored for lookup. 
+* 🔄 CHANGE: Translators' contributions are also added to [mod notes](https://www.reddit.com/r/modnews/comments/t8vafc/announcing_mod_notes/). 
 
 ###### Deprecated Features
 
@@ -50,7 +52,7 @@ The various routines (Ziwen, Wenyuan, Wenju) no longer have separate version num
     * `!translate`/`!translator`: These commands formerly allowed you to ask the bot to cross-post posts to r/translator.
     * `!delete`: Formerly allowed OPs or mods to delete bot cross-posts. 
     * `!note`: A rarely used mod-only command, it manually saved a post with a generic post flair to the [saved languages log](https://www.reddit.com/r/translator/wiki/saved). This has become completely automated now and is no longer necessary. 
-    * `+`: Allowed users to manually award a point to a user.
+    * `+`: Allowed users to manually award a point to a user. This was practically never used.
 
 ##### Wenju 1.0 (2024-04-22)
 
@@ -223,7 +225,7 @@ Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
 * 🔄 CHANGE: Quality of life adjustments for title formatting - alternate names for English (Ingles, Ingerris, etc) is now supported. The bot also has a hard list of words that it won't apply fuzzy spelling matching to - for example, Javanese posts kept getting corrected to Japanese. 
 * 🔄 CHANGE: Notifications will now be sent to people signed up for both languages if a request is for two non-English languages (e.g. Dutch to Indonesian). 
 * 🛠️ BUG FIX: Fixed a situation where Ziwen would delete its attribution comment on one of its crossposts. 
-* 🛠️ BUG FIX: Fixed a situation where Ziwen would delete processed posts' id from its database (a relic from the ReplyBot routine). Posts and comments are now stored on separate tables.  
+* 🛠️ BUG FIX: Fixed a situation where Ziwen would delete processed posts' id from its database (a relic from the [ReplyBot](https://praw.readthedocs.io/en/stable/tutorials/reply_bot.html) tutorial routine). Posts and comments are now stored on separate tables.  
 
 ##### Wenyuan 2.3 (2017-11-15)
 * ✨ ADDITION: ~~Added the ability to submit posts on the status of the bot to the profile. Also added the ability to delete those statuses.~~

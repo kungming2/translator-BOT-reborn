@@ -6,6 +6,7 @@ functions are used by Wenyuan, the statistics calculator routine.
 """
 
 from datetime import datetime, timezone
+from typing import Optional
 
 import orjson
 
@@ -31,8 +32,8 @@ def action_counter(messages_number, action_type):
         return
 
     # Normalize the action type
-    if action_type == "!id:":
-        action_type = "!identify:"
+    if action_type == "id":
+        action_type = "identify"
 
     current_day = get_current_utc_date()
 
@@ -188,7 +189,7 @@ def generate_command_usage_report(start_time, end_time, days):
 """USER STATISTICS"""
 
 
-def user_statistics_loader(username):
+def user_statistics_loader(username: str) -> Optional[str]:
     """
     Function that pairs with messaging_user_statistics_writer.
     Takes a username and looks up what commands they have
@@ -206,19 +207,40 @@ def user_statistics_loader(username):
     header = "| Command | Times |\n|--------|------|\n"
     cursor = db.cursor_main  # Use the DatabaseManager cursor
 
-    def fetch_data(query):
+    def fetch_data(query: str) -> Optional[dict]:
         cursor.execute(query, (username,))
         row = cursor.fetchone()
         return eval(row[1]) if row else None  # Use eval only if trusted input
 
-    def format_commands(commands):
+    def normalize_command(cmd: str) -> str:
+        """Normalize command names for display."""
+        # Remove leading ! and trailing colons
+        cmd = cmd.lstrip("!").rstrip(":")
+
+        # Specific replacements
+        if cmd == "`":
+            return "lookup_cjk"
+        elif cmd == "wikipedia_lookup":
+            return "lookup_wp"
+
+        return cmd
+
+    def format_commands(commands: dict) -> list[str]:
+        # Aggregate commands by normalized name
+        normalized_commands = {}
+        for cmd, count in commands.items():
+            if cmd == "Notifications":
+                continue
+            normalized = normalize_command(cmd)
+            normalized_commands[normalized] = (
+                normalized_commands.get(normalized, 0) + count
+            )
+
         return [
-            f"| {'`lookup`' if cmd == '`' else cmd} | {count} |"
-            for cmd, count in sorted(commands.items())
-            if cmd != "Notifications"
+            f"| {cmd} | {count} |" for cmd, count in sorted(normalized_commands.items())
         ]
 
-    def format_notifications(notifications):
+    def format_notifications(notifications: dict) -> list[str]:
         return [
             f"| Notifications (`{lang}`) | {count} |"
             for lang, count in sorted(notifications.items())
