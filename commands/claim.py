@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 from typing import Any
 
+from praw.models import Comment
+
 from connection import REDDIT, logger
 from languages import converter
 from models.kunulo import Kunulo
@@ -99,8 +101,11 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
         # Sticky the comment if there is only one language, as there can
         # only be one stickied comment at a time.
-        claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
-        logger.info(f"[ZW] Bot: > Left a claim comment for u/{comment.author}.")
+        if isinstance(claim_comment, Comment):
+            claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
+            logger.info(f"[ZW] Bot: > Left a claim comment for u/{comment.author}.")
+        else:
+            logger.error(f"[ZW] Bot: Unresolved claim comment.")
 
     return
 

@@ -7,7 +7,8 @@ Handles processing commands by users.
 import importlib
 import os
 import time
-from typing import Callable
+from collections.abc import Sequence
+from typing import Callable, Union
 
 from connection import logger
 
@@ -84,6 +85,18 @@ def update_language(ajo, komando) -> None:
     generally be a list of Lingvos.
 
     This is used by !set and !identify.
+
+    Args:
+        ajo: An Ajo object whose language will be updated.
+        komando: A command object containing a `data` attribute with a sequence
+                 of Lingvo objects.
+
+    Raises:
+        ValueError: If komando.data contains None values instead of Lingvo objects.
+
+    Note:
+        If komando.data contains a single Lingvo, it will be set directly.
+        If it contains multiple Lingvos, the entire sequence will be set.
     """
     # Check for None values in the data
     if None in komando.data:
@@ -93,6 +106,7 @@ def update_language(ajo, komando) -> None:
         )
 
     # Convert a list of single language items to a single object.
+    languages_to_set: Union[object, Sequence[object]]
     if len(komando.data) == 1:
         languages_to_set = komando.data[0]
     else:

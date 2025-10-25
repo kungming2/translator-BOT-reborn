@@ -5,16 +5,34 @@ Allows posts to be set as "Needs Review".
 This is generally used when asking for reviews of one's work.
 """
 
+from praw.models import Comment
+
 from config import logger
 from models.kunulo import Kunulo
 
 from . import update_status
 
 
-def handle(comment, _instruo, komando, ajo) -> None:
-    """Command handler called by ziwen_commands()."""
+def handle(comment: Comment, _instruo, komando, ajo) -> None:
+    """
+    Command handler called by ziwen_commands().
+
+    Marks a post as needing review by updating its status to 'doublecheck'
+    and removes any existing claim comments.
+
+    Args:
+        comment: The Reddit comment that triggered this command.
+        _instruo: Instruction object (unused in this handler).
+        komando: Command object containing parsed command data.
+        ajo: The Ajo object representing the post to be marked for review.
+
+    Side effects:
+        - Updates the post status to 'doublecheck' (Needs Review)
+        - Deletes any previously claimed comment on the submission
+        - Logs the status change operation
+    """
     logger.info("Doublecheck handler initiated.")
-    status_type = "doublecheck"
+    status_type: str = "doublecheck"
     logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
 
     # Handler logic to update the post status.
