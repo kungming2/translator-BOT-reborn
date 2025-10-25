@@ -32,7 +32,10 @@ def handle(comment, _instruo, komando, ajo) -> None:
             f"[ZW] Bot: > u/{original_poster}'s account is "
             f"younger than {minimum_account_age_days} days."
         )
-        reply_text: str = RESPONSE.COMMENT_PAGE_DISALLOWED + RESPONSE.BOT_DISCLAIMER
+        reply_text: str = (
+            RESPONSE.COMMENT_PAGE_DISALLOWED.format(age=minimum_account_age_days)
+            + RESPONSE.BOT_DISCLAIMER
+        )
         comment_reply(comment, reply_text)
         return
 
