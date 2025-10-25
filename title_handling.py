@@ -614,7 +614,20 @@ def _clean_chunk(chunk: str) -> str:
 
 
 def _resolve_languages(chunk, is_source):
-    """Resolve language objects from a text chunk."""
+    """
+    Resolve language objects from a text chunk extracted from a post title.
+
+    Handles various formats including:
+    - Single languages: "Spanish", "Arabic", "en", "fra"
+    - Multiple languages with separators: "English OR German", "Spanish/French", "Korean & Japanese"
+    - Comma-separated lists: "Spanish, French, Italian"
+    - Unknown language indicators: "unknown", "unk", "???"
+    - Language codes (ISO 639-1, 639-3) and language names
+
+    :param chunk: Text extracted from title containing language information (e.g., "English OR German")
+    :param is_source: Boolean indicating if this is the source language chunk (affects word limit for processing)
+    :return: List of Lingvo objects representing resolved languages, or empty list if none found
+    """
     cleaned = _clean_chunk(chunk)
     logger.debug(f"Cleaned Chunk: {cleaned}")
 
@@ -625,6 +638,34 @@ def _resolve_languages(chunk, is_source):
     if "]" in chunk:
         chunk = chunk.split("]", 1)[0]
 
+    # NEW: Handle OR/AND/slash separators - split and process each part separately
+    # Check for separators: "or", "and", "&", "/"
+    separator_pattern = r"\s+(?:or|and|&)\s+|/"
+    if re.search(separator_pattern, chunk, flags=re.IGNORECASE):
+        logger.debug(f"Found separator in chunk: {chunk}")
+        parts = re.split(separator_pattern, chunk, flags=re.IGNORECASE)
+        logger.debug(f"Split into parts: {parts}")
+
+        all_languages = []
+        for part in parts:
+            part = part.strip()
+            if part:
+                # Recursively resolve each part
+                part_languages = _resolve_languages(part, is_source)
+                if part_languages:
+                    all_languages.extend(part_languages)
+
+        if all_languages:
+            # Deduplicate by preferred_code
+            unique = {}
+            for lang in all_languages:
+                key = lang.name if hasattr(lang, "name") else lang.language_code_3
+                unique[key] = lang
+            logger.debug(f"Resolved languages from separators: {list(unique.values())}")
+            return list(unique.values())
+        # If no languages found after split, continue with normal processing
+
+    # ORIGINAL LOGIC CONTINUES HERE
     if "," in chunk:
         language_parts = [part.strip() for part in chunk.split(",")]
         resolved = []
@@ -650,8 +691,8 @@ def _resolve_languages(chunk, is_source):
         w
         for w in words
         if not (
-                (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
-                or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
+            (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
+            or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
         )
     ]
 
@@ -663,7 +704,7 @@ def _resolve_languages(chunk, is_source):
     resolved = []
     for word in cleaned_words[:max_words_to_check]:
         # **FIX: Strip trailing punctuation before conversion**
-        word = word.rstrip('-_.,;:!?')
+        word = word.rstrip("-_.,;:!?")
 
         if "Eng" in word and len(word) <= 8:
             word = "English"
@@ -787,6 +828,7 @@ def _determine_flair(titolo_object):
     """
     Sets the final flair code and text on the titolo_object based on
     direction and language support. Handles multiple-language targets.
+    Prioritizes non-English languages when English is present in either source or target.
     """
 
     def resolve_flair_code(lang_obj):
@@ -827,6 +869,41 @@ def _determine_flair(titolo_object):
 
         return f"{prefix}{', '.join(included_codes)}{suffix}"
 
+    def get_non_english_language(language_list):
+        """Extract the first non-English language from a list, or None if all are English."""
+        for lang in language_list:
+            if lang and lang.name != "English":
+                return lang
+        return None
+
+    # NEW: Handle cases where English is present in source or target
+    # Priority: Use the non-English language for the flair
+    source_languages = titolo_object.source or []
+    target_languages = titolo_object.target or []
+
+    # Check if English appears in source
+    source_has_english = any(lang.name == "English" for lang in source_languages)
+    target_has_english = any(lang.name == "English" for lang in target_languages)
+
+    # If English is in target, prioritize source language (translating FROM something TO English)
+    if target_has_english and source_languages:
+        non_english_source = get_non_english_language(source_languages)
+        if non_english_source:
+            flair_code = resolve_flair_code(non_english_source)
+            titolo_object.add_final_code(flair_code)
+            titolo_object.add_final_text(non_english_source.name)
+            return
+
+    # If English is in source, prioritize target language (translating TO something FROM English)
+    if source_has_english and target_languages:
+        non_english_target = get_non_english_language(target_languages)
+        if non_english_target:
+            flair_code = resolve_flair_code(non_english_target)
+            titolo_object.add_final_code(flair_code)
+            titolo_object.add_final_text(non_english_target.name)
+            return
+
+    # ORIGINAL LOGIC BELOW (fallback when above cases don't apply)
     if titolo_object.direction == "english_to":
         if not titolo_object.source:
             return  # No source language to base flair on
