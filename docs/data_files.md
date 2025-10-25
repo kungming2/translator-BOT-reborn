@@ -30,6 +30,8 @@ Contains two files:
 
 ## Databases
 
+These are all [SQLite databases](https://sqlite.org/).
+
 | Filename   | Function                                              |
 |------------|-------------------------------------------------------|
 | `ajo.db`   | Ajo database for all requests.                        | 
@@ -38,23 +40,23 @@ Contains two files:
 
 #### ajo.db Tables
 
-* **ajo_database**: 
+* **ajo_database**: Contains all [ajo](./models.md) records. Note that pre-2.0 Ajos are saved as a Python string representation while post-2.0 ones are saved in [JSON](https://www.json.org/json-en.html); the bot contains compatibility for loading both types.
 
 #### cache.db Tables
 
-* **comment_cache**: 
+* **comment_cache**: Contains recently posted comments to check against to see if edits have been made to comments with new commands.
 * **multiplier_cache**: 
 
 #### ajo_database
 
-* **internal_posts**:
-* **notify_cumulative**:
-* **notify_internal**:
-* **notify_users**:
-* **old_comments**:
-* **old_posts**:
-* **total_commands**:
-* **total_points**:
+* **internal_posts**: Contains internal (meta and community) posts data. Roughly speaking, a stripped-down version of `ajo_database`. 
+* **notify_cumulative**: Contains dictionaries recording the total number of notifications a user has received, indexed by language code. 
+* **notify_internal**: A list of usernames and internal post types that those usernames are subscribed to. (one post type / user per row)
+* **notify_users**: A list of usernames and languages that those usernames are subscribed to. (one language_code / user per row)
+* **old_comments**: Internal list recording comment IDs that have already been seen and processed by the bot. 
+* **old_posts**: Internal list recording post IDs that have already been seen and processed by the bot. 
+* **total_commands**: Contains dictionaries recording the total number of commands and actions a user has taken.
+* **total_points**: Large table containing points data per comment, username, and post.
 
 ## Datasets
 
