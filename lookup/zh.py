@@ -823,16 +823,16 @@ async def zh_character(character):
 
     lookup_line_2 = (
         f"\n\n\n^Information ^from "
-        f"[^(Unihan)](https://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint={character}) ^| "
-        f"[^(CantoDict)](https://www.cantonese.sheik.co.uk/dictionary/characters/{tradify(character)}/) ^| "
-        f"[^(Chinese Etymology)](https://hanziyuan.net/#{tradify(character)}) ^| "
-        f"[^(CHISE)](https://www.chise.org/est/view/char/{character}) ^| "
-        f"[^(CTEXT)](https://ctext.org/dictionary.pl?if=en&char={tradify(character)}) ^| "
-        f"[^(MDBG)](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=1&wdqb={character}) ^| "
-        f"[^(MoE DICT)](https://www.moedict.tw/'{tradify(character)}) ^| "
-        f"[^(MFCCD)](https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word={tradify(character)}) ^| "
-        f"[^(ZDIC)](https://www.zdic.net/hans/{simplify(character)}) ^| "
-        f"[^(ZI)](https://zi.tools/zi/{tradify(character)})"
+        f"^[Unihan](https://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint={character}) ^| "
+        f"^[CantoDict](https://www.cantonese.sheik.co.uk/dictionary/characters/{tradify(character)}/) ^| "
+        f"^[ChineseEtymology](https://hanziyuan.net/#{tradify(character)}) ^| "
+        f"^[CHISE](https://www.chise.org/est/view/char/{character}) ^| "
+        f"^[CTEXT](https://ctext.org/dictionary.pl?if=en&char={tradify(character)}) ^| "
+        f"^[MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=1&wdqb={character}) ^| "
+        f"^[MoEDICT](https://www.moedict.tw/'{tradify(character)}) ^| "
+        f"^[MFCCD](https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word={tradify(character)}) ^| "
+        f"^[ZDIC](https://www.zdic.net/hans/{simplify(character)}) ^| "
+        f"^[ZI](https://zi.tools/zi/{tradify(character)})"
     )
 
     to_post = lookup_line_1 + lookup_line_2
@@ -1133,11 +1133,11 @@ async def zh_word(word):
 
     footer = (
         "\n\n^Information ^from "
-        f"[^CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| "
-        f"[^MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| "
-        f"[^Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| "
-        f"[^Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| "
-        f"[^ZDIC](https://www.zdic.net/hans/{simplify(word)})"
+        f"^[CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={tradify(word)}) ^| "
+        f"^[MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| "
+        f"^[Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| "
+        f"^[Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| "
+        f"^[ZDIC](https://www.zdic.net/hans/{simplify(word)})"
     )
 
     result = lookup_header + meaning_section + "\n\n" + footer
