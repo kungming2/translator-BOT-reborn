@@ -197,7 +197,7 @@ def _update_points_status(
     status_list.append([username, points])
 
 
-def create_translator_mod_note(
+def create_mod_note(
     username: str,
     post_id: str,
     language_name: str,
@@ -213,10 +213,10 @@ def create_translator_mod_note(
     try:
         included_note = f"Helped translate `{post_id}` ({language_name})"
 
-        REDDIT.redditor(username).mod.notes.create(
+        REDDIT.subreddit(SETTINGS["subreddit"]).mod.notes.create(
             label="HELPFUL_USER",
             note=included_note,
-            subreddit=SETTINGS["subreddit"],
+            redditor=REDDIT.redditor(username),
         )
 
         logger.info(f"[ModNote] Created note for u/{username}: {included_note}")
@@ -414,7 +414,7 @@ def points_tabulator(
             ajo_writer(ajo_w_points)
 
         # Create mod note for the translator
-        create_translator_mod_note(
+        create_mod_note(
             username=translator_to_add,
             post_id=original_post.id,
             language_name=original_post_lingvo.name,
