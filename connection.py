@@ -169,6 +169,37 @@ def is_internal_post(submission: "praw.models.Submission") -> bool:
     return False
 
 
+def create_mod_note(
+    label: str,
+    username: str,
+    included_note: str,
+) -> bool:
+    """
+    Creates a moderator note for a user.
+
+    :param label: The label of the user in the note. See:
+                  https://praw.readthedocs.io/en/stable/code_overview/other/mod_note.html
+                  for valid ones. These must be standard labels (no
+                  user-created ones)
+    :param username: The username of the translator to create a note for.
+    :param included_note: The note to include.
+    :return: True if note was created successfully, False otherwise.
+    """
+    try:
+        REDDIT.subreddit(SETTINGS["subreddit"]).mod.notes.create(
+            label=label,
+            note=included_note,
+            redditor=REDDIT.redditor(username),
+        )
+
+        logger.info(f"[ModNote] Created {label} note for u/{username}: {included_note}")
+        return True
+
+    except Exception as e:
+        logger.error(f"[ModNote] Failed to create note for u/{username}: {e}")
+        return False
+
+
 def widget_update(widget_id, new_text):
     """
     Update a text widget on the subreddit with new content.
