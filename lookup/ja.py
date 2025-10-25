@@ -173,15 +173,15 @@ def ja_character(character: str) -> str:
     # Append resource links
     if is_kana:
         lookup_line_3: str = (
-            f"\n\n^Information ^from [^Jisho](https://jisho.org/search/{character}%20%23particle) ^| "
-            f"[^Tangorin](https://tangorin.com/general/{character}%20particle) ^| "
-            f"[^Weblio](https://ejje.weblio.jp/content/{character})"
+            f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{character}%20%23particle) ^| "
+            f"^[Tangorin](https://tangorin.com/general/{character}%20particle) ^| "
+            f"^[Weblio](https://ejje.weblio.jp/content/{character})"
         )
     else:
         lookup_line_3: str = (
-            f"\n\n^Information ^from [^Jisho](https://jisho.org/search/{character}%20%23kanji) ^| "
-            f"[^Tangorin](https://tangorin.com/kanji/{character}) ^| "
-            f"[^Weblio](https://ejje.weblio.jp/content/{character})"
+            f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{character}%20%23kanji) ^| "
+            f"^[Tangorin](https://tangorin.com/kanji/{character}) ^| "
+            f"^[Weblio](https://ejje.weblio.jp/content/{character})"
         )
 
     logger.info(
@@ -305,8 +305,8 @@ def _ja_name_search(ja_given_name: str) -> str | None:
         f"# [{ja_given_name}](https://en.wiktionary.org/wiki/{ja_given_name}#Japanese)\n\n"
         f"**Readings:** {readings_str}\n\n"
         f"**Meanings**: A Japanese name.\n\n\n"
-        f"^(Information from) [^JinmeiKanjiJisho)](https://kanji.reader.bz/{ja_given_name}) "
-        f"^| [^Weblio](https://ejje.weblio.jp/content/{ja_given_name})"
+        f"^(Information from) ^[JinmeiKanjiJisho)](https://kanji.reader.bz/{ja_given_name}) "
+        f"^| ^[Weblio](https://ejje.weblio.jp/content/{ja_given_name})"
     )
 
     return formatted_section
@@ -392,8 +392,8 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
         if source:
             formatted_section += f"**Literary Source**: {source}\n\n\n"
         formatted_section += (
-            f"^(Information from) [^Jitenon]({entry_url}) "
-            f"^| [^Weblio](https://ejje.weblio.jp/content/{yojijukugo})"
+            f"^(Information from) ^[Jitenon]({entry_url}) "
+            f"^| ^[Weblio](https://ejje.weblio.jp/content/{yojijukugo})"
         )
 
         return formatted_section
@@ -481,9 +481,9 @@ async def ja_word(japanese_word: str) -> str | None:
         # Add sources
         footer: str = (
             f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{japanese_word}%23words) ^| "
-            f"[^Kotobank](https://kotobank.jp/word/{japanese_word}) ^| "
-            f"[^Tangorin](https://tangorin.com/general/{japanese_word}) ^| "
-            f"[^Weblio](https://ejje.weblio.jp/content/{japanese_word})"
+            f"^[Kotobank](https://kotobank.jp/word/{japanese_word}) ^| "
+            f"^[Tangorin](https://tangorin.com/general/{japanese_word}) ^| "
+            f"^[Weblio](https://ejje.weblio.jp/content/{japanese_word})"
         )
 
         logger.info(f"[ZW] JA-Word: Final result for '{japanese_word}' returned.")
