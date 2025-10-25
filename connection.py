@@ -200,7 +200,7 @@ def widget_update(widget_id, new_text):
         # Update the widget
         try:
             active_widget.mod.update(text=new_text)
-            logger.error(f"Successfully updated widget {widget_id}.")
+            logger.info(f"Successfully updated widget {widget_id}.")
             return True
         except RedditAPIException as e:
             logger.error(f"Error updating widget {widget_id}: {e}")

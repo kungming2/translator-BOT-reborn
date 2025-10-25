@@ -420,7 +420,7 @@ async def ja_word(japanese_word: str) -> str | None:
         word_data: dict | list | None = await fetch_json(session, url)
 
     if not word_data or not word_data.get("data"):
-        logger.error("[ZW] JA-Word: No JSON or empty data.")
+        logger.error(f"[ZW] JA-Word: No JSON or empty data for `{japanese_word}`.")
         word_reading: str = ""
         main_data = None
     else:

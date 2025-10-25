@@ -930,7 +930,7 @@ def process_title(title, post=None):
     )
     logger.debug("Language names: " + str([x.name for x in combined_languages]))
     if not combined_languages:
-        logger.error("Could not make sense of this title at all. Asking AI...")
+        logger.info("> Could not make sense of this title at all. Asking AI...")
         ai_result = title_ai_parser(title, post)
         if isinstance(ai_result, dict):
             _update_titolo_from_ai_result(result, ai_result)
