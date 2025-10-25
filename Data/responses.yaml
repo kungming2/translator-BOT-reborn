@@ -213,10 +213,10 @@ COMMENT_DEFINED_MULTIPLE: |
 
   *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
   [](#comment_defined_multiple)
-COMMENT_ADVANCED_IDENTIFY_ERROR: '
+COMMENT_ADVANCED_IDENTIFY_ERROR: |
 
   Sorry, but [advanced *!identify* commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_advanced_.21identify)
-  require either a [three-letter ISO 639-3](https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes) or  [four-letter
+  require either a [three-letter ISO 639-3](https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes) or [four-letter
   ISO 15924 code](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes).
 
 
@@ -233,8 +233,8 @@ COMMENT_ADVANCED_IDENTIFY_ERROR: '
   | Latin           | *Latn* |
   | Nastaliq        | *Aran* |
 
-  [](#comment_advanced_identify_error)'  # unused
-COMMENT_VERIFICATION_RESPONSE: {}, u/{}. I've taken note of your verification request for {}. [](#comment_verification_response)
+  [](#comment_advanced_identify_error)
+COMMENT_VERIFICATION_RESPONSE: '{}, u/{}. I''ve taken note of your verification request for {}. [](#comment_verification_response)'
 COMMENT_INVALID_VERIFICATION_RESPONSE: |
   Hey there, u/{username}. It appears that your verification request does not match the required format.
   
