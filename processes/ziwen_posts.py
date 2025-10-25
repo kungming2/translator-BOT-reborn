@@ -285,6 +285,8 @@ def ziwen_posts(post_limit=None):
         logger.debug(
             f"[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`"
         )
+        logger.info(f"[ZW] Post Title: `{post.title}`")
+        logger.info(f"[ZW] Post Link: `https://www.reddit.com{post.permalink}`")
         logger.info(f"[ZW] Post Ajo ID: `{post_ajo.id}`")
         logger.info(f"[ZW] Post Ajo initial data: `{vars(post_ajo)}`")
 
