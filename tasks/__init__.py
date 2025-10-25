@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import importlib
+from pathlib import Path
+
 from config import Paths, load_settings, logger
 from discord_utils import send_discord_alert
 
@@ -26,15 +29,15 @@ def task(schedule):
 def run_schedule(schedule_name):
     """Run all tasks for a given schedule"""
 
-    # Import task modules here, in order to register them. Everything in
-    # tasks/ should be placed here.
-    from . import (
-        community_digest,
-        data_maintenance,
-        iso_updates,
-        moderator_digest,
-        status_report,
-    )
+    # Dynamically import all task modules in the tasks/ directory
+    # to register them. This automatically includes any .py files
+    # without needing to manually list them.
+    current_dir = Path(__file__).parent
+
+    for file_path in current_dir.glob("*.py"):
+        if file_path.name != "__init__.py":
+            module_name = file_path.stem  # filename without .py extension
+            importlib.import_module(f".{module_name}", package=__package__)
 
     tasks_to_run = _tasks.get(schedule_name, [])
     executed_tasks = []

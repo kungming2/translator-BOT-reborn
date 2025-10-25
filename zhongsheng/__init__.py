@@ -5,6 +5,9 @@ Command registry for Zhongsheng bot.
 Allows commands to be defined in separate modules and registered via decorator.
 """
 
+import importlib
+from pathlib import Path
+
 from discord.ext import commands
 
 _commands = []
@@ -32,22 +35,15 @@ def command(name, help_text, roles=None):
 def register_commands(bot):
     """Register all commands with the Discord bot"""
 
-    # Import all command modules to trigger registration.
-    # Everything in zhongsheng/ should be listed here.
-    from . import (
-        cjk,
-        comment,
-        describe,
-        error,
-        filter,
-        guide,
-        lang,
-        office,
-        post,
-        search,
-        title,
-        user,
-    )
+    # Dynamically import all command modules in the zhongsheng/ directory
+    # to trigger registration. This automatically includes any .py files
+    # without needing to manually list them.
+    current_dir = Path(__file__).parent
+
+    for file_path in current_dir.glob("*.py"):
+        if file_path.name != "__init__.py":
+            module_name = file_path.stem  # filename without .py extension
+            importlib.import_module(f".{module_name}", package=__package__)
 
     for cmd in _commands:
         # Start with the function
