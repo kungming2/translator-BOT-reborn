@@ -8,6 +8,7 @@ and then passes it on to that module.
 
 import traceback
 
+from praw.models import Message, Redditor
 from wasabi import msg
 
 from config import logger
@@ -23,10 +24,23 @@ from messaging import (
 )
 
 
-def ziwen_messages():
-    """Main function to process commands via Reddit messaging system."""
+def ziwen_messages() -> None:
+    """Main function to process commands via Reddit messaging system.
 
-    messages = list(REDDIT.inbox.unread(limit=10))
+    Processes unread inbox messages and routes them to appropriate handlers
+    based on message subject. Supports subscription management, status checks,
+    points queries, and moderator commands (add/remove).
+
+    Valid commands (case-insensitive subjects):
+    - subscribe: Subscribe to notifications
+    - unsubscribe: Unsubscribe from notifications
+    - status: Check subscription status
+    - points: Check points balance
+    - add: Add user (moderators only)
+    - remove: Remove user (moderators only)
+    """
+
+    messages: list[Message] = list(REDDIT.inbox.unread(limit=10))
 
     # Iterate over the messages in the inbox.
     for message in messages:
@@ -38,8 +52,8 @@ def ziwen_messages():
             logger.error("[ZW] Messages: Invalid author.")
             continue
 
-        message_author = message.author  # Redditor object
-        message_subject = message.subject.lower()
+        message_author: Redditor = message.author  # Redditor object
+        message_subject: str = message.subject.lower()
         message.mark_read()  # Mark the message as read.
 
         if "subscribe" in message_subject and "un" not in message_subject:
