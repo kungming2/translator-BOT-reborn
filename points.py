@@ -27,7 +27,7 @@ from praw.exceptions import RedditAPIException
 from praw.models import Comment
 
 from config import SETTINGS, logger
-from connection import REDDIT_HELPER, USERNAME
+from connection import REDDIT, REDDIT_HELPER, USERNAME
 from database import db
 from languages import converter
 from models.ajo import ajo_loader, ajo_writer
@@ -195,6 +195,36 @@ def _update_points_status(
             entry[1] += points
             return
     status_list.append([username, points])
+
+
+def create_translator_mod_note(
+    username: str,
+    post_id: str,
+    language_name: str,
+) -> bool:
+    """
+    Creates a moderator note for a translator who helped with a post.
+
+    :param username: The username of the translator to create a note for.
+    :param post_id: The ID of the post they helped translate.
+    :param language_name: The name of the language (from Lingvo object).
+    :return: True if note was created successfully, False otherwise.
+    """
+    try:
+        included_note = f"Helped translate `{post_id}` ({language_name})"
+
+        REDDIT.redditor(username).mod.notes.create(
+            label="HELPFUL_USER",
+            note=included_note,
+            subreddit=SETTINGS["subreddit"],
+        )
+
+        logger.info(f"[ModNote] Created note for u/{username}: {included_note}")
+        return True
+
+    except Exception as e:
+        logger.error(f"[ModNote] Failed to create note for u/{username}: {e}")
+        return False
 
 
 def points_tabulator(
@@ -382,6 +412,13 @@ def points_tabulator(
         if ajo_w_points:
             ajo_w_points.add_translators(translator_to_add)
             ajo_writer(ajo_w_points)
+
+        # Create mod note for the translator
+        create_translator_mod_note(
+            username=translator_to_add,
+            post_id=original_post.id,
+            language_name=original_post_lingvo.name,
+        )
 
     # Write to DB
     logger.info(
