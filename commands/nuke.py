@@ -8,7 +8,7 @@ all their posts and comments. It can only be called by a mod.
 from praw.models import Comment, Submission
 
 from config import SETTINGS
-from connection import REDDIT, is_mod, logger
+from connection import REDDIT, is_mod, logger, create_mod_note
 from reddit_sender import message_send
 
 
@@ -74,3 +74,7 @@ def handle(comment, _instruo, _komando, _ajo) -> None:
         ),
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
+
+    # Create a mod note for the individual.
+    command_note = f"Mod u/{mod_caller} nuked u/{nuked_person}."
+    create_mod_note("PERMA_BAN", nuked_person.name, command_note)
