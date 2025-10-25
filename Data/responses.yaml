@@ -2,19 +2,21 @@
 
 # MESSAGES - THESE ARE SENT PRIVATELY
 
-MSG_UNSUBSCRIBE_BUTTON: ' | [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
-  | [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
-  | [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
+MSG_UNSUBSCRIBE_BUTTON: ' • [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
+  • [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
+  • [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
 MSG_NSFW_WARNING: '
 
 
   (Just FYI, this has been flagged as an **NSFW** post.)'
 MSG_SUBSCRIBE_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.%0A%23%23+You+can+sign+up+for+one+language+or+as+many+as+you%27d+like.%0ALANGUAGES%3A+
 MSG_REMOVAL_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0ALANGUAGES%3A+{language_name}
-MSG_NO_SUBSCRIPTIONS: Sorry, you're not currently subscribed to notifications for any [language posts](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_language_codes.2Fnames_syntax)
+MSG_NO_SUBSCRIPTIONS: >
+  Sorry, you're not currently subscribed to notifications for any language requests
   on r/translator. Would you like to [sign up]({})?
-MSG_CANNOT_PROCESS: Sorry, but I couldn't process the [language/language codes](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_language_codes.2Fnames_syntax)
-  in your message. Please double-check your message to make sure they're accurate and [try again]({}).
+MSG_CANNOT_PROCESS: >
+  Sorry, but I couldn't process the language/language codes in your message. 
+  Please double-check your message to make sure they're accurate and [try again]({}).
 MSG_MISSING_ASSETS: |
   Hey there u/{author},
 
@@ -74,7 +76,8 @@ MSG_NOTIFY_IDENTIFY: >
   
   {image_description}
 
-MSG_WIKIPAGE_FULL: The [{0} wiki page](https://www.reddit.com/r/translatorBOT/wiki/{0}) seems to be full.
+MSG_WIKIPAGE_FULL: >
+  The [{0} wiki page](https://www.reddit.com/r/translatorBOT/wiki/{0}) seems to be full.
   Please archive some of the older entries on that page.
 MSG_NO_POINTS: You haven't earned any points on r/translator yet. You can earn points by helping identify
   or translate requests in our community!
@@ -101,13 +104,13 @@ MSG_UNSUBSCRIBE_ALL: |
   To resubscribe, please [click here]({}).
 
 MSG_CLOSING_OUT_SUBJECT: '[Notification] Was your {language} request translated?'
-MSG_CLOSING_OUT: '
+MSG_CLOSING_OUT: |
 
   Hey there, u/{author}!
 
 
-  Thanks for submitting [your post](https://reddit.com{permalink}) to r/translator! It''s been over {days}
-  days since you posted your request, and there''s been {num_comments} comments on it since then.
+  Thanks for submitting [your post](https://reddit.com{permalink}) to r/translator! It's been over {days}
+  days since you posted your request, and there's been {num_comments} comments on it since then.
 
 
   If any of those comments fulfilled your {language} translation request, **please reply to that comment
@@ -118,7 +121,6 @@ MSG_CLOSING_OUT: '
 
   Thank you for helping keep our community organized! We hope you found it a useful place.
 
-  '
 
 # COMMENTS - THESE ARE PUBLICLY POSTED.
 # Note that comments must include an invisible Markdown tag in them.
@@ -130,7 +132,7 @@ COMMENT_LONG: |
 
   *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is required on your part.* [](#comment_long)
 COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
-  to be 14 days or older to use the service. [](#comment_page_disallowed)
+  to be {age} days or older to use the service. [](#comment_page_disallowed)
 COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
   anyone on file for {language_name}.
 
@@ -138,7 +140,7 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
   If someone else is reading this and knows {language_name}, please [sign up for notifications for that
   language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
   if you would like to be notified for future posts for it! [](#comment_no_language)\n\n'
-COMMENT_NO_RESULTS: Sorry, but that doesn't look like anything to me. [](#comment_no_results)
+COMMENT_LANGUAGE_NO_RESULTS: Sorry, but your identification appears to be an invalid language name or code. [](#comment_language_no_results)
 COMMENT_ENGLISH_ONLY: |
   Hey there u/{author},
 
@@ -194,7 +196,7 @@ COMMENT_SELF_ALREADY_CLAIMED: |
 COMMENT_UNKNOWN: |
   **It looks like you have submitted a translation request tagged as 'Unknown.'** 
 
-  * Other community members may help you recategorize your post with the `!identify:` or the `!page:` [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).
+  * Other community members may help you recategorize your post with the `!identify` or the `!page` [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).
   * Please refrain from posting short 'thank you' comments until your request has been fully translated.
   * Do *not* delete your post if it is identified as another language. We will automatically find people who can help you!
 
@@ -222,25 +224,17 @@ COMMENT_ADVANCED_IDENTIFY_ERROR: '
 
 
   | Script          | Code   |
-
   |-----------------|--------|
-
   | Arabic          | *Arab* |
-
   | Cyrillic        | *Cyrl* |
-
   | Devanagari      | *Deva* |
-
   | Han Characters  | *Hani* |
-
   | Hebrew          | *Hebr* |
-
   | Latin           | *Latn* |
-
   | Nastaliq        | *Aran* |
 
-  [](#comment_advanced_identify_error)'
-COMMENT_VERIFICATION_RESPONSE: "{}, u/{}. I've taken note of your verification request for {}. [](#comment_verification_response)"
+  [](#comment_advanced_identify_error)'  # unused
+COMMENT_VERIFICATION_RESPONSE: {}, u/{}. I've taken note of your verification request for {}. [](#comment_verification_response)
 COMMENT_INVALID_VERIFICATION_RESPONSE: |
   Hey there, u/{username}. It appears that your verification request does not match the required format.
   
@@ -248,9 +242,9 @@ COMMENT_INVALID_VERIFICATION_RESPONSE: |
   
   [](#comment_invalid_verification_response)
 COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
-  a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)
+  a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)  # unused
 COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
-  here](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) for a list of valid ISO 15924 codes.  [](#comment_invalid_script)
+  here](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) for a list of valid ISO 15924 codes.  [](#comment_invalid_script)  # unused
 COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
   Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
 
@@ -308,11 +302,11 @@ WY_MOD_NOTIFICATION_MESSAGE: |
 WY_NEW_HEADER: |
   ## {language_name} ({language_family}) ![](%%statistics-h%%)
 
-  *[Statistics](https://www.reddit.com/r/translator/wiki/statistics) for r/translator provided by [Wenyuan](https://www.reddit.com/r/translatorBOT/wiki/wenyuan)*
+  *[Statistics](https://www.reddit.com/r/translator/wiki/statistics) for r/translator provided by Wenyuan*
 
-  Year | Month | Total Requests | Percent of All Requests | Untranslated Requests | Translation Percentage
-  | RI | View Translated Requests
-  -----|-------|------|------|------|------|----|------
+  | Year | Month | Total Requests | Percent of All Requests | Untranslated Requests | Translation Percentage
+  | RI | View Translated Requests |
+  |-----|-------|------|------|------|------|----|------|
 
 WY_FULL_RETRIEVAL_DATA: |
   | Info                                    | #             |
@@ -329,7 +323,9 @@ WY_FULL_RETRIEVAL_DATA: |
 # QUERIES FOR AI AGENTS
 
 TITLE_PARSING_QUERY: >
-  Assess this Reddit post title which is for a translation request. Output what you assess to be the source language and target language, and the percentage confidence for your assessment in this JSON format:
+  Assess this Reddit post title which is for a translation request. 
+  Output what you assess to be the source language and target language, 
+  and the percentage confidence for your assessment in this JSON format:
 
   {{
     "source_language": {{
@@ -343,7 +339,16 @@ TITLE_PARSING_QUERY: >
     "confidence": PERCENTAGE (out of 1.0)
   }}
 
-  Use ISO 639-1 codes for the languages if they are available. If a source or target language cannot be assessed, return a blank dictionary ({{}}) for that language. Both source and target languages must have an ISO 639 code to be valid.
+  If the title indicates that the user does not know the source language
+   (e.g. the likely source is "I don't know"/"idk"/"no clue" return 
+  the source_language name as "Unknown", and the source_language code as
+  "unknown".
+
+  Use ISO 639-1 codes for the languages if they are available with ISO 639-3
+  as a fallback if 639-1 codes do not exist for that language. If a 
+  source or target language cannot be assessed, return a blank dictionary 
+  ({{}}) for that language. Both source and target languages must have 
+  an ISO 639 code to be valid, unless the source is "Unknown".
 
   This is the post title:
 
