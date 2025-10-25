@@ -8,6 +8,7 @@ comment, along with the data associated with that comment call.
 
 import re
 import shlex
+from collections import defaultdict
 
 from config import SETTINGS
 from languages import converter
@@ -104,8 +105,6 @@ def extract_commands_from_text(text):
     :param text: The input text to parse for commands.
     :return: A list of Komando objects with extracted commands and their arguments.
     """
-    from collections import defaultdict
-
     commands_dict = defaultdict(list)
     specific_mode_dict = defaultdict(bool)
     original_text = text.strip()
