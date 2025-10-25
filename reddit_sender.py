@@ -60,7 +60,9 @@ def comment_reply(comment: Comment, reply_text: str) -> None:
             pass
 
 
-def message_reply(msg_obj: Comment | Message | Submission, reply_text: str) -> None:
+def message_reply(
+    msg_obj: Comment | Message | Submission, reply_text: str
+) -> Comment | Submission | None:
     """
     Reply to a Reddit object (Comment, Message, or Submission).
     In testing mode, logs the reply instead of sending it.
@@ -81,19 +83,22 @@ def message_reply(msg_obj: Comment | Message | Submission, reply_text: str) -> N
             title="Reply",
             metadata={"Reply Target": target_id, "Author": str(target_author)},
         )
-        return
+        return None
 
     # Actual reply
     if isinstance(msg_obj, (Comment, Message, Submission)):
         try:
-            msg_obj.reply(reply_text)
+            returned_object = msg_obj.reply(reply_text)
             logger.info(f"Replied to `{target_id}` successfully.")
         except (APIException, NotFound):
             logger.exception(f"Unexpected error replying to `{target_id}`.")
+        else:
+            return returned_object
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."
         )
+        return None
 
 
 def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
