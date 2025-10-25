@@ -54,9 +54,13 @@ async def lang_convert(ctx, *, language_input: str):
         # Handle 'random' argument
         if language_input.lower() == "random":
             random_lang_obj = select_random_language()
-            lang_ref = get_language_reference(random_lang_obj)
-            language_input = lang_ref["language_code_3"]
-            importlib.reload(languages)
+            if random_lang_obj:
+                lang_ref = get_language_reference(random_lang_obj.name)
+                language_input = lang_ref["language_code_3"]
+                importlib.reload(languages)
+            else:  # rare; no results in random selection.
+                await ctx.send("⚠️ An error occurred. No valid random results found.")
+                return
 
         # Run conversion
         result = languages.converter(language_input, preserve_country=True)
