@@ -11,8 +11,9 @@ import logging
 import re
 import string
 from pprint import pprint
-from typing import List
+from typing import Any, List, Optional, Union
 
+from praw.models import Submission
 from rapidfuzz import fuzz
 
 from ai import ai_query, openai_access
@@ -114,18 +115,22 @@ def extract_lingvos_from_text(
     return sorted(found, key=lambda ling: ling.name) if found else None
 
 
-def _english_fuzz(word):
+def _english_fuzz(word: str) -> bool:
     """
     A quick function that detects if a word is likely to be "English."
     Used in replace_bad_english_typing below.
 
-    :param word: Any word.
-    :return: A boolean. True if it's likely to be a misspelling of the
-             word 'English', false otherwise.
-    """
+    Uses fuzzy string matching to determine if a word is a misspelling of
+    "English" (e.g., "Enlgish", "Englsh", "Englich").
 
+    Args:
+        word: Any word to check for similarity to "English".
+
+    Returns:
+        True if the word has >70% similarity to "English", False otherwise.
+    """
     word = word.title()
-    closeness = fuzz.ratio("English", word)
+    closeness: float = fuzz.ratio("English", word)
     if closeness > 70:  # Very likely
         return True
     else:  # Unlikely
@@ -437,12 +442,27 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
 """ASSESSING (SECOND ROUND)"""
 
 
-def _preprocess_title(post_title):
+def _preprocess_title(post_title: str) -> Union[str, Titolo]:
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
     misused language tags, and removing cross-post markers.
+
+    Performs extensive normalization including:
+    - Removing cross-post markers
+    - Correcting common spelling variations (e.g., "english" -> "English")
+    - Normalizing brackets and directional symbols
+    - Fixing malformed language tags
+    - Handling country suffixes
+    - Moving misplaced bracketed tags to the front
+
+    Args:
+        post_title: The raw Reddit post title to normalize.
+
+    Returns:
+        The normalized title string, or an empty Titolo object if the title
+        contains "[Unknown]" or starts with "?".
     """
-    title = re.sub(r"\(x-post.*", "", post_title).strip()
+    title: str = re.sub(r"\(x-post.*", "", post_title).strip()
 
     # Correct spelling/alias issues
     for spelling in converter("en").name_alternates:
@@ -470,7 +490,7 @@ def _preprocess_title(post_title):
 
     # Attempt recovery with language reformatter.
     if not any(b in title for b in ["[", "]"]):
-        reformatted = _reformat_detected_languages_in_title(title)
+        reformatted: str = _reformat_detected_languages_in_title(title)
         if reformatted:
             title = reformatted
 
@@ -479,8 +499,8 @@ def _preprocess_title(post_title):
     if "{" in title and "}" in title and "[" in title:
         match = re.search(r"{(\D+)}", title)
         if match:
-            country = match.group(1)
-            code = country_converter(country)[0]
+            country: str = match.group(1)
+            code: str = country_converter(country)[0]
             if code:
                 title = title.split("{", 1)[0].strip() + title.split("}", 1)[1]
     elif "{" in title and "[" not in title:
@@ -530,15 +550,33 @@ def _preprocess_title(post_title):
     return title
 
 
-def _is_punctuation_only(s):
+def _is_punctuation_only(s: str) -> bool:
+    """
+    Check if a string contains only punctuation characters (after stripping whitespace).
+
+    Args:
+        s: The string to check.
+
+    Returns:
+        True if the string is non-empty and contains only punctuation, False otherwise.
+    """
     # Strip whitespace first
     s = s.strip()
     # Check if s is empty or all chars are punctuation
     return len(s) > 0 and all(c in string.punctuation for c in s)
 
 
-def _clean_text(text, preserve_commas=False):
-    """Insert spaces around brackets/parentheses and remove other punctuation with extra spaces."""
+def _clean_text(text: str, preserve_commas: bool = False) -> str:
+    """
+    Insert spaces around brackets/parentheses and remove other punctuation with extra spaces.
+
+    Args:
+        text: The text to clean.
+        preserve_commas: If True, keep commas in the text. Default is False.
+
+    Returns:
+        Cleaned text with normalized spacing and reduced punctuation.
+    """
     # Insert spaces around brackets and parentheses
     text = re.sub(r"([\[\]()])", r" \1 ", text)
 
@@ -556,11 +594,22 @@ def _clean_text(text, preserve_commas=False):
     return text.strip()
 
 
-def _extract_source_chunk(title):
-    """Extract the source language chunk from a processed title."""
+def _extract_source_chunk(title: str) -> str:
+    """
+    Extract the source language chunk from a processed title.
+
+    Handles both properly formatted titles ([Source > Target]) and malformed
+    titles with various separators (>, to, -, <).
+
+    Args:
+        title: The processed title string.
+
+    Returns:
+        The extracted and cleaned source language chunk.
+    """
     # If title has proper bracket format [Source > Target], extract from within brackets
     if "[" in title and "]" in title:
-        bracket_content = title[title.index("[") + 1 : title.index("]")]
+        bracket_content: str = title[title.index("[") + 1 : title.index("]")]
         if ">" in bracket_content:
             # Get everything before the first > within brackets
             return _clean_text(bracket_content.split(">")[0])
@@ -577,14 +626,25 @@ def _extract_source_chunk(title):
     return _clean_text(title)
 
 
-def _extract_target_chunk(title):
-    """Extract the target language chunk from a processed title."""
+def _extract_target_chunk(title: str) -> str:
+    """
+    Extract the target language chunk from a processed title.
+
+    Handles both properly formatted titles ([Source > Target]) and malformed
+    titles with various separators (>, to, -, <).
+
+    Args:
+        title: The processed title string.
+
+    Returns:
+        The extracted and cleaned target language chunk, or empty string if not found.
+    """
     # If title has proper bracket format [Source > Target], extract from within brackets
     if "[" in title and "]" in title:
-        bracket_content = title[title.index("[") + 1 : title.index("]")]
+        bracket_content: str = title[title.index("[") + 1 : title.index("]")]
         if ">" in bracket_content:
             # Get everything after the last > within brackets
-            parts = bracket_content.split(">")
+            parts: list[str] = bracket_content.split(">")
             return _clean_text(parts[-1], True)
         elif " to " in bracket_content:
             parts = bracket_content.split(" to ")
@@ -593,7 +653,7 @@ def _extract_target_chunk(title):
     # Fallback to original logic for malformed titles
     for sep in [">", " to ", "-", "<"]:
         if sep in title:
-            chunk = title.split(sep, 1)[1]
+            chunk: str = title.split(sep, 1)[1]
             # Stop at the closing bracket
             if "]" in chunk:
                 chunk = chunk.split("]", 1)[0]
@@ -602,13 +662,20 @@ def _extract_target_chunk(title):
 
 
 def _clean_chunk(chunk: str) -> str:
+    """
+    Clean a language chunk by removing brackets, whitespace, and trailing punctuation.
+
+    Args:
+        chunk: The chunk string to clean.
+
+    Returns:
+        Cleaned chunk in lowercase with brackets and trailing punctuation removed.
+    """
     # Strip brackets and spaces
     chunk = chunk.strip()
     chunk = chunk.lstrip("[").rstrip("]")
     chunk = chunk.strip()
     # Remove trailing punctuation like '-' or ':' or spaces again
-    import re
-
     chunk = re.sub(r"\W+$", "", chunk.lower())
     return chunk
 
@@ -1024,17 +1091,28 @@ def process_title(title, post=None):
 """AI PROCESSING"""
 
 
-def _update_titolo_from_ai_result(result, ai_result):
+def _update_titolo_from_ai_result(result: Titolo, ai_result: dict[str, Any]) -> None:
     """
     Update a Titolo object based on AI parser output.
 
+    Extracts source and target language information from the AI result and
+    updates the Titolo object's language fields, direction, and notification
+    languages. Marks the object as AI-assessed upon successful update.
+
     Args:
-        result (Titolo): The object to be updated.
-        ai_result (dict): The AI's parsed result with language codes and names.
+        result: The Titolo object to be updated.
+        ai_result: The AI's parsed result with language codes and names.
+                   Expected keys: 'source_language', 'target_language',
+                   each containing a 'code' field.
+
+    Side effects:
+        - Updates result.source, result.target, result.direction
+        - Updates result.notify_languages and result.ai_assessed flag
+        - Logs the update operation
     """
     try:
-        src = ai_result.get("source_language")
-        tgt = ai_result.get("target_language")
+        src: Optional[dict[str, Any]] = ai_result.get("source_language")
+        tgt: Optional[dict[str, Any]] = ai_result.get("target_language")
 
         if src and "code" in src:
             result.source = [converter(src["code"])]
@@ -1052,16 +1130,31 @@ def _update_titolo_from_ai_result(result, ai_result):
         logger.error(f"Failed to update Titolo from AI result: {e}")
 
 
-def title_ai_parser(title, post=None):
+def title_ai_parser(
+    title: str, post: Optional[Submission] = None
+) -> Union[dict[str, Any], tuple[str, str]]:
     """
     Passes a malformed title to an AI to assess, and returns the non-English language
     (code and name) if confidence is sufficient.
 
-    :param title: Title of a Reddit post.
-    :param post: A PRAW submission object, or `None`
-    :return: A dictionary (see the responses file for its format)
+    Optionally includes image data from the post (direct image or first gallery image)
+    to improve AI assessment accuracy.
+
+    Args:
+        title: Title of a Reddit post to be parsed.
+        post: A PRAW submission object containing optional image data, or None.
+
+    Returns:
+        On success: A dictionary containing:
+            - 'source_language': dict with 'code' and 'name' keys
+            - 'target_language': dict with 'code' and 'name' keys
+            - 'confidence': float between 0.0 and 1.0
+        On failure: A tuple of ("error", error_message_string)
+
+    Note:
+        Returns an error tuple if AI confidence is below 0.7 threshold.
     """
-    image_url = None
+    image_url: Optional[str] = None
 
     if post:
         # Check if post has an image (gallery or direct image)
@@ -1069,18 +1162,18 @@ def title_ai_parser(title, post=None):
             image_url = post.url
         elif hasattr(post, "is_gallery") and post.is_gallery:
             # Get first image from gallery
-            media_metadata = getattr(post, "media_metadata", {})
+            media_metadata: dict[str, Any] = getattr(post, "media_metadata", {})
             if media_metadata:
                 first_item = next(iter(media_metadata.values()))
                 if "s" in first_item and "u" in first_item["s"]:
                     image_url = first_item["s"]["u"].replace("&amp;", "&")
 
     # Prepare the query input (text only)
-    query_input = RESPONSE.TITLE_PARSING_QUERY + title
+    query_input: str = RESPONSE.TITLE_PARSING_QUERY + title
 
     # Construct query kwargs
     logger.info("Passing information to AI service...")
-    query_kwargs = {
+    query_kwargs: dict[str, Any] = {
         "service": "openai",
         "behavior": "You are assessing a technical identification",
         "query": query_input,
@@ -1092,12 +1185,12 @@ def title_ai_parser(title, post=None):
         query_kwargs["image_url"] = image_url
 
     # Send to AI
-    query_data = ai_query(**query_kwargs)
+    query_data: str = ai_query(**query_kwargs)
 
     # Parse AI response
-    query_dict = json.loads(query_data)
+    query_dict: dict[str, Any] = json.loads(query_data)
 
-    confidence = query_dict.get("confidence", 0.0)
+    confidence: float = query_dict.get("confidence", 0.0)
     if confidence < 0.7:
         logger.warning("AI confidence value too low for title.")
         return "error", "Confidence value too low"

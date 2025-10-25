@@ -9,6 +9,7 @@ import csv
 import random
 import re
 from pprint import pprint
+from typing import Any, Optional
 
 import orjson  # Using for faster performance
 import pycountry
@@ -148,11 +149,17 @@ class Lingvo:
 """MAIN LOADER"""
 
 
-def _combine_language_data():
+def _combine_language_data() -> dict[str, dict[str, Any]]:
     """
     Helper function to combine raw language data, utility data, and statistics.
 
-    :return: dict - Combined language data dictionary
+    Merges three data sources in order of precedence:
+    1. Raw language data (base layer from language_data.yaml)
+    2. Utility language data (overlay from utility_lingvo.yaml)
+    3. Statistics data (filtered overlay from _statistics.json)
+
+    Returns:
+        A dictionary mapping language codes to their combined attribute dictionaries.
     """
     allowed_keys = {
         "num_months",
@@ -167,7 +174,7 @@ def _combine_language_data():
     with open(Paths.DATASETS["STATISTICS"], "rb") as f:
         statistics_data = orjson.loads(f.read())
 
-    combined_data = {}
+    combined_data: dict[str, dict[str, Any]] = {}
 
     # Process raw data
     for code, attrs in raw_data.items():
@@ -193,17 +200,18 @@ def _combine_language_data():
     return combined_data
 
 
-def validate_lingvo_dataset():
+def validate_lingvo_dataset() -> list[str]:
     """
-    Validates the language dataset by checking for codes missing required fields.
+    Validates the language dataset by checking for codes that are
+    missing required fields.
 
-    :return: list[str] - List of language codes missing required fields
-                         (name or language_code)
+    Returns:
+        List of language codes missing required fields (name or language_code).
     """
     combined_data = _combine_language_data()
 
     # Check for problematic codes
-    problematic_codes = []
+    problematic_codes: list[str] = []
     for code, attrs in combined_data.items():
         name = attrs.get("name")
         lang_code = attrs.get("language_code", code)
@@ -215,17 +223,21 @@ def validate_lingvo_dataset():
     return problematic_codes
 
 
-def _load_lingvo_dataset(debug=False):
+def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
     """
     Loads the language dataset by combining raw language data and
     utility language data, then returns a dictionary of Lingvo instances.
 
-    :return: dict[str, Lingvo]
+    Args:
+        debug: If True, log detailed information about each language code.
+
+    Returns:
+        Dictionary mapping language codes to Lingvo instances.
     """
     combined_data = _combine_language_data()
 
     # Create Lingvo instances
-    lingvo_dict = {}
+    lingvo_dict: dict[str, Lingvo] = {}
 
     for code, attrs in combined_data.items():
         if debug:
@@ -243,31 +255,50 @@ def _load_lingvo_dataset(debug=False):
     return lingvo_dict
 
 
-def get_lingvos(force_refresh=False):
-    """Get lingvos dataset, optionally forcing a refresh."""
+def get_lingvos(force_refresh: bool = False) -> dict[str, Lingvo]:
+    """
+    Get lingvos dataset, optionally forcing a refresh.
+
+    Args:
+        force_refresh: If True, reload the dataset even if cached. This
+        is especially used when the underlying data has been altered.
+
+    Returns:
+        Dictionary mapping language codes to Lingvo instances.
+    """
     global _lingvos_cache
     if _lingvos_cache is None or force_refresh:
         _lingvos_cache = _load_lingvo_dataset()
     return _lingvos_cache
 
 
-def define_language_lists():
+def define_language_lists() -> dict[str, Any]:
     """
     Generate various language code and name mappings from a language dataset.
 
-    :return: A dictionary with structured language metadata lists and mappings.
+    Returns:
+        A dictionary with structured language metadata lists and mappings:
+        - SUPPORTED_CODES: List of supported language codes
+        - SUPPORTED_LANGUAGES: List of supported language names
+        - ISO_DEFAULT_ASSOCIATED: List of language-country pairs (e.g., "en-US")
+        - ISO_639_1: List of 2-letter ISO 639-1 codes
+        - ISO_639_2B: Mapping of ISO 639-2B codes to ISO 639-1 codes
+        - ISO_639_3: List of 3-letter ISO 639-3 codes
+        - ISO_NAMES: List of language names
+        - MISTAKE_ABBREVIATIONS: Mapping of common mistakes to correct codes
+        - LANGUAGE_COUNTRY_ASSOCIATED: Mapping of codes to associated countries
     """
     lingvos = get_lingvos()
 
-    supported_codes = []
-    supported_languages = []
-    iso_default_associated = []
-    iso_639_1 = []
-    iso_639_2b = {}
-    iso_639_3 = []
-    iso_names = []
-    mistake_abbreviations = {}
-    language_country_associated = {}
+    supported_codes: list[str] = []
+    supported_languages: list[str] = []
+    iso_default_associated: list[str] = []
+    iso_639_1: list[str] = []
+    iso_639_2b: dict[str, str] = {}
+    iso_639_3: list[str] = []
+    iso_names: list[str] = []
+    mistake_abbreviations: dict[str, str] = {}
+    language_country_associated: dict[str, Any] = {}
 
     for code_1, lingvo in lingvos.items():
         if len(code_1) == 2:
@@ -314,22 +345,43 @@ def define_language_lists():
     }
 
 
-def normalize(text):
-    """Cleans the text for processing. Lowercases it, and then
-    substitutes and strips whitespace."""
+def normalize(text: str) -> str:
+    """
+    Cleans the text for processing. Lowercases it, and then
+    substitutes and strips whitespace.
+
+    Args:
+        text: The text to normalize.
+
+    Returns:
+        Normalized text in lowercase with punctuation removed
+        and whitespace normalized.
+    """
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
-def _fuzzy_text(word, supported_languages, threshold=85):
-    """Attempts to fuzzy match the given word with language names,
-    and ignores common mistaken matches."""
+def _fuzzy_text(
+    word: str, supported_languages: list[str], threshold: int = 85
+) -> Optional[str]:
+    """
+    Attempts to fuzzy match the given word with language names,
+    and ignores common mistaken matches.
+
+    Args:
+        word: The word to match against language names.
+        supported_languages: List of language names to match against.
+        threshold: Minimum fuzzy match score (0-100) required for a match.
+
+    Returns:
+        The best matching language name, or None if no match exceeds the threshold.
+    """
     exclude = language_module_settings["FUZZ_IGNORE_LANGUAGE_NAMES"]
     word_norm = normalize(word)
 
-    best_match = None
+    best_match: Optional[str] = None
     best_score = threshold
 
     for language in supported_languages:
@@ -402,22 +454,28 @@ def add_alt_language_name(language_code: str, alt_name: str):
 """MAIN CONVERTER FUNCTIONS"""
 
 
-def _iso_codes_deep_search(search_term, script_search=False):
+def _iso_codes_deep_search(
+    search_term: str, script_search: bool = False
+) -> Optional[Lingvo]:
     """
     Searches for a language or script code from a CSV of ISO 639-3 or
     ISO 15924 codes.
 
-    :param search_term: The term to search for (code or name).
-    :param script_search: If True, search in script codes (ISO 15924, 4-letter codes).
-    :return: Lingvo object if found, else None.
+    Args:
+        search_term: The term to search for (code or name).
+        script_search: If True, search in script codes (ISO 15924, 4-letter codes).
+                       If False, search in language codes (ISO 639-3).
+
+    Returns:
+        Lingvo object if a match is found, None otherwise.
     """
     search_term = search_term.strip().lower()
 
     if script_search:
-        dataset_path = Paths.DATASETS["ISO_SCRIPT_CODES"]
-        code_key = "Script Code"
-        name_key = "Script Name"
-        alt_key = "Alternate Names"
+        dataset_path: str = Paths.DATASETS["ISO_SCRIPT_CODES"]
+        code_key: str = "Script Code"
+        name_key: str = "Script Name"
+        alt_key: str = "Alternate Names"
     else:
         dataset_path = Paths.DATASETS["ISO_CODES"]
         code_key = "ISO 639-3"
@@ -431,10 +489,10 @@ def _iso_codes_deep_search(search_term, script_search=False):
                 if not row.get(name_key):
                     continue  # Skip malformed/incomplete rows
 
-                code = row.get(code_key, "").strip().lower()
-                name = row.get(name_key, "").strip()
-                alt_raw = row.get(alt_key) or ""
-                alternates = [
+                code: str = row.get(code_key, "").strip().lower()
+                name: str = row.get(name_key, "").strip()
+                alt_raw: str = row.get(alt_key) or ""
+                alternates: list[str] = [
                     alt.strip().lower() for alt in alt_raw.split(";") if alt.strip()
                 ]
 
@@ -675,13 +733,21 @@ def converter(
     return None
 
 
-def parse_language_list(list_string):
+def parse_language_list(list_string: str) -> list[Lingvo]:
     """
     Splits a string of language codes or names using flexible delimiters.
-    Examples: "ar, latin, yi", "ko+lo", etc.
 
-    :param list_string: A possible list of languages as a string.
-    :return: A sorted list of Lingvo objects, or an empty list if none found.
+    Handles multiple delimiter formats including commas, plus signs, newlines,
+    slashes, colons, and semicolons. Also handles space-delimited lists.
+
+    Examples: "ar, latin, yi", "ko+lo", "en/fr/de"
+
+    Args:
+        list_string: A possible list of languages as a string.
+
+    Returns:
+        A sorted list of Lingvo objects, or an empty list if none found.
+        Results are deduplicated by preferred code and sorted alphabetically.
     """
     if not list_string:
         return []
@@ -704,7 +770,7 @@ def parse_language_list(list_string):
         items = list_string.split(",")
 
     utility_codes = {"meta", "community", "all"}
-    final_lingvos = {}
+    final_lingvos: dict[str, Lingvo] = {}
 
     for item in items:
         item = item.strip().lower()
@@ -729,8 +795,21 @@ def parse_language_list(list_string):
 """MANAGING COUNTRIES DATA"""
 
 
-def get_country_emoji(country_name):
-    """Return the flag emoji for a given country name."""
+def get_country_emoji(country_name: str) -> str:
+    """
+    Return the flag emoji for a given country name.
+
+    Attempts multiple lookup strategies:
+    1. Direct name match
+    2. Common name match (e.g., "UK", "South Korea")
+    3. Fuzzy search for partial matches
+
+    Args:
+        country_name: The country name to look up.
+
+    Returns:
+        The country's flag emoji as a string, or empty string if not found.
+    """
     if not country_name:
         return ""
 
@@ -757,51 +836,61 @@ def get_country_emoji(country_name):
             country = None
 
     if country:
+        # Form the emoji.
         code = country.alpha_2
         return chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
     else:
         return ""
 
 
-def _load_country_list():
+def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
     """
-    Load countries from a CSV file. Returns a list of tuples.
+    Load countries from a CSV file.
+
     Expected CSV columns: CountryName, Alpha2, Alpha3, NumericCode,
                           Keywords (semicolon-separated)
+
+    Returns:
+        List of tuples containing (name, alpha2, alpha3, numeric_code, keywords).
     """
-    country_list = []
+    country_list: list[tuple[str, str, str, str, list[str]]] = []
     with open(Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            name = row[0].strip()
-            alpha2 = row[1].strip()
-            alpha3 = row[2].strip()
-            numeric = row[3].strip()
-            keywords = (
+            name: str = row[0].strip()
+            alpha2: str = row[1].strip()
+            alpha3: str = row[2].strip()
+            numeric: str = row[3].strip()
+            keywords: list[str] = (
                 row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
             )
             country_list.append((name, alpha2, alpha3, numeric, keywords))
     return country_list
 
 
-def country_converter(text_input, abbreviations_okay=True):
+def country_converter(
+    text_input: str, abbreviations_okay: bool = True
+) -> tuple[str, str]:
     """
     Detects a country based on input. Supports full names, 2-letter
     and 3-letter codes, or associated keywords.
 
-    :param text_input: The input text to match.
-    :param abbreviations_okay: If True, allow matching by abbreviations,
-                               like 'CN' or 'MX'. Default is True.
-    :return: (country_code, country_name)
+    Args:
+        text_input: The input text to match.
+        abbreviations_okay: If True, allow matching by abbreviations,
+                           like 'CN' or 'MX'. Default is True.
+
+    Returns:
+        Tuple of (country_code, country_name). Returns ("", "") if no match found.
     """
     country_list = _load_country_list()
 
-    text = text_input.strip()
+    text: str = text_input.strip()
     if len(text) <= 1:
         return "", ""
 
-    text_upper = text.upper()
-    text_title = text.title()
+    text_upper: str = text.upper()
+    text_title: str = text.title()
 
     # Match 2-letter code
     if len(text) == 2 and abbreviations_okay:
@@ -816,8 +905,8 @@ def country_converter(text_input, abbreviations_okay=True):
                 return alpha2, name
 
     # Initialize fallback match variables
-    possible_code = ""
-    possible_name = ""
+    possible_code: str = ""
+    possible_name: str = ""
 
     # Match exact or partial name
     for name, alpha2, _, _, _ in country_list:
@@ -839,18 +928,18 @@ def country_converter(text_input, abbreviations_okay=True):
     return "", ""
 
 
-def select_random_language(iso_639_1=False):
+def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
     """
     Pick a random language code and name from our CSV file.
 
     Args:
-        iso_639_1 (bool): If True, select ISO 639-1 codes (2-letter).
-                          Otherwise, select ISO 639-3 codes (3-letter).
+        iso_639_1: If True, select ISO 639-1 codes (2-letter).
+                   Otherwise, select ISO 639-3 codes (3-letter).
 
     Returns:
-        Lingvo or None if no match found.
+        A randomly selected Lingvo object, or None if no match found.
     """
-    pattern = r"^[a-z]{2}$" if iso_639_1 else r"^[a-z]{3}$"
+    pattern: str = r"^[a-z]{2}$" if iso_639_1 else r"^[a-z]{3}$"
 
     with open(
         Paths.DATASETS["ISO_CODES"], "r", newline="", encoding="utf-8"
@@ -858,7 +947,7 @@ def select_random_language(iso_639_1=False):
         reader = csv.reader(csvfile)
         next(reader, None)  # Skip header
 
-        filtered = [
+        filtered: list = [
             row
             for row in reader
             if row
@@ -870,7 +959,7 @@ def select_random_language(iso_639_1=False):
         return None
 
     chosen = random.choice(filtered)
-    code_index = 1 if iso_639_1 else 0
+    code_index: int = 1 if iso_639_1 else 0
     selected_language = converter(chosen[code_index])
 
     return selected_language
