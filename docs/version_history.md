@@ -65,6 +65,9 @@ Now (as of v2.0) fully integrated into the entirety of translator-BOT, Wenju was
 * 🔄 CHANGE: Copies and clears the "[identified](www.reddit.com/r/translator/wiki/identified)" and "[saved](https://www.reddit.com/r/translator/wiki/saved)" wikipages so they don't get too full. (new function)
 
 ##### Zifang 1.0 (2023-06-26)
+
+Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
+
 * 🚀 FEATURE: [Wikipedia lookup](https://www.reddit.com/r/translator/comments/14k4xf3/meta_new_bot_features_including_wikipedia_lookup/) for terms by enclosing them with `{{curly braces}}`.
 * 🚀 FEATURE: Duplicate detection for posts submitted in a short period of time with similar titles and images.
 * 🚀 FEATURE: Closing out posts: when a post is more than a week old, and has quite a few comments, but hasn't been marked as "translated" or "needs review" yet, the bot will message their authors asking them to "close out" and mark their posts as translated.
