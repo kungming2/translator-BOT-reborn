@@ -26,14 +26,14 @@ The various routines (Ziwen, Wenyuan, Wenju) no longer have separate version num
     * Consequently, some functions which ran outside of Ziwen in a separate routine called Zifang have been reincorporated into the main bot Ziwen. This [includes](https://www.reddit.com/r/translator/comments/14k4xf3/meta_new_bot_features_including_wikipedia_lookup/) Wikipedia lookup, closing out posts, and duplicate detection for new posts.
 * 🚀 FEATURE: A new bot named **[Zhongsheng](https://en.wikipedia.org/wiki/Ban_Chao)** can now work with subreddit data to provide useful information and lookups on the [subreddit Discord](https://discord.gg/wabv5NYzdV). More information about its commands and functionality can be found there with the command `/guide`.  
 * ✨ ADDITION: Full support for language chaining for all state commands in defined multiple posts (posts where the OP has defined a certain number of languages they want). `!translated:zh`, `!doublecheck:ja+ko`, etc. will work with defined multiple posts.
-* ✨ ADDITION: Messages from the bot can now include language-specific greetings to users.
+* ✨ ADDITION: Messages from the bot can now include language-specific greetings to users. (e.g. 你好, Guten Tag.)
 * ✨ ADDITION: Better Korean-language lookup results and output, including tokenization of Korean sentences.
-* ✨ ADDITION: If it's a request for a image translation, a short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
+* ✨ ADDITION: If it's a request for a image translation, a very short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
 * 🔄 CHANGE: Time handling bot-wide has been standardized to [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
 * 🔄 CHANGE: Signing up for language notifications is more tolerant of non-standard formatting.
 * 🔄 CHANGE: More accurate and relevant Sino-Vietnamese readings of single Han characters in the lookup. (credit to u/TheDeadlyZebra for the suggestion)
-* 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. 王后 will never be the nonsensical 王後 now).
-* 🔄 CHANGE: The `!search` function now uses [DuckDuckGo](https://duckduckgo.com/). Frankly, its results aren't as good as Google, but the [module](https://pypi.org/project/googlesearch-python/) we usually use for Google is currently inoperational. 
+* 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. [王后](https://en.wiktionary.org/wiki/%E7%8E%8B%E5%90%8E) will never be the nonsensical 王後 now).
+* 🔄 CHANGE: The `!search` function now uses [DuckDuckGo](https://duckduckgo.com/). Frankly, its results aren't as good as Google, but the [module](https://pypi.org/project/googlesearch-python/) we usually use for Google is [currently inoperational](https://github.com/Nv7-GitHub/googlesearch/issues). 
 * 🔄 CHANGE: All [2024-2025 updates to ISO 639-3](https://iso639-3.sil.org/code_changes/change_management) have been added to the dataset. New updates will be automatically recorded by the bot and posted to r/translatorBOT.
 * 🔄 CHANGE: Number of notification messages sent for posts has been lowered to 7 in order to work with Reddit's more stringent API rate limits.
 * 🔄 CHANGE: Content in multi-line triple backtick sections (`\`\`\``) will be ignored for lookup. 
@@ -47,7 +47,7 @@ The various routines (Ziwen, Wenyuan, Wenju) no longer have separate version num
 * 🕯️ REMOVED: Code for long-defunct commands that were no longer used.
     *  `!reference`: This returned information about a language and has been long removed. There is now an equivalent on the Discord server, `/lang`. 
     *  `!restore`: Formerly sent an archived copy of a text-only post if the OP had deleted it to the translator. It has been non-functional since [Pushshift got taken over by Reddit](https://www.reddit.com/r/pushshift/comments/14ei799/pushshift_live_again_and_how_moderators_can/) and its API was sunsetted.
-    * `!translate`/`!translator`: These command formerly allowed you to ask the bot to cross-post posts to r/translator.
+    * `!translate`/`!translator`: These commands formerly allowed you to ask the bot to cross-post posts to r/translator.
     * `!delete`: Formerly allowed OPs or mods to delete bot cross-posts. 
     * `!note`: A rarely used mod-only command, it manually saved a post with a generic post flair to the [saved languages log](https://www.reddit.com/r/translator/wiki/saved). This has become completely automated now and is no longer necessary. 
     * `+`: Allowed users to manually award a point to a user.
