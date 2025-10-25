@@ -69,7 +69,8 @@ async def lang_convert(ctx, *, language_input: str):
         # Handle --add_alt flag only for Moderators
         added_alt = False
         if add_alt_flag:
-            if "Moderator" not in getattr(ctx.author, "roles", []):
+            user_role_names = [role.name for role in ctx.author.roles]
+            if "Moderator" not in user_role_names:
                 await ctx.send("🚫 You do not have permission to use `--add_alt`.")
                 add_alt_flag = False  # disable further processing
             elif alt_value is not None:
