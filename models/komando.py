@@ -63,6 +63,9 @@ def check_specific_mode(arg_str):
     Check if argument ends with ! and has 2-4 chars before it.
     Returns (cleaned_arg, specific_mode_flag).
     """
+    # Strip common trailing punctuation first (except !)
+    arg_str = arg_str.rstrip(".,;:?()[]{}")
+
     if arg_str.endswith("!"):
         content = arg_str[:-1]  # Remove trailing !
         if 2 <= len(content) <= 4:
