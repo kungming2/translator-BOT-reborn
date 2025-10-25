@@ -7,6 +7,7 @@ Contains functions that deal with Chinese-language content.
 import asyncio
 import csv
 import html as html_stdlib
+import logging
 import random
 import re
 from contextlib import suppress
@@ -608,6 +609,8 @@ def _zh_character_other_readings(character):
     :param character: A single Chinese character.
     :return: None or a Markdown-formatted string with readings.
     """
+    logger.debug(f"Looking up readings for character: {character}")
+
     # noinspection HttpUrlsUsage
     url = (
         "http://ccdb.hemiola.com/characters/string/{}"
@@ -615,10 +618,28 @@ def _zh_character_other_readings(character):
     )
 
     try:
-        response = requests.get(url.format(character), headers=useragent)
+        formatted_url = url.format(character)
+        logger.debug(f"Requesting URL: {formatted_url}")
+
+        response = requests.get(formatted_url, headers=useragent)
+        logger.debug(f"Response status code: {response.status_code}")
+
         response.raise_for_status()
-        data = response.json()[0]
-    except (IndexError, ValueError, requests.RequestException):
+
+        json_data = response.json()
+        logger.debug(f"JSON response: {json_data}")
+
+        data = json_data[0]
+        logger.debug(f"Extracted data: {data}")
+
+    except IndexError as e:
+        logger.debug(f"IndexError - empty response array: {e}")
+        return None
+    except ValueError as e:
+        logger.debug(f"ValueError - JSON parsing failed: {e}")
+        return None
+    except requests.RequestException as e:
+        logger.debug(f"RequestException - network error: {e}")
         return None
 
     results = []
@@ -626,28 +647,46 @@ def _zh_character_other_readings(character):
     # Japanese readings
     ja_kun = data.get("kJapaneseKun") or ""
     ja_on = data.get("kJapaneseOn") or ""
+    logger.debug(f"Japanese kun: {ja_kun}, on: {ja_on}")
+
     if ja_kun or ja_on:
         ja_kun = ja_kun.lower() + " " if ja_kun else ""
         ja_on = ja_on.upper() if ja_on else ""
         ja_combined = ", ".join((ja_kun + ja_on).strip().split())
         results.append(f"**Japanese** | *{ja_combined}*")
+        logger.debug(f"Added Japanese reading: {ja_combined}")
 
     # Korean readings
     ko_hangul = data.get("kHangul")
+    logger.debug(f"Korean Hangul: {ko_hangul}")
+
     if ko_hangul:
         ko_latin = Romanizer(ko_hangul).romanize().lower()
         ko_latin = ko_latin.replace(" ", ", ")
         ko_hangul_fmt = ko_hangul.replace(" ", ", ")
         results.append(f"**Korean** | {ko_hangul_fmt} / *{ko_latin}*")
+        logger.debug(f"Added Korean reading: {ko_hangul_fmt} / {ko_latin}")
 
     # Vietnamese reading
     vi_latin = _vietnamese_readings(character)
+    logger.debug(f"Vietnamese reading from helper: {vi_latin}")
+
     if vi_latin is None:
         vi_latin = data.get("kVietnamese")
+        logger.debug(f"Vietnamese reading from API: {vi_latin}")
+
     if vi_latin:
         results.append(f"**Vietnamese** | *{vi_latin.lower()}*")
+        logger.debug(f"Added Vietnamese reading: {vi_latin}")
 
-    return "\n".join(results) if results else None
+    logger.debug(f"Final results: {results}")
+
+    if results:
+        logger.debug("Returning formatted results")
+        return "\n".join(results)
+    else:
+        logger.debug("No results found - returning None")
+        return None
 
 
 async def zh_character(character):
@@ -1156,11 +1195,20 @@ def show_menu():
     print("2. zh_word (search for a Chinese word)")
     print("3. zh_word_chengyu_supplement (search for a chengyu addition)")
     print("4. variant_character_search (search for a variant character)")
-    print("5. tea dictionary search ")
+    print("5. character other readings search ")
     print("x. Exit")
 
 
 if __name__ == "__main__":
+
+    # Configure logging to DEBUG level
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    # Also set the module logger to DEBUG explicitly
+    logger.setLevel(logging.DEBUG)
+
     while True:
         show_menu()
         choice = input("Enter your choice (0-5): ")
@@ -1184,4 +1232,4 @@ if __name__ == "__main__":
         elif choice == "4":
             print(variant_character_search(my_test))
         elif choice == "5":
-            print(asyncio.run(_zh_word_tea_dictionary_search(my_test)))
+            print(_zh_character_other_readings(my_test))
