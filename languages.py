@@ -323,7 +323,7 @@ def normalize(text):
     return text
 
 
-def _fuzzy_text(word, supported_languages, threshold=75):
+def _fuzzy_text(word, supported_languages, threshold=85):
     """Attempts to fuzzy match the given word with language names,
     and ignores common mistaken matches."""
     exclude = language_module_settings["FUZZ_IGNORE_LANGUAGE_NAMES"]
