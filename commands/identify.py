@@ -8,6 +8,8 @@ known by the short form !id, which is treated as a synonym.
 from config import logger
 from models.kunulo import Kunulo
 from notifications import notifier
+from reddit_sender import comment_reply
+from responses import RESPONSE
 from wiki import update_wiki_page
 
 from . import update_language
@@ -48,7 +50,14 @@ def handle(comment, instruo, komando, ajo) -> None:
     logger.info(f"[ZW] Bot: !identify data is: {komando.data}")
 
     # Update the Ajo's language(s) post.
-    update_language(ajo, komando)
+    try:
+        update_language(ajo, komando)
+    except ValueError as e:
+        logger.error(f"[ZW] Bot: !identify data is invalid: {e}")
+        invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS
+        comment_reply(comment, invalid_text)
+        logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
+        return
 
     # Handle notifications.
     if ajo.type == "single" or (ajo.type == "multiple" and not ajo.is_defined_multiple):

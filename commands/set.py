@@ -9,6 +9,7 @@ from config import logger
 from connection import is_mod
 from models.kunulo import Kunulo
 from reddit_sender import message_send
+from responses import RESPONSE
 
 from . import update_language
 
@@ -27,7 +28,17 @@ def handle(comment, _instruo, komando, ajo) -> None:
     )
 
     # Update the Ajo's language(s) post.
-    update_language(ajo, komando)
+    try:
+        update_language(ajo, komando)
+    except ValueError as e:
+        logger.error(f"[ZW] Bot: !set data is invalid: {e}")
+        message_send(
+            comment.author,
+            "[Notification] Invalid !set language",
+            RESPONSE.COMMENT_LANGUAGE_NO_RESULTS,
+        )
+        logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
+        return
 
     # Delete any pre-existing defined multiple or "Unknown" comment.
     delete_tags: list[str] = ["comment_defined_multiple", "comment_unknown"]

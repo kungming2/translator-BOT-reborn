@@ -85,6 +85,13 @@ def update_language(ajo, komando) -> None:
 
     This is used by !set and !identify.
     """
+    # Check for None values in the data
+    if None in komando.data:
+        raise ValueError(
+            "Cannot set language: komando.data contains "
+            "None value(s) instead of Lingvo objects"
+        )
+
     # Convert a list of single language items to a single object.
     if len(komando.data) == 1:
         languages_to_set = komando.data[0]
