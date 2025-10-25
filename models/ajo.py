@@ -948,16 +948,14 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
                 code_tag = "[--]"
                 output_flair_css = "generic"
     else:  # multiple posts
-        if language_code_3 == "multiple":
-            output_flair_css = "multiple"
-            code_tag = None
-        else:
-            output_flair_css = "multiple"
+        output_flair_css = "multiple"
 
-            if not hasattr(ajo, "status"):
-                ajo.status = {}
-            if isinstance(ajo.status, dict):
-                code_tag = ajo_defined_multiple_flair_former(ajo.status)
+        if not hasattr(ajo, "status"):
+            ajo.status = {}
+        if isinstance(ajo.status, dict):
+            code_tag = ajo_defined_multiple_flair_former(ajo.status)
+        else:
+            code_tag = None
 
     # Determine flair text
     if ajo.type == "single":
@@ -990,7 +988,7 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
         else:
             output_flair_text = f"Multiple Languages {code_tag}"
 
-        # Update flair on Reddit if template exists
+    # Update flair on Reddit if template exists
     if output_flair_css in post_templates:
         template_id = post_templates[output_flair_css]
         logger.debug(
@@ -1003,8 +1001,8 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
 
         # Only update flair if something actually changed
         flair_changed: bool = (
-            current_flair != output_flair_text
-            or current_flair_template_id != template_id
+                current_flair != output_flair_text
+                or current_flair_template_id != template_id
         )
 
         if not testing_mode:
@@ -1046,8 +1044,8 @@ def determine_flair_and_update(ajo: Ajo, initial_update: bool = False) -> None:
         )
 
     # Sync flair output back to Ajo instance
-    ajo.output_flair_css = output_flair_css
-    ajo.output_flair_text = output_flair_text
+    ajo.output_post_flair_css = output_flair_css
+    ajo.output_post_flair_text = output_flair_text
 
 
 """INTERNAL USE"""
@@ -1143,9 +1141,22 @@ if __name__ == "__main__":
             pprint.pp(vars(Ajo.from_dict(test_dict)))
 
         elif choice == "4":
-            test_ajo = input("Enter the ID of the Ajo: ")
-            test_info = ajo_loader(test_ajo)
-            print(test_info)
-            print(test_info.lingvo)
-            print(test_info.language_name)
-            pprint.pp(vars(test_info))
+            test_ajo_input = input("Enter the ID of the Ajo: ")
+            test_ajo = ajo_loader(test_ajo_input)
+
+            if test_ajo is None:
+                print(f"Could not load Ajo with ID: {test_ajo_input}")
+            else:
+                print("=" * 60)
+                print(f"ID: {test_ajo.id}")
+                print(f"Lingvo: {test_ajo.lingvo}")
+                print(f"Language Name: {test_ajo.language_name}")
+
+                print("FULL OBJECT DATA:")
+                print("=" * 60)
+                pprint.pp(vars(test_ajo))
+                print("=" * 60)
+
+                determine_flair_and_update(test_ajo)
+                print(f"Determined flair CSS: {test_ajo.output_post_flair_css}")
+                print(f"Determined flair text: {test_ajo.output_post_flair_text}")
