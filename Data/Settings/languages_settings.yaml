@@ -1,7 +1,9 @@
 # These are English words that usually get erroneously recognized as a
 # language due to Fuzzywuzzy. Let's ignore them.
+FUZZY_THRESHOLD: 85
 FUZZ_IGNORE_WORDS:
   - Acehnese
+  - Ancient
   - Ancient Mayan
   - Archaic
   - Asian-ish
@@ -60,6 +62,7 @@ FUZZ_IGNORE_WORDS:
 
 # These are languages for which fuzzing usually doesn't play well.
 FUZZ_IGNORE_LANGUAGE_NAMES:
+  - Ancient Egyptian
   - American Sign Language
   - Javanese
 

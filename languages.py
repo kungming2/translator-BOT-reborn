@@ -363,9 +363,7 @@ def normalize(text: str) -> str:
     return text
 
 
-def _fuzzy_text(
-    word: str, supported_languages: list[str], threshold: int = 85
-) -> Optional[str]:
+def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
     """
     Attempts to fuzzy match the given word with language names,
     and ignores common mistaken matches.
@@ -373,12 +371,12 @@ def _fuzzy_text(
     Args:
         word: The word to match against language names.
         supported_languages: List of language names to match against.
-        threshold: Minimum fuzzy match score (0-100) required for a match.
 
     Returns:
         The best matching language name, or None if no match exceeds the threshold.
     """
     exclude = language_module_settings["FUZZ_IGNORE_LANGUAGE_NAMES"]
+    threshold = language_module_settings["FUZZY_THRESHOLD"]
     word_norm = normalize(word)
 
     best_match: Optional[str] = None
