@@ -325,7 +325,7 @@ WY_FULL_RETRIEVAL_DATA: |
 TITLE_PARSING_QUERY: >
   Assess this Reddit post title which is for a translation request. 
   Output what you assess to be the source language and target language, 
-  and the percentage confidence for your assessment in this JSON format:
+  and the percentage confidence for your assessment in valid JSON format:
 
   {{
     "source_language": {{
