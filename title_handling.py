@@ -1188,7 +1188,11 @@ def title_ai_parser(
     query_data: str = ai_query(**query_kwargs)
 
     # Parse AI response
-    query_dict: dict[str, Any] = json.loads(query_data)
+    try:
+        query_dict: dict[str, Any] = json.loads(query_data)
+    except json.decoder.JSONDecodeError:
+        logger.error(f"Failed to parse query data: `{query_data}`")
+        return "error", "Service returned invalid JSON"
 
     confidence: float = query_dict.get("confidence", 0.0)
     if confidence < 0.7:
