@@ -322,7 +322,11 @@ def record_filter_log(
     :param filter_type: Code of the violated filter rule.
     """
     timestamp_utc = convert_to_day(created_timestamp)
-    line = f"\n| {timestamp_utc} | {filtered_title} | {filter_type} |"
+
+    # Clean the title: remove tabs, newlines, and normalize whitespace
+    cleaned_title = " ".join(filtered_title.split())
+
+    line = f"\n| {timestamp_utc} | {cleaned_title} | {filter_type} |"
 
     with open(Paths.LOGS["FILTER"], "a", encoding="utf-8") as f:
         f.write(line)
