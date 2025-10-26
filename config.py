@@ -40,7 +40,9 @@ class Paths:
         "CREDENTIALS": os.path.join(DATA_DIR, "auth.yaml"),
     }
 
-    # Written responses and templates by the bot
+    # Written responses and templates by the bot.
+    # Included here for completion; for regular use, utilize
+    # responses.py's RESPONSE object instead.
     RESPONSES: dict[str, str] = {
         "TEXT": os.path.join(DATA_DIR, "responses.yaml"),
     }
@@ -94,7 +96,7 @@ class Paths:
         "MONTHLY_STATISTICS": os.path.join(
             DATA_DIR, "Wenyuan", "monthly_statistics_output.md"
         ),
-        "WEEKLY_CHALLENGE": os.path.join(DATA_DIR, "Wenyuan", "weekly_challenge.md"),
+        "TRANSLATION_CHALLENGE": os.path.join(DATA_DIR, "translation_challenge.md"),
     }
 
     # Archival output files
