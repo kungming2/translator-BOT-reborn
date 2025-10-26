@@ -7,8 +7,8 @@ information and statistics to moderators via Discord.
 
 import csv
 import time
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 import yaml
 
@@ -16,7 +16,7 @@ from config import SETTINGS, Paths, get_reports_directory, logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
-from time_handling import get_current_utc_date, convert_to_day
+from time_handling import convert_to_day, get_current_utc_date
 from usage_statistics import generate_command_usage_report
 from utility import format_markdown_table_with_padding
 
@@ -174,20 +174,25 @@ def error_log_count() -> str:
     return formatted_template
 
 
-def filter_log_tabulator():
+def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=False):
     """
-    Calculate the filtration rate of bad titles based on the last
-    LINES_TO_KEEP entries.
+    Calculate the filtration rate of bad titles for a specified time period.
 
-    Reads the filter log, extracts the most recent entries, determines the
-    time span between the oldest of those entries and today, and returns
-    a Markdown snippet showing the average filter rate per day.
+    Reads the filter log and calculates statistics for either:
+    - A custom date range (if start_date/end_date provided)
+    - The last LINES_TO_KEEP entries (default behavior)
+
+    Args:
+        start_date: Optional datetime.date or Unix timestamp for range start
+        end_date: Optional datetime.date or Unix timestamp for range end (defaults to today)
+        include_detailed_stats: If True, includes comparison with total log statistics
+
+    Returns:
+        str: Markdown formatted filter statistics
     """
-
-    # Current day stamp.
     today = datetime.now(timezone.utc).date()
 
-    # Read the filter log file.
+    # Read the filter log file
     try:
         with open(Paths.LOGS["FILTER"], "r", encoding="utf-8") as f:
             filter_logs = f.read().strip()
@@ -195,36 +200,132 @@ def filter_log_tabulator():
         logger.warning("[WJ] filter_log_tabulator: Filter log file not found.")
         return "* **Filter rate**: Unknown (file missing)"
 
-    # Remove the header from consideration, and only keep the last X entries.
-    entries = filter_logs.splitlines()[2:]
-    entries = entries[-WENJU_SETTINGS["lines_to_keep"] :]
+    # Remove header and get entries
+    all_entries = filter_logs.splitlines()[2:]
 
-    # Handle cases where there are too few entries.
-    if len(entries) < 2:
+    if len(all_entries) < 2:
         logger.info("[WJ] filter_log_tabulator: Not enough data in filter log.")
         return "* **Filter rate**: Insufficient data"
 
-    total_count = len(entries)
+    # Determine which entries to analyze
+    if start_date is not None:
+        # Custom date range mode
+        entries, period_start, period_end = _filter_entries_by_date_range(
+            all_entries, start_date, end_date or today
+        )
+        if not entries:
+            logger.warning(
+                "[WJ] filter_log_tabulator: No entries found in specified date range."
+            )
+            return "* **Filter rate**: No data in specified range"
 
-    # Parse the first (oldest) entry’s date.
-    try:
-        first_date_str = entries[0].split("|")[0].strip()
-        first_date = datetime.strptime(first_date_str, "%Y-%m-%d").date()
-    except Exception as e:
-        logger.error(f"[WJ] filter_log_tabulator: Failed to parse first date — {e}")
-        return "* **Filter rate**: Unknown (date parse error)"
+        days_elapsed = (period_end - period_start).days or 1
+        entry_count = len(entries)
+        period_label = f"{period_start} to {period_end}"
+    else:
+        # Default: use last N entries
+        entries = all_entries[-WENJU_SETTINGS["lines_to_keep"] :]
+        entry_count = len(entries)
 
-    # Calculate the difference in days.
-    days_elapsed = (today - first_date).days or 1  # Prevent division by zero
-    rate_per_day = round(total_count / days_elapsed, 2)
+        try:
+            first_date_str = entries[0].split("|")[0].strip()
+            period_start = datetime.strptime(first_date_str, "%Y-%m-%d").date()
+        except Exception as e:
+            logger.error(f"[WJ] filter_log_tabulator: Failed to parse first date — {e}")
+            return "* **Filter rate**: Unknown (date parse error)"
 
-    filter_string = f"* **Filter rate**: {rate_per_day}/day"
+        period_end = today
+        days_elapsed = (period_end - period_start).days or 1
+        period_label = f"recent {days_elapsed} days"
+
+    # Calculate rate for the period
+    rate_per_day = round(entry_count / days_elapsed, 2)
+
+    # Build basic output
+    filter_string = f"* **Filter rate**: {rate_per_day}/day ({period_label})"
+
     logger.debug(
-        f"[WJ] filter_log_tabulator: The average number of filtered posts is {rate_per_day}/day "
-        f"over {days_elapsed} days ({total_count} entries)."
+        f"[WJ] filter_log_tabulator: Average filtered posts: {rate_per_day}/day "
+        f"over {days_elapsed} days ({entry_count} entries)."
     )
 
+    # Optionally include detailed stats comparing period vs. total
+    if include_detailed_stats:
+        try:
+            # Parse oldest entry in entire log
+            oldest_date_str = all_entries[0].split("|")[0].strip()
+            oldest_date = datetime.strptime(oldest_date_str, "%Y-%m-%d").date()
+
+            total_days = (today - oldest_date).days or 1
+            total_count = len(all_entries)
+            total_rate = round(total_count / total_days, 2)
+
+            # Calculate percentage difference
+            if total_rate > 0:
+                rate_diff = round(((rate_per_day - total_rate) / total_rate) * 100, 1)
+                trend = "↑" if rate_diff > 0 else "↓" if rate_diff < 0 else "→"
+
+                filter_string += (
+                    f"\n* **Overall rate**: {total_rate}/day (all-time: {total_count} entries, {total_days} days)"
+                    f"\n* **Trend**: {trend} {abs(rate_diff)}% vs. all-time average"
+                )
+
+                logger.debug(
+                    f"[WJ] filter_log_tabulator: All-time average: {total_rate}/day. "
+                    f"Period comparison: {rate_diff:+.1f}%"
+                )
+            else:
+                filter_string += f"\n* **Overall rate**: {total_rate}/day (all-time: {total_count} entries)"
+
+                logger.debug(
+                    f"[WJ] filter_log_tabulator: All-time average: {total_rate}/day. "
+                    f"Period comparison: N/A"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"[WJ] filter_log_tabulator: Failed to calculate detailed stats — {e}"
+            )
+
     return filter_string
+
+
+def _filter_entries_by_date_range(entries, start_date, end_date):
+    """
+    Filter log entries to those within the specified date range.
+
+    Args:
+        entries: List of log entry strings
+        start_date: datetime.date or Unix timestamp
+        end_date: datetime.date or Unix timestamp
+
+    Returns:
+        tuple: (filtered_entries, start_date_obj, end_date_obj)
+    """
+    # Convert Unix timestamps to date objects if needed
+    if isinstance(start_date, (int, float)):
+        start_date = datetime.fromtimestamp(start_date, tz=timezone.utc).date()
+    if isinstance(end_date, (int, float)):
+        end_date = datetime.fromtimestamp(end_date, tz=timezone.utc).date()
+
+    filtered = []
+    for line_num, entry in enumerate(entries, start=1):
+        try:
+            if entry[:1] == "|":
+                entry_date_str = entry.split("|")[1].strip()
+            else:
+                entry_date_str = entry.split("|")[0].strip()
+            entry_date = datetime.strptime(entry_date_str, "%Y-%m-%d").date()
+
+            if start_date <= entry_date <= end_date:
+                filtered.append(entry)
+        except Exception as e:
+            # Skip entries with malformed dates
+            logger.error(f"Encountered entry error at line {line_num}: {e}")
+            logger.error(f"ENTRY: {entry}")
+            continue
+
+    return filtered, start_date, end_date
 
 
 def note_language_tags():
@@ -297,13 +398,16 @@ def collate_moderator_digest():
     days_ago = WENJU_SETTINGS["report_command_average"]
     time_delta = 86400 * days_ago
     current_time = int(time.time())
+    back_start_date = current_time - time_delta
 
     # Collect the data.
     error_log_data = error_log_count()
-    filter_log_data = filter_log_tabulator()
+    filter_log_data = filter_log_tabulator(
+        start_date=back_start_date, end_date=today_date
+    )
     activity_data = activity_csv_handler()
     command_data = generate_command_usage_report(
-        current_time - time_delta, current_time, days_ago
+        back_start_date, current_time, days_ago
     )
     command_data = format_markdown_table_with_padding(command_data)
     noted_entries_data = note_language_tags()
@@ -318,7 +422,7 @@ def collate_moderator_digest():
             noted_entries_data,
         ]
     )
-    subject_line = f"Log for {today_date}"
+    subject_line = f"Moderator Digest for {today_date}"
     digest_summary = f"# {subject_line}\n{total_data}"
 
     # Resolve the output file path.
@@ -342,4 +446,9 @@ def collate_moderator_digest():
 
 
 if __name__ == "__main__":
-    print(error_log_count())
+    print(
+        filter_log_tabulator(
+            start_date=1759302000, end_date=1761030000, include_detailed_stats=True
+        )
+    )
+    print(filter_log_tabulator())
