@@ -15,8 +15,8 @@ from database import db, record_filter_log
 
 # from dupe_detector import duplicate_detector
 from error import error_log_extended
-from models.ajo import Ajo, ajo_loader
-from models.diskuto import Diskuto, diskuto_writer, diskuto_exists
+from models.ajo import Ajo
+from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
 from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
 from request_closeout import closeout_posts
@@ -112,15 +112,35 @@ def ziwen_posts(post_limit=None):
             logger.debug(
                 f"[ZW] Posts: This post {post_id} already exists in the processed database."
             )
+            continue
 
-            # Try to load the associated Ajo object
-            post_ajo = ajo_loader(post_id)
-            if post_ajo:
-                logger.debug(f"[ZW] Posts: Loaded existing Ajo for post {post_id}.")
-            else:
-                logger.warning(
-                    f"[ZW] Posts: Post {post_id} is in `old_posts` database but has no Ajo stored."
-                )
+        # Mark post as processed
+        db.cursor_main.execute(
+            "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
+            (post_id, int(post.created_utc)),
+        )
+        db.conn_main.commit()
+
+        # Apply a filtration test to make sure this post is valid.
+        post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
+
+        # If it fails this test, write to `record_filter_log`
+        if not post_okay:
+            # Remove this post, it failed all routines.
+            if not SETTINGS["testing_mode"]:
+                post.mod.remove()
+            suggested_title_replacement = format_title_correction_comment(
+                title_text=post_title, author=post_author
+            )
+            removal_suggestion = suggested_title_replacement + RESPONSE.BOT_DISCLAIMER
+            message_reply(post, removal_suggestion)
+
+            # Write the title to the log.
+            record_filter_log(post_title, post.created_utc, filter_reason)
+            action_counter(1, "Removed posts")  # Write to the counter log
+            logger.info(
+                f"[ZW] Posts: Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`"
+            )
             continue
 
         # Create a new Ajo here into memory if it doesn't already exist.
@@ -131,12 +151,19 @@ def ziwen_posts(post_limit=None):
             titolo_content = Titolo.process_title(post)
             post_ajo = Ajo.from_titolo(titolo_content, post)
 
-        # Mark post as processed
-        db.cursor_main.execute(
-            "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
-            (post_id, int(post.created_utc)),
-        )
-        db.conn_main.commit()
+        # Check for English-only POSTS.
+        if is_english_only(titolo_content):
+            # Remove this post, as it is English-only.
+            if not SETTINGS["testing_mode"]:
+                post.mod.remove()
+            message_reply(
+                post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author)
+            )
+
+            record_filter_log(post_title, post.created_utc, "EE")
+            action_counter(1, "Removed posts")  # Write to the counter log
+            logger.info("[ZW] Posts: Removed an English-only post. | `{post.id}`")
+            continue
 
         # Check on Ajo status. We only want to deal with untranslated new posts.
         if post_ajo is not None and post_ajo.status in [
@@ -185,42 +212,6 @@ def ziwen_posts(post_limit=None):
                 f"[ZW] Posts: Post `{post_id}` is too old to send notifications for."
             )
 
-        # Apply a filtration test to make sure this post is valid.
-        post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
-
-        # If it fails this test, write to `record_filter_log`
-        if not post_okay:
-            # Remove this post, it failed all routines.
-            if not SETTINGS["testing_mode"]:
-                post.mod.remove()
-            suggested_title_replacement = format_title_correction_comment(
-                title_text=post_title, author=post_author
-            )
-            removal_suggestion = suggested_title_replacement + RESPONSE.BOT_DISCLAIMER
-            message_reply(post, removal_suggestion)
-
-            # Write the title to the log.
-            record_filter_log(post_title, post.created_utc, filter_reason)
-            action_counter(1, "Removed posts")  # Write to the counter log
-            logger.info(
-                f"[ZW] Posts: Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`"
-            )
-            continue
-
-        # Check for English-only content.
-        if is_english_only(titolo_content):
-            # Remove this post, as it is English-only.
-            if not SETTINGS["testing_mode"]:
-                post.mod.remove()
-            message_reply(
-                post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author)
-            )
-
-            record_filter_log(post_title, post.created_utc, "EE")
-            action_counter(1, "Removed posts")  # Write to the counter log
-            logger.info("[ZW] Posts: Removed an English-only post. | `{post.id}`")
-            continue
-
         # After this point, this post is something we can work with.
         # Length checks for overly long posts.
         if len(post.selftext) > SETTINGS["post_long_characters"]:
@@ -246,13 +237,21 @@ def ziwen_posts(post_limit=None):
         # Get the Titolo and send notifications to users.
         if messages_send_okay and not user_posted_too_much:
             action_counter(1, "New posts")  # Write to the counter log
-            for lingvo in titolo_content.notify_languages:
-                notified = notifier(
-                    lingvo, post
-                )  # Returns a list of messaged individuals.
 
-                # Add the list of notified users to the Ajo.
-                post_ajo.add_notified(notified)
+            # Add None check for titolo_content before accessing notify_languages
+            if titolo_content and hasattr(titolo_content, "notify_languages"):
+                for lingvo in titolo_content.notify_languages:
+                    notified = notifier(
+                        lingvo, post
+                    )  # Returns a list of messaged individuals.
+
+                    # Add the list of notified users to the Ajo.
+                    post_ajo.add_notified(notified)
+            else:
+                logger.warning(
+                    f"[ZW] Posts: Cannot send notifications for post {post_id} -"
+                    f" titolo_content is None or missing notify_languages."
+                )
 
         # Leave a long comment if required.
         if post_long_comment:
@@ -269,7 +268,9 @@ def ziwen_posts(post_limit=None):
         # Handle case where lingvo might be None
         if post_ajo.lingvo is None or not post_ajo.lingvo.supported:
             # Get language name, handling None case
-            language_name = post_ajo.lingvo.name if post_ajo.lingvo else "Unparsed"
+            language_name = (
+                post_ajo.lingvo.name if post_ajo.lingvo is not None else "Unparsed"
+            )
 
             update_wiki_page(
                 "save",
@@ -290,7 +291,8 @@ def ziwen_posts(post_limit=None):
         logger.info(f"[ZW] Post Ajo ID: `{post_ajo.id}`")
         logger.info(f"[ZW] Post Ajo initial data: `{vars(post_ajo)}`")
 
-        # Only update if we're not in testing mode.
+        # Only update if we're not in testing mode. This also writes the
+        # Ajo to disk.
         if not SETTINGS["testing_mode"]:
             post_ajo.update_reddit(initial_update=True)
 
