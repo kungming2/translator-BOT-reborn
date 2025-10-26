@@ -1,4 +1,11 @@
+# Note that this file stores settings for BOTH Wenju and Wenyuan.
 lines_to_keep: 60000  # lines to keep in the events (logger) log
 max_queue: 7  # number of items we want to alert mods about.
 report_command_average: 3  # number of days to obtain average command usage data
-controversial_score_threshold: -25  # Alert mods if a comment goes below this
+controversial_score_threshold: -25  # Alert mods if a comment goes below this limit
+
+minimum_points_display_threshold: 75
+points_exclude_usernames:
+  - translator-ModTeam
+  - translator-BOT
+  - AutoModerator
