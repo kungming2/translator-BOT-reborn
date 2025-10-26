@@ -21,6 +21,7 @@ import requests
 from bs4 import BeautifulSoup as Bs
 from korean_romanizer.romanizer import Romanizer
 from lxml import html
+from pypinyin import lazy_pinyin, Style
 
 from config import Paths, logger
 from connection import get_random_useragent
@@ -160,152 +161,7 @@ def _pair_syllables_with_tones(raw_syllables):
     return " ".join(pairs)
 
 
-def _process_gwoyeu_romatzyh(syllables, corresponding_dict):
-    """
-    Processes the syllables into Gwoyeu Romatzyh romanization.
-
-    :param syllables: List of pinyin syllables with tones.
-    :param corresponding_dict: Dict mapping base pinyin to [Yale, Wade-Giles, GYRM].
-    :return: List of GYRM syllables as strings.
-    """
-
-    def split_initial_final(syllable_to_split):
-        if syllable_to_split.startswith(("w", "y")):
-            return None, syllable_to_split[1:]
-        elif len(syllable_to_split) > 1 and syllable_to_split[1] == "h":
-            return syllable_to_split[:1], syllable_to_split[2:]
-        else:
-            return syllable_to_split[0], syllable_to_split[1:]
-
-    gr_list = []
-
-    for syllable in syllables:
-        if len(syllable) < 2:
-            logger.error(f"⚠️ Skipping malformed syllable for GYRM: '{syllable}'")
-            continue
-
-        try:
-            tone = int(syllable[-1])
-        except ValueError:
-            logger.error(f"⚠️ Invalid tone in syllable: '{syllable}'")
-            continue
-
-        base_pinyin = syllable[:-1].lower()
-
-        if base_pinyin not in corresponding_dict:
-            logger.error(f"❌ Missing key in dictionary for GYRM: '{base_pinyin}'")
-            continue
-
-        initial, final = split_initial_final(base_pinyin)
-        gr_base = corresponding_dict[base_pinyin][2]
-        gr_equiv = None
-
-        # GYRM tone transformation rules
-        if tone == 1:
-            if initial in ["l", "m", "n", "r"]:
-                gr_equiv = gr_base[0] + "h" + gr_base[1:]
-            else:
-                gr_equiv = gr_base
-
-        elif tone == 2:
-            if initial in ["l", "m", "n", "r"]:
-                gr_equiv = gr_base
-            elif "i" in gr_base and final[-1] != "i":
-                gr_equiv = gr_base.replace("i", "y")
-            elif "i" in gr_base and final[-1] == "i":
-                gr_equiv = gr_base.replace("i", "y") + "i"
-            elif "u" in gr_base and final[-1] != "u":
-                gr_equiv = gr_base.replace("u", "w")
-            elif "u" in gr_base and final[-1] == "u":
-                gr_equiv = gr_base.replace("u", "w") + "u"
-            else:
-                last_vowel_index = max(
-                    (i for i, c in enumerate(gr_base) if c in "aeiou"), default=-1
-                )
-                if last_vowel_index != -1:
-                    gr_equiv = (
-                        gr_base[: last_vowel_index + 1]
-                        + "r"
-                        + gr_base[last_vowel_index + 1 :]
-                    )
-                else:
-                    gr_equiv = gr_base
-
-        elif tone == 3:
-            if gr_base[0] in "iu":
-                if gr_base.startswith("i"):
-                    gr_equiv = gr_base.replace("i", "ye", 1)
-                elif gr_base.startswith("u"):
-                    gr_equiv = gr_base.replace("u", "wo", 1)
-            elif "i" in gr_base and "u" in gr_base:
-                if gr_base.index("i") < gr_base.index("u"):
-                    gr_equiv = gr_base.replace("i", "e", 1)
-                else:
-                    gr_equiv = gr_base.replace("u", "o", 1)
-            elif (
-                "i" in gr_base and vowel_neighbor("i", gr_base) and "ei" not in gr_base
-            ):
-                gr_equiv = gr_base.replace("i", "e", 1)
-            elif (
-                "u" in gr_base
-                and vowel_neighbor("u", gr_base)
-                and "ou" not in gr_base
-                and "uo" not in gr_base
-            ):
-                gr_equiv = gr_base.replace("u", "o", 1)
-            else:
-                if "uo" not in gr_base:
-                    doubled = False
-                    result = []
-                    for char in gr_base:
-                        if char in "aeiouy" and not doubled:
-                            result.append(char * 2)
-                            doubled = True
-                        else:
-                            result.append(char)
-                    gr_equiv = "".join(result)
-                else:
-                    gr_equiv = gr_base.replace("o", "oo")
-
-        elif tone == 4:
-            if "i" in gr_base and _vowel_preceder("i", gr_base):
-                gr_equiv = gr_base.replace("i", "y", 1)
-            elif "u" in gr_base and _vowel_preceder("u", gr_base):
-                gr_equiv = gr_base.replace("u", "w", 1)
-            elif gr_base.endswith("n") or gr_base.endswith("l"):
-                gr_equiv = gr_base + gr_base[-1]
-            elif gr_base.endswith("ng"):
-                gr_equiv = gr_base.replace("ng", "nq")
-            else:
-                gr_equiv = gr_base + "h"
-
-            # Null-onset handling
-            if gr_equiv.startswith("i"):
-                if vowel_neighbor("i", gr_base):
-                    gr_equiv = gr_equiv.replace("i", "y", 1)
-                else:
-                    gr_equiv = "y" + gr_equiv
-            elif gr_equiv.startswith("u"):
-                if vowel_neighbor("u", gr_base):
-                    gr_equiv = gr_equiv.replace("u", "w", 1)
-                else:
-                    gr_equiv = "w" + gr_equiv
-            if gr_equiv.endswith("iw"):
-                gr_equiv = gr_equiv.replace("iw", "iuh")
-
-        elif tone == 5:
-            if base_pinyin in {"me", "ge", "zi"}:
-                gr_equiv = base_pinyin[0]
-            else:
-                gr_equiv = gr_base
-
-        if gr_equiv:
-            gr_list.append(gr_equiv)
-
-    return gr_list
-
-
-def _zh_word_alternate_romanization(pinyin_string):
+def _zh_word_alternate_romanization(pinyin_string, original_input=None):
     """
     Takes a pinyin with tone-number string and returns a version of it in the
     legacy Yale, Wade-Giles, and Gwoyeu Romatzyh romanization schemes.
@@ -317,6 +173,8 @@ def _zh_word_alternate_romanization(pinyin_string):
     * ryhguang in GYRM.
 
     :param pinyin_string: A numbered pinyin string (e.g. pin1 yin1).
+    :param original_input: The original characters in the search query,
+                           used to produce the GYRM output.
     :return: A tuple (Yale romanization, Wade-Giles, GYRM).
     """
 
@@ -363,13 +221,16 @@ def _zh_word_alternate_romanization(pinyin_string):
         wadegiles_list.append(add_tone(corresponding_dict[base][1]))
 
     # Process Gwoyeu Romatzyh romanization
-    gr_list = _process_gwoyeu_romatzyh(syllables, corresponding_dict)
+    if original_input:
+        gr_reading_list = lazy_pinyin(original_input, style=Style.GWOYEU)
+        gr_post = ''.join(gr_reading_list)
+    else:  # no characters passed
+        gr_post = ''
 
     yale_post = " ".join(yale_list)
     wadegiles_post = " ".join(wadegiles_list)
-    gr_post = "".join(gr_list)
 
-    # Sole spelling exception for GYRM
+    # Sole spelling exception for GYRM (羅馬)
     if "luomaa" in gr_post:
         gr_post = gr_post.replace("luomaa", "roma")
 
@@ -488,7 +349,7 @@ def _min_hakka_readings(character):
         for word in reading.split():
             word = re.sub(r"([a-z])(\d)", r"\1^(\2)", word)
             formatted.append(word)
-        return f"\n|**Hakka (Sixian)** | *{' '.join(formatted)}* |"
+        return f"\n| **Hakka (Sixian)** | *{' '.join(formatted)}* |"
 
     min_reading = get_min_reading(character)
     hak_reading = get_hak_reading(character)
@@ -1104,7 +965,7 @@ async def zh_word(word):
                 match = re.search(r'\|([^|]*)"', onclick)
                 py_split = match.group(1).strip() if match else ""
                 logger.info(f">>> Pinyin string to look up: {py_split}")
-                alt_romanize = _zh_word_alternate_romanization(py_split)
+                alt_romanize = _zh_word_alternate_romanization(py_split, word)
             except IndexError:
                 alt_romanize = ("---", "---", "---")
 
@@ -1129,7 +990,7 @@ async def zh_word(word):
             yue_pronunciation = re.sub(r"(\d)", r"^(\1)", yue_pronunciation)
         else:
             cmn_pronunciation = _convert_numbered_pinyin(alternate_pinyin)
-            alt_romanize = _zh_word_alternate_romanization(alternate_pinyin)
+            alt_romanize = _zh_word_alternate_romanization(alternate_pinyin, word)
             yue_pronunciation = alternate_jyutping or None
             meaning = "\n".join(alternate_meanings)
 
