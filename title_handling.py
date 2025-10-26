@@ -568,7 +568,7 @@ def _preprocess_title(post_title: str) -> str:
         title = title.replace("KR ", "Korean ")
 
     # Handle unknown or unclear entries - normalize to [Unknown > target]
-    if "[Unknown]" in title.title() or title.lstrip().startswith("[?"):
+    if "[Unknown]" in title.title() or title.lstrip().startswith("[?") or title.lstrip().startswith("[ ?"):
         # Try to extract target language
         match = re.search(r"(?:>|to)\s*([^]]+)", title, re.IGNORECASE)
         if match:
@@ -1108,7 +1108,7 @@ def process_title(title, post=None):
     )
     logger.debug("Language names: " + str([x.name for x in combined_languages]))
     if not combined_languages:
-        logger.info("> Could not make sense of this title at all. Asking AI...")
+        logger.info(f"> Could not make sense of this title ({title}) at all. Asking AI...")
         ai_result = title_ai_parser(title, post)
         if isinstance(ai_result, dict):
             _update_titolo_from_ai_result(result, ai_result)
