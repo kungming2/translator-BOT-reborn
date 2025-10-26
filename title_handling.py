@@ -218,28 +218,49 @@ def _build_required_title_keywords() -> dict[str, list[str]]:
 
 def _move_bracketed_tag_to_front(title: str) -> str:
     """
-    Moves the first bracketed tag (e.g., [Tag]) in the title to the front.
+    Moves the first bracketed or parenthesized tag in the title to the front,
+    normalizing parentheses to brackets.
 
-    This is useful when titles include tags like "[JP] Title Here" or "Title [FR] Here",
-    and you want to normalize them to have the tag at the beginning.
+    This is useful when titles include tags like "[JP] Title Here", "Title [FR] Here",
+    or "Title (English > Japanese)" and you want to normalize them to have the tag
+    at the beginning with square brackets.
 
-    :param title: The original title, possibly with a bracketed tag.
-    :return: The title with the bracketed tag moved to the front.
+    :param title: The original title, possibly with a bracketed or parenthesized tag.
+    :return: The title with the tag moved to the front and normalized to brackets.
     """
+    # Try to find bracketed tag first
     match = re.search(r"\[.*?]", title)
     if match:
         tag = match.group(0)
-        remainder = title.replace(tag, "").strip()
-    else:
-        # Handle malformed title with unclosed bracket like "Title [JP"
+        remainder = title.replace(tag, "", 1).strip()
+        return f"{tag} {remainder}".strip()
+
+    # Try to find parenthesized tag (looking for language patterns)
+    # Match parentheses that contain ">" or "to" suggesting a translation
+    match = re.search(r"\(([^)]*(?:>|to)[^)]*)\)", title)
+    if match:
+        tag_content = match.group(1)
+        tag = f"[{tag_content}]"  # Normalize to brackets
+        remainder = title.replace(match.group(0), "", 1).strip()
+        return f"{tag} {remainder}".strip()
+
+    # Handle malformed title with unclosed bracket like "Title [JP"
+    if "[" in title:
         parts = title.split("[", 1)
         if len(parts) == 2:
             tag = f"[{parts[1].rstrip(']')}]"
             remainder = parts[0].strip()
-        else:
-            return title  # Nothing to do
+            return f"{tag} {remainder}".strip()
 
-    return f"{tag} {remainder}".strip()
+    # Handle malformed title with unclosed parenthesis like "Title (JP"
+    if "(" in title and (">" in title or "to" in title.lower()):
+        parts = title.split("(", 1)
+        if len(parts) == 2:
+            tag = f"[{parts[1].rstrip(')')}]"
+            remainder = parts[0].strip()
+            return f"{tag} {remainder}".strip()
+
+    return title  # Nothing to do
 
 
 def _reformat_detected_languages_in_title(title: str) -> str | None:
@@ -442,7 +463,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
 """ASSESSING (SECOND ROUND)"""
 
 
-def _preprocess_title(post_title: str) -> Union[str, Titolo]:
+def _preprocess_title(post_title: str) -> str:
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
     misused language tags, and removing cross-post markers.
@@ -459,8 +480,7 @@ def _preprocess_title(post_title: str) -> Union[str, Titolo]:
         post_title: The raw Reddit post title to normalize.
 
     Returns:
-        The normalized title string, or an empty Titolo object if the title
-        contains "[Unknown]" or starts with "?".
+        The normalized title string.
     """
     title: str = re.sub(r"\(x-post.*", "", post_title).strip()
 
@@ -511,7 +531,11 @@ def _preprocess_title(post_title: str) -> Union[str, Titolo]:
         k in title.title() for k in title_settings["ENGLISH_DASHES"]
     ):
         title = title.replace("-", " > ")
-    if "[" in title and "[" not in title[:10]:
+
+    # Move misplaced bracketed or parenthesized tags to the front
+    has_bracket = "[" in title and "[" not in title[:10]
+    has_paren = "(" in title and "(" not in title[:10]
+    if has_bracket or has_paren:
         title = _move_bracketed_tag_to_front(title.strip())
     title = title.replace("English.", "English] ").replace("_", " ")
 
@@ -543,9 +567,16 @@ def _preprocess_title(post_title: str) -> Union[str, Titolo]:
     if "KR " in title.upper()[:10]:
         title = title.replace("KR ", "Korean ")
 
-    # Handle unknown or unclear entries
-    if "[Unknown]" in title.title() or title.lstrip().startswith("?"):
-        return Titolo()  # Return empty object
+    # Handle unknown or unclear entries - normalize to [Unknown > target]
+    if "[Unknown]" in title.title() or title.lstrip().startswith("[?"):
+        # Try to extract target language
+        match = re.search(r"(?:>|to)\s*([^]]+)", title, re.IGNORECASE)
+        if match:
+            target_lang = match.group(1).strip().rstrip("]")
+            title = f"[Unknown > {target_lang}]"
+        else:
+            # No target language specified, default to English
+            title = "[Unknown > English]"
 
     return title
 
