@@ -96,3 +96,28 @@ def messaging_months_elapsed() -> int:
     total_current_months = today.year * 12 + today.month
 
     return total_current_months - month_beginning
+
+
+def time_convert_to_string_seconds(seconds: int) -> str:
+    """
+    Convert seconds to human-readable time string.
+
+    Args:
+        seconds: Time in seconds
+
+    Returns:
+        Formatted time string
+    """
+    if seconds < 60:
+        return f"{seconds} seconds"
+    elif seconds < 3600:
+        minutes = seconds // 60
+        return f"{minutes} minutes"
+    elif seconds < 86400:
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        return f"{hours} hours, {minutes} minutes"
+    else:
+        days = seconds // 86400
+        hours = (seconds % 86400) // 3600
+        return f"{days} days, {hours} hours"
