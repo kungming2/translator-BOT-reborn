@@ -12,6 +12,7 @@ import orjson
 
 from config import Paths, logger
 from database import db
+from tasks import WENJU_SETTINGS
 from time_handling import get_current_utc_date
 
 
@@ -184,6 +185,149 @@ def generate_command_usage_report(start_time, end_time, days):
         rows.append(f"| {command} | {daily_average} |")
 
     return formatted_content + "\n".join(rows)
+
+
+"""NOTIFICATIONS/POINTS STATISTICS"""
+
+
+def count_notifications(start_time, end_time):
+    """
+    Gather notification count within a given time period.
+
+    :param start_time: Period start time (Unix timestamp in UTC)
+    :param end_time: Period end time (Unix timestamp in UTC)
+    :return: Formatted string with notification statistics
+    """
+    from datetime import datetime
+    import json
+
+    # Load counter log
+    with open(Paths.LOGS["COUNTER"], "r", encoding="utf-8") as f:
+        counter_dict = json.load(f)
+
+    total_notifications = 0
+    days_with_data = 0
+
+    # Aggregate notifications within the time range
+    for date_str, actions in counter_dict.items():
+        # Convert date string to UTC Unix timestamp
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        unix_timestamp = int(date_obj.replace(tzinfo=timezone.utc).timestamp())
+
+        if start_time <= unix_timestamp <= end_time:
+            days_with_data += 1
+            total_notifications += actions.get("Notifications", 0)
+
+    # Calculate average (avoid division by zero)
+    avg_notifications = (
+        total_notifications / days_with_data if days_with_data > 0 else 0
+    )
+
+    return (
+        f"\n* Total notifications sent during this period:           {total_notifications:,} messages"
+        f"\n* Average notifications sent per day during this period: {avg_notifications:,.2f} messages"
+    )
+
+
+def get_month_points_summary(year_month):
+    """
+    Generate a formatted table of user points for a given month.
+    Settings for this function are in wenju_settings, as this is a
+    statistics retrieval function.
+
+    :param year_month: Month identifier in YYYY-MM format (e.g., '2018-09')
+    :return: Markdown-formatted table with points breakdown
+    """
+    # Minimum points required for inclusion in summary
+    point_threshold = WENJU_SETTINGS["minimum_points_display_threshold"]
+
+    # Build table header
+    header = (
+        f"\n| Username | Points in {year_month} | Total Cumulative Points | "
+        f"Participated Posts in {year_month} | Total Participated Posts |\n"
+        "|-----------|--------|-------|------|-----------|"
+    )
+
+    # Get all usernames for the month (sorted alphabetically)
+    query = """
+            SELECT DISTINCT username
+            FROM total_points
+            WHERE year_month = ?
+            ORDER BY LOWER(username) \
+            """
+    results = db.fetchall_main(query, (year_month,))
+    usernames = [row["username"] for row in results]
+
+    # Exclude translator-ModTeam and bot itself
+    usernames_excluded = WENJU_SETTINGS["points_exclude_usernames"]
+    usernames = [x for x in usernames if x not in usernames_excluded]
+
+    # Collect user statistics
+    user_stats = []
+    for username in usernames:
+        month_points, month_posts = _get_month_stats(username, year_month)
+
+        # Skip users below threshold
+        if month_points < point_threshold:
+            continue
+
+        total_points, total_posts = _get_total_stats(username)
+
+        # Escape underscores for markdown formatting
+        formatted_username = username.replace("_", r"\_")
+
+        user_stats.append(
+            {
+                "username": formatted_username,
+                "month_points": month_points,
+                "month_posts": month_posts,
+                "total_points": total_points,
+                "total_posts": total_posts,
+            }
+        )
+
+    # Sort by month points (descending)
+    user_stats.sort(key=lambda user: user["month_points"], reverse=True)
+
+    # Build table rows
+    rows = [
+        f"\n| u\\/{user['username']} | {user['month_points']} | {user['total_points']} | "
+        f"{user['month_posts']} posts | {user['total_posts']} posts |"
+        for user in user_stats
+    ]
+
+    return header + "".join(rows)
+
+
+def _get_month_stats(username, year_month):
+    """Calculate points and unique posts for a user in a specific month."""
+    query = """
+            SELECT points, post_id
+            FROM total_points
+            WHERE username = ? \
+              AND year_month = ? \
+            """
+    results = db.fetchall_main(query, (username, year_month))
+
+    total_points = sum(row["points"] for row in results)
+    unique_posts = len(set(row["post_id"] for row in results))
+
+    return total_points, unique_posts
+
+
+def _get_total_stats(username):
+    """Calculate cumulative points for a user across all time."""
+    query = """
+            SELECT points, post_id
+            FROM total_points
+            WHERE username = ? \
+            """
+    results = db.fetchall_main(query, (username,))
+
+    total_points = sum(row["points"] for row in results)
+    unique_posts = len(set(row["post_id"] for row in results))
+
+    return total_points, unique_posts
 
 
 """USER STATISTICS"""
