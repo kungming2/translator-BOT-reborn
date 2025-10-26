@@ -374,62 +374,51 @@ def _update_user_notification_count(
 
 
 def _notification_rate_limiter(
-    subscribed_users: list, lingvo_object, monthly_limit: int
+        subscribed_users: list,
+        lingvo_object,
+        monthly_limit: int,
+        already_contacted: list = None
 ) -> list:
     """
-    Equalizes notification volume for high-traffic languages to avoid
-    spamming users.
-    Tries to limit each user to receiving no more than `monthly_limit`
-    notifications per month.
+    Equalizes notification volume for high-traffic languages.
 
-    Formula:
-        users_to_notify_per_post = (total_notifications_allowed) / (average_monthly_posts)
-                                 = (number_of_users * monthly_limit) / average_posts_per_month
-
-    :param subscribed_users: List of users subscribed to this language
-    :param lingvo_object: The Lingvo object of the language (e.g. 'zh', 'es', 'ko')
-    :param monthly_limit: Max number of times each user should be notified per month
-    :return: A list of selected users to notify
+    :param already_contacted: Users already notified for this post (NEW)
     """
-    if not subscribed_users:  # There are no subscribed users.
+    if not subscribed_users or monthly_limit <= 0:
+        return []
+
+    # Filter out already-contacted users first
+    if already_contacted:
+        subscribed_users = [u for u in subscribed_users if u not in already_contacted]
+
+    if not subscribed_users:
         return []
 
     total_users = len(subscribed_users)
     max_language_users = SETTINGS["notifications_user_limit"]
     language_name = lingvo_object.name
 
-    # Get the average number of posts per month for the language
-    if language_name == "Unknown":
-        average_posts_per_month = 260
-    else:
-        average_posts_per_month = getattr(lingvo_object, "rate_monthly", 1)
-        if not average_posts_per_month:  # This doesn't have many requests.
-            average_posts_per_month = 0
+    # Get average monthly posts
+    average_posts_per_month = getattr(lingvo_object, "rate_monthly", 1) or 0
 
-    # Calculate how many users to notify per post
-    if average_posts_per_month == 0:
-        num_users_to_notify = SETTINGS["notifications_user_limit"]
+    if language_name == "Unknown":
+        average_posts_per_month = SETTINGS["unknown_language_default_rate"]
+
+    # Calculate users to notify
+    if average_posts_per_month < 5:  # Notify everyone for rarer languages
+        return sorted(subscribed_users, key=lambda u: str(u).lower())
     else:
         total_allowed_notifications = total_users * monthly_limit
         num_users_to_notify = round(
             total_allowed_notifications / average_posts_per_month
         )
-        num_users_to_notify = max(
-            1, num_users_to_notify
-        )  # Ensure at least one user is notified
+        num_users_to_notify = max(1, min(num_users_to_notify, max_language_users))
 
-    # Randomly sample if too many users would be notified.
+    # Sample if needed
     if num_users_to_notify < total_users:
         subscribed_users = random.sample(subscribed_users, num_users_to_notify)
 
-    # Final cap to avoid exceeding the maximum allowed per post
-    if len(subscribed_users) > max_language_users:
-        subscribed_users = random.sample(subscribed_users, max_language_users)
-        logger.info(
-            f"[ZW] Notifier Equalizer: {max_language_users}+ users for {language_name} notifications. Randomized."
-        )
-
-    # Alphabetize final list
+    # Return alphabetized list
     return sorted(subscribed_users, key=lambda u: str(u).lower())
 
 
@@ -581,7 +570,7 @@ def notifier(lingvo, submission, mode="new_post"):
 
     # Equalize distribution across popular languages
     notify_users_list = _notification_rate_limiter(
-        notify_users_list, lingvo, SETTINGS["notifications_user_limit"]
+        notify_users_list, lingvo, SETTINGS["notifications_monthly_limit"], contacted
     )
 
     # In 'page' mode, further limit to `page_users_count` users maximum
@@ -748,4 +737,6 @@ if __name__ == "__main__":
         notifications_test = input(
             "Please enter the language you'd like to retrieve notifications for: "
         )
-        print(fetch_usernames_for_lingvo(converter(notifications_test)))
+        notifications_data = fetch_usernames_for_lingvo(converter(notifications_test))
+        print(f"Number of signups for `{notifications_test}`: {len(notifications_data)}")
+        print(notifications_data)
