@@ -220,21 +220,21 @@ def widget_update(widget_id, new_text):
         for widget in widgets.sidebar:
             if isinstance(widget, praw.models.TextArea):
                 if widget.id == widget_id:
-                    logger.debug(f"Found widget with ID: {widget_id}")
+                    logger.debug(f"Found widget with ID: `{widget_id}`")
                     active_widget = widget
                     break
 
         if active_widget is None:
-            logger.info(f"Widget with ID {widget_id} not found.")
+            logger.info(f"Widget with ID `{widget_id}` not found.")
             return False
 
         # Update the widget
         try:
             active_widget.mod.update(text=new_text)
-            logger.info(f"Successfully updated widget {widget_id}.")
+            logger.info(f"Successfully updated widget `{widget_id}`.")
             return True
         except RedditAPIException as e:
-            logger.error(f"Error updating widget {widget_id}: {e}")
+            logger.error(f"Error updating widget `{widget_id}`: {e}")
             return False
 
     except Exception as e:
