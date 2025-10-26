@@ -179,11 +179,24 @@ def verification_parser() -> None:
 
         try:
             language_name = components[0]
-            _ = re.search(url_pattern, components[1]).group(0)
-            _ = re.search(url_pattern, components[2]).group(0)
-            _ = re.search(url_pattern, components[3]).group(0)
-            notes = components[4] if len(components) > 4 else ""
-        except (IndexError, AttributeError):
+
+            # Find all URLs in the components (skip the first one which is language name)
+            urls = []
+            notes = ""
+
+            for i, comp in enumerate(components[1:], start=1):
+                if re.search(url_pattern, comp):
+                    urls.append(re.search(url_pattern, comp).group(0))
+                else:
+                    # If it's not a URL, treat everything from here as notes
+                    notes = " ".join(components[i:])
+                    break
+
+            # Require at least 3 URLs
+            if len(urls) < 3:
+                raise ValueError("Not enough URLs")
+
+        except (IndexError, AttributeError, ValueError):
             # Malformed comment - stop processing
             if comment.is_root:
                 redo_reply = RESPONSE.COMMENT_INVALID_VERIFICATION_RESPONSE.format(
@@ -216,7 +229,7 @@ def verification_parser() -> None:
             f"New Verification Request for **{language_name}**",
             f"Please check [this verification request](https://www.reddit.com{comment.permalink}) "
             f"from [{author_string}](https://www.reddit.com/user/{author_name})."
-            f"\n\nIncluded notes from user: '{notes}'",
+            f"\n\nIncluded notes from user: *{notes if notes else 'None'}*",
             "verification",
         )
         logger.info(
