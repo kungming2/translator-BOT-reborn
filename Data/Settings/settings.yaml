@@ -118,10 +118,10 @@ notification_cutoff_age: 60 # in minutes
 claim_period: 28800
 # A number that defines the soft number of notifications an individual
 # will get in a month *per language*.
-notifications_limit: 100
+notifications_monthly_limit: 30
 # A number that defines how many MAX number of people we message for
 # a single language post.
-notifications_user_limit: 7
+notifications_user_limit: 8
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
@@ -136,6 +136,8 @@ post_long_characters: 1500
 user_age_page: 14
 # How many users !page should contact.
 num_users_page: 3
+# Hardcoded how many posts are Unknown every month
+unknown_language_default_rate: 260
 
 # Month delta for points calculation. How many months ago do we want to
 # use as a reference for points calculation?
