@@ -28,6 +28,7 @@ Typical usage:
 """
 
 import os
+from datetime import datetime, timedelta
 from typing import Any
 
 import yaml
@@ -230,5 +231,42 @@ def retrieve_error_log() -> str:
     return final_text
 
 
+"""CHECKING FOR ERRORS IN EVENTS LOG"""
+
+
+def display_event_errors(days=7):
+    """
+    Print only ERROR entries from the last N days from a log file.
+
+    Args:
+        days: Number of days to look back (default: 7)
+    """
+    cutoff_date = datetime.now() - timedelta(days=days)
+
+    try:
+        with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
+            for line in f:
+                # Check if line contains ERROR
+                if "ERROR:" in line:
+                    # Extract timestamp (format: 2025-10-26T23:47:21Z)
+                    try:
+                        timestamp_str = line.split(" - ")[0].replace("ERROR: ", "")
+                        log_date = datetime.strptime(
+                            timestamp_str, "%Y-%m-%dT%H:%M:%SZ"
+                        )
+
+                        # Only print if within last week
+                        if log_date >= cutoff_date:
+                            print(line.rstrip())
+                    except (ValueError, IndexError):
+                        # If timestamp parsing fails, print anyway to be safe
+                        print(line.rstrip())
+    except FileNotFoundError:
+        print(f"Error: Log file not found.")
+    except Exception as e:
+        print(f"Error reading log file: {e}")
+
+
 if __name__ == "__main__":
     print(retrieve_error_log())
+    display_event_errors()

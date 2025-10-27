@@ -8,6 +8,7 @@ import discord
 import yaml
 
 from config import Paths
+from error import display_event_errors
 
 from . import command
 
@@ -48,6 +49,17 @@ async def error_logs(ctx):
 
             response += f"\nError:\n{entry.get('error', 'N/A')}\n"
             response += "```\n\n"
+
+        # Get event log errors from last 3 days
+        event_errors = display_event_errors(days=3)
+
+        if event_errors:
+            response += "**Event Log Errors (Last 3 Days):**\n```\n"
+            for error_line in event_errors:
+                response += f"{error_line}\n"
+            response += "```\n"
+        else:
+            response += "✅ No event log errors in the last 3 days.\n"
 
         # Discord has a 2000-character limit, so split if needed
         if len(response) > 2000:
