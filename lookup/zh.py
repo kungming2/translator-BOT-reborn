@@ -347,7 +347,7 @@ def _min_hakka_readings(character):
         reading = re.sub(r"(\d{1,4})([a-z])", r"\1 \2", reading)
         formatted = []
         for word in reading.split():
-            word = re.sub(r"([a-z])(\d)", r"\1^(\2)", word)
+            word = re.sub(r"([a-z])(\d+)", r"\1^(\2)", word)
             formatted.append(word)
         return f"\n| **Hakka (Sixian)** | *{' '.join(formatted)}* |"
 
