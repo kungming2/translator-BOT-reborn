@@ -19,6 +19,7 @@ from rapidfuzz import fuzz
 from ai import ai_query, openai_access
 from config import SETTINGS, Paths, load_settings, logger
 from connection import REDDIT_HELPER
+from discord_utils import send_discord_alert
 from languages import Lingvo, converter, country_converter, define_language_lists
 from responses import RESPONSE
 
@@ -568,7 +569,11 @@ def _preprocess_title(post_title: str) -> str:
         title = title.replace("KR ", "Korean ")
 
     # Handle unknown or unclear entries - normalize to [Unknown > target]
-    if "[Unknown]" in title.title() or title.lstrip().startswith("[?") or title.lstrip().startswith("[ ?"):
+    if (
+        "[Unknown]" in title.title()
+        or title.lstrip().startswith("[?")
+        or title.lstrip().startswith("[ ?")
+    ):
         # Try to extract target language
         match = re.search(r"(?:>|to)\s*([^]]+)", title, re.IGNORECASE)
         if match:
@@ -1108,10 +1113,41 @@ def process_title(title, post=None):
     )
     logger.debug("Language names: " + str([x.name for x in combined_languages]))
     if not combined_languages:
-        logger.info(f"> Could not make sense of this title ({title}) at all. Asking AI...")
+        logger.info(
+            f"> Could not make sense of this title ({title}) at all. Asking AI..."
+        )
         ai_result = title_ai_parser(title, post)
         if isinstance(ai_result, dict):
             _update_titolo_from_ai_result(result, ai_result)
+
+            updating_subject = "AI Parsed Title and Assigned Language to Post"
+            updating_reason = (
+                f"Unable to parse this post's language; AI assessed it as `{result.final_code}`. "
+                f"If incorrect, please assign [this post](https://www.reddit.com{post.permalink}) "
+                f"a different and accurate language category."
+                f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
+            )
+            logger.info(
+                f"[ZW] Posts: AI assessment of title performed for '{post.title}' | `{post.id}`."
+            )
+
+        else:
+            # AI parsing failed. Assign generic categories.
+            result.add_final_code("generic")
+            result.add_final_text("Generic")
+
+            updating_subject = "AI Unable to Parse Title; No Language Assigned"
+            updating_reason = (
+                "Completely unable to parse this post's language; assigned a generic category. "
+                f"Please check and assign [this post](https://www.reddit.com{post.permalink}) a language category."
+                f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
+            )
+            logger.info(
+                f"[ZW] Posts: AI assessment of title failed for '{post.title}' | `{post.id}`. "
+                "Assigned completely generic category."
+            )
+
+        send_discord_alert(updating_subject, updating_reason, "report")
 
     # Update the Titolo with the best selection for flair.
     _determine_flair(result)
