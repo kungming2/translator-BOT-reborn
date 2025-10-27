@@ -71,7 +71,7 @@ def _get_lookup_language(instruo, ajo):
         logger.info(f"Found identify komando with data: {identify_komando.data}")
         return identify_komando.data[0]
 
-    # Default to the Ajo's language
+    # Default to the Ajo's language if there is no identify Komando.
     return ajo.lingvo
 
 
@@ -132,6 +132,7 @@ def handle(comment, instruo, komando, ajo) -> None:
     # Determine which language to use for lookup
     lookup_lingvo = _get_lookup_language(instruo, ajo)
     komando.remap_language(lookup_lingvo.preferred_code)  # remap the data if needed
+    logger.info(f"> Remapped lookup_CJK data to: {lookup_lingvo.preferred_code}")
 
     # Map the language code to a CJK language category
     cjk_language: str | None = _find_cjk_language(lookup_lingvo.preferred_code)
