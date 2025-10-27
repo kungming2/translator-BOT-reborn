@@ -162,14 +162,14 @@ COMMENT_BAD_TITLE: |
   We're happy to help you translate your request, but this post has been automatically removed because:
 
   * It appears that the title is not properly formatted according to our subreddit's guidelines.
-  * Proper title formatting helps keep our community organized and allows our translators to access relevant requests. 
+  * Proper title formatting helps keep our community organized and allows our translators to access requests relevant to them. 
 
   ---
 
   **What should you do now?**
 
   * [Try resubmitting your request with the suggested title text below](https://www.reddit.com/r/translator/submit?title={new_url}):
-  * {new_title}
+  * `{new_title}`
   * Should you need more information, please read r/translator's [formatting guidelines on the wiki](https://www.reddit.com/r/translator/wiki/rules).
   [](#comment_bad_title)
 
