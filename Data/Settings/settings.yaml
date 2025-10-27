@@ -108,7 +108,7 @@ internal_post_types:
 # This is how many posts or comments Ziwen will retrieve all at once.
 # PRAW can download 100 at a time.
 max_posts: 100
-# This is how many days' worth of processed post and comments ID we
+# This is how many days' worth of processed post and comments IDs we
 # wish to keep.
 max_old_age: 180
 # Do not send notifications messages for posts processed that are older
@@ -116,12 +116,18 @@ max_old_age: 180
 notification_cutoff_age: 60 # in minutes
 # How long do we allow people to `!claim` a post? This is defined in seconds.
 claim_period: 28800
+
+# A boolean that notes whether the soft API limit of sending messages
+# (calculated right now as 10 messages / 5 minutes) is active.
+notifications_api_limiter_on: true
 # A number that defines the soft number of notifications an individual
 # will get in a month *per language*.
 notifications_monthly_limit: 30
 # A number that defines how many MAX number of people we message for
 # a single language post.
 notifications_user_limit: 8
+
+
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
