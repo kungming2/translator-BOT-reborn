@@ -317,8 +317,23 @@ def points_tabulator(
                 parent_author, parent_comment = get_parent_author(comment)
                 if parent_author:
                     final_translator = parent_author
-                    if final_translator != comment_author:
+                    if (
+                        final_translator != comment_author
+                        and comment_author != op_author
+                    ):
                         points += 1
+
+                        # Credit the person who helped mark the translation
+                        helper_note = (
+                            f"Marked translation as complete on https://redd.it/{original_post.id} "
+                            f"({original_post_lingvo.name})"
+                        )
+                        create_mod_note(
+                            label="HELPFUL_USER",
+                            username=comment_author,
+                            included_note=helper_note,
+                        )
+
                     final_translator_points += 1 + multiplier
                     logger.debug(
                         f"[ZW] Cleanup mark: u/{comment_author} marked u/{final_translator}'s work."
@@ -386,7 +401,7 @@ def points_tabulator(
             f"({original_post_lingvo.name})"
         )
         create_mod_note(
-            label="HELPFUL_USER",
+            label="SOLID_CONTRIBUTOR",
             username=final_translator,
             included_note=included_note,
         )
