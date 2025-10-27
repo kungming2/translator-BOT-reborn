@@ -841,6 +841,17 @@ def get_country_emoji(country_name: str) -> str:
         return ""
 
 
+def get_language_emoji(language_code):
+    """Intended for use primarily with ISO 639-1 codes."""
+    if not language_code:
+        return ""
+
+    language_full_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
+    country_listed = language_full_data[language_code]["country"]
+
+    return get_country_emoji(country_listed)
+
+
 def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
     """
     Load countries from a CSV file.

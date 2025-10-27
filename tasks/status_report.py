@@ -17,6 +17,7 @@ from languages import (
     converter,
     define_language_lists,
     get_country_emoji,
+    get_language_emoji,
     get_lingvos,
     select_random_language,
 )
@@ -336,7 +337,10 @@ def language_of_the_day(selected_language=None):
         today_language = language_data.get(today_language.language_code_3)
 
     # Get a couple more variables for prettier formatting.
-    country_emoji = get_country_emoji(today_language.country)
+    if not today_language.country:
+        country_emoji = get_language_emoji(today_language.preferred_code)
+    else:
+        country_emoji = get_country_emoji(today_language.country)
     language_family_link = (
         f"https://en.wikipedia.org/wiki/"
         f"{today_language.family.replace('_', ' ')}_languages"
