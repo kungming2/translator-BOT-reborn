@@ -1,11 +1,18 @@
 # About
 
-**Ziwén (子文)** is a Reddit bot that handles real-time commands for r/translator, the largest translation community on the website. 
+**translator-BOT** contains various routines that handle functions for [r/translator](https://www.reddit.com/r/translator/), the largest translation community on the [website](https://www.reddit.com). 
 
-It posts comments and sends messages under the username u/translator-BOT. Ziwen moderates and keeps r/translator organized, provides community members with useful reference information, and crossposts translation requests from elsewhere on Reddit.
+It consists of four separate routines that share codebases:
 
-This bot was rewritten in 2025 to improve code readability, functions, and potential extensibility, hence the "reborn" tag.
+| Routine Name | Functions                                                                             |
+|--------------|---------------------------------------------------------------------------------------|
+| Ziwen        | Organizes the community through Reddit bot commands and sends notifications.          | 
+| Wenju        | Runs regular maintenance and summary functions.                                       |
+| Wenyuan      | Gathers statistics and makes monthly posts on the state of the community.             |
+| Zhongsheng   | Responds to commands on Discord; mostly for inquiry into the state of bot operations. |
+
+All functions generally post comments and send messages under the username [u/translator-BOT](https://www.reddit.com/user/translator-bot/). This bot was first deployed in late 2016 and after a period of feature expansion and consolidation, rewritten in 2025 to improve code readability, functions, and potential extensibility, hence the "reborn" tag.
 
 # Documentation
 
-Documentation for Ziwen's various commands and functions can be found in the **[docs](/docs/index.md)** folder of this repo.
+Detailed documentation for Ziwen's various commands and functions can be found in the **[docs](/docs/index.md)** folder of this repo.
