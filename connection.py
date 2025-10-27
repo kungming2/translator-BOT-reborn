@@ -179,8 +179,17 @@ def create_mod_note(
 
     :param label: The label of the user in the note. See:
                   https://praw.readthedocs.io/en/stable/code_overview/other/mod_note.html
-                  for valid ones. These must be standard labels (no
-                  user-created ones)
+                  for current valid ones. These must be standard labels
+                  (no user-created ones):
+                      * ABUSE_WARNING
+                      * BAN
+                      * BOT_BAN
+                      * HELPFUL_USER
+                      * PERMA_BAN
+                      * SOLID_CONTRIBUTOR
+                      * SPAM_WARNING
+                      * SPAM_WATCH
+                      * None
     :param username: The username of the translator to create a note for.
     :param included_note: The note to include.
     :return: True if note was created successfully, False otherwise.
