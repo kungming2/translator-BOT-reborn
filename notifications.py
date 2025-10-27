@@ -380,7 +380,9 @@ def _notification_rate_limiter(
     already_contacted: list = None,
 ) -> list:
     """
-    Equalizes notification volume for high-traffic languages.
+    Equalizes notification volume for high-traffic languages. Returns
+    an alphabetized list, but that list will be shuffled when messages
+    are sent in order to equalize distribution in spite of API limits.
 
     :param already_contacted: Users already notified for this post (NEW)
     """
@@ -406,7 +408,12 @@ def _notification_rate_limiter(
 
     # Calculate users to notify
     if average_posts_per_month < 5:  # Notify everyone for rarer languages
-        return sorted(subscribed_users, key=lambda u: str(u).lower())
+        # If the API limits on messages are off, return the entire list.
+        # Otherwise, return up to the user limit maximum.
+        if not SETTINGS["notifications_api_limiter_on"]:
+            return sorted(subscribed_users, key=lambda u: str(u).lower())
+        else:
+            return random.sample(subscribed_users, SETTINGS["notifications_user_limit"])
     else:
         total_allowed_notifications = total_users * monthly_limit
         num_users_to_notify = round(
