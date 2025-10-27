@@ -311,19 +311,27 @@ def _filter_entries_by_date_range(entries, start_date, end_date):
     filtered = []
     for line_num, entry in enumerate(entries, start=1):
         try:
-            if entry[:1] == "|":
-                entry_date_str = entry.split("|")[1].strip()
-            else:
-                entry_date_str = entry.split("|")[0].strip()
+            # Split by pipe and filter out empty strings
+            parts = [p.strip() for p in entry.split("|") if p.strip()]
+
+            if not parts:
+                raise ValueError("No valid parts found in entry")
+
+            # First non-empty part should be the date
+            entry_date_str = parts[0]
+
+            # Parse the date string to a date object
             entry_date = datetime.strptime(entry_date_str, "%Y-%m-%d").date()
 
-            if start_date <= entry_date <= end_date:
-                filtered.append(entry)
         except Exception as e:
             # Skip entries with malformed dates
             logger.error(f"Encountered entry error at line {line_num}: {e}")
             logger.error(f"ENTRY: {entry}")
             continue
+
+        # Only do comparison if we successfully parsed a date
+        if entry_date is not None and start_date <= entry_date <= end_date:
+            filtered.append(entry)
 
     return filtered, start_date, end_date
 
