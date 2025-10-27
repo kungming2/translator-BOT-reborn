@@ -25,7 +25,6 @@ from kiwipiepy import Kiwi
 from config import Paths, load_settings
 from connection import get_random_useragent, logger
 from languages import converter
-from lookup.zh import simplify
 from title_handling import extract_lingvos_from_text
 
 useragent = get_random_useragent()
@@ -238,7 +237,7 @@ def lookup_matcher(
                 if len(token) >= 2:
                     if "zh" in seg_language_codes and not has_kana:
                         new_tokens: list[str] = lookup_zh_ja_tokenizer(
-                            simplify(token), "zh"
+                            token, "zh"
                         )
                     elif "ja" in seg_language_codes or has_kana:
                         new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "ja")
