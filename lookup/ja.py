@@ -18,8 +18,8 @@ from selenium.webdriver.firefox.options import Options
 from config import logger
 from connection import get_random_useragent
 
-from .async_helpers import call_sync_async, fetch_json
-from .zh import calligraphy_search
+from lookup.async_helpers import call_sync_async, fetch_json
+from lookup.zh import calligraphy_search
 
 useragent = get_random_useragent()
 
@@ -132,11 +132,11 @@ def ja_character(character: str) -> str:
     else:
         # Multi-kanji mode
         ooi_key: str = f"# {character}"
-        ooi_header: str = "\n\nCharacter"
-        ooi_separator: str = "\n---|"
-        ooi_kun: str = "\n**Kun-readings**"
-        ooi_on: str = "\n**On-readings**"
-        ooi_meaning: str = "\n**Meanings**"
+        ooi_header: str = "\n\n| Character"
+        ooi_separator: str = "\n| ---"
+        ooi_kun: str = "\n| **Kun-readings**"
+        ooi_on: str = "\n| **On-readings**"
+        ooi_meaning: str = "\n| **Meanings**"
 
         for moji in character:
             response = requests.get(
@@ -161,13 +161,20 @@ def ja_character(character: str) -> str:
         for moji in character:
             data = multi_character_dict[moji]
             ooi_header += f" | [{moji}](https://en.wiktionary.org/wiki/{moji}#Japanese)"
-            ooi_separator += "---|"
+            ooi_separator += " | ---"
             ooi_kun += f" | {data['kun']}"
             ooi_on += f" | {data['on']}"
-            ooi_meaning += f" | {data['meaning']} |"
+            ooi_meaning += f" | {data['meaning']}"
+
+        # Add closing pipes to all rows
+        ooi_header += " |"
+        ooi_separator += " |"
+        ooi_kun += " |"
+        ooi_on += " |"
+        ooi_meaning += " |"
 
         total_data: str = (
-            ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
+                ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
         )
 
     # Append resource links
