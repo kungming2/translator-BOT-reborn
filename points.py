@@ -256,7 +256,6 @@ def points_tabulator(
     logger.debug(f"[ZW] Points tabulator: {language_name}, multiplier: {multiplier}")
 
     commands = extract_commands_from_text(body)  # Returns a List[Komando]
-    translator_to_add = None
     points_status = []
     comment_id = instruo.id_comment
 
@@ -302,7 +301,6 @@ def points_tabulator(
                             f"[ZW] Verify: u/{comment_author} confirms u/{final_translator} in {parent_comment}"
                         )
                 else:
-                    translator_to_add = comment_author
                     points += 1 + multiplier
                     logger.debug(f"[ZW] Translation: Detected by u/{comment_author}")
             elif comment.author and comment.author.name == op_author and len(body) > 13:
@@ -371,16 +369,15 @@ def points_tabulator(
 
     if final_translator_points:
         _update_points_status(points_status, final_translator, final_translator_points)
-        translator_to_add = translator_to_add or final_translator
 
     # Filter out any 0-point entries
     results = [entry for entry in points_status if entry[1] != 0]
 
     # Record translator to Ajo
-    if translator_to_add:
+    if final_translator:
         ajo_w_points = ajo_loader(original_post.id)
         if ajo_w_points:
-            ajo_w_points.add_translators(translator_to_add)
+            ajo_w_points.add_translators(final_translator)
             ajo_writer(ajo_w_points)
 
         # Create mod note for the translator
@@ -390,7 +387,7 @@ def points_tabulator(
         )
         create_mod_note(
             label="HELPFUL_USER",
-            username=translator_to_add,
+            username=final_translator,
             included_note=included_note,
         )
 
