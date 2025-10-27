@@ -23,7 +23,6 @@ from languages import (
     converter,
     define_language_lists,
     get_country_emoji,
-    get_language_emoji,
     get_lingvos,
     select_random_language,
 )
@@ -348,11 +347,12 @@ def language_of_the_day(selected_language=None):
         # Use the refreshed data directly
         today_language = language_data.get(today_language.language_code_3)
 
-    # Get a couple more variables for prettier formatting.
-    if not today_language.country:
-        country_emoji = get_language_emoji(today_language.preferred_code)
-    else:
+    # Get the language's country/region flag for better formatting.
+    if today_language.country:
         country_emoji = get_country_emoji(today_language.country)
+    else:
+        country_emoji = today_language.country_emoji
+
     language_family_link = (
         f"https://en.wikipedia.org/wiki/"
         f"{today_language.family.replace('_', ' ')}_languages"
@@ -364,11 +364,18 @@ def language_of_the_day(selected_language=None):
         header += f"`({today_language.language_code_1}`/`{today_language.language_code_3})`\n\n"
     else:
         header += f"`({today_language.preferred_code})`\n\n"
+
+    # Build the body with conditional country line
+    country_line = ""
+    if country_emoji is not None:
+        country_line = f"* **Country**: {country_emoji} {today_language.country}\n"
+
     body = (
         f"* **Family**: [{today_language.family}]({language_family_link})\n"
-        f"* **Country**: {country_emoji} "
-        f"{today_language.country}\n* **Population**: {today_language.population:,}"
+        f"{country_line}"
+        f"* **Population**: {today_language.population:,}"
     )
+
     if language_subreddit:
         body += f"\n* **Subreddit**: {language_subreddit}"
     summary = f"\n\n{language_entry_summary}"
@@ -391,8 +398,15 @@ def language_of_the_day(selected_language=None):
             f"({wikipedia_redirect_link})** ({code_string}), "
             f"{article} {today_language.family} language. {language_entry_summary}"
         )
+
+        # Build the title with conditional emoji
+        if country_emoji is not None:
+            title = f"Language of the Day: {country_emoji} {today_language.name}"
+        else:
+            title = f"Language of the Day: {today_language.name}"
+
         send_discord_alert(
-            f"Language of the Day: {country_emoji} {today_language.name}",
+            title,
             language_blurb,
             "lotd",
         )

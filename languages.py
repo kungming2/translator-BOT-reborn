@@ -145,6 +145,19 @@ class Lingvo:
             "link_statistics": self.link_statistics,
         }
 
+    # Dynamically retrieve country emoji if present
+    @property
+    def country_emoji(self):
+        """
+        Dynamically retrieves the country emoji for this language.
+        Uses get_language_emoji with the preferred code.
+
+        Returns:
+            The country's flag emoji as a string, or empty string if not available.
+        """
+        emoji = get_language_emoji(self.preferred_code)
+        return emoji if emoji else None
+
 
 """MAIN LOADER"""
 
@@ -1000,7 +1013,8 @@ if __name__ == "__main__":
 
             if converter_result:
                 print(
-                    f"Your Input: `{my_test}` → Preferred Code: `{converter_result.preferred_code}`"
+                    f"Your Input: `{my_test}` → Preferred Code: {converter_result.country_emoji} "
+                    f"`{converter_result.preferred_code}`"
                 )
                 pprint(vars(converter_result))
             else:
