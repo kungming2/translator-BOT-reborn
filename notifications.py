@@ -374,10 +374,10 @@ def _update_user_notification_count(
 
 
 def _notification_rate_limiter(
-        subscribed_users: list,
-        lingvo_object,
-        monthly_limit: int,
-        already_contacted: list = None
+    subscribed_users: list,
+    lingvo_object,
+    monthly_limit: int,
+    already_contacted: list = None,
 ) -> list:
     """
     Equalizes notification volume for high-traffic languages.
@@ -594,7 +594,7 @@ def notifier(lingvo, submission, mode="new_post"):
     # If the post has an image, get a description.
     if check_url_extension(submission.url):
         image_description = fetch_image_description(submission.url, post_nsfw)
-        image_description = f"\n\nImage description: *{image_description}*"
+        image_description = f"\n\n**Image description**: *{image_description}*"
     else:
         image_description = ""
 
@@ -738,5 +738,7 @@ if __name__ == "__main__":
             "Please enter the language you'd like to retrieve notifications for: "
         )
         notifications_data = fetch_usernames_for_lingvo(converter(notifications_test))
-        print(f"Number of signups for `{notifications_test}`: {len(notifications_data)}")
+        print(
+            f"Number of signups for `{notifications_test}`: {len(notifications_data)}"
+        )
         print(notifications_data)
