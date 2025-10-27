@@ -10,7 +10,13 @@ from praw.exceptions import RedditAPIException
 from praw.models import TextArea
 
 from config import SETTINGS, get_reports_directory, logger
-from connection import REDDIT, REDDIT_HELPER, reddit_status_check, widget_update
+from connection import (
+    REDDIT,
+    REDDIT_HELPER,
+    create_mod_note,
+    reddit_status_check,
+    widget_update,
+)
 from database import db
 from discord_utils import send_discord_alert
 from languages import (
@@ -117,6 +123,12 @@ def monitor_controversial_comments():
         # Criteria: score <= -25, not removed, not reported, not already saved
         score_threshold = WENJU_SETTINGS["controversial_score_threshold"]
         if score <= score_threshold and not removed and not mod_reports and not saved:
+            create_mod_note(
+                "ABUSE_WARNING",
+                comment.author.name,
+                f"Authored heavily downvoted comment at https://www.reddit.com/{comment.permalink}",
+            )
+
             # Send alert to Discord
             send_discord_alert(
                 "Comment with Excessive Downvotes",
