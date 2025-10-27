@@ -12,7 +12,7 @@ import time
 from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
-from connection import REDDIT, is_mod
+from connection import REDDIT, create_mod_note, is_mod
 from discord_utils import send_discord_alert
 from languages import converter
 from reddit_sender import message_reply, message_send
@@ -224,6 +224,15 @@ def verification_parser() -> None:
             + RESPONSE.BOT_DISCLAIMER
         )
         message_reply(comment, reply_text)
+
+        # Credit the person who helped mark the translation
+        verified_note = f"Requested verification for ({language_lingvo.name})"
+
+        create_mod_note(
+            label="HELPFUL_USER",
+            username=author_name,
+            included_note=verified_note,
+        )
 
         send_discord_alert(
             f"New Verification Request for **{language_name}**",
