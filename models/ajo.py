@@ -358,13 +358,21 @@ class Ajo:
         # Ajo extras
         # Populate language_history with actual language codes from target languages
         if titolo.target:
+            # Filter out English from targets for classification purposes
+            non_english_targets = [
+                lang for lang in titolo.target
+                if lang.preferred_code != 'en'
+            ]
+
             # If multiple languages (defined multiple), wrap in a list
-            if len(titolo.target) > 1:
-                ajo.language_history = [[lang.preferred_code for lang in titolo.target]]
-                # Create status dictionary with 'untranslated' for each language code
+            if len(non_english_targets) > 1:
+                ajo.language_history = [[lang.preferred_code for lang in non_english_targets]]
+                # Create status dictionary with 'untranslated' for each language code (excluding English)
                 ajo.status = {
-                    lang.preferred_code: "untranslated" for lang in titolo.target
+                    lang.preferred_code: "untranslated" for lang in non_english_targets
                 }
+                ajo.is_defined_multiple = True
+                ajo.type = "multiple"
             else:
                 # Single language, keep as flat list
                 ajo.language_history = [titolo.final_code]
@@ -372,11 +380,6 @@ class Ajo:
         else:
             ajo.language_history = []
             ajo.status = "untranslated"
-
-        # Set is_defined_multiple if there are multiple target languages
-        if titolo.target and len(titolo.target) > 1:
-            ajo.is_defined_multiple = True
-            ajo.type = "multiple"
 
         # Populate fields from Reddit submission if available
         if submission:
