@@ -1065,7 +1065,7 @@ def _determine_flair(titolo_object):
     titolo_object.add_final_text(lang.name)
 
 
-def process_title(title, post=None):
+def process_title(title, post=None, discord_notify=True):
     """
     Main function to process a Reddit post title, extract language info,
     assign flair metadata, detect direction and output a structured Titolo object.
@@ -1073,6 +1073,8 @@ def process_title(title, post=None):
     Args:
         title (str): The post title from r/translator.
         post (PRAW): A PRAW object. Unused unless we ask AI.
+        discord_notify (bool): Whether to send a Discord notification
+                               if AI is asked.
 
     Returns:
         Titolo: An object representing the parsed structure and flair decisions.
@@ -1147,7 +1149,8 @@ def process_title(title, post=None):
                 "Assigned completely generic category."
             )
 
-        send_discord_alert(updating_subject, updating_reason, "report")
+        if discord_notify:
+            send_discord_alert(updating_subject, updating_reason, "report")
 
     # Update the Titolo with the best selection for flair.
     _determine_flair(result)
@@ -1351,7 +1354,7 @@ if __name__ == "__main__":
         if choice == "1":
             logger.setLevel(logging.DEBUG)
             my_test = input("Enter the string you wish to test: ")
-            titolo_output = process_title(my_test)
+            titolo_output = process_title(my_test, None, False)
             pprint(vars(titolo_output))
         elif choice == "2":
             logger.setLevel(logging.INFO)
@@ -1360,7 +1363,7 @@ if __name__ == "__main__":
             )
             for submission in submissions:
                 print(f"POST TITLE: {submission.title}")
-                titolo_output = process_title(submission.title)
+                titolo_output = process_title(submission.title, submission, False)
                 pprint(vars(titolo_output))
                 print("\n\n")
         elif choice == "3":
