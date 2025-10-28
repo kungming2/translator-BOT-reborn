@@ -8,11 +8,13 @@ to that post.
 """
 
 import re
+import sqlite3
 import time
 from typing import TYPE_CHECKING
 
 from config import SETTINGS, logger
 from connection import REDDIT, create_mod_note, is_mod
+from database import db
 from discord_utils import send_discord_alert
 from languages import converter
 from reddit_sender import message_reply, message_send
@@ -148,6 +150,8 @@ def verification_parser() -> None:
     except ValueError:
         return
 
+    cursor = db.cursor_main
+
     for comment in submission.comments.list():
         comment_body = comment.body.strip()
 
@@ -158,15 +162,17 @@ def verification_parser() -> None:
             # Author is deleted; skip this comment
             continue
 
-        # Mark comment as processed on Reddit (bot ignores saved comments)
-        comment.save()
+        # Check if comment has already been processed in the database
+        existing = db.fetch_main(
+            "SELECT verification_comment_id FROM verification_database WHERE verification_comment_id = ?",
+            (comment.id,),
+        )
+        if existing:
+            continue
 
-        # Skip old comments past our window or already saved (processed) comments
+        # Skip old comments past our window
         verification_request_age = SETTINGS["verification_request_age"] * 60
-        if (
-            int(time.time()) - int(comment.created_utc) >= verification_request_age
-            or comment.saved
-        ):
+        if int(time.time()) - int(comment.created_utc) >= verification_request_age:
             continue
 
         # Normalize comment body for parsing
@@ -215,6 +221,27 @@ def verification_parser() -> None:
             continue
 
         language_lingvo = converter(language_name)
+
+        # Insert into database to mark as processed
+        try:
+            cursor.execute(
+                """
+                INSERT INTO verification_database 
+                (verification_comment_id, post_id, created_utc, username, language_code)
+                VALUES (?, ?, ?, ?, ?)
+            """,
+                (
+                    comment.id,
+                    VERIFIED_POST_ID,
+                    int(comment.created_utc),
+                    author_name,
+                    language_lingvo.preferred_code,
+                ),
+            )
+            db.conn_main.commit()
+        except sqlite3.Error as e:
+            logger.error(f"Database error for comment {comment.id}: {e}")
+            continue
 
         # Reply to the person who asked for verification.
         reply_text = (

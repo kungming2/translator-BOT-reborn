@@ -259,6 +259,15 @@ def _initialize_main_db() -> None:
         )
         """,
         """
+        CREATE TABLE verification_database (
+            verification_comment_id TEXT PRIMARY KEY,
+            post_id TEXT,
+            created_utc INTEGER,
+            username TEXT,
+            language_code TEXT
+        )
+        """,
+        """
         CREATE INDEX index_total_points_usernames ON total_points (username)
         """,
     ]
