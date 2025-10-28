@@ -112,6 +112,10 @@ def extract_commands_from_text(text):
     # Normalize curly quotes in both cases
     text = original_text.replace(""", '"').replace(""", '"')
     text = text.replace("'", "'").replace("'", "'")
+
+    # Remove backslash escapes before backticks (from Reddit's rich text formatter)
+    text = text.replace("\\`", "`")
+
     text_lower = text.lower()  # For case-insensitive command detection
 
     # Replace !id with synonym !identify.
