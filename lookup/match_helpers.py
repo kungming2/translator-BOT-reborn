@@ -117,6 +117,27 @@ def lookup_matcher(
     :param language_code: Language code ('zh', 'ja', 'ko') or None. Can be a string like 'zh+ja'.
     :return: Dict mapping language code to list of terms.
     """
+
+    def map_cjk_code(cjk_code: str, cjk_lang_dict: dict) -> str:
+        """
+        Map 4-letter SIL codes to 2-letter CJK language codes if applicable.
+
+        :param cjk_code: Language code to check
+        :param cjk_lang_dict: Dictionary of CJK language mappings
+        :return: Mapped code ('zh', 'ja', 'ko') or original code
+        """
+        if len(cjk_code) == 4:
+            for lang_name, codes in cjk_lang_dict.items():
+                if cjk_code.lower() in [c.lower() for c in codes]:
+                    # Map language name to code
+                    if "Chinese" in lang_name:
+                        return "zh"
+                    elif "Japanese" in lang_name:
+                        return "ja"
+                    elif "Korean" in lang_name:
+                        return "ko"
+        return cjk_code
+
     original_text: str = str(content_text)
 
     # Remove all triple-backtick blocks (```...```)
@@ -131,10 +152,7 @@ def lookup_matcher(
         language_codes: list[str] = []
         for code in raw_codes:
             parsed: str = converter(code).preferred_code
-            # Map 4-letter SIL code to CJK if needed
-            for key in ["zh", "ja", "ko"]:
-                if len(parsed) == 4 and parsed in cjk_languages[key]:
-                    parsed = key
+            parsed = map_cjk_code(parsed, cjk_languages)
             if parsed not in language_codes:
                 language_codes.append(parsed)
     elif language_code:
@@ -172,10 +190,7 @@ def lookup_matcher(
         if inline_lang:
             # Convert inline language specification to preferred code
             parsed: str = converter(inline_lang).preferred_code
-            # Map 4-letter SIL code to CJK if needed
-            for key in ["zh", "ja", "ko"]:
-                if len(parsed) == 4 and parsed in cjk_languages[key]:
-                    parsed = key
+            parsed = map_cjk_code(parsed, cjk_languages)
             inline_language_codes.append(parsed)
             logger.debug(f"Inline language found: {inline_lang} → {parsed}")
         else:
@@ -236,9 +251,7 @@ def lookup_matcher(
             for token in cjk_tokens:
                 if len(token) >= 2:
                     if "zh" in seg_language_codes and not has_kana:
-                        new_tokens: list[str] = lookup_zh_ja_tokenizer(
-                            token, "zh"
-                        )
+                        new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "zh")
                     elif "ja" in seg_language_codes or has_kana:
                         new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "ja")
                     else:
