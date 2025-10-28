@@ -342,6 +342,10 @@ def _update_user_notification_count(
     cursor = db.cursor_main
     language_code = lingvo_object.preferred_code
 
+    # Format as unknown-[abcd] for scripts.
+    if lingvo_object.script_code:
+        language_code = f"{language_code}-{lingvo_object.script_code}"
+
     # Attempt to fetch existing notification records
     cursor.execute(
         "SELECT received FROM notify_cumulative WHERE username = ?", (username,)
