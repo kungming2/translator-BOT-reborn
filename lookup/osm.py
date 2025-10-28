@@ -8,6 +8,8 @@ from urllib.parse import quote
 
 import requests
 
+from connection import logger
+
 
 def search_nominatim(query, accept_language="en-US,en"):
     """
@@ -38,6 +40,13 @@ def search_nominatim(query, accept_language="en-US,en"):
         response.raise_for_status()
         results = response.json()
 
+        # Nothing found.
+        if not results:
+            logger.info(f"> No results found for {query}")
+            return []
+        else:
+            logger.info(f"> Found {len(results)} results for {query}")
+
         # Format results
         formatted_results = []
         for result in results:
@@ -62,25 +71,26 @@ def search_nominatim(query, accept_language="en-US,en"):
             osm_map_link = (
                 f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=15"
             )
-            google_map_link = f"https://www.google.com/maps?q={lat},{lon}"
+            google_maps_link = f"https://www.google.com/maps?q={lat},{lon}"
 
             # Format output
             formatted = (
                 f"[{display_name}]({permalink}) ({place_type}) [{lat}, {lon}] "
-                f"([OSM]({osm_map_link}), [Google]({google_map_link}))"
+                f"([OSM]({osm_map_link}), [Google]({google_maps_link}))"
             )
             formatted_results.append(formatted)
 
         return formatted_results
 
     except requests.RequestException as e:
-        return [f"Error: {str(e)}"]
+        logger.error(f"Error: {e}")
+        return []
 
 
 # Example usage
 if __name__ == "__main__":
     while True:
-        search_area = input("Please enter the place you want to search: ")
+        search_area = input("Please enter the place you want to search for: ")
         results_test = search_nominatim(search_area)
         for result_x in results_test:
             print(result_x)
