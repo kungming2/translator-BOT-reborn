@@ -30,7 +30,7 @@ async def lang_convert(ctx, *, language_input: str):
         i = 0
         while i < len(tokens):
             token = tokens[i]
-            if token in ("--add_alt", "-add_alt"):
+            if token in ("--add_alt", "–add_alt", "-add_alt"):
                 add_alt_flag = True
                 alt_tokens = []
                 j = i + 1

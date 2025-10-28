@@ -18,7 +18,7 @@ from . import command
 async def title_search(ctx, *, title: str):
     """Discord wrapper for Titolo creation."""
     # Check if --ai flag is present
-    use_ai = title.endswith(" --ai")
+    use_ai = title.endswith((" --ai", " –ai", " -ai"))
 
     # Remove the flag from the title if present
     if use_ai:
