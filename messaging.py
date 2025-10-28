@@ -7,6 +7,7 @@ This is Reddit-native, rather than Discord.
 
 import praw
 from praw.exceptions import APIException
+from praw.models import Message
 from wasabi import msg
 
 from config import Paths, load_settings, logger
@@ -261,7 +262,9 @@ def handle_add(message, message_author):
             f"Added the language codes **{match_codes_print}** "
             f"for u/{add_username} into the notifications database."
         )
-        message_reply(message, reply_text=addition_message)
+        # Only send Reddit reply if this is a PRAW message object
+        if isinstance(message, Message):
+            message_reply(message, reply_text=addition_message)
 
 
 def handle_remove(message, message_author):
@@ -291,7 +294,9 @@ def handle_remove(message, message_author):
         f"Removed the subscriptions for u/{remove_username} from the notifications database. "
         f"(**{final_match_codes_print}**)"
     )
-    message_reply(message, reply_text=removal_message)
+    # Only send Reddit reply if this is a PRAW message object
+    if isinstance(message, Message):
+        message_reply(message, reply_text=removal_message)
 
 
 def handle_points(message, message_author):

@@ -348,7 +348,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
     :return: None if the user has no data (no commands that they
              called), a sorted Markdown table otherwise.
     """
-    header = "| Command | Times |\n|--------|------|\n"
+    header = "| Commands/Notifications | Times |\n|--------|------|\n"
     cursor = db.cursor_main  # Use the DatabaseManager cursor
 
     def fetch_data(query: str) -> Optional[dict]:

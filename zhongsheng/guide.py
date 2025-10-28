@@ -20,6 +20,10 @@ COMMAND_DESCRIPTIONS = {
     "error": "Display the 3 most recent error log entries",
     "describe": "Generate an AI alt-text description of an image from a URL",
     "office": "Get a random quote from *The Office (US)*",
+    "notif": "Manage user notification subscriptions for r/translator. "
+    "Use `/notif add [username] [languages]` to add language subscriptions, "
+    "`/notif status [username]` to view current subscriptions and usage statistics, "
+    "or `/notif remove [username]` to purge all subscriptions for that user from the database",
     "guide": "Display this informational guide about Zhongsheng commands",
 }
 
@@ -35,6 +39,7 @@ COMMAND_ROLES = {
     "filter": ["Moderator", "Helper"],
     "guide": ["Moderator", "Helper"],
     "office": ["Moderator", "Helper"],
+    "notif": ["Moderator"],
 }
 
 

@@ -5,20 +5,16 @@
 import logging
 from typing import Optional
 
-from notifications import notifier_language_list_retriever
-from messaging import handle_add, handle_remove, user_statistics_loader
+from messaging import parse_language_list, user_statistics_loader
+from notifications import (
+    notifier_language_list_editor,
+    notifier_language_list_retriever,
+)
+from utility import format_markdown_table_with_padding
 
 from . import command
 
 logger = logging.getLogger("ziwen")
-
-
-class MockMessage:
-    """Mock message object that mimics Reddit's message structure."""
-
-    def __init__(self, body, author):
-        self.body = body
-        self.author = author
 
 
 @command(
@@ -61,7 +57,7 @@ async def notif(ctx, action: str, username: str, language: Optional[str] = None)
 
 
 async def handle_notif_add(ctx, username: str, language: Optional[str]):
-    """Handle adding notification subscriptions using existing Reddit handler."""
+    """Handle adding notification subscriptions using the database editor directly."""
     if not language:
         await ctx.send("⚠️ Language codes are required for the `add` action.")
         return
@@ -71,24 +67,33 @@ async def handle_notif_add(ctx, username: str, language: Optional[str]):
         f"from {ctx.author.name}"
     )
 
-    # Format the message body to match what handle_add expects
-    mock_body = f"USERNAME: {username}\nLANGUAGES: {language}"
-    mock_message = MockMessage(mock_body, ctx.author.name)
+    # Parse the language codes
+    language_matches = parse_language_list(language)
 
-    # Call the existing handle_add function
-    # This will handle parsing, validation, and database operations
+    if not language_matches:
+        await ctx.send(
+            f"⚠️ No valid language codes found in: `{language}`\n"
+            f"Please use ISO 639 codes (e.g., `es`, `fr`, `zh`) or language names."
+        )
+        return
+
+    # Add subscriptions directly using the editor
     try:
-        handle_add(mock_message, ctx.author.name)
+        notifier_language_list_editor(language_matches, username, "insert")
+
+        match_codes_print = ", ".join(lang.name for lang in language_matches)
+
         await ctx.send(
             f"✅ **Added notifications for u/{username}**\n"
-            f"Languages: `{language}`"
+            f"Languages: `{match_codes_print}`"
         )
     except Exception as e:
+        logger.error(f"[ZW] Discord: Error adding notifications: {e}", exc_info=True)
         await ctx.send(f"⚠️ Failed to add notifications: `{e}`")
 
 
 async def handle_notif_remove(ctx, username: str):
-    """Handle removing ALL notification subscriptions using existing Reddit handler."""
+    """Handle removing ALL notification subscriptions using the database editor directly."""
     logger.info(
         f"[ZW] Discord: Notification remove request for u/{username} "
         f"from {ctx.author.name}"
@@ -98,16 +103,12 @@ async def handle_notif_remove(ctx, username: str):
     subscribed_codes = notifier_language_list_retriever(username)
 
     if not subscribed_codes:
-        await ctx.send(f"ℹ️ u/{username} has no active subscriptions.")
+        await ctx.send(f"🈚 u/{username} has no active subscriptions.")
         return
 
-    # Format body to match what handle_remove expects
-    mock_body = f"USERNAME: {username}"
-    mock_message = MockMessage(mock_body, ctx.author.name)
-
-    # Call the existing handle_remove function (purges all subscriptions)
+    # Purge all subscriptions directly using the editor
     try:
-        handle_remove(mock_message, ctx.author.name)
+        notifier_language_list_editor([], username, "purge")
 
         # Format response with removed subscriptions
         subscribed_codes_list = [x.preferred_code for x in subscribed_codes]
@@ -118,6 +119,7 @@ async def handle_notif_remove(ctx, username: str):
             f"Previous subscriptions: `{final_match_codes_print}`"
         )
     except Exception as e:
+        logger.error(f"[ZW] Discord: Error removing notifications: {e}", exc_info=True)
         await ctx.send(f"⚠️ Failed to remove notifications: `{e}`")
 
 
@@ -135,9 +137,7 @@ async def handle_notif_status(ctx, username: str):
     internal_entries = notifier_language_list_retriever(username, internal=True)
 
     if not final_match_entries and not internal_entries:
-        await ctx.send(
-            f"ℹ️ **u/{username}** has no active notification subscriptions."
-        )
+        await ctx.send(f"🈚 **u/{username}** has no active notification subscriptions.")
         return
 
     # Build subscription list
@@ -145,10 +145,17 @@ async def handle_notif_status(ctx, username: str):
 
     # Process language subscriptions
     if final_match_entries:
-        final_match_names_set = {
-            f"{entry.name}{' (Script)' if 'unknown-' in entry else ''}"
-            for entry in final_match_entries
-        }
+        final_match_names_set = set()
+        for entry in final_match_entries:
+            script_label = (
+                " (Script)"
+                if entry.script_code is not None or "unknown-" in str(entry)
+                else ""
+            )
+            final_match_names_set.add(
+                f"{entry.name} (`{entry.preferred_code}`){script_label}"
+            )
+
         subscriptions_list.extend(
             sorted(list(final_match_names_set), key=lambda x: x.lower())
         )
@@ -170,9 +177,26 @@ async def handle_notif_status(ctx, username: str):
         f"• {subscriptions_formatted}"
     )
 
-    # Add user statistics if available
+    # Add notification statistics if available
     user_commands_statistics_data = user_statistics_loader(username)
     if user_commands_statistics_data:
-        status_message += f"\n\n**User Commands Statistics:**\n{user_commands_statistics_data}"
+        # Filter to only notification-related rows
+        lines = user_commands_statistics_data.strip().split("\n")
+        notification_lines = [
+            line
+            for line in lines
+            if "Notifications" in line
+            or line.startswith("|")
+            and line.count("|") >= 2 > lines.index(line)
+        ]
+
+        if (
+            len(notification_lines) > 2
+        ):  # Has header + separator + at least one data row
+            filtered_stats = "\n".join(notification_lines)
+            formatted_table = format_markdown_table_with_padding(filtered_stats)
+            status_message += (
+                f"\n\n**Notification Usage Statistics:**\n{formatted_table}"
+            )
 
     await ctx.send(status_message)

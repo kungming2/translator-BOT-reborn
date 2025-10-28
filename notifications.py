@@ -143,7 +143,11 @@ def notifier_language_list_editor(
         user_object: Reddit username *object* to modify entries for
         mode: 'insert' adds, 'delete' removes, 'purge' removes all (languages only)
     """
-    username = user_object.name
+    # Handle both string usernames and user objects with .name attribute
+    if isinstance(user_object, str):
+        username = user_object
+    else:
+        username = user_object.name
 
     # Purge all language notifications for this user (languages and internal)
     if mode == "purge":

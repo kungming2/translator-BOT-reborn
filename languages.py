@@ -773,12 +773,16 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
     for delimiter in ["+", "\n", "/", ":", ";"]:
         list_string = list_string.replace(delimiter, ",")
 
-    # Handle space-delimited case specially
-    if "," not in list_string and " " in list_string:
-        match = converter(list_string)
-        items = [list_string] if match is None else [match]
-    else:
+    # Split on commas (or use the whole string if no commas)
+    if "," in list_string:
         items = list_string.split(",")
+    elif " " in list_string:
+        # Space-delimited case - try the whole string first
+        match = converter(list_string)
+        items = [list_string] if match is None else list_string.split()
+    else:
+        # Single item, no delimiters
+        items = [list_string]
 
     utility_codes = {"meta", "community", "all"}
     final_lingvos: dict[str, Lingvo] = {}
@@ -860,6 +864,11 @@ def get_language_emoji(language_code):
         return ""
 
     language_full_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
+
+    # Check if the language code exists in the data
+    if language_code not in language_full_data:
+        return ""
+
     country_listed = language_full_data[language_code]["country"]
 
     return get_country_emoji(country_listed)
