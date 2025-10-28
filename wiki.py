@@ -178,6 +178,9 @@ def update_wiki_page(
             reason=f"Ziwen: updating the {action} wiki page with a new link",
         )
     except (prawcore.exceptions.Forbidden, prawcore.exceptions.TooLarge) as e:
+        # This should not happen often, as Wenju automatically archives
+        # entries every month, but is retained here just in case.
+
         logger.warning(f"[ZW] Save_Wiki: The {action} wiki page is full.")
         send_discord_alert(
             f"'{action}' Wiki Page Full",
