@@ -92,6 +92,16 @@ This command retrieves the last three errors recorded in the log.
 /error
 ```
 
+### Command: */notif*
+
+This command allows moderators to directly edit and query the notifications database. The syntax for the command is:
+
+```
+/notif [username] [add/remove/status] [language_to_add (optional)]
+```
+
+Note that `remove` completely removes the user from the notifications database.
+
 ### Command: */post*
 
 This command looks through the logs and the database for mentions of this post, detailing which actions were performed on the post, and what its [Ajo](./models.md)'s state is. 
