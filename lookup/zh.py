@@ -7,11 +7,13 @@ Contains functions that deal with Chinese-language content.
 import asyncio
 import csv
 import html as html_stdlib
+import json
 import logging
 import random
 import re
 from contextlib import suppress
 from time import sleep
+from urllib.parse import quote
 
 import aiofiles
 import aiohttp
@@ -21,13 +23,12 @@ import requests
 from bs4 import BeautifulSoup as Bs
 from korean_romanizer.romanizer import Romanizer
 from lxml import html
-from pypinyin import lazy_pinyin, Style
+from pypinyin import Style, lazy_pinyin
 
 from config import Paths, logger
 from connection import get_random_useragent
-from responses import RESPONSE
-
 from lookup.async_helpers import call_sync_async
+from responses import RESPONSE
 
 useragent = get_random_useragent()
 
@@ -223,9 +224,9 @@ def _zh_word_alternate_romanization(pinyin_string, original_input=None):
     # Process Gwoyeu Romatzyh romanization
     if original_input:
         gr_reading_list = lazy_pinyin(original_input, style=Style.GWOYEU)
-        gr_post = ''.join(gr_reading_list)
+        gr_post = "".join(gr_reading_list)
     else:  # no characters passed
-        gr_post = ''
+        gr_post = ""
 
     yale_post = " ".join(yale_list)
     wadegiles_post = " ".join(wadegiles_list)
@@ -461,6 +462,95 @@ def calligraphy_search(character):
     return image_string
 
 
+def _fetch_from_zitools(character):
+    """
+    Fetch character readings from zi.tools API as a fallback when ccdb.hemiola.com is down.
+
+    :param character: A single Chinese character.
+    :return: Dictionary with keys matching ccdb API format (kJapaneseOn, kJapaneseKun, kHangul, kVietnamese)
+             or None if the request fails.
+    """
+    logger.debug(f"Fetching from zi.tools for character: {character}")
+
+    # URL encode the character
+    encoded_char = quote(character)
+    url = f"https://zi.tools/api/zi/{encoded_char}"
+
+    try:
+        response = requests.get(url, headers=useragent, timeout=10)
+        logger.debug(f"zi.tools response status code: {response.status_code}")
+        response.raise_for_status()
+
+        data = response.json()
+        logger.debug(f"zi.tools JSON response received")
+
+        # Check if unihan data exists (nested under "yi")
+        if "yi" not in data or "unihan" not in data["yi"]:
+            logger.debug("No 'yi.unihan' data found in response")
+            return None
+
+        yi_data = data["yi"]["unihan"]
+
+        # Check if curver (current version) exists with direct values
+        if "curver" in yi_data and yi_data["curver"]:
+            unihan = yi_data["curver"]
+            logger.debug(f"Using curver")
+            # curver has direct string values
+            ja_on = unihan.get("kJapaneseOn")
+            ja_kun = unihan.get("kJapaneseKun")
+            ko_hangul = unihan.get("kHangul")
+            vi_latin = unihan.get("kVietnamese")
+
+            # Strip suffix from kHangul if present (e.g., "사:0E" -> "사")
+            if ko_hangul and ":" in ko_hangul:
+                ko_hangul = ko_hangul.split(":")[0]
+        elif "allver" in yi_data and yi_data["allver"]:
+            # Use allver which has version history arrays
+            # In allver, each field is an array of [start_version, end_version, value] tuples
+            allver = yi_data["allver"]
+            logger.debug(f"Using allver")
+
+            def get_latest_value(field_name):
+                """Get the latest value from a unihan field array."""
+                if field_name in allver and allver[field_name]:
+                    # Get the last (most recent) entry
+                    latest_entry = allver[field_name][-1]
+                    # The value is the third element
+                    if len(latest_entry) >= 3:
+                        value = latest_entry[2]
+                        # For kHangul, strip the suffix after colon if present
+                        if field_name == "kHangul" and ":" in value:
+                            value = value.split(":")[0]
+                        return value
+                return None
+
+            ja_on = get_latest_value("kJapaneseOn")
+            ja_kun = get_latest_value("kJapaneseKun")
+            ko_hangul = get_latest_value("kHangul")
+            vi_latin = get_latest_value("kVietnamese")
+        else:
+            logger.debug("No curver or allver data found in unihan")
+            return None
+
+        logger.debug(
+            f"zi.tools - Japanese On: {ja_on}, Kun: {ja_kun}, Korean: {ko_hangul}, Vietnamese: {vi_latin}"
+        )
+
+        # Return in format matching ccdb API
+        result = {
+            "kJapaneseOn": ja_on,
+            "kJapaneseKun": ja_kun,
+            "kHangul": ko_hangul,
+            "kVietnamese": vi_latin,
+        }
+
+        return result
+
+    except (requests.RequestException, json.JSONDecodeError, KeyError, IndexError) as e:
+        logger.debug(f"Error fetching from zi.tools: {e}")
+        return None
+
+
 def _zh_character_other_readings(character):
     """
     Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
@@ -482,7 +572,7 @@ def _zh_character_other_readings(character):
         formatted_url = url.format(character)
         logger.debug(f"Requesting URL: {formatted_url}")
 
-        response = requests.get(formatted_url, headers=useragent)
+        response = requests.get(formatted_url, headers=useragent, timeout=5)
         logger.debug(f"Response status code: {response.status_code}")
 
         response.raise_for_status()
@@ -493,15 +583,13 @@ def _zh_character_other_readings(character):
         data = json_data[0]
         logger.debug(f"Extracted data: {data}")
 
-    except IndexError as e:
-        logger.debug(f"IndexError - empty response array: {e}")
-        return None
-    except ValueError as e:
-        logger.debug(f"ValueError - JSON parsing failed: {e}")
-        return None
-    except requests.RequestException as e:
-        logger.debug(f"RequestException - network error: {e}")
-        return None
+    except (IndexError, ValueError, requests.RequestException) as e:
+        logger.debug(f"ccdb.hemiola.com failed: {e}. Trying zi.tools fallback...")
+        data = _fetch_from_zitools(character)
+
+        if data is None:
+            logger.debug("Both ccdb and zi.tools failed.")
+            return None
 
     results = []
 
@@ -564,7 +652,8 @@ async def zh_character(character):
 
     async with aiohttp.ClientSession(headers=useragent) as session:
         resp = await session.get(
-            f"https://www.mdbg.net/chinese/dictionary?page=chardict&cdcanoce=0&cdqchi={character}"
+            f"https://www.mdbg.net/chinese/dictionary?page=chardict&cdcanoce=0&cdqchi={character}",
+            timeout=aiohttp.ClientTimeout(total=10),
         )
         content = await resp.text()
         tree = html.fromstring(content)
@@ -666,7 +755,9 @@ async def zh_character(character):
 
         for wenzi in multi_character_list:
             character_url = f"https://www.mdbg.net/chindict/chindict.php?page=chardict&cdcanoce=0&cdqchi={wenzi}"
-            resp = await session.get(character_url)
+            resp = await session.get(
+                character_url, timeout=aiohttp.ClientTimeout(total=10)
+            )
             content = await resp.text()
             new_tree = html.fromstring(content)
 
@@ -1056,12 +1147,11 @@ def show_menu():
     print("2. zh_word (search for a Chinese word)")
     print("3. zh_word_chengyu_supplement (search for a chengyu addition)")
     print("4. variant_character_search (search for a variant character)")
-    print("5. character other readings search ")
+    print("5. Other readings search ")
     print("x. Exit")
 
 
 if __name__ == "__main__":
-
     # Configure logging to DEBUG level
     logging.basicConfig(
         level=logging.DEBUG,
