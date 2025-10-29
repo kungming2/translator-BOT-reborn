@@ -4,6 +4,7 @@
 Experimental module to return search results for locations via OSM.
 """
 
+from typing import Any
 from urllib.parse import quote
 
 import requests
@@ -11,70 +12,82 @@ import requests
 from connection import logger
 
 
-def search_nominatim(query, accept_language="en-US,en"):
+def search_nominatim(
+    query: str, accept_language: str = "en-US,en", coords: list[float] | None = None
+) -> list[str]:
     """
     Search OSM Nominatim and return formatted results.
 
     Args:
-        query: Search query string (e.g., "Yongchun, Fujian")
+        query: Search query string (e.g., "Chongqing")
         accept_language: Language preference (default: "en-US,en")
+        coords: List containing [latitude, longitude] (default: None)
 
     Returns:
         List of formatted result strings
     """
     # URL encode the query (double encoding for the UI link)
-    encoded_query = quote(query)
+    encoded_query: str = quote(query)
 
     # Build API URL
-    url = (
+    url: str = (
         f"https://nominatim.openstreetmap.org/search?q={encoded_query}"
         f"&accept-language={accept_language}&format=jsonv2"
     )
 
     # Set a user agent (required by Nominatim usage policy)
-    headers = {"User-Agent": "Python OSM Search Script"}
+    headers: dict[str, str] = {"User-Agent": "Python OSM Search Script"}
 
     try:
         # Make the request
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        results = response.json()
+        results: list[dict[str, Any]] = response.json()
 
         # Nothing found.
         if not results:
             logger.info(f"> No results found for {query}")
+            # If coords provided, return map links with those coordinates
+            if coords and len(coords) == 2:
+                lat: float = round(coords[0], 3)
+                lon: float = round(coords[1], 3)
+                osm_map_link: str = (
+                    f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=15"
+                )
+                google_maps_link: str = f"https://www.google.com/maps?q={lat},{lon}"
+                return [f"([OSM]({osm_map_link}), [Google]({google_maps_link}))"]
             return []
         else:
             logger.info(f"> Found {len(results)} results for {query}")
 
         # Format results
-        formatted_results = []
+        formatted_results: list[str] = []
         for result in results:
-            display_name = result.get("display_name", "Unknown")
-            osm_type = result.get("osm_type", "")
-            osm_id = result.get("osm_id", "")
-            category = result.get("category", "unknown")
-            place_type = result.get("type", "unknown")
-            lat = result.get("lat", "")
-            lon = result.get("lon", "")
+            display_name: str = result.get("display_name", "Unknown")
+            osm_type: str = result.get("osm_type", "")
+            osm_id: str = result.get("osm_id", "")
+            category: str = result.get("category", "unknown")
+            place_type: str = result.get("type", "unknown")
+            lat: float = round(float(result.get("lat", "")), 3)
+            lon: float = round(float(result.get("lon", "")), 3)
 
             # Convert osm_type to single letter: node->N, way->W, relation->R
-            osm_type_letter = osm_type[0].upper() if osm_type else ""
+            osm_type_letter: str = osm_type[0].upper() if osm_type else ""
 
             # Create Nominatim details permalink
-            permalink = (
+            permalink: str = (
                 f"https://nominatim.openstreetmap.org/ui/details.html?osmtype="
                 f"{osm_type_letter}&osmid={osm_id}&class={category}"
             )
 
             # Create map links
-            osm_map_link = (
+            osm_map_link: str = (
                 f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=15"
             )
-            google_maps_link = f"https://www.google.com/maps?q={lat},{lon}"
+            google_maps_link: str = f"https://www.google.com/maps?q={lat},{lon}"
 
             # Format output
-            formatted = (
+            formatted: str = (
                 f"[{display_name}]({permalink}) ({place_type}) [{lat}, {lon}] "
                 f"([OSM]({osm_map_link}), [Google]({google_maps_link}))"
             )
