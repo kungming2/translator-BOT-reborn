@@ -115,17 +115,28 @@ def monitor_controversial_comments():
         # Extract comment info
         score = comment.score
         removed = comment.removed
-        saved = comment.saved
         mod_reports = comment.mod_reports
         permalink = comment.permalink
+        comment_id = comment.id
+        created_utc = int(comment.created_utc)
+        author_name = comment.author.name if comment.author else "[deleted]"
 
-        # Criteria: score <= -25, not removed, not reported, not already saved
+        # Check if this comment has already been acted upon
+        query = "SELECT comment_id FROM acted_comments WHERE comment_id = ?"
+        already_acted = db.fetch_main(query, (comment_id,))
+
+        # Criteria: score <= threshold, not removed, not reported, not already acted upon
         score_threshold = WENJU_SETTINGS["controversial_score_threshold"]
-        if score <= score_threshold and not removed and not mod_reports and not saved:
+        if (
+            score <= score_threshold
+            and not removed
+            and not mod_reports
+            and not already_acted
+        ):
             create_mod_note(
                 "ABUSE_WARNING",
-                comment.author.name,
-                f"Authored heavily downvoted comment at https://www.reddit.com/{comment.permalink}",
+                author_name,
+                f"Authored heavily downvoted comment at https://www.reddit.com/{permalink}",
             )
 
             # Send alert to Discord
@@ -136,8 +147,17 @@ def monitor_controversial_comments():
                 "alert",
             )
 
-            # Save the comment to mark it as reviewed
-            comment.save()
+            # Record this action in the database
+            insert_query = """
+                           INSERT INTO acted_comments (comment_id, created_utc, comment_author_username, action_type)
+                           VALUES (?, ?, ?, ?) \
+                           """
+            cursor = db.cursor_main
+            cursor.execute(
+                insert_query,
+                (comment_id, created_utc, author_name, "controversial_comment"),
+            )
+            db.conn_main.commit()
 
     return
 

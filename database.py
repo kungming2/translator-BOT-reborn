@@ -213,6 +213,14 @@ def _initialize_main_db() -> None:
         )
         """,
         """
+        CREATE TABLE acted_comments (
+            comment_id TEXT PRIMARY KEY,
+            created_utc INTEGER,
+            comment_author_username TEXT,
+            action_type TEXT
+        )
+        """,
+        """
         CREATE TABLE notify_cumulative (
             username TEXT,
             received TEXT,

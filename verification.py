@@ -94,17 +94,25 @@ def process_verification(confirming_comment: "Comment") -> None:
 
     mod_caller = confirming_comment.author
     if not is_mod(mod_caller):
-        logger.error(f"u{mod_caller} is NOT a mod.")
+        logger.warning(f"u{mod_caller} is NOT a mod.")
         return
 
     logger.info(f"> Verify command called by u/{mod_caller}.")
-    confirming_comment.save()
 
-    # Exit if we've processed this already.
-    if confirming_comment.saved:
+    # Extract comment data
+    comment_id = confirming_comment.id
+    created_utc = int(confirming_comment.created_utc)
+    author_name = mod_caller.name if mod_caller else "[deleted]"
+
+    # Check if we've already processed this verification
+    query = "SELECT comment_id FROM acted_comments WHERE comment_id = ?"
+    already_acted = db.fetch_main(query, (comment_id,))
+
+    if already_acted:
+        logger.info(f"> Verification comment {comment_id} already processed. Skipping.")
         return
 
-    # Fetch the person to be nuked by looking at the parent of the
+    # Fetch the person to be verified by looking at the parent of the
     # comment. This is the person to whom the mod replied.
     parent_comment = confirming_comment.parent()
     verified_person = parent_comment.author
@@ -128,6 +136,18 @@ def process_verification(confirming_comment: "Comment") -> None:
         f"[here](https://www.reddit.com{confirming_comment.permalink}?context=10000).",
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
+
+    # Record this action in the database
+    insert_query = """
+                   INSERT INTO acted_comments (comment_id, created_utc, comment_author_username, action_type)
+                   VALUES (?, ?, ?, ?) \
+                   """
+    cursor = db.cursor_main
+    cursor.execute(
+        insert_query, (comment_id, created_utc, author_name, "process_verification")
+    )
+    db.conn_main.commit()
+
     logger.info("> Verified procedure complete.")
 
     return
