@@ -114,6 +114,7 @@ def ziwen_posts(post_limit=None):
             )
             continue
 
+        logger.info(f"[ZW] Posts: Now processing `{post_id}`: {post_title}...")
         # Mark post as processed
         db.cursor_main.execute(
             "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
@@ -122,9 +123,16 @@ def ziwen_posts(post_limit=None):
         db.conn_main.commit()
 
         # Apply a filtration test to make sure this post is valid.
+        logger.info(
+            f"[ZW] Posts: About to filter post {post_id} with title: {post_title} | `{post_id}`"
+        )
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
+        logger.info(
+            f"[ZW] Posts: Filter result for {post_id}: {post_okay}, {filter_reason}"
+        )
 
-        # If it fails this test, write to `record_filter_log`
+        # If it fails this test, write to `record_filter_log` and then
+        # skip processing it.
         if not post_okay:
             # Remove this post, it failed all routines.
             if not SETTINGS["testing_mode"]:
@@ -146,7 +154,7 @@ def ziwen_posts(post_limit=None):
         # Create a new Ajo here into memory if it doesn't already exist.
         if not post_ajo:
             logger.info(
-                "[ZW] Posts: No Ajo stored in existing database. Creating new Ajo..."
+                "f[ZW] Posts: No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
             )
             titolo_content = Titolo.process_title(post)
             post_ajo = Ajo.from_titolo(titolo_content, post)

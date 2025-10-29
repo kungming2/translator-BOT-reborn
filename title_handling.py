@@ -423,7 +423,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
         if not any(kw in title_lower for kw in mandatory_keywords):
             filter_reason = "1"
             logger.info(
-                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
+                f"Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
             )
             return False, None, filter_reason
 
@@ -432,7 +432,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
         if not any(phrase in title_lower[:25] for phrase in to_phrases):
             filter_reason = "1A"
             logger.info(
-                f"[L] Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
+                f"Main_Posts_Filter: > Filtered a post with an incorrect title format. Rule: #{filter_reason}"
             )
             return False, None, filter_reason
 
@@ -445,7 +445,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
             if not non_english_lingvos:
                 filter_reason = "1B"
                 logger.info(
-                    f"[L] Main_Posts_Filter: > Filtered a post with no valid language. Rule: #{filter_reason}"
+                    f"Main_Posts_Filter: > Filtered a post with no valid language. Rule: #{filter_reason}"
                 )
                 return False, None, filter_reason
 
@@ -453,7 +453,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
     if ">" in title and "]" not in title and ">" not in title[:50]:
         filter_reason = "2"
         logger.info(
-            f"[L] Main_Posts_Filter: > Filtered a post due to incorrect placement of '>'. Rule: #{filter_reason}"
+            f"Main_Posts_Filter: > Filtered a post due to incorrect placement of '>'. Rule: #{filter_reason}"
         )
         return False, None, filter_reason
 
@@ -1335,19 +1335,20 @@ def _show_menu():
     print("1. Title testing (enter your own title to test)")
     print("2. Reddit titles (retrieve the last few Reddit posts to test against)")
     print("3. AI title testing (test AI output for a malformed title)")
+    print("4. Test filtration against a title")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         _show_menu()
-        choice = input("Enter your choice (1-3): ")
+        choice = input("Enter your choice (1-4): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3"]:
+        if choice not in ["1", "2", "3", "4"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1369,3 +1370,7 @@ if __name__ == "__main__":
         elif choice == "3":
             my_test = input("Enter the string you wish to test: ")
             print(title_ai_parser(my_test))
+
+        elif choice == "4":
+            my_test = input("Enter the title you wish to test: ")
+            print(main_posts_filter(my_test))
