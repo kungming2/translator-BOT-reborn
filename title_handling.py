@@ -1224,6 +1224,7 @@ def title_ai_parser(
     Note:
         Returns an error tuple if AI confidence is below 0.7 threshold.
     """
+    logger.info(f"AI Parser: AI service is now assessing title: {title}")
     image_url: Optional[str] = None
 
     if post:
@@ -1269,7 +1270,7 @@ def title_ai_parser(
         logger.warning("AI confidence value too low for title.")
         return "error", "Confidence value too low"
 
-    logger.info("AI service returned data.")
+    logger.info(f"AI Parser: AI service returned data: {query_dict}")
     return query_dict
 
 
