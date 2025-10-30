@@ -232,7 +232,9 @@ def ziwen_commands():
             logger.debug("[ZW] Bot: Recorded user commands in database.")
 
             # Calculate points for the comment and write them to database.
-            points_tabulator(comment, original_post, original_ajo.lingvo)
+            # This is obviously skipped if the post is an internal post.
+            if not diskuto_exists(original_post.id):
+                points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             # If this is the verified thread and there are no commands, skip
             if original_post.id == VERIFIED_POST_ID:
