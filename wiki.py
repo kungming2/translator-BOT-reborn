@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from dateutil.relativedelta import relativedelta
 import prawcore
 import yaml
-from yaml import parser
+from yaml.parser import ParserError
 
 from config import SETTINGS
 from connection import REDDIT, REDDIT_HELPER, logger
@@ -235,7 +235,7 @@ def _frequently_requested_wiki() -> list[dict[str, Any]] | None:
     if not alert_mods:
         try:
             frt_data = list(frt_data)
-        except yaml.parser.ParserError:
+        except ParserError:
             frt_data = None
             alert_mods = True
         else:
