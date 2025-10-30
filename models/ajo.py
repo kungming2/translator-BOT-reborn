@@ -360,13 +360,14 @@ class Ajo:
         if titolo.target:
             # Filter out English from targets for classification purposes
             non_english_targets = [
-                lang for lang in titolo.target
-                if lang.preferred_code != 'en'
+                lang for lang in titolo.target if lang.preferred_code != "en"
             ]
 
             # If multiple languages (defined multiple), wrap in a list
             if len(non_english_targets) > 1:
-                ajo.language_history = [[lang.preferred_code for lang in non_english_targets]]
+                ajo.language_history = [
+                    [lang.preferred_code for lang in non_english_targets]
+                ]
                 # Create status dictionary with 'untranslated' for each language code (excluding English)
                 ajo.status = {
                     lang.preferred_code: "untranslated" for lang in non_english_targets
@@ -595,24 +596,27 @@ class Ajo:
 
         This method is for single language posts or non-defined multiple posts only.
         For defined multiple posts, use set_defined_multiple_status() instead.
-
-        :raises ValueError: If the status value is not allowed, if called on a defined multiple,
-                           or if the status transition is not permitted.
         """
         if self.is_defined_multiple:
-            raise ValueError(
-                "Cannot use set_status() on a defined multiple post. Use set_defined_multiple_status() instead."
+            logger.warning(
+                "Cannot use set_status() on a defined multiple post. "
+                "Use set_defined_multiple_status() instead."
             )
+            return
 
         allowed = {"translated", "doublecheck", "inprogress", "missing", "untranslated"}
         if value not in allowed:
-            raise ValueError(f"Status must be one of {allowed}.")
+            logger.warning(
+                f"Ignoring invalid status '{value}'. Must be one of {allowed}."
+            )
+            return
 
         # Check if current status is 'translated' - cannot change from this state
         if hasattr(self, "status") and self.status == "translated":
-            raise ValueError(
-                "Cannot change status once marked as 'translated'. Status is final."
+            logger.warning(
+                "Attempted to change status after 'translated' (final). Ignoring."
             )
+            return
 
         # Check if current status is 'doublecheck' - can only transition to 'translated'
         if (
@@ -620,11 +624,14 @@ class Ajo:
             and self.status == "doublecheck"
             and value != "translated"
         ):
-            raise ValueError(
-                "Once marked as 'doublecheck', status can only be changed to 'translated'."
+            logger.warning(
+                f"Invalid transition from 'doublecheck' to '{value}'. "
+                "Only 'translated' is allowed."
             )
+            return
 
         self.status = value
+        logger.info(f"Status set to '{value}'.")
 
         # Automatically set closed_out to True when status is 'translated' or 'doublecheck'
         if value in {"translated", "doublecheck"}:
