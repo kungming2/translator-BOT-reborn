@@ -588,7 +588,7 @@ def _zh_character_other_readings(character):
         data = _fetch_from_zitools(character)
 
         if data is None:
-            logger.debug("Both ccdb and zi.tools failed.")
+            logger.warning("Both ccdb and zi.tools failed.")
             return None
 
     results = []
@@ -602,7 +602,7 @@ def _zh_character_other_readings(character):
         ja_kun = ja_kun.lower() + " " if ja_kun else ""
         ja_on = ja_on.upper() if ja_on else ""
         ja_combined = ", ".join((ja_kun + ja_on).strip().split())
-        results.append(f"**Japanese** | *{ja_combined}*")
+        results.append(f"| **Japanese** | *{ja_combined}* |")
         logger.debug(f"Added Japanese reading: {ja_combined}")
 
     # Korean readings
@@ -613,7 +613,7 @@ def _zh_character_other_readings(character):
         ko_latin = Romanizer(ko_hangul).romanize().lower()
         ko_latin = ko_latin.replace(" ", ", ")
         ko_hangul_fmt = ko_hangul.replace(" ", ", ")
-        results.append(f"**Korean** | {ko_hangul_fmt} / *{ko_latin}*")
+        results.append(f"| **Korean** | {ko_hangul_fmt} (*{ko_latin}*) |")
         logger.debug(f"Added Korean reading: {ko_hangul_fmt} / {ko_latin}")
 
     # Vietnamese reading
@@ -625,7 +625,7 @@ def _zh_character_other_readings(character):
         logger.debug(f"Vietnamese reading from API: {vi_latin}")
 
     if vi_latin:
-        results.append(f"**Vietnamese** | *{vi_latin.lower()}*")
+        results.append(f"| **Vietnamese** | *{vi_latin.lower()}* |")
         logger.debug(f"Added Vietnamese reading: {vi_latin}")
 
     logger.debug(f"Final results: {results}")
