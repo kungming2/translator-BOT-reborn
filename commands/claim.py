@@ -105,7 +105,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
             claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
             logger.info(f"[ZW] Bot: > Left a claim comment for u/{comment.author}.")
         else:
-            logger.error(f"[ZW] Bot: Unresolved claim comment.")
+            logger.error(f"[ZW] Bot: Unresolved claim comment by u/{comment.author}.")
 
     return
 

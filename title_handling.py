@@ -323,7 +323,7 @@ def _reformat_detected_languages_in_title(title: str) -> str | None:
                 )
                 break
             else:
-                logger.debug(f"Same as first_lang and only appears once, skipping")
+                logger.debug(f"Same as first_lang {first_lang} and only appears once, skipping")
 
     logger.debug(
         f"Final detected languages: first_lang={first_lang}, last_lang={last_lang}, last_lang_word={last_lang_word}"

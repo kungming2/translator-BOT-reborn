@@ -262,7 +262,7 @@ def display_event_errors(days=7):
                         # If timestamp parsing fails, print anyway to be safe
                         print(line.rstrip())
     except FileNotFoundError:
-        print(f"Error: Log file not found.")
+        print("Error: Log file not found.")
     except Exception as e:
         print(f"Error reading log file: {e}")
 

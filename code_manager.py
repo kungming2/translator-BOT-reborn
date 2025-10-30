@@ -8,6 +8,7 @@ import pandas as pd
 from pathlib import Path
 
 from config import Paths
+from connection import logger
 
 # Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
@@ -27,10 +28,10 @@ def load_csv():
                 continue
 
         if df is None:
-            print(f"Error: Could not decode file with any standard encoding.")
+            logger.error("Error: Could not decode file with any standard encoding.")
             return None
     except FileNotFoundError:
-        print(f"Error: File not found at {CSV_PATH}")
+        logger.error(f"Error: File not found at {CSV_PATH}")
         return None
 
 
@@ -38,9 +39,9 @@ def save_csv(df):
     """Save DataFrame back to CSV file."""
     try:
         df.to_csv(CSV_PATH, index=False, encoding="utf-8")
-        print("✓ File saved successfully.")
+        logger.info("✓ File saved successfully.")
     except Exception as e:
-        print(f"Error saving file: {e}")
+        logger.error(f"Error saving file: {e}")
 
 
 def create_entry():
