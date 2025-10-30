@@ -482,7 +482,7 @@ def _fetch_from_zitools(character):
         response.raise_for_status()
 
         data = response.json()
-        logger.debug(f"zi.tools JSON response received")
+        logger.debug("zi.tools JSON response received")
 
         # Check if unihan data exists (nested under "yi")
         if "yi" not in data or "unihan" not in data["yi"]:
@@ -494,7 +494,7 @@ def _fetch_from_zitools(character):
         # Check if curver (current version) exists with direct values
         if "curver" in yi_data and yi_data["curver"]:
             unihan = yi_data["curver"]
-            logger.debug(f"Using curver")
+            logger.debug("Using curver")
             # curver has direct string values
             ja_on = unihan.get("kJapaneseOn")
             ja_kun = unihan.get("kJapaneseKun")
@@ -508,7 +508,7 @@ def _fetch_from_zitools(character):
             # Use allver which has version history arrays
             # In allver, each field is an array of [start_version, end_version, value] tuples
             allver = yi_data["allver"]
-            logger.debug(f"Using allver")
+            logger.debug("Using allver")
 
             def get_latest_value(field_name):
                 """Get the latest value from a unihan field array."""
@@ -903,8 +903,14 @@ async def _zh_word_tea_dictionary_search(chinese_word):
         return None
 
     text_nodes = [t.strip() for t in text_nodes if t.strip()]
+    logger.debug(f"Text nodes: {text_nodes}")
     if not text_nodes:
         return None
+
+    # Check for "Don't know" early and return None if found
+    for node in text_nodes:
+        if "Don′t know" in node or "Don't know" in node:
+            return None
 
     pinyin_line_index = None
     pinyin = None
@@ -919,6 +925,7 @@ async def _zh_word_tea_dictionary_search(chinese_word):
         return None
 
     meaning_parts = text_nodes[pinyin_line_index + 1 :]
+    logger.debug(f"Meaning parts: {meaning_parts}")
     if not meaning_parts:
         return None
 
