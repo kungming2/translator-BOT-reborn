@@ -147,9 +147,9 @@ def ziwen_commands():
             db.conn_main.commit()
             logger.debug(f"Comment `{comment_id}` is now being processed.")
 
-        # Skip the bot's own comments.
-        if author_name == username:
-            logger.info(f"`{comment_id}` is from myself. Skipping...")
+        # Skip the bot's own comments and AutoModerator comments.
+        if author_name in [username, "AutoModerator"]:
+            logger.info(f"`{comment_id}` is from bot u/{author_name}. Skipping...")
             continue
 
         # Load the ajo for the post from the database.
