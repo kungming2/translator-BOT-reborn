@@ -421,7 +421,9 @@ def _notification_rate_limiter(
         if not SETTINGS["notifications_api_limiter_on"]:
             return sorted(subscribed_users, key=lambda u: str(u).lower())
         else:
-            return random.sample(subscribed_users, SETTINGS["notifications_user_limit"])
+            # Take the minimum to avoid sampling more than available
+            num_to_sample = min(len(subscribed_users), SETTINGS["notifications_user_limit"])
+            return random.sample(subscribed_users, num_to_sample)
     else:
         total_allowed_notifications = total_users * monthly_limit
         num_users_to_notify = round(
