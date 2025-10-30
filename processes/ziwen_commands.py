@@ -23,6 +23,7 @@ from reddit_sender import message_send
 from responses import RESPONSE
 from title_handling import Titolo
 from usage_statistics import action_counter, user_statistics_writer
+from verification import VERIFIED_POST_ID
 
 
 def _mark_short_thanks_as_translated(comment, ajo):
@@ -100,6 +101,11 @@ def ziwen_commands():
     flair update will not include the "(Identified)" suffix, as this indicates
     a direct moderator action rather than community identification.
 
+    Special handling for the verified thread:
+    The verified thread (retrieved via get_verified_thread()) is exempted from
+    internal post filtering. Only !verify commands are allowed on this thread;
+    all other commands are blocked.
+
     :return: Nothing.
     """
     subreddit = SETTINGS["subreddit"]
@@ -128,8 +134,10 @@ def ziwen_commands():
         except AttributeError:
             continue
 
-        # Skip internal posts (e.g. meta/community).
-        if diskuto_exists(original_post.id) or is_internal_post(original_post):
+        # Skip internal posts (e.g. meta/community), but allow the verified thread
+        if original_post.id != VERIFIED_POST_ID and (
+            diskuto_exists(original_post.id) or is_internal_post(original_post)
+        ):
             continue
 
         # Check to see if the comment has already been acted upon.
@@ -180,6 +188,21 @@ def ziwen_commands():
                 f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
             )
 
+            # If this is the verified thread, only allow !verify commands
+            if original_post.id == VERIFIED_POST_ID:
+                # Filter to only allow 'verify' commands on the verified thread
+                allowed_commands = [
+                    k for k in instruo.commands if k.name.lower() == "verify"
+                ]
+                if not allowed_commands:
+                    logger.info(
+                        f"Non-verify command attempted on verified thread `{original_post.id}`. "
+                        f"Skipping comment `{comment_id}`."
+                    )
+                    continue
+                # Replace commands with only the allowed ones
+                instruo.commands = allowed_commands
+
             # Pass off to handling functions depending on the command.
             # e.g. an identify command will pass off to the handler
             # function located in identify.py
@@ -211,6 +234,14 @@ def ziwen_commands():
             # Calculate points for the comment and write them to database.
             points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
+            # If this is the verified thread and there are no commands, skip
+            if original_post.id == VERIFIED_POST_ID:
+                logger.debug(
+                    "Non-command comment on verified thread "
+                    f"`{original_post.id}`. Skipping."
+                )
+                continue
+
             logger.debug(
                 f"[ZW] Bot: Post `{original_post.id}` does not contain "
                 "any operational keywords and commands."
