@@ -35,6 +35,7 @@ For information on language processing can be found at the relevant page below.
 * [Technical Information](./technical.md)
 * [Verification](./verification.md)
 * [Wenju](./wenju.md)
+* [Wenyuan](./wenyuan.md)
 
 **Other**
 

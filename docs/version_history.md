@@ -29,16 +29,29 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 * ✨ ADDITION: Messages from the bot can now include language-specific greetings to users. (e.g. 你好, Guten Tag.)
 * ✨ ADDITION: Better Korean-language lookup results and output, including tokenization of Korean sentences.
 * ✨ ADDITION: If it's a request for a image translation, a very short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
+* ✨ ADDITION: Wikipedia pages with coordinate attributes from the lookup function will also include a relevant [OpenStreetMap](https://www.openstreetmap.org) link to that location. 
+* 🔄 CHANGE: The codebase is now linted and formatted with [Ruff](https://github.com/astral-sh/ruff).
 * 🔄 CHANGE: Time handling bot-wide has been standardized to [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
 * 🔄 CHANGE: Signing up for language notifications is more tolerant of non-standard formatting.
+* 🔄 CHANGE: Meta/Community posts are now classified as "internal posts" and are stored and processed separately from regular language requests for better consistency.
 * 🔄 CHANGE: More accurate and relevant [Sino-Vietnamese](https://en.wikipedia.org/wiki/Sino-Vietnamese) readings of single Han characters in the lookup. (credit to u/TheDeadlyZebra for the suggestion)
-* 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. [王后](https://en.wiktionary.org/wiki/%E7%8E%8B%E5%90%8E) will never be the nonsensical 王後 now).
+* 🔄 CHANGE: Improved simplified/traditional conversion for Chinese (e.g. [王后](https://en.wiktionary.org/wiki/%E7%8E%8B%E5%90%8E) "queen consort" will never be also displayed as the nonsensical 王後 now).
 * 🔄 CHANGE: The `!search` function now uses [DuckDuckGo](https://duckduckgo.com/). Frankly, its results aren't as good as Google, but the [module](https://pypi.org/project/googlesearch-python/) we usually use for Google is [currently inoperational](https://github.com/Nv7-GitHub/googlesearch/issues). 
 * 🔄 CHANGE: All [2024-2025 updates to ISO 639-3](https://iso639-3.sil.org/code_changes/change_management) have been added to the dataset. New updates will be automatically recorded by the bot and posted to r/translatorBOT.
-* 🔄 CHANGE: Chinese subreddit character/word lookup has been transferred to u/ChineseLanguageMods. It uses the same backend as Ziwen.
-* 🔄 CHANGE: Number of notification messages sent for posts has been lowered to 7 in order to work with Reddit's more stringent API rate limits.
+* 🔄 CHANGE: Chinese subreddit character/word lookup has been transferred to u/ChineseLanguageMods. It still uses the same backend as Ziwen.
+* 🔄 CHANGE: Number of notification messages sent for posts has been lowered to 8 in order to work with Reddit's more stringent API rate limits regarding messaging.
 * 🔄 CHANGE: Content in multi-line triple backtick sections (`\`\`\``) will be ignored for lookup. 
 * 🔄 CHANGE: Translators' contributions are also added to [mod notes](https://www.reddit.com/r/modnews/comments/t8vafc/announcing_mod_notes/). 
+* 🔄 CHANGE: Removed all dependence on the Reddit [save](https://praw.readthedocs.io/en/latest/code_overview/models/submission.html) function in some smaller helper functions to mark whether a comment had been processed.
+* 🔄 CHANGE: Added a backup function to query [zi.tools](https://zi.tools/) in case CCDB is not [responding](http://ccdb.hemiola.com/). 
+* 🔄 CHANGE: Updated [CC-Canto](https://cantonese.org/download.html) to the latest available version.
+* 🔄 CHANGE: `zh_word()` will no longer return a blank entry line if no Cantonese readings are found for the word (it'll just omit the line entirely).
+* 🔄 CHANGE: Added a `created_utc` column to `old_posts` and `old_comments` tables in the main database for more consistent clearing of previously processed items. 
+* 🔄 CHANGE: Bot disclaimer/footer has been simplified to just two links.
+* 🔄 CHANGE: More [indices](https://sqlite.org/lang_createindex.html) have been added to the main database to speed up large table queries.
+* 🔄 CHANGE: [Gwoyeu Romatzyh](en.wikipedia.org/wiki/Gwoyeu_Romatzyh) output is now provided by [python-pinyin](https://github.com/mozillazg/python-pinyin), and the self-written converter has been removed.
+* 🛠️ BUG FIX: Fixed slightly incorrect Hakka (Sixian) tone formatting in Markdown.   
+* 🛠️ BUG FIX: Records of notifications for script codes for now on will save the script codes as well, instead of just "unknown".
 
 ###### Deprecated Features
 
