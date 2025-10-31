@@ -141,6 +141,11 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 logger.info(
                     f"Reddit API rate limit reached. Cannot send message to u/{username}."
                 )
+            elif ex.error_type == "USER_DOESNT_EXIST":
+                # User no longer exists.
+                logger.info(
+                    f"User does not exist. Unable to send message to u/{username}."
+                )
             else:
                 logger.error(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"
