@@ -263,7 +263,9 @@ def _old_chinese_search(character):
         return None
 
     mc, oc = mc_oc_readings[character]
-    result = f"\n| **Middle Chinese** | \\*{mc}* |"
+    # Note that the Middle Chinese entry does not have an asterisk in
+    # the CSV, while the OC one does.
+    result = f"\n| **Middle Chinese** | \\**{mc}* |"
     if oc:  # only include Old Chinese if it exists
         result += f"\n| **Old Chinese** | \\*{oc}* |"
     return result
@@ -1190,4 +1192,4 @@ if __name__ == "__main__":
         elif choice == "4":
             print(variant_character_search(my_test))
         elif choice == "5":
-            print(_zh_character_other_readings(my_test))
+            print(_old_chinese_search(my_test))
