@@ -7,7 +7,8 @@ Contains functions that deal with Korean-language content.
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
-from connection import credentials_source
+from connection import credentials_source, logger
+from lookup.cache_helpers import parse_ko_output_to_json, save_to_cache
 
 # Set the API key to use.
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
@@ -43,12 +44,15 @@ def _ko_search_raw(target_word: str) -> list[dict]:
     :return: List of simplified entry dictionaries.
     """
     filtered_data: list[dict] = []
-    korean_input = krdict.search(
-        query=target_word.strip(),
-        search_type=krdict.SearchType.WORD,
-        translation_language=krdict.TranslationLanguage.ENGLISH,
-        raise_api_errors=True,
-    )
+    try:
+        korean_input = krdict.search(
+            query=target_word.strip(),
+            search_type=krdict.SearchType.WORD,
+            translation_language=krdict.TranslationLanguage.ENGLISH,
+            raise_api_errors=True,
+        )
+    except krdict.types.exceptions.KRDictException:
+        return []
 
     for entry in korean_input.data.results:
         if entry.word == target_word:
@@ -134,6 +138,15 @@ def ko_word(korean_word: str) -> str | None:
     )
 
     final_comment: str = lookup_header + "".join(entries) + footer
+
+    # Cache the result before returning
+    try:
+        parsed_data = parse_ko_output_to_json(final_comment)
+        save_to_cache(parsed_data, "ko", "ko_word")
+    except Exception as ex:
+        # Silently fail if caching doesn't work
+        logger.error(f"Encountered issue: {ex}")
+        pass
 
     return final_comment
 

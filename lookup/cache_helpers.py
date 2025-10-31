@@ -2,8 +2,10 @@
 # -*- coding: UTF-8 -*-
 """Caching functions for lookup scripts."""
 
+import asyncio
 import json
 import re
+import sys
 import time
 from typing import Dict
 
@@ -252,11 +254,80 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     return result
 
 
+"""KOREAN CACHING"""
+
+
+def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
+    """
+    Parse the markdown output from ko_word into structured JSON.
+
+    :param markdown_output: The markdown string returned by ko_word
+    :return: Dictionary with structured data
+    """
+    result: Dict[str, any] = {
+        "word": None,
+        "romanization": None,
+        "entries": []  # List of {part_of_speech, meanings: [{origin, definition}]}
+    }
+
+    # Extract the Korean word from header
+    # Pattern: # [애교](https://...)
+    header_match = re.search(r'#\s*\[([^\]]+)\]', markdown_output)
+    if header_match:
+        result["word"] = header_match.group(1).strip()
+
+    # Split by part of speech sections (##### *Noun*, etc.)
+    pos_sections = re.split(r'#####\s*\*([^*]+)\*', markdown_output)[1:]  # Skip first empty part
+
+    # Process pairs of (part_of_speech, content)
+    for i in range(0, len(pos_sections), 2):
+        if i + 1 >= len(pos_sections):
+            break
+
+        pos = pos_sections[i].strip()
+        content = pos_sections[i + 1]
+
+        entry: Dict[str, any] = {
+            "part_of_speech": pos.lower(),
+            "meanings": []
+        }
+
+        # Extract romanization (only once, should be same for all entries)
+        if not result["romanization"]:
+            rom_match = re.search(r'\*\*Romanization:\*\*\s*\*([^*]+)\*', content)
+            if rom_match:
+                result["romanization"] = rom_match.group(1).strip()
+
+        # Extract meanings - each starts with * and may have origin link
+        # Pattern: * [水道](link): definition text
+        # or: * definition text (no origin)
+        meaning_matches = re.findall(
+            r'\*\s*(?:\[([^\]]+)\]\([^\)]+\):\s*)?([^\n*]+)',
+            content
+        )
+
+        for origin, definition in meaning_matches:
+            definition = definition.strip()
+            # Skip non-definition text like "Romanization:", "Meanings:", standalone ":", etc.
+            if (definition and
+                    definition not in ["Romanization:", "Meanings:", "Meanings", ":"] and
+                    not definition.endswith(":") and
+                    len(definition) > 3):  # Skip very short entries
+                meaning_entry = {
+                    "definition": definition
+                }
+                if origin:
+                    meaning_entry["origin"] = origin.strip()
+                entry["meanings"].append(meaning_entry)
+
+        if entry["meanings"]:  # Only add if we found meanings
+            result["entries"].append(entry)
+
+    return result
+
+
 # Example usage
 if __name__ == "__main__":
-    import asyncio
-    import sys
-
     # Add parent directory to path to import zh module
     sys.path.insert(0, "..")
     from zh import zh_character, zh_word
