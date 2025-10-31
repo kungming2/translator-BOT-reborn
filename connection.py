@@ -127,7 +127,9 @@ def is_valid_user(username):
     """
     Simple function that tests if a Redditor is a valid user.
     Used to keep the notifications database clean.
-    Note that `AttributeError` is returned if a user is *suspended* by Reddit.
+    Note that `AttributeError` is returned if a user is *suspended* by
+    Reddit, while NotFound is usually returned if the user is shadow-
+    banned.
 
     :param username: The username of a Reddit user.
     :return exists: A boolean. False if non-existent or shadowbanned,
@@ -139,7 +141,7 @@ def is_valid_user(username):
         _ = REDDIT_HELPER.redditor(username).fullname
         return True
     except (exceptions.NotFound, AttributeError):
-        logger.error(f"User {username} not found.")
+        logger.warning(f"User {username} not found.")
         return False
 
 

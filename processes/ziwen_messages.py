@@ -44,17 +44,20 @@ def ziwen_messages() -> None:
 
     # Iterate over the messages in the inbox.
     for message in messages:
+
+        message_subject: str = message.subject.lower()
+        message.mark_read()  # Mark the message as read early on.
+
+        # Now-deleted author.
         if message.author is None:
             continue
 
         # Invalid user (e.g. shadow-banned)
         if not is_valid_user(message.author):
-            logger.error("[ZW] Messages: Invalid author.")
+            logger.warning(f"[ZW] Messages: Invalid author u/{message.author}.")
             continue
 
         message_author: Redditor = message.author  # Redditor object
-        message_subject: str = message.subject.lower()
-        message.mark_read()  # Mark the message as read.
 
         if "subscribe" in message_subject and "un" not in message_subject:
             handle_subscribe(message, message_author)
