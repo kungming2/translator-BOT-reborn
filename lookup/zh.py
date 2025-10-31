@@ -366,7 +366,7 @@ def _contains_latin(text):
     return bool(re.search(r"[a-zA-ZÀ-ÿĀ-ž]", text))
 
 
-def _vietnamese_readings(character, max_readings=4):
+async def _vietnamese_readings(character, max_readings=4, timeout_seconds=5):
     """
     Function to obtain more accurate readings for Chinese characters
     in Vietnamese. Unicode's standard listings include lots of
@@ -380,47 +380,57 @@ def _vietnamese_readings(character, max_readings=4):
     viet_dictionary_url = f"https://hvdic.thivien.net/whv/{character}"
 
     try:
-        response = requests.get(viet_dictionary_url, headers=useragent, timeout=10)
+        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+            response = await client.get(viet_dictionary_url, headers=useragent)
 
-        if response.status_code != 200:
-            return None
+            if response.status_code != 200:
+                logger.warning(
+                    f"Vietnamese reading lookup returned status {response.status_code} for '{character}'"
+                )
+                return None
 
-        tree = html.fromstring(response.content)
+            tree = html.fromstring(response.content)
 
-        # Extract span texts
-        raw_spans = tree.xpath(
-            '//div[contains(@class,"whv") or contains(@class,"content")]//span/text()'
+            # Extract span texts
+            raw_spans = tree.xpath(
+                '//div[contains(@class,"whv") or contains(@class,"content")]//span/text()'
+            )
+            decoded_spans = [
+                html_stdlib.unescape(s.strip()) for s in raw_spans if s.strip()
+            ]
+
+            # Keep only words that are mostly letters (including Vietnamese)
+            han_viet_readings = []
+            for word in decoded_spans:
+                if re.fullmatch(
+                    r"[^\W\d_]+", word, re.UNICODE
+                ):  # excludes digits and symbols
+                    han_viet_readings.append(word)
+                if len(han_viet_readings) >= max_readings:
+                    break
+
+            if not han_viet_readings:
+                return None
+
+            han_viet_readings = list(set(han_viet_readings))
+            han_viet_readings = [x for x in han_viet_readings if _contains_latin(x)]
+            readings_formatted = ", ".join(han_viet_readings)
+            logger.info("Looked up Vietnamese readings for Chinese character.")
+
+            return readings_formatted
+
+    except (httpx.TimeoutException, httpx.ConnectTimeout) as e:
+        logger.warning(f"Timeout fetching Vietnamese readings for '{character}': {e}")
+        return None
+    except (httpx.ConnectError, httpx.RequestError) as e:
+        logger.warning(
+            f"Connection error fetching Vietnamese readings for '{character}': {e}"
         )
-        decoded_spans = [
-            html_stdlib.unescape(s.strip()) for s in raw_spans if s.strip()
-        ]
-
-        # Keep only words that are mostly letters (including Vietnamese)
-        han_viet_readings = []
-        for word in decoded_spans:
-            if re.fullmatch(
-                r"[^\W\d_]+", word, re.UNICODE
-            ):  # excludes digits and symbols
-                han_viet_readings.append(word)
-            if len(han_viet_readings) >= max_readings:
-                break
-
-        if not han_viet_readings:
-            return None
-
-        han_viet_readings = list(set(han_viet_readings))
-        han_viet_readings = [x for x in han_viet_readings if _contains_latin(x)]
-        readings_formatted = ", ".join(han_viet_readings)
-        logger.info("Looked up Vietnamese readings for Chinese character.")
-
-        return readings_formatted
-
-    except (
-        requests.exceptions.Timeout,
-        requests.exceptions.ConnectionError,
-        requests.exceptions.RequestException,
-    ) as e:
-        logger.warning(f"Failed to fetch Vietnamese readings for '{character}': {e}")
+        return None
+    except Exception as e:
+        logger.error(
+            f"Unexpected error fetching Vietnamese readings for '{character}': {e}"
+        )
         return None
 
 
@@ -568,7 +578,7 @@ def _fetch_from_zitools(character):
         return None
 
 
-def _zh_character_other_readings(character):
+async def _zh_character_other_readings(character):
     """
     Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
     character from the Chinese Character Web API. Note that the Chinese
@@ -634,7 +644,7 @@ def _zh_character_other_readings(character):
         logger.debug(f"Added Korean reading: {ko_hangul_fmt} / {ko_latin}")
 
     # Vietnamese reading
-    vi_latin = _vietnamese_readings(character)
+    vi_latin = await _vietnamese_readings(character)
     logger.debug(f"Vietnamese reading from helper: {vi_latin}")
 
     if vi_latin is None:
@@ -742,9 +752,7 @@ async def zh_character(character):
             pass
 
         # Other Sino-Xenic readings
-        other_readings_data = await call_sync_async(
-            _zh_character_other_readings, tradify(character)
-        )
+        other_readings_data = await _zh_character_other_readings(tradify(character))
         if other_readings_data:
             lookup_line_1 += f"\n{other_readings_data}"
 
