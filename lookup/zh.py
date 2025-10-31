@@ -28,6 +28,7 @@ from pypinyin import Style, lazy_pinyin
 from config import Paths, logger
 from connection import get_random_useragent
 from lookup.async_helpers import call_sync_async
+from lookup.cache_helpers import parse_zh_output_to_json, save_to_cache
 from responses import RESPONSE
 
 useragent = get_random_useragent()
@@ -846,6 +847,16 @@ async def zh_character(character):
     logger.info(
         f"[ZW] ZH-Character: Received lookup command for {character} in Chinese. Returned search results."
     )
+
+    try:
+        parsed_data = parse_zh_output_to_json(to_post)
+        save_to_cache(parsed_data, "zh", "zh_character")
+        logger.debug(f"[ZW] ZH-Character: Cached result for '{character}'")
+    except Exception as e:
+        logger.error(
+            f"[ZW] ZH-Character: Failed to cache result for '{character}': {e}"
+        )
+
     return to_post
 
 
@@ -1158,6 +1169,15 @@ async def zh_word(word):
     logger.info(
         f"[ZW] ZH-Word: Received a lookup command for '{word}'. Returned search results."
     )
+
+    # Cache the result before returning
+    try:
+        parsed_data = parse_zh_output_to_json(result)
+        save_to_cache(parsed_data, "zh", "zh_word")
+        logger.debug(f"[ZW] ZH-Word: Cached result for '{word}'")
+    except Exception as e:
+        logger.error(f"[ZW] ZH-Word: Failed to cache result for '{word}': {e}")
+
     return result
 
 
