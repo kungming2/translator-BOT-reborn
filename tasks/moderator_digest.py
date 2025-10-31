@@ -402,7 +402,8 @@ def collate_moderator_digest():
     :return: None
     """
     logger.info("Collating moderator digest...")
-    today_date = get_current_utc_date()
+    today_date_str = get_current_utc_date()
+    today_date = datetime.strptime(today_date_str, "%Y-%m-%d").date()
     days_ago = WENJU_SETTINGS["report_command_average"]
     time_delta = 86400 * days_ago
     current_time = int(time.time())

@@ -42,8 +42,10 @@ You can run any schedule manually for testing:
 """
 
 import sys
+import traceback
 
 from config import logger
+from error import error_log_extended
 from tasks import get_tasks, run_schedule
 
 
@@ -59,4 +61,12 @@ def wenju_runner() -> None:
 
 
 if __name__ == "__main__":
-    wenju_runner()
+    try:
+        wenju_runner()
+    except (KeyboardInterrupt, SystemExit):
+        # Don’t treat intentional exits or Ctrl+C as "errors"
+        raise
+    except Exception as e:
+        # Log all other unexpected exceptions
+        error_text = f"{type(e).__name__}: {e}\n\n{traceback.format_exc()}"
+        error_log_extended(error_text, "Wenju")
