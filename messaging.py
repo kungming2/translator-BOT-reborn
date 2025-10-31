@@ -306,20 +306,20 @@ def handle_points(message, message_author):
     user_points_output = "### Points on r/translator\n\n" + points_retriever(
         message_author.name
     )
-    user_commands_statistics_data = user_statistics_loader(message_author)
+    user_commands_statistics_data = user_statistics_loader(message_author.name)
     if user_commands_statistics_data is not None:
         commands_component = (
             "\n\n### Commands Statistics\n\n" + user_commands_statistics_data
         )
     else:
         commands_component = ""
+    reply_body = user_points_output + commands_component
+    logger.info(f"[ZW] Messages: Points information is {reply_body}.")
 
     try:
         message_reply(
             message,
-            reply_text=user_points_output
-            + commands_component
-            + RESPONSE.BOT_DISCLAIMER,
+            reply_text=reply_body + RESPONSE.BOT_DISCLAIMER,
         )
     except praw.exceptions.RedditAPIException:
         logger.error("[ZW] Messages: Rate limit reached.")
