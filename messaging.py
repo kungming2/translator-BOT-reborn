@@ -304,7 +304,7 @@ def handle_points(message, message_author):
     logger.info(f"[ZW] Messages: New points status request from u/{message_author}.")
 
     user_points_output = "### Points on r/translator\n\n" + points_retriever(
-        message_author
+        message_author.name
     )
     user_commands_statistics_data = user_statistics_loader(message_author)
     if user_commands_statistics_data is not None:
