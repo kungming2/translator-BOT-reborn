@@ -118,6 +118,11 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
         "tea_meanings": None,
         "chengyu_meaning": None,  # for chengyu
         "chengyu_source": None,  # for chengyu
+        "calligraphy_links": {
+            "sfzd_image": None,  # calligraphy image
+            "sfds": None,  # SFDS calligraphy link
+            "variants": None,  # YTZZD variants dictionary link
+        },
     }
 
     # Extract traditional and simplified forms from header
@@ -133,6 +138,35 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
             # Same for both
             result["traditional"] = header_text.strip()
             result["simplified"] = header_text.strip()
+
+    # Extract calligraphy image link
+    # Pattern: **Chinese Calligraphy Variants**: [伤](https://wxapp-b.shufazidian.com/shufa6/...)
+    calligraphy_match = re.search(
+        r"\*\*Chinese Calligraphy Variants\*\*:\s*\[[^]]+\]\((https://[^\s)]+shufazidian\.com[^\s)]+)\)",
+        markdown_output,
+    )
+    if calligraphy_match:
+        result["calligraphy_links"]["sfzd_image"] = calligraphy_match.group(1).strip()
+
+    # Extract SFDS calligraphy link
+    # Pattern: *[SFDS](https://www.sfds.cn/4F24/)*
+    sfds_match = re.search(
+        r"\[SFDS\]\((https://www\.sfds\.cn/[^\s)]+)\)", markdown_output
+    )
+
+    if sfds_match:
+        result["calligraphy_links"]["sfds"] = sfds_match.group(1).strip()
+
+    # Extract YTZZD variants link
+    # Pattern: *[YTZZD](https://dict.variants.moe.edu.tw/dictView.jsp?ID=2007&q=1)*
+    variants_match = re.search(
+        r"\[YTZZD\]\((https://dict\.variants\.moe\.edu\.tw/[^\s)]+)\)", markdown_output
+    )
+    if variants_match:
+        variants_url = variants_match.group(1).strip()
+        # Only save if it's not the base URL (which means no variant was found)
+        if "dictView.jsp" in variants_url:
+            result["calligraphy_links"]["variants"] = variants_url
 
     # Extract pronunciations from table
     # Pattern: | **Language** | *pronunciation* |
@@ -206,6 +240,15 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     # Clean up empty fields
     result["pronunciations"] = {k: v for k, v in result["pronunciations"].items() if v}
 
+    # Clean up calligraphy_links - remove if all values are None
+    if not any(result["calligraphy_links"].values()):
+        result["calligraphy_links"] = None
+    else:
+        # Remove None values from calligraphy_links
+        result["calligraphy_links"] = {
+            k: v for k, v in result["calligraphy_links"].items() if v is not None
+        }
+
     return result
 
 
@@ -224,8 +267,8 @@ if __name__ == "__main__":
 
         while True:
             print("\nOptions:")
-            print("1. Lookup and cache a word (zh_word)")
-            print("2. Lookup and cache a character (zh_character)")
+            print("1. Look up and cache a word (zh_word)")
+            print("2. Look up and cache a character (zh_character)")
             print("3. Check cache for a term")
             print("x. Exit")
 
@@ -236,7 +279,7 @@ if __name__ == "__main__":
                 break
 
             if choice == "1":
-                word = input("Enter Chinese word to lookup: ").strip()
+                word = input("Enter Chinese word to look up: ").strip()
                 if not word:
                     print("No input provided.")
                     continue
@@ -262,7 +305,7 @@ if __name__ == "__main__":
                     traceback.print_exc()
 
             elif choice == "2":
-                char = input("Enter Chinese character to lookup: ").strip()
+                char = input("Enter Chinese character to look up: ").strip()
                 if not char:
                     print("No input provided.")
                     continue
