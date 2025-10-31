@@ -377,36 +377,50 @@ def _vietnamese_readings(character, max_readings=4):
 
     character = tradify(character)
     viet_dictionary_url = f"https://hvdic.thivien.net/whv/{character}"
-    response = requests.get(viet_dictionary_url, headers=useragent)
 
-    if response.status_code != 200:
+    try:
+        response = requests.get(viet_dictionary_url, headers=useragent, timeout=10)
+
+        if response.status_code != 200:
+            return None
+
+        tree = html.fromstring(response.content)
+
+        # Extract span texts
+        raw_spans = tree.xpath(
+            '//div[contains(@class,"whv") or contains(@class,"content")]//span/text()'
+        )
+        decoded_spans = [
+            html_stdlib.unescape(s.strip()) for s in raw_spans if s.strip()
+        ]
+
+        # Keep only words that are mostly letters (including Vietnamese)
+        han_viet_readings = []
+        for word in decoded_spans:
+            if re.fullmatch(
+                r"[^\W\d_]+", word, re.UNICODE
+            ):  # excludes digits and symbols
+                han_viet_readings.append(word)
+            if len(han_viet_readings) >= max_readings:
+                break
+
+        if not han_viet_readings:
+            return None
+
+        han_viet_readings = list(set(han_viet_readings))
+        han_viet_readings = [x for x in han_viet_readings if _contains_latin(x)]
+        readings_formatted = ", ".join(han_viet_readings)
+        logger.info("Looked up Vietnamese readings for Chinese character.")
+
+        return readings_formatted
+
+    except (
+        requests.exceptions.Timeout,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.RequestException,
+    ) as e:
+        logger.warning(f"Failed to fetch Vietnamese readings for '{character}': {e}")
         return None
-
-    tree = html.fromstring(response.content)
-
-    # Extract span texts
-    raw_spans = tree.xpath(
-        '//div[contains(@class,"whv") or contains(@class,"content")]//span/text()'
-    )
-    decoded_spans = [html_stdlib.unescape(s.strip()) for s in raw_spans if s.strip()]
-
-    # Keep only words that are mostly letters (including Vietnamese)
-    han_viet_readings = []
-    for word in decoded_spans:
-        if re.fullmatch(r"[^\W\d_]+", word, re.UNICODE):  # excludes digits and symbols
-            han_viet_readings.append(word)
-        if len(han_viet_readings) >= max_readings:
-            break
-
-    if not han_viet_readings:
-        return None
-
-    han_viet_readings = list(set(han_viet_readings))
-    han_viet_readings = [x for x in han_viet_readings if _contains_latin(x)]
-    readings_formatted = ", ".join(han_viet_readings)
-    logger.info("Looked up Vietnamese readings for Chinese character.")
-
-    return readings_formatted
 
 
 def calligraphy_search(character):
