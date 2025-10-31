@@ -156,7 +156,7 @@ def ziwen_commands():
             logger.debug(f"Comment `{comment_id}` is now being processed.")
 
         # Skip the bot's own comments and AutoModerator comments.
-        logger.info(f"[ZW] Commands: Checking author: '{author_name}' against bot: '{username}'")
+        logger.debug(f"[ZW] Commands: Checking author: '{author_name}' against bot: '{username}'")
         if author_name.lower() in [username.lower(), "automoderator", "translator-modteam"]:
             logger.info(f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping...")
             continue
