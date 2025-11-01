@@ -3972,18 +3972,6 @@ ik:
   - North Alaskan Inupiat
   - North Alaskan Iñupiaq
   population: 3000
-ike:
-  country: Canada
-  family: Eskimo-Aleut
-  language_code_3: ike
-  link_ethnologue: https://www.ethnologue.com/language/ike
-  link_wikipedia: https://en.wikipedia.org/wiki/Inuktitut
-  name: Inuktitut
-  name_alternates:
-  - Canadian Inuit
-  - Inuit
-  - Inuit of Quebec
-  population: 35200
 ikt:
   country: Canada
   family: Eskimo-Aleut
@@ -4614,7 +4602,6 @@ kl:
   link_wikipedia: https://en.wikipedia.org/wiki/Greenlandic_language
   name: Kalaallisut
   name_alternates:
-  - Greenlandic Inuktitut
   - Greenlandic
   population: 57000
   subreddit: kalaallisut
