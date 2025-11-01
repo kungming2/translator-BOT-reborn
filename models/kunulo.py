@@ -15,7 +15,7 @@ import pprint
 import re
 
 from config import SETTINGS, logger
-from connection import REDDIT_HELPER, USERNAME
+from connection import REDDIT, REDDIT_HELPER, USERNAME
 
 
 class Kunulo:
@@ -290,7 +290,8 @@ class Kunulo:
         for entry in entries:
             comment_id = self._normalize_entry(entry)[0]
             try:
-                comment = self._submission.reddit.comment(comment_id)
+                # Use instead of self._submission.reddit
+                comment = REDDIT.comment(id=comment_id)
                 comment.delete()
                 deleted_count += 1
                 logger.info(
@@ -341,6 +342,6 @@ if __name__ == "__main__":
     while True:
         test_url = input("Enter the URL of the Reddit post with comments to test: ")
         submission_id = test_url.split("comments/")[1].split("/")[0]
-        test_post = REDDIT_HELPER.submission(id=submission_id)
+        test_post = REDDIT.submission(id=submission_id)
         test_kunulo = Kunulo.from_submission(test_post)
         pprint.pprint(test_kunulo)
