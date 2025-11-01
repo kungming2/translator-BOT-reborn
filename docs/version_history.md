@@ -51,8 +51,9 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 * 🔄 CHANGE: Bot disclaimer/footer has been simplified to just two links.
 * 🔄 CHANGE: More [indices](https://sqlite.org/lang_createindex.html) have been added to the main database to speed up large table queries.
 * 🔄 CHANGE: [Gwoyeu Romatzyh](en.wikipedia.org/wiki/Gwoyeu_Romatzyh) output is now provided by [python-pinyin](https://github.com/mozillazg/python-pinyin), and the self-written converter has been removed.
+* 🔄 CHANGE: Added a cache for CJK lookups. Right now it is write-only but reading support will be introduced later so that lookups for previously searched terms will be much faster and can be retrieved locally.
 * 🛠️ BUG FIX: Fixed slightly incorrect Hakka (Sixian) tone formatting in Markdown.
-* 🛠️ BUG FIX: Fixed a new bug where [hanzi](https://en.wikipedia.org/wiki/Chinese_characters)-only lookup matches were accidentally being converted to simplified Chinese, even for Japanese.  
+* 🛠️ BUG FIX: Fixed a new bug where [hanzi](https://en.wikipedia.org/wiki/Chinese_characters)-only lookup matches were accidentally being converted to simplified Chinese, even for Japanese.
 * 🛠️ BUG FIX: Records of notifications for script codes for now on will save the script codes as well, instead of just "unknown".
 
 ###### Deprecated Features

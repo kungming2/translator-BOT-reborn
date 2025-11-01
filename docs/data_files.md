@@ -45,10 +45,12 @@ These are all [SQLite databases](https://sqlite.org/).
 #### cache.db Tables
 
 * **comment_cache**: Contains recently posted comments to check against to see if edits have been made to comments with new commands.
-* **multiplier_cache**: 
+* **lookup_cjk_cache**: Contains cached data for recent [CJK lookup](./lookup.md) results.
+* **multiplier_cache**: Contains multipliers for [points](./points.md).
 
 #### ajo_database
 
+* **acted_comments**: Contains a list of comments that have been acted on by non-Ziwen routines. 
 * **internal_posts**: Contains internal (meta and community) posts data. Roughly speaking, a stripped-down version of `ajo_database`. 
 * **notify_cumulative**: Contains dictionaries recording the total number of notifications a user has received, indexed by language code. 
 * **notify_internal**: A list of usernames and internal post types that those usernames are subscribed to. (one post type / user per row)
@@ -57,6 +59,7 @@ These are all [SQLite databases](https://sqlite.org/).
 * **old_posts**: Internal list recording post IDs that have already been seen and processed by the bot. 
 * **total_commands**: Contains dictionaries recording the total number of commands and actions a user has taken.
 * **total_points**: Large table containing points data per comment, username, and post.
+* **verification_database**: Contains verification requests, sorted by username and language.
 
 ## Datasets
 
