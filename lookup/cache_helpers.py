@@ -69,7 +69,8 @@ def get_from_cache(
     """
     Retrieve cached CJK lookup data from the database.
 
-    :param term: The term to look up (e.g., traditional Chinese, Japanese kanji, Korean hangul)
+    :param term: The term to look up (e.g., traditional Chinese,
+                 Japanese kanji, Korean hangul)
     :param language_code: Language code (e.g., "zh", "ja", "ko")
     :param lookup_type: Lookup type (e.g., "zh_word", "zh_character")
     :param max_age_days: Maximum age of cached data in days (default: 30)
@@ -105,9 +106,11 @@ def get_from_cache(
 
 def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     """
-    Parse the markdown output from zh_word or zh_character into structured JSON.
+    Parse the markdown output from zh_word or zh_character into structured
+    JSON.
 
-    :param markdown_output: The markdown string returned by zh_word or zh_character
+    :param markdown_output: The markdown string returned by zh_word or
+                            zh_character
     :return: Dictionary with structured data
     """
     result: Dict[str, any] = {
@@ -142,9 +145,9 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
             result["simplified"] = header_text.strip()
 
     # Extract calligraphy image link
-    # Pattern: **Chinese Calligraphy Variants**: [伤](https://wxapp-b.shufazidian.com/shufa6/...)
     calligraphy_match = re.search(
-        r"\*\*Chinese Calligraphy Variants\*\*:\s*\[[^]]+\]\((https://[^\s)]+shufazidian\.com[^\s)]+)\)",
+        r"\*\*Chinese Calligraphy Variants\*\*:\s*"
+        r"\[[^]]+]\((https://[^\s)]+shufazidian\.com[^\s)]+)\)",
         markdown_output,
     )
     if calligraphy_match:
@@ -153,7 +156,7 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     # Extract SFDS calligraphy link
     # Pattern: *[SFDS](https://www.sfds.cn/4F24/)*
     sfds_match = re.search(
-        r"\[SFDS\]\((https://www\.sfds\.cn/[^\s)]+)\)", markdown_output
+        r"\[SFDS]\((https://www\.sfds\.cn/[^\s)]+)\)", markdown_output
     )
 
     if sfds_match:
@@ -162,7 +165,8 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     # Extract YTZZD variants link
     # Pattern: *[YTZZD](https://dict.variants.moe.edu.tw/dictView.jsp?ID=2007&q=1)*
     variants_match = re.search(
-        r"\[YTZZD\]\((https://dict\.variants\.moe\.edu\.tw/[^\s)]+)\)", markdown_output
+        r"\[YTZZD]\((https://dict\.variants\.moe\.edu\.tw/[^\s)]+)\)",
+        markdown_output,
     )
     if variants_match:
         variants_url = variants_match.group(1).strip()
@@ -174,10 +178,12 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     # Pattern: | **Language** | *pronunciation* |
     pronunciation_patterns = {
         "mandarin_pinyin": r"\|\s*\*\*Mandarin\*\*\s*\(Pinyin\)\s*\|\s*\*([^*]+)\*",
-        "mandarin_wade_giles": r"\|\s*\*\*Mandarin\*\*\s*\(Wade-Giles\)\s*\|\s*\*([^*]+)\*",
+        "mandarin_wade_giles": (
+            r"\|\s*\*\*Mandarin\*\*\s*\(Wade-Giles\)\s*\|\s*\*([^*]+)\*"
+        ),
         "mandarin_yale": r"\|\s*\*\*Mandarin\*\*\s*\(Yale\)\s*\|\s*\*([^*]+)\*",
         "mandarin_gr": r"\|\s*\*\*Mandarin\*\*\s*\(GR\)\s*\|\s*\*([^*]+)\*",
-        "mandarin": r"\|\s*\*\*Mandarin\*\*\s*\|\s*\*([^*]+)\*",  # for zh_character
+        "mandarin": r"\|\s*\*\*Mandarin\*\*\s*\|\s*\*([^*]+)\*",
         "cantonese": r"\|\s*\*\*Cantonese\*\*\s*\|\s*\*([^*]+)\*",
         "southern_min": r"\|\s*\*\*Southern Min\*\*\s*\|\s*\*([^*]+)\*",
         "hakka_sixian": r"\|\s*\*\*Hakka \(Sixian\)\*\*\s*\|\s*\*([^*]+)\*",
@@ -254,6 +260,117 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
     return result
 
 
+"""JAPANESE CACHING"""
+
+
+def parse_ja_output_to_json(markdown_output: str) -> Dict[str, any]:
+    """
+    Parse the markdown output from ja_word or ja_character into structured
+    JSON.
+
+    :param markdown_output: The markdown string returned by ja_word or
+                            ja_character
+    :return: Dictionary with structured data, or None if it's a
+             multi-character table
+    """
+    # Check if this is a multi-character table format (should be skipped)
+    # Pattern: has both "| Character |" and multiple character links in header
+    if "| Character |" in markdown_output and "| --- |" in markdown_output:
+        # Count how many character links are in the header row
+        header_match = re.search(r"\| Character \|([^\n]+)", markdown_output)
+        if header_match:
+            header_content = header_match.group(1)
+            # Count character links - if more than 1, it's a multi-character
+            # table
+            char_links = re.findall(
+                r"\[(.)]\(https://en\.wiktionary\.org", header_content
+            )
+            if len(char_links) > 1:
+                return {}
+
+    result: Dict[str, any] = {
+        "word": None,
+        "type": None,  # "word" or "character"
+        "part_of_speech": None,
+        "reading": None,
+        "kun_readings": None,
+        "on_readings": None,
+        "meanings": None,
+        "calligraphy_links": None,  # Dict with sfzd_image, sfds, variants
+    }
+
+    # Extract the Japanese word/character from header
+    # Pattern: # [世代](https://...)
+    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
+    if header_match:
+        result["word"] = header_match.group(1).strip()
+
+    # Determine if it's a word or character lookup
+    if "**Kun-readings:**" in markdown_output or "**On-readings:**" in markdown_output:
+        result["type"] = "character"
+
+        # Extract kun readings
+        kun_match = re.search(r"\*\*Kun-readings:\*\*\s*([^\n]+)", markdown_output)
+        if kun_match:
+            kun_text = kun_match.group(1).strip()
+            # Parse readings like "か.わる (*ka . waru*), かわ.る (*kawa . ru*)"
+            kun_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", kun_text)
+            result["kun_readings"] = [
+                {"kana": kana.strip(), "romaji": romaji.strip()}
+                for kana, romaji in kun_pairs
+            ]
+
+        # Extract on readings
+        on_match = re.search(r"\*\*On-readings:\*\*\s*([^\n]+)", markdown_output)
+        if on_match:
+            on_text = on_match.group(1).strip()
+            on_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", on_text)
+            result["on_readings"] = [
+                {"kana": kana.strip(), "romaji": romaji.strip()}
+                for kana, romaji in on_pairs
+            ]
+
+        # Extract calligraphy links (Japanese characters can have Chinese
+        # calligraphy)
+        calligraphy_match = re.search(
+            r"\*\*Chinese Calligraphy Variants\*\*:\s*\[.]\(([^)]+)\)\s*"
+            r"\(\*\[SFZD]\([^)]+\)\*,\s*\*\[SFDS]\(([^)]+)\)\*,\s*"
+            r"\*\[YTZZD]\(([^)]+)\)\*\)",
+            markdown_output,
+        )
+        if calligraphy_match:
+            result["calligraphy_links"] = {
+                "sfzd_image": calligraphy_match.group(1).strip(),
+                "sfds": calligraphy_match.group(2).strip(),
+                "variants": calligraphy_match.group(3).strip(),
+            }
+
+    else:
+        result["type"] = "word"
+
+        # Extract part of speech
+        pos_match = re.search(r"#####\s*\*([^*]+)\*", markdown_output)
+        if pos_match:
+            result["part_of_speech"] = pos_match.group(1).strip().lower()
+
+        # Extract reading (for words)
+        reading_match = re.search(
+            r"\*\*Reading:\*\*\s*(\S+)\s*\(\*([^)]+)\*\)", markdown_output
+        )
+        if reading_match:
+            result["reading"] = {
+                "kana": reading_match.group(1).strip(),
+                "romaji": reading_match.group(2).strip(),
+            }
+
+    # Extract meanings (common to both word and character)
+    meanings_match = re.search(r'\*\*Meanings\*\*:\s*"([^"]+)"', markdown_output)
+    if meanings_match:
+        result["meanings"] = meanings_match.group(1).strip()
+
+    return result
+
+
 """KOREAN CACHING"""
 
 
@@ -267,17 +384,19 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
     result: Dict[str, any] = {
         "word": None,
         "romanization": None,
-        "entries": []  # List of {part_of_speech, meanings: [{origin, definition}]}
+        "entries": [],  # List of {part_of_speech, meanings: [{origin, definition}]}
     }
 
     # Extract the Korean word from header
     # Pattern: # [애교](https://...)
-    header_match = re.search(r'#\s*\[([^\]]+)\]', markdown_output)
+    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
     if header_match:
         result["word"] = header_match.group(1).strip()
 
     # Split by part of speech sections (##### *Noun*, etc.)
-    pos_sections = re.split(r'#####\s*\*([^*]+)\*', markdown_output)[1:]  # Skip first empty part
+    pos_sections = re.split(r"#####\s*\*([^*]+)\*", markdown_output)[
+        1:
+    ]  # Skip first empty part
 
     # Process pairs of (part_of_speech, content)
     for i in range(0, len(pos_sections), 2):
@@ -287,14 +406,11 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
         pos = pos_sections[i].strip()
         content = pos_sections[i + 1]
 
-        entry: Dict[str, any] = {
-            "part_of_speech": pos.lower(),
-            "meanings": []
-        }
+        entry: Dict[str, any] = {"part_of_speech": pos.lower(), "meanings": []}
 
         # Extract romanization (only once, should be same for all entries)
         if not result["romanization"]:
-            rom_match = re.search(r'\*\*Romanization:\*\*\s*\*([^*]+)\*', content)
+            rom_match = re.search(r"\*\*Romanization:\*\*\s*\*([^*]+)\*", content)
             if rom_match:
                 result["romanization"] = rom_match.group(1).strip()
 
@@ -302,20 +418,20 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
         # Pattern: * [水道](link): definition text
         # or: * definition text (no origin)
         meaning_matches = re.findall(
-            r'\*\s*(?:\[([^\]]+)\]\([^\)]+\):\s*)?([^\n*]+)',
-            content
+            r"\*\s*(?:\[([^]]+)]\([^)]+\):\s*)?([^\n*]+)", content
         )
 
         for origin, definition in meaning_matches:
             definition = definition.strip()
-            # Skip non-definition text like "Romanization:", "Meanings:", standalone ":", etc.
-            if (definition and
-                    definition not in ["Romanization:", "Meanings:", "Meanings", ":"] and
-                    not definition.endswith(":") and
-                    len(definition) > 3):  # Skip very short entries
-                meaning_entry = {
-                    "definition": definition
-                }
+            # Skip non-definition text like "Romanization:", "Meanings:",
+            # standalone ":", etc.
+            if (
+                definition
+                and definition not in ["Romanization:", "Meanings:", "Meanings", ":"]
+                and not definition.endswith(":")
+                and len(definition) > 3
+            ):  # Skip very short entries
+                meaning_entry = {"definition": definition}
                 if origin:
                     meaning_entry["origin"] = origin.strip()
                 entry["meanings"].append(meaning_entry)
@@ -333,7 +449,8 @@ if __name__ == "__main__":
     from zh import zh_character, zh_word
 
     async def cache_writer():
-        """Interactive test function for caching zh_word and zh_character lookups."""
+        """Interactive test function for caching zh_word and zh_character
+        lookups."""
         print("\n=== Chinese Word/Character Lookup Cache Tester ===\n")
 
         while True:

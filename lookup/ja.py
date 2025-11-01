@@ -17,19 +17,20 @@ from selenium.webdriver.firefox.options import Options
 
 from config import logger
 from connection import get_random_useragent
-
 from lookup.async_helpers import call_sync_async, fetch_json
+from lookup.cache_helpers import parse_ja_output_to_json, save_to_cache
 from lookup.zh import calligraphy_search
 
 useragent = get_random_useragent()
 
 """ROMANIZATION HELPER"""
 
+_kks = pykakasi.kakasi()
+
 
 def _to_hepburn(input_text: str) -> str:
     """Returns a Hepburn romanization of the input."""
-    kks = pykakasi.kakasi()
-    result = kks.convert(input_text)
+    result = _kks.convert(input_text)
     return " ".join([item["hepburn"] for item in result])
 
 
@@ -194,6 +195,16 @@ def ja_character(character: str) -> str:
     logger.info(
         f"[ZW] JA-Character: Received lookup command for {character} in Japanese. Returned results."
     )
+
+    # Cache the result before returning
+    try:
+        parsed_data = parse_ja_output_to_json(total_data)
+        save_to_cache(parsed_data, "ja", "ja_character")
+    except Exception as ex:
+        # Silently fail if caching doesn't work
+        logger.error(f"Encountered issue: {ex}")
+        pass
+
     return total_data + lookup_line_3
 
 
@@ -288,21 +299,18 @@ def _ja_name_search(ja_given_name: str) -> str | None:
     )
 
     logger.debug(name_content)
-    logger.debug(hiragana_content)
+    logger.info(f"Name lookup: {hiragana_content=}")
+    if not hiragana_content:
+        return None  # no readings found
 
     # Check for error message: "見つかりませんでした" = "Not found"
     if "見つかりませんでした" in str(name_content):
         return None
 
-    # Clean and split romaji readings
-    name_content = [x for x in name_content if x != "\xa0\xa0"]
-    if name_content:
-        name_content = name_content[0].split()
-
-    # Pair hiragana and romaji readings
-    for i, hira in enumerate(hiragana_content):
-        hira_clean: str = hira.strip()
-        romaji: str = name_content[i].title() if i < len(name_content) else ""
+    # Father and format readings.
+    for hira in hiragana_content:
+        hira_clean = hira.strip()
+        romaji = _to_hepburn(hira_clean).title()
         names_with_readings.append(f"{hira_clean} (*{romaji}*)")
 
     readings_str: str = ", ".join(names_with_readings)
@@ -494,6 +502,16 @@ async def ja_word(japanese_word: str) -> str | None:
         )
 
         logger.info(f"[ZW] JA-Word: Final result for '{japanese_word}' returned.")
+
+        # Cache the result before returning
+        try:
+            parsed_data = parse_ja_output_to_json(return_comment)
+            save_to_cache(parsed_data, "ja", "ja_word")
+        except Exception as ex:
+            # Silently fail if caching doesn't work
+            logger.error(f"Encountered issue: {ex}")
+            pass
+
         return return_comment + footer
     else:
         return None
