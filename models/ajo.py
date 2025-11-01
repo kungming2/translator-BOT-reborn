@@ -455,20 +455,36 @@ class Ajo:
         preferred_code = data.get("preferred_code")
 
         language_codes_3 = data.get("language_code_3", [])
+        language_codes_1 = data.get("language_code_1", [])
+
+        # Handle defined multiple posts (lists of specific language codes)
         if isinstance(language_codes_3, list) and len(language_codes_3) > 1:
             preferred_code = "multiple"
             ajo.is_defined_multiple = True
             ajo.type = "multiple"
+        # Handle legacy non-defined multiple (just code 'multiple')
+        elif language_codes_3 == "multiple" or language_codes_1 == "multiple":
+            preferred_code = "multiple"
+            ajo.is_defined_multiple = False  # Not a defined multiple
+            ajo.type = "multiple"
+        # Handle legacy 'generic' code
+        elif language_codes_3 == "generic":
+            preferred_code = "generic"
         elif not preferred_code:
-            # fallback to language_code_1 for single language
+            # Try language_code_1 first (2-letter codes like 'ja' are preferred)
             code1 = data.get("language_code_1")
             if isinstance(code1, list):
                 valid_codes = [c for c in code1 if isinstance(c, str) and c.strip()]
                 preferred_code = valid_codes[0] if valid_codes else None
             elif isinstance(code1, str) and code1.strip():
-                preferred_code = code1
+                preferred_code = code1.strip().lower()
             else:
-                preferred_code = None
+                # Fallback to language_code_3 (handles 'unknown', macrolanguages, etc.)
+                code3 = data.get("language_code_3")
+                if isinstance(code3, str) and code3.strip():
+                    preferred_code = code3.strip().lower()
+                else:
+                    preferred_code = None
 
         ajo.preferred_code = preferred_code
 
