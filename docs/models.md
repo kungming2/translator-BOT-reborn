@@ -16,7 +16,7 @@ This is the primary class that represents a language (or in some cases a languag
 
 ### Example
 
-```
+```python
 {'countries_associated': ['MX',
                           'VE',
                           'AR',
@@ -110,7 +110,7 @@ This class represents the parsed information from a post's title to r/translator
 
 ### Example
 
-```
+```python
 {'ai_assessed': False,
  'direction': 'english_to',
  'final_code': 'fa',
@@ -126,21 +126,19 @@ This class represents the parsed information from a post's title to r/translator
 
 ### Attributes
 
-### Attributes
-
-| Attribute | Type | Description                                                                                                                                              |
-|------------|------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ai_assessed` | `bool` | Indicates whether the title or post was evaluated automatically by the AI-based heuristic. This is generally only `True` for extremely malformed titles. |
-| `direction` | `str` | Direction of translation, indicating which way translation occurs (e.g. `"english_to"`).                                                                 |
-| `final_code` | `str` | The preferred language code representing the final identified target or source language (e.g. `"fa"`).                                                   |
-| `final_text` | `str` | Standard name of the final identified language (e.g. `"Persian"`).                                                                                       |
-| `language_country` | `str \| None` | Optional country context for the language (e.g. `"CA"` for French Canadian), if specified in the title.                                                  |
-| `notify_languages` | `list[Lingvo]` | List of `Lingvo` objects representing languages to notify (that is, which translators to send messages to).                                              |
-| `source` | `list[Lingvo]` | One or more `Lingvo` objects corresponding to the detected source languages.                                                                             |
-| `target` | `list[Lingvo]` | One or more `Lingvo` objects corresponding to the detected target languages.                                                                             |
-| `title_actual` | `str` | Cleaned/simplified version of the Reddit post title after removing the language tag formatting.                                                          |
-| `title_original` | `str` | Original unaltered Reddit title text as submitted by the user.                                                                                           |
-| `title_processed` | `str` | Final standardized version of the title after parsing and normalization, as processed by the title handling function `process_title()`.                   |
+| Attribute | Type | Description                                                                                                                                                   |
+|------------|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ai_assessed` | `bool` | Indicates whether the title or post was evaluated automatically by the AI-based heuristic. This is generally only `True` for extremely malformed titles.      |
+| `direction` | `str` | Direction of translation, indicating which way translation occurs (e.g. `"english_to"`).                                                                      |
+| `final_code` | `str` | The preferred language code representing the final identified target or source language (e.g. `"fa"`).                                                        |
+| `final_text` | `str` | Standard name of the final identified language (e.g. `"Persian"`).                                                                                            |
+| `language_country` | `str \| None` | Optional country context for the language (e.g. `"CA"` for French Canadian), if specified in the title.                                                       |
+| `notify_languages` | `list[Lingvo]` | List of `Lingvo` objects representing languages to notify (that is, which translators to send messages to).                                                   |
+| `source` | `list[Lingvo]` | One or more `Lingvo` objects corresponding to the detected source languages.                                                                                  |
+| `target` | `list[Lingvo]` | One or more `Lingvo` objects corresponding to the detected target languages.                                                                                  |
+| `title_actual` | `str` | Cleaned/simplified version of the Reddit post title after removing the language tag formatting.                                                               |
+| `title_original` | `str` | Original unaltered Reddit title text as submitted by the user.                                                                                                |
+| `title_processed` | `str` | Final standardized version of the title after parsing and normalization, as processed by the [title handling](./title_processing) function `process_title()`. |
 
 
 ## Komando
@@ -153,7 +151,7 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 
 ### Examples
 
-```
+```python
 # Command without argument
 {'name': 'translated', 
  'data': [], 
@@ -191,6 +189,22 @@ This class represents a Reddit comment *containing* commands as Komandos. For ex
 
 ### Example
 
+```python
+{
+    "id_comment": "nmklwau",
+    "id_post": "1olu2fc",
+    "created_utc": 1762021167,
+    "author_comment": "kungming2",
+    "author_post": "Geo_Joy",
+    "commands": [
+        Komando(name="translated", data=[], specific_mode=False),
+        Komando(name="lookup_wp", data=["Guangxu era"], specific_mode=False),
+    ],
+    "languages": [],
+    "body": "Confirm !translated and to give OP dates: {{Guangxu era}}",
+}
+```
+
 ### Attributes
 
 ## Ajo
@@ -201,7 +215,7 @@ This class represents a Reddit translation request. It includes many attributes 
 
 ### Example
 
-```
+```python
 {
     "author": "SimilarPerspective47",
     "created_utc": 1759444445,
@@ -261,14 +275,18 @@ This was formerly (and confusingly) called Komento in the 1.x versions of the bo
 
 ### Examples
 
-```
-{'_data': {'comment_unknown': [('njpal88', None)]},
- '_op_thanks': True,
- '_submission': Submission(id='1o7pjsn')}
- 
-{'_data': {'comment_cjk': [('nk398my', ['改善', '心', '美', '念', '道'])]},
- '_op_thanks': False,
- '_submission': Submission(id='1o9lu1n')}
+```python
+{
+    "_data": {"comment_unknown": [("njpal88", None)]},
+    "_op_thanks": True,
+    "_submission": Submission(id="1o7pjsn"),
+}
+
+{
+    "_data": {"comment_cjk": [("nk398my", ["改善", "心", "美", "念", "道"])]},
+    "_op_thanks": False,
+    "_submission": Submission(id="1o9lu1n"),
+}
 ```
 
 ### Attributes
@@ -284,11 +302,11 @@ This was formerly (and confusingly) called Komento in the 1.x versions of the bo
 
 From Esperanto *[diskuto](https://en.wiktionary.org/wiki/diskuto#Esperanto)*, "discussion".
 
-This is a much less complicated equivalent to Ajo. This class represents an *internal post" that is not a request, including meta and community posts.
+This is a much less complicated equivalent to Ajo. This class represents an *internal post* that is not a language translation request, including meta and community posts.
 
 ### Example
 
-```
+```python
 {"created_utc": 1748894490,
  "id": "1l1s1sx",
  "post_type": "meta",
@@ -306,4 +324,3 @@ This is a much less complicated equivalent to Ajo. This class represents an *int
 | `post_type` | `str` | Type of post (e.g. `"meta"`, `community`).                                                                                   |
 | `processed` | `bool` | Indicates whether the post has been processed by the bot and notifications sent out to people subscribed to that `post_type`. |
 | `title_original` | `str` | Original Reddit post title as submitted.                                                                                     |
-
