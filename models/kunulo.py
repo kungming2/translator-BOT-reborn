@@ -299,7 +299,7 @@ class Kunulo:
                 )
             except Exception as e:
                 # Log the error but continue trying to delete other comments
-                print(f"Warning: Failed to delete comment {comment_id}: {e}")
+                logger.warning(f"Warning: Failed to delete comment {comment_id}: {e}")
 
         # Remove the tag from data if any comments were deleted
         if deleted_count > 0:
