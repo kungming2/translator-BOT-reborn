@@ -323,7 +323,9 @@ def _reformat_detected_languages_in_title(title: str) -> str | None:
                 )
                 break
             else:
-                logger.debug(f"Same as first_lang {first_lang} and only appears once, skipping")
+                logger.debug(
+                    f"Same as first_lang {first_lang} and only appears once, skipping"
+                )
 
     logger.debug(
         f"Final detected languages: first_lang={first_lang}, last_lang={last_lang}, last_lang_word={last_lang_word}"
@@ -548,9 +550,9 @@ def _preprocess_title(post_title: str) -> str:
             title = title.replace("-", " ")
 
     # Clean up symbols and duplicate markers
-    for ch in ["&", "+", "/", "\\", "|"]:
+    for ch in ["&", "+", "/", "\\", "|", "?"]:
         title = title.replace(ch, f" {ch} ")
-    for compound in [">>>", ">>", "> >"]:
+    for compound in [">>>", ">>", "> >", "<"]:
         title = title.replace(compound, " > ")
 
     # Try to normalize missing brackets around 'English'
@@ -564,7 +566,7 @@ def _preprocess_title(post_title: str) -> str:
             title = title.replace("-", " > ")
         title = title.replace(" into ", ">")
 
-    # Fix frequent false matches for "KR"
+    # Fix frequent false matches for "KR". This is a unique exception.
     if "KR " in title.upper()[:10]:
         title = title.replace("KR ", "Korean ")
 
@@ -801,8 +803,8 @@ def _resolve_languages(chunk, is_source):
 
     logger.debug(f"Cleaned words: {cleaned_words}")
 
-    # KEY FIX: Limit words checked for target languages
-    max_words_to_check = 5 if is_source else 2
+    # Limit words checked to as long as we have
+    max_words_to_check = max(5, len(cleaned_words))
 
     resolved = []
     for word in cleaned_words[:max_words_to_check]:
@@ -1124,7 +1126,7 @@ def process_title(title, post=None, discord_notify=True):
 
             updating_subject = "AI Parsed Title and Assigned Language to Post"
             updating_reason = (
-                f"Unable to parse this post's language; AI assessed it as `{result.final_code}`. "
+                f"Passed to AI service; AI assessed it as `{result.final_code}`. "
                 f"If incorrect, please assign [this post](https://www.reddit.com{post.permalink}) "
                 f"a different and accurate language category."
                 f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
@@ -1196,6 +1198,9 @@ def _update_titolo_from_ai_result(result: Titolo, ai_result: dict[str, Any]) -> 
         logger.info(
             f"AI updated source: {result.source}, target: {result.target}, direction: {result.direction}"
         )
+
+        _determine_flair(result)
+        logger.info(f"AI determined flair: {result.final_code=}; {result.final_text=}")
     except Exception as e:
         logger.error(f"Failed to update Titolo from AI result: {e}")
 
