@@ -154,7 +154,7 @@ def ziwen_posts(post_limit=None):
         # Create a new Ajo here into memory if it doesn't already exist.
         if not post_ajo:
             logger.info(
-                "f[ZW] Posts: No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
+                f"[ZW] Posts: No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
             )
             titolo_content = Titolo.process_title(post)
             post_ajo = Ajo.from_titolo(titolo_content, post)
@@ -170,7 +170,7 @@ def ziwen_posts(post_limit=None):
 
             record_filter_log(post_title, post.created_utc, "EE")
             action_counter(1, "Removed posts")  # Write to the counter log
-            logger.info("[ZW] Posts: Removed an English-only post. | `{post.id}`")
+            logger.info(f"[ZW] Posts: Removed an English-only post. | `{post.id}`")
             continue
 
         # Check on Ajo status. We only want to deal with untranslated new posts.
