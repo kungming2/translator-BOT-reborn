@@ -17,8 +17,8 @@ Adding a second exclamation mark `!` after a command indicates to the bot that t
 Specific identifcation is only meant for single-language posts.
 
 ```
-!identify:any!                  # Changes the post to Anyin. 
-!identify:zmi!                  # Changes the post to Negeri Sembilan Malay. 
+!identify:any!                   # Changes the post to Anyin. 
+!identify:zmi!                   # Changes the post to Negeri Sembilan Malay. 
 !identify:Cyrl!                  # Changes the Unknown post to Cyrillic (Script).
 !identify:Latn!                  # Changes the Unknown post to Latin (Script). 
 ```
