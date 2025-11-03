@@ -4602,6 +4602,7 @@ kl:
   link_wikipedia: https://en.wikipedia.org/wiki/Greenlandic_language
   name: Kalaallisut
   name_alternates:
+  - Greenlandic Inuktitut
   - Greenlandic
   population: 57000
   subreddit: kalaallisut
@@ -5564,23 +5565,6 @@ mad:
   - Madhura
   - Madurese
   population: 7790900
-mal:
-  country: India
-  family: Dravidian
-  greetings: നമസ്തേ
-  language_code_3: mal
-  link_ethnologue: https://www.ethnologue.com/language/mal
-  link_wikipedia: https://en.wikipedia.org/wiki/Malayalam
-  name: Malayalam
-  name_alternates:
-  - Alealum
-  - Malayalani
-  - Malayali
-  - Malean
-  - Maliyad
-  - Mallealle
-  - Mopla
-  population: 37829870
 mam:
   country: Guatemala.
   family: Mayan
@@ -8374,6 +8358,17 @@ sk:
   population: 6839000
   supported: true
   thanks: Ďakujem
+skm:
+  country: Papua New Guinea
+  family: Trans-New Guinea
+  language_code_3: skm
+  link_ethnologue: https://www.ethnologue.com/language/skm
+  link_wikipedia: https://en.wikipedia.org/wiki/Kutong_language
+  name: Kutong
+  name_alternates:
+  - Dinangat
+  - Sakam
+  population: 1300
 skr:
   country: Pakistan
   family: Indo-European
@@ -8560,6 +8555,25 @@ sox:
   name_alternates:
   - Shwo
   population: 9000
+soy:
+  country: Benin
+  family: Niger-Congo
+  language_code_3: soy
+  link_ethnologue: https://www.ethnologue.com/language/soy
+  link_wikipedia: https://en.wikipedia.org/wiki/Yobe_language
+  name: Miyobe
+  name_alternates:
+  - Bijobe
+  - Biyobe
+  - Kayobe
+  - Kuyobe
+  - Meyobe
+  - Solamba
+  - Solla
+  - Sorouba
+  - Soruba
+  - Uyobe
+  population: 16250
 sq:
   countries_associated:
   - XK
@@ -10430,6 +10444,15 @@ ybk:
   - Lao Phula
   - Pao Tle
   population: 12000
+ybo:
+  country: Papua New Guinea
+  family: Trans-New Guinea
+  language_code_3: ybo
+  link_ethnologue: https://www.ethnologue.com/language/ybo
+  link_wikipedia: https://en.wikipedia.org/wiki/Yabong_language
+  name: Yabong
+  name_alternates: []
+  population: 1500
 yec:
   country: Germany
   family: Mixed language
@@ -10843,3 +10866,19 @@ zxx:
   - Nothing
   - 'Null'
   supported: true
+lbj:
+  country: India
+  family: Sino-Tibetan
+  language_code_3: lbj
+  link_ethnologue: https://www.ethnologue.com/language/lbj
+  link_wikipedia: https://en.wikipedia.org/wiki/Ladakhi_language
+  name: Ladakhi
+  population: 110000
+oge:
+  family: Kartvelian
+  language_code_3: oge
+  link_wikipedia: https://en.wikipedia.org/wiki/Old_Georgian
+  name: Old Georgian
+  name_alternates:
+  - Enay kartuli
+  population: 0
