@@ -140,18 +140,6 @@ def ziwen_commands():
         ):
             continue
 
-        # Skip comments on filtered posts
-        filtered_result = db.cursor_main.execute(
-            "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
-        ).fetchone()
-        # Note: filtered_result[0] accesses the filtered column directly since
-        # we're only SELECTing that one column (not SELECT *)
-        if filtered_result and filtered_result[0] == 1:
-            logger.info(
-                f"Comment `{comment_id}` is on already-filtered post `{original_post.id}`. Skipping."
-            )
-            continue
-
         # Check to see if the comment has already been acted upon.
         if db.cursor_main.execute(
             "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
@@ -178,6 +166,18 @@ def ziwen_commands():
         ]:
             logger.info(
                 f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping..."
+            )
+            continue
+
+        # Skip comments on filtered posts
+        filtered_result = db.cursor_main.execute(
+            "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
+        ).fetchone()
+        # Note: filtered_result[0] accesses the filtered column directly since
+        # we're only SELECTing that one column (not SELECT *)
+        if filtered_result and filtered_result[0] == 1:
+            logger.info(
+                f"Comment `{comment_id}` is on already-filtered post `{original_post.id}`. Skipping."
             )
             continue
 
