@@ -82,6 +82,8 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
     with YoutubeDL(ydl_opts) as ydl:
         try:
             info = ydl.extract_info(youtube_url, download=False)
+            if info is None:
+                return None
             return info.get("duration")  # duration in seconds
         except Exception as e:
             logger.error(f"Error fetching video info: {e}")

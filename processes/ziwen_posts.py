@@ -244,11 +244,20 @@ def ziwen_posts(post_limit=None):
 
             # If the video is considered long by our settings,
             # but make an exception if someone posts the exact timestamp.
-            if video_length > SETTINGS["video_long_seconds"] and "t=" not in post.url:
+            # Also check if video_length is not None (API might fail)
+            if (
+                video_length is not None
+                and video_length > SETTINGS["video_long_seconds"]
+                and "t=" not in post.url
+            ):
                 logger.info(
                     f"[ZW] Posts: This is a long YouTube video ({video_length} seconds)."
                 )
                 post_long_comment = True
+            elif video_length is None:
+                logger.warning(
+                    f"[ZW] Posts: Could not fetch YouTube video length for {post.url}"
+                )
 
         # This is a boolean that is True if the user has posted too much
         # in a short period of time and False if they haven't.
