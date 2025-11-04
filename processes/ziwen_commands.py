@@ -140,6 +140,18 @@ def ziwen_commands():
         ):
             continue
 
+        # Skip comments on filtered posts
+        filtered_result = db.cursor_main.execute(
+            "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
+        ).fetchone()
+        # Note: filtered_result[0] accesses the filtered column directly since
+        # we're only SELECTing that one column (not SELECT *)
+        if filtered_result and filtered_result[0] == 1:
+            logger.info(
+                f"Comment `{comment_id}` is on already-filtered post `{original_post.id}`. Skipping."
+            )
+            continue
+
         # Check to see if the comment has already been acted upon.
         if db.cursor_main.execute(
             "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
@@ -156,20 +168,32 @@ def ziwen_commands():
             logger.debug(f"Comment `{comment_id}` is now being processed.")
 
         # Skip the bot's own comments and AutoModerator comments.
-        logger.debug(f"[ZW] Commands: Checking author: '{author_name}' against bot: '{username}'")
-        if author_name.lower() in [username.lower(), "automoderator", "translator-modteam"]:
-            logger.info(f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping...")
+        logger.debug(
+            f"[ZW] Commands: Checking author: '{author_name}' against bot: '{username}'"
+        )
+        if author_name.lower() in [
+            username.lower(),
+            "automoderator",
+            "translator-modteam",
+        ]:
+            logger.info(
+                f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping..."
+            )
             continue
 
         # Load the ajo for the post from the database.
         original_ajo = ajo_loader(original_post.id)
         if not original_ajo:
             # On the off-chance that there is no Ajo associated...
-            logger.warning(f"[ZW] Commands: Ajo for `{original_post.id}` does not exist. Creating...")
+            logger.warning(
+                f"[ZW] Commands: Ajo for `{original_post.id}` does not exist. Creating..."
+            )
             original_ajo = Ajo.from_titolo(
                 Titolo.process_title(original_post), original_post
             )
-        logger.debug(f"[ZW] Commands: > Ajo lingvo is {original_ajo.lingvo}")  # loaded lazily
+        logger.debug(
+            f"[ZW] Commands: > Ajo lingvo is {original_ajo.lingvo}"
+        )  # loaded lazily
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
@@ -226,7 +250,9 @@ def ziwen_commands():
                     # This is unlikely to happen - basically happens when
                     # there is a command listed to be acted upon, but
                     # there is no code to actually process it.
-                    logger.error(f"[ZW] Commands: No handler for command: {komando.name}")
+                    logger.error(
+                        f"[ZW] Commands: No handler for command: {komando.name}"
+                    )
 
             # Record data on user commands.
             user_statistics_writer(instruo)

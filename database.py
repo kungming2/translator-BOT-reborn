@@ -248,7 +248,8 @@ def _initialize_main_db() -> None:
         """
         CREATE TABLE old_posts (
             id TEXT PRIMARY KEY,
-            created_utc INTEGER
+            created_utc INTEGER,
+            filtered BOOLEAN DEFAULT 0
         )
         """,
         """

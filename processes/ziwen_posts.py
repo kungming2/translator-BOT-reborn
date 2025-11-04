@@ -115,20 +115,20 @@ def ziwen_posts(post_limit=None):
             continue
 
         logger.info(f"[ZW] Posts: Now processing `{post_id}`: {post_title}...")
-        # Mark post as processed
+        # Mark post as processed.
         db.cursor_main.execute(
-            "INSERT INTO old_posts (id, created_utc) VALUES (?, ?)",
-            (post_id, int(post.created_utc)),
+            "INSERT INTO old_posts (id, created_utc, filtered) VALUES (?, ?, ?)",
+            (post_id, int(post.created_utc), 0),
         )
         db.conn_main.commit()
 
         # Apply a filtration test to make sure this post is valid.
         logger.info(
-            f"[ZW] Posts: About to filter post {post_id} with title: {post_title} | `{post_id}`"
+            f"[ZW] Posts: About to filter post `{post_id}` with title: {post_title} | `{post_id}`"
         )
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
         logger.info(
-            f"[ZW] Posts: Filter result for {post_id}: {post_okay}, {filter_reason}"
+            f"[ZW] Posts: Filter result for `{post_id}`: {post_okay}, {filter_reason}"
         )
 
         # If it fails this test, write to `record_filter_log` and then
@@ -145,6 +145,12 @@ def ziwen_posts(post_limit=None):
 
             # Write the title to the log.
             record_filter_log(post_title, post.created_utc, filter_reason)
+            # Mark post as filtered in database
+            db.cursor_main.execute(
+                "UPDATE old_posts SET filtered = 1 WHERE id = ?", (post_id,)
+            )
+            db.conn_main.commit()
+
             action_counter(1, "Removed posts")  # Write to the counter log
             logger.info(
                 f"[ZW] Posts: Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`"
@@ -169,6 +175,12 @@ def ziwen_posts(post_limit=None):
             )
 
             record_filter_log(post_title, post.created_utc, "EE")
+            # Mark post as filtered in database
+            db.cursor_main.execute(
+                "UPDATE old_posts SET filtered = 1 WHERE id = ?", (post_id,)
+            )
+            db.conn_main.commit()
+
             action_counter(1, "Removed posts")  # Write to the counter log
             logger.info(f"[ZW] Posts: Removed an English-only post. | `{post.id}`")
             continue
