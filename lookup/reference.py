@@ -84,20 +84,40 @@ def _get_archived_ethnologue_page(language_code: str) -> str | None:
     :return: URL of the archived page, or None if unavailable
     """
     ethnologue_url = f"https://www.ethnologue.com/language/{language_code}"
-    user_agent = "Wenyuan, looking up old language data"
-    cdx_api = waybackpy.WaybackMachineCDXServerAPI(ethnologue_url, user_agent)
+    user_agent = get_random_useragent()
+
+    cdx_api = waybackpy.WaybackMachineCDXServerAPI(ethnologue_url, str(user_agent))
 
     try:
         archived_snapshot = cdx_api.near(year=2019, month=6, day=6, hour=12, minute=0)
-    except (
-        exceptions.NoCDXRecordFound,
-        exceptions.WaybackError,
-        requests.exceptions.ConnectTimeout,
-    ):
-        logger.error(f"[WY] Could not retrieve archived data for `{language_code}`.")
+    except exceptions.NoCDXRecordFound:
+        logger.warning(
+            f"No archived Ethnologue page found for `{language_code}` "
+            f"(URL: {ethnologue_url})."
+        )
+        return None
+    except exceptions.WaybackError as e:
+        logger.error(
+            f"Wayback Machine error while retrieving `{language_code}` "
+            f"(URL: {ethnologue_url}): {e}"
+        )
+        return None
+    except requests.exceptions.ConnectTimeout:
+        logger.error(
+            f"Connection timed out when accessing Wayback Machine for `{language_code}`."
+        )
         return None
     except requests.exceptions.RetryError:
-        logger.error("[WY] Wayback Machine is currently unavailable.")
+        logger.error(
+            "Wayback Machine service unavailable — RetryError raised "
+            f"while retrieving `{language_code}`."
+        )
+        return None
+    except Exception as e:
+        logger.exception(
+            f"Unexpected error occurred while retrieving archived page for `{language_code}` "
+            f"(URL: {ethnologue_url}) | Error {e}."
+        )
         return None
 
     return archived_snapshot.archive_url
