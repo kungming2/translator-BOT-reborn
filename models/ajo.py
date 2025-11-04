@@ -395,8 +395,8 @@ class Ajo:
 
     def update_from_titolo(self, titolo: "Titolo"):
         """
-        Update this Ajo instance in-place based on a Titolo instance and
-        optional Reddit submission.
+        Update this Ajo instance in-place based on a Titolo instance.
+        This is used by reset() to restore an Ajo to its original state.
         """
         self.title_original = titolo.title_original
         self.title = titolo.title_actual
@@ -408,7 +408,38 @@ class Ajo:
         self.original_source_language_name = titolo.source
         self.original_target_language_name = titolo.target
 
-        self.status = "untranslated"
+        # Determine if this should be a multiple or single post based on targets
+        if titolo.target and len(titolo.target) > 1:
+            # Multiple languages detected
+            non_english_targets = [
+                lang for lang in titolo.target if lang.preferred_code != "en"
+            ]
+
+            if len(non_english_targets) > 1:
+                self.type = "multiple"
+                self.is_defined_multiple = True
+                self.status = {
+                    lang.preferred_code: "untranslated" for lang in non_english_targets
+                }
+                self.language_history = [
+                    [lang.preferred_code for lang in non_english_targets]
+                ]
+            else:
+                # Only one non-English language or all English
+                self.type = "single"
+                self.is_defined_multiple = False
+                self.status = "untranslated"
+                self.language_history = [titolo.final_code]
+        else:
+            # Single language or no target
+            self.type = "single"
+            self.is_defined_multiple = False
+            self.status = "untranslated"
+            self.language_history = [titolo.final_code] if titolo.final_code else []
+
+        logger.info(
+            f"[ZW] Ajo: Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
+        )
 
     def to_dict(self):
         """
@@ -573,6 +604,29 @@ class Ajo:
                 # Assume it's a Lingvo object
                 self._lingvo = code_or_lingvo
                 self.preferred_code = self._lingvo.preferred_code
+
+            # Reset multiple post flags when setting to single language
+            self.type = "single"
+            self.is_defined_multiple = False
+            # Add after line 43:
+            logger.info(
+                f"[ZW] Ajo: Converted from multiple to single "
+                f"language post: {self.language_name}"
+            )
+
+            # Reset status to string format for single posts
+            if isinstance(self.status, dict):
+                # Preserve 'translated' or 'doublecheck' if any language had it
+                if any(
+                    s in ["translated", "doublecheck"] for s in self.status.values()
+                ):
+                    # Keep the most "complete" status
+                    if "translated" in self.status.values():
+                        self.status = "translated"
+                    else:
+                        self.status = "doublecheck"
+                else:
+                    self.status = "untranslated"
 
             # Update tracking fields
             self.language_history.append(self.language_name)
