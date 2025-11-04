@@ -7,7 +7,6 @@ comment, along with the data associated with that comment call.
 """
 
 import re
-import shlex
 from collections import defaultdict
 
 from config import SETTINGS
@@ -59,7 +58,7 @@ class Komando:
         )
 
 
-def check_specific_mode(arg_str):
+def _check_specific_mode(arg_str):
     """
     Check if argument ends with ! and has 2-4 chars before it.
     Returns (cleaned_arg, specific_mode_flag).
@@ -77,12 +76,44 @@ def check_specific_mode(arg_str):
     return arg_str, False
 
 
-def split_arguments(arg_str):
-    """Splits arguments respecting quoted substrings."""
-    try:
-        return shlex.split(arg_str)
-    except ValueError:
-        return [arg_str]
+def _deduplicate_args(args):
+    """
+    Deduplicate arguments while preserving order.
+
+    Handles three types of arguments:
+    1. Lingvo objects - dedupe by language code
+    2. Lists (for lookup_cjk) - dedupe by [lang, term] pairs
+    3. Strings - dedupe by value
+
+    :param args: List of arguments to deduplicate
+    :return: Deduplicated list maintaining original order
+    """
+    if not args:
+        return args
+
+    seen = set()
+    result = []
+
+    for arg in args:
+        # Handle Lingvo objects
+        if hasattr(arg, "language_name"):
+            key = arg.language_name
+            if key not in seen:
+                seen.add(key)
+                result.append(arg)
+        # Handle lists (lookup_cjk format: [lang, term])
+        elif isinstance(arg, list):
+            key = tuple(arg)
+            if key not in seen:
+                seen.add(key)
+                result.append(arg)
+        # Handle strings
+        else:
+            if arg not in seen:
+                seen.add(arg)
+                result.append(arg)
+
+    return result
 
 
 def extract_commands_from_text(text):
@@ -131,7 +162,7 @@ def extract_commands_from_text(text):
         mode_flags = []
 
         for arg in args_temp:
-            cleaned, is_specific_mode = check_specific_mode(arg)
+            cleaned, is_specific_mode = _check_specific_mode(arg)
             if cleaned is None:
                 # Invalid specific mode: skip this arg
                 continue
@@ -225,14 +256,20 @@ def extract_commands_from_text(text):
         if wiki_terms:
             commands_dict["lookup_wp"].extend(wiki_terms)
 
-    # Finalize Komando list
+    # Finalize Komando list with deduplication
     commands = []
     for name, args in commands_dict.items():
         is_specific = specific_mode_dict.get(name, False)
-        if any(isinstance(arg, list) for arg in args):
-            commands.append(Komando(name, args, specific_mode=is_specific))
+
+        # Deduplicate arguments
+        deduped_args = _deduplicate_args(args)
+
+        if any(isinstance(arg, list) for arg in deduped_args):
+            commands.append(Komando(name, deduped_args, specific_mode=is_specific))
         else:
-            commands.append(Komando(name, list(args), specific_mode=is_specific))
+            commands.append(
+                Komando(name, list(deduped_args), specific_mode=is_specific)
+            )
 
     return commands
 
