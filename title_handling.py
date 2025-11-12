@@ -1126,7 +1126,7 @@ def process_title(title, post=None, discord_notify=True):
 
             updating_subject = "AI Parsed Title and Assigned Language to Post"
             updating_reason = (
-                f"Passed to AI service; AI assessed it as **{result.add_final_text}** (`{result.final_code}`). "
+                f"Passed to AI service; AI assessed it as **{result.final_text}** (`{result.final_code}`). "
                 f"If incorrect, please assign [this post](https://www.reddit.com{post.permalink}) "
                 f"a different and accurate language category."
                 f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
