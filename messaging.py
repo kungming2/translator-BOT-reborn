@@ -195,7 +195,7 @@ def handle_status(message, message_author):
     else:
         # Process language subscriptions
         final_match_names_set = {
-            f"{entry.name}{' (Script)' if 'unknown-' in entry else ''}"
+            f"{entry.name}{' (Script)' if len(entry.preferred_code) == 4 else ''}"
             for entry in final_match_entries
         }
         final_match_names = sorted(list(final_match_names_set), key=lambda x: x.lower())
