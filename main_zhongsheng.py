@@ -53,8 +53,8 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
         await ctx.send("You do not have the correct role for this command.")
     else:
         # Log the error.
-        logger.error(
-            f"Error in command `/{ctx.command.name}` by user {ctx.author} "
+        logger.critical(
+            f"Critical error in command `/{ctx.command.name}` by user {ctx.author} "
             f"(ID: {ctx.author.id}): {type(error).__name__}: {error}",
             exc_info=error,  # This includes the full traceback
         )

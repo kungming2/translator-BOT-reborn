@@ -44,7 +44,7 @@ You can run any schedule manually for testing:
 import sys
 import traceback
 
-from config import logger
+from config import logger, TRANSIENT_ERRORS
 from error import error_log_extended
 from tasks import get_tasks, run_schedule
 
@@ -64,9 +64,20 @@ if __name__ == "__main__":
     try:
         wenju_runner()
     except (KeyboardInterrupt, SystemExit):
-        # Don’t treat intentional exits or Ctrl+C as "errors"
+        # Don't treat intentional exits or Ctrl+C as "errors"
+        logger.info("Manual user shutdown.")
         raise
+
+    except TRANSIENT_ERRORS as e:
+        # Just log transient errors at WARNING level, don't save to error log
+        logger.warning(
+            f"[WJ] Main: Transient error encountered: {type(e).__name__}: {e}"
+        )
+        logger.info("[WJ] Main: Will retry on next cycle.")
+
     except Exception as e:
         # Log all other unexpected exceptions
+        logger.critical(f"[WJ] Main: Encountered critical error {e}.")
+
         error_text = f"{type(e).__name__}: {e}\n\n{traceback.format_exc()}"
         error_log_extended(error_text, "Wenju")

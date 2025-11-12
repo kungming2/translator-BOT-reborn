@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 import yaml
+from prawcore.exceptions import RequestException, ResponseException, ServerError
 
 from time_handling import get_current_month
 
@@ -168,5 +169,13 @@ def load_settings(path: str | Path) -> dict:
 
 
 logger: logging.Logger = set_up_logger()
+TRANSIENT_ERRORS = (
+    ServerError,
+    RequestException,
+    ResponseException,
+    ConnectionError,
+    TimeoutError,
+)
+
 # To use, SETTINGS['variable_name']
 SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])
