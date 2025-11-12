@@ -27,17 +27,26 @@ from config import logger
 
 
 def check_url_extension(submission_url: str) -> bool:
-    """Checks to see if a URL extension matches an image file.
-    Returns True if it is, False otherwise."""
+    """
+    Checks if a URL has an image file extension.
 
-    # Regular expression to match file extensions
-    pattern = r"\.(jpg|jpeg|gif|webp|png)$"
+    :param submission_url: The URL to check.
+    """
+    # Strip whitespace/newlines first
+    submission_url = submission_url.strip()
+
+    # Use \Z instead of $ to match absolute end of string
+    pattern = r"\.(jpg|jpeg|gif|webp|png)\Z"
 
     # Check if the URL ends with one of the specified extensions
-    if re.search(pattern, submission_url, re.IGNORECASE):
-        return True
-    else:
+    has_image_extension = bool(re.search(pattern, submission_url, re.IGNORECASE))
+
+    if not has_image_extension:
+        logger.warning("URL does not have a valid image extension.")
         return False
+    else:
+        logger.debug("URL does have a valid image extension.")
+        return True
 
 
 def extract_text_within_curly_braces(text: str) -> list[str]:
