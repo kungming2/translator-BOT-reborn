@@ -215,7 +215,7 @@ def handle_status(message, message_author):
         )
         status_component = status_message.format("\n* ".join(all_subscriptions))
 
-    user_commands_statistics_data = user_statistics_loader(message_author)
+    user_commands_statistics_data = user_statistics_loader(message_author.name)
     if user_commands_statistics_data is not None:
         commands_component = (
             "\n\n### User Commands Statistics\n\n" + user_commands_statistics_data
