@@ -44,7 +44,7 @@ def ziwen_posts(post_limit=None):
     """
     subreddit_object = REDDIT.subreddit(SETTINGS["subreddit"])
     fetch_amount = post_limit if post_limit is not None else SETTINGS["max_posts"]
-    valid_period = SETTINGS["claim_period"] * 3  # Window to act on posts
+    valid_period = SETTINGS["claim_period"] * 9  # Window to act on posts
     titolo_content = None
 
     current_time = int(time.time())  # This is the current time.
