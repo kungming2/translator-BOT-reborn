@@ -192,9 +192,9 @@ COMMENT_CURRENTLY_CLAIMED: |
 COMMENT_SELF_ALREADY_CLAIMED: |
   You've already claimed this post. [](#comment_self_already_claimed)
 COMMENT_UNKNOWN: |
-  **It looks like you have submitted a translation request tagged as 'Unknown.'** 
+  **It looks like you have submitted a translation request tagged as 'Unknown'.** 
 
-  * Other community members may help you recategorize your post with the `!identify` or the `!page` [commands](https://www.reddit.com/r/translatorBOT/wiki/ziwen#wiki_post_state_commands).
+  * Other community members may help you re-categorize your post with the `!identify` or the `!page` commands.
   * Please refrain from posting short 'thank you' comments until your request has been fully translated.
   * Do *not* delete your post if it is identified as another language. We will automatically find people who can help you!
 

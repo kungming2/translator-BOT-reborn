@@ -293,6 +293,14 @@ def ziwen_posts(post_limit=None):
                 f"[ZW] Posts: Left a comment informing that the post `{post_id}` is long."
             )
 
+        # Leave an "unknown" comment if it's an unknown post.
+        if post_ajo.preferred_code == "unknown":
+            unknown_comment = RESPONSE.COMMENT_UNKNOWN + RESPONSE.BOT_DISCLAIMER
+            message_reply(post, unknown_comment)
+            logger.info(
+                f"[ZW] Posts: Left an informative 'unknown' comment on post `{post_id}`."
+            )
+
         # Add to the saved wiki page if it's not a commonly requested language.
         # Handle case where lingvo might be None
         if post_ajo.lingvo is None or not post_ajo.lingvo.supported:
