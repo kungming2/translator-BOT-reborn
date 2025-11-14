@@ -80,4 +80,5 @@ STATE: State = ziwen_startup()
 
 if __name__ == "__main__":
     start_time = time.time()
+    print(template_retriever())
     print(round(time.time() - start_time, 2))

@@ -21,6 +21,7 @@ from notifications import is_user_over_submission_limit, notifier
 from reddit_sender import message_reply
 from request_closeout import closeout_posts
 from responses import RESPONSE
+from startup import STATE
 from time_handling import get_current_utc_date
 from title_handling import (
     Titolo,
@@ -31,6 +32,41 @@ from title_handling import (
 from usage_statistics import action_counter
 from utility import fetch_youtube_length
 from wiki import update_wiki_page
+
+
+def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
+    """
+    Assign the appropriate flair template to an internal post based on its type.
+
+    :param post: Reddit submission object
+    :param internal_post_type: Type of internal post (e.g., 'meta', 'community'), or None
+    :return: True if flair was successfully assigned, False otherwise
+    """
+    if not internal_post_type:
+        logger.warning(
+            f"[ZW] Internal post `{post.id}` has no post_type, cannot assign flair."
+        )
+        return False
+
+    # Get the template ID for this internal post type
+    template_id = STATE.post_templates.get(internal_post_type)
+
+    if not template_id:
+        logger.warning(
+            f"[ZW] No flair template found for internal post type '{internal_post_type}' "
+            f"on post `{post.id}`"
+        )
+        return False
+
+    try:
+        post.flair.select(flair_template_id=template_id, text=internal_post_type)
+        logger.info(
+            f"[ZW] Assigned '{internal_post_type}' flair to internal post `{post.id}`"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"[ZW] Failed to assign flair to internal post `{post.id}`: {e}")
+        return False
 
 
 def ziwen_posts(post_limit=None):
@@ -100,6 +136,10 @@ def ziwen_posts(post_limit=None):
             else:
                 diskuto_output = Diskuto.process_post(post)
                 diskuto_writer(diskuto_output)
+
+                # Assign it a proper flair template.
+                _assign_internal_post_flair(post, diskuto_output.post_type)
+
                 logger.info(
                     f"> `{post.id}` post saved as an internal post for later processing."
                 )
