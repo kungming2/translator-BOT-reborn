@@ -222,13 +222,13 @@ def _move_bracketed_tag_to_front(title: str) -> str:
     Moves the first bracketed or parenthesized tag in the title to the front,
     normalizing parentheses to brackets.
 
-    This is useful when titles include tags like "[JP] Title Here", "Title [FR] Here",
-    or "Title (English > Japanese)" and you want to normalize them to have the tag
-    at the beginning with square brackets.
-
-    :param title: The original title, possibly with a bracketed or parenthesized tag.
-    :return: The title with the tag moved to the front and normalized to brackets.
+    Only moves tags when the title doesn't already have language info at the start.
     """
+    # **NEW: Don't move anything if title already starts with language pattern**
+    # Pattern: "Word > Word:" or "Word to Word:" at the beginning
+    if re.match(r"^[A-Za-z\s]+\s*(?:>|to)\s*[A-Za-z]+\s*:", title, re.IGNORECASE):
+        return title  # Already properly formatted, don't touch it
+
     # Try to find bracketed tag first
     match = re.search(r"\[.*?]", title)
     if match:
@@ -254,6 +254,7 @@ def _move_bracketed_tag_to_front(title: str) -> str:
             return f"{tag} {remainder}".strip()
 
     # Handle malformed title with unclosed parenthesis like "Title (JP"
+    # **MODIFIED: Only if it contains language indicators**
     if "(" in title and (">" in title or "to" in title.lower()):
         parts = title.split("(", 1)
         if len(parts) == 2:
@@ -470,22 +471,12 @@ def _preprocess_title(post_title: str) -> str:
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
     misused language tags, and removing cross-post markers.
-
-    Performs extensive normalization including:
-    - Removing cross-post markers
-    - Correcting common spelling variations (e.g., "english" -> "English")
-    - Normalizing brackets and directional symbols
-    - Fixing malformed language tags
-    - Handling country suffixes
-    - Moving misplaced bracketed tags to the front
-
-    Args:
-        post_title: The raw Reddit post title to normalize.
-
-    Returns:
-        The normalized title string.
     """
     title: str = re.sub(r"\(x-post.*", "", post_title).strip()
+
+    # **NEW: Check if title already has a clear "LANG to LANG" pattern at the start**
+    # If so, don't aggressively move parentheticals around
+    has_clear_format = bool(re.match(r"^[A-Za-z\s]+\s+to\s+[A-Za-z]+\s*:", title))
 
     # Correct spelling/alias issues
     for spelling in converter("en").name_alternates:
@@ -511,8 +502,8 @@ def _preprocess_title(post_title: str) -> str:
         title = title.replace("(", "[", 1).replace(")", "]", 1)
         title = title.replace("{", "[", 1).replace("}", "]", 1)
 
-    # Attempt recovery with language reformatter.
-    if not any(b in title for b in ["[", "]"]):
+    # **MODIFIED: Only attempt reformatting if no clear format exists**
+    if not any(b in title for b in ["[", "]"]) and not has_clear_format:
         reformatted: str = _reformat_detected_languages_in_title(title)
         if reformatted:
             title = reformatted
@@ -535,11 +526,13 @@ def _preprocess_title(post_title: str) -> str:
     ):
         title = title.replace("-", " > ")
 
-    # Move misplaced bracketed or parenthesized tags to the front
+    # **MODIFIED: Only move bracketed tags if there's no clear "X to Y" format already**
     has_bracket = "[" in title and "[" not in title[:10]
     has_paren = "(" in title and "(" not in title[:10]
-    if has_bracket or has_paren:
+
+    if not has_clear_format and (has_bracket or has_paren):
         title = _move_bracketed_tag_to_front(title.strip())
+
     title = title.replace("English.", "English] ").replace("_", " ")
 
     # Fix improperly hyphenated words
