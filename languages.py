@@ -169,7 +169,7 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
     Merges three data sources in order of precedence:
     1. Raw language data (base layer from language_data.yaml)
     2. Utility language data (overlay from utility_lingvo.yaml)
-    3. Statistics data (filtered overlay from _statistics.json)
+    3. Statistics data (filtered overlay from statistics.json)
 
     Returns:
         A dictionary mapping language codes to their combined attribute dictionaries.

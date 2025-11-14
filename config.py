@@ -61,7 +61,7 @@ class Paths:
             DATA_DIR, "Datasets", "iso_codes_updates.yaml"
         ),
         "OLD_CHINESE": os.path.join(DATA_DIR, "Datasets", "old_chinese.csv"),
-        "STATISTICS": os.path.join(DATA_DIR, "Datasets", "_statistics.json"),
+        "STATISTICS": os.path.join(DATA_DIR, "Datasets", "statistics.json"),
         "ZH_ROMANIZATION": os.path.join(
             DATA_DIR, "Datasets", "romanization_chinese.csv"
         ),
@@ -71,12 +71,12 @@ class Paths:
 
     # Log files that are frequently written to
     LOGS: dict[str, str] = {
-        "ERROR": os.path.join(DATA_DIR, "Logs", "_log_error.yaml"),
-        "COUNTER": os.path.join(DATA_DIR, "Logs", "_log_counter.json"),
-        "FILTER": os.path.join(DATA_DIR, "Logs", "_log_filter.md"),
-        "EVENTS": os.path.join(DATA_DIR, "Logs", "_log_events.md"),
-        "ACTIVITY": os.path.join(DATA_DIR, "Logs", "_log_activity.csv"),
-        "TESTING": os.path.join(DATA_DIR, "Logs", "_log_testing.md"),
+        "ERROR": os.path.join(DATA_DIR, "Logs", "log_error.yaml"),
+        "COUNTER": os.path.join(DATA_DIR, "Logs", "log_counter.json"),
+        "FILTER": os.path.join(DATA_DIR, "Logs", "log_filter.md"),
+        "EVENTS": os.path.join(DATA_DIR, "Logs", "log_events.md"),
+        "ACTIVITY": os.path.join(DATA_DIR, "Logs", "log_activity.csv"),
+        "TESTING": os.path.join(DATA_DIR, "Logs", "log_testing.md"),
     }
 
     # Settings files. No private information should be in these.

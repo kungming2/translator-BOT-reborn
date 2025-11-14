@@ -23,7 +23,7 @@ from utility import format_markdown_table_with_padding
 
 def activity_csv_handler():
     """
-    Manage and summarize the _log_activity.csv file.
+    Manage and summarize the log_activity.csv file.
 
     This function trims the CSV to retain only the last LINES_TO_KEEP entries
     and computes summary statistics including:
