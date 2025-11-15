@@ -994,52 +994,56 @@ async def zh_word_chengyu_supplement(chengyu):
     search_url = f"http://cy.5156edu.com/serach.php?f_type=chengyu&f_type2=&f_key={chengyu_gb_hex}"
     logger.debug(f"ZH-Chengyu search URL: {search_url}")
 
-    try:
-        async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient() as client:
+        try:
             response = await client.get(search_url, headers=headers)
             response.encoding = "gb2312"
             page_tree = html.fromstring(response.text)
             chengyu_result_texts = page_tree.xpath("//table[2]//td//text()")
-    except (UnicodeEncodeError, UnicodeDecodeError, httpx.RequestError) as e:
-        logger.error(f"[ZW] ZH-Chengyu: Unicode or connection error: {e}")
-        return None
+        except (UnicodeEncodeError, UnicodeDecodeError, httpx.RequestError) as e:
+            logger.error(f"[ZW] ZH-Chengyu: Unicode or connection error: {e}")
+            return None
 
-    if "找到 0 个成语" in "".join(chengyu_result_texts):
-        logger.info(f"[ZW] ZH-Chengyu: No chengyu results found for {chengyu}.")
-        return None
+        if "找到 0 个成语" in "".join(chengyu_result_texts):
+            logger.info(f"[ZW] ZH-Chengyu: No chengyu results found for {chengyu}.")
+            return None
 
-    link_elements = page_tree.xpath('//tr[contains(@bgcolor, "#ffffff")]/td/a')
-    if not link_elements:
-        return None
+        link_elements = page_tree.xpath('//tr[contains(@bgcolor, "#ffffff")]/td/a')
+        if not link_elements:
+            return None
 
-    detail_url = link_elements[0].get("href")
-    logger.info(f"[ZW] > ZH-Chengyu: Found chengyu detail page at: {detail_url}")
+        detail_url = link_elements[0].get("href")
+        logger.info(f"[ZW] > ZH-Chengyu: Found chengyu detail page at: {detail_url}")
 
-    try:
-        detail_response = await client.get(detail_url, headers=headers)
-        detail_response.encoding = "gb2312"
-        detail_tree = html.fromstring(detail_response.text)
-    except httpx.RequestError as e:
-        logger.error(f"[ZW] ZH-Chengyu: Error fetching detail page: {e}")
-        return None
+        try:
+            detail_response = await client.get(detail_url, headers=headers)
+            detail_response.encoding = "gb2312"
+            detail_tree = html.fromstring(detail_response.text)
+        except httpx.RequestError as e:
+            logger.error(f"[ZW] ZH-Chengyu: Error fetching detail page: {e}")
+            return None
 
-    meaning_xpath = "//tr[td[1][contains(normalize-space(.), '解释：')]]/td[2]/text()"
-    literary_source_xpath = (
-        "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]/text()"
-    )
+        meaning_xpath = (
+            "//tr[td[1][contains(normalize-space(.), '解释：')]]/td[2]/text()"
+        )
+        literary_source_xpath = (
+            "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]/text()"
+        )
 
-    meaning_list = detail_tree.xpath(meaning_xpath)
-    literary_source_list = detail_tree.xpath(literary_source_xpath)
+        meaning_list = detail_tree.xpath(meaning_xpath)
+        literary_source_list = detail_tree.xpath(literary_source_xpath)
 
-    meaning = meaning_list[0].strip() if meaning_list else ""
-    literary_source = literary_source_list[0].strip() if literary_source_list else ""
-    logger.debug(f" Found {meaning}, {literary_source}")
+        meaning = meaning_list[0].strip() if meaning_list else ""
+        literary_source = (
+            literary_source_list[0].strip() if literary_source_list else ""
+        )
+        logger.debug(f" Found {meaning}, {literary_source}")
 
-    return (
-        f"\n\n**Chinese Meaning**: {meaning}\n\n"
-        f"**Literary Source**: {literary_source}"
-        f" ([5156edu]({detail_url}), [18Dao](https://tw.18dao.net/成語詞典/{tradify(chengyu)}))"
-    )
+        return (
+            f"\n\n**Chinese Meaning**: {meaning}\n\n"
+            f"**Literary Source**: {literary_source}"
+            f" ([5156edu]({detail_url}), [18Dao](https://tw.18dao.net/成語詞典/{tradify(chengyu)}))"
+        )
 
 
 async def zh_word(word):
