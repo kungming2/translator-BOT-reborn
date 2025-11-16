@@ -593,8 +593,9 @@ class Ajo:
             # Initialize status as dictionary with all languages set to 'untranslated'
             self.status = {code: "untranslated" for code in lang_codes}
 
-            # Append the list of codes to language_history
-            self.language_history.append(lang_codes)
+            # Append the list of codes to language_history only if it's not the last entry
+            if not self.language_history or self.language_history[-1] != lang_codes:
+                self.language_history.append(lang_codes)
         else:
             # Single language (default behavior)
             if isinstance(code_or_lingvo, str):
@@ -608,7 +609,6 @@ class Ajo:
             # Reset multiple post flags when setting to single language
             self.type = "single"
             self.is_defined_multiple = False
-            # Add after line 43:
             logger.info(
                 f"[ZW] Ajo: Converted from multiple to single "
                 f"language post: {self.language_name}"
@@ -628,8 +628,12 @@ class Ajo:
                 else:
                     self.status = "untranslated"
 
-            # Update tracking fields
-            self.language_history.append(self.language_name)
+            # Update tracking fields - only append if the last entry is different
+            if (
+                not self.language_history
+                or self.language_history[-1] != self.language_name
+            ):
+                self.language_history.append(self.language_name)
 
         # Set is_identified for both cases
         self.is_identified = is_identified
