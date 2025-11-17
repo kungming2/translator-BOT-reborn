@@ -360,7 +360,7 @@ def statistics_list_updater(input_data: Dict[str, list]):
 
 
 @task(schedule="monthly")
-def get_language_pages() -> None:
+def refresh_language_statistics() -> None:
     """
     Collect all language wiki pages, parse statistics, and generate JSON.
     Updates the 'statistics' wiki page as well with a list of all links
@@ -536,4 +536,4 @@ def monthly_statistics_unpinner():
 
 
 if __name__ == "__main__":
-    print(validate_data_files())
+    print(refresh_language_statistics())
