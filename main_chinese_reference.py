@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 
 import asyncpraw
 from asyncpraw import exceptions
+from asyncprawcore import exceptions as asyncprawcore_exceptions
 from wasabi import msg
 
 from config import SETTINGS, logger
@@ -42,16 +43,29 @@ if TYPE_CHECKING:
 
 
 async def _cc_ref(reddit: "Reddit") -> None:
-    """
-    Runtime for Chinese language subreddits. The bot monitors a
-    multireddit called 'chinese' and provides character and word lookups
-    for requests marked by backticks, just like on r/translator.
-    """
-    multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
+    """Runtime for Chinese language subreddits."""
+    try:
+        multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
+    except asyncprawcore_exceptions.RequestException as e:
+        logger.warning(
+            f"[CC_REF]: Failed to fetch multireddit - network/auth error: {e}"
+        )
+        return
+    except Exception as e:
+        logger.error(f"[CC_REF]: Unexpected error fetching multireddit: {e}")
+        return
+
     comments = []
 
-    async for comment in multireddit.comments(limit=SETTINGS["max_posts"]):
-        comments.append(comment)
+    try:
+        async for comment in multireddit.comments(limit=SETTINGS["max_posts"]):
+            comments.append(comment)
+    except asyncprawcore_exceptions.RequestException as e:
+        logger.error(f"[CC_REF]: Failed to fetch comments - network/auth error: {e}")
+        return
+    except Exception as e:
+        logger.error(f"[CC_REF]: Unexpected error fetching comments: {e}")
+        return
 
     for comment in comments:
         body = comment.body
