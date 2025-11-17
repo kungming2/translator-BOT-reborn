@@ -1021,7 +1021,18 @@ def determine_flair_and_update(
         output_flair_css = css
 
     if ajo.type == "single":
-        if language_name not in unq_types:
+        # FIX: Check if this is a script (used for Unknown posts that were identified)
+        # Scripts should always display as [?], not as their script code
+        is_script = getattr(ajo, "is_script", False)
+
+        if is_script:
+            # Scripts always use [?] display, regardless of the script code
+            code_tag = "[?]"
+            output_flair_css = "unknown"
+            logger.debug(
+                f">>> Update Reddit: Script detected for post `{ajo.id}`, using [?]."
+            )
+        elif language_name not in unq_types:
             if ajo.is_supported:
                 if language_code_1:
                     set_code_and_css(language_code_1, language_code_1)
@@ -1053,6 +1064,9 @@ def determine_flair_and_update(
 
     # Determine flair text
     if ajo.type == "single":
+        # Store the base CSS before status overwrites it
+        base_flair_css = output_flair_css
+
         status_map = {
             "translated": ("translated", f"Translated {code_tag}"),
             "doublecheck": ("doublecheck", f"Needs Review {code_tag}"),
@@ -1060,7 +1074,12 @@ def determine_flair_and_update(
             "missing": ("missing", f"Missing Assets {code_tag}"),
         }
         if isinstance(ajo.status, str) and ajo.status in status_map:
-            output_flair_css, output_flair_text = status_map[ajo.status]
+            status_css, output_flair_text = status_map[ajo.status]
+            # Preserve "unknown" CSS for Unknown posts and scripts
+            if base_flair_css == "unknown":
+                output_flair_css = "unknown"
+            else:
+                output_flair_css = status_css
         else:
             # Default untranslated flair text
             output_flair_text = language_name
