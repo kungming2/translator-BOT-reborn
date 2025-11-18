@@ -13,6 +13,7 @@ This module contains general-purpose utility functions for:
 
 import io
 import re
+import time
 
 import imagehash
 import PIL
@@ -22,7 +23,6 @@ from yt_dlp import YoutubeDL
 
 from config import logger
 
-
 """MEDIA FUNCTIONS"""
 
 
@@ -31,9 +31,18 @@ def check_url_extension(submission_url: str) -> bool:
     Checks if a URL has an image file extension.
 
     :param submission_url: The URL to check.
+    :return: True if URL has valid image extension, False otherwise.
     """
+    if not submission_url:
+        logger.debug("check_url_extension: Received empty or None URL.")
+        return False
+
     # Strip whitespace/newlines first
     submission_url = submission_url.strip()
+
+    if not submission_url:
+        logger.debug("check_url_extension: URL is empty after stripping whitespace.")
+        return False
 
     # Use \Z instead of $ to match absolute end of string
     pattern = r"\.(jpg|jpeg|gif|webp|png)\Z"
@@ -42,38 +51,82 @@ def check_url_extension(submission_url: str) -> bool:
     has_image_extension = bool(re.search(pattern, submission_url, re.IGNORECASE))
 
     if not has_image_extension:
-        logger.warning("URL does not have a valid image extension.")
+        logger.debug(
+            f"check_url_extension: URL does not have a valid image extension: {submission_url}"
+        )
         return False
     else:
-        logger.debug("URL does have a valid image extension.")
+        extension = submission_url.split(".")[-1].lower()
+        logger.debug(f"check_url_extension: URL has valid .{extension} extension.")
         return True
 
 
 def extract_text_within_curly_braces(text: str) -> list[str]:
-    """Extracts all content inside {{...}} blocks, with whitespace stripped."""
+    """
+    Extracts all content inside {{...}} blocks, with whitespace stripped.
+
+    :param text: Text to search for curly brace patterns.
+    :return: List of extracted strings.
+    """
+    if not text:
+        logger.debug("extract_text_within_curly_braces: Received empty or None text.")
+        return []
+
     pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
-    return [match.strip() for match in re.findall(pattern, text)]
+    matches = [match.strip() for match in re.findall(pattern, text)]
+
+    if matches:
+        logger.debug(
+            f"extract_text_within_curly_braces: Found {len(matches)} match(es)."
+        )
+
+    return matches
 
 
 def generate_image_hash(image_url: str) -> str | None:
     """
     Generates an image hash from a linked URL for later comparison.
+
     :param image_url: A direct link to a URL containing an image.
     :return: The hash of the image, or None if unable to hash.
     """
+    if not image_url:
+        logger.warning("generate_image_hash: Received empty or None URL.")
+        return None
+
+    logger.debug(f"generate_image_hash: Attempting to hash image from: {image_url}")
+    start_time = time.time()
 
     # Download the image from the URL
     try:
-        response = requests.get(image_url)
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
         img = Image.open(io.BytesIO(response.content))
-    except (PIL.UnidentifiedImageError, requests.exceptions.ConnectionError):
-        # Imgur redirects break this.
-        logger.debug(f"[ZW] generate_image_hash: Unable to hash {image_url}.")
+    except PIL.UnidentifiedImageError as e:
+        logger.warning(
+            f"generate_image_hash: Unable to identify image format for {image_url}: {e}"
+        )
+        return None
+    except requests.exceptions.ConnectionError as e:
+        logger.warning(f"generate_image_hash: Connection error for {image_url}: {e}")
+        return None
+    except requests.exceptions.Timeout as e:
+        logger.warning(f"generate_image_hash: Request timeout for {image_url}: {e}")
+        return None
+    except requests.exceptions.HTTPError as e:
+        logger.warning(f"generate_image_hash: HTTP error for {image_url}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"generate_image_hash: Unexpected error for {image_url}: {e}")
         return None
     else:
         # Generate the hash using `dhash` algorithm.
         hash_value = str(imagehash.dhash(img))
-        logger.debug(f"[ZW] generate_image_hash: Assessed {image_url}: {hash_value}")
+        elapsed = time.time() - start_time
+        logger.debug(
+            f"generate_image_hash: Successfully hashed {image_url} -> {hash_value} "
+            f"(took {elapsed:.2f}s)"
+        )
 
     return hash_value
 
@@ -82,21 +135,53 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
     """
     Returns the length of a YouTube video in seconds using the
     yt-dlp library. Returns None if unable to fetch.
+
+    :param youtube_url: URL of the YouTube video.
+    :return: Video duration in seconds, or None if fetch failed.
     """
+    if not youtube_url:
+        logger.warning("fetch_youtube_length: Received empty or None URL.")
+        return None
+
+    logger.debug(f"fetch_youtube_length: Fetching video length for: {youtube_url}")
+    start_time = time.time()
+
     ydl_opts = {
         "quiet": True,
         "skip_download": True,  # we only want metadata
+        "no_warnings": True,
     }
 
-    with YoutubeDL(ydl_opts) as ydl:
-        try:
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             if info is None:
+                logger.warning(
+                    f"fetch_youtube_length: No video info returned for {youtube_url}"
+                )
                 return None
-            return info.get("duration")  # duration in seconds
-        except Exception as e:
-            logger.error(f"Error fetching video info: {e}")
-            return None
+
+            duration = info.get("duration")
+            elapsed = time.time() - start_time
+
+            if duration:
+                logger.debug(
+                    f"fetch_youtube_length: Video is {duration}s long "
+                    f"(fetched in {elapsed:.2f}s)"
+                )
+            else:
+                logger.warning(
+                    f"fetch_youtube_length: Duration not available for {youtube_url}"
+                )
+
+            return duration
+    except Exception as e:
+        elapsed = time.time() - start_time
+        logger.error(
+            f"fetch_youtube_length: Error fetching video info for {youtube_url} "
+            f"after {elapsed:.2f}s: {type(e).__name__}: {e}"
+        )
+        return None
 
 
 """MARKDOWN FUNCTIONS"""
@@ -107,8 +192,21 @@ def format_markdown_table_with_padding(table_text: str) -> str:
     Formats a Markdown table (with optional header above it)
     into a neatly aligned triple-backtick code block for Discord.
     Basically, this pads out the rows to look more even.
+
+    :param table_text: Raw Markdown table text to format.
+    :return: Formatted table as Discord code block.
     """
+    if not table_text:
+        logger.debug("format_markdown_table_with_padding: Received empty table text.")
+        return "```\n(No table provided)\n```"
+
     lines = [line.rstrip() for line in table_text.strip().splitlines() if line.strip()]
+
+    if not lines:
+        logger.debug(
+            "format_markdown_table_with_padding: No valid lines found in table."
+        )
+        return "```\n(No valid content)\n```"
 
     # Split header and table parts
     header_lines = []
@@ -124,6 +222,9 @@ def format_markdown_table_with_padding(table_text: str) -> str:
             header_lines.append(line)
 
     if not table_lines:
+        logger.debug(
+            "format_markdown_table_with_padding: No table rows with '|' found."
+        )
         return "```\n(No valid table found)\n```"
 
     # Parse table rows
@@ -135,6 +236,10 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         if parts and parts[-1] == "":
             parts = parts[:-1]
         rows.append(parts)
+
+    if not rows:
+        logger.debug("format_markdown_table_with_padding: No valid rows after parsing.")
+        return "```\n(No valid table found)\n```"
 
     # Compute column widths
     num_cols = max(len(row) for row in rows)
@@ -156,7 +261,13 @@ def format_markdown_table_with_padding(table_text: str) -> str:
     header_block = "\n".join(header_lines)
     table_block = "```\n" + "\n".join(formatted_table) + "\n```"
 
-    return f"{header_block}\n\n{table_block}"
+    result = f"{header_block}\n\n{table_block}" if header_block else table_block
+    logger.debug(
+        f"format_markdown_table_with_padding: Formatted table with {len(rows)} rows, "
+        f"{num_cols} columns."
+    )
+
+    return result
 
 
 if __name__ == "__main__":
@@ -164,6 +275,6 @@ if __name__ == "__main__":
     length_seconds = fetch_youtube_length(test_url)
 
     if length_seconds is not None:
-        print(f"Video length: {length_seconds}")
+        print(f"Video length: {length_seconds} seconds")
     else:
         print("Failed to fetch video length.")
