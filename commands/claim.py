@@ -54,23 +54,25 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
     # Check for previously claimed status.
     for language in languages_to_check:
-        existing_claim_comment = REDDIT.comment(kunulo_object.get_tag("comment_claim"))
-        if existing_claim_comment:
-            logger.info("[ZW] Bot: Pre-existing claim comment found.")
+        claim_comment_id = kunulo_object.get_tag("comment_claim")
+
+        if claim_comment_id:
+            logger.info(f"[ZW] Bot: Pre-existing claim comment `{claim_comment_id}` found.")
+            existing_claim_comment = REDDIT.comment(claim_comment_id)
 
             # Pass current_time to the parser
-            claim_info = parse_claim_comment(existing_claim_comment, current_time)
+            claim_info = parse_claim_comment(existing_claim_comment.body, current_time)
 
-            # Check if the claim languages match.
+            # Check if this specific language is already claimed
             if language == claim_info["language"]:
-                if claim_info["claimer"] == comment.author:
+                if claim_info["claimer"] == comment.author.name:
                     # Same user trying to re-claim
                     comment_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
                     logger.info(
                         "[ZW] Bot: >> But this post is already claimed by them. Replied to them."
                     )
                 else:
-                    # Different user
+                    # Different user trying to claim
                     remaining_minutes = claim_info["claim_time_diff"] // 60
                     reply_text = RESPONSE.COMMENT_CURRENTLY_CLAIMED.format(
                         language_name=claim_info["language"].name,
@@ -80,6 +82,11 @@ def handle(comment, _instruo, komando, ajo) -> None:
                     )
                     comment_reply(comment, reply_text)
 
+                # Language is already claimed, skip adding it to claimed_languages
+                continue
+
+            # If we reach here, this language is NOT already claimed
+            # Add it to the list to be claimed
             claimed_languages.append(language)
 
     # If there isn't, we can claim it for the user and
