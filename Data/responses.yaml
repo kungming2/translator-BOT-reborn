@@ -128,6 +128,8 @@ MSG_CLOSING_OUT: |
 COMMENT_LONG: |
   **Your translation request appears to be very long.** It may take a while for a translator to respond. Consider narrowing the scope of your request or asking for a synopsis or summary instead.
 
+  If you believe your request is *not* long, you (the OP) may comment `!long` to remove the status.
+
   *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is required on your part.* [](#comment_long)
 COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
   to be {age} days or older to use the service. [](#comment_page_disallowed)
