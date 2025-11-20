@@ -610,7 +610,10 @@ def notifier(lingvo, submission, mode="new_post"):
 
     # If the post has an image, get a description.
     if check_url_extension(submission.url):
-        image_description = fetch_image_description(submission.url, post_nsfw)
+        # Ensure URL is clean - no trailing whitespace or punctuation
+        clean_url = submission.url.strip().rstrip('.')
+
+        image_description = fetch_image_description(clean_url, post_nsfw)
         image_description = f"\n\n**Image description**: *{image_description}*"
     else:
         image_description = ""

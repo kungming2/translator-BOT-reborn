@@ -4,7 +4,11 @@
 Handles interfacing for AI queries.
 """
 
-from openai import OpenAI  # Used for both DeepSeek and OpenAI
+from openai import (
+    APIError,  # Used for both DeepSeek and OpenAI
+    BadRequestError,
+    OpenAI,
+)
 
 from config import Paths, load_settings, logger
 from responses import RESPONSE
@@ -40,7 +44,7 @@ def ai_query(
     behavior: str,
     query: str,
     image_url: str | None = None,
-) -> str:
+) -> str | None:
     """
     Function to pass a query to an AI service, optionally with
     image support. Image support requires the service to be "openai".
@@ -50,7 +54,7 @@ def ai_query(
     :param behavior: Instructions for how the service should act.
     :param query: Text prompt to pass to the AI.
     :param image_url: Optional public image URL (for OpenAI Vision).
-    :return: The AI-generated response content.
+    :return: The AI-generated response content, or None if an error occurred.
     """
 
     if service == "deepseek":
@@ -65,13 +69,14 @@ def ai_query(
     elif service == "openai":
         ai_model: str = access_credentials["OPENAI_MODEL"]
 
-        # Construct multimodal message if image is present
+        # Clean image URL if present
         if image_url:
+            image_url = image_url.strip().rstrip(".")
             user_content: list[dict] | str = [
                 {"type": "text", "text": query},
                 {"type": "image_url", "image_url": {"url": image_url}},
             ]
-            logger.debug("Image attached to input.")
+            logger.debug(f"Image attached to input: {image_url}")
         else:
             user_content: list[dict] | str = query
 
@@ -83,15 +88,32 @@ def ai_query(
     else:
         raise ValueError("Service must be either 'deepseek' or 'openai'.")
 
-    # noinspection PyTypeChecker
-    ai_response = client_object.chat.completions.create(
-        model=ai_model,
-        messages=messages,
-        stream=False,  # type: ignore
-    )
-    response_data: str = ai_response.choices[0].message.content
+    try:
+        # noinspection PyTypeChecker
+        ai_response = client_object.chat.completions.create(
+            model=ai_model,
+            messages=messages,
+            stream=False,  # type: ignore
+        )
+        response_data: str = ai_response.choices[0].message.content
+        return response_data
 
-    return response_data
+    except BadRequestError as e:
+        # Handle invalid requests (e.g., bad image URL, invalid parameters)
+        logger.error(f"{service.upper()} BadRequestError: {e}")
+        if image_url:
+            logger.error(f"Problematic image URL: {image_url}")
+        return None
+
+    except APIError as e:
+        # Handle other API errors (rate limits, server errors, etc.)
+        logger.error(f"{service.upper()} APIError: {e}")
+        return None
+
+    except Exception as e:
+        # Catch any other unexpected errors
+        logger.error(f"Unexpected error in ai_query for ({service}): {e}")
+        return None
 
 
 """IMAGE DESCRIPTION"""
