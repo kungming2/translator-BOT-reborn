@@ -340,7 +340,7 @@ def note_language_tags():
     """
     Identify recent posts that have temporary or missing language tags.
 
-    Temporary tags include "[?]" and "[--]". Posts with these or blank tags
+    Temporary tags include "[--]". Posts with these or blank tags
     should be reviewed and assigned proper language flair.
 
     This function scans the latest 1000 posts, filters those with malformed
@@ -349,7 +349,7 @@ def note_language_tags():
 
     header = "\n# Entries with Tags to Note\n"
 
-    malformed_tags = {"[?]", "[--]", "[]"}
+    malformed_tags = {"[--]", "[]"}
     flagged_submissions = []
 
     # Get the last 1000 submissions and check their flair tags.
