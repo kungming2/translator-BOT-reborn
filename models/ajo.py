@@ -631,9 +631,9 @@ class Ajo:
             # Update tracking fields - only append if the last entry is different
             if (
                 not self.language_history
-                or self.language_history[-1] != self.language_name
+                or self.language_history[-1] != self.preferred_code
             ):
-                self.language_history.append(self.language_name)
+                self.language_history.append(self.preferred_code)
 
         # Set is_identified for both cases
         self.is_identified = is_identified

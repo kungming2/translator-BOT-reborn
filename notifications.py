@@ -422,7 +422,9 @@ def _notification_rate_limiter(
             return sorted(subscribed_users, key=lambda u: str(u).lower())
         else:
             # Take the minimum to avoid sampling more than available
-            num_to_sample = min(len(subscribed_users), SETTINGS["notifications_user_limit"])
+            num_to_sample = min(
+                len(subscribed_users), SETTINGS["notifications_user_limit"]
+            )
             return random.sample(subscribed_users, num_to_sample)
     else:
         total_allowed_notifications = total_users * monthly_limit
@@ -443,21 +445,35 @@ def _should_send_language_notification(lingvo, messaging_ajo_history):
     """
     Checks if notifications for the language represented by the Lingvo object
     have already been sent in the post's language history to avoid duplicate messaging.
+    Note that the language_history attribute was formerly a list of
+    language names, but it has been normalized to be a list of codes.
+    This function can work with both.
 
     :param lingvo: Lingvo object representing the current language.
-    :param messaging_ajo_history: List of language names representing previous classifications of the post.
+    :param messaging_ajo_history: List of language codes or names (for backwards compatibility)
+                                  representing previous classifications of the post.
     :return: True if notification should be sent for this language; False otherwise.
     """
 
-    # Convert Lingvo to language name using the converter helper
+    if not messaging_ajo_history:
+        return True
+
+    # Get both code and name from Lingvo for comparison
+    language_code = lingvo.preferred_code
     language_name = lingvo.name
+
+    # Check if language appears in history (matching either code or name)
+    in_history = any(
+        entry in (language_code, language_name) for entry in messaging_ajo_history
+    )
+
+    # Check if language is the last entry (matching either code or name)
+    last_entry = messaging_ajo_history[-1]
+    is_last = last_entry in (language_code, language_name)
 
     # Allow sending notification only if language is either not in history
     # or is the last classification (to prevent duplicate notifications).
-    if (
-        language_name in messaging_ajo_history
-        and language_name != messaging_ajo_history[-1]
-    ):
+    if in_history and not is_last:
         return False
     return True
 
@@ -611,7 +627,7 @@ def notifier(lingvo, submission, mode="new_post"):
     # If the post has an image, get a description.
     if check_url_extension(submission.url):
         # Ensure URL is clean - no trailing whitespace or punctuation
-        clean_url = submission.url.strip().rstrip('.')
+        clean_url = submission.url.strip().rstrip(".")
 
         image_description = fetch_image_description(clean_url, post_nsfw)
         image_description = f"\n\n**Image description**: *{image_description}*"
