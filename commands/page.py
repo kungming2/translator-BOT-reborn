@@ -54,7 +54,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         if not people_messaged:
             replying_text.append(
                 RESPONSE.COMMENT_NO_LANGUAGE.format(
-                    language_name=language.language_name,
+                    language_name=language.name,
                     language_code=language.preferred_code,
                 )
             )
