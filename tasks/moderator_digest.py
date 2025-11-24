@@ -367,7 +367,7 @@ def note_language_tags():
 
     # Return early if there are no results.
     if not flagged_submissions:
-        return header
+        return header + "\n\n*No recent posts with temporary or missing tags found.*"
 
     rows = []
     for post in flagged_submissions:
