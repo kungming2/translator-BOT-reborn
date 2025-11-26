@@ -55,6 +55,8 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 * 🛠️ BUG FIX: Fixed slightly incorrect Hakka (Sixian) tone formatting in Markdown.
 * 🛠️ BUG FIX: Fixed a new bug where [hanzi](https://en.wikipedia.org/wiki/Chinese_characters)-only lookup matches were accidentally being converted to simplified Chinese, even for Japanese.
 * 🛠️ BUG FIX: Records of notifications for script codes for now on will save the script codes as well, instead of just "unknown".
+* 🛠️ BUG FIX: Fixed a bug where it was impossible to identify multiple-language posts back to a single language.
+* 🛠️ BUG FIX: Fixed claim handler not posting claim comments, causing `progress_tracker` crashes when checking expired claims
 
 ###### Deprecated Features
 
