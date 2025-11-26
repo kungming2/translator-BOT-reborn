@@ -85,9 +85,9 @@ def handle(comment, _instruo, komando, ajo) -> None:
                 # Language is already claimed, skip adding it to claimed_languages
                 continue
 
-            # If we reach here, this language is NOT already claimed
-            # Add it to the list to be claimed
-            claimed_languages.append(language)
+        # If we reach here, this language is NOT already claimed
+        # Add it to the list to be claimed
+        claimed_languages.append(language)
 
     # If there isn't, we can claim it for the user and
     # update the post status.
