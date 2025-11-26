@@ -220,9 +220,26 @@ def progress_tracker() -> None:
                 continue  # No inprogress marking in any of the dictionary's items.
 
         kunulo_object = Kunulo.from_submission(post)
-        claim_comment = REDDIT_HELPER.comment(kunulo_object.get_tag("comment_claim"))
-        claim_comment_data = parse_claim_comment(claim_comment.body, current_time)
-        time_diff = claim_comment_data.get("claim_time_diff")
+        comment_claim_id = kunulo_object.get_tag("comment_claim")
+
+        # Skip if there's no claim comment ID
+        if not comment_claim_id:
+            logger.warning(
+                f"[ZW] progress_tracker: No comment_claim found for post {post_id}. "
+                f"Skipping. {permalink}"
+            )
+            continue
+
+        try:
+            claim_comment = REDDIT_HELPER.comment(comment_claim_id)
+            claim_comment_data = parse_claim_comment(claim_comment.body, current_time)
+            time_diff = claim_comment_data.get("claim_time_diff")
+        except Exception as e:
+            logger.warning(
+                f"[ZW] progress_tracker: Failed to fetch/parse claim comment for post {post_id}. "
+                f"Error: {e}. Skipping. {permalink}"
+            )
+            continue
 
         # Skip if there's no claim time data, or if the time difference
         # is still within the allowable amount.
