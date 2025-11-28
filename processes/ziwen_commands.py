@@ -283,14 +283,22 @@ def ziwen_commands():
 
         # Check if there was a 'set' command in this comment
         moderator_set = False
+        skip_update = False
         if instruo and comment_has_command(comment_body):
             moderator_set = any(
                 komando.name.lower() == "set" for komando in instruo.commands
             )
+            # Skip update if the only command is 'verify'
+            if (
+                len(instruo.commands) == 1
+                and instruo.commands[0].name.lower() == "verify"
+            ):
+                skip_update = True
 
         # Update the ajo if NOT in testing mode. This updates both the
         # flair on the site as well as the local database.
-        if not SETTINGS["testing_mode"]:
+        # Also skip if the only command was 'verify'.
+        if not SETTINGS["testing_mode"] and not skip_update:
             original_ajo.update_reddit(moderator_set=moderator_set)
 
 
