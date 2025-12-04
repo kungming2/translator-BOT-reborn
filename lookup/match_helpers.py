@@ -120,22 +120,40 @@ def lookup_matcher(
 
     def map_cjk_code(cjk_code: str, cjk_lang_dict: dict) -> str:
         """
-        Map 4-letter SIL codes to 2-letter CJK language codes if applicable.
+        Map language codes (any length) to 2-letter CJK language codes if applicable.
 
-        :param cjk_code: Language code to check
-        :param cjk_lang_dict: Dictionary of CJK language mappings
-        :return: Mapped code ('zh', 'ja', 'ko') or original code
+        Examples:
+        - "Hani" (4 chars) -> "zh" (found in Chinese list)
+        - "och" (3 chars) -> "zh" (found in Chinese list)
+        - "Hang" (4 chars) -> "ko" (found in Korean list)
+        - "okm" (3 chars) -> "ko" (found in Korean list)
+        - "Jpan" (4 chars) -> "ja" (found in Japanese list)
+
+        :param cjk_code: Language code to check (any length)
+        :param cjk_lang_dict: Dictionary of CJK language mappings (or full settings dict)
+        :return: Mapped code ('zh', 'ja', 'ko') or original code if not found
         """
-        if len(cjk_code) == 4:
-            for lang_name, codes in cjk_lang_dict.items():
-                if cjk_code.lower() in [c.lower() for c in codes]:
-                    # Map language name to code
-                    if "Chinese" in lang_name:
-                        return "zh"
-                    elif "Japanese" in lang_name:
-                        return "ja"
-                    elif "Korean" in lang_name:
-                        return "ko"
+        # If the full settings dict was passed, extract just the CJK_LANGUAGES section
+        if "CJK_LANGUAGES" in cjk_lang_dict:
+            cjk_lang_dict = cjk_lang_dict["CJK_LANGUAGES"]
+
+        # Check if the code exists in any CJK language list
+        for lang_name, codes in cjk_lang_dict.items():
+            # Skip if codes is not a list (defensive programming)
+            if not isinstance(codes, list):
+                continue
+
+            # Case-insensitive match
+            if cjk_code.lower() in [c.lower() for c in codes]:
+                # Map language name to 2-letter code
+                if "Chinese" in lang_name:
+                    return "zh"
+                elif "Japanese" in lang_name:
+                    return "ja"
+                elif "Korean" in lang_name:
+                    return "ko"
+
+        # If not found in any CJK list, return the original code
         return cjk_code
 
     original_text: str = str(content_text)
