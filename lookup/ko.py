@@ -51,7 +51,9 @@ def _ko_search_raw(target_word: str) -> list[dict]:
             translation_language=krdict.TranslationLanguage.ENGLISH,
             raise_api_errors=True,
         )
-    except krdict.types.exceptions.KRDictException:
+    except (krdict.types.exceptions.KRDictException, Exception) as e:
+        # Catch 404s and other API errors - just return empty list
+        logger.warning(f"Korean lookup failed for '{target_word}': {e}")
         return []
 
     for entry in korean_input.data.results:

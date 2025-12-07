@@ -54,7 +54,7 @@ async def _lookup_japanese_term(term: str) -> str | None:
 
 async def _lookup_korean_term(term: str) -> str | None:
     """Perform Korean word lookup."""
-    return ko_word(term)
+    return await asyncio.to_thread(ko_word, term)  # Run sync function in thread pool
 
 
 async def _rate_limit_delay() -> None:
