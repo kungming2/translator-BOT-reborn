@@ -1064,9 +1064,6 @@ def determine_flair_and_update(
 
     # Determine flair text
     if ajo.type == "single":
-        # Store the base CSS before status overwrites it
-        base_flair_css = output_flair_css
-
         status_map = {
             "translated": ("translated", f"Translated {code_tag}"),
             "doublecheck": ("doublecheck", f"Needs Review {code_tag}"),
@@ -1074,12 +1071,7 @@ def determine_flair_and_update(
             "missing": ("missing", f"Missing Assets {code_tag}"),
         }
         if isinstance(ajo.status, str) and ajo.status in status_map:
-            status_css, output_flair_text = status_map[ajo.status]
-            # Preserve "unknown" CSS for Unknown posts and scripts
-            if base_flair_css == "unknown":
-                output_flair_css = "unknown"
-            else:
-                output_flair_css = status_css
+            output_flair_css, output_flair_text = status_map[ajo.status]
         else:
             # Default untranslated flair text
             output_flair_text = language_name
