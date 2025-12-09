@@ -597,13 +597,16 @@ def _is_punctuation_only(s: str) -> bool:
     return len(s) > 0 and all(c in string.punctuation for c in s)
 
 
-def _clean_text(text: str, preserve_commas: bool = False) -> str:
+def _clean_text(
+    text: str, preserve_commas: bool = False, preserve_separators: bool = False
+) -> str:
     """
     Insert spaces around brackets/parentheses and remove other punctuation with extra spaces.
 
     Args:
         text: The text to clean.
         preserve_commas: If True, keep commas in the text. Default is False.
+        preserve_separators: If True, keep &, /, and commas for language separation. Default is False.
 
     Returns:
         Cleaned text with normalized spacing and reduced punctuation.
@@ -612,10 +615,11 @@ def _clean_text(text: str, preserve_commas: bool = False) -> str:
     text = re.sub(r"([\[\]()])", r" \1 ", text)
 
     # Remove other punctuation (excluding brackets/parentheses)
-    if preserve_commas:
-        text = re.sub(
-            r"[.;@#?!&$" "'\"•/]+ *", " ", text
-        )  # Remove comma from the pattern
+    if preserve_separators:
+        # Keep &, /, and , for language separation
+        text = re.sub(r"[.;@#?!$" "'\"•]+ *", " ", text)
+    elif preserve_commas:
+        text = re.sub(r"[.;@#?!&$" "'\"•/]+ *", " ", text)
     else:
         text = re.sub(r"[,.;@#?!&$" "'\"•/]+ *", " ", text)
 
@@ -676,10 +680,12 @@ def _extract_target_chunk(title: str) -> str:
         if ">" in bracket_content:
             # Get everything after the last > within brackets
             parts: list[str] = bracket_content.split(">")
-            return _clean_text(parts[-1], True)
+            # Preserve separators like &, /, and commas for language parsing
+            return _clean_text(parts[-1], preserve_separators=True)
         elif " to " in bracket_content:
             parts = bracket_content.split(" to ")
-            return _clean_text(parts[-1], True)
+            # Preserve separators like &, /, and commas for language parsing
+            return _clean_text(parts[-1], preserve_separators=True)
 
     # Fallback to original logic for malformed titles
     for sep in [">", " to ", "-", "<"]:
@@ -688,7 +694,8 @@ def _extract_target_chunk(title: str) -> str:
             # Stop at the closing bracket
             if "]" in chunk:
                 chunk = chunk.split("]", 1)[0]
-            return _clean_text(chunk, True)
+            # Preserve separators like &, /, and commas for language parsing
+            return _clean_text(chunk, preserve_separators=True)
     return ""
 
 
@@ -736,9 +743,9 @@ def _resolve_languages(chunk, is_source):
     if "]" in chunk:
         chunk = chunk.split("]", 1)[0]
 
-    # NEW: Handle OR/AND/slash separators - split and process each part separately
-    # Check for separators: "or", "and", "&", "/"
-    separator_pattern = r"\s+(?:or|and|&)\s+|/"
+    # NEW: Handle OR/AND/slash/ampersand/comma separators - split and process each part separately
+    # Check for separators: "or", "and", "&", "/", ","
+    separator_pattern = r"\s+(?:or|and)\s+|[&/,]"
     if re.search(separator_pattern, chunk, flags=re.IGNORECASE):
         logger.debug(f"Found separator in chunk: {chunk}")
         parts = re.split(separator_pattern, chunk, flags=re.IGNORECASE)
@@ -763,20 +770,7 @@ def _resolve_languages(chunk, is_source):
             return list(unique.values())
         # If no languages found after split, continue with normal processing
 
-    # ORIGINAL LOGIC CONTINUES HERE
-    if "," in chunk:
-        language_parts = [part.strip() for part in chunk.split(",")]
-        resolved = []
-        for part in language_parts:
-            result = _resolve_languages(part, is_source)
-            if result:
-                resolved.extend(result)
-        unique = {}
-        for lang in resolved:
-            key = lang.name if hasattr(lang, "name") else lang.language_code_3
-            unique[key] = lang
-        return list(unique.values())
-
+    # ORIGINAL LOGIC CONTINUES HERE (but comma handling removed since it's now in separator pattern)
     words = chunk.split()
     words = [w for w in words if not _is_punctuation_only(w)]
 
