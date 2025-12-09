@@ -374,6 +374,12 @@ class Ajo:
                 }
                 ajo.is_defined_multiple = True
                 ajo.type = "multiple"
+            # Check if this is a non-defined multiple (a standard "Multiple Languages" request)
+            elif titolo.final_code == "multiple" or titolo.final_text == "Multiple Languages":
+                ajo.language_history = [titolo.final_code]
+                ajo.status = "untranslated"
+                ajo.is_defined_multiple = False
+                ajo.type = "multiple"
             else:
                 # Single language, keep as flat list
                 ajo.language_history = [titolo.final_code]
