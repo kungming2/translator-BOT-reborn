@@ -34,9 +34,7 @@ UTILITY_CODES = [
 
 
 def calculate_ri(
-    language_posts: int,
-    total_posts: int,
-    native_speakers: int
+    language_posts: int, total_posts: int, native_speakers: int
 ) -> float | None:
     """
     Calculate the Representation Index for a language.
@@ -98,14 +96,17 @@ def cerbo_wiki_editor(
                 page_content.content_md
             ):  # This month has not been recorded on the wiki.
                 # Checks to see if there's an entry for the month
-                page_content_new = str(page_content.content_md) + wiki_language_line
+                page_content_new = (
+                    str(page_content.content_md).rstrip("\n") + wiki_language_line
+                )
+
                 # Adds this month's entry to the data from the wikipage
                 page_content.edit(
                     content=page_content_new,
                     reason=f"Updating with data from {month_year_chunk}",
                 )
                 logger.info(
-                    f"Updated wiki entry for {language_name} in {month_year_chunk}"
+                    f"Updated wiki entry for {language_name} statistics during {month_year_chunk}"
                 )
             else:  # Entry already exists
                 logger.info(
@@ -258,7 +259,7 @@ def update_language_wiki_pages(lumo, month_year):
         # Build the table row
         wiki_line = (
             f"\n| {year} | {month} | {total_link} | {stats['percent_of_all_requests']}% | "
-            f"{untranslated} | {stats['translation_percentage']}% | {ri_value} | --- |\n"
+            f"{untranslated} | {stats['translation_percentage']}% | {ri_value} | --- |"
         )
 
         # Update the wiki page
