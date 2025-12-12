@@ -779,12 +779,17 @@ def _resolve_languages(chunk, is_source):
         words.insert(0, joined)
 
     logger.debug(f"Words before cleanup: {words}")
+    # Convert strings to sets for O(1) lookup
+    english_2_words = set(title_settings["ENGLISH_2_WORDS"])
+    english_3_words = set(title_settings["ENGLISH_3_WORDS"].split())
+
+    # Filter words
     cleaned_words = [
         w
         for w in words
         if not (
-            (len(w) == 2 and w.title() in title_settings["ENGLISH_2_WORDS"])
-            or (len(w) == 3 and w.title() in title_settings["ENGLISH_3_WORDS"])
+            (len(w) == 2 and w.title() in english_2_words)
+            or (len(w) == 3 and w.title() in english_3_words)
         )
     ]
 

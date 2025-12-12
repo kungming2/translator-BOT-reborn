@@ -5,6 +5,8 @@ Handles messaging retrieval and sending functions.
 This is Reddit-native, rather than Discord.
 """
 
+import logging
+
 import praw
 from praw.exceptions import APIException
 from praw.models import Message
@@ -63,22 +65,40 @@ def notify_op_translated_post(author, permalink):
 def handle_subscribe(message, message_author):
     """Handle subscription requests."""
     body_text = message.body
+    logger.debug(f"[SUB] Body text: {repr(body_text[:100])}...")  # First 100 chars
 
     # We want to omit common 3-letter words (like 'and')
     title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
-    commonly_excluded = title_settings["ENGLISH_3_WORDS"]
+    commonly_excluded_str = title_settings["ENGLISH_3_WORDS"]
+    commonly_excluded = (
+        commonly_excluded_str.split()
+    )  # Split on whitespace to create a list
+    logger.debug(f"[SUB] commonly_excluded list length: {len(commonly_excluded)}")
+    logger.debug(f"[SUB] First 10 excluded words: {commonly_excluded[:10]}")
 
     logger.info(f"[ZW] Messages: New subscription request from u/{message_author}.")
     language_matches = parse_language_list(body_text)  # Returns Lingvo objects.
+    logger.debug(f"[SUB] After parse_language_list: {len(language_matches)} matches")
+    logger.debug(
+        f"[SUB] Lingvo preferred_codes: {[x.preferred_code for x in language_matches]}"
+    )
+
     lingvo_names_formatted = []
 
     # Remove commonly excluded 3-letter words.
     language_matches = [
         x for x in language_matches if x.preferred_code not in commonly_excluded
     ]
+    logger.debug(
+        f"[SUB] After filtering commonly_excluded: {len(language_matches)} matches"
+    )
+    logger.debug(
+        f"[SUB] Remaining preferred_codes: {[x.preferred_code for x in language_matches]}"
+    )
 
     # No valid matches.
     if not language_matches:  # There are no valid codes to subscribe.
+        logger.warning(f"[SUB] No valid matches after filtering - rejecting request")
         message_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
@@ -89,12 +109,17 @@ def handle_subscribe(message, message_author):
         )
         return
 
+    logger.debug(
+        f"[SUB] Proceeding with subscription for {len(language_matches)} languages"
+    )
+
     # Insert the relevant codes.
     notifier_language_list_editor(language_matches, message_author, "insert")
 
     # Get the language names of those codes for use in the reply message.
     for lingvo in language_matches:
         lingvo_names_formatted.append(lingvo.name)
+    logger.debug(f"[SUB] Language names: {lingvo_names_formatted}")
 
     # Add the various components of the reply.
     thanks_phrase = getattr(
@@ -333,3 +358,23 @@ if __name__ == "__main__":
         msg.good("This user exists!")
     else:
         msg.fail("This user does not exist!")
+
+    # Mock message class
+    class MockMessage:
+        def __init__(self, body):
+            self.body = body
+
+    # Enable debug logging
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    # Interactive mode
+    while True:
+        print("\nEnter custom test (or 'x' to exit):")
+        custom_input = input("Message body: ")
+
+        if custom_input.lower() == "x":
+            break
+
+        message_custom = MockMessage(custom_input)
+        handle_subscribe(message_custom, "test_user_custom")
+        print("\n" + "=" * 50 + "\n")

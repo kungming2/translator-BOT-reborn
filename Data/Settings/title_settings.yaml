@@ -75,6 +75,8 @@ ENGLISH_2_WORDS:
   - To
   - Tw
 
+# Note that this is actually formatted as a really long string. This
+# has to be split into a list for scripts to parse it correctly.
 ENGLISH_3_WORDS: >-
   Abs Abu Aby Ace Act Add Ado Ads Aft Age Ago Aid Ail Aim Air Ait Aka Ale Amp
   And Ant Ape App Apt Arc Are Ark Arm Art Ash Ask Asp Ass Ate Auk Awe Awn Axe

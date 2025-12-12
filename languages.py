@@ -6,6 +6,7 @@ A collection of database sets and language functions that all r/translator bots 
 
 import copy
 import csv
+import logging
 import random
 import re
 from pprint import pprint
@@ -760,51 +761,68 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         A sorted list of Lingvo objects, or an empty list if none found.
         Results are deduplicated by preferred code and sorted alphabetically.
     """
+    logger.debug(f"[PARSE] Input list_string: {repr(list_string)}")
+
     if not list_string:
+        logger.debug("[PARSE] Empty list_string, returning empty list")
         return []
 
     # Strip 'LANGUAGES:' prefix if present
     if "LANGUAGES:" in list_string:
         list_string = list_string.rpartition("LANGUAGES:")[-1].strip()
+        logger.debug(f"[PARSE] After stripping LANGUAGES: prefix: {repr(list_string)}")
     else:
         list_string = list_string.strip()
+        logger.debug(f"[PARSE] After strip (no LANGUAGES: prefix): {repr(list_string)}")
 
     # Normalize various delimiters to commas
     for delimiter in ["+", "\n", "/", ":", ";"]:
         list_string = list_string.replace(delimiter, ",")
+    logger.debug(f"[PARSE] After normalizing delimiters: {repr(list_string)}")
 
     # Split on commas (or use the whole string if no commas)
     if "," in list_string:
         items = list_string.split(",")
+        logger.debug(f"[PARSE] Split on comma, items: {items}")
     elif " " in list_string:
         # Space-delimited case - try the whole string first
         match = converter(list_string)
         items = [list_string] if match is None else list_string.split()
+        logger.debug(f"[PARSE] Space-delimited case, match={match}, items: {items}")
     else:
         # Single item, no delimiters
         items = [list_string]
+        logger.debug(f"[PARSE] Single item, no delimiters: {items}")
 
     utility_codes = {"meta", "community", "all"}
     final_lingvos: dict[str, Lingvo] = {}
 
     for item in items:
         item = item.strip().lower()
+        logger.debug(f"[PARSE] Processing item: {repr(item)}")
+
         if not item:
+            logger.debug(f"[PARSE] Item is empty, skipping")
             continue
 
         if item in utility_codes:
-            # Optionally wrap utility codes as special Lingvo objects if needed
-            continue  # or handle separately
+            logger.debug(f"[PARSE] Item {repr(item)} is a utility code, skipping")
+            continue
         else:
             lang = converter(item)
+            logger.debug(f"[PARSE] converter({repr(item)}) returned: {lang}")
             if lang:
-                final_lingvos[lang.preferred_code] = (
-                    lang  # Deduplicate by preferred code
-                )
+                final_lingvos[lang.preferred_code] = lang
+                logger.debug(f"[PARSE] Added {lang.preferred_code} -> {lang.name}")
+            else:
+                logger.debug(f"[PARSE] converter returned None for {repr(item)}")
 
-    return sorted(
+    logger.debug(f"[PARSE] Final lingvos dict keys: {list(final_lingvos.keys())}")
+    result = sorted(
         final_lingvos.values(), key=lambda lingvo: lingvo.preferred_code.lower()
     )
+    logger.debug(f"[PARSE] Returning {len(result)} Lingvo objects: {[x.preferred_code for x in result]}")
+    return result
 
 
 """MANAGING COUNTRIES DATA"""
@@ -1030,6 +1048,7 @@ if __name__ == "__main__":
                 print("Did not match anything.")
 
         elif choice == "2":
+            logger.setLevel(logging.DEBUG)
             language_list_input = input(
                 "Enter the language list from a subscription message to parse: "
             )
