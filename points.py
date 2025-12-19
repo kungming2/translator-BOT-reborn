@@ -212,6 +212,13 @@ def points_tabulator(
                                  Note that this is a single object; since
                                  points are allocated depending on a language.
     """
+    # Early return if lingvo is None
+    if original_post_lingvo is None:
+        logger.warning(
+            f"[ZW] Points tabulator: Skipping comment `{comment.id}` - no Lingvo object provided"
+        )
+        return
+
     cursor_main = db.cursor_main
     conn_main = db.conn_main
 
