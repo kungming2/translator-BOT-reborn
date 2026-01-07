@@ -1116,34 +1116,57 @@ def process_title(title, post=None, discord_notify=True):
         if isinstance(ai_result, dict):
             _update_titolo_from_ai_result(result, ai_result)
 
-            updating_subject = "AI Parsed Title and Assigned Language to Post"
-            updating_reason = (
-                f"Passed to AI service; AI assessed it as **{result.final_text}** (`{result.final_code}`). "
-                f"If incorrect, please assign [this post](https://www.reddit.com{post.permalink}) "
-                f"a different and accurate language category."
-                f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
-            )
-            logger.info(
-                f"[ZW] Posts: AI assessment of title performed for '{post.title}' | `{post.id}`."
-            )
+            # Only construct Discord message if post object exists
+            if post:
+                updating_subject = "AI Parsed Title and Assigned Language to Post"
+                updating_reason = (
+                    f"Passed to AI service; AI assessed it as **{result.final_text}** (`{result.final_code}`). "
+                    f"If incorrect, please assign [this post](https://www.reddit.com{post.permalink}) "
+                    f"a different and accurate language category."
+                    f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
+                )
+                logger.info(
+                    f"[ZW] Posts: AI assessment of title performed for '{post.title}' | `{post.id}`."
+                )
+            else:
+                updating_subject = "AI Parsed Title and Assigned Language (Test Mode)"
+                updating_reason = (
+                    f"Passed to AI service; AI assessed it as **{result.final_text}** (`{result.final_code}`). "
+                    f"Test mode - no post object available."
+                )
+                logger.info(
+                    f"[ZW] Posts: AI assessment of title performed for test title."
+                )
 
         else:
             # AI parsing failed. Assign generic categories.
             result.add_final_code("generic")
             result.add_final_text("Generic")
 
-            updating_subject = "AI Unable to Parse Title; No Language Assigned"
-            updating_reason = (
-                "Completely unable to parse this post's language; assigned a generic category. "
-                f"Please check and assign [this post](https://www.reddit.com{post.permalink}) a language category."
-                f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
-            )
-            logger.info(
-                f"[ZW] Posts: AI assessment of title failed for '{post.title}' | `{post.id}`. "
-                "Assigned completely generic category."
-            )
+            # Only construct Discord message if post object exists
+            if post:
+                updating_subject = "AI Unable to Parse Title; No Language Assigned"
+                updating_reason = (
+                    "Completely unable to parse this post's language; assigned a generic category. "
+                    f"Please check and assign [this post](https://www.reddit.com{post.permalink}) a language category."
+                    f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
+                )
+                logger.info(
+                    f"[ZW] Posts: AI assessment of title failed for '{post.title}' | `{post.id}`. "
+                    "Assigned completely generic category."
+                )
+            else:
+                updating_subject = "AI Unable to Parse Title (Test Mode)"
+                updating_reason = (
+                    "Completely unable to parse this post's language; assigned a generic category. "
+                    "Test mode - no post object available."
+                )
+                logger.info(
+                    "[ZW] Posts: AI assessment of title failed for test title. "
+                    "Assigned completely generic category."
+                )
 
-        if discord_notify:
+        if discord_notify and post:  # Only send Discord alert if post exists
             send_discord_alert(updating_subject, updating_reason, "report")
 
     # Update the Titolo with the best selection for flair.
