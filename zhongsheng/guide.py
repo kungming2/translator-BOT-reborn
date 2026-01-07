@@ -19,7 +19,7 @@ COMMAND_DESCRIPTIONS = {
     "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `/cjk c 翻译`)",
     "error": "Display the 3 most recent error log entries",
     "describe": "Generate an AI alt-text description of an image from a URL",
-    "office": "Get a random quote from *The Office (US)*",
+    "status": "Get a random quote from *The Office (US)* and see the last actions by the bot",
     "notif": "Manage user notification subscriptions for r/translator. "
     "Use `/notif add [username] [languages]` to add language subscriptions, "
     "`/notif status [username]` to view current subscriptions and usage statistics, "
@@ -38,7 +38,7 @@ COMMAND_ROLES = {
     "describe": ["Moderator", "Helper"],
     "filter": ["Moderator", "Helper"],
     "guide": ["Moderator", "Helper"],
-    "office": ["Moderator", "Helper"],
+    "status": ["Moderator", "Helper"],
     "notif": ["Moderator"],
 }
 
