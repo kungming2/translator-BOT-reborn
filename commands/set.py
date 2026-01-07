@@ -47,12 +47,29 @@ def handle(comment, _instruo, komando, ajo) -> None:
         kunulo_object.delete(tag)
 
     # Message the mod who called this command.
-    new_language = komando.data[0]  # Lingvo
-    set_msg: str = (
-        f"{new_language.greetings} moderator u/{comment.author},\n\n"
-        f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
-        f"{new_language.name} (`{new_language.preferred_code}`)."
-    )
+    languages = komando.data  # List of Lingvo objects
+    if len(languages) == 1:
+        new_language = languages[0]
+        set_msg: str = (
+            f"{new_language.greetings}, moderator u/{comment.author},\n\n"
+            f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
+            f"{new_language.name} (`{new_language.preferred_code}`)."
+        )
+    else:
+        # Multiple languages - collate greetings (excluding "Hello")
+        greetings = [lang.greetings for lang in languages if lang.greetings != "Hello"]
+        greeting_string = " / ".join(greetings) if greetings else "Hello"
+
+        # Build the language list string
+        lang_parts = [f"{lang.name} (`{lang.preferred_code}`)" for lang in languages]
+        lang_string = ", ".join(lang_parts[:-1]) + f", and {lang_parts[-1]}"
+
+        set_msg: str = (
+            f"{greeting_string}, moderator u/{comment.author},\n\n"
+            f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the languages "
+            f"{lang_string}."
+        )
+
     message_send(
         comment.author, subject="[Notification] !set command successful", body=set_msg
     )
