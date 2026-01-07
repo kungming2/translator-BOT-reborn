@@ -324,11 +324,18 @@ TITLE_PARSING_QUERY: >
   the source_language name as "Unknown", and the source_language code as
   "unknown".
 
-  Use ISO 639-1 codes for the languages if they are available with ISO 639-3
-  as a fallback if 639-1 codes do not exist for that language. If a 
-  source or target language cannot be assessed, return a blank dictionary 
-  ({{}}) for that language. Both source and target languages must have 
-  an ISO 639 code to be valid, unless the source is "Unknown".
+  CRITICAL: You MUST use ISO 639-1 codes (2 letters, e.g., "en", "es", "fr") 
+  OR ISO 639-3 codes (3 letters, e.g., "eng", "spa", "fra") ONLY. 
+  Do NOT use ISO 639-2 or ISO 639-5 codes under any circumstances.
+
+  Use ISO 639-1 codes when available (preferred). Use ISO 639-3 codes ONLY 
+  as a fallback for languages that do not have an ISO 639-1 code.
+
+  Both source and target languages must have a valid ISO 639-1 or ISO 639-3 
+  code to be included in the response, unless the source is "Unknown".
+
+  If a source or target language cannot be assessed or does not have a valid
+  ISO 639-1 or 639-3 code, return a blank dictionary ({{}}) for that language.
 
   This is the post title:
 
