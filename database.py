@@ -33,7 +33,8 @@ import pprint
 import sqlite3
 import time
 from ast import literal_eval
-from typing import TYPE_CHECKING, Any
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from config import SETTINGS, Paths, logger
 from time_handling import convert_to_day
@@ -325,7 +326,7 @@ def record_activity_csv(data_tuple: tuple) -> None:
     :param data_tuple: Tuple of data to write as a CSV row.
     """
     with open(Paths.LOGS["ACTIVITY"], mode="a", newline="") as csv_file:
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+        writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)  # type: ignore[arg-type]
         writer.writerow(data_tuple)
 
 
@@ -584,6 +585,83 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
         import traceback
 
         traceback.print_exc()
+
+
+def get_recent_event_log_lines(
+        num_lines: int = 5,
+        tag: Optional[str] = None
+) -> Tuple[str, str]:
+    """
+    Extract the last N lines from a log file and find the last event with a specific tag.
+
+    Args:
+        num_lines: Number of lines to extract from the end of the file (default: 5)
+        tag: Tag to search for in brackets, e.g. 'ZW' to find '[ZW]' (default: None)
+
+    Returns:
+        A tuple of (log_content, time_ago) where:
+        - log_content: String containing the last N lines formatted in a code block
+        - time_ago: String describing how long ago the last tagged event occurred
+
+    Raises:
+        FileNotFoundError: If the log file doesn't exist
+        Exception: For other errors during file reading or parsing
+    """
+
+    # Read the last N lines from the file
+    with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        last_n = lines[-num_lines:] if len(lines) >= num_lines else lines
+
+    if not last_n:
+        raise ValueError("Log file is empty")
+
+    # Format the log content
+    log_content = "```\n" + "".join(last_n) + "```"
+
+    # If no tag specified, return just the log content
+    if tag is None:
+        return log_content, "no tag specified"
+
+    # Find the last line with the specified tag
+    tag_pattern = f"[{tag.upper()}]"
+    tagged_lines = [line for line in last_n if tag_pattern in line]
+
+    if not tagged_lines:
+        time_ago = f"no {tag} events found"
+    else:
+        last_tagged_line = tagged_lines[-1].strip()
+        try:
+            # Extract timestamp from format: INFO: 2026-01-07T19:45:59Z - ...
+            timestamp_str = last_tagged_line.split(" - ")[0].split(": ")[1]
+            last_event_time = datetime.fromisoformat(
+                timestamp_str.replace("Z", "+00:00")
+            )
+            current_time = datetime.now(timezone.utc)
+
+            # Calculate time delta
+            delta = current_time - last_event_time
+            delta_seconds = delta.total_seconds()
+
+            # Format the time difference
+            if delta_seconds < 60:  # Less than 1 minute
+                seconds = int(delta_seconds)
+                time_ago = f"{seconds} second{'s' if seconds != 1 else ''} ago"
+            elif delta_seconds < 3600:  # Less than 1 hour
+                minutes = int(delta_seconds / 60)
+                time_ago = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+            else:  # 1 hour or more
+                hours = delta_seconds / 3600
+                if hours < 48:  # Less than 2 days, show in hours
+                    hours_int = int(hours)
+                    time_ago = f"{hours_int} hour{'s' if hours_int != 1 else ''} ago"
+                else:  # 2 days or more
+                    days = int(hours / 24)
+                    time_ago = f"{days} day{'s' if days != 1 else ''} ago"
+        except (IndexError, ValueError):
+            time_ago = "unknown"
+
+    return log_content, time_ago
 
 
 def _show_menu() -> None:
