@@ -1,6 +1,14 @@
 bot_name: Ziwen
 subreddit: translator
 testing_mode: false  # Very important variable!
+
+bot_shortform_tags:
+  Ziwen: ZW
+  Wenyuan: WY
+  Zhongsheng: ZS
+  Wenju: WJ
+  Chinese Reference: CCREF
+
 commands_with_args:
   - "!id:"
   - "!identify:"

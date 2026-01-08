@@ -35,6 +35,7 @@ import yaml
 
 from config import SETTINGS, Paths, logger
 from connection import REDDIT
+from database import get_recent_event_log_lines
 from time_handling import get_current_utc_time, time_convert_to_string
 
 
@@ -171,12 +172,24 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
 
         # Get contextual info
         last_post_text = _record_last_post_and_comment()
+        # This will match stuff like "Ziwen Main" to "ZW"
+        bot_tag = next(
+            (
+                tag
+                for name, tag in SETTINGS["bot_shortform_tags"].items()
+                if bot_version.startswith(name)
+            ),
+            None,
+        )
+        # We just need the last few events from the time (no time delta)
+        last_events = get_recent_event_log_lines(10, bot_tag)[0]
 
-        # Append new entry
+        # Append new entry to the error log.
         new_entry = {
             "timestamp": get_current_utc_time(),
             "bot_version": bot_version,
             "context": last_post_text,
+            "events": last_events,
             "error": error_save_entry,
             "resolved": False,
         }
