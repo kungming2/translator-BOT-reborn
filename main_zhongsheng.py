@@ -54,7 +54,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     else:
         # Log the error.
         logger.critical(
-            f"Critical error in command `/{ctx.command.name}` by user {ctx.author} "
+            f"[ZS] Critical error in command `/{ctx.command.name}` by user {ctx.author} "
             f"(ID: {ctx.author.id}): {type(error).__name__}: {error}",
             exc_info=error,  # This includes the full traceback
         )
@@ -65,7 +65,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
 async def on_command_completion(ctx: Context) -> None:
     """Log command usage when a command completes successfully."""
     logger.info(
-        f"Command `/{ctx.command.name}` called by user {ctx.author} "
+        f"[ZS] Command `/{ctx.command.name}` called by user {ctx.author} "
         f"(ID: {ctx.author.id}) in {ctx.guild.name}"
     )
 
@@ -80,7 +80,7 @@ async def before_command(ctx: Context) -> None:
                 ctx.kwargs[key] = value.strip().strip("`").strip()
 
     logger.info(
-        f"Invoking command `/{ctx.command.name}` by user {ctx.author} "
+        f"[ZS] Invoking command `/{ctx.command.name}` by user {ctx.author} "
         f"with args: {ctx.args[2:]} kwargs: {ctx.kwargs}"
     )
 
