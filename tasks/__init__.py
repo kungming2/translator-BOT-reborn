@@ -43,12 +43,12 @@ def run_schedule(schedule_name):
     executed_tasks = []
 
     for task_func in tasks_to_run:
-        logger.info(f"> Running {task_func.__name__}...")
+        logger.info(f"[WJ] > Running {task_func.__name__}...")
         try:
             task_func()
             executed_tasks.append(task_func.__name__)
         except Exception as e:
-            logger.error(f"> Error in {task_func.__name__}: {e}")
+            logger.error(f"[WJ] > Error in {task_func.__name__}: {e}")
 
     # Send Discord alert after all tasks have completed
     if executed_tasks:
