@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from praw.models import Submission
 
     from languages import Lingvo
+    from models.ajo import Ajo
 
 
 def points_retriever(username: str) -> str:
@@ -201,6 +202,7 @@ def points_tabulator(
     comment: Comment,
     original_post: "Submission",
     original_post_lingvo: "Lingvo",
+    ajo: "Ajo" = None
 ) -> None:
     """
     Tabulates points for a Reddit comment based on detected translation
@@ -209,8 +211,7 @@ def points_tabulator(
     :param comment: The PRAW comment object for which we are assessing points.
     :param original_post: The post on which the comment was originally posted.
     :param original_post_lingvo: The Lingvo associated with the original post.
-                                 Note that this is a single object; since
-                                 points are allocated depending on a language.
+    :param ajo: Optional Ajo object for the post. If not provided, will be loaded.
     """
     # Early return if lingvo is None
     if original_post_lingvo is None:
@@ -229,13 +230,12 @@ def points_tabulator(
         op_author = original_post.author.name
     else:
         op_author = "[deleted]"
-    comment_author = instruo.author_comment  # String, not a PRAW object.
+    comment_author = instruo.author_comment
 
     if not comment_author or comment_author.lower() in (
         "automoderator",
         USERNAME.lower(),
     ):
-        # Ignore bot comments.
         logger.debug(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
         return
 
@@ -247,7 +247,16 @@ def points_tabulator(
         and len(body) < 20
     ):
         logger.info(f"[ZW] Skipping short OP thank-you comment `{comment.id}`")
-        return  # Short thank-you from the OP, not meaningful
+        return
+
+    # Load Ajo if not provided
+    if ajo is None:
+        ajo = ajo_loader(original_post.id)
+        if ajo is None:
+            logger.warning(
+                f"[ZW] Points tabulator: Could not load Ajo for post `{original_post.id}`"
+            )
+            # Continue without Ajo - we can still award points
 
     # Determine worth of the translation based on language
     logger.info(
@@ -257,28 +266,18 @@ def points_tabulator(
     try:
         multiplier = points_worth_determiner(original_post_lingvo)
     except ValueError:
-        # It's a language not marked on the wiki.
         multiplier = 20
 
     logger.debug(f"[ZW] Points tabulator: {language_name}, multiplier: {multiplier}")
 
-    commands = extract_commands_from_text(body)  # Returns a List[Komando]
+    commands = extract_commands_from_text(body)
     points_status = []
     comment_id = instruo.id_comment
 
     points = 0
-    final_translator = None
-    final_translator_points = 0
+    translators_to_record = []  # FIX: Track multiple translators instead of just one
 
     def get_parent_author(checked_comment: Comment) -> tuple[str | None, str | None]:
-        """
-        Given a PRAW comment object, returns the author's name and
-        ID of the parent comment (if applicable).
-
-        Returns:
-            (author_name, parent_id) if the parent is a comment,
-            (None, None) if parent is deleted or a submission.
-        """
         try:
             parent = checked_comment.parent()
             if isinstance(parent, Comment) and parent.author:
@@ -287,9 +286,9 @@ def points_tabulator(
             logger.warning(f"Failed to get parent author: {e}")
         return None, None
 
-    # Iterating over the Komando objects.
+    # Iterating over the Komando objects
     for cmd in commands:
-        name = cmd.name  # We only need the name of the command.
+        name = cmd.name
 
         if name in {"translated", "doublecheck"}:
             if instruo.author_comment != op_author:
@@ -298,38 +297,89 @@ def points_tabulator(
                     and name == "translated"
                     and any(k in body for k in SETTINGS["verifying_keywords"])
                 ):
-                    # Likely a verification for another translation.
+                    # Verification case: crediting parent comment author
                     parent_author, parent_comment = get_parent_author(comment)
                     if parent_author:
-                        final_translator = parent_author
-                        final_translator_points += 1 + multiplier
+                        # Credit the parent author as translator
+                        if parent_author not in translators_to_record:
+                            translators_to_record.append(parent_author)
+                        _update_points_status(
+                            points_status, parent_author, 1 + multiplier
+                        )
+                        # Credit verifier with smaller points
                         points += 1
-                        logger.debug(
-                            f"[ZW] Verify: u/{comment_author} confirms u/{final_translator} in {parent_comment}"
+                        logger.info(
+                            f"[ZW] Verify: u/{comment_author} confirms u/{parent_author} in {parent_comment}"
+                        )
+
+                        # Create mod note for the translator being verified
+                        translator_note = (
+                            f"Helped translate https://redd.it/{original_post.id} "
+                            f"({original_post_lingvo.name})"
+                        )
+                        create_mod_note(
+                            label="SOLID_CONTRIBUTOR",
+                            username=parent_author,
+                            included_note=translator_note,
+                        )
+
+                        # Create mod note for the verifier
+                        verifier_note = (
+                            f"Verified translation on https://redd.it/{original_post.id} "
+                            f"({original_post_lingvo.name})"
+                        )
+                        create_mod_note(
+                            label="HELPFUL_USER",
+                            username=comment_author,
+                            included_note=verifier_note,
                         )
                 else:
+                    # Direct translation case: this user is the translator
                     points += 1 + multiplier
-                    logger.debug(f"[ZW] Translation: Detected by u/{comment_author}")
+                    if comment_author not in translators_to_record:
+                        translators_to_record.append(comment_author)
+                    logger.info(f"[ZW] Translation: Detected by u/{comment_author}")
+
+                    # Create mod note for translator
+                    translator_note = (
+                        f"Helped translate https://redd.it/{original_post.id} "
+                        f"({original_post_lingvo.name})"
+                    )
+                    create_mod_note(
+                        label="SOLID_CONTRIBUTOR",
+                        username=comment_author,
+                        included_note=translator_note,
+                    )
+
             elif comment.author and comment.author.name == op_author and len(body) > 13:
-                # OP is marking a translation but is giving more explanation
+                # OP is marking a translation with explanation
                 parent_author, parent_comment = get_parent_author(comment)
                 if parent_author and parent_author != op_author:
-                    final_translator = parent_author
-                    final_translator_points += 1 + multiplier
-                    logger.debug(
-                        f"[ZW] OP delegated !translated to u/{final_translator}"
+                    if parent_author not in translators_to_record:
+                        translators_to_record.append(parent_author)
+                    _update_points_status(points_status, parent_author, 1 + multiplier)
+                    logger.info(f"[ZW] OP delegated !translated to u/{parent_author}")
+
+                    # Create mod note for translator credited by OP
+                    translator_note = (
+                        f"Helped translate https://redd.it/{original_post.id} "
+                        f"({original_post_lingvo.name})"
                     )
+                    create_mod_note(
+                        label="SOLID_CONTRIBUTOR",
+                        username=parent_author,
+                        included_note=translator_note,
+                    )
+
             elif len(body) < 13:
                 # Very short cleanup !translated post
                 parent_author, parent_comment = get_parent_author(comment)
                 if parent_author:
-                    final_translator = parent_author
-                    if (
-                        final_translator != comment_author
-                        and comment_author != op_author
-                    ):
-                        points += 1
+                    if parent_author not in translators_to_record:
+                        translators_to_record.append(parent_author)
 
+                    if parent_author != comment_author and comment_author != op_author:
+                        points += 1
                         # Credit the person who helped mark the translation
                         helper_note = (
                             f"Marked translation as complete on https://redd.it/{original_post.id} "
@@ -341,10 +391,22 @@ def points_tabulator(
                             included_note=helper_note,
                         )
 
-                    final_translator_points += 1 + multiplier
-                    logger.debug(
-                        f"[ZW] Cleanup mark: u/{comment_author} marked u/{final_translator}'s work."
+                    _update_points_status(points_status, parent_author, 1 + multiplier)
+                    logger.info(
+                        f"[ZW] Cleanup mark: u/{comment_author} marked u/{parent_author}'s work."
                     )
+
+                    # Create mod note for the translator being credited
+                    translator_note = (
+                        f"Helped translate https://redd.it/{original_post.id} "
+                        f"({original_post_lingvo.name})"
+                    )
+                    create_mod_note(
+                        label="SOLID_CONTRIBUTOR",
+                        username=parent_author,
+                        included_note=translator_note,
+                    )
+
         elif name == "identify":
             points += 3
         elif name in {"claim", "page", "search", "missing"}:
@@ -355,62 +417,73 @@ def points_tabulator(
             points += 1
         else:
             logger.debug(f"[Points] No point value set for command: {name}")
+
     logger.info(
         f"[ZW] Commands processed for comment `{comment.id}`: {len(commands)} commands, "
         f"total preliminary points {points}"
     )
 
     if len(body) > 120 and comment_author != op_author:
-        # Long-form comments (not from OP)
         points += 1 + int(round(0.25 * multiplier))
 
-    # OP short thank-you cases.
+    # OP short thank-you cases
     if (
         comment_author == op_author
         and any(k in body for k in SETTINGS["thanks_keywords"])
         and len(body) < 20
     ):
-        logger.debug(f"[ZW] OP short thank-you from u/{comment_author}")
+        logger.info(f"[ZW] OP short thank-you from u/{comment_author}")
         parent_author, parent_comment = get_parent_author(comment)
         if parent_author:
-            final_translator = parent_author
-            final_translator_points += 1 + multiplier
+            if parent_author not in translators_to_record:
+                translators_to_record.append(parent_author)
+
+            # Check if we already awarded points to avoid double-crediting
             cursor_main.execute(
                 "SELECT points, post_id FROM total_points WHERE username = ? AND post_id = ?",
-                (final_translator, original_post.id),
+                (parent_author, original_post.id),
             )
+            already_credited = False
             for rec_points, rec_post_id in cursor_main.fetchall():
                 if (
-                    int(rec_points) == final_translator_points
+                    int(rec_points) == (1 + multiplier)
                     and rec_post_id == original_post.id
                 ):
-                    final_translator_points = 0
+                    already_credited = True
+                    break
 
-    # Points assignment
+            if not already_credited:
+                _update_points_status(points_status, parent_author, 1 + multiplier)
+
+            # Create mod note for translator credited by OP thank-you
+            translator_note = (
+                f"Helped translate https://redd.it/{original_post.id} "
+                f"({original_post_lingvo.name})"
+            )
+            create_mod_note(
+                label="SOLID_CONTRIBUTOR",
+                username=parent_author,
+                included_note=translator_note,
+            )
+
+    # Final points assignment for comment author
     _update_points_status(points_status, comment_author, points)
-
-    if final_translator_points:
-        _update_points_status(points_status, final_translator, final_translator_points)
 
     # Filter out any 0-point entries
     results = [entry for entry in points_status if entry[1] != 0]
 
-    # Record translator to Ajo
-    if final_translator:
-        ajo_w_points = ajo_loader(original_post.id)
-        if ajo_w_points:
-            ajo_w_points.add_translators(final_translator)
-            ajo_writer(ajo_w_points)
+    # Record ALL translators to Ajo - FIX: Record multiple translators
+    if translators_to_record and ajo:
+        for translator in translators_to_record:
+            ajo.add_translators(translator)
+            logger.info(
+                f"[ZW] Added u/{translator} to Ajo translators for `{original_post.id}`"
+            )
 
-        # Create mod note for the translator
-        included_note = (
-            f"Helped translate https://redd.it/{original_post.id} "
-            f"({original_post_lingvo.name})"
-        )
-        create_mod_note(
-            label="SOLID_CONTRIBUTOR",
-            username=final_translator,
-            included_note=included_note,
+        # Write updated Ajo once after adding all translators
+        ajo_writer(ajo)
+        logger.info(
+            f"[ZW] Recorded {len(translators_to_record)} translator(s) to Ajo: {', '.join(translators_to_record)}"
         )
 
     # Write to DB
@@ -418,7 +491,7 @@ def points_tabulator(
         f"[ZW] Writing {len(results)} point record(s) to DB for comment `{comment.id}`"
     )
     for username, user_points in results:
-        logger.debug(f"[ZW] Writing: ({username}, {user_points})")
+        logger.debug(f"[ZW] Writing: ({username} with {user_points} points)")
         cursor_main.execute(
             "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
             (month_string, comment_id, username, str(user_points), original_post.id),
