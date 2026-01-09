@@ -453,7 +453,8 @@ class Ajo:
     def to_dict(self):
         """
         Serialize only JSON-safe fields of this Ajo object.
-        Excludes internal and derived attributes like `_lingvo`, `language_name`, `is_supported`, etc.
+        Excludes internal and derived attributes like `_lingvo`, `_submission`,
+        and computed properties like `language_name`, `is_supported`, etc.
         """
 
         def lingvo_list_to_names(lingvo_list):
@@ -462,29 +463,41 @@ class Ajo:
             return [lv.name if hasattr(lv, "name") else str(lv) for lv in lingvo_list]
 
         return {
+            # Immutable core fields
             "id": self.id,
             "created_utc": self.created_utc,
             "author": self.author,
+            # Title and direction info
             "title_original": self.title_original,
             "title": self.title,
             "direction": self.direction,
+            # Language identification
             "preferred_code": self.preferred_code,
             "language_history": self.language_history or [],
-            "status": self.status or "untranslated",
-            "output_post_flair_css": self.output_post_flair_css,
-            "output_post_flair_text": self.output_post_flair_text,
             "original_source_language_name": lingvo_list_to_names(
                 self.original_source_language_name
             ),
             "original_target_language_name": lingvo_list_to_names(
                 self.original_target_language_name
             ),
+            # Status tracking
+            "status": self.status or "untranslated",
+            "output_post_flair_css": self.output_post_flair_css,
+            "output_post_flair_text": self.output_post_flair_text,
+            # Boolean flags
             "is_identified": bool(self.is_identified),
             "is_long": bool(self.is_long),
-            "image_hash": self.image_hash,
-            "type": self.type or "single",
             "is_defined_multiple": bool(self.is_defined_multiple),
             "closed_out": bool(self.closed_out),
+            # Type classification
+            "type": self.type or "single",
+            # Media
+            "image_hash": self.image_hash,
+            # Tracking lists and timestamps
+            "recorded_translators": self.recorded_translators or [],
+            "notified": self.notified or [],
+            "time_delta": self.time_delta or {},
+            "author_messaged": bool(self.author_messaged),
         }
 
     @classmethod
@@ -553,12 +566,18 @@ class Ajo:
             if hasattr(ajo, key):
                 setattr(ajo, key, value)
 
-        # Compatibility defaults
+        # Compatibility defaults - ensure all tracking fields are initialized
         ajo.language_history = data.get("language_history", [])
         ajo.status = data.get("status", "untranslated")
         ajo.is_identified = data.get("is_identified", False)
         ajo.is_long = data.get("is_long", False)
         ajo.closed_out = data.get("closed_out", False)
+
+        # Initialize tracking fields with proper defaults
+        ajo.recorded_translators = data.get("recorded_translators", [])
+        ajo.notified = data.get("notified", [])
+        ajo.time_delta = data.get("time_delta", {})
+        ajo.author_messaged = data.get("author_messaged", False)
 
         # Normalize language name fields
         ajo.original_source_language_name = _normalize_lang_field(
