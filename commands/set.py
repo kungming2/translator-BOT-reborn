@@ -27,6 +27,17 @@ def handle(comment, _instruo, komando, ajo) -> None:
         f"[ZW] Bot: COMMAND: !set, from moderator u/{comment.author} on `{ajo.id}`."
     )
 
+    # Invalid identification data.
+    if not komando.data or None in komando.data:
+        logger.error(f"Invalid or missing Komando data: {komando.data}")
+        message_send(
+            comment.author,
+            "[Notification] Invalid !set language",
+            RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
+        )
+        logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
+        return
+
     # Update the Ajo's language(s) post.
     try:
         update_language(ajo, komando)
@@ -35,7 +46,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         message_send(
             comment.author,
             "[Notification] Invalid !set language",
-            RESPONSE.COMMENT_LANGUAGE_NO_RESULTS,
+            RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
         logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
         return

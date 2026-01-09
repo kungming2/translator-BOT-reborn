@@ -42,8 +42,13 @@ def handle(comment, instruo, komando, ajo) -> None:
     permission_to_send: bool = _send_notifications_okay(instruo, ajo)
 
     # Invalid identification data.
-    if not komando.data:
-        logger.error("No Komando data found!")
+    if not komando.data or None in komando.data:
+        logger.error(f"Invalid or missing Komando data: {komando.data}")
+        invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
+            id_comment_body=comment.body
+        )
+        comment_reply(comment, invalid_text)
+        logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
         return
 
     logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author} on `{ajo.id}`.")
@@ -54,7 +59,9 @@ def handle(comment, instruo, komando, ajo) -> None:
         update_language(ajo, komando)
     except ValueError as e:
         logger.error(f"[ZW] Bot: !identify data is invalid: {e}")
-        invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS
+        invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
+            id_comment_body=comment.body
+        )
         comment_reply(comment, invalid_text)
         logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
         return
