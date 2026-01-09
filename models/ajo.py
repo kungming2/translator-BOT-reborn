@@ -375,7 +375,10 @@ class Ajo:
                 ajo.is_defined_multiple = True
                 ajo.type = "multiple"
             # Check if this is a non-defined multiple (a standard "Multiple Languages" request)
-            elif titolo.final_code == "multiple" or titolo.final_text == "Multiple Languages":
+            elif (
+                titolo.final_code == "multiple"
+                or titolo.final_text == "Multiple Languages"
+            ):
                 ajo.language_history = [titolo.final_code]
                 ajo.status = "untranslated"
                 ajo.is_defined_multiple = False
@@ -814,7 +817,9 @@ class Ajo:
 
         if translator_name not in self.recorded_translators:
             self.recorded_translators.append(translator_name)
-            logger.debug(f"[ZW] Ajo: Added translator name u/{translator_name}.")
+            logger.debug(
+                f"[ZW] Ajo: Added translator to recorded translators: u/{translator_name}."
+            )
 
     def add_notified(self, notified_list: List[str]) -> None:
         """
