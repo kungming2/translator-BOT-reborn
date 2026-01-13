@@ -101,7 +101,7 @@ def ziwen_posts(post_limit=None):
     dupes_removed = duplicate_detector(
         list_posts=posts,
         reddit_instance=REDDIT,
-        testing_mode=SETTINGS["testing_mode"],
+        testing_mode=True,
     )
     if dupes_removed:
         logger.info(
@@ -164,7 +164,8 @@ def ziwen_posts(post_limit=None):
 
         # Apply a filtration test to make sure this post is valid.
         logger.info(
-            f"[ZW] Posts: About to filter post `{post_id}` with title: {post_title} | `{post_id}`"
+            f"[ZW] Posts: About to assess filtration for post `{post_id}` with title: "
+            f"{post_title} | `{post_id}`"
         )
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
         logger.info(
