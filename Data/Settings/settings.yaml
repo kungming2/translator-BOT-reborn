@@ -90,10 +90,13 @@ verifying_keywords:
   - agree
   - approve
   - concur
+  - confirm
   - good job
   - good work
   - is correct
   - is right
+  - looks good
+  - looks right
   - verified
   - verify
   - well done
@@ -112,6 +115,9 @@ defined_multiple_legend:
 internal_post_types:
   - community
   - meta
+
+# Regular cron job cycle run time (in minutes)
+cycle_time: 5.0
 
 # This is how many posts or comments Ziwen will retrieve all at once.
 # PRAW can download 100 at a time.

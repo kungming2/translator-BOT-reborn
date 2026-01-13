@@ -139,7 +139,7 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
 
   If someone else is reading this and knows {language_name}, please [sign up for notifications for that
   language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
-  if you would like to be notified for future posts for it! [](#comment_no_language)\n\n'
+  if you would like to be notified for future posts for it! [](#comment_no_language)'
 COMMENT_LANGUAGE_NO_RESULTS: |
   Sorry, but your identification appears to be an invalid language name or code.
   

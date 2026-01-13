@@ -11,9 +11,10 @@ import traceback
 
 import psutil
 
-from config import logger, TRANSIENT_ERRORS
+from config import SETTINGS, TRANSIENT_ERRORS, logger
 from connection import REDDIT, USERNAME
 from database import record_activity_csv
+from discord_utils import send_discord_alert
 from edit_tracker import edit_tracker, progress_tracker
 from error import error_log_extended
 from processes.ziwen_commands import ziwen_commands
@@ -85,3 +86,21 @@ if __name__ == "__main__":
         )
         record_activity_csv(run_information)
         logger.info(f"[ZW] Main: Run {elapsed_time:.2f} minutes.")
+
+        # Send Discord alert if run took longer than 5 minutes
+        cycle_time = SETTINGS["cycle_time"]
+        if elapsed_time > cycle_time:
+            alert_subject = "Long Run Time Alert"
+            alert_message = (
+                f"Run took {elapsed_time:.2f} minutes (> {cycle_time} minutes)\n"
+                f"API calls used: {used_calls}\n"
+                f"Memory usage: {mem_usage}"
+            )
+            send_discord_alert(
+                subject=alert_subject,
+                message=alert_message,
+                webhook_name="alert",
+            )
+            logger.warning(
+                f"[ZW] Discord alert sent for overly-long run time: {elapsed_time:.2f} minutes."
+            )
