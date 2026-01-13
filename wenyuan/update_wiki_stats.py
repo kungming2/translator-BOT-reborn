@@ -25,10 +25,8 @@ WY_NEW_HEADER = (
 # Utility codes that get special handling
 UTILITY_CODES = [
     "Unknown",
-    "Generic",
     "Nonlanguage",
     "Conlang",
-    "App",
     "Multiple Languages",
 ]
 
@@ -86,6 +84,10 @@ def cerbo_wiki_editor(
     underscore_name = underscore_name.replace("<", "")
     underscore_name = underscore_name.replace(">", "")
 
+    # Special case: "Multiple Languages" wiki page is at /wiki/multiple
+    if language_name == "Multiple Languages":
+        underscore_name = "multiple"
+
     # Fetch the wikipage for the language.
     page_content = r.wiki[underscore_name]  # Get it.
 
@@ -106,12 +108,12 @@ def cerbo_wiki_editor(
                     reason=f"Updating with data from {month_year_chunk}",
                 )
                 logger.info(
-                    f"Updated wiki entry for {language_name} statistics "
+                    f"[WY] Updated wiki entry for {language_name} statistics "
                     f"for the month of {month_year_chunk}."
                 )
             else:  # Entry already exists
                 logger.info(
-                    f"Wiki entry exists for {language_name} in {month_year_chunk}."
+                    f"[WY] Wiki entry exists for {language_name} in {month_year_chunk}."
                 )
         except prawcore.exceptions.NotFound:
             # Problem with the WikiPage... it doesn't exist.
@@ -124,19 +126,19 @@ def cerbo_wiki_editor(
                 content=template_content,
                 reason=f"Creating a new statistics wiki page for {language_name}",
             )
-            logger.info(f"Created a new wiki page for {language_name}")
+            logger.info(f"[WY] Created a new wiki page for {language_name}")
             # Adds this month's entry to the data from the wikipage
             page_content_new = template_content + wiki_language_line
             page_content.edit(
                 content=page_content_new,
                 reason=f"Updating with data from {month_year_chunk}",
             )
-            logger.info(f"Updated wiki entry for {language_name} in {month_year_chunk}")
+            logger.info(f"[WY] Updated wiki entry for {language_name} in {month_year_chunk}")
         except RedditAPIException:
             # Problem with the WikiPage... it doesn't exist.
-            logger.warning(f"Error with {language_name}")
+            logger.warning(f"[WY] Error with {language_name}")
     else:
-        # Code for editing utility pages (app, unknown, etc.)
+        # Code for editing utility pages (unknown, conlang etc.)
         try:
             if month_year_chunk not in str(page_content.content_md):
                 page_content_new = str(page_content.content_md) + wiki_language_line
@@ -145,14 +147,14 @@ def cerbo_wiki_editor(
                     reason=f"Updating with data from {month_year_chunk}",
                 )
                 logger.info(
-                    f"Updated wiki function entry for {language_name} in {month_year_chunk}"
+                    f"[WY] Updated wiki function entry for {language_name} in {month_year_chunk}"
                 )
             else:  # Entry already exists
                 logger.info(
-                    f"Wiki function entry exists for {language_name} in {month_year_chunk}"
+                    f"[WY] Wiki function entry exists for {language_name} in {month_year_chunk}"
                 )
         except prawcore.exceptions.NotFound:
-            logger.warning(f"Wiki page not found for utility code {language_name}")
+            logger.warning(f"[WY] Wiki page not found for utility code {language_name}")
 
     return
 
@@ -176,14 +178,14 @@ def update_monthly_wiki_page(month_year, formatted_content):
 
         # Check if content already exists (avoid duplicate posts)
         if "## Overall Statistics" in str(page_content.content_md):
-            logger.info(f"Wiki page already exists for {month_year}")
+            logger.info(f"[WY] Wiki page already exists for {month_year}")
             return f"https://www.reddit.com/r/translator/wiki/{wiki_page_name}"
         else:
             # Update the page
             page_content.edit(
                 content=formatted_content, reason=f"Monthly statistics for {month_year}"
             )
-            logger.info(f"Updated wiki page for {month_year}")
+            logger.info(f"[WY] Updated wiki page for {month_year}")
             return f"https://www.reddit.com/r/translator/wiki/{wiki_page_name}"
 
     except prawcore.exceptions.NotFound:
@@ -194,13 +196,13 @@ def update_monthly_wiki_page(month_year, formatted_content):
                 content=formatted_content,
                 reason=f"Creating monthly statistics page for {month_year}",
             )
-            logger.info(f"Created new wiki page for {month_year}")
+            logger.info(f"[WY] Created new wiki page for {month_year}")
             return f"https://www.reddit.com/r/translator/wiki/{wiki_page_name}"
         except Exception as e:
-            logger.error(f"Error creating wiki page for {month_year}: {e}")
+            logger.error(f"[WY] Error creating wiki page for {month_year}: {e}")
             return None
     except Exception as e:
-        logger.error(f"Error updating wiki page for {month_year}: {e}")
+        logger.error(f"[WY] Error updating wiki page for {month_year}: {e}")
         return None
 
 
@@ -302,7 +304,7 @@ def update_statistics_index_page(month_year):
 
         # Check if entry already exists
         if wiki_page_name in str(page_content.content_md):
-            logger.info(f"Statistics index already contains entry for {month_year}")
+            logger.info(f"[WY] Statistics index already contains entry for {month_year}")
             return True
 
         # Find where to insert (assuming chronological order, newest first)
@@ -324,9 +326,9 @@ def update_statistics_index_page(month_year):
         page_content.edit(
             content=new_content, reason=f"Adding {month_name} {year} statistics"
         )
-        logger.info(f"Updated statistics index page with {month_year}")
+        logger.info(f"[WY] Updated statistics index page with {month_year}")
         return True
 
     except Exception as e:
-        logger.error(f"Error updating statistics index page: {e}")
+        logger.error(f"[WY] Error updating statistics index page: {e}")
         return False
