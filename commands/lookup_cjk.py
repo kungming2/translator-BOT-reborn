@@ -107,10 +107,14 @@ def _format_reply(lookup_results: list[str], ajo=None) -> str:
     if not ajo:
         return formatted_results
     else:
-        author_mention_tag: str = (
-            f"*u/{ajo.author} (OP), the following lookup results "
-            "may be of interest to your request.*\n\n"
-        )
+        # Tag the author if there is one.
+        if ajo.author:
+            author_mention_tag: str = (
+                f"*u/{ajo.author} (OP), the following lookup results "
+                "may be of interest to your request.*\n\n"
+            )
+        else:
+            author_mention_tag = ""
         return (
             author_mention_tag
             + formatted_results
