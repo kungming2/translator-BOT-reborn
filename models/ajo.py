@@ -1119,9 +1119,9 @@ def determine_flair_and_update(
                     output_flair_text = getattr(ajo, "script_name", "") + " (Script)"
     else:  # This is a multiple post.
         # Multiple post flair text
-        if code_tag is None:
-            output_flair_text = converter(output_flair_css).preferred_code
-        else:
+        if code_tag is None:  # Not defined
+            output_flair_text = "Multiple Languages"
+        else:  # Defined
             output_flair_text = f"Multiple Languages {code_tag}"
 
     # Update flair on Reddit if template exists
