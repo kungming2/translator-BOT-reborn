@@ -162,7 +162,7 @@ def create_post_entry(post, titolo_data) -> str:
     )
 
 
-def create_error_entry(post) -> str:
+def _generate_error_entry_line(post) -> str:
     """
     Create a formatted error entry for problematic posts.
 
@@ -210,7 +210,7 @@ def process_single_post(post, categories: PostCategories) -> float:
     """
     start_time = time.time()
 
-    titolo_data = process_title(post.title, post)
+    titolo_data = process_title(post.title, post, False)
     entry = create_post_entry(post, titolo_data)
     categorize_post(entry, titolo_data, categories)
 
@@ -293,7 +293,7 @@ def calculate_statistics(
 """
 
 
-def save_to_file(content: str) -> Path:
+def _save_to_file(content: str) -> Path:
     """
     Save content to a dated file in the reports directory.
 
@@ -306,6 +306,9 @@ def save_to_file(content: str) -> Path:
     # Resolve the output file path
     folder_to_save = get_reports_directory()
     output_path = Path(folder_to_save) / f"{today_date}_Title_Retrieval.md"
+
+    # Create the directory if it doesn't exist
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write the file
     output_path.write_text(content, encoding="utf-8")
@@ -355,7 +358,7 @@ def retrieve_titles_test(fetch_amount: int = 1000) -> None:
             processed_times.append(process_time)
         except Exception:
             # Handle problematic posts without stopping execution
-            error_entry = create_error_entry(post)
+            error_entry = _generate_error_entry_line(post)
             categories.display.append(error_entry)
             categories.problematic.append(error_entry)
 
@@ -369,8 +372,8 @@ def retrieve_titles_test(fetch_amount: int = 1000) -> None:
     # Display results
     print(full_document)
 
-    # Optionally save to file
-    save_to_file(full_document)
+    # Save to file
+    _save_to_file(full_document)
 
 
 if __name__ == "__main__":

@@ -106,11 +106,12 @@ def cerbo_wiki_editor(
                     reason=f"Updating with data from {month_year_chunk}",
                 )
                 logger.info(
-                    f"Updated wiki entry for {language_name} statistics during {month_year_chunk}"
+                    f"Updated wiki entry for {language_name} statistics "
+                    f"for the month of {month_year_chunk}."
                 )
             else:  # Entry already exists
                 logger.info(
-                    f"Wiki entry exists for {language_name} in {month_year_chunk}"
+                    f"Wiki entry exists for {language_name} in {month_year_chunk}."
                 )
         except prawcore.exceptions.NotFound:
             # Problem with the WikiPage... it doesn't exist.
@@ -262,16 +263,20 @@ def update_language_wiki_pages(lumo, month_year):
             f"{untranslated} | {stats['translation_percentage']}% | {ri_value} | --- |"
         )
 
-        # Update the wiki page
-        cerbo_wiki_editor(
-            language_name=lang,
-            language_family=lingvo.family if lingvo.family else "Unknown",
-            wiki_language_line=wiki_line,
-            month_year_chunk=month_year,
-        )
-        updated_count += 1
+        # Only update the wiki page if it's not a script code.
+        if len(lang_code) != 4:
+            # Update the wiki page
+            cerbo_wiki_editor(
+                language_name=lang,
+                language_family=lingvo.family if lingvo.family else "Unknown",
+                wiki_language_line=wiki_line,
+                month_year_chunk=month_year,
+            )
+            updated_count += 1
+        else:
+            logger.info(f"[WY] Skipping {lang} because it's a script code.")
 
-    logger.info(f"Updated {updated_count} language wiki pages")
+    logger.info(f"[WY] Updated {updated_count} language wiki pages")
     return updated_count
 
 
