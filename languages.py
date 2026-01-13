@@ -151,12 +151,12 @@ class Lingvo:
     def country_emoji(self):
         """
         Dynamically retrieves the country emoji for this language.
-        Uses get_language_emoji with the preferred code.
+        Uses _get_language_emoji with the preferred code.
 
         Returns:
             The country's flag emoji as a string, or empty string if not available.
         """
-        emoji = get_language_emoji(self.preferred_code)
+        emoji = _get_language_emoji(self.preferred_code)
         return emoji if emoji else None
 
 
@@ -821,7 +821,9 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
     result = sorted(
         final_lingvos.values(), key=lambda lingvo: lingvo.preferred_code.lower()
     )
-    logger.debug(f"[PARSE] Returning {len(result)} Lingvo objects: {[x.preferred_code for x in result]}")
+    logger.debug(
+        f"[PARSE] Returning {len(result)} Lingvo objects: {[x.preferred_code for x in result]}"
+    )
     return result
 
 
@@ -876,7 +878,7 @@ def get_country_emoji(country_name: str) -> str:
         return ""
 
 
-def get_language_emoji(language_code):
+def _get_language_emoji(language_code):
     """Intended for use primarily with ISO 639-1 codes."""
     if not language_code:
         return ""
@@ -1018,19 +1020,20 @@ def show_menu():
     print("\nSelect a test to run:")
     print("1. Converter test (enter a string to test with the converter)")
     print("2. Parse language list (enter a language list string to parse)")
+    print("3. Get country emoji (enter a country name to get its flag emoji)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     while True:
         show_menu()
-        choice = input("Enter your choice (1-2 or x): ")
+        choice = input("Enter your choice (1-3 or x): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2"]:
+        if choice not in ["1", "2", "3"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1044,6 +1047,7 @@ if __name__ == "__main__":
                     f"`{converter_result.preferred_code}`"
                 )
                 pprint(vars(converter_result))
+                print(f"Country flag emoji: {converter_result.country_emoji}")
             else:
                 print("Did not match anything.")
 
@@ -1054,3 +1058,13 @@ if __name__ == "__main__":
             )
             parse_result = parse_language_list(language_list_input)
             pprint(parse_result)
+
+        elif choice == "3":
+            print(pycountry.countries.search_fuzzy("Congo"))
+            country_input = input("Enter a country name: ")
+            emoji_result = get_country_emoji(country_input)
+
+            if emoji_result:
+                print(f"Country: {country_input} → Flag emoji: {emoji_result}")
+            else:
+                print(f"Could not find flag emoji for: {country_input}")

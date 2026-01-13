@@ -635,6 +635,8 @@ ary:
   - Moroccan Dareja
   - Moroccan Darija
   - Moroccan Dereja
+  - Darija
+  - Dārija
   population: 28421200
   supported: true
   thanks: ' شكرا بزاف'
@@ -697,6 +699,36 @@ ast:
   - Astur-Leonese
   - Asturian-Leonese
   population: 550000
+atj:
+  country: Canada
+  family: Algic
+  language_code_3: atj
+  link_ethnologue: https://www.ethnologue.com/language/atj
+  link_wikipedia: https://en.wikipedia.org/wiki/Atikamekw_language
+  name: Atikamekw
+  name_alternates:
+  - Atihkamekw
+  - Atikamek
+  - Attikamek
+  - Attimewk
+  - Tête de Boule
+  population: 6160
+auk:
+  country: Papua New Guinea
+  family: Torricelli
+  language_code_3: auk
+  link_ethnologue: https://www.ethnologue.com/language/auk
+  link_wikipedia: https://en.wikipedia.org/wiki/Heyo_language
+  name: Heyo
+  name_alternates:
+  - Arima
+  - Arinua
+  - Arinwa
+  - Lolopani
+  - Ruruhip
+  - Wan Wan
+  - Wanib
+  population: 2710
 av:
   country: Russian Federation
   family: North Caucasian
@@ -935,6 +967,17 @@ bbg:
   - Varama
   - Yibarambu
   population: 1000
+bcl:
+  country: Philippines
+  family: Austronesian
+  language_code_3: bcl
+  link_ethnologue: https://www.ethnologue.com/language/bcl
+  link_wikipedia: https://en.wikipedia.org/wiki/Central_Bikol
+  name: Central Bikol
+  name_alternates:
+  - Bikol
+  - Central Bicolano
+  population: 3890000
 bcq:
   country: Ethiopia
   family: Afro-Asiatic
@@ -1463,7 +1506,6 @@ bwg:
   - Balke
   - Chirue
   - Cibalke
-  - Rue
   population: 15000
 bxd:
   country: China
@@ -1945,6 +1987,15 @@ cs:
   subreddit: learnczech
   supported: true
   thanks: Dík
+csi:
+  country: United States
+  family: Miwok-Costanoan
+  language_code_3: csi
+  link_ethnologue: https://www.ethnologue.com/language/csi
+  link_wikipedia: https://en.wikipedia.org/wiki/Coast_Miwok_language
+  name: Coast Miwok
+  name_alternates: []
+  population: 200
 css:
   country: United States
   family: Miwok-Costanoan
@@ -2139,6 +2190,16 @@ dhi:
   name_alternates:
   - Dhemal
   population: 20880
+dib:
+  country: South Sudan
+  family: Nilo-Saharan
+  language_code_3: dib
+  link_ethnologue: https://www.ethnologue.com/language/dib
+  link_wikipedia: https://en.wikipedia.org/wiki/Dinka_language
+  name: South Central Dinka
+  name_alternates:
+  - Central Dinka
+  population: 250
 dmg:
   country: Malaysia
   family: Austronesian
@@ -3233,7 +3294,7 @@ got:
   - Gothisch; gotische
   population: 0
 gox:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_3: gox
   link_ethnologue: https://www.ethnologue.com/language/gox
@@ -3350,6 +3411,26 @@ gui:
   link_wikipedia: https://en.wikipedia.org/wiki/Eastern_Bolivian_Guaran%C3%AD_language
   name: Eastern Bolivian Guarani
   population: 125000
+guk:
+  country: Ethiopia
+  family: Nilo-Saharan
+  language_code_3: guk
+  link_ethnologue: https://www.ethnologue.com/language/guk
+  link_wikipedia: https://en.wikipedia.org/wiki/Gumuz_language
+  name: Gumuz
+  name_alternates:
+  - B’ega
+  - Bega-Tse
+  - Debatsa
+  - Debuga
+  - Dehenda
+  - Gombo
+  - Gumis
+  - Kadallu
+  - Mendeya
+  - Sa-B’aga
+  - Sigumza
+  population: 205380
 gul:
   country: United States
   family: Creole
@@ -3658,6 +3739,16 @@ hmd:
   - Northeastern Yunnan Miao
   - Ta Hwa Miao
   population: 300000
+hmm:
+  country: China
+  family: Hmong-Mien
+  language_code_3: hmm
+  link_ethnologue: https://www.ethnologue.com/language/hmm
+  link_wikipedia: https://en.wikipedia.org/wiki/Mashan_Miao_language
+  name: Central Mashan Hmong
+  name_alternates:
+  - Central Mashan Hmong
+  population: 70000
 hmn:
   country: China
   family: Hmong-Mien
@@ -3934,6 +4025,21 @@ ie:
   name_alternates:
   - Occidental
   population: 0
+ifa:
+  country: Philippines
+  family: Austronesian
+  language_code_3: ifa
+  link_ethnologue: https://www.ethnologue.com/language/ifa
+  link_wikipedia: https://en.wikipedia.org/wiki/Ifugao_language
+  name: Amganad Ifugao
+  name_alternates:
+  - Amganad
+  - Amganad Ifugao
+  - Central Ifugao
+  - Ifugao
+  - Ifugao Mun’alyon
+  - Ifugaw
+  population: 185000
 ig:
   country: Nigeria
   family: Niger-Congo
@@ -3984,6 +4090,19 @@ ikt:
   - Western Canadian Inuit
   - Western Canadian Inuktitut
   population: 1020
+ikz:
+  country: Tanzania
+  family: Niger-Congo
+  language_code_3: ikz
+  link_ethnologue: https://www.ethnologue.com/language/ikz
+  link_wikipedia: https://en.wikipedia.org/wiki/Ikizu_language
+  name: Ikizu
+  name_alternates:
+  - Ikiikiizu
+  - Ikikizo
+  - Ikikizu
+  - Kiikizu
+  population: 52900
 ilg:
   country: Australia
   family: Australian
@@ -3992,6 +4111,20 @@ ilg:
   link_wikipedia: https://en.wikipedia.org/wiki/Ilgar_language
   name: Garig-Ilgar
   population: 200
+ili:
+  country: China
+  family: Turkic
+  language_code_3: ili
+  link_ethnologue: https://www.ethnologue.com/language/ili
+  link_wikipedia: https://en.wikipedia.org/wiki/Ili_Turki_language
+  name: Ili Turki
+  name_alternates:
+  - Ili Turk
+  - T’urk
+  - Taranchi
+  - Tu’erke
+  - Tuerke
+  population: 240
 ilo:
   country: Philippines
   family: Austronesian
@@ -4479,7 +4612,7 @@ ker:
   name: Kera
   population: 50500
 kg:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_1: kg
   language_code_3: kon
@@ -4668,7 +4801,7 @@ kmb:
   - North Mbundu
   population: 6000000
 kmr:
-  country: Turkey
+  country: Türkiye
   family: Indo-European
   language_code_3: kmr
   link_ethnologue: https://www.ethnologue.com/language/kmr
@@ -4886,6 +5019,18 @@ ksh:
   - North Middle Franconian
   - Ripuarisch
   population: 250000
+ksq:
+  country: Nigeria
+  family: Afro-Asiatic
+  language_code_3: ksq
+  link_ethnologue: https://www.ethnologue.com/language/ksq
+  link_wikipedia: https://en.wikipedia.org/wiki/Kwaami_language
+  name: Kwaami
+  name_alternates:
+  - Komawa
+  - Kwamanchi
+  - Kwami
+  population: 10000
 ksw:
   country: Myanmar
   family: Sino-Tibetan
@@ -5140,6 +5285,14 @@ lb:
   subreddit: learnluxembourgish
   supported: true
   thanks: Merci
+lbj:
+  country: India
+  family: Sino-Tibetan
+  language_code_3: lbj
+  link_ethnologue: https://www.ethnologue.com/language/lbj
+  link_wikipedia: https://en.wikipedia.org/wiki/Ladakhi_language
+  name: Ladakhi
+  population: 110000
 ldb:
   country: Nigeria
   family: Niger-Congo
@@ -5345,7 +5498,7 @@ lmp:
   - Wimbum
   population: 130000
 ln:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   greetings: Mbote
   language_code_1: ln
@@ -5396,7 +5549,7 @@ lo:
   supported: true
   thanks: ຂອບໃຈ
 log:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Nilo-Saharan
   language_code_3: log
   link_ethnologue: https://www.ethnologue.com/language/log
@@ -5459,7 +5612,7 @@ lt:
   supported: true
   thanks: Ačiū
 lu:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_1: lu
   language_code_3: lub
@@ -5753,6 +5906,15 @@ mga:
   name_alternates:
   - Gadhelisch
   population: 0
+mgl:
+  country: Papua New Guinea
+  family: Austronesian
+  language_code_3: mgl
+  link_ethnologue: https://www.ethnologue.com/language/mgl
+  link_wikipedia: https://en.wikipedia.org/wiki/Idne_language
+  name: Maleu-Kilenge
+  name_alternates: []
+  population: 5200
 mh:
   country: Marshall Islands
   family: Austronesian
@@ -5990,6 +6152,21 @@ mqf:
   - Somahai
   - Sumohai
   population: 2000
+mql:
+  country: Benin
+  family: Niger-Congo
+  language_code_3: mql
+  link_ethnologue: https://www.ethnologue.com/language/mql
+  link_wikipedia: https://en.wikipedia.org/wiki/Mbelime_language
+  name: Mbelime
+  name_alternates:
+  - Bebelibe
+  - Bèbèdibè
+  - Mbilme
+  - Mbèlimè
+  - Oubièlo
+  - Ubielo
+  population: 39900
 mqu:
   country: South Sudan
   family: Nilo-Saharan
@@ -6134,6 +6311,19 @@ mt:
   subreddit: learn_maltese
   supported: true
   thanks: Grazzi
+mtg:
+  country: Indonesia
+  family: Trans-New Guinea
+  language_code_3: mtg
+  link_ethnologue: https://www.ethnologue.com/language/mtg
+  link_wikipedia: https://en.wikipedia.org/wiki/Goliath_language
+  name: Una
+  name_alternates:
+  - Goliath
+  - Langda
+  - Mount Goliath
+  - Oranje-Gebergte
+  population: 5600
 mup:
   country: India
   family: Indo-European
@@ -6182,6 +6372,18 @@ mvo:
   link_wikipedia: https://en.wikipedia.org/wiki/Marovo_language
   name: Marovo
   population: 8090
+mwg:
+  country: Papua New Guinea
+  family: Austronesian
+  language_code_3: mwg
+  link_ethnologue: https://www.ethnologue.com/language/mwg
+  link_wikipedia: https://en.wikipedia.org/wiki/West_Arawe_language
+  name: Aiklep
+  name_alternates:
+  - Agerlep
+  - Eklep
+  - Moewehafen
+  population: 3700
 mwl:
   country: Portugal
   family: Indo-European
@@ -6192,7 +6394,7 @@ mwl:
   population: 15000
 mwr:
   country: India
-  family: Unknown
+  family: Indo-European
   language_code_3: mwr
   link_ethnologue: https://www.ethnologue.com/language/mwr
   link_wikipedia: https://en.wikipedia.org/wiki/Marwari_language
@@ -6712,7 +6914,7 @@ nub:
   link_wikipedia: https://en.wikipedia.org/wiki/Nubian_languages
   name: Nubian
 nue:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_3: nue
   link_ethnologue: https://www.ethnologue.com/language/nue
@@ -6864,6 +7066,14 @@ odt:
   family: Indo-European
   language_code_3: odt
   name: Old Dutch
+  population: 0
+oge:
+  family: Kartvelian
+  language_code_3: oge
+  link_wikipedia: https://en.wikipedia.org/wiki/Old_Georgian
+  name: Old Georgian
+  name_alternates:
+  - Enay kartuli
   population: 0
 oj:
   country: Canada
@@ -7458,6 +7668,15 @@ pt:
   subreddit: portuguese
   supported: true
   thanks: Obrigado
+ptr:
+  country: Vanuatu
+  family: Austronesian
+  language_code_3: ptr
+  link_ethnologue: https://www.ethnologue.com/language/ptr
+  link_wikipedia: https://en.wikipedia.org/wiki/Piamatsina_language
+  name: Piamatsina
+  name_alternates: []
+  population: 210
 pue:
   country: Argentina
   family: Language isolate
@@ -7502,6 +7721,16 @@ puy:
   - Purísima
   - Santa Rosa
   population: 190
+pwg:
+  country: Papua New Guinea
+  family: Austronesian
+  language_code_3: pwg
+  link_ethnologue: https://www.ethnologue.com/language/pwg
+  link_wikipedia: https://en.wikipedia.org/wiki/Gapapaiwa_language
+  name: Gapapaiwa
+  name_alternates:
+  - Manape
+  population: 3000
 pwr:
   country: India
   family: Indo-European
@@ -8140,6 +8369,18 @@ sco:
   link_wikipedia: https://en.wikipedia.org/wiki/Scots_language
   name: Scots
   population: 1599200
+sct:
+  country: Laos
+  family: Austro-Asiatic
+  language_code_3: sct
+  link_ethnologue: https://www.ethnologue.com/language/sct
+  link_wikipedia: https://en.wikipedia.org/wiki/Bru_language
+  name: Southern Katang
+  name_alternates:
+  - Kataang Rueal
+  - Katang
+  - Katang Rueal
+  population: 40000
 sd:
   country: Pakistan
   family: Indo-European
@@ -8211,6 +8452,16 @@ sga:
   language_code_3: sga
   link_wikipedia: https://en.wikipedia.org/wiki/Old_Irish
   name: Old Irish
+shh:
+  country: United States
+  family: Uto-Aztecan
+  language_code_3: shh
+  link_ethnologue: https://www.ethnologue.com/language/shh
+  link_wikipedia: https://en.wikipedia.org/wiki/Shoshoni_language
+  name: Shoshoni
+  name_alternates:
+  - Shoshone
+  population: 7000
 shi:
   country: Morocco
   family: Afro-Asiatic
@@ -8827,7 +9078,7 @@ swb:
   - Maore
   population: 156500
 swc:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_3: swc
   link_ethnologue: https://www.ethnologue.com/language/swc
@@ -8853,8 +9104,30 @@ swh:
   link_wikipedia: https://en.wikipedia.org/wiki/Swahili_language
   name: Swahili
   population: 98327740
+swx:
+  country: Brazil
+  family: Arauan
+  language_code_3: swx
+  link_ethnologue: https://www.ethnologue.com/language/swx
+  link_wikipedia: https://en.wikipedia.org/wiki/Zuruah%C3%A1_language
+  name: Suruaha
+  name_alternates:
+  - Indios do Coxodoá
+  - Sorowaha
+  - Suruwahá
+  - Zuruahã
+  population: 200
+sxm:
+  country: Cambodia
+  family: Austro-Asiatic
+  language_code_3: sxm
+  link_ethnologue: https://www.ethnologue.com/language/sxm
+  link_wikipedia: https://en.wikipedia.org/wiki/Somray_language
+  name: Samre
+  name_alternates: []
+  population: 200
 syc:
-  country: Turkey
+  country: Türkiye
   family: Afro-Asiatic
   language_code_3: syc
   link_ethnologue: https://www.ethnologue.com/language/syc
@@ -9244,6 +9517,16 @@ th:
   subreddit: learnthai
   supported: true
   thanks: ขอบคุณ
+the:
+  country: Nepal
+  family: Indo-European
+  language_code_3: the
+  link_ethnologue: https://www.ethnologue.com/language/the
+  link_wikipedia: https://en.wikipedia.org/wiki/Tharu_languages
+  name: Chitwania Tharu
+  name_alternates:
+  - Chitwania Tharu
+  population: 1530000
 thv:
   country: Algeria
   family: Afro-Asiatic
@@ -9469,7 +9752,7 @@ tqo:
 tr:
   countries_associated:
   - CY
-  country: Turkey
+  country: Türkiye
   family: Turkic
   greetings: Merhaba
   language_code_1: tr
@@ -9593,6 +9876,15 @@ ttq:
   - Tourage
   - Tuareg
   population: 801000
+tuj:
+  country: Indonesia
+  family: West Papuan
+  language_code_3: tuj
+  link_ethnologue: https://www.ethnologue.com/language/tuj
+  link_wikipedia: https://en.wikipedia.org/wiki/Tobelo_language
+  name: Tugutil
+  name_alternates: []
+  population: 2590
 tus:
   country: United States
   family: Iroquoian
@@ -10033,6 +10325,18 @@ vis:
   - Malankudi
   - Malarkuti
   population: 199
+vml:
+  country: Australia
+  family: Australian
+  language_code_3: vml
+  link_ethnologue: https://www.ethnologue.com/language/vml
+  link_wikipedia: https://en.wikipedia.org/wiki/Malgana_language
+  name: Malgana
+  name_alternates:
+  - Maldjana
+  - Maljanna
+  - Malkana
+  population: 199
 vnm:
   country: Vanuatu
   family: Austronesian
@@ -10070,6 +10374,17 @@ wa:
   name_alternates:
   - Wallon
   population: 600000
+waa:
+  country: United States
+  family: Sahaptian
+  language_code_3: waa
+  link_ethnologue: https://www.ethnologue.com/language/waa
+  link_wikipedia: https://en.wikipedia.org/wiki/Sahaptin_language
+  name: Walla Walla
+  name_alternates:
+  - Ichishkíin
+  - Northeast Sahaptin
+  population: 200
 wae:
   country: Switzerland
   family: Indo-European
@@ -10148,6 +10463,18 @@ win:
   - Hocák
   - Winnebago
   population: 1650
+wji:
+  country: Nigeria
+  family: Afro-Asiatic
+  language_code_3: wji
+  link_ethnologue: https://www.ethnologue.com/language/wji
+  link_wikipedia: https://en.wikipedia.org/wiki/Warji_language
+  name: Warji
+  name_alternates:
+  - Sarawa
+  - Warja
+  - Warjawa
+  population: 77700
 wnd:
   country: Australia
   family: Australian
@@ -10380,6 +10707,15 @@ xrg:
   - Noongar
   - Nyungar
   population: 0
+xsp:
+  country: Papua New Guinea
+  family: Trans-New Guinea
+  language_code_3: xsp
+  link_ethnologue: https://www.ethnologue.com/language/xsp
+  link_wikipedia: https://en.wikipedia.org/wiki/Silopi_language
+  name: Silopi
+  name_alternates: []
+  population: 350
 xsr:
   country: Nepal
   family: Sino-Tibetan
@@ -10528,7 +10864,7 @@ ylm:
   name: Limi
   population: 29000
 ymg:
-  country: Democratic Republic of the Congo
+  country: Congo, The Democratic Republic of the
   family: Niger-Congo
   language_code_3: ymg
   link_ethnologue: https://www.ethnologue.com/language/ymg
@@ -10792,6 +11128,7 @@ zh:
   - Bronze Script
   - Seal Script
   - Mandaring
+  - Hànzì
   population: 1091782930
   subreddit: chineselanguage
   supported: true
@@ -10836,6 +11173,29 @@ zkt:
   - Khitan
   - Liao
   population: 0
+zpl:
+  country: Mexico
+  family: Otomanguean
+  language_code_3: zpl
+  link_ethnologue: https://www.ethnologue.com/language/zpl
+  link_wikipedia: https://en.wikipedia.org/wiki/Lachix%C3%ADo_Zapotec
+  name: Lachixio Zapotec
+  name_alternates:
+  - Eastern Sola de Vega Zapotec
+  - Zapoteco de Lachixío
+  population: 6500
+zpw:
+  country: Mexico
+  family: Otomanguean
+  language_code_3: zpw
+  link_ethnologue: https://www.ethnologue.com/language/zpw
+  link_wikipedia: https://en.wikipedia.org/wiki/Zaniza_Zapotec
+  name: Zaniza Zapotec
+  name_alternates:
+  - Papabuco
+  - Western Sola de Vega Zapotec
+  - Zapoteco de Santa María Zaniza
+  population: 770
 zu:
   countries_default: ZA
   country: South Africa
@@ -10866,19 +11226,30 @@ zxx:
   - Nothing
   - 'Null'
   supported: true
-lbj:
-  country: India
-  family: Sino-Tibetan
-  language_code_3: lbj
-  link_ethnologue: https://www.ethnologue.com/language/lbj
-  link_wikipedia: https://en.wikipedia.org/wiki/Ladakhi_language
-  name: Ladakhi
-  population: 110000
-oge:
-  family: Kartvelian
-  language_code_3: oge
-  link_wikipedia: https://en.wikipedia.org/wiki/Old_Georgian
-  name: Old Georgian
+zyn:
+  country: China
+  family: Tai-Kadai
+  language_code_3: zyn
+  link_ethnologue: https://www.ethnologue.com/language/zyn
+  link_wikipedia: https://en.wikipedia.org/wiki/Yongnan_languages
+  name: Yongnan Zhuang
   name_alternates:
-  - Enay kartuli
-  population: 0
+  - Bou Rau
+  - Boux Toj
+  - Long An
+  - Long’an
+  - Nongz Anx
+  - Nung An
+  - Southern Zhuang
+  - Yongnan Vernacular of the Southern Dialect of the Zhuang Language
+  - Zhuangyu nanbu fangyan Yongnan tuyu
+  population: 1810000
+zza:
+  country: Türkiye
+  family: Unknown
+  language_code_3: zza
+  link_ethnologue: https://www.ethnologue.com/language/zza
+  link_wikipedia: https://en.wikipedia.org/wiki/Zaza_language
+  name: Zaza
+  name_alternates: []
+  population: 1344000
