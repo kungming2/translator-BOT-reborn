@@ -6,6 +6,7 @@ import asyncio
 import random
 
 from config import Paths, load_settings, logger
+from models.kunulo import Kunulo
 from languages import converter
 from lookup.ja import ja_character, ja_word
 from lookup.ko import ko_word
@@ -62,19 +63,6 @@ async def _rate_limit_delay() -> None:
     await asyncio.sleep(random.randint(3, 10))
 
 
-def _get_lookup_language(instruo, ajo):
-    """Determine the language to use for lookup."""
-    # Check if there's an identify command that specifies the language
-    identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
-
-    if identify_komando:
-        logger.info(f"Found identify komando with data: {identify_komando.data}")
-        return identify_komando.data[0]
-
-    # Default to the Ajo's language if there is no identify Komando.
-    return ajo.lingvo
-
-
 async def perform_cjk_lookups(cjk_language: str, search_terms: list[str]) -> list[str]:
     """Perform lookups based on CJK language type.
     search_terms must be a list of strings."""
@@ -123,40 +111,202 @@ def _format_reply(lookup_results: list[str], ajo=None) -> str:
         )
 
 
+def _check_for_duplicate_lookups(
+    comment, search_terms: list[str], cjk_language: str
+) -> dict | None:
+    """
+    Check if the requested CJK terms have already been looked up in this thread.
+    Works for all CJK languages (Chinese, Japanese, Korean) and both characters and words.
+
+    Args:
+        comment: PRAW comment object
+        search_terms: List of terms to look up (e.g., ['成功', '面粉'] or ['ばかり', '一人'])
+        cjk_language: The CJK language category ('Chinese', 'Japanese', 'Korean')
+
+    Returns:
+        dict or None: If duplicates found, returns result from check_existing_cjk_lookups.
+                     Otherwise returns None.
+    """
+    if not search_terms:
+        return None
+
+    # Create Kunulo instance from the submission
+    submission = comment.submission
+    kunulo = Kunulo.from_submission(submission)
+
+    # Check for existing lookups (works for all CJK languages and all term types)
+    existing = kunulo.check_existing_cjk_lookups(
+        search_terms,
+        exact_match=True,  # Change to False if you want subset matching
+    )
+
+    if existing:
+        logger.info(
+            f"[ZW] CJK Lookup: Duplicate lookup detected for {existing['matched_chars']} "
+            f"in {cjk_language}"
+        )
+        return existing
+
+    return None
+
+
 def handle(comment, instruo, komando, ajo) -> None:
     """
     Handle for CJK lookup commands.
 
-    Example of a Komando to process:
-        Komando(name='lookup_cjk', data=['成功'])
+    Supports multi-language lookups where different terms can have different languages.
+    If an !identify command is present, it provides a default language for auto-detected terms,
+    but explicitly marked terms (e.g., `term`:ko) keep their specified language.
+
+    Examples:
+        - `可能` `시계`:ko with !identify:ja
+          → data: [('zh', '可能', False), ('ko', '시계', True)]
+          → Japanese: ['可能'], Korean: ['시계']
+        - `可能` `麻将` (no !identify)
+          → data: [('zh', '可能', False), ('zh', '麻将', False)]
+          → Chinese: ['可能', '麻将'] (auto-detected)
     """
     logger.info("CJK Lookup handler initiated.")
     logger.info(f"[ZW] Bot: COMMAND: CJK Lookup, from u/{comment.author}.")
 
-    # Determine which language to use for lookup
-    lookup_lingvo = _get_lookup_language(instruo, ajo)
-    komando.remap_language(lookup_lingvo.preferred_code)  # remap the data if needed
-    logger.info(f"> Remapped lookup_CJK data to: {lookup_lingvo.preferred_code}")
+    # Check if there's an !identify command for auto-detected terms
+    identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
+    default_language = None
 
-    # Map the language code to a CJK language category
-    cjk_language: str | None = _find_cjk_language(lookup_lingvo.preferred_code)
+    if identify_komando and identify_komando.data:
+        # Use the first language from !identify as default for auto-detected terms
+        default_lingvo = identify_komando.data[0]
+        default_language = _find_cjk_language(default_lingvo.preferred_code)
+        if default_language:
+            logger.info(
+                f"[ZW] CJK Lookup: !identify command found - using {default_language} "
+                f"as default for auto-detected terms"
+            )
 
-    if not cjk_language:
+    # Group terms by their CJK language category
+    # This allows handling mixed-language lookups like Chinese + Korean in one command
+    terms_by_language = {}
+
+    for entry in komando.data:
+        # Handle both old format (lang, term) and new format (lang, term, explicit)
+        if len(entry) == 3:
+            lang_code, term, is_explicit = entry
+        elif len(entry) == 2:
+            lang_code, term = entry
+            is_explicit = False  # Assume auto-detected for backward compatibility
+        else:
+            logger.warning(f"[ZW] CJK Lookup: Invalid entry format: {entry}")
+            continue
+
+        # Determine the language to use
+        if is_explicit:
+            # Explicitly marked - use the specified language
+            cjk_language = _find_cjk_language(lang_code)
+            logger.debug(
+                f"Term '{term}' explicitly marked as {lang_code} → {cjk_language}"
+            )
+        elif default_language:
+            # Auto-detected and we have a default from !identify - use default
+            cjk_language = default_language
+            logger.debug(
+                f"Term '{term}' auto-detected, using !identify default → {cjk_language}"
+            )
+        else:
+            # Auto-detected and no default - use auto-detected language
+            cjk_language = _find_cjk_language(lang_code)
+            logger.debug(f"Term '{term}' auto-detected as {lang_code} → {cjk_language}")
+
+        if cjk_language:
+            if cjk_language not in terms_by_language:
+                terms_by_language[cjk_language] = []
+            terms_by_language[cjk_language].append(term)
+        else:
+            logger.warning(
+                f"[ZW] CJK Lookup: Could not map language code '{lang_code}' to a CJK language. "
+                f"Skipping term '{term}'."
+            )
+
+    if not terms_by_language:
+        logger.warning(
+            "[ZW] CJK Lookup: No valid CJK terms found after language mapping."
+        )
         return
 
-    # Extract all search terms from komando.data, ignoring language codes
-    search_terms: list[str] = [term for lang_code, term in komando.data]
-
-    # Perform lookups for all search terms
-    lookup_results: list[str] = asyncio.run(
-        perform_cjk_lookups(cjk_language, search_terms)
+    logger.info(
+        f"[ZW] CJK Lookup: Processing terms grouped by language: {terms_by_language}"
     )
 
-    # Reply if we have information to provide
-    if lookup_results:
-        reply_body: str = _format_reply(lookup_results, ajo)
-        comment_reply(comment, reply_body)
-        logger.info(f"[ZW] Bot: >> Looked up the term(s) in {cjk_language}.")
+    # Process each language group separately
+    all_lookup_results = []
+    duplicate_responses = []
+
+    for cjk_language, search_terms in terms_by_language.items():
+        logger.info(
+            f"[ZW] CJK Lookup: Processing {len(search_terms)} term(s) for {cjk_language}: {search_terms}"
+        )
+
+        # Check for duplicates for this language group
+        duplicate_check = _check_for_duplicate_lookups(
+            comment, search_terms, cjk_language
+        )
+
+        if duplicate_check:
+            # Duplicate found - prepare response but don't return yet
+            # (we might have other non-duplicate languages to process)
+            comment_id = duplicate_check["comment_id"]
+            matched_chars = duplicate_check["matched_chars"]
+
+            # Get permalink using Kunulo
+            kunulo = Kunulo.from_submission(comment.submission)
+            permalink = kunulo.get_comment_permalink(comment_id)
+
+            # Format the matched terms nicely
+            chars_str = ", ".join(f"**{char}**" for char in matched_chars)
+
+            # Store duplicate response
+            duplicate_message = (
+                f"The {cjk_language} term(s) {chars_str} have already been looked up. "
+                f"Please see [this comment]({permalink})."
+            )
+            duplicate_responses.append(duplicate_message)
+
+            logger.info(
+                f"[ZW] CJK Lookup: Duplicate found for {cjk_language} terms {matched_chars} "
+                f"in comment {comment_id}."
+            )
+            continue  # Skip to next language group
+
+        # No duplicates - perform lookups for this language
+        lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, search_terms))
+        all_lookup_results.extend(lookup_results)
+        logger.info(f"[ZW] CJK Lookup: Completed lookups for {cjk_language}.")
+
+    # Prepare and send reply
+    reply_parts = []
+
+    # Add duplicate notifications if any
+    if duplicate_responses:
+        duplicate_section = "\n\n".join(duplicate_responses)
+        duplicate_section += "\n\nIf you need additional information or have questions, feel free to ask!"
+        reply_parts.append(duplicate_section)
+
+    # Add new lookup results if any
+    if all_lookup_results:
+        reply_body = _format_reply(all_lookup_results, ajo)
+        reply_parts.append(reply_body)
+
+    # Send reply if we have anything to say
+    if reply_parts:
+        final_reply = "\n\n---\n\n".join(reply_parts)
+        comment_reply(comment, final_reply)
+        logger.info(
+            f"[ZW] CJK Lookup: Replied with {len(all_lookup_results)} new lookup(s) "
+            f"and {len(duplicate_responses)} duplicate notification(s)."
+        )
+    else:
+        logger.warning(
+            "[ZW] CJK Lookup: No results to reply with (all duplicates or no matches)."
+        )
 
 
 if __name__ == "__main__":
