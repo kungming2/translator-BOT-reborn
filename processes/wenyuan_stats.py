@@ -699,7 +699,11 @@ class Lumo:
                 identified[normalized_history[-1]] += 1
 
             # Posts misidentified (wrong initial language)
-            elif normalized_history[0] not in ["Unknown", "Generic", "Multiple Languages"]:
+            elif normalized_history[0] not in [
+                "Unknown",
+                "Generic",
+                "Multiple Languages",
+            ]:
                 if normalized_history[0] != normalized_history[-1]:
                     pair = f"{normalized_history[0]} → {normalized_history[-1]}"
                     misidentified[pair] += 1
