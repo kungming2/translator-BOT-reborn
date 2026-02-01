@@ -133,7 +133,9 @@ def cerbo_wiki_editor(
                 content=page_content_new,
                 reason=f"Updating with data from {month_year_chunk}",
             )
-            logger.info(f"[WY] Updated wiki entry for {language_name} in {month_year_chunk}")
+            logger.info(
+                f"[WY] Updated wiki entry for {language_name} in {month_year_chunk}"
+            )
         except RedditAPIException:
             # Problem with the WikiPage... it doesn't exist.
             logger.warning(f"[WY] Error with {language_name}")
@@ -304,7 +306,9 @@ def update_statistics_index_page(month_year):
 
         # Check if entry already exists
         if wiki_page_name in str(page_content.content_md):
-            logger.info(f"[WY] Statistics index already contains entry for {month_year}")
+            logger.info(
+                f"[WY] Statistics index already contains entry for {month_year}"
+            )
             return True
 
         # Find where to insert (assuming chronological order, newest first)
