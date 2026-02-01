@@ -15,6 +15,12 @@ commands_with_args:
   - "!page:"
   - "!search:"  # Does not accept language terms.
   - "!set:"
+  - "!transform:"  # Does not accept language terms.
+
+# These commands accept arguments, but these arguments are not languages
+commands_skip_conversion:
+  - "!search:"  # Does not accept language terms.
+  - "!transform:"  # Does not accept language terms.
 
 commands_optional_args:
   - "!translated"
@@ -43,6 +49,7 @@ command_points:
   claim: 1
   page: 1
   search: 1
+  transform: 1
   reference: 1
   lookup_cjk: 2
   lookup_wp: 1
@@ -141,7 +148,6 @@ notifications_monthly_limit: 30
 # a single language post.
 notifications_user_limit: 8
 
-
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
 # notifications to avoid spamming)
@@ -170,6 +176,10 @@ comment_edit_age_max: 18  # in hours
 # search for.
 comment_edit_num_limit: 30
 
+# Lookup age for the CJK cache (in days). Cache entries that are older
+# than this will be re-fetched.
+lookup_cjk_cache_age: 730  # 2 years
+
 # Search function uses... (DDG or Reddit)
 search_engine: DDG
 
@@ -187,3 +197,8 @@ log_search_days: 30  # How many days' worth of data we search for
 
 # Verification parser will not consider requests older than this age
 verification_request_age: 15  # in minutes
+
+# Image retention age (in days)
+image_retention_age: 7
+# Image JPEG quality (percentage)
+image_jpeg_quality: 60
