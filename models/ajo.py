@@ -634,13 +634,20 @@ class Ajo:
                 self._lingvo = code_or_lingvo
                 self.preferred_code = self._lingvo.preferred_code
 
-            # Reset multiple post flags when setting to single language
-            self.type = "single"
-            self.is_defined_multiple = False
-            logger.info(
-                f"[ZW] Ajo: Converted from multiple to single "
-                f"language post: {self.language_name}"
-            )
+            # Check if this is the "multiple" language code (non-defined multiple post)
+            if self.preferred_code == "multiple":
+                self.type = "multiple"
+                self.is_defined_multiple = False
+                logger.info(
+                    "[ZW] Ajo: Set to non-defined multiple language post"
+                )
+            else:
+                # Reset multiple post flags when setting to single language
+                self.type = "single"
+                self.is_defined_multiple = False
+                logger.info(
+                    f"[ZW] Ajo: Single language post: {self.language_name}"
+                )
 
             # Reset status to string format for single posts
             if isinstance(self.status, dict):
