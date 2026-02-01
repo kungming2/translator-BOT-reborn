@@ -95,7 +95,7 @@ class TestLingvoClass(unittest.TestCase):
             "Language Name": "Spanish",
             "ISO 639-1": "es",
             "ISO 639-3": "spa",
-            "Alternate Names": "Castilian; Español",
+            "Alternate Names": "Castilian; EspaÃ±ol",
         }
         lingvo = Lingvo.from_csv_row(row)
         self.assertEqual(lingvo.name, "Spanish")
@@ -279,7 +279,7 @@ class TestLanguageLists(unittest.TestCase):
             }
             for key in expected_keys:
                 self.assertIn(key, lists)
-        except Exception as e:
+        except (FileNotFoundError, ImportError, KeyError, ValueError) as e:
             self.skipTest(f"Language data not available: {e}")
 
     def test_supported_codes_are_strings(self):
@@ -288,7 +288,7 @@ class TestLanguageLists(unittest.TestCase):
             lists = define_language_lists()
             for code in lists["SUPPORTED_CODES"]:
                 self.assertIsInstance(code, str)
-        except Exception:
+        except (FileNotFoundError, ImportError, KeyError, ValueError):
             self.skipTest("Language data not available")
 
     def test_iso_codes_are_unique(self):
@@ -297,7 +297,7 @@ class TestLanguageLists(unittest.TestCase):
             lists = define_language_lists()
             iso_639_1 = lists["ISO_639_1"]
             self.assertEqual(len(iso_639_1), len(set(iso_639_1)))
-        except Exception:
+        except (FileNotFoundError, ImportError, KeyError, ValueError):
             self.skipTest("Language data not available")
 
 
@@ -309,7 +309,7 @@ class TestGetLingvos(unittest.TestCase):
         try:
             lingvos = get_lingvos()
             self.assertIsInstance(lingvos, dict)
-        except Exception:
+        except (FileNotFoundError, ImportError, KeyError, ValueError):
             self.skipTest("Language data not available")
 
     def test_get_lingvos_values_are_lingvo(self):
@@ -318,7 +318,7 @@ class TestGetLingvos(unittest.TestCase):
             lingvos = get_lingvos()
             for key, value in list(lingvos.items())[:5]:
                 self.assertIsInstance(value, Lingvo)
-        except Exception:
+        except (FileNotFoundError, ImportError, KeyError, ValueError):
             self.skipTest("Language data not available")
 
     def test_get_lingvos_caching(self):
@@ -327,7 +327,7 @@ class TestGetLingvos(unittest.TestCase):
             result1 = get_lingvos()
             result2 = get_lingvos()
             self.assertIs(result1, result2)
-        except Exception:
+        except (FileNotFoundError, ImportError, KeyError, ValueError):
             self.skipTest("Language data not available")
 
 
