@@ -15,21 +15,29 @@ from utility import extract_text_within_curly_braces
 
 
 class Komando:
-    def __init__(self, name, data=None, specific_mode=False):
+    def __init__(
+        self, name, data=None, specific_mode=False, disable_tokenization=False
+    ):
         self.name = name  # e.g., "identify", "translated"
         # For data, ["es"], ["la", "grc"] as Lingvos or None
-        # lookup and wiki ones get a list of strings
+        # lookup_cjk gets tuples: ('lang', 'term', explicit_bool)
         self.data = data
         self.specific_mode = specific_mode
+        self.disable_tokenization = disable_tokenization
 
     def __repr__(self):
-        return f"Komando(name={self.name!r}, data={self.data!r}, specific_mode={self.specific_mode!r})"
+        return (
+            f"Komando(name={self.name!r}, data={self.data!r}, "
+            f"specific_mode={self.specific_mode!r}, "
+            f"disable_tokenization={self.disable_tokenization!r})"
+        )
 
     def to_dict(self):
         return {
             "name": self.name,
             "data": self.data,
             "specific_mode": self.specific_mode,
+            "disable_tokenization": self.disable_tokenization,
         }
 
     def remap_language(self, target_lang_code):
@@ -48,13 +56,31 @@ class Komando:
 
         if not self.data:
             return Komando(
-                name=self.name, data=self.data, specific_mode=self.specific_mode
+                name=self.name,
+                data=self.data,
+                specific_mode=self.specific_mode,
+                disable_tokenization=self.disable_tokenization,
             )
 
-        remapped_data = [[target_lang_code, term] for _, term in self.data]
+        # Handle both old format (lang, term) and new format (lang, term, explicit)
+        remapped_data = []
+        for entry in self.data:
+            if len(entry) == 3:
+                # New format: (lang, term, explicit)
+                _, term, explicit = entry
+                remapped_data.append((target_lang_code, term, explicit))
+            elif len(entry) == 2:
+                # Old format: (lang, term)
+                _, term = entry
+                remapped_data.append((target_lang_code, term))
+            else:
+                remapped_data.append(entry)
 
         return Komando(
-            name=self.name, data=remapped_data, specific_mode=self.specific_mode
+            name=self.name,
+            data=remapped_data,
+            specific_mode=self.specific_mode,
+            disable_tokenization=self.disable_tokenization,
         )
 
 
@@ -80,10 +106,11 @@ def _deduplicate_args(args):
     """
     Deduplicate arguments while preserving order.
 
-    Handles three types of arguments:
+    Handles four types of arguments:
     1. Lingvo objects - dedupe by language code
-    2. Lists (for lookup_cjk) - dedupe by [lang, term] pairs
-    3. Strings - dedupe by value
+    2. 3-tuples (for lookup_cjk) - dedupe by (lang, term, explicit) tuples
+    3. 2-tuples (for lookup_cjk legacy) - dedupe by (lang, term) tuples
+    4. Strings - dedupe by value
 
     :param args: List of arguments to deduplicate
     :return: Deduplicated list maintaining original order
@@ -101,11 +128,10 @@ def _deduplicate_args(args):
             if key not in seen:
                 seen.add(key)
                 result.append(arg)
-        # Handle lists (lookup_cjk format: [lang, term])
-        elif isinstance(arg, list):
-            key = tuple(arg)
-            if key not in seen:
-                seen.add(key)
+        # Handle tuples (lookup_cjk format: (lang, term) or (lang, term, explicit))
+        elif isinstance(arg, tuple):
+            if arg not in seen:  # Tuples are hashable - can use directly
+                seen.add(arg)
                 result.append(arg)
         # Handle strings
         else:
@@ -130,6 +156,9 @@ def extract_commands_from_text(text):
     Supports specific_mode via trailing exclamation: !command:la! activates specific_mode
     for strict code lookups (2-4 character codes only).
 
+    For lookup_cjk commands, supports disable_tokenization via trailing exclamation:
+    `term`! or `term`:lang! disables tokenization for that lookup.
+
     Arguments are converted to Lingvo objects via the converter() function unless
     the command is in the skip-conversion list.
 
@@ -138,6 +167,7 @@ def extract_commands_from_text(text):
     """
     commands_dict = defaultdict(list)
     specific_mode_dict = defaultdict(bool)
+    disable_tokenization_dict = defaultdict(bool)
     original_text = text.strip()
 
     # Normalize curly quotes in both cases
@@ -188,7 +218,7 @@ def extract_commands_from_text(text):
                 match[0] or match[1], bool(match[0])
             )
 
-            should_convert = cmd_lower not in ["!search:"]
+            should_convert = cmd_lower not in SETTINGS["commands_skip_conversion"]
             args = [
                 converter(arg, specific_mode=specific_modes[i])
                 if should_convert
@@ -238,17 +268,40 @@ def extract_commands_from_text(text):
             commands_dict.setdefault(canonical, [])
 
     # Special: CJK lookup using lookup_matcher
-    # Supports: `term`, `term`:lang formats
+    # Supports: `term`, `term`:lang, `term`!, `term`:lang! formats
     from lookup.match_helpers import lookup_matcher
 
     if text.count("`") >= 1:
-        lookup_cjk = lookup_matcher(original_text, None)
-        for lang, terms in lookup_cjk.items():
+        # Check for disable_tokenization flag (trailing !)
+        has_disable_tokenization = False
+
+        # Pattern to match backtick lookups with optional language and trailing !
+        # Matches: `term`!, `term`:lang!
+        backtick_pattern = r"`([^`]+)`(?::(\w+))?(!)?"
+        backtick_matches = re.findall(backtick_pattern, original_text)
+
+        for term, lang, exclamation in backtick_matches:
+            if exclamation:
+                has_disable_tokenization = True
+                break
+
+        if has_disable_tokenization:
+            disable_tokenization_dict["lookup_cjk"] = True
+
+        # Pass disable_tokenization flag to lookup_matcher
+        lookup_cjk = lookup_matcher(
+            original_text, None, disable_tokenization=has_disable_tokenization
+        )
+
+        # lookup_cjk now returns: {'zh': [('可能', False), ('麻将', False)], 'ko': [('시계', True)]}
+        for lang, terms_with_flags in lookup_cjk.items():
             if lang == "lookup":
-                commands_dict["lookup_cjk"].extend(terms)
+                # Old format without explicit flag - shouldn't happen with new lookup_matcher
+                commands_dict["lookup_cjk"].extend(terms_with_flags)
             else:
-                for term in terms:
-                    commands_dict["lookup_cjk"].append([lang, term])
+                for term, is_explicit in terms_with_flags:
+                    # Store as 3-tuple: (lang, term, explicit)
+                    commands_dict["lookup_cjk"].append((lang, term, is_explicit))
 
     # Special: Wikipedia lookup using {{braces}}
     if text.count("{{") > 0 and text.count("}}") > 0:
@@ -260,15 +313,28 @@ def extract_commands_from_text(text):
     commands = []
     for name, args in commands_dict.items():
         is_specific = specific_mode_dict.get(name, False)
+        disable_tokenization = disable_tokenization_dict.get(name, False)
 
         # Deduplicate arguments
         deduped_args = _deduplicate_args(args)
 
-        if any(isinstance(arg, list) for arg in deduped_args):
-            commands.append(Komando(name, deduped_args, specific_mode=is_specific))
+        if any(isinstance(arg, tuple) for arg in deduped_args):
+            commands.append(
+                Komando(
+                    name,
+                    deduped_args,
+                    specific_mode=is_specific,
+                    disable_tokenization=disable_tokenization,
+                )
+            )
         else:
             commands.append(
-                Komando(name, list(deduped_args), specific_mode=is_specific)
+                Komando(
+                    name,
+                    list(deduped_args),
+                    specific_mode=is_specific,
+                    disable_tokenization=disable_tokenization,
+                )
             )
 
     return commands
