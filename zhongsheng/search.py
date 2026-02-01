@@ -21,7 +21,9 @@ async def search_posts(ctx, *, search_term: str):
         post_ids = fetch_search_reddit_posts(search_term)
 
         if not post_ids:
-            await ctx.send("🈚 No results found. Try another term or adjust your query.")
+            await ctx.send(
+                "🈚 No results found. Try another term or adjust your query."
+            )
             return
 
         # Build and format the search results
