@@ -3,6 +3,7 @@
 import json
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Union
 
@@ -22,8 +23,12 @@ from time_handling import (
     get_current_month,
     get_previous_month,
     messaging_months_elapsed,
+    time_convert_to_string_seconds,
 )
 from wiki import fetch_most_requested_languages
+
+
+"""DATA TRIMMING"""
 
 
 @task(schedule="daily")
@@ -504,6 +509,9 @@ def archive_identified_saved():
     return
 
 
+"""SUBREDDIT ORGANIZATION/CLEANUP"""
+
+
 @task(schedule="monthly")
 def monthly_statistics_unpinner():
     """Unpins the statistics posts if it is still pinned when
@@ -533,6 +541,53 @@ def monthly_statistics_unpinner():
             logger.info("Monthly Statistics Unpinner: Unpinned monthly post.")
 
     return
+
+
+@task(schedule="daily")
+def archive_modmail(days_max: int = 2) -> None:
+    """Archive modmail conversations older than days_max days where the
+    last participant was a moderator."""
+    logger.info("Assessing modmail...")
+    subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
+
+    # Get list of moderator names for checking
+    mod_names = {mod.name.lower() for mod in subreddit.moderator()}
+
+    unread_counts = subreddit.modmail.unread_count()
+    for key, count in unread_counts.items():
+        if count > 0:
+            logger.info(f"Current '{key}' in modmail: {count}")
+
+    current_time = datetime.now(timezone.utc)
+    max_age_seconds = days_max * 86400
+
+    for convo in subreddit.modmail.conversations():
+        convo.read()
+
+        last_updated = datetime.fromisoformat(convo.last_updated)
+        convo_age = (current_time - last_updated).total_seconds()
+        readable_age = time_convert_to_string_seconds(int(convo_age))
+
+        # Check if last participant was a moderator
+        last_participant = convo.authors[-1].name if convo.authors else None
+        is_mod_last = last_participant and last_participant.lower() in mod_names
+
+        if convo_age > max_age_seconds and is_mod_last:
+            convo.archive()
+            logger.info(
+                f"Conversation by u/{convo.participant} archived. "
+                f"({readable_age} old, last message by mod u/{last_participant})."
+            )
+        else:
+            skip_reason = (
+                "not old enough"
+                if convo_age <= max_age_seconds
+                else "last participant not a mod"
+            )
+            logger.debug(
+                f"Conversation by u/{convo.participant} not archived. "
+                f"({readable_age}, {skip_reason.title()})."
+            )
 
 
 if __name__ == "__main__":
