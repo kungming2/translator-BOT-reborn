@@ -13,7 +13,7 @@ from config import SETTINGS, logger
 from connection import REDDIT, is_internal_post
 from database import db, record_filter_log
 
-# from dupe_detector import duplicate_detector
+from dupe_detector import duplicate_detector, check_image_duplicate
 from error import error_log_extended
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
@@ -94,12 +94,13 @@ def ziwen_posts(post_limit=None):
     posts.reverse()
 
     # ========================================================================
-    # DUPLICATE DETECTION - Run before main processing
+    # DUPLICATE DETECTION - Run before main processing routine
     # ========================================================================
-    """
     logger.info("[ZW] Running duplicate detection...")
+    # Pass half the most recent fetched posts for faster processing
+    detection_limit = fetch_amount // 2
     dupes_removed = duplicate_detector(
-        list_posts=posts,
+        list_posts=posts[-detection_limit:],
         reddit_instance=REDDIT,
         testing_mode=True,
     )
@@ -107,7 +108,8 @@ def ziwen_posts(post_limit=None):
         logger.info(
             f"[ZW] Completed duplicate detection. Removed {dupes_removed} posts."
         )
-    """
+    else:
+        logger.info("[ZW] No duplicate posts found.")
 
     # Main processing logic.
     for post in posts:
@@ -237,6 +239,23 @@ def ziwen_posts(post_limit=None):
                 f"[ZW] Posts: Skipping post {post_id} because status is '{post_ajo.status}'."
             )
             continue
+
+        # NEW: Check for image duplicates (image_hash is already set by from_titolo)
+        if post_ajo.image_hash:
+            duplicate_result = check_image_duplicate(
+                post=post,
+                ajo=post_ajo,
+                days_lookback=90,  # Look back 90 days
+                max_distance=5,  # Allow up to 5 bits difference
+                testing_mode=SETTINGS["testing_mode"],
+            )
+
+            if duplicate_result and duplicate_result["found"]:
+                logger.info(
+                    f"[ZW] Posts: Image duplicate detected for `{post_id}`. "
+                    f"Distance: {duplicate_result['distance']}, "
+                    f"Same author: {duplicate_result['same_author']}"
+                )
 
         # Continue work on post.
         logger.info(f"[ZW] Posts: Processing post `{post_id}`.")
