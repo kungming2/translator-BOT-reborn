@@ -2,7 +2,10 @@
 # -*- coding: UTF-8 -*-
 """Post search command. Used for database inquiry."""
 
+import traceback
+
 from database import search_logs
+from points import points_post_retriever
 
 from . import command
 
@@ -39,4 +42,30 @@ async def post_search(ctx, post_input: str):
         await ctx.send("⚠️ Could not extract post ID from the provided input.")
         return
 
+    # First run the standard search_logs function
     await search_logs(ctx, post_id, "post")
+
+    # Then query and display points data
+    try:
+        points_data = points_post_retriever(post_id)
+
+        if points_data is not None:
+            # Build the points data table
+            response = f"```\n=== POINTS DATA ({len(points_data)} records) ===\n"
+            response += "Comment ID | Username | Points\n"
+            response += "-----------|----------|-------\n"
+
+            total_points = 0
+            for comment_id, username, points in points_data:
+                total_points += points
+                response += f"{comment_id} | {username} | {points}\n"
+
+            # Add summary line
+            response += "-----------|----------|-------\n"
+            response += f"Total: {len(points_data)} award(s) | {total_points} points\n"
+            response += "```"
+
+            await ctx.send(response)
+    except Exception as e:
+        await ctx.send(f"Error retrieving points data: {str(e)}")
+        traceback.print_exc()
