@@ -55,7 +55,8 @@ def _str_representer(dumper: yaml.SafeDumper, data: str) -> yaml.ScalarNode:
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
-CustomDumper.add_representer(str, _str_representer)
+# PyCharm incorrectly flags this - SafeDumper is compatible with CustomDumper
+CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
 
 
 def error_log_basic(entry: str, bot_routine: str) -> None:
