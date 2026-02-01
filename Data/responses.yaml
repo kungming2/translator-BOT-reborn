@@ -244,11 +244,92 @@ COMMENT_DUPLICATE: |
   
   It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you've recently submitted and I have removed it as a result.
   
-  If this is in error, please resubmit this post with a *unique* title giving more context for translators, or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
+  If this is in error, please resubmit this post with a *unique* title giving more context for translators.
+  Alternatively, you may message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
   
-  Thank you.
+  Thanks!
   
   [](#comment_duplicate)
+
+COMMENT_CJK_LOOKUP_DUPLICATE: |
+  It appears that the terms **{lookup_terms}** have already been looked up in this thread.  
+  Please see [this comment](https://www.reddit.com{permalink}) for those results.
+  
+  [](#comment_cjk_lookup_duplicate)
+
+COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
+  Hey u/{author}, it looks like the image in this post is {similarity} an image you posted [here]({previous_link}) {time_ago}. 
+
+  If this is intentional (for example, requesting a different language pair), please disregard this message. 
+  Otherwise, you may want to check if you've already received a translation for this image.
+  
+  [](#comment_image_duplicate_same_author)
+
+COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
+  Hey u/{author}, it looks like the image in this post is {similarity} \
+  an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+
+  You may want to check that post to see if it has already been translated. 
+  If you have a specific reason for reposting, please disregard this message.
+
+  [](#comment_image_duplicate_different_author)
+
+# IMAGE TRANSFORMATION RELATED COMMENTS
+
+COMMENT_TRANSFORM_NO_DATA: |
+  No transformation specified. Valid transformations are:
+  
+  * `90`, `180`, `270` (clockwise rotation)
+  * `-90`, `-180`, `-270` (counterclockwise rotation)
+  * `h` or `horizontal` (flip horizontally)
+  * `v` or `vertical` (flip vertically)
+  
+  Example: `!transform:90`
+  
+  [](#comment_transform_no_data)
+
+COMMENT_TRANSFORM_INVALID: |
+  Invalid transformation: `{0}`. Valid transformations are:
+  
+  * `90`, `180`, `270` (clockwise rotation)
+  * `-90`, `-180`, `-270` (counterclockwise rotation)
+  * `h` or `horizontal` (flip horizontally)
+  * `v` or `vertical` (flip vertically)
+  
+  Example: `!transform:90`
+  
+  [](#comment_transform_invalid)
+
+COMMENT_TRANSFORM_NOT_IMAGE_POST: |
+  This command only works on image posts, not text posts.
+  
+  [](#comment_transform_not_image_post)
+
+COMMENT_TRANSFORM_NO_DIRECT_IMAGE: |
+  This post does not appear to contain a *direct* link to an image. 
+  The `!transform` command requires a direct image URL (e.g., ending in .jpg, .png, .gif).
+  
+  [](#comment_transform_no_direct_image)
+
+COMMENT_TRANSFORM_ERROR: |
+  Sorry, I encountered an error while transforming the image:
+  
+  ```
+  {0}
+  ```
+  
+  Please make sure the image URL is accessible and try again.
+  
+  [](#comment_transform_error)
+
+COMMENT_TRANSFORM_SUCCESS_REPLY: |
+  Here's your transformed image ({0}):
+  
+  **[View Image Here]({1})**
+  
+  *Note: This image will be automatically deleted after {2} days.*
+
+  [](#comment_transform_success_reply)
 
 # ANCHORS - THESE ARE ADDED TO CONTENT GENERATED ELSEWHERE
 
