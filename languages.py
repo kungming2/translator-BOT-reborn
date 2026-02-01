@@ -802,7 +802,7 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         logger.debug(f"[PARSE] Processing item: {repr(item)}")
 
         if not item:
-            logger.debug(f"[PARSE] Item is empty, skipping")
+            logger.debug("[PARSE] Item is empty, skipping")
             continue
 
         if item in utility_codes:
