@@ -57,7 +57,9 @@ def handle(comment, _instruo, komando, ajo) -> None:
         claim_comment_id = kunulo_object.get_tag("comment_claim")
 
         if claim_comment_id:
-            logger.info(f"[ZW] Bot: Pre-existing claim comment `{claim_comment_id}` found.")
+            logger.info(
+                f"[ZW] Bot: Pre-existing claim comment `{claim_comment_id}` found."
+            )
             existing_claim_comment = REDDIT.comment(claim_comment_id)
 
             # Pass current_time to the parser
