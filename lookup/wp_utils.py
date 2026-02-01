@@ -53,8 +53,8 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
             )
             wikipage_obj = wikipedia.page(term, auto_suggest=False, redirect=True)
         except (
-                wikipedia.exceptions.DisambiguationError,
-                wikipedia.exceptions.PageError,
+            wikipedia.exceptions.DisambiguationError,
+            wikipedia.exceptions.PageError,
         ):
             # No direct matches, try auto suggest.
             try:
@@ -62,8 +62,8 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
                 wikipage_obj = wikipedia.page(term.strip())
                 term_entry: str = wikipage_obj.url
             except (
-                    wikipedia.exceptions.DisambiguationError,
-                    wikipedia.exceptions.PageError,
+                wikipedia.exceptions.DisambiguationError,
+                wikipedia.exceptions.PageError,
             ):
                 # Still no dice.
                 logger.error(f">> Unable to resolve '{term}' on Wikipedia. Skipping.")
@@ -137,7 +137,9 @@ def get_page_location_data(wikipage_obj: wikipedia.WikipediaPage) -> str | None:
 
     # Search OSM with the formatted coordinates
     osm_query: str = wikipage_obj.title + formatted_coords
-    osm_results: list[str] = search_nominatim(osm_query, coords=[lat_rounded, lon_rounded])
+    osm_results: list[str] = search_nominatim(
+        osm_query, coords=[lat_rounded, lon_rounded]
+    )
 
     # Format results as markdown
     markdown_output: str = "*Location results*:\n\n"
