@@ -191,7 +191,26 @@ This function also serves as a simple way to find thematically similar posts tha
 * If there are no results for the search term, Ziwen will leave a comment letting the user know.
 * Ziwen will *not* automatically mark a thread as translated even if the quoted comment contains `!translated`. It'll be up to the person who called the `!search` function to check if the displayed results contain accurate translations.
 
-#### Function
+### Command: *!transform:[value]*
+
+The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as part of a request. This command has strict type requirements:
+
+* `!transform:rotate:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `360` is an invalid value as that would just be the exact same image.
+* `!transform:flip:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid shortform values.
+
+#### Examples
+
+    !transform:90  # Rotates image 90 degrees clockwise
+    !transform:-90  # Rotates image 90 degrees counterclockwise
+    !transform:180  # Rotates image 180 degrees clockwise
+    !transform:horizontal  # Flips the image horizontally
+    !transform:v  # Flips the image vertically
+
+#### Notes
+
+* This function uploads transformed images to [ImgBB](https://imgbb.com/). Images uploaded by this bot through this function are automatically deleted after 7 days.
+  * The bot does downsample the image quality in order to reduce the load on ImgBB's servers and speed up operations.
+* This function currently only supports _direct image posts_ (not galleries). Gallery support will be supported in a future release.
 
 ## Moderator/OP Commands
 

@@ -18,6 +18,29 @@ This page records the version history of the various routines of translator-BOT.
 
 *Entries which are crossed out indicate [removed or irrelevant functionality](deprecated.md).*
 
+##### translator-BOT 2.1 "The Transformation Update" (2026-02-01)
+
+* 🚀 FEATURE: People can use `!transform:[value]` to change the post's image to the right direction for ease of translating.
+    * `[value]` can be positive or negative values of `90` (e.g. `90` rotates the image clockwise, while `-90` rotates it counterclockwise). 
+    * `[value]` can also be `horizontal`, `h` or `vertical`, `v` to flip the image horizontally or vertically respectively.
+    * Currently, this command works on image posts (not galleries). Gallery support may be added in a future update after we see how this current implementation shakes out.
+* 🚀 FEATURE: The post duplicates detector has been turned on. Duplicates may be detected in one of two ways:
+    * Their titles are identical or near-identical and posted by the same author within a short period of time. 
+    * Their image hashes (if applicable for image-only posts) are identical or very similar.
+    * If a suspected duplicate is found, the bot will remove the post and notify the OP.
+* ✨ ADDITION: CJK lookups now have some new (optional) syntax.
+    * A language tag added to a lookup will force a lookup in that language, even on a post that's of a different language. E.g. `文化`:ja will return a Japanese lookup, even on a Chinese post. 
+    * An exclamation mark `!` appended to the lookup (`年年有余`!, `井底之蛙`:zh!) will disable tokenization of the lookup.
+* ✨ ADDITION: CJK lookups can now be loaded from a local cache instead for much faster results. Results loaded from a cache are indicated with the lightning emoji (⚡).
+* ✨ ADDITION: Calls for the same lookups (CJK) in the comments will be redirected to a pre-existing comment if it already exists.
+* ✨ ADDITION: `/post` in Zhongsheng now also includes relevant points data for the post's comments.
+* ✨ ADDITION: Wenju will post a weekly action report on its mod actions to r/translatorBOT.
+* ✨ ADDITION: Wenju will inform mods with a monthly overview of rule violations that resulted in mod post/comment removals.
+* ✨ ADDITION: Modmail conversations that are over 2 days old, where a mod was the last respondent, will now be archived automatically.
+* 🔄 CHANGE: Kunulo object's data for Chinese CJK lookups now properly include only the traditional characters as a base.  
+* 🛠️ BUG FIX: Chinese tokenization now uses simplified as a base in order to return more accurate results, particularly when it comes to chengyu. This was the behavior in previous 1.x versions of translator-BOT.
+* 🛠️ BUG FIX: Fixed an issue when searching katakana matches for Japanese SFX.
+
 ##### translator-BOT 2.0 "The Reborn Update" (2025-10-20)
 
 The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have separate version numbers as of this update, since all of them fully share the same code.
