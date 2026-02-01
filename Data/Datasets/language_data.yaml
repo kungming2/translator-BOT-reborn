@@ -264,6 +264,16 @@ afb:
   name_alternates:
   - Khaliji
   population: 2339000
+agd:
+  country: Papua New Guinea
+  family: Trans-New Guinea
+  language_code_3: agd
+  link_ethnologue: https://www.ethnologue.com/language/agd
+  link_wikipedia: https://en.wikipedia.org/wiki/Agarabi_language
+  name: Agarabi
+  name_alternates:
+  - Agarabe
+  population: 27000
 agx:
   country: Russian Federation
   family: Nakh-Daghestanian
@@ -1204,6 +1214,21 @@ bju:
   - Awa
   - Furu
   population: 200
+bkc:
+  country: Cameroon
+  family: Niger-Congo
+  language_code_3: bkc
+  link_ethnologue: https://www.ethnologue.com/language/bkc
+  link_wikipedia: https://en.wikipedia.org/wiki/Baka_language
+  name: Baka <Cameroon>
+  name_alternates:
+  - Babinga
+  - Bebayaga
+  - Bebayaka
+  - Bibaya
+  - Pygmees Baka
+  - Pygmees de l’Est
+  population: 43200
 bkr:
   country: Indonesia
   family: Austronesian
@@ -2200,6 +2225,17 @@ dib:
   name_alternates:
   - Central Dinka
   population: 250
+dip:
+  country: South Sudan
+  family: Nilo-Saharan
+  language_code_3: dip
+  link_ethnologue: https://www.ethnologue.com/language/dip
+  link_wikipedia: https://en.wikipedia.org/wiki/Dinka_language
+  name: Northeastern Dinka
+  name_alternates:
+  - Padang
+  - White Nile Dinka
+  population: 320000
 dmg:
   country: Malaysia
   family: Austronesian
@@ -4383,6 +4419,15 @@ jje:
   - Jeju
   - Jejumal
   population: 5000
+jmr:
+  country: Ghana
+  family: Niger-Congo
+  language_code_3: jmr
+  link_ethnologue: https://www.ethnologue.com/language/jmr
+  link_wikipedia: https://en.wikipedia.org/wiki/Kamara_language
+  name: Kamara
+  name_alternates: []
+  population: 5000
 jpr:
   country: Israel
   family: Indo-European
@@ -4903,6 +4948,19 @@ koi:
   - Permian
   - Permyak
   population: 94500
+kot:
+  country: Cameroon
+  family: Afro-Asiatic
+  language_code_3: kot
+  link_ethnologue: https://www.ethnologue.com/language/kot
+  link_wikipedia: https://en.wikipedia.org/wiki/Lagwan_language
+  name: Lagwan
+  name_alternates:
+  - Kotoko-Logone
+  - Lagouane
+  - Lagwane
+  - Logone
+  population: 40000
 kpw:
   country: Papua New Guinea
   family: Trans-New Guinea
@@ -5131,6 +5189,17 @@ kw:
   - Kernowek
   population: 0
   subreddit: kernowek
+kwj:
+  country: Papua New Guinea
+  family: Sepik
+  language_code_3: kwj
+  link_ethnologue: https://www.ethnologue.com/language/kwj
+  link_wikipedia: https://en.wikipedia.org/wiki/Kwanga_language
+  name: Kwanga
+  name_alternates:
+  - Gawanga
+  - Kawanga
+  population: 10000
 kwn:
   country: Namibia
   family: Niger-Congo
@@ -8851,6 +8920,15 @@ sq:
   subreddit: albanian
   supported: true
   thanks: Falemenderit
+sqo:
+  country: Iran
+  family: Indo-European
+  language_code_3: sqo
+  link_ethnologue: https://www.ethnologue.com/language/sqo
+  link_wikipedia: https://en.wikipedia.org/wiki/Sorkhei_language
+  name: Sorkhei
+  name_alternates: []
+  population: 10000
 sr:
   countries_associated:
   - ME
@@ -11071,6 +11149,15 @@ zbe:
   - Long Jegan Berawan
   - Melawan
   population: 1100
+zbt:
+  country: Indonesia
+  family: Austronesian
+  language_code_3: zbt
+  link_ethnologue: https://www.ethnologue.com/language/zbt
+  link_wikipedia: https://en.wikipedia.org/wiki/Batui_language
+  name: Batui
+  name_alternates: []
+  population: 2900
 zgh:
   country: Morocco
   family: Afro-Asiatic
