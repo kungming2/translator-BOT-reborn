@@ -44,7 +44,6 @@ def ziwen_messages() -> None:
 
     # Iterate over the messages in the inbox.
     for message in messages:
-
         message_subject: str = message.subject.lower()
         message.mark_read()  # Mark the message as read early on.
 
