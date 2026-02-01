@@ -20,7 +20,7 @@ from notifications import (
     notifier_language_list_editor,
     notifier_language_list_retriever,
 )
-from points import points_retriever
+from points import points_user_retriever
 from reddit_sender import message_reply, message_send
 from responses import RESPONSE
 from usage_statistics import (
@@ -98,7 +98,7 @@ def handle_subscribe(message, message_author):
 
     # No valid matches.
     if not language_matches:  # There are no valid codes to subscribe.
-        logger.warning(f"[SUB] No valid matches after filtering - rejecting request")
+        logger.warning("[SUB] No valid matches after filtering - rejecting request")
         message_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
@@ -328,7 +328,7 @@ def handle_points(message, message_author):
     """Handle points requests."""
     logger.info(f"[ZW] Messages: New points status request from u/{message_author}.")
 
-    user_points_output = "### Points on r/translator\n\n" + points_retriever(
+    user_points_output = "### Points on r/translator\n\n" + points_user_retriever(
         message_author.name
     )
     user_commands_statistics_data = user_statistics_loader(message_author.name)
