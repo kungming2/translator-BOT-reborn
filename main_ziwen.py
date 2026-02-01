@@ -27,6 +27,8 @@ if __name__ == "__main__":
     start_time = time.time()
 
     try:
+        logger.info("[ZW] Main: Starting cycle run.")
+
         # First it processes the titles of new posts.
         ziwen_posts()
 
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         # Record memory usage at the end of a run.
         mem_num = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = "{:.2f} MB".format(mem_num / (1024 * 1024))
-        logger.info(f"[ZW] Run complete. Calls used: {used_calls}. {mem_usage} used.")
+        logger.info(f"[ZW] Main: Run complete. Calls used: {used_calls}. {mem_usage} used.")
 
     except (KeyboardInterrupt, SystemExit):
         # Don't treat intentional exits or Ctrl+C as "errors"
