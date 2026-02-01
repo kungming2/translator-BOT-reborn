@@ -86,8 +86,8 @@ class Kunulo:
 
         Parses lines starting with '# [' and extracts the CJK characters
         before any parentheses. For example:
-        - "# [古](url)" -> "古"
-        - "# [劍 (剑)](url)" -> "劍"
+        - "# [夜](url)" -> "夜"
+        - "# [國 / 国](url)" -> "國"  (traditional char only)
 
         Args:
             comment_body: The raw Markdown text of the comment
@@ -103,6 +103,9 @@ class Kunulo:
         for match in header_pattern.finditer(comment_body):
             char = match.group(1).strip()
             if char:
+                # If format is "國 / 国", extract only the traditional character (before " / ")
+                if " / " in char:
+                    char = char.split(" / ")[0].strip()
                 cjk_chars.append(char)
 
         return cjk_chars
@@ -262,6 +265,73 @@ class Kunulo:
         """
         entries = self._data.get(tag, [])
         return [self._normalize_entry(e)[0] for e in entries]
+
+    def check_existing_cjk_lookups(self, requested_characters, exact_match=True):
+        """
+        Check if requested CJK characters have already been looked up.
+
+        Args:
+            requested_characters: List of CJK characters to check
+            exact_match: If True, requires exact same set of characters.
+                        If False, checks if requested chars are subset of any existing lookup.
+
+        Returns:
+            dict or None: If matches found, returns {'comment_id': str, 'matched_chars': list}
+                         If no matches, returns None
+        """
+        if not requested_characters:
+            return None
+
+        # Get all comment_cjk entries
+        cjk_entries = self.get_all_entries("comment_cjk")
+
+        if not cjk_entries:
+            return None
+
+        # Convert requested characters to a set for comparison
+        requested_set = set(requested_characters)
+
+        # Check each existing comment for matches
+        for comment_id, existing_chars in cjk_entries:
+            if existing_chars:
+                existing_set = set(existing_chars)
+
+                if exact_match:
+                    # Check for exact match (same characters, order doesn't matter)
+                    if requested_set == existing_set:
+                        return {
+                            "comment_id": comment_id,
+                            "matched_terms": list(requested_set),
+                        }
+                else:
+                    # Check if requested is subset of existing
+                    if requested_set.issubset(existing_set):
+                        return {
+                            "comment_id": comment_id,
+                            "matched_terms": list(requested_set),
+                        }
+
+        return None
+
+    def get_comment_permalink(self, comment_id):
+        """
+        Generate a Reddit permalink for a comment.
+
+        Args:
+            comment_id: The Reddit comment ID
+
+        Returns:
+            str: Reddit permalink URL
+
+        Raises:
+            RuntimeError: If no submission is associated with this Kunulo instance
+        """
+        if self._submission is None:
+            raise RuntimeError(
+                "Cannot generate permalink: No submission associated with this Kunulo instance."
+            )
+
+        return f"https://www.reddit.com{self._submission.permalink}{comment_id}"
 
     def delete(self, tag):
         """
