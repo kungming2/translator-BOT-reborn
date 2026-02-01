@@ -13,6 +13,7 @@ from difflib import SequenceMatcher
 from itertools import combinations
 
 import numpy as np
+import orjson
 
 # For fuzzy matching (backup)
 from rapidfuzz import fuzz
@@ -23,6 +24,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from config import SETTINGS, logger
 from connection import REDDIT, is_mod, search_removal_reasons
+from database import db
 from reddit_sender import message_reply
 from responses import RESPONSE
 from usage_statistics import action_counter
@@ -60,9 +62,13 @@ class DuplicateDetector:
             try:
                 # Use a lightweight but effective model
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
-                logger.info("[DD] Semantic similarity model loaded successfully")
+                logger.info(
+                    "[ZW] Duplicate Detector: Semantic similarity model loaded successfully"
+                )
             except Exception as e:
-                logger.warning(f"[DD] Failed to load semantic model: {e}")
+                logger.warning(
+                    f"[ZW] Duplicate Detector: Failed to load semantic model: {e}"
+                )
                 self.model = None
 
     @staticmethod
@@ -102,7 +108,8 @@ class DuplicateDetector:
         """
         # Match numbers with various contexts: #1, episode 5, part 3, pt 2, etc.
         patterns = [
-            r"(?:episode|ep|part|pt|chapter|ch|#|letter)\s*(\d+)",  # Contextual numbers
+            r"#(\d+)",  # Explicit pattern for #1, #2, etc.
+            r"(?:episode|ep|part|pt|chapter|ch|letter)\s*(\d+)",  # Contextual numbers
             r"\((?:pt|part)\s*(\d+)\)",  # Numbers in parentheses: (pt 1), (part 2)
             r"(?<=[\s\.\(\[\-])\d+(?=[\s\.\)\]\-]|$)",  # Standalone numbers
         ]
@@ -112,6 +119,9 @@ class DuplicateDetector:
             matches = re.findall(pattern, text, re.IGNORECASE)
             numbers.extend([int(m) for m in matches])
 
+        logger.info(
+            f"[ZW] Duplicate Detector: Extracted numbers from '{text}': {numbers}"
+        )
         return numbers
 
     def is_numerical_sequence(self, titles):
@@ -138,7 +148,7 @@ class DuplicateDetector:
         if len(number_sets) < 2:
             return False
 
-        logger.info(f"[DD] Numbers found in titles: {number_sets}")
+        logger.info(f"[ZW] Duplicate Detector: Numbers found in titles: {number_sets}")
 
         # Check if numbers are incrementing consistently
         # Compare the last number in each set (usually the episode/part number)
@@ -151,7 +161,9 @@ class DuplicateDetector:
             return False
 
         avg_diff = sum(differences) / len(differences)
-        logger.info(f"[DD] Average numerical difference: {avg_diff}")
+        logger.info(
+            f"[ZW] Duplicate Detector: Average numerical difference: {avg_diff}"
+        )
 
         # If numbers are incrementing consistently (difference of 1-3), it's likely a series
         if 0 < avg_diff <= 3:
@@ -188,7 +200,9 @@ class DuplicateDetector:
 
             return np.mean(similarities)
         except Exception as e:
-            logger.error(f"[DD] Error calculating semantic similarity: {e}")
+            logger.error(
+                f"[ZW] Duplicate Detector: Error calculating semantic similarity: {e}"
+            )
             return None
 
     @staticmethod
@@ -268,7 +282,7 @@ class DuplicateDetector:
         actionable_posts = []
         current_time = int(time.time())
 
-        # Group posts by author
+        # FIRST: Collect all posts by author
         for post in list_posts:
             try:
                 post_author = post.author.name.lower()
@@ -282,12 +296,16 @@ class DuplicateDetector:
 
             # Skip approved posts
             if post.approved:
-                logger.info(f"[DD] Post `{post.id}` already approved by moderator")
+                logger.debug(
+                    f"[ZW] Duplicate Detector: Post `{post.id}` already approved by moderator"
+                )
                 continue
 
             # Skip moderator posts
             if is_mod(post_author):
-                logger.info(f"[DD] Post `{post.id}` posted by moderator")
+                logger.debug(
+                    f"[ZW] Duplicate Detector: Post `{post.id}` posted by moderator"
+                )
                 continue
 
             normalized_title = self.normalize_text(post.title)
@@ -300,71 +318,75 @@ class DuplicateDetector:
                 }
             )
 
-            # Process posts by the same author
-            for author, posts in author_posts.items():
-                if len(posts) < 2:
-                    continue
+        # THEN: Process posts by the same author (FIXED INDENTATION)
+        for author, posts in author_posts.items():
+            if len(posts) < 2:
+                continue
 
-                # Sort by creation time
-                posts.sort(key=lambda x: x["created_utc"])
-                titles = [p["title"] for p in posts]
+            # Sort by creation time
+            posts.sort(key=lambda x: x["created_utc"])
+            titles = [p["title"] for p in posts]
 
-                logger.info(f"[DD] Analyzing {len(posts)} posts by u/{author}")
+            logger.info(
+                f"[ZW] Duplicate Detector: Analyzing {len(posts)} posts by u/{author}"
+            )
 
-                # Check if titles are part of a numbered sequence
-                if self.is_numerical_sequence(titles):
-                    logger.info(
-                        f"[DD] Posts by u/{author} appear to be a series. Skipping."
-                    )
-                    continue
-
-                # Calculate similarity using the best available method
-                similarity_score = None
-                method_used = None
-
-                # Try semantic similarity first (most accurate)
-                if self.model:
-                    similarity_score = self.calculate_semantic_similarity(titles)
-                    if similarity_score is not None:
-                        method_used = "semantic"
-                        # Convert to 0-100 scale for consistent threshold comparison
-                        similarity_score *= 100
-
-                # Fallback to fuzzy matching
-                if similarity_score is None:
-                    similarity_score = self.calculate_fuzzy_similarity(titles)
-                    if similarity_score is not None:
-                        method_used = "fuzzy"
-
-                # Final fallback to difflib
-                if similarity_score is None:
-                    similarity_score = self.calculate_string_similarity(titles)
-                    method_used = "difflib"
-
-                if similarity_score is None:
-                    continue
-
+            # Check if titles are part of a numbered sequence
+            if self.is_numerical_sequence(titles):
                 logger.info(
-                    f"[DD] Posts by u/{author} have {method_used} similarity: "
-                    f"{similarity_score:.2f}"
+                    f"[ZW] Duplicate Detector: Posts by u/{author} appear to be a series. Skipping."
+                )
+                continue
+
+            # Calculate similarity using the best available method
+            similarity_score = None
+            method_used = None
+
+            # Try semantic similarity first (most accurate)
+            if self.model:
+                similarity_score = self.calculate_semantic_similarity(titles)
+                if similarity_score is not None:
+                    method_used = "semantic"
+                    # Convert to 0-100 scale for consistent threshold comparison
+                    similarity_score *= 100
+
+            # Fallback to fuzzy matching
+            if similarity_score is None:
+                similarity_score = self.calculate_fuzzy_similarity(titles)
+                if similarity_score is not None:
+                    method_used = "fuzzy"
+
+            # Final fallback to difflib
+            if similarity_score is None:
+                similarity_score = self.calculate_string_similarity(titles)
+                method_used = "difflib"
+
+            if similarity_score is None:
+                continue
+
+            logger.info(
+                f"[ZW] Duplicate Detector: Posts by u/{author} have {method_used} similarity: "
+                f"{similarity_score:.2f}"
+            )
+
+            # Determine threshold based on method
+            threshold = (
+                self.semantic_threshold * 100
+                if method_used == "semantic"
+                else self.fuzzy_threshold
+            )
+
+            # Flag duplicates if above threshold
+            if similarity_score >= threshold:
+                # Keep the oldest post, remove the rest
+                duplicate_ids = [p["id"] for p in posts[1:]]
+                actionable_posts.extend(duplicate_ids)
+                logger.info(
+                    f"[ZW] Duplicate Detector: Flagged duplicates for removal: {duplicate_ids}"
                 )
 
-                # Determine threshold based on method
-                threshold = (
-                    self.semantic_threshold * 100
-                    if method_used == "semantic"
-                    else self.fuzzy_threshold
-                )
-
-                # Flag duplicates if above threshold
-                if similarity_score >= threshold:
-                    # Keep the oldest post, remove the rest
-                    duplicate_ids = [p["id"] for p in posts[1:]]
-                    actionable_posts.extend(duplicate_ids)
-                    logger.info(f"[DD] Flagged duplicates for removal: {duplicate_ids}")
-
-            # Remove any duplicates from actionable_posts and return
-            actionable_posts = list(set(actionable_posts))
+        # Remove any duplicates from actionable_posts and return
+        actionable_posts = list(set(actionable_posts))
 
         return actionable_posts if actionable_posts else None
 
@@ -387,11 +409,11 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
     duplicate_ids = detector.detect_duplicates(list_posts)
 
     if not duplicate_ids:
-        logger.info("[DD] No duplicates detected.")
+        logger.info("[ZW] Duplicate Detector: No duplicates detected.")
         return None
 
     logger.info(
-        f"[DD] Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
+        f"[ZW] Duplicate Detector: Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
     )
 
     # Remove duplicates and notify authors
@@ -432,15 +454,20 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
                 original_link=original_post.permalink,
                 dupe_link=dupe_post.permalink,
             )
-            bot_reply = message_reply(dupe_post, duplicate_comment)
+
             if not testing_mode:
+                bot_reply = message_reply(dupe_post, duplicate_comment)
                 bot_reply.mod.distinguish()
 
             successfully_removed.append(dupe_id)
-            logger.info(f"[DD] Removed duplicate post {dupe_id} by u/{dupe_author}")
+            logger.info(
+                f"[ZW] Duplicate Detector: Removed duplicate post {dupe_id} by u/{dupe_author}"
+            )
 
         except Exception as e:
-            logger.error(f"[DD] Error processing duplicate {dupe_id}: {e}")
+            logger.error(
+                f"[ZW] Duplicate Detector: Error processing duplicate {dupe_id}: {e}"
+            )
             continue
 
     # Log to action counter
@@ -449,7 +476,372 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
     return successfully_removed if successfully_removed else None
 
 
-def test_duplicate_detection():
+def search_image_hash(
+    image_hash: str, max_distance: int = 5, days: int | None = None
+) -> list[dict]:
+    """
+    Search the Ajo database for posts with matching or similar image hashes.
+
+    Args:
+        image_hash: The image hash to search for (hexadecimal string)
+        max_distance: Maximum Hamming distance for similarity (default: 5)
+                     0 = exact match only
+                     5 = allow up to 5 bit differences (similar images)
+        days: Number of days to look back (default: None = search all time)
+
+    Returns:
+        List of dictionaries containing matching post information:
+        [{'post_id': str, 'created_utc': int, 'author': str,
+          'title': str, 'hash': str, 'distance': int}, ...]
+        Sorted by distance (closest matches first)
+    """
+    from database import db
+
+    if not image_hash:
+        logger.warning(
+            "[ZW] Duplicate Detector: search_image_hash: Received empty hash"
+        )
+        return []
+
+    try:
+        # Import here to avoid issues if imagehash isn't available
+        import imagehash
+
+        target_hash = imagehash.hex_to_hash(image_hash)
+    except Exception as e:
+        logger.error(
+            f"[ZW] Duplicate Detector: Failed to parse image hash '{image_hash}': {e}"
+        )
+        return []
+
+    # Calculate cutoff time if days parameter is provided
+    cutoff_utc = None
+    if days is not None:
+        cutoff_utc = int(time.time()) - (days * 86400)
+        logger.debug(
+            f"[ZW] Duplicate Detector: Searching image hashes from last {days} days (cutoff: {cutoff_utc})"
+        )
+
+    try:
+        # Build query with optional time filter
+        if cutoff_utc is not None:
+            query = """
+                    SELECT id, created_utc, ajo
+                    FROM ajo_database
+                    WHERE ajo LIKE '%image_hash%'
+                      AND created_utc >= ? \
+                    """
+            results = db.fetchall_ajo(query, (cutoff_utc,))
+        else:
+            query = "SELECT id, created_utc, ajo FROM ajo_database WHERE ajo LIKE '%image_hash%'"
+            results = db.fetchall_ajo(query)
+
+        matches = []
+
+        for result in results:
+            try:
+                post_id = result["id"]
+                created_utc = result["created_utc"]
+                data_json = result["ajo"]
+
+                # Parse the ajo data
+                if isinstance(data_json, str):
+                    try:
+                        data = orjson.loads(data_json)
+                    except orjson.JSONDecodeError:
+                        from ast import literal_eval
+
+                        data = literal_eval(data_json)
+                else:
+                    data = data_json
+
+                stored_hash = data.get("image_hash")
+                if not stored_hash:
+                    continue
+
+                # Calculate Hamming distance
+                try:
+                    stored_hash_obj = imagehash.hex_to_hash(stored_hash)
+                    distance = target_hash - stored_hash_obj
+                except Exception as e:
+                    logger.debug(
+                        f"[ZW] Duplicate Detector: Error comparing hash for post {post_id}: {e}"
+                    )
+                    continue
+
+                # Only include if within distance threshold
+                if distance <= max_distance:
+                    matches.append(
+                        {
+                            "post_id": post_id,
+                            "created_utc": created_utc,
+                            "author": data.get("author", "unknown"),
+                            "title": data.get("title", ""),
+                            "hash": stored_hash,
+                            "distance": distance,
+                        }
+                    )
+
+            except Exception as e:
+                logger.debug(f"[ZW] Duplicate Detector: Error processing result: {e}")
+                continue
+
+        # Sort by distance (closest matches first)
+        matches.sort(key=lambda x: x["distance"])
+
+        time_range = f"last {days} days" if days is not None else "all time"
+        logger.info(
+            f"[ZW] Duplicate Detector: Found {len(matches)} image hash matches "
+            f"in {time_range} (max distance: {max_distance})"
+        )
+        return matches
+
+    except Exception as e:
+        logger.error(f"[ZW] Duplicate Detector: Error searching image hashes: {e}")
+        return []
+
+
+def check_image_duplicate(
+    post, ajo, days_lookback=30, max_distance=5, testing_mode=False
+):
+    """
+    Check if a post's image is a duplicate of a previously posted image.
+
+    This function should be called from ziwen_posts after an Ajo is created
+    for an image post. It searches for similar images in the database and
+    notifies the user if a match is found.
+
+    Args:
+        post: PRAW submission object (the current post being processed)
+        ajo: Ajo object for the current post (must have image_hash set)
+        days_lookback: How many days back to search (default: 30)
+        max_distance: Maximum Hamming distance for similarity (default: 5)
+                     0 = exact match only
+                     5 = allow up to 5 bit differences (similar images)
+        testing_mode: If True, don't actually post comments (default: False)
+
+    Returns:
+        dict or None: Information about the duplicate if found, else None
+        {
+            'found': bool,
+            'match': dict,  # Best matching post info
+            'commented': bool  # Whether a comment was posted
+        }
+    """
+    # Skip if no image hash (not an image post)
+    if not ajo.image_hash:
+        logger.debug(
+            f"[ZW] Image Dupe Check: Post `{post.id}` has no image hash, skipping"
+        )
+        return None
+
+    logger.info(
+        f"[ZW] Image Dupe Check: Checking image hash for post `{post.id}` "
+        f"(hash: {ajo.image_hash})"
+    )
+
+    try:
+        # Search for similar images in the database
+        matches = search_image_hash(
+            image_hash=ajo.image_hash, max_distance=max_distance, days=days_lookback
+        )
+
+        # Filter out the current post itself
+        matches = [m for m in matches if m["post_id"] != post.id]
+
+        if not matches:
+            logger.info(
+                f"[ZW] Image Dupe Check: No similar images found for post `{post.id}`"
+            )
+            return None
+
+        # Get the best match (closest distance)
+        best_match = matches[0]
+        distance = best_match["distance"]
+
+        logger.info(
+            f"[ZW] Image Dupe Check: Found similar image for post `{post.id}`: "
+            f"matches post `{best_match['post_id']}` with distance {distance}"
+        )
+
+        # Determine similarity level for user message
+        if distance == 0:
+            similarity_text = "identical to"
+        elif distance <= 2:
+            similarity_text = "nearly identical to"
+        else:
+            similarity_text = "very similar to"
+
+        # Format the notification comment
+        try:
+            post_author = post.author.name
+        except AttributeError:
+            post_author = "[deleted]"
+
+        # Build the comment with information about the similar post
+        previous_post_link = f"https://www.reddit.com/comments/{best_match['post_id']}"
+
+        # Calculate time difference
+        time_diff_seconds = post.created_utc - best_match["created_utc"]
+        time_diff_hours = time_diff_seconds / 3600
+        time_diff_days = time_diff_seconds / 86400
+
+        if time_diff_days >= 1:
+            time_ago = f"{int(time_diff_days)} day(s) ago"
+        else:
+            time_ago = f"{int(time_diff_hours)} hour(s) ago"
+
+        # Check if it's by the same author
+        same_author = best_match["author"].lower() == post_author.lower()
+
+        if same_author:
+            comment_text = RESPONSE.COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR.format(
+                author=post_author,
+                similarity=similarity_text,
+                previous_link=previous_post_link,
+                time_ago=time_ago,
+            )
+        else:
+            comment_text = RESPONSE.COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR.format(
+                author=post_author,
+                similarity=similarity_text,
+                previous_link=previous_post_link,
+                previous_author=best_match["author"],
+                time_ago=time_ago,
+            )
+
+        # Add disclaimer
+        comment_text += "\n\n" + RESPONSE.BOT_DISCLAIMER
+
+        # Post the comment
+        commented = False
+        if not testing_mode:
+            try:
+                message_reply(post, comment_text)
+                # Don't distinguish - this is informational, not a removal
+                commented = True
+                logger.info(
+                    f"[ZW] Image Dupe Check: Posted duplicate notification on `{post.id}`"
+                )
+
+                # Log to action counter
+                action_counter(1, "Image duplicate notifications")
+
+            except Exception as e:
+                logger.error(
+                    f"[ZW] Image Dupe Check: Failed to post comment on `{post.id}`: {e}"
+                )
+        else:
+            logger.info(
+                f"[ZW] Image Dupe Check: [TESTING MODE] Would have posted comment:\n{comment_text}"
+            )
+            commented = True  # In testing mode, we "posted"
+
+        return {
+            "found": True,
+            "match": best_match,
+            "commented": commented,
+            "distance": distance,
+            "same_author": same_author,
+        }
+
+    except Exception as e:
+        logger.error(
+            f"[ZW] Image Dupe Check: Error checking image duplicate for `{post.id}`: {e}"
+        )
+        return None
+
+
+def get_image_duplicate_stats(days=7):
+    """
+    Get statistics about image duplicates in the database.
+
+    Useful for monitoring and tuning the duplicate detection parameters.
+
+    Args:
+        days: Number of days to analyze (default: 7)
+
+    Returns:
+        dict: Statistics about image duplicates
+        {
+            'total_image_posts': int,
+            'unique_hashes': int,
+            'duplicate_groups': list[dict],  # Groups of posts with identical hashes
+            'time_range_days': int
+        }
+    """
+
+    cutoff_utc = int(time.time()) - (days * 86400)
+
+    try:
+        query = """
+                SELECT id, created_utc, ajo
+                FROM ajo_database
+                WHERE ajo LIKE '%image_hash%'
+                  AND created_utc >= ? \
+                """
+        results = db.fetchall_ajo(query, (cutoff_utc,))
+
+        hash_groups = defaultdict(list)
+        total_posts = 0
+
+        for result in results:
+            try:
+                data = orjson.loads(result["ajo"])
+                image_hash = data.get("image_hash")
+
+                if image_hash:
+                    total_posts += 1
+                    hash_groups[image_hash].append(
+                        {
+                            "post_id": result["id"],
+                            "created_utc": result["created_utc"],
+                            "author": data.get("author", "unknown"),
+                            "title": data.get("title", ""),
+                        }
+                    )
+            except Exception as e:
+                logger.debug(f"[ZW] Image Stats: Error processing result: {e}")
+                continue
+
+        # Find duplicate groups (same hash, multiple posts)
+        duplicate_groups = [
+            {
+                "hash": hash_val,
+                "count": len(posts),
+                "posts": sorted(posts, key=lambda x: x["created_utc"]),
+            }
+            for hash_val, posts in hash_groups.items()
+            if len(posts) > 1
+        ]
+
+        # Sort by count (most duplicates first)
+        duplicate_groups.sort(key=lambda x: x["count"], reverse=True)
+
+        stats = {
+            "total_image_posts": total_posts,
+            "unique_hashes": len(hash_groups),
+            "duplicate_groups": duplicate_groups,
+            "time_range_days": days,
+        }
+
+        logger.info(
+            f"[ZW] Image Stats: Found {total_posts} image posts with "
+            f"{len(hash_groups)} unique hashes over {days} days. "
+            f"{len(duplicate_groups)} groups with exact duplicates."
+        )
+
+        return stats
+
+    except Exception as e:
+        logger.error(f"[ZW] Image Stats: Error getting statistics: {e}")
+        return None
+
+
+"""TESTING ROUTINE"""
+
+
+def duplicate_detection_test():
     """
     Test the duplicate detector on r/translator posts.
     """
@@ -465,6 +857,7 @@ def test_duplicate_detection():
     # Get the most recent posts (adjust limit as needed)
     print(f"Fetching posts from r/{designated_subreddit}...")
     posts = list(subreddit.new(limit=100))  # Get last 100 posts
+    posts.reverse()  # Reverse order to process oldest posts first
     print(f"Fetched {len(posts)} posts\n")
 
     # Show some basic stats
@@ -499,10 +892,10 @@ def test_duplicate_detection():
     duplicate_ids = duplicate_detector(
         posts,
         REDDIT,
-        image_hash_detector=None,  # No image hash detection for this test
+        testing_mode=True,
         semantic_threshold=0.85,
         fuzzy_threshold=85,
-        age_limit_hours=48,  # Look at last 48 hours
+        age_limit_hours=48,  # Look at last 48 hours as a maximum
     )
 
     print("-" * 80)
@@ -551,4 +944,9 @@ def test_duplicate_detection():
 
 
 if __name__ == "__main__":
-    test_duplicate_detection()
+    start_time = time.time()
+    # duplicate_detection_test()
+    print(search_image_hash("e3c80e178acccc33", days=30))
+    end_time = time.time()
+    elapsed = end_time - start_time
+    print(f"\nTotal execution time: {elapsed:.2f} seconds")
