@@ -13,12 +13,18 @@ import pykakasi
 import requests
 from lxml import html
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from config import logger
 from connection import get_random_useragent
 from lookup.async_helpers import call_sync_async, fetch_json
-from lookup.cache_helpers import parse_ja_output_to_json, save_to_cache
+from lookup.cache_helpers import (
+    format_ja_character_from_cache,
+    format_ja_word_from_cache,
+    get_from_cache,
+    parse_ja_output_to_json,
+    save_to_cache,
+)
 from lookup.zh import calligraphy_search
 
 useragent = get_random_useragent()
@@ -64,9 +70,10 @@ def _format_kun_on_readings(tree) -> tuple[str, str]:
 """CHARACTER FUNCTIONS"""
 
 
-def ja_character(character: str) -> str:
+def _ja_character_fetch(character: str) -> str:
     """
-    Looks up a Japanese kanji or hiragana character's readings and meanings.
+    Internal function to fetch Japanese character data from web sources.
+    This is called by ja_character when cache miss occurs.
 
     :param character: A kanji or single hiragana. This function will not
                       work with individual katakana.
@@ -175,7 +182,7 @@ def ja_character(character: str) -> str:
         ooi_meaning += " |"
 
         total_data: str = (
-                ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
+            ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
         )
 
     # Append resource links
@@ -200,12 +207,34 @@ def ja_character(character: str) -> str:
     try:
         parsed_data = parse_ja_output_to_json(total_data)
         save_to_cache(parsed_data, "ja", "ja_character")
+        logger.debug(f"[ZW] JA-Character: Cached result for '{character}'")
     except Exception as ex:
-        # Silently fail if caching doesn't work
-        logger.error(f"Encountered issue: {ex}")
-        pass
+        logger.error(
+            f"[ZW] JA-Character: Failed to cache result for '{character}': {ex}"
+        )
 
     return total_data + lookup_line_3
+
+
+def ja_character(character: str) -> str:
+    """
+    Looks up a Japanese kanji or hiragana character's readings and meanings with caching support.
+    Checks cache first, falls back to web fetch if not found.
+
+    :param character: A kanji or single hiragana. This function will not
+                      work with individual katakana.
+    :return: A formatted string with readings, meanings, and resource links.
+    """
+    # Check cache first
+    cached = get_from_cache(character, "ja", "ja_character")
+
+    if cached and cached.get("word"):  # Check it's not empty dict
+        logger.info(f"[ZW] JA-Character: Retrieved '{character}' from cache.")
+        return format_ja_character_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from web
+    logger.info(f"[ZW] JA-Character: Cache miss for '{character}', fetching from web.")
+    return _ja_character_fetch(character)
 
 
 """WORD FUNCTIONS"""
@@ -216,9 +245,15 @@ def _sfx_search(katakana_string: str) -> str | None:
         return None
 
     search_url: str = f"https://nsk.sh/tools/jp-onomatopoeia/?term={katakana_string}"
-    options: Options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options)
+
+    options = ChromeOptions()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+
+    driver = webdriver.Chrome(options=options)
 
     try:
         driver.get(search_url)
@@ -272,6 +307,9 @@ def _sfx_search(katakana_string: str) -> str | None:
 
         return finished_comment
 
+    except Exception as e:
+        logger.warning(f"[ZW] JA-Word-SFX: Error searching for {katakana_string}: {e}")
+        return None
     finally:
         driver.quit()
 
@@ -421,10 +459,13 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
         return None
 
 
-async def ja_word(japanese_word: str) -> str | None:
+async def _ja_word_fetch(japanese_word: str) -> str | None:
     """
-    Async version of ja_word. Uses Jisho's unlisted API to fetch Japanese word data.
-    Falls back to other functions if no word data found.
+    Internal function to fetch Japanese word data from web sources.
+    This is called by ja_word when cache miss occurs.
+
+    :param japanese_word: A Japanese word.
+    :return: Formatted string with readings and meanings, or None.
     """
     japanese_word = japanese_word.strip()
     url: str = (
@@ -507,17 +548,73 @@ async def ja_word(japanese_word: str) -> str | None:
         try:
             parsed_data = parse_ja_output_to_json(return_comment)
             save_to_cache(parsed_data, "ja", "ja_word")
+            logger.debug(f"[ZW] JA-Word: Cached result for '{japanese_word}'")
         except Exception as ex:
-            # Silently fail if caching doesn't work
-            logger.error(f"Encountered issue: {ex}")
-            pass
+            logger.error(
+                f"[ZW] JA-Word: Failed to cache result for '{japanese_word}': {ex}"
+            )
 
         return return_comment + footer
     else:
         return None
 
 
+async def ja_word(japanese_word: str) -> str | None:
+    """
+    Async version of ja_word with caching support.
+    Uses Jisho's unlisted API to fetch Japanese word data.
+    Falls back to other functions if no word data found.
+    Checks cache first, falls back to web fetch if not found.
+
+    :param japanese_word: A Japanese word.
+    :return: Formatted string with readings and meanings, or None.
+    """
+    japanese_word = japanese_word.strip()
+
+    # Check cache first
+    cached = get_from_cache(japanese_word, "ja", "ja_word")
+
+    if cached and cached.get("word"):  # Check it's not empty dict
+        logger.info(f"[ZW] JA-Word: Retrieved '{japanese_word}' from cache.")
+        return format_ja_word_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from web
+    logger.info(f"[ZW] JA-Word: Cache miss for '{japanese_word}', fetching from web.")
+    return await _ja_word_fetch(japanese_word)
+
+
 if __name__ == "__main__":
+    import logging
+
+    # Configure logging to DEBUG level
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    # Also set the module logger to DEBUG explicitly
+    logger.setLevel(logging.DEBUG)
+
+    def show_menu():
+        print("\nSelect a search to run:")
+        print("1. ja_character (search for a single Japanese character)")
+        print("2. ja_word (search for a Japanese word)")
+        print("x. Exit")
+
     while True:
-        my_input = input("Please enter a string: ")
-        print(asyncio.run(ja_word(my_input)))
+        show_menu()
+        choice = input("Enter your choice (1-2, or x): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        my_input = input("Enter the string you wish to test: ")
+
+        if choice == "1":
+            print(ja_character(my_input))
+        elif choice == "2":
+            print(asyncio.run(ja_word(my_input)))

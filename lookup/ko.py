@@ -8,7 +8,12 @@ import krdict
 from korean_romanizer.romanizer import Romanizer
 
 from connection import credentials_source, logger
-from lookup.cache_helpers import parse_ko_output_to_json, save_to_cache
+from lookup.cache_helpers import (
+    format_ko_word_from_cache,
+    get_from_cache,
+    parse_ko_output_to_json,
+    save_to_cache,
+)
 
 # Set the API key to use.
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
@@ -83,10 +88,10 @@ def _ko_search_raw(target_word: str) -> list[dict]:
     return filtered_data
 
 
-def ko_word(korean_word: str) -> str | None:
+def _ko_word_fetch(korean_word: str) -> str | None:
     """
-    This function passes on a search for a Korean word, and then
-    if there is a result, formats in Markdown.
+    Internal function to fetch Korean word data from the API.
+    This is called by ko_word when cache miss occurs.
 
     :param korean_word: A word in Korean.
     :return: A Markdown formatted string, or None.
@@ -145,15 +150,68 @@ def ko_word(korean_word: str) -> str | None:
     try:
         parsed_data = parse_ko_output_to_json(final_comment)
         save_to_cache(parsed_data, "ko", "ko_word")
+        logger.debug(f"[ZW] KO-Word: Cached result for '{korean_word}'")
     except Exception as ex:
-        # Silently fail if caching doesn't work
-        logger.error(f"Encountered issue: {ex}")
-        pass
+        logger.error(f"[ZW] KO-Word: Failed to cache result for '{korean_word}': {ex}")
 
     return final_comment
 
 
+def ko_word(korean_word: str) -> str | None:
+    """
+    This function searches for a Korean word with caching support.
+    Checks cache first, falls back to API fetch if not found.
+
+    :param korean_word: A word in Korean.
+    :return: A Markdown formatted string, or None.
+    """
+    korean_word = korean_word.strip()
+
+    # Check cache first
+    cached = get_from_cache(korean_word, "ko", "ko_word")
+
+    if cached and cached.get("word"):  # Check it's not empty dict
+        logger.info(f"[ZW] KO-Word: Retrieved '{korean_word}' from cache.")
+        return format_ko_word_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from API
+    logger.info(f"[ZW] KO-Word: Cache miss for '{korean_word}', fetching from API.")
+    return _ko_word_fetch(korean_word)
+
+
 if __name__ == "__main__":
+    import logging
+
+    # Configure logging to DEBUG level
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    # Also set the module logger to DEBUG explicitly
+    logger.setLevel(logging.DEBUG)
+
+    def show_menu():
+        print("\nSelect a search to run:")
+        print("1. ko_word (search for a Korean word)")
+        print("x. Exit")
+
     while True:
+        show_menu()
+        choice = input("Enter your choice (1, or x): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1"]:
+            print("Invalid choice, please try again.")
+            continue
+
         my_input = input("Enter a Korean word to search for: ")
-        print(ko_word(my_input))
+
+        if choice == "1":
+            result = ko_word(my_input)
+            if result:
+                print(result)
+            else:
+                print(f"No results found for '{my_input}'")

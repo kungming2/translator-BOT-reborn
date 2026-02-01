@@ -28,7 +28,13 @@ from pypinyin import Style, lazy_pinyin
 from config import Paths, logger
 from connection import get_random_useragent
 from lookup.async_helpers import call_sync_async
-from lookup.cache_helpers import parse_zh_output_to_json, save_to_cache
+from lookup.cache_helpers import (
+    format_zh_word_from_cache,
+    get_cached_or_fetch_zh_character,
+    get_from_cache,
+    parse_zh_output_to_json,
+    save_to_cache,
+)
 from responses import RESPONSE
 
 useragent = get_random_useragent()
@@ -128,6 +134,27 @@ def _convert_numbered_pinyin(s):
     result += t
 
     return result
+
+
+async def zh_word(word):
+    """
+    Defines a Chinese word (typically >1 character) with caching support.
+    Checks cache first, falls back to web fetch if not found.
+
+    :param word: Any Chinese word (usually more than one character).
+    :return: Formatted string containing pronunciation and meanings.
+    """
+    # Check cache directly with traditional form
+    trad_word = tradify(word)
+    cached = get_from_cache(trad_word, "zh", "zh_word")
+
+    if cached:
+        logger.info(f"[ZW] ZH-Word: Retrieved '{word}' from cache.")
+        return format_zh_word_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from web
+    logger.info(f"[ZW] ZH-Word: Cache miss for '{word}', fetching from web.")
+    return await _zh_word_fetch(word)
 
 
 def vowel_neighbor(letter, word):
@@ -665,10 +692,10 @@ async def _zh_character_other_readings(character):
         return None
 
 
-async def zh_character(character):
+async def _zh_character_fetch(character):
     """
-    Look up a Chinese character's pronunciations and meanings,
-    combining multiple reference functions.
+    Internal function to fetch Chinese character data from web sources.
+    This is called by zh_character when cache miss occurs.
 
     :param character: Any Chinese character or string.
     :return: Formatted string containing the character's information.
@@ -800,6 +827,7 @@ async def zh_character(character):
                 yue_pronunciation = yue_pronunciation.replace(str(i), f"^{i} ")
             yue_pronunciation = "*" + yue_pronunciation.strip() + "*"
 
+            multi_character_dict[wenzi] = {}
             multi_character_dict[wenzi]["mandarin"] = cmn_pronunciation
             multi_character_dict[wenzi]["cantonese"] = yue_pronunciation
 
@@ -866,6 +894,17 @@ async def zh_character(character):
         )
 
     return to_post
+
+
+async def zh_character(character):
+    """
+    Look up a Chinese character's pronunciations and meanings with caching support.
+    Checks cache first, falls back to web fetch if not found.
+
+    :param character: Any Chinese character or string.
+    :return: Formatted string containing the character's information.
+    """
+    return await get_cached_or_fetch_zh_character(character, _zh_character_fetch)
 
 
 """WORD FUNCTIONS"""
@@ -944,7 +983,7 @@ async def _zh_word_tea_dictionary_search(chinese_word):
 
     # Check for "Don't know" early and return None if found
     for node in text_nodes:
-        if "Don′t know" in node or "Don't know" in node:
+        if "Don't know" in node or "Don't know" in node:
             return None
 
     pinyin_line_index = None
@@ -965,7 +1004,7 @@ async def _zh_word_tea_dictionary_search(chinese_word):
         return None
 
     meaning = " ".join(meaning_parts).replace(" )", " ").replace("  ", " ").strip()
-    if "Don′t know" in meaning:
+    if "Don't know" in meaning:
         return None
 
     formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
@@ -1024,10 +1063,10 @@ async def zh_word_chengyu_supplement(chengyu):
             return None
 
         meaning_xpath = (
-            "//tr[td[1][contains(normalize-space(.), '解释：')]]/td[2]/text()"
+            "//tr[td[1][contains(normalize-space(.), '解释:')]]/td[2]/text()"
         )
         literary_source_xpath = (
-            "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]/text()"
+            "//tr[td[1][contains(normalize-space(.), '出处:')]]/td[2]/text()"
         )
 
         meaning_list = detail_tree.xpath(meaning_xpath)
@@ -1046,9 +1085,10 @@ async def zh_word_chengyu_supplement(chengyu):
         )
 
 
-async def zh_word(word):
+async def _zh_word_fetch(word):
     """
-    Defines a Chinese word (typically >1 character), returning its readings and meanings.
+    Internal function to fetch Chinese word data from web sources.
+    This is called by zh_word when cache miss occurs.
 
     :param word: Any Chinese word (usually more than one character).
     :return: Formatted string containing pronunciation and meanings.

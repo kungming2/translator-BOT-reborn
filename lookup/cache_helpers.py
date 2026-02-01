@@ -9,9 +9,10 @@ import sys
 import time
 from typing import Dict
 
+from config import SETTINGS
 from database import db
 
-"""CACHE INPUT/OUTPUT"""
+"""CACHE INPUT"""
 
 
 def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
@@ -63,9 +64,7 @@ def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
     db.conn_cache.commit()
 
 
-def get_from_cache(
-    term: str, language_code: str, lookup_type: str, max_age_days: int = 30
-) -> Dict | None:
+def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | None:
     """
     Retrieve cached CJK lookup data from the database.
 
@@ -73,9 +72,9 @@ def get_from_cache(
                  Japanese kanji, Korean hangul)
     :param language_code: Language code (e.g., "zh", "ja", "ko")
     :param lookup_type: Lookup type (e.g., "zh_word", "zh_character")
-    :param max_age_days: Maximum age of cached data in days (default: 30)
     :return: Parsed dictionary if found and not expired, None otherwise
     """
+    max_age_days = SETTINGS["lookup_cjk_cache_age"]
     cutoff_time = int(time.time()) - (max_age_days * 86400)
 
     query = """
@@ -442,7 +441,378 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
     return result
 
 
-# Example usage
+"""CHINESE CACHE OUTPUT"""
+
+
+def format_zh_character_from_cache(cached_data: Dict) -> str:
+    """
+    Reconstruct the zh_character markdown output from cached data.
+
+    :param cached_data: Dictionary with parsed character data
+    :return: Formatted markdown string
+    """
+    trad = cached_data.get("traditional")
+    simp = cached_data.get("simplified")
+    pronunciations = cached_data.get("pronunciations", {})
+    meanings = cached_data.get("meanings", "")
+    calligraphy = cached_data.get("calligraphy_links")
+
+    # Header
+    if trad == simp:
+        header = f"# [{trad}](https://en.wiktionary.org/wiki/{trad}#Chinese)\n\n"
+    else:
+        header = (
+            f"# [{trad} / {simp}](https://en.wiktionary.org/wiki/{trad}#Chinese)\n\n"
+        )
+
+    # Pronunciation table
+    table = "| Language | Pronunciation |\n|----------|---------------|\n"
+
+    # Mandarin
+    if "mandarin" in pronunciations:
+        table += f"| **Mandarin** | *{pronunciations['mandarin']}* |\n"
+    elif "mandarin_pinyin" in pronunciations:
+        table += f"| **Mandarin** | *{pronunciations['mandarin_pinyin']}* |\n"
+
+    # Cantonese
+    if "cantonese" in pronunciations:
+        table += f"| **Cantonese** | *{pronunciations['cantonese']}* |\n"
+
+    # Southern Min (Hokkien)
+    if "southern_min" in pronunciations:
+        table += f"| **Southern Min** | *{pronunciations['southern_min']}* |\n"
+
+    # Hakka
+    if "hakka_sixian" in pronunciations:
+        table += f"| **Hakka (Sixian)** | *{pronunciations['hakka_sixian']}* |\n"
+
+    # Old/Middle Chinese
+    if "middle_chinese" in pronunciations:
+        table += f"| **Middle Chinese** | \\**{pronunciations['middle_chinese']}* |\n"
+    if "old_chinese" in pronunciations:
+        table += f"| **Old Chinese** | \\*{pronunciations['old_chinese']}* |\n"
+
+    # Japanese
+    if "japanese" in pronunciations:
+        table += f"| **Japanese** | *{pronunciations['japanese']}* |\n"
+
+    # Korean
+    if "korean_hangul" in pronunciations and "korean_romanized" in pronunciations:
+        table += f"| **Korean** | {pronunciations['korean_hangul']} (*{pronunciations['korean_romanized']}*) |\n"
+
+    # Vietnamese
+    if "vietnamese" in pronunciations:
+        table += f"| **Vietnamese** | *{pronunciations['vietnamese']}* |\n"
+
+    # Calligraphy links
+    calligraphy_section = ""
+    if calligraphy:
+        sfzd_image = calligraphy.get("sfzd_image")
+        sfds = calligraphy.get("sfds")
+        variants = calligraphy.get("variants")
+
+        if sfzd_image:
+            variant_link = (
+                f"[YTZZD]({variants})"
+                if variants
+                else "[YTZZD](https://dict.variants.moe.edu.tw/)"
+            )
+            calligraphy_section = (
+                f"\n\n**Chinese Calligraphy Variants**: [{trad}]({sfzd_image}) "
+                f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *{variant_link}*)"
+            )
+
+    # Meanings
+    meanings_section = f'\n\n**Meanings**: "{meanings}"'
+
+    # Additional meanings
+    if cached_data.get("buddhist_meanings"):
+        meanings_section += (
+            f'\n\n**Buddhist Meanings**: "{cached_data["buddhist_meanings"]}"'
+        )
+
+    if cached_data.get("cantonese_meanings"):
+        meanings_section += (
+            f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
+        )
+
+    if cached_data.get("tea_meanings"):
+        meanings_section += f'\n\n**Tea Meanings**: "{cached_data["tea_meanings"]}"'
+
+    # Footer
+    footer = (
+        f"\n\n\n^Information ^from "
+        f"^[Unihan](https://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint={trad}) ^| "
+        f"^[CantoDict](https://www.cantonese.sheik.co.uk/dictionary/characters/{trad}/) ^| "
+        f"^[Chinese-Etymology](https://hanziyuan.net/#{trad}) ^| "
+        f"^[CHISE](https://www.chise.org/est/view/char/{trad}) ^| "
+        f"^[CTEXT](https://ctext.org/dictionary.pl?if=en&char={trad}) ^| "
+        f"^[MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=1&wdqb={trad}) ^| "
+        f"^[MoE-DICT](https://www.moedict.tw/'{trad}) ^| "
+        f"^[MFCCD](https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word={trad}) ^| "
+        f"^[ZDIC](https://www.zdic.net/hans/{simp}) ^| "
+        f"^[ZI](https://zi.tools/zi/{trad})"
+    )
+
+    return header + table + calligraphy_section + meanings_section + footer
+
+
+def format_zh_word_from_cache(cached_data: Dict) -> str:
+    """
+    Reconstruct the zh_word markdown output from cached data.
+
+    :param cached_data: Dictionary with parsed word data
+    :return: Formatted markdown string
+    """
+    trad = cached_data.get("traditional")
+    simp = cached_data.get("simplified")
+    pronunciations = cached_data.get("pronunciations", {})
+    meanings = cached_data.get("meanings", "")
+
+    # Header
+    if trad == simp:
+        header = f"# [{trad}](https://en.wiktionary.org/wiki/{trad}#Chinese)"
+    else:
+        header = f"# [{trad} / {simp}](https://en.wiktionary.org/wiki/{trad}#Chinese)"
+
+    # Pronunciation table
+    table = "\n\n| Language | Pronunciation |\n|---------|--------------|\n"
+
+    # Mandarin variants
+    if "mandarin_pinyin" in pronunciations:
+        table += f"| **Mandarin** (Pinyin) | *{pronunciations['mandarin_pinyin']}* |\n"
+    if "mandarin_wade_giles" in pronunciations:
+        table += f"| **Mandarin** (Wade-Giles) | *{pronunciations['mandarin_wade_giles']}* |\n"
+    if "mandarin_yale" in pronunciations:
+        table += f"| **Mandarin** (Yale) | *{pronunciations['mandarin_yale']}* |\n"
+    if "mandarin_gr" in pronunciations:
+        table += f"| **Mandarin** (GR) | *{pronunciations['mandarin_gr']}* |\n"
+
+    # Cantonese
+    if "cantonese" in pronunciations:
+        table += f"| **Cantonese** | *{pronunciations['cantonese']}* |\n"
+
+    # Southern Min
+    if "southern_min" in pronunciations:
+        table += f"| **Southern Min** | *{pronunciations['southern_min']}* |\n"
+
+    # Hakka
+    if "hakka_sixian" in pronunciations:
+        table += f"| **Hakka (Sixian)** | *{pronunciations['hakka_sixian']}* |\n"
+
+    # Meanings section
+    meanings_section = f'\n\n**Meanings**: "{meanings}"'
+
+    # Chengyu specific fields
+    if cached_data.get("chinese_meaning"):
+        meanings_section += f"\n\n**Chinese Meaning**: {cached_data['chinese_meaning']}"
+
+    if cached_data.get("literary_source"):
+        meanings_section += f"\n\n**Literary Source**: {cached_data['literary_source']}"
+
+    # Additional meanings
+    if cached_data.get("buddhist_meanings"):
+        meanings_section += (
+            f'\n\n**Buddhist Meanings**: "{cached_data["buddhist_meanings"]}"'
+        )
+
+    if cached_data.get("cantonese_meanings"):
+        meanings_section += (
+            f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
+        )
+
+    if cached_data.get("tea_meanings"):
+        meanings_section += f'\n\n**Tea Meanings**: "{cached_data["tea_meanings"]}"'
+
+    # Footer
+    word = trad if trad else simp
+    footer = (
+        "\n\n^Information ^from "
+        f"^[CantoDict](https://www.cantonese.sheik.co.uk/dictionary/search/?searchtype=1&text={trad}) ^| "
+        f"^[MDBG](https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}) ^| "
+        f"^[Yellowbridge](https://yellowbridge.com/chinese/dictionary.php?word={word}) ^| "
+        f"^[Youdao](https://dict.youdao.com/w/eng/{word}/#keyfrom=dict2.index) ^| "
+        f"^[ZDIC](https://www.zdic.net/hans/{simp})"
+    )
+
+    return header + table + meanings_section + "\n\n" + footer
+
+
+"""JAPANESE CACHE OUTPUT"""
+
+
+def format_ja_character_from_cache(cached_data: Dict) -> str:
+    """
+    Reconstruct the ja_character markdown output from cached data.
+
+    :param cached_data: Dictionary with parsed character data
+    :return: Formatted markdown string
+    """
+    word = cached_data.get("word")
+    kun_readings = cached_data.get("kun_readings", [])
+    on_readings = cached_data.get("on_readings", [])
+    meanings = cached_data.get("meanings", "")
+    calligraphy = cached_data.get("calligraphy_links")
+
+    # Header
+    header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
+
+    # Format kun readings
+    kun_formatted = (
+        ", ".join([f"{r['kana']} (*{r['romaji']}*)" for r in kun_readings])
+        if kun_readings
+        else ""
+    )
+
+    # Format on readings
+    on_formatted = (
+        ", ".join([f"{r['kana']} (*{r['romaji']}*)" for r in on_readings])
+        if on_readings
+        else ""
+    )
+
+    # Readings section
+    readings_section = ""
+    if kun_formatted:
+        readings_section += f"**Kun-readings:** {kun_formatted}\n\n"
+    if on_formatted:
+        readings_section += f"**On-readings:** {on_formatted}"
+
+    # Calligraphy
+    calligraphy_section = ""
+    if calligraphy:
+        sfzd = calligraphy.get("sfzd_image")
+        sfds = calligraphy.get("sfds")
+        variants = calligraphy.get("variants")
+        if sfzd and sfds and variants:
+            calligraphy_section = (
+                f"\n\n**Chinese Calligraphy Variants**: [{word}]({sfzd}) "
+                f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *[YTZZD]({variants})*)"
+            )
+
+    # Meanings
+    meanings_section = f'\n\n**Meanings**: "{meanings}"'
+
+    # Footer
+    footer = (
+        f"\n\n\n^Information ^from ^[Jisho](https://jisho.org/search/{word}%20%23kanji) ^| "
+        f"^[Tangorin](https://tangorin.com/kanji/{word}) ^| "
+        f"^[Weblio](https://ejje.weblio.jp/content/{word})"
+    )
+
+    return header + readings_section + calligraphy_section + meanings_section + footer
+
+
+def format_ja_word_from_cache(cached_data: Dict) -> str:
+    """
+    Reconstruct the ja_word markdown output from cached data.
+
+    :param cached_data: Dictionary with parsed word data
+    :return: Formatted markdown string
+    """
+    word = cached_data.get("word")
+    pos = cached_data.get("part_of_speech", "")
+    reading = cached_data.get("reading", {})
+    meanings = cached_data.get("meanings", "")
+
+    # Header
+    header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
+
+    # Part of speech
+    pos_section = f"##### *{pos.title()}*\n\n" if pos else ""
+
+    # Reading
+    reading_section = ""
+    if reading:
+        kana = reading.get("kana", "")
+        romaji = reading.get("romaji", "")
+        if kana and romaji:
+            reading_section = f"**Reading:** {kana} (*{romaji}*)\n\n"
+
+    # Meanings
+    meanings_section = f'**Meanings**: "{meanings}"'
+
+    # Footer
+    footer = (
+        f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{word}%23words) ^| "
+        f"^[Kotobank](https://kotobank.jp/word/{word}) ^| "
+        f"^[Tangorin](https://tangorin.com/general/{word}) ^| "
+        f"^[Weblio](https://ejje.weblio.jp/content/{word})"
+    )
+
+    return header + pos_section + reading_section + meanings_section + footer
+
+
+"""KOREAN CACHE OUTPUT"""
+
+
+def format_ko_word_from_cache(cached_data: Dict) -> str:
+    """
+    Reconstruct the ko_word markdown output from cached data.
+
+    :param cached_data: Dictionary with parsed word data
+    :return: Formatted markdown string
+    """
+    word = cached_data.get("word")
+    romanization = cached_data.get("romanization", "")
+    entries = cached_data.get("entries", [])
+
+    # Header
+    header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Korean)"
+
+    # Build entries by part of speech
+    entries_text = ""
+    for entry in entries:
+        pos = entry.get("part_of_speech", "").title()
+        meanings = entry.get("meanings", [])
+
+        entries_text += f"\n\n##### *{pos}*\n\n"
+        entries_text += f"**Romanization:** *{romanization}*\n\n"
+        entries_text += "**Meanings**:\n"
+
+        for meaning_entry in meanings:
+            definition = meaning_entry.get("definition", "")
+            origin = meaning_entry.get("origin")
+
+            if origin:
+                entries_text += f"* [{origin}](https://en.wiktionary.org/wiki/{origin}): {definition}\n"
+            else:
+                entries_text += f"* {definition}\n"
+
+    # Footer
+    footer = (
+        "\n\n^Information ^from "
+        f"^[KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search"
+        f"?nation=eng&nationCode=6&ParaWordNo=&mainSearchWord={word}&lang=eng) ^| "
+        f"^[Naver](https://korean.dict.naver.com/koendict/#/search?query={word}) ^| "
+        f"^[Collins](https://www.collinsdictionary.com/dictionary/korean-english/{word})"
+    )
+
+    return header + entries_text + footer
+
+
+"""CACHE RETRIEVAL WITH FALLBACK"""
+
+
+async def get_cached_or_fetch_zh_character(character: str, fetch_func) -> str:
+    """
+    Try to get data from cache first, otherwise fetch from web.
+
+    :param character: Chinese character to look up
+    :param fetch_func: Async function to call if cache miss
+    :return: Formatted markdown string
+    """
+    # Try cache first
+    cached = get_from_cache(character, "zh", "zh_character")
+
+    if cached:
+        return format_zh_character_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from web
+    return await fetch_func(character)
+
+
+# Testing Usage
 if __name__ == "__main__":
     # Add parent directory to path to import zh module
     sys.path.insert(0, "..")
