@@ -1,10 +1,11 @@
 [project]
 name = "translator-BOT"
-version = "2.0.0"
-description = "Moderator routines for r/translator"
+version = "2.1.0"
+description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "kungming2"},
+    {name = "youraveragebear"},
 ]
