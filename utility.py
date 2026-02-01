@@ -14,6 +14,7 @@ This module contains general-purpose utility functions for:
 import io
 import re
 import time
+from typing import Any
 
 import imagehash
 import PIL
@@ -146,14 +147,14 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
     logger.debug(f"fetch_youtube_length: Fetching video length for: {youtube_url}")
     start_time = time.time()
 
-    ydl_opts = {
+    ydl_opts: dict[str, Any] = {
         "quiet": True,
-        "skip_download": True,  # we only want metadata
+        "skip_download": True,
         "no_warnings": True,
     }
 
     try:
-        with YoutubeDL(ydl_opts) as ydl:
+        with YoutubeDL(ydl_opts) as ydl:  # type: ignore
             info = ydl.extract_info(youtube_url, download=False)
             if info is None:
                 logger.warning(
