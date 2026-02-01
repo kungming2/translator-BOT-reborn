@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from models.ajo import Ajo
 
 
-def points_retriever(username: str) -> str:
+def points_user_retriever(username: str) -> str:
     """
     Fetches the total number of points earned by a user in the current month.
     Used with the messages routine to inform users of their point totals.
@@ -102,6 +102,34 @@ def points_retriever(username: str) -> str:
     # Summary row
     to_post += f"\n| *Total* | {all_points} | {total_post_count} |"
     return to_post
+
+
+def points_post_retriever(post_id: str) -> list[tuple[str, str, int]] | None:
+    """
+    Fetches all point awards associated with a specific post ID.
+
+    :param post_id: The Reddit post ID to look up.
+    :return: List of tuples (comment_id, username, points) or None if no records found.
+    """
+    cursor = db.cursor_main
+    cursor.execute(
+        "SELECT comment_id, username, points FROM total_points WHERE post_id = ?",
+        (post_id,),
+    )
+    rows = cursor.fetchall()
+
+    if not rows:
+        return None
+
+    # Convert rows to list of tuples for easier handling
+    results = []
+    for row in rows:
+        comment_id = row[0] if isinstance(row, tuple) else row["comment_id"]
+        username = row[1] if isinstance(row, tuple) else row["username"]
+        points = row[2] if isinstance(row, tuple) else row["points"]
+        results.append((comment_id, username, int(points)))
+
+    return results
 
 
 def points_worth_determiner(lingvo_object: "Lingvo") -> int:
@@ -202,7 +230,7 @@ def points_tabulator(
     comment: Comment,
     original_post: "Submission",
     original_post_lingvo: "Lingvo",
-    ajo: "Ajo" = None
+    ajo: "Ajo" = None,
 ) -> None:
     """
     Tabulates points for a Reddit comment based on detected translation
