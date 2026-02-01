@@ -1126,7 +1126,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
                 )
                 logger.info(
-                    f"[ZW] Posts: AI assessment of title performed for '{post.title}' | `{post.id}`."
+                    f"[ZW] Title: AI assessment of title performed for '{post.title}' | `{post.id}`."
                 )
             else:
                 updating_subject = "AI Parsed Title and Assigned Language (Test Mode)"
@@ -1135,7 +1135,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"Test mode - no post object available."
                 )
                 logger.info(
-                    f"[ZW] Posts: AI assessment of title performed for test title."
+                    "[ZW] Title: AI assessment of title performed for test title."
                 )
 
         else:
