@@ -76,7 +76,7 @@ def ai_query(
                 {"type": "text", "text": query},
                 {"type": "image_url", "image_url": {"url": image_url}},
             ]
-            logger.debug(f"Image attached to input: {image_url}")
+            logger.debug(f"[S] AI: API: Image attached to input: {image_url}")
         else:
             user_content: list[dict] | str = query
 
@@ -100,19 +100,21 @@ def ai_query(
 
     except BadRequestError as e:
         # Handle invalid requests (e.g., bad image URL, invalid parameters)
-        logger.error(f"{service.upper()} BadRequestError: {e}")
+        logger.error(f"[S] AI: ERROR: {service.upper()} BadRequestError: {e}")
         if image_url:
-            logger.error(f"Problematic image URL: {image_url}")
+            logger.error(f"[S] AI: ERROR: Problematic image URL: {image_url}")
         return None
 
     except APIError as e:
         # Handle other API errors (rate limits, server errors, etc.)
-        logger.error(f"{service.upper()} APIError: {e}")
+        logger.error(f"[S] AI: ERROR: {service.upper()} APIError: {e}")
         return None
 
     except Exception as e:
         # Catch any other unexpected errors
-        logger.error(f"Unexpected error in ai_query for ({service}): {e}")
+        logger.error(
+            f"[S] AI: ERROR: Unexpected error in ai_query for ({service}): {e}"
+        )
         return None
 
 
@@ -145,7 +147,7 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
     )
 
     # Send to AI (needs to use OpenAI for image assessment)
-    logger.debug("Fetching image description.")
+    logger.debug(f"[S] AI: PROCESS: Fetching image description")
     description: str = ai_query(
         service="openai",
         client_object=openai_access(),

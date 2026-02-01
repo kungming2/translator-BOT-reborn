@@ -28,10 +28,12 @@ def load_csv():
                 continue
 
         if df is None:
-            logger.error("Error: Could not decode file with any standard encoding.")
+            logger.error(
+                f"[S] Database: ERROR: Could not decode file with any standard encoding"
+            )
             return None
     except FileNotFoundError:
-        logger.error(f"Error: File not found at {CSV_PATH}")
+        logger.error(f"[S] Database: ERROR: File not found at `{CSV_PATH}`")
         return None
 
 
@@ -39,9 +41,9 @@ def save_csv(df):
     """Save DataFrame back to CSV file."""
     try:
         df.to_csv(CSV_PATH, index=False, encoding="utf-8")
-        logger.info("✓ File saved successfully.")
+        logger.info(f"[S] Database: File saved successfully")
     except Exception as e:
-        logger.error(f"Error saving file: {e}")
+        logger.error(f"[S] Database: ERROR: Failed to save file: {e}")
 
 
 def create_entry():
