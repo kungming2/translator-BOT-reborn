@@ -46,7 +46,7 @@ def check_url_extension(submission_url: str) -> bool:
         return False
 
     # Use \Z instead of $ to match absolute end of string
-    pattern = r"\.(jpg|jpeg|gif|webp|png)\Z"
+    pattern = r"\.(jpg|jpeg|webp|png)\Z"
 
     # Check if the URL ends with one of the specified extensions
     has_image_extension = bool(re.search(pattern, submission_url, re.IGNORECASE))
