@@ -8,7 +8,7 @@ This document details the primary commands, run by the **Ziwen** routine, that w
 
 #### Command Arguments for Languages
 
-Several commands detailed below may either require or accept a language, added on to the command after a colon `:`. Language names with more than one word must be wrapped in double quotes (e.g. `"American Sign Language`), and multiple languages can be chained with a plus sign `+`. Here are some examples of valid input:
+Several commands detailed below may either require or accept a language, added on to the command after a colon `:`. Language names with more than one word must be wrapped in double quotes (e.g. `"American Sign Language"`), and multiple languages can be chained with a plus sign `+`. Here are some examples of valid input:
 
 #### Specific !identify Functions
 
@@ -193,10 +193,10 @@ This function also serves as a simple way to find thematically similar posts tha
 
 ### Command: *!transform:[value]*
 
-The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as part of a request. This command has strict type requirements:
+The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as a post. This command has strict value requirements:
 
-* `!transform:rotate:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `360` is an invalid value as that would just be the exact same image.
-* `!transform:flip:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid shortform values.
+* `!transform:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `360` is an invalid value as that would just be the exact same image.
+* `!transform:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid shortform values.
 
 #### Examples
 
