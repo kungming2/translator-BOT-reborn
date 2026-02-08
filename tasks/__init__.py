@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import importlib
+import traceback
 from pathlib import Path
 
 from config import Paths, load_settings, logger
 from discord_utils import send_discord_alert
+from error import error_log_basic
 
 _tasks = {}
 
@@ -48,7 +50,8 @@ def run_schedule(schedule_name):
             task_func()
             executed_tasks.append(task_func.__name__)
         except Exception as e:
-            logger.error(f"[WJ] > Error in {task_func.__name__}: {e}")
+            logger.exception(f"[WJ] > Error in {task_func.__name__}: {e}")
+            error_log_basic(f"{traceback.format_exc()}", f"Wenju ({schedule_name})")
 
     # Send Discord alert after all tasks have completed
     if executed_tasks:
