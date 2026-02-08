@@ -303,11 +303,11 @@ COMMENT_TRANSFORM_NOT_IMAGE_POST: |
   
   [](#comment_transform_not_image_post)
 
-COMMENT_TRANSFORM_NO_DIRECT_IMAGE: |
-  This post does not appear to contain a *direct* link to an image. 
-  The `!transform` command requires a direct image URL (e.g., ending in .jpg, .png, .gif).
+COMMENT_TRANSFORM_NO_IMAGE: |
+  This post does not appear to contain any links to an image. 
+  The `!transform` command requires an image URL (e.g., ending in .jpg, .png) appear somewhere in the post.
   
-  [](#comment_transform_no_direct_image)
+  [](#comment_transform_no_image)
 
 COMMENT_TRANSFORM_ERROR: |
   Sorry, I encountered an error while transforming the image:
@@ -323,7 +323,7 @@ COMMENT_TRANSFORM_ERROR: |
 COMMENT_TRANSFORM_SUCCESS_REPLY: |
   Here's your transformed image ({0}):
   
-  **[View Image Here]({1})**
+  {1}
   
   *Note: This image will be automatically deleted after {2} days.*
 

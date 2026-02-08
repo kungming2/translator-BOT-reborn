@@ -4,6 +4,8 @@
 Handler for the !transform command, which rotates or flips images from posts.
 """
 
+import re
+
 from config import SETTINGS, logger
 from connection import REDDIT_HELPER
 from image_handling import TRANSFORM_MAP, rotate_or_flip_image, upload_to_imgbb
@@ -27,6 +29,106 @@ VALID_TRANSFORMS = {
     "flip_h",
     "flip_v",
 }
+
+
+def _extract_gallery_images(submission):
+    """
+    Extract image URLs from a Reddit gallery post.
+
+    Args:
+        submission: A PRAW submission object
+
+    Returns:
+        list: List of image URLs from the gallery (videos and non-images excluded)
+    """
+    image_urls = []
+
+    # Check if the submission has a gallery
+    if hasattr(submission, "is_gallery") and submission.is_gallery:
+        # Get the gallery data
+        if hasattr(submission, "gallery_data"):
+            # Get media metadata
+            media_metadata = submission.media_metadata
+
+            # Iterate through gallery items in order
+            for item in submission.gallery_data["items"]:
+                # Stop after collecting 5 images
+                if len(image_urls) >= 5:
+                    break
+
+                media_id = item["media_id"]
+
+                # Get the image info from media_metadata
+                if media_id in media_metadata:
+                    media_info = media_metadata[media_id]
+
+                    # Get the largest resolution image URL
+                    if "s" in media_info:
+                        image_url = media_info["s"]["u"]
+                        # URLs are HTML encoded, decode them
+                        image_url = image_url.replace("&amp;", "&")
+                        # Cut off URL parameters after the base image URL
+                        if "?" in image_url:
+                            image_url = image_url.split("?")[0]
+
+                        if "preview" in image_url:
+                            image_url = image_url.replace("preview", "i")
+
+                        # Only add if it's a valid image URL
+                        if check_url_extension(image_url):
+                            image_urls.append(image_url)
+
+    return image_urls
+
+
+def _extract_images_from_submission(submission):
+    """
+    Extract all image URLs from a Reddit submission.
+
+    Handles three types of posts:
+    - Self/text posts: Extracts image URLs from the body text
+    - Single image posts: Returns the submission URL
+    - Gallery posts: Extracts all images from the gallery
+
+    Args:
+        submission: A PRAW submission object
+
+    Returns:
+        list: List of image URLs found in the submission
+    """
+    image_urls = []
+
+    # Case 1: Gallery post
+    if hasattr(submission, "is_gallery") and submission.is_gallery:
+        logger.info(f"[ZW] Transform: Detected gallery post for {submission.id}")
+        image_urls = _extract_gallery_images(submission)
+        logger.info(f"[ZW] Transform: Found {len(image_urls)} images in gallery")
+        return image_urls
+
+    # Case 2: Self/text post
+    if submission.is_self:
+        logger.info(f"[ZW] Transform: Detected text post for {submission.id}")
+        # Extract URLs from the selftext using regex
+        # This pattern matches common image hosting URLs
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+        found_urls = re.findall(url_pattern, submission.selftext)
+
+        for url in found_urls:
+            if check_url_extension(url):
+                image_urls.append(url)
+
+        logger.info(f"[ZW] Transform: Found {len(image_urls)} image URLs in text body")
+        return image_urls
+
+    # Case 3: Single image post
+    if submission.url and check_url_extension(submission.url):
+        logger.info(f"[ZW] Transform: Detected single image post for {submission.id}")
+        image_urls.append(submission.url)
+        return image_urls
+
+    # No images found
+    logger.info(f"[ZW] Transform: No images found in submission {submission.id}")
+    return image_urls
 
 
 def handle(comment, _instruo, komando, _ajo) -> None:
@@ -60,25 +162,19 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     # Get the submission
     submission = comment.submission
 
-    # Check if submission has an image URL
-    if submission.is_self:
-        message_reply(
-            comment, RESPONSE.COMMENT_TRANSFORM_NOT_IMAGE_POST + RESPONSE.BOT_DISCLAIMER
-        )
-        return
+    # Extract all image URLs from the submission
+    image_urls = _extract_images_from_submission(submission)
 
-    image_url = submission.url
-
-    # Verify the URL points to an image
-    if not check_url_extension(image_url):
+    # Check if we found any images
+    if not image_urls:
         message_reply(
             comment,
-            RESPONSE.COMMENT_TRANSFORM_NO_DIRECT_IMAGE + RESPONSE.BOT_DISCLAIMER,
+            RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER,
         )
         return
 
     logger.info(
-        f"[ZW] Transform: Processing image from {image_url} with transformation: {transformation}"
+        f"[ZW] Transform: Processing {len(image_urls)} image(s) with transformation: {transformation}"
     )
 
     # Determine transformation description for reply
@@ -94,34 +190,75 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     expiration_days = SETTINGS["image_retention_age"]
 
-    try:
-        # Transform the image
-        transformed_image = rotate_or_flip_image(image_url, transformation)
-        logger.info("[ZW] Transform: Image transformed successfully")
+    # Process each image
+    transformed_urls = []
+    failed_images = []
 
-        # Upload to ImgBB with submission title as the name
-        uploaded_url = upload_to_imgbb(
-            transformed_image,
-            title=submission.title[:200],  # Limit to 200 chars for API
-        )
-        logger.info(f"[ZW] Transform: Image uploaded to {uploaded_url}")
+    for idx, image_url in enumerate(image_urls, 1):
+        try:
+            logger.info(
+                f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}"
+            )
 
-    except Exception as e:
-        logger.error(f"[ZW] Transform: Error processing image: {e}")
+            # Transform the image
+            transformed_image = rotate_or_flip_image(image_url, transformation)
+            logger.info(f"[ZW] Transform: Image {idx} transformed successfully")
+
+            # Upload to ImgBB with submission title as the name
+            title_suffix = f" ({idx}/{len(image_urls)})" if len(image_urls) > 1 else ""
+            uploaded_url = upload_to_imgbb(
+                transformed_image,
+                title=(submission.title[:190] + title_suffix)[
+                    :200
+                ],  # Limit to 200 chars for API
+            )
+            logger.info(f"[ZW] Transform: Image {idx} uploaded to {uploaded_url}")
+            transformed_urls.append(uploaded_url)
+
+        except Exception as e:
+            logger.error(f"[ZW] Transform: Error processing image {idx}: {e}")
+            failed_images.append((idx, str(e)))
+
+    # Prepare response
+    if not transformed_urls:
+        # All images failed
+        error_msg = "Failed to process all images. Errors:\n"
+        for idx, error in failed_images:
+            error_msg += f"- Image {idx}: {error}\n"
         message_reply(
             comment,
-            RESPONSE.COMMENT_TRANSFORM_ERROR.format(str(e)) + RESPONSE.BOT_DISCLAIMER,
+            RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg)
+            + RESPONSE.BOT_DISCLAIMER,
         )
         return
 
-    # Reply with the transformed image URL
-    message_reply(
-        comment,
-        RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
-            transform_desc, uploaded_url, expiration_days
+    # Build success message
+    if len(transformed_urls) == 1:
+        # Single image response
+        single_image_link = f"**[View Image Here]({transformed_urls[0]})**"
+        reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
+            transform_desc, single_image_link, expiration_days
         )
-        + RESPONSE.BOT_DISCLAIMER,
-    )
+    else:
+        # Multiple images response
+        reply_text = (
+            f"Applied {transform_desc} to {len(transformed_urls)} image(s):\n\n"
+        )
+        for idx, url in enumerate(transformed_urls, 1):
+            reply_text += f"**Image {idx}:** {url}\n\n"
+        reply_text += (
+            f"\n*Images will be available for approximately {expiration_days} days.*"
+        )
+
+    # Add failure notice if some images failed
+    if failed_images:
+        reply_text += (
+            f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"
+        )
+        for idx, error in failed_images:
+            reply_text += f"- Image {idx}: {error}\n"
+
+    message_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
 
 
 if "__main__" == __name__:
