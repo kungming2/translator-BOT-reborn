@@ -163,6 +163,16 @@ def _initialize_cache_db() -> None:
             language_multiplier INTEGER
         )
         """,
+        """
+        CREATE TABLE lookup_cjk_cache (
+            term TEXT NOT NULL,
+            language_code TEXT NOT NULL,
+            retrieved_utc INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            data TEXT NOT NULL,
+            PRIMARY KEY(term, language_code, type)
+        )
+        """,
     ]
 
     _initialize_db(db_path, create_statements)
@@ -279,6 +289,53 @@ def _initialize_main_db() -> None:
         """,
         """
         CREATE INDEX index_total_points_usernames ON total_points (username)
+        """,
+        """
+        CREATE INDEX idx_notify_cumulative_username ON notify_cumulative (
+            username
+        )
+        """,
+        """
+        CREATE INDEX idx_notify_internal_username ON notify_internal (
+            username
+        )
+        """,
+        """
+        CREATE INDEX idx_notify_users_language ON notify_users (
+            language_code
+        )
+        """,
+        """
+        CREATE UNIQUE INDEX idx_notify_users_username_lang ON notify_users (
+            username,
+            language_code
+        )
+        """,
+        """
+        CREATE INDEX idx_old_comments_created ON old_comments (
+            created_utc
+        )
+        """,
+        """
+        CREATE INDEX idx_total_points_comment_id ON total_points (
+            comment_id
+        )
+        """,
+        """
+        CREATE INDEX idx_total_points_post_id ON total_points (
+            post_id
+        )
+        """,
+        """
+        CREATE INDEX idx_total_points_username_year_month ON total_points (
+            username,
+            year_month
+        )
+        """,
+        """
+        CREATE INDEX idx_verification_database_username ON verification_database (
+            username
+        )
         """,
     ]
 
@@ -588,8 +645,7 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
 
 
 def get_recent_event_log_lines(
-        num_lines: int = 5,
-        tag: Optional[str] = None
+    num_lines: int = 5, tag: Optional[str] = None
 ) -> Tuple[str, str]:
     """
     Extract the last N lines from a log file and find the last event with a specific tag.
