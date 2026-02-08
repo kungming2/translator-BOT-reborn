@@ -31,6 +31,71 @@ VALID_TRANSFORMS = {
 }
 
 
+def _clean_reddit_url(url: str) -> str:
+    """
+    Clean up Reddit preview URLs to get the direct image URL.
+
+    Converts URLs like:
+    https://preview.redd.it/abc123.jpg?width=2253&format=pjpg&auto=webp&s=...
+
+    To:
+    https://i.redd.it/abc123.jpg
+
+    :param url: The URL to clean.
+    :return: Cleaned URL.
+    """
+    if 'preview.redd.it' in url:
+        # Replace preview.redd.it with i.redd.it
+        url = url.replace('preview.redd.it', 'i.redd.it')
+
+    # Remove query parameters
+    if '?' in url:
+        url = url.split('?')[0]
+
+    return url
+
+
+def _is_valid_image_url(url: str) -> bool:
+    """
+    Check if a URL is a valid image URL, including URLs with query parameters.
+
+    This is more lenient than check_url_extension() as it handles:
+    - Direct image URLs (e.g., image.jpg)
+    - Reddit preview URLs with query params (e.g., preview.redd.it/...?format=pjpg)
+    - Image URLs with tracking parameters
+
+    :param url: The URL to check.
+    :return: True if URL appears to be an image, False otherwise.
+    """
+    if not url:
+        return False
+
+    url = url.strip()
+
+    # First try the standard check for direct image URLs
+    if check_url_extension(url):
+        return True
+
+    # Handle Reddit preview/image URLs with query parameters
+    if 'redd.it' in url:
+        # Check if format parameter indicates an image
+        if 'format=pjpg' in url or 'format=png' in url or 'format=jpg' in url:
+            return True
+        # Check if the URL path (before query params) ends with an image extension
+        url_without_params = url.split('?')[0]
+        if check_url_extension(url_without_params):
+            return True
+
+    # Check if URL path (before query params) has an image extension
+    # This handles cases like: example.com/image.jpg?param=value
+    if '?' in url:
+        url_without_params = url.split('?')[0]
+        if check_url_extension(url_without_params):
+            return True
+
+    return False
+
+
 def _extract_gallery_images(submission):
     """
     Extract image URLs from a Reddit gallery post.
@@ -40,6 +105,7 @@ def _extract_gallery_images(submission):
 
     Returns:
         list: List of image URLs from the gallery (videos and non-images excluded)
+              Limited to first 5 images to avoid processing too many images.
     """
     image_urls = []
 
@@ -67,12 +133,8 @@ def _extract_gallery_images(submission):
                         image_url = media_info["s"]["u"]
                         # URLs are HTML encoded, decode them
                         image_url = image_url.replace("&amp;", "&")
-                        # Cut off URL parameters after the base image URL
-                        if "?" in image_url:
-                            image_url = image_url.split("?")[0]
-
-                        if "preview" in image_url:
-                            image_url = image_url.replace("preview", "i")
+                        # Clean up the Reddit URL
+                        image_url = _clean_reddit_url(image_url)
 
                         # Only add if it's a valid image URL
                         if check_url_extension(image_url):
@@ -111,11 +173,14 @@ def _extract_images_from_submission(submission):
         # Extract URLs from the selftext using regex
         # This pattern matches common image hosting URLs
         url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
-        found_urls = re.findall(url_pattern, submission.selftext)
+        test_found_urls = re.findall(url_pattern, submission.selftext)
 
-        for url in found_urls:
-            if check_url_extension(url):
-                image_urls.append(url)
+        for url in test_found_urls:
+            # Use the more lenient check for self-text URLs
+            if _is_valid_image_url(url):
+                # Clean up Reddit preview URLs
+                cleaned_url = _clean_reddit_url(url)
+                image_urls.append(cleaned_url)
 
         logger.info(f"[ZW] Transform: Found {len(image_urls)} image URLs in text body")
         return image_urls
@@ -168,8 +233,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     # Check if we found any images
     if not image_urls:
         message_reply(
-            comment,
-            RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER,
+            comment, RESPONSE.COMMENT_TRANSFORM_NO_DIRECT_IMAGE + RESPONSE.BOT_DISCLAIMER
         )
         return
 
@@ -196,9 +260,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     for idx, image_url in enumerate(image_urls, 1):
         try:
-            logger.info(
-                f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}"
-            )
+            logger.info(f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}")
 
             # Transform the image
             transformed_image = rotate_or_flip_image(image_url, transformation)
@@ -208,9 +270,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             title_suffix = f" ({idx}/{len(image_urls)})" if len(image_urls) > 1 else ""
             uploaded_url = upload_to_imgbb(
                 transformed_image,
-                title=(submission.title[:190] + title_suffix)[
-                    :200
-                ],  # Limit to 200 chars for API
+                title=(submission.title[:190] + title_suffix)[:200],  # Limit to 200 chars for API
             )
             logger.info(f"[ZW] Transform: Image {idx} uploaded to {uploaded_url}")
             transformed_urls.append(uploaded_url)
@@ -227,64 +287,114 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             error_msg += f"- Image {idx}: {error}\n"
         message_reply(
             comment,
-            RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg)
-            + RESPONSE.BOT_DISCLAIMER,
+            RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg) + RESPONSE.BOT_DISCLAIMER,
         )
         return
 
     # Build success message
     if len(transformed_urls) == 1:
         # Single image response
-        single_image_link = f"**[View Image Here]({transformed_urls[0]})**"
         reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
-            transform_desc, single_image_link, expiration_days
+            transform_desc, transformed_urls[0], expiration_days
         )
     else:
         # Multiple images response
-        reply_text = (
-            f"Applied {transform_desc} to {len(transformed_urls)} image(s):\n\n"
-        )
+        reply_text = f"Applied {transform_desc} to {len(transformed_urls)} image(s):\n\n"
         for idx, url in enumerate(transformed_urls, 1):
             reply_text += f"**Image {idx}:** {url}\n\n"
-        reply_text += (
-            f"\n*Images will be available for approximately {expiration_days} days.*"
-        )
+        reply_text += f"\n*Images will be available for approximately {expiration_days} days.*"
 
     # Add failure notice if some images failed
     if failed_images:
-        reply_text += (
-            f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"
-        )
+        reply_text += f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"
         for idx, error in failed_images:
             reply_text += f"- Image {idx}: {error}\n"
 
     message_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
 
 
-if "__main__" == __name__:
-    while True:
-        # Get comment URL from user
-        comment_url: str = input(
-            "Enter Reddit comment URL (or 'quit' to exit): "
-        ).strip()
+if __name__ == "__main__":
+    import logging
 
-        # Check for exit
-        if comment_url.lower() in ["quit", "exit", "q"]:
+    # Configure logging to DEBUG level
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    # Also set the module logger to DEBUG explicitly
+    logger.setLevel(logging.DEBUG)
+
+
+    def show_menu():
+        print("\nSelect a test to run:")
+        print("1. Test _extract_images_from_submission (enter submission ID)")
+        print("2. Test full transform handler (enter comment URL)")
+        print("x. Exit")
+
+
+    while True:
+        show_menu()
+        menu_choice = input("Enter your choice (1-2, or x): ")
+
+        if menu_choice == "x":
+            print("Exiting...")
             break
 
-        # Get comment from URL and process
-        test_comment = REDDIT_HELPER.comment(url=comment_url)
-        test_instruo: Instruo = Instruo.from_comment(test_comment)
-        print(f"Instruo created: {test_instruo}\n")
+        if menu_choice not in ["1", "2"]:
+            print("Invalid choice, please try again.")
+            continue
 
-        # Find the transform command in the instruo
-        transform_komando = None
-        for test_komando in test_instruo.commands:
-            if test_komando.name == "transform":
-                transform_komando = test_komando
-                break
+        if menu_choice == "1":
+            test_submission_id = input("Enter Reddit submission ID: ").strip()
+            try:
+                test_submission = REDDIT_HELPER.submission(id=test_submission_id)
+                print(f"\nSubmission: {test_submission.title}")
+                print(f"Is self post: {test_submission.is_self}")
+                print(f"Is gallery: {hasattr(test_submission, 'is_gallery') and test_submission.is_gallery}")
+                print(f"URL: {test_submission.url}")
 
-        if transform_komando:
-            print(handle(test_comment, test_instruo, transform_komando, None))
-        else:
-            print("No !transform command found in comment")
+                if test_submission.is_self:
+                    print(f"\nSelf-text body:\n{test_submission.selftext}\n")
+
+                    # Debug: show what URLs are found
+                    url_pattern_test = r'https?://[^\s<>"{}|\\^`\[\]]+'
+                    found_urls = re.findall(url_pattern_test, test_submission.selftext)
+                    print(f"URLs found in self-text: {len(found_urls)}")
+                    for test_idx, found_url in enumerate(found_urls, 1):
+                        is_valid = _is_valid_image_url(found_url)
+                        print(f"  {test_idx}. {found_url}")
+                        print(f"      Valid image URL: {is_valid}")
+
+                extracted_image_urls = _extract_images_from_submission(test_submission)
+
+                print(f"\n{'=' * 60}")
+                print(f"Found {len(extracted_image_urls)} image(s):")
+                print(f"{'=' * 60}")
+                for img_idx, img_url in enumerate(extracted_image_urls, 1):
+                    print(f"{img_idx}. {img_url}")
+                print(f"{'=' * 60}\n")
+
+            except Exception as err:
+                print(f"Error: {err}")
+
+        elif menu_choice == "2":
+            test_comment_url = input("Enter Reddit comment URL: ").strip()
+            try:
+                test_comment = REDDIT_HELPER.comment(url=test_comment_url)
+                test_instruo = Instruo.from_comment(test_comment)
+                print(f"Instruo created: {test_instruo}\n")
+
+                # Find the transform command in the instruo
+                test_transform_komando = None
+                for test_komando in test_instruo.commands:
+                    if test_komando.name == "transform":
+                        test_transform_komando = test_komando
+                        break
+
+                if test_transform_komando:
+                    print(handle(test_comment, test_instruo, test_transform_komando, None))
+                else:
+                    print("No !transform command found in comment")
+
+            except Exception as err:
+                print(f"Error: {err}")
