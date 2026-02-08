@@ -59,7 +59,9 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
         return False
 
     try:
-        post.flair.select(flair_template_id=template_id, text=internal_post_type.title())
+        post.flair.select(
+            flair_template_id=template_id, text=internal_post_type.title()
+        )
         logger.info(
             f"[ZW] Assigned '{internal_post_type}' flair to internal post `{post.id}`"
         )
