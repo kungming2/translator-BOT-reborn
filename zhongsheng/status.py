@@ -3,7 +3,9 @@
 """Status command"""
 
 import aiohttp
+import traceback
 
+from config import logger
 from connection import get_random_useragent
 from database import get_recent_event_log_lines
 
@@ -21,7 +23,10 @@ async def status(ctx):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 "https://officeapi.akashrajpurohit.com/quote/random",
-                headers=get_random_useragent(),
+                headers={
+                    **get_random_useragent(),
+                    "Accept-Encoding": "gzip, deflate",
+                },  # Explicitly avoid br
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
@@ -30,8 +35,10 @@ async def status(ctx):
                     office_response = f'**{character}**: "{quote}"\n\n'
                 else:
                     office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
-    except Exception as e:
-        office_response = f"⚠️ An error occurred fetching quote: {str(e)}\n\n"
+    except Exception as err:
+        tb = traceback.format_exc()
+        logger.error(f"[WJ] Encountered {err} when fetching quote.")
+        office_response = f"⚠️ An error occurred fetching quote:\n```\n{tb}\n```\n\n"
 
     # Now get the events log status
     try:
