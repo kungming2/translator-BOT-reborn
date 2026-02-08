@@ -17,8 +17,8 @@ from time_handling import get_current_month
 # Base directory configuration
 BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 # Note that since this is a storage folder and not a module,
-# it is capitalized in my logic.
-DATA_DIR: str = os.path.join(BASE_DIR, "Data")
+# it has a leading underscore.
+DATA_DIR: str = os.path.join(BASE_DIR, "_data")
 
 
 # Group related paths into dictionaries for better organization
@@ -113,12 +113,12 @@ def get_reports_directory(base_dir: Path | None = None) -> Path:
     This used for digest reports by tasks in the tasks folder.
 
     :param base_dir: Optional base path for data storage.
-                     Defaults to the "Data" folder next to this file.
+                     Defaults to the "_data" folder next to this file.
     :return: A Path object for the monthly log directory, e.g.:
              /path/to/Data/Reports/2025-10
     """
     if base_dir is None:
-        base_dir = Path(__file__).resolve().parent / "Data"
+        base_dir = Path(__file__).resolve().parent / "_data"
 
     current_month: str = get_current_month()
     log_dir: Path = base_dir / "Reports" / current_month
