@@ -92,11 +92,12 @@ if __name__ == "__main__":
         # Send Discord alert if run took longer than 5 minutes
         cycle_time = SETTINGS["cycle_time"]
         if elapsed_time > cycle_time:
-            alert_subject = "Long Run Time Alert"
+            alert_subject = "Excessive Run Time Alert"
             alert_message = (
-                f"Run took {elapsed_time:.2f} minutes (> {cycle_time} minutes)\n"
-                f"API calls used: {used_calls}\n"
-                f"Memory usage: {mem_usage}"
+                f"Run took {elapsed_time:.2f} minutes (> {cycle_time} minutes)\n\n"
+                f"* **Run start time**: {run_time}\n"
+                f"* **API calls used**: {used_calls}\n"
+                f"* **Memory usage**: {mem_usage}"
             )
             send_discord_alert(
                 subject=alert_subject,
