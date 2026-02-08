@@ -102,12 +102,12 @@ def ai_query(
         # Handle invalid requests (e.g., bad image URL, invalid parameters)
         logger.error(f"[S] AI: ERROR: {service.upper()} BadRequestError: {e}")
         if image_url:
-            logger.error(f"[S] AI: ERROR: Problematic image URL: {image_url}")
+            logger.warning(f"[S] AI: Warning: Problematic image URL: {image_url}")
         return None
 
     except APIError as e:
         # Handle other API errors (rate limits, server errors, etc.)
-        logger.error(f"[S] AI: ERROR: {service.upper()} APIError: {e}")
+        logger.warning(f"[S] AI: Warning: {service.upper()} APIError: {e}")
         return None
 
     except Exception as e:
