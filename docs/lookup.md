@@ -14,6 +14,13 @@ Chinese or Japanese explanations are included in *chengyu* and *yojijukugo* look
 
 On average, [55% of posts](https://www.reddit.com/r/translator/wiki/overall_statistics) on r/translator are for one of the Chinese, Japanese, or Korean (CJK) languages. 
 
+#### Optional Syntax
+
+A language tag added to a lookup will force a lookup in that language, even on a post that's of a different language. E.g. `文化`:ja will return a Japanese lookup for that term, even if the comment is on a Chinese post and would normally result in the Chinese information for that term.
+
+An exclamation mark ! appended to the lookup (`年年有余`!, `井底之蛙`:zh!) will disable tokenization of the lookup. If you're adding a language tag to the lookup, the exclamation mark should go on the very end.
+
+
 #### Dictionaries
 
 Information from the following dictionaries/databases are included directly in CJK lookup:
@@ -27,8 +34,7 @@ Information from the following dictionaries/databases are included directly in C
 #### Notes
 
 * The information that Ziwen returns generally depends on the language of the post. Chinese posts will return Chinese information, and so on. 
-  * But, **if there's a language identification in the commentt, Ziwen will return information for that language.** For example, a comment "This is Chinese: ``吹牛`` !identify:zh" on a Japanese post will result in a Chinese lookup.
-  * Similarly, appending the language to the lookup will conduct the search for that language (e.g. `照り焼き``:ja`). These are overall rarer use cases and most people will be served well from just using the post language to generate lookup information automatically. 
+  * But, **if there's a language identification command in the comment, Ziwen will return information for that language.** For example, a comment "This is Chinese: ``吹牛`` !identify:zh" on a Japanese post will result in a Chinese lookup.
 * If no words are found for a multi-character compound, it will collate individual character data together in a table. For example, the nonsensical search `強彥` will return separate entries for 強 and 彥 in a table.
 * If a single Chinese or Japanese character is looked up, Ziwen will retrieve [calligraphy and seal script](https://www.reddit.com/r/translator/comments/6wsaks/japanese_english_shirt_post/dmahdae/) images for it and include those images in its findings. 
 * The ability to call specific language and Japanese surnames was first suggested by u/nomfood.
@@ -43,3 +49,7 @@ This is from the {{Qianlong Era}}, and it's {{Jingdezhen porcelain}} from China.
 ```
 
 This example would return Wikipedia links and short summaries for "[Qianlong Emperor](https://en.wikipedia.org/wiki/Qianlong_Emperor)" and "[Jingdezhen porcelain](https://en.wikipedia.org/wiki/Jingdezhen_porcelain)".
+
+#### Notes
+
+* If Wikipedia has a location coordinates that is associated with the page, Ziwen will try and include a relevant [OpenStreetMap](https://www.openstreetmap.org/) link to that location. 
