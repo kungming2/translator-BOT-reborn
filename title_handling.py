@@ -900,7 +900,7 @@ def _get_notification_languages(assess_request):
 
     # No need to waste time if the languages are both English.
     if direction == "english_both":
-        logger.error("Both English. Not sending notifications.")
+        logger.warning("Both English. Not sending notifications.")
         return None
 
     # Combine unique languages from both lists
