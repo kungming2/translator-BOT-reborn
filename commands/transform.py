@@ -44,13 +44,13 @@ def _clean_reddit_url(url: str) -> str:
     :param url: The URL to clean.
     :return: Cleaned URL.
     """
-    if 'preview.redd.it' in url:
+    if "preview.redd.it" in url:
         # Replace preview.redd.it with i.redd.it
-        url = url.replace('preview.redd.it', 'i.redd.it')
+        url = url.replace("preview.redd.it", "i.redd.it")
 
     # Remove query parameters
-    if '?' in url:
-        url = url.split('?')[0]
+    if "?" in url:
+        url = url.split("?")[0]
 
     return url
 
@@ -77,19 +77,19 @@ def _is_valid_image_url(url: str) -> bool:
         return True
 
     # Handle Reddit preview/image URLs with query parameters
-    if 'redd.it' in url:
+    if "redd.it" in url:
         # Check if format parameter indicates an image
-        if 'format=pjpg' in url or 'format=png' in url or 'format=jpg' in url:
+        if "format=pjpg" in url or "format=png" in url or "format=jpg" in url:
             return True
         # Check if the URL path (before query params) ends with an image extension
-        url_without_params = url.split('?')[0]
+        url_without_params = url.split("?")[0]
         if check_url_extension(url_without_params):
             return True
 
     # Check if URL path (before query params) has an image extension
     # This handles cases like: example.com/image.jpg?param=value
-    if '?' in url:
-        url_without_params = url.split('?')[0]
+    if "?" in url:
+        url_without_params = url.split("?")[0]
         if check_url_extension(url_without_params):
             return True
 
@@ -233,7 +233,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     # Check if we found any images
     if not image_urls:
         message_reply(
-            comment, RESPONSE.COMMENT_TRANSFORM_NO_DIRECT_IMAGE + RESPONSE.BOT_DISCLAIMER
+            comment, RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER
         )
         return
 
@@ -260,7 +260,9 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     for idx, image_url in enumerate(image_urls, 1):
         try:
-            logger.info(f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}")
+            logger.info(
+                f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}"
+            )
 
             # Transform the image
             transformed_image = rotate_or_flip_image(image_url, transformation)
@@ -270,7 +272,9 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             title_suffix = f" ({idx}/{len(image_urls)})" if len(image_urls) > 1 else ""
             uploaded_url = upload_to_imgbb(
                 transformed_image,
-                title=(submission.title[:190] + title_suffix)[:200],  # Limit to 200 chars for API
+                title=(submission.title[:190] + title_suffix)[
+                    :200
+                ],  # Limit to 200 chars for API
             )
             logger.info(f"[ZW] Transform: Image {idx} uploaded to {uploaded_url}")
             transformed_urls.append(uploaded_url)
@@ -287,26 +291,33 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             error_msg += f"- Image {idx}: {error}\n"
         message_reply(
             comment,
-            RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg) + RESPONSE.BOT_DISCLAIMER,
+            RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg)
+            + RESPONSE.BOT_DISCLAIMER,
         )
         return
 
     # Build success message
     if len(transformed_urls) == 1:
         # Single image response
+        image_link = f"**[Image]({transformed_urls[0]})**"
         reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
-            transform_desc, transformed_urls[0], expiration_days
+            transform_desc, image_link, expiration_days
         )
     else:
-        # Multiple images response
-        reply_text = f"Applied {transform_desc} to {len(transformed_urls)} image(s):\n\n"
+        # Multiple images response - build the image links list
+        image_links = ""
         for idx, url in enumerate(transformed_urls, 1):
-            reply_text += f"**Image {idx}:** {url}\n\n"
-        reply_text += f"\n*Images will be available for approximately {expiration_days} days.*"
+            image_links += f"* **[Image {idx}]({url})**\n"
+
+        reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
+            transform_desc, image_links.strip(), expiration_days
+        )
 
     # Add failure notice if some images failed
     if failed_images:
-        reply_text += f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"
+        reply_text += (
+            f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"
+        )
         for idx, error in failed_images:
             reply_text += f"- Image {idx}: {error}\n"
 
@@ -324,13 +335,11 @@ if __name__ == "__main__":
     # Also set the module logger to DEBUG explicitly
     logger.setLevel(logging.DEBUG)
 
-
     def show_menu():
         print("\nSelect a test to run:")
         print("1. Test _extract_images_from_submission (enter submission ID)")
         print("2. Test full transform handler (enter comment URL)")
         print("x. Exit")
-
 
     while True:
         show_menu()
@@ -350,7 +359,9 @@ if __name__ == "__main__":
                 test_submission = REDDIT_HELPER.submission(id=test_submission_id)
                 print(f"\nSubmission: {test_submission.title}")
                 print(f"Is self post: {test_submission.is_self}")
-                print(f"Is gallery: {hasattr(test_submission, 'is_gallery') and test_submission.is_gallery}")
+                print(
+                    f"Is gallery: {hasattr(test_submission, 'is_gallery') and test_submission.is_gallery}"
+                )
                 print(f"URL: {test_submission.url}")
 
                 if test_submission.is_self:
@@ -392,7 +403,9 @@ if __name__ == "__main__":
                         break
 
                 if test_transform_komando:
-                    print(handle(test_comment, test_instruo, test_transform_komando, None))
+                    print(
+                        handle(test_comment, test_instruo, test_transform_komando, None)
+                    )
                 else:
                     print("No !transform command found in comment")
 

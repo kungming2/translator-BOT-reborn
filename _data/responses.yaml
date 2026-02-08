@@ -321,7 +321,7 @@ COMMENT_TRANSFORM_ERROR: |
   [](#comment_transform_error)
 
 COMMENT_TRANSFORM_SUCCESS_REPLY: |
-  Here's your transformed image ({0}):
+  Here's your transformed image(s) ({0}):
   
   {1}
   
