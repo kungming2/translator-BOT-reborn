@@ -725,7 +725,7 @@ def check_image_duplicate(
                 )
 
                 # Log to action counter
-                action_counter(1, "Image duplicate notifications")
+                action_counter(1, "Removed image duplicates")
 
             except Exception as e:
                 logger.error(
