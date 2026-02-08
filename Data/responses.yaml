@@ -266,11 +266,9 @@ COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
   [](#comment_image_duplicate_same_author)
 
 COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
-  Hey u/{author}, it looks like the image in this post is {similarity} \
-  an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+  Hey u/{author}, it looks like the image hash of this post is {similarity} an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
 
-  You may want to check that post to see if it has already been translated. 
-  If you have a specific reason for reposting, please disregard this message.
+  You may want to check that post to see if it has already been translated. Please disregard this message if the images are dissimilar.
 
   [](#comment_image_duplicate_different_author)
 
