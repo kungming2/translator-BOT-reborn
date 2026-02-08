@@ -62,26 +62,69 @@ def check_url_extension(submission_url: str) -> bool:
         return True
 
 
-def extract_text_within_curly_braces(text: str) -> list[str]:
+def clean_reddit_image_url(url: str) -> str:
     """
-    Extracts all content inside {{...}} blocks, with whitespace stripped.
+    Clean up Reddit preview URLs to get the direct image URL.
 
-    :param text: Text to search for curly brace patterns.
-    :return: List of extracted strings.
+    Converts URLs like:
+    https://preview.redd.it/abc123.jpg?width=2253&format=pjpg&auto=webp&s=...
+
+    To:
+    https://i.redd.it/abc123.jpg
+
+    :param url: The URL to clean.
+    :return: Cleaned URL.
     """
-    if not text:
-        logger.debug("extract_text_within_curly_braces: Received empty or None text.")
-        return []
+    if "preview.redd.it" in url:
+        # Replace preview.redd.it with i.redd.it
+        url = url.replace("preview.redd.it", "i.redd.it")
 
-    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
-    matches = [match.strip() for match in re.findall(pattern, text)]
+    # Remove query parameters
+    if "?" in url:
+        url = url.split("?")[0]
 
-    if matches:
-        logger.debug(
-            f"extract_text_within_curly_braces: Found {len(matches)} match(es)."
-        )
+    return url
 
-    return matches
+
+def is_valid_image_url(url: str) -> bool:
+    """
+    Check if a URL is a valid image URL, including URLs with query parameters.
+
+    This is more lenient than check_url_extension() as it handles:
+    - Direct image URLs (e.g., image.jpg)
+    - Reddit preview URLs with query params (e.g., preview.redd.it/...?format=pjpg)
+    - Image URLs with tracking parameters
+
+    :param url: The URL to check.
+    :return: True if URL appears to be an image, False otherwise.
+    """
+    if not url:
+        return False
+
+    url = url.strip()
+
+    # First try the standard check for direct image URLs
+    if check_url_extension(url):
+        return True
+
+    # Handle Reddit preview/image URLs with query parameters
+    if "redd.it" in url:
+        # Check if format parameter indicates an image
+        if "format=pjpg" in url or "format=png" in url or "format=jpg" in url:
+            return True
+        # Check if the URL path (before query params) ends with an image extension
+        url_without_params = url.split("?")[0]
+        if check_url_extension(url_without_params):
+            return True
+
+    # Check if URL path (before query params) has an image extension
+    # This handles cases like: example.com/image.jpg?param=value
+    if "?" in url:
+        url_without_params = url.split("?")[0]
+        if check_url_extension(url_without_params):
+            return True
+
+    return False
 
 
 def generate_image_hash(image_url: str) -> str | None:
@@ -130,6 +173,31 @@ def generate_image_hash(image_url: str) -> str | None:
         )
 
     return hash_value
+
+
+"""OTHER FUNCTIONS"""
+
+
+def extract_text_within_curly_braces(text: str) -> list[str]:
+    """
+    Extracts all content inside {{...}} blocks, with whitespace stripped.
+
+    :param text: Text to search for curly brace patterns.
+    :return: List of extracted strings.
+    """
+    if not text:
+        logger.debug("extract_text_within_curly_braces: Received empty or None text.")
+        return []
+
+    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
+    matches = [match.strip() for match in re.findall(pattern, text)]
+
+    if matches:
+        logger.debug(
+            f"extract_text_within_curly_braces: Found {len(matches)} match(es)."
+        )
+
+    return matches
 
 
 def fetch_youtube_length(youtube_url: str) -> int | None:

@@ -12,7 +12,7 @@ from image_handling import TRANSFORM_MAP, rotate_or_flip_image, upload_to_imgbb
 from models.instruo import Instruo
 from reddit_sender import message_reply
 from responses import RESPONSE
-from utility import check_url_extension
+from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
 
 # Valid transformation values
 VALID_TRANSFORMS = {
@@ -29,71 +29,6 @@ VALID_TRANSFORMS = {
     "flip_h",
     "flip_v",
 }
-
-
-def _clean_reddit_url(url: str) -> str:
-    """
-    Clean up Reddit preview URLs to get the direct image URL.
-
-    Converts URLs like:
-    https://preview.redd.it/abc123.jpg?width=2253&format=pjpg&auto=webp&s=...
-
-    To:
-    https://i.redd.it/abc123.jpg
-
-    :param url: The URL to clean.
-    :return: Cleaned URL.
-    """
-    if "preview.redd.it" in url:
-        # Replace preview.redd.it with i.redd.it
-        url = url.replace("preview.redd.it", "i.redd.it")
-
-    # Remove query parameters
-    if "?" in url:
-        url = url.split("?")[0]
-
-    return url
-
-
-def _is_valid_image_url(url: str) -> bool:
-    """
-    Check if a URL is a valid image URL, including URLs with query parameters.
-
-    This is more lenient than check_url_extension() as it handles:
-    - Direct image URLs (e.g., image.jpg)
-    - Reddit preview URLs with query params (e.g., preview.redd.it/...?format=pjpg)
-    - Image URLs with tracking parameters
-
-    :param url: The URL to check.
-    :return: True if URL appears to be an image, False otherwise.
-    """
-    if not url:
-        return False
-
-    url = url.strip()
-
-    # First try the standard check for direct image URLs
-    if check_url_extension(url):
-        return True
-
-    # Handle Reddit preview/image URLs with query parameters
-    if "redd.it" in url:
-        # Check if format parameter indicates an image
-        if "format=pjpg" in url or "format=png" in url or "format=jpg" in url:
-            return True
-        # Check if the URL path (before query params) ends with an image extension
-        url_without_params = url.split("?")[0]
-        if check_url_extension(url_without_params):
-            return True
-
-    # Check if URL path (before query params) has an image extension
-    # This handles cases like: example.com/image.jpg?param=value
-    if "?" in url:
-        url_without_params = url.split("?")[0]
-        if check_url_extension(url_without_params):
-            return True
-
-    return False
 
 
 def _extract_gallery_images(submission):
@@ -134,7 +69,7 @@ def _extract_gallery_images(submission):
                         # URLs are HTML encoded, decode them
                         image_url = image_url.replace("&amp;", "&")
                         # Clean up the Reddit URL
-                        image_url = _clean_reddit_url(image_url)
+                        image_url = clean_reddit_image_url(image_url)
 
                         # Only add if it's a valid image URL
                         if check_url_extension(image_url):
@@ -177,9 +112,9 @@ def _extract_images_from_submission(submission):
 
         for url in test_found_urls:
             # Use the more lenient check for self-text URLs
-            if _is_valid_image_url(url):
+            if is_valid_image_url(url):
                 # Clean up Reddit preview URLs
-                cleaned_url = _clean_reddit_url(url)
+                cleaned_url = clean_reddit_image_url(url)
                 image_urls.append(cleaned_url)
 
         logger.info(f"[ZW] Transform: Found {len(image_urls)} image URLs in text body")
@@ -372,7 +307,7 @@ if __name__ == "__main__":
                     found_urls = re.findall(url_pattern_test, test_submission.selftext)
                     print(f"URLs found in self-text: {len(found_urls)}")
                     for test_idx, found_url in enumerate(found_urls, 1):
-                        is_valid = _is_valid_image_url(found_url)
+                        is_valid = is_valid_image_url(found_url)
                         print(f"  {test_idx}. {found_url}")
                         print(f"      Valid image URL: {is_valid}")
 
