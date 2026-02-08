@@ -276,7 +276,7 @@ class Kunulo:
                         If False, checks if requested chars are subset of any existing lookup.
 
         Returns:
-            dict or None: If matches found, returns {'comment_id': str, 'matched_chars': list}
+            dict or None: If matches found, returns {'comment_id': str, 'matched_terms': list}
                          If no matches, returns None
         """
         if not requested_characters:

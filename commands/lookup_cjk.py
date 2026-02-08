@@ -142,7 +142,7 @@ def _check_for_duplicate_lookups(
 
     if existing:
         logger.info(
-            f"[ZW] CJK Lookup: Duplicate lookup detected for {existing['matched_chars']} "
+            f"[ZW] CJK Lookup: Duplicate lookup detected for {existing['matched_terms']} "
             f"in {cjk_language}"
         )
         return existing
@@ -254,14 +254,14 @@ def handle(comment, instruo, komando, ajo) -> None:
             # Duplicate found - prepare response but don't return yet
             # (we might have other non-duplicate languages to process)
             comment_id = duplicate_check["comment_id"]
-            matched_chars = duplicate_check["matched_chars"]
+            matched_terms = duplicate_check["matched_terms"]
 
             # Get permalink using Kunulo
             kunulo = Kunulo.from_submission(comment.submission)
             permalink = kunulo.get_comment_permalink(comment_id)
 
             # Format the matched terms nicely
-            chars_str = ", ".join(f"**{char}**" for char in matched_chars)
+            chars_str = ", ".join(f"**{char}**" for char in matched_terms)
 
             # Store duplicate response
             duplicate_message = (
@@ -271,7 +271,7 @@ def handle(comment, instruo, komando, ajo) -> None:
             duplicate_responses.append(duplicate_message)
 
             logger.info(
-                f"[ZW] CJK Lookup: Duplicate found for {cjk_language} terms {matched_chars} "
+                f"[ZW] CJK Lookup: Duplicate found for {cjk_language} terms {matched_terms} "
                 f"in comment {comment_id}."
             )
             continue  # Skip to next language group
