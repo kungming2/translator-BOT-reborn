@@ -745,6 +745,7 @@ def notifier_internal(post_type, submission):
             )
             recipient = REDDIT.redditor(username)
             message_body = RESPONSE.MSG_NOTIFY.format(
+                greetings="Hello",
                 username=username,
                 language_name=post_type,
                 post_type="post",
