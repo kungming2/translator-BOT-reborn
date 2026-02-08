@@ -47,9 +47,7 @@ def most_recent_submitters() -> list[str]:
     return [
         post.author.name
         for post in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=100)
-        if post.created_utc > cutoff
-        and post.author
-        and post.author.name != USERNAME
+        if post.created_utc > cutoff and post.author and post.author.name != USERNAME
     ]
 
 
