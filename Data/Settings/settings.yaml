@@ -126,6 +126,10 @@ internal_post_types:
 # Regular cron job cycle run time (in minutes)
 cycle_time: 5.0
 
+# Mod exemption emoji - if a post ends with this emoji and was created
+# by a moderator, it will be treated as a test post and will not trigger
+# notifications.
+mod_test_emoji: 🧪
 # This is how many posts or comments Ziwen will retrieve all at once.
 # PRAW can download 100 at a time.
 max_posts: 100

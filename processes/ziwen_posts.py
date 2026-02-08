@@ -10,7 +10,7 @@ import traceback
 from wasabi import msg
 
 from config import SETTINGS, logger
-from connection import REDDIT, is_internal_post
+from connection import REDDIT, is_internal_post, is_mod
 from database import db, record_filter_log
 
 from dupe_detector import duplicate_detector, check_image_duplicate
@@ -59,7 +59,7 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
         return False
 
     try:
-        post.flair.select(flair_template_id=template_id, text=internal_post_type)
+        post.flair.select(flair_template_id=template_id, text=internal_post_type.title())
         logger.info(
             f"[ZW] Assigned '{internal_post_type}' flair to internal post `{post.id}`"
         )
@@ -102,7 +102,7 @@ def ziwen_posts(post_limit=None):
     dupes_removed = duplicate_detector(
         list_posts=posts[-detection_limit:],
         reddit_instance=REDDIT,
-        testing_mode=True,
+        testing_mode=False,
     )
     if dupes_removed:
         logger.info(
@@ -291,6 +291,19 @@ def ziwen_posts(post_limit=None):
             logger.info(
                 f"[ZW] Posts: Post `{post_id}` is too old to send notifications for."
             )
+
+        # Check if this is a mod test post (contains test emoji and posted by mod)
+        # If so, disable notifications
+        if messages_send_okay and SETTINGS.get("mod_test_emoji"):
+            mod_test_emoji = SETTINGS["mod_test_emoji"]
+
+            if mod_test_emoji in post_title:
+                if is_mod(post_author):
+                    messages_send_okay = False
+                    logger.info(
+                        f"[ZW] Posts: Post `{post_id}` is a moderator test post. "
+                        f"Notifications disabled."
+                    )
 
         # After this point, this post is something we can work with.
         # Length checks for overly long posts.
