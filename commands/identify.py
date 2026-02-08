@@ -43,7 +43,7 @@ def handle(comment, instruo, komando, ajo) -> None:
 
     # Invalid identification data.
     if not komando.data or None in komando.data:
-        logger.error(f"Invalid or missing Komando data: {komando.data}")
+        logger.warning(f"Invalid or missing Komando data: {komando.data}")
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
             id_comment_body=comment.body
         )
@@ -58,7 +58,7 @@ def handle(comment, instruo, komando, ajo) -> None:
     try:
         update_language(ajo, komando)
     except ValueError as e:
-        logger.error(f"[ZW] Bot: !identify data is invalid: {e}")
+        logger.warning(f"[ZW] Bot: !identify data is invalid: {e}")
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
             id_comment_body=comment.body
         )
