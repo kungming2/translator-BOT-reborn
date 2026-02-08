@@ -190,10 +190,11 @@ def weekly_bot_action_report():
     avg_actions_per_day = total_actions / 7  # 7 days in a week
 
     summary = f"""## Summary
-    - **Analysis Period**: {start_date} to {end_date}
-    - **Total Actions**: {total_actions:,}
-    - **Average Actions per Day**: {avg_actions_per_day:,.1f}
-    - **Unique Action Types**: {len(action_data)}
+
+- **Analyzed Period**: {start_date} to {end_date}
+- **Total Actions**: {total_actions:,}
+- **Average Actions per Day**: {avg_actions_per_day:,.1f}
+- **Unique Action Types**: {len(action_data)}
     """
     report_sections.append(summary)
 
