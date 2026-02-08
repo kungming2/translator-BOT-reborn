@@ -107,21 +107,21 @@ class Paths:
     }
 
 
-def get_reports_directory(base_dir: Path | None = None) -> Path:
+def get_reports_directory(base_dir: str | None = None) -> Path:
     """
     Return the Path object for the current month's reports directory.
     This used for digest reports by tasks in the tasks folder.
 
     :param base_dir: Optional base path for data storage.
-                     Defaults to the "_data" folder next to this file.
+                     Defaults to DATA_DIR.
     :return: A Path object for the monthly log directory, e.g.:
-             /path/to/Data/Reports/2025-10
+             /path/to/_data/Reports/2025-10
     """
     if base_dir is None:
-        base_dir = Path(__file__).resolve().parent / "_data"
+        base_dir = DATA_DIR
 
     current_month: str = get_current_month()
-    log_dir: Path = base_dir / "Reports" / current_month
+    log_dir: Path = Path(base_dir) / "Reports" / current_month
 
     return log_dir
 
