@@ -508,11 +508,11 @@ def update_verified_list():
             # Sanitize and split the language text for conversion.
             clean_text = re.sub(r"[^\w\s]", " ", verified_for)
             for word in clean_text.split():
-                result = converter(
-                    word, False
-                ).preferred_code  # We want the language code
-                if result:
-                    users_by_flair.setdefault(result, []).append(user)
+                converter_result = converter(word, False)
+                if converter_result:  # Check if result is not None
+                    result = converter_result.preferred_code
+                    if result:
+                        users_by_flair.setdefault(result, []).append(user)
 
         elif flair_css not in {"verified", "moderator"} and ":verified:" in flair_text:
             # User has a verified emoji but no verified flair class.
@@ -612,13 +612,24 @@ def deleted_posts_assessor(
 
     # Compare deleted posts with cached Ajo data
     for post_id, submission in deleted_submissions.items():
-        cached = relevant_ajos.get(post_id, {})
-        author = cached.get("author", "[unknown]")
+        cached = relevant_ajos.get(post_id)
+        if not cached:
+            # If no cached Ajo found, skip this post
+            continue
+
+        # Access Ajo attributes directly (not dictionary-style)
+        author = cached.author or "[unknown]"
         authors.append(author)
 
         # Flag posts marked as translated or doublecheck
-        if cached.get("status") in {"translated", "doublecheck"}:
-            translated_deleted.append((submission, author))
+        # Note: status can be either a string or dict (for defined_multiple posts)
+        if isinstance(cached.status, str):
+            if cached.status in {"translated", "doublecheck"}:
+                translated_deleted.append((submission, author))
+        elif isinstance(cached.status, dict):
+            # For defined_multiple posts, check if any language is translated/doublecheck
+            if any(s in {"translated", "doublecheck"} for s in cached.status.values()):
+                translated_deleted.append((submission, author))
 
     # Identify deleted posts where OP never commented (impolite deletions)
     impolite_entries = []
