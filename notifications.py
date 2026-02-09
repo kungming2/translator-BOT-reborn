@@ -752,6 +752,7 @@ def notifier_internal(post_type, submission):
                 title=submission.title,
                 permalink=submission.permalink,
                 post_author=original_post_author,
+                image_description="",
             )
             full_message = f"{message_body}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
             message_send(
