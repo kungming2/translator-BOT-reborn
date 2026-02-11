@@ -36,6 +36,7 @@ from time_handling import (
     time_convert_to_utc,
 )
 from utility import format_markdown_table_with_padding
+from verification import get_verified_thread
 
 
 @task(schedule="hourly")
@@ -552,7 +553,10 @@ def update_verified_list():
 
     # Keep the upper portion of the page intact.
     upper_portion = verified_page.content_md.split(anchor, 1)[0]
-    date_stamp = f"\n*Last Updated {get_current_utc_date()}*\n"
+    date_stamp = f"\n* *Last Updated {get_current_utc_date()}*\n"
+    date_stamp += (
+        f"* [Current Verification Thread](https://redd.it/{get_verified_thread()})\n"
+    )
     final_update = "\n".join([upper_portion, anchor, date_stamp, final_text])
 
     # Commit the edit.
