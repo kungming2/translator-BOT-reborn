@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import json
 import re
 import sqlite3
 import time
@@ -592,7 +593,7 @@ def deleted_posts_assessor(
     logger.debug(f"Fetched {len(stored_ajos)} entries from local_database.")
 
     # Parse and store relevant Ajos keyed by post ID
-    relevant_ajos = {row[0]: Ajo.from_dict(row[2]) for row in stored_ajos}
+    relevant_ajos = {row[0]: Ajo.from_dict(json.loads(row[2])) for row in stored_ajos}
 
     # Retrieve submissions via Reddit API
     submission_fullnames = [f"t3_{pid}" for pid in relevant_ajos]
@@ -679,7 +680,10 @@ def deleted_posts_assessor(
     )
 
     # Save the report to Markdown
-    log_path = f"{reports_directory}/{today}_Deleted.md"
+    # Ensure the directory exists (get_reports_directory returns a Path object)
+    reports_directory.mkdir(parents=True, exist_ok=True)
+    log_path = reports_directory / f"{today}_Deleted.md"
+
     with open(log_path, "w", encoding="utf-8") as f:
         f.write(report)
 
@@ -787,4 +791,4 @@ def notify_list_statistics_calculator() -> None:
 
 
 if __name__ == "__main__":
-    print(update_verified_list())
+    print(deleted_posts_assessor())
