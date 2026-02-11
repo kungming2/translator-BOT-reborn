@@ -1,17 +1,91 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import re
+import urllib.request
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Dict, List
 
 import requests
 import yaml
 from lxml import html
 from praw.exceptions import PRAWException
+from pypdf import PdfReader
 
 from config import Paths
 from connection import REDDIT, get_random_useragent, logger
 from discord_utils import send_discord_alert
 from tasks import task
+
+
+def parse_iso639_newsletter(pdf_source):
+    """
+    Parse an ISO 639 MA Newsletter PDF and extract adopted change requests.
+
+    Args:
+        pdf_source (str): URL to the PDF file or local file path
+
+    Returns:
+        str: Markdown-formatted list of adopted change requests
+    """
+    # Check if it's a local file path
+    if pdf_source.startswith(("http://", "https://")):
+        # Download from URL with random user agent to avoid 403 errors
+        req = urllib.request.Request(pdf_source, headers=get_random_useragent())
+        with urllib.request.urlopen(req) as response:
+            pdf_data = response.read()
+        pdf_file = BytesIO(pdf_data)
+        reader = PdfReader(pdf_file)
+    else:
+        # Read from local file
+        reader = PdfReader(pdf_source)
+
+    # Extract text from all pages
+    full_text = ""
+    for page in reader.pages:
+        full_text += page.extract_text()
+
+    # Find the section "Change requests that have been adopted"
+    adopted_section_match = re.search(
+        r"Change requests that have been adopted.*?(?=Newly posted change requests|$)",
+        full_text,
+        re.DOTALL | re.IGNORECASE,
+    )
+
+    if not adopted_section_match:
+        return "No adopted change requests found."
+
+    adopted_section = adopted_section_match.group(0)
+
+    # Pattern to match change requests
+    # Format: YYYY-NNN, Action [code] Language Name (639-X) -- description
+    pattern = r"(\d{4}-\d{3}),\s+(.+?)\s+--"
+
+    matches = re.findall(pattern, adopted_section)
+
+    if not matches:
+        return "No change requests could be parsed."
+
+    # Build the base URL for request links
+    # ISO 639-3 change requests typically follow this pattern
+    base_url = "https://iso639-3.sil.org/request/"
+
+    # Format as Markdown list
+    markdown_list = []
+    for case_number, instruction in matches:
+        # Clean up the instruction text
+        instruction = instruction.strip()
+
+        # Add backticks around language codes [xxx]
+        # Pattern matches [xxx] where xxx is typically 3 letters
+        instruction = re.sub(r"\[([a-z]{3})]", r"[`\1`]", instruction)
+
+        # Create the request URL
+        request_url = f"{base_url}{case_number}"
+        # Format as Markdown list item
+        markdown_list.append(f"* **[{case_number}]({request_url})**: {instruction}")
+
+    return "\n".join(markdown_list)
 
 
 @task(schedule="weekly")
@@ -147,11 +221,26 @@ def post_iso_reports_to_reddit() -> None:
             except PRAWException as e:
                 logger.error(f"Error posting '{report_name}': {e}")
             else:
-                discord_message = (
-                    f"SIL has posted a new report: [{report_name}]({pdf_link})."
-                )
+                # Parse the PDF to extract adopted change requests
+                try:
+                    markdown_list = parse_iso639_newsletter(pdf_link)
+
+                    # Build Discord message with the extracted changes
+                    discord_message = (
+                        f"SIL has posted a new report: [{report_name}]({pdf_link}).\n\n"
+                        f"**Adopted Change Requests:**\n{markdown_list}"
+                    )
+                except Exception as parse_error:
+                    logger.warning(
+                        f"Could not parse PDF '{report_name}': {parse_error}"
+                    )
+                    # Fallback to simple message if parsing fails
+                    discord_message = (
+                        f"SIL has posted a new report: [{report_name}]({pdf_link})."
+                    )
+
                 send_discord_alert(
-                    subject="New ISO 639-3 Report",
+                    subject="New ISO 639-3 Update",
                     message=discord_message,
                     webhook_name="notification",
                 )
@@ -170,6 +259,5 @@ def post_iso_reports_to_reddit() -> None:
 
 
 if __name__ == "__main__":
-    # Example usage
     fetch_iso_reports()
     post_iso_reports_to_reddit()
