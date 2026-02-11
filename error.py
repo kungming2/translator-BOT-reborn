@@ -71,6 +71,7 @@ def error_log_basic(entry: str, bot_routine: str) -> None:
         "timestamp": get_current_utc_time(),
         "bot_version": bot_routine,
         "error": entry.strip(),
+        "resolved": False,
     }
 
     # Load existing entries (if any)
