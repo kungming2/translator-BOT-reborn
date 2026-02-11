@@ -368,7 +368,8 @@ def language_of_the_day(selected_language=None):
         today_language = language_data.get(today_language.language_code_3)
 
     # Get the language's country/region flag for better formatting.
-    if today_language.country:
+    # Use getattr to safely check if country attribute exists
+    if getattr(today_language, "country", None):
         country_emoji = get_country_emoji(today_language.country)
     else:
         country_emoji = today_language.country_emoji
@@ -782,4 +783,4 @@ def notify_list_statistics_calculator() -> None:
 
 
 if __name__ == "__main__":
-    print(language_of_the_day())
+    print(update_verified_list())
