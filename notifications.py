@@ -738,7 +738,8 @@ def notifier_internal(post_type, submission):
     logger.info(
         f"Sending internal notifications to {len(notify_targets)} users. | `{submission.id}`"
     )
-    for username in notify_targets:
+    for target in notify_targets:
+        username = target[1]
         try:
             message_subject = (
                 f"[Notification] New {post_type.title()} post on r/translator"
