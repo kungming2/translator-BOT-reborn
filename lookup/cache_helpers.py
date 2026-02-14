@@ -5,74 +5,60 @@
 import asyncio
 import json
 import re
+import sqlite3
 import sys
 import time
+import threading
 from typing import Dict
 
-from config import SETTINGS
-from database import db
+from config import SETTINGS, Paths
+
 
 """CACHE INPUT"""
+
+_cache_thread_local = threading.local()
 
 
 def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
     """
     Save parsed CJK lookup data to the lookup_cjk_cache table.
-
-    :param data: Dictionary with parsed data (output from parse_zh_output_to_json)
-    :param language_code: Language code (e.g., "zh", "ja", "ko")
-    :param lookup_type: Lookup type (e.g., "zh_word", "zh_character")
     """
-    # Determine which field to use as the term key based on language
     if language_code == "zh":
         term = data.get("traditional")
         if not term:
             raise ValueError("No traditional character/word found in data")
     elif language_code == "ja":
-        # For Japanese, use the kanji/kana as the term
         term = data.get("term") or data.get("kanji") or data.get("word")
         if not term:
             raise ValueError("No Japanese term found in data")
     elif language_code == "ko":
-        # For Korean, use the hangul as the term
         term = data.get("term") or data.get("hangul") or data.get("word")
         if not term:
             raise ValueError("No Korean term found in data")
     else:
-        # Generic fallback - try common field names
         term = data.get("term") or data.get("word") or data.get("traditional")
         if not term:
             raise ValueError(
                 f"No term found in data for language code '{language_code}'"
             )
 
-    # Convert data dict to JSON string
     data_json = json.dumps(data, ensure_ascii=False)
-
-    # Get current UTC timestamp
     retrieved_utc = int(time.time())
 
-    # Prepare the insert query with REPLACE to handle updates
     query = """
         INSERT OR REPLACE INTO lookup_cjk_cache 
         (term, language_code, retrieved_utc, type, data) 
         VALUES (?, ?, ?, ?, ?)
     """
 
-    cursor = db.cursor_cache
+    cursor, conn = _get_thread_local_cursor()
     cursor.execute(query, (term, language_code, retrieved_utc, lookup_type, data_json))
-    db.conn_cache.commit()
+    conn.commit()
 
 
 def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | None:
     """
     Retrieve cached CJK lookup data from the database.
-
-    :param term: The term to look up (e.g., traditional Chinese,
-                 Japanese kanji, Korean hangul)
-    :param language_code: Language code (e.g., "zh", "ja", "ko")
-    :param lookup_type: Lookup type (e.g., "zh_word", "zh_character")
-    :return: Parsed dictionary if found and not expired, None otherwise
     """
     max_age_days = SETTINGS["lookup_cjk_cache_age"]
     cutoff_time = int(time.time()) - (max_age_days * 86400)
@@ -80,13 +66,13 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | No
     query = """
             SELECT data, retrieved_utc
             FROM lookup_cjk_cache
-            WHERE term = ? \
-              AND language_code = ? \
-              AND type = ? \
-              AND retrieved_utc >= ? \
+            WHERE term = ?
+              AND language_code = ?
+              AND type = ?
+              AND retrieved_utc >= ?
             """
 
-    cursor = db.cursor_cache
+    cursor, _ = _get_thread_local_cursor()
     cursor.execute(query, (term, language_code, lookup_type, cutoff_time))
     result = cursor.fetchone()
 
@@ -98,6 +84,29 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | No
             return None
 
     return None
+
+
+def _get_thread_local_cursor() -> tuple[sqlite3.Cursor, sqlite3.Connection]:
+    """
+    Return a (cursor, connection) pair bound to the calling thread.
+
+    SQLite connections cannot be shared across threads. When cache functions
+    are invoked from a thread-pool worker — via asyncio.to_thread or
+    run_in_executor — they run on a different thread from the one that owns
+    db.conn_cache, causing a ProgrammingError.
+
+    threading.local() gives each thread its own isolated namespace. The first
+    call from a given thread opens a fresh connection to the cache database and
+    stores it under _cache_thread_local.conn. All subsequent calls from that
+    same thread reuse the existing connection. Thread-pool workers are reused
+    by asyncio across coroutine invocations, so at most one connection is
+    opened per pooled thread.
+    """
+    if not hasattr(_cache_thread_local, "conn"):
+        conn = sqlite3.connect(Paths.DATABASE["CACHE"])
+        conn.row_factory = sqlite3.Row
+        _cache_thread_local.conn = conn
+    return _cache_thread_local.conn.cursor(), _cache_thread_local.conn
 
 
 """CHINESE CACHING"""

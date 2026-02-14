@@ -49,7 +49,7 @@ async def _lookup_chinese_term(term: str) -> str | None:
 async def _lookup_japanese_term(term: str) -> str | None:
     """Perform Japanese character or word lookup."""
     if len(term) == 1:
-        return ja_character(term)
+        return await asyncio.to_thread(ja_character, term)
     return await ja_word(term)
 
 
