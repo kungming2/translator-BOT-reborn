@@ -544,19 +544,22 @@ def monthly_statistics_unpinner():
 
 
 @task(schedule="daily")
-def archive_modmail(days_max: int = 2) -> None:
-    """Archive modmail conversations older than days_max days where the
-    last participant was a moderator."""
-    logger.info("Assessing modmail...")
+def archive_modmail() -> None:
+    """Archive modmail conversations older than days_max days where a
+    moderator has participated in the conversation."""
+    days_max = WENJU_SETTINGS["modmail_archival_age"]
+
+    logger.debug("Assessing modmail...")
     subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
 
     # Get list of moderator names for checking
-    mod_names = {mod.name.lower() for mod in subreddit.moderator()}
+    mod_names = [mod.name.lower() for mod in subreddit.moderator()]
+    logger.debug(f"Moderators: {mod_names}")
 
     unread_counts = subreddit.modmail.unread_count()
     for key, count in unread_counts.items():
         if count > 0:
-            logger.info(f"Current '{key}' in modmail: {count}")
+            logger.debug(f"Current '{key}' in modmail: {count}")
 
     current_time = datetime.now(timezone.utc)
     max_age_seconds = days_max * 86400
@@ -568,21 +571,29 @@ def archive_modmail(days_max: int = 2) -> None:
         convo_age = (current_time - last_updated).total_seconds()
         readable_age = time_convert_to_string_seconds(int(convo_age))
 
-        # Check if last participant was a moderator
-        last_participant = convo.authors[-1].name if convo.authors else None
-        is_mod_last = last_participant and last_participant.lower() in mod_names
+        # Check if any participant is a moderator
+        participants = (
+            [author.name for author in convo.authors] if convo.authors else []
+        )
+        mod_participant = next(
+            (name for name in participants if name.lower() in mod_names), None
+        )
+        logger.debug(
+            f"Conversation '{convo.subject}' | Age: {readable_age} | "
+            f"Authors: {participants} | Mod participant: {mod_participant}"
+        )
 
-        if convo_age > max_age_seconds and is_mod_last:
+        if convo_age > max_age_seconds and mod_participant:
             convo.archive()
             logger.info(
                 f"Conversation by u/{convo.participant} archived. "
-                f"({readable_age} old, last message by mod u/{last_participant})."
+                f"({readable_age} old, mod u/{mod_participant} participated)."
             )
         else:
             skip_reason = (
                 "not old enough"
                 if convo_age <= max_age_seconds
-                else "last participant not a mod"
+                else "no moderator participated"
             )
             logger.debug(
                 f"Conversation by u/{convo.participant} not archived. "
@@ -591,4 +602,4 @@ def archive_modmail(days_max: int = 2) -> None:
 
 
 if __name__ == "__main__":
-    print(refresh_language_statistics())
+    print(archive_modmail())
