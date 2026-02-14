@@ -150,7 +150,7 @@ notifications_api_limiter_on: true
 notifications_monthly_limit: 30
 # A number that defines how many MAX number of people we message for
 # a single language post.
-notifications_user_limit: 8
+notifications_user_limit: 30
 
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
