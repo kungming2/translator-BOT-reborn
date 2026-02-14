@@ -192,7 +192,7 @@ def weekly_bot_action_report():
     summary = f"""## Summary
 
 - **Analyzed Period**: {start_date} to {end_date}
-- **Total Actions**: {total_actions:,}
+- **Total Reddit Actions**: {total_actions:,}
 - **Average Actions per Day**: {avg_actions_per_day:,.1f}
 - **Unique Action Types**: {len(action_data)}
     """
