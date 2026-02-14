@@ -30,7 +30,7 @@ def handle(comment, _instruo, _komando, ajo) -> None:
             kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
             kunulo_object.delete("comment_long")
 
-        ajo.set_long(new_status)
+        ajo.set_is_long(new_status)
         logger.info(
             f"[ZW] Bot: Changed post `{ajo.id}`'s long state to '{new_status}.'"
         )
