@@ -29,7 +29,8 @@ def get_verified_thread() -> str | None:
     Return the ID of the most recent 'Verified' meta thread in r/translator
     that was posted by a moderator.
 
-    :return: The verification post ID as a string, or None if not found or author is not a mod.
+    :return: The verification post ID as a string, or
+             None if not found or author is not a mod.
     """
     search = REDDIT.subreddit(SETTINGS["subreddit"]).search(
         "title:verified AND flair:meta", time_filter="year", sort="new", limit=1
