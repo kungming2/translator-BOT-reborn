@@ -240,7 +240,7 @@ COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to
   Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
 
 COMMENT_DUPLICATE: |
-  Hey u/{author}!
+  Hey there u/{author},
   
   It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you've recently submitted and I have removed it as a result.
   
@@ -258,7 +258,9 @@ COMMENT_CJK_LOOKUP_DUPLICATE: |
   [](#comment_cjk_lookup_duplicate)
 
 COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
-  Hey u/{author}, it looks like the image in this post is {similarity} an image you posted [here]({previous_link}) {time_ago}. 
+  Hey there u/{author}, 
+  
+  It looks like the image in this post is {similarity} an image you posted [here]({previous_link}) {time_ago}. 
 
   If this is intentional (for example, requesting a different language pair), please disregard this message. 
   Otherwise, you may want to check if you've already received a translation for this image.
@@ -266,7 +268,9 @@ COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
   [](#comment_image_duplicate_same_author)
 
 COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
-  Hey u/{author}, it looks like the image hash of this post is {similarity} an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+  Hey there u/{author}, 
+  
+  It looks like the image hash of this post is {similarity} an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
 
   You may want to check that post to see if it has already been translated. Please disregard this message if the images are dissimilar.
 
