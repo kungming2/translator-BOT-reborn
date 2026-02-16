@@ -41,7 +41,7 @@ def notify_op_translated_post(author, permalink):
     if author == USERNAME:
         return  # Don't message the bot itself
 
-    subject = "[Notification] Your request has been translated on r/translator!"
+    subject = "Your request has been translated on r/translator!"
     body = (
         RESPONSE.MSG_TRANSLATED.format(author=author, permalink=permalink)
         + RESPONSE.BOT_DISCLAIMER

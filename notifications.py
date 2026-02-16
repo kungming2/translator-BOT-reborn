@@ -664,7 +664,7 @@ def notifier(lingvo, submission, mode="new_post"):
         try:
             # Send message to user via Reddit messages
             message_subject = (
-                f"[Notification] New {language_name} request on r/translator"
+                f"New {language_name} request on r/translator"
             )
             recipient = REDDIT.redditor(username)
             full_message = (
@@ -742,7 +742,7 @@ def notifier_internal(post_type, submission):
         username = target[1]
         try:
             message_subject = (
-                f"[Notification] New {post_type.title()} post on r/translator"
+                f"New {post_type.title()} post on r/translator"
             )
             recipient = REDDIT.redditor(username)
             message_body = RESPONSE.MSG_NOTIFY.format(

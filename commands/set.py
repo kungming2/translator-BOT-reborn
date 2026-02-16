@@ -32,7 +32,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         logger.error(f"Invalid or missing Komando data: {komando.data}")
         message_send(
             comment.author,
-            "[Notification] Invalid !set language",
+            "Invalid !set language",
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
         logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
@@ -45,7 +45,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         logger.error(f"[ZW] Bot: !set data is invalid: {e}")
         message_send(
             comment.author,
-            "[Notification] Invalid !set language",
+            "Invalid !set language",
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
         logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
@@ -93,7 +93,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     try:
         message_send(
             comment.author,
-            subject="[Notification] !set command successful",
+            subject="!set command successful",
             body=set_msg,
         )
         logger.info(

@@ -72,7 +72,7 @@ def _mark_short_thanks_as_translated(comment, ajo):
     )
     message_send(
         comment.author,
-        "[Notification] A message about your translation request",
+        "A message about your translation request",
         message_body,
     )
 

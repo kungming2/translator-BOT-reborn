@@ -29,7 +29,7 @@ def handle(comment, _instruo, _komando, ajo) -> None:
         )
         message_send(
             comment.author,
-            subject="[Notification] !reset command successful",
+            subject="!reset command successful",
             body=reset_msg,
         )
 
