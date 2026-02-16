@@ -24,6 +24,7 @@ and is configured via CHINESE_* credentials in the config.
 import asyncio
 import re
 import traceback
+import warnings
 from typing import TYPE_CHECKING
 
 import asyncpraw
@@ -37,6 +38,12 @@ from error import error_log_extended
 from lookup.match_helpers import lookup_zh_ja_tokenizer
 from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
+
+# Suppress jieba's pkg_resources deprecation warning;
+# setuptools is pinned to a compatible version.
+warnings.filterwarnings(
+    "ignore", message="pkg_resources is deprecated", category=UserWarning
+)
 
 if TYPE_CHECKING:
     from asyncpraw import Reddit
@@ -104,7 +111,10 @@ async def _cc_ref(reddit: "Reddit") -> None:
                     "r/translator ", f"r/{comment.subreddit.display_name} "
                 )  # Adapt the disclaimer to whatever subreddit the bot is posting on
                 if len(reply_text) > 10000:
-                    reply_text = reply_text[:9900]
+                    reply_text = (
+                        reply_text[:9000]
+                        + "\n\n*Reference information has been truncated due to excessive length.*"
+                    )
 
                 try:
                     reply = await comment.reply(reply_text + cc_bot_disclaimer)
