@@ -100,7 +100,7 @@ def ziwen_posts(post_limit=None):
     # ========================================================================
     logger.info("[ZW] Running duplicate detection...")
     # Pass half the most recent fetched posts for faster processing
-    detection_limit = fetch_amount // 2
+    detection_limit = int(fetch_amount // 4)
     dupes_removed = duplicate_detector(
         list_posts=posts[-detection_limit:],
         reddit_instance=REDDIT,
