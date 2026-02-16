@@ -54,6 +54,9 @@ def handle(comment, instruo, komando, ajo) -> None:
     logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author} on `{ajo.id}`.")
     logger.info(f"[ZW] Bot: !identify data is: {komando.data}")
 
+    # Capture the original language before update_language mutates ajo.lingvo.
+    original_language = ajo.lingvo
+
     # Update the Ajo's language(s) post.
     try:
         update_language(ajo, komando)
@@ -66,9 +69,8 @@ def handle(comment, instruo, komando, ajo) -> None:
         logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
         return
 
-    # Handle notifications.
+    # Handle notifications after identification.
     if ajo.type == "single" or (ajo.type == "multiple" and not ajo.is_defined_multiple):
-        original_language = ajo.lingvo
         new_language = komando.data[0]  # Lingvo
 
         # Assuming the two languages are different, we can obtain a
@@ -86,7 +88,9 @@ def handle(comment, instruo, komando, ajo) -> None:
                     user=ajo.author,
                 )
             if permission_to_send:
-                logger.info("Now sending notifications...")
+                logger.info(
+                    "Now sending notifications after identification..."
+                )
                 contacted = notifier(new_language, original_post, "identify")
                 ajo.add_notified(contacted)
     else:  # Defined multiple post.
