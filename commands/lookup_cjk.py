@@ -298,6 +298,11 @@ def handle(comment, instruo, komando, ajo) -> None:
     # Send reply if we have anything to say
     if reply_parts:
         final_reply = "\n\n---\n\n".join(reply_parts)
+        if len(final_reply) > 10000:
+            final_reply = (
+                    final_reply[:9000]
+                    + "\n\n*Lookup information has been truncated due to excessive length.*"
+            )
         comment_reply(comment, final_reply)
         logger.info(
             f"[ZW] CJK Lookup: Replied with {len(all_lookup_results)} new lookup(s) "
