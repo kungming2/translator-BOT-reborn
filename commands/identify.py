@@ -13,6 +13,7 @@ from responses import RESPONSE
 from wiki import update_wiki_page
 
 from . import update_language
+from time_handling import get_current_utc_date
 
 
 def _send_notifications_okay(instruo, ajo) -> bool:
@@ -80,12 +81,12 @@ def handle(comment, instruo, komando, ajo) -> None:
             if ajo.type == "single":
                 update_wiki_page(
                     action="identify",
-                    formatted_date=ajo.created_utc,
+                    formatted_date=get_current_utc_date(),
                     title=ajo.title_original,
                     post_id=ajo.id,
-                    flair_text=original_language,
+                    flair_text=original_language.name,
                     new_flair=komando.data[0].name,
-                    user=ajo.author,
+                    user=comment.author,
                 )
             if permission_to_send:
                 logger.info(
