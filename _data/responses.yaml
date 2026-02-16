@@ -101,7 +101,7 @@ MSG_UNSUBSCRIBE_ALL: |
 
   To resubscribe, please [click here]({}).
 
-MSG_CLOSING_OUT_SUBJECT: '[Notification] Was your {language} request translated?'
+MSG_CLOSING_OUT_SUBJECT: 'Was your {language} request translated?'
 MSG_CLOSING_OUT: |
 
   Hey there, u/{author}!
