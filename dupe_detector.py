@@ -6,6 +6,7 @@ be duplicates from the same user.
 """
 
 import hashlib
+import logging
 import re
 import time
 from collections import defaultdict
@@ -61,8 +62,10 @@ class DuplicateDetector:
         if use_semantic:
             try:
                 # Use a lightweight but effective model
+                logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+                logging.getLogger("tqdm").setLevel(logging.WARNING)
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
-                logger.info(
+                logger.debug(
                     "[ZW] Duplicate Detector: Semantic similarity model loaded successfully"
                 )
             except Exception as e:
@@ -119,7 +122,7 @@ class DuplicateDetector:
             matches = re.findall(pattern, text, re.IGNORECASE)
             numbers.extend([int(m) for m in matches])
 
-        logger.info(
+        logger.debug(
             f"[ZW] Duplicate Detector: Extracted numbers from '{text}': {numbers}"
         )
         return numbers
@@ -148,7 +151,7 @@ class DuplicateDetector:
         if len(number_sets) < 2:
             return False
 
-        logger.info(f"[ZW] Duplicate Detector: Numbers found in titles: {number_sets}")
+        logger.debug(f"[ZW] Duplicate Detector: Numbers found in titles: {number_sets}")
 
         # Check if numbers are incrementing consistently
         # Compare the last number in each set (usually the episode/part number)
@@ -161,7 +164,7 @@ class DuplicateDetector:
             return False
 
         avg_diff = sum(differences) / len(differences)
-        logger.info(
+        logger.debug(
             f"[ZW] Duplicate Detector: Average numerical difference: {avg_diff}"
         )
 
@@ -327,7 +330,7 @@ class DuplicateDetector:
             posts.sort(key=lambda x: x["created_utc"])
             titles = [p["title"] for p in posts]
 
-            logger.info(
+            logger.debug(
                 f"[ZW] Duplicate Detector: Analyzing {len(posts)} posts by u/{author}"
             )
 
@@ -364,7 +367,7 @@ class DuplicateDetector:
             if similarity_score is None:
                 continue
 
-            logger.info(
+            logger.debug(
                 f"[ZW] Duplicate Detector: Posts by u/{author} have {method_used} similarity: "
                 f"{similarity_score:.2f}"
             )
@@ -409,7 +412,7 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
     duplicate_ids = detector.detect_duplicates(list_posts)
 
     if not duplicate_ids:
-        logger.info("[ZW] Duplicate Detector: No duplicates detected.")
+        logger.debug("[ZW] Duplicate Detector: No duplicates detected.")
         return None
 
     logger.info(
