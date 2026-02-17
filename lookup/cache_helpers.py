@@ -587,13 +587,17 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
     # Pronunciation table
     table = "\n\n| Language | Pronunciation |\n|---------|--------------|\n"
 
+    def _fix_last_tone(s: str) -> str:
+        """Ensure the final superscript tone number is wrapped in parentheses."""
+        return re.sub(r"\^(\d)$", r"^(\1)", s)
+
     # Mandarin variants
     if "mandarin_pinyin" in pronunciations:
         table += f"| **Mandarin** (Pinyin) | *{pronunciations['mandarin_pinyin']}* |\n"
     if "mandarin_wade_giles" in pronunciations:
-        table += f"| **Mandarin** (Wade-Giles) | *{pronunciations['mandarin_wade_giles']}* |\n"
+        table += f"| **Mandarin** (Wade-Giles) | *{_fix_last_tone(pronunciations['mandarin_wade_giles'])}* |\n"
     if "mandarin_yale" in pronunciations:
-        table += f"| **Mandarin** (Yale) | *{pronunciations['mandarin_yale']}* |\n"
+        table += f"| **Mandarin** (Yale) | *{_fix_last_tone(pronunciations['mandarin_yale'])}* |\n"
     if "mandarin_gr" in pronunciations:
         table += f"| **Mandarin** (GR) | *{pronunciations['mandarin_gr']}* |\n"
 

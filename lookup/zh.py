@@ -153,7 +153,7 @@ async def zh_word(word):
         return format_zh_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(f"[ZW] ZH-Word: Cache miss for '{word}', fetching from web.")
+    logger.info(f"[ZW] ZH-Word: '{word}' not found in cache, fetching from web.")
     return await _zh_word_fetch(word)
 
 
@@ -255,6 +255,16 @@ def _zh_word_alternate_romanization(pinyin_string, original_input=None):
         gr_post = "".join(gr_reading_list)
     else:  # no characters passed
         gr_post = ""
+
+    # Wrap the tone number of the last syllable in parentheses to avoid
+    # Reddit's markdown parser consuming the trailing superscript incorrectly.
+    def _parenthesize_last_tone(lst):
+        if lst:
+            lst[-1] = re.sub(r"\^(\d)$", r"^(\1)", lst[-1])
+        return lst
+
+    _parenthesize_last_tone(yale_list)
+    _parenthesize_last_tone(wadegiles_list)
 
     yale_post = " ".join(yale_list)
     wadegiles_post = " ".join(wadegiles_list)

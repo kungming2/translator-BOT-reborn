@@ -233,7 +233,7 @@ def ja_character(character: str) -> str:
         return format_ja_character_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(f"[ZW] JA-Character: Cache miss for '{character}', fetching from web.")
+    logger.info(f"[ZW] JA-Character: '{character}' not found in cache, fetching from web.")
     return _ja_character_fetch(character)
 
 
@@ -579,7 +579,7 @@ async def ja_word(japanese_word: str) -> str | None:
         return format_ja_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(f"[ZW] JA-Word: Cache miss for '{japanese_word}', fetching from web.")
+    logger.info(f"[ZW] JA-Word: '{japanese_word}' not found in cache, fetching from web.")
     return await _ja_word_fetch(japanese_word)
 
 

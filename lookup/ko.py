@@ -175,7 +175,7 @@ def ko_word(korean_word: str) -> str | None:
         return format_ko_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from API
-    logger.info(f"[ZW] KO-Word: Cache miss for '{korean_word}', fetching from API.")
+    logger.info(f"[ZW] KO-Word: '{korean_word}' not found in cache, fetching from API.")
     return _ko_word_fetch(korean_word)
 
 
