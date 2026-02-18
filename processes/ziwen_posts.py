@@ -4,6 +4,7 @@
 Main script to fetch posts and act upon them.
 """
 
+import pprint
 import time
 import traceback
 
@@ -12,8 +13,7 @@ from wasabi import msg
 from config import SETTINGS, logger
 from connection import REDDIT, is_internal_post, is_mod
 from database import db, record_filter_log
-
-from dupe_detector import duplicate_detector, check_image_duplicate
+from dupe_detector import check_image_duplicate, duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
@@ -401,7 +401,7 @@ def ziwen_posts(post_limit=None):
         logger.info(f"[ZW] Post Title: `{post.title}`")
         logger.info(f"[ZW] Post Link: `https://www.reddit.com{post.permalink}`")
         logger.info(f"[ZW] Post Ajo ID: `{post_ajo.id}`")
-        logger.info(f"[ZW] Post Ajo initial data: `{vars(post_ajo)}`")
+        logger.info(f"[ZW] Post Ajo initial data:\n{pprint.pformat(vars(post_ajo))}")
 
         # Only update if we're not in testing mode. This also writes the
         # Ajo to disk.
