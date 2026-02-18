@@ -17,7 +17,7 @@ import os
 import re
 from typing import Any
 
-import jieba
+import rjieba as jieba
 import MeCab
 import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
@@ -57,7 +57,7 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
 
         # Simplify Traditional Chinese to Simplified for better tokenization
         simplified_phrase = simplify(phrase)
-        simplified_tokens: list[str] = list(jieba.cut(simplified_phrase, cut_all=False))
+        simplified_tokens: list[str] = list(jieba.cut(simplified_phrase))
 
         # Map simplified tokens back to original Traditional Chinese characters
         tokens: list[str] = []
@@ -328,7 +328,7 @@ def lookup_matcher(
 
 if __name__ == "__main__":
     while True:
-        print("\n=" * 30)
+        print("=" * 30)
         print("Note: Backticks will be automatically added around your phrase.\n")
 
         test_phrase = input("Enter phrase: ")
