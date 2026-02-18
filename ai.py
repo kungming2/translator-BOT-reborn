@@ -147,7 +147,7 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
     )
 
     # Send to AI (needs to use OpenAI for image assessment)
-    logger.debug(f"[S] AI: PROCESS: Fetching image description")
+    logger.debug("[S] AI: PROCESS: Fetching image description")
     description: str = ai_query(
         service="openai",
         client_object=openai_access(),

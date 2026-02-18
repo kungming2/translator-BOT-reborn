@@ -89,9 +89,7 @@ def handle(comment, instruo, komando, ajo) -> None:
                     user=comment.author,
                 )
             if permission_to_send:
-                logger.info(
-                    "Now sending notifications after identification..."
-                )
+                logger.info("Now sending notifications after identification...")
                 contacted = notifier(new_language, original_post, "identify")
                 ajo.add_notified(contacted)
     else:  # Defined multiple post.

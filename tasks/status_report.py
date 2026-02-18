@@ -262,9 +262,11 @@ def update_sidebar_statistics():
             reason=f"Updating sidebar at {current_time_str}",
         )
 
-        logger.info(f"Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit}")
+        logger.info(
+            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit}"
+        )
     except Exception as e:
-        logger.error(f"Failed to update Old Reddit sidebar: {e}")
+        logger.error(f"[WJ] Failed to update Old Reddit sidebar: {e}")
         return
 
     # --- Update New Reddit widget ---
@@ -290,7 +292,9 @@ def update_sidebar_statistics():
         active_widget.mod.update(text=widget_text)  # type: ignore[attr-defined]
         logger.debug("Updated New Reddit sidebar widget with latest statistics.")
     except RedditAPIException:
-        logger.error("Reddit API error: failed to update New Reddit sidebar widget.")
+        logger.error(
+            "[WJ] Reddit API error: failed to update New Reddit sidebar widget."
+        )
 
     return
 
