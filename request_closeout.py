@@ -76,7 +76,7 @@ def _send_closeout_messages(
         )
         logger.info(
             f"Messaged u/{author} about "
-            f"closing out their post at {post_praw.permalink}."
+            f"closing out their post at https://www.reddit.com{post_praw.permalink}."
         )
 
     return
