@@ -18,7 +18,7 @@ import re
 from typing import Any
 
 import rjieba as jieba
-import MeCab
+import MeCab  # mecab-python3
 import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
 
