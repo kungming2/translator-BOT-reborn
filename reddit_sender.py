@@ -23,6 +23,13 @@ from prawcore.exceptions import ServerError
 from config import SETTINGS, logger
 from testing import log_testing_mode
 
+
+class UserNotFoundException(Exception):
+    """Raised when Reddit reports that a target user no longer exists."""
+
+    pass
+
+
 testing_mode = SETTINGS["testing_mode"]
 
 
@@ -121,13 +128,14 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
             elif ex.error_type == "RATELIMIT":
                 # Rate limited by the API.
                 logger.info(
-                    f"Reddit API rate limit reached. Cannot send message to u/{username}."
+                    f"Reddit API rate limit reached: Cannot send message to u/{username}."
                 )
             elif ex.error_type == "USER_DOESNT_EXIST":
-                # User no longer exists.
+                # User no longer exists; raise so callers can clean up.
                 logger.info(
-                    f"User does not exist. Unable to send message to u/{username}."
+                    f"User does not exist: Unable to send message to u/{username}."
                 )
+                raise UserNotFoundException(f"u/{username} no longer exists.")
             else:
                 logger.warning(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"

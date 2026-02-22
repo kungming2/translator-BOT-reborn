@@ -20,7 +20,7 @@ from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
 from languages import Lingvo, converter, country_converter, language_module_settings
 from models.ajo import ajo_loader
-from reddit_sender import message_send
+from reddit_sender import message_send, UserNotFoundException
 from responses import RESPONSE
 from startup import STATE
 from time_handling import time_convert_to_string
@@ -674,6 +674,11 @@ def notifier(lingvo, submission, mode="new_post"):
             # Update notification count for this user/language
             _update_user_notification_count(username, lingvo)
 
+        except UserNotFoundException:
+            logger.info(
+                f"[Notifier] u/{username} no longer exists. Pruning from database."
+            )
+            _prune_deleted_user_notifications(username)
         except exceptions.APIException as e:
             logger.info(
                 f"[Notifier] Error sending message to u/{username}. Removing user."
@@ -756,6 +761,11 @@ def notifier_internal(post_type, submission):
                 redditor_obj=recipient, subject=message_subject, body=full_message
             )
 
+        except UserNotFoundException:
+            logger.info(
+                f"[Notifier] u/{username} no longer exists. Pruning from database."
+            )
+            _prune_deleted_user_notifications(username, True)
         except exceptions.APIException as e:
             logger.info(
                 f"[Notifier] Error sending internal message to "
