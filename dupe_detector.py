@@ -459,7 +459,7 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
             )
 
             if not testing_mode:
-                bot_reply = reddit_reply(dupe_post, duplicate_comment, True)
+                reddit_reply(dupe_post, duplicate_comment, True)
 
             successfully_removed.append(dupe_id)
             logger.info(
