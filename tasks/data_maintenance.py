@@ -77,7 +77,7 @@ def log_trimmer():
 
 
 @task(schedule="weekly")
-def trim_error_log(error_log_path):
+def error_log_trimmer(error_log_path):
     """Remove resolved errors older than one week from the error log."""
     with open(error_log_path, "r", encoding="utf-8") as f:
         entries = yaml.safe_load(f) or []
@@ -210,7 +210,7 @@ def clean_processed_database():
     """
     Cleans up old entries in old_comments and old_posts,
     keeping only entries from the last 180 days based on the
-    created_utc column in each table. TODO make this work
+    created_utc column in each table.
     """
     max_age_days = SETTINGS["max_old_age"]
     cursor = db.cursor_main
