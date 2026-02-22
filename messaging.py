@@ -21,7 +21,7 @@ from notifications import (
     notifier_language_list_retriever,
 )
 from points import points_user_retriever
-from reddit_sender import message_reply, message_send
+from reddit_sender import reddit_reply, message_send
 from responses import RESPONSE
 from usage_statistics import (
     action_counter,
@@ -99,7 +99,7 @@ def handle_subscribe(message, message_author):
     # No valid matches.
     if not language_matches:  # There are no valid codes to subscribe.
         logger.warning("[SUB] No valid matches after filtering - rejecting request")
-        message_reply(
+        reddit_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
             + RESPONSE.BOT_DISCLAIMER,
@@ -134,7 +134,7 @@ def handle_subscribe(message, message_author):
     )
 
     # Reply to the subscribing user.
-    message_reply(
+    reddit_reply(
         message,
         reply_text=main_body
         + RESPONSE.BOT_DISCLAIMER
@@ -154,7 +154,7 @@ def handle_unsubscribe(message, message_author):
     if message.body.lower().strip().endswith("all"):
         # Pass an empty list.
         notifier_language_list_editor([], message_author, "purge")
-        message_reply(
+        reddit_reply(
             message,
             reply_text=RESPONSE.MSG_UNSUBSCRIBE_ALL.format(
                 "all", RESPONSE.MSG_SUBSCRIBE_LINK
@@ -167,7 +167,7 @@ def handle_unsubscribe(message, message_author):
     # Continue processing the message.
     language_matches = parse_language_list(message.body)  # Returns Lingvo objects.
     if language_matches is None:  # There are no valid codes to unsubscribe them from.
-        message_reply(
+        reddit_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
             + RESPONSE.BOT_DISCLAIMER,
@@ -189,7 +189,7 @@ def handle_unsubscribe(message, message_author):
 
     bullet_list = "\n* ".join(final_match_names)
 
-    message_reply(
+    reddit_reply(
         message,
         reply_text=RESPONSE.MSG_UNSUBSCRIBE_ALL.format(
             bullet_list, RESPONSE.MSG_SUBSCRIBE_LINK
@@ -251,7 +251,7 @@ def handle_status(message, message_author):
     compilation = "### Notifications\n\n" + status_component + commands_component
 
     action_counter(1, "Status checks")
-    message_reply(
+    reddit_reply(
         message,
         reply_text=compilation
         + RESPONSE.BOT_DISCLAIMER
@@ -289,7 +289,7 @@ def handle_add(message, message_author):
         )
         # Only send Reddit reply if this is a PRAW message object
         if isinstance(message, Message):
-            message_reply(message, reply_text=addition_message)
+            reddit_reply(message, reply_text=addition_message)
 
 
 def handle_remove(message, message_author):
@@ -321,7 +321,7 @@ def handle_remove(message, message_author):
     )
     # Only send Reddit reply if this is a PRAW message object
     if isinstance(message, Message):
-        message_reply(message, reply_text=removal_message)
+        reddit_reply(message, reply_text=removal_message)
 
 
 def handle_points(message, message_author):
@@ -342,7 +342,7 @@ def handle_points(message, message_author):
     logger.info(f"[ZW] Messages: Points information is {reply_body}.")
 
     try:
-        message_reply(
+        reddit_reply(
             message,
             reply_text=reply_body + RESPONSE.BOT_DISCLAIMER,
         )

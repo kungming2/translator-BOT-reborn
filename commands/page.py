@@ -11,7 +11,7 @@ import time
 from config import SETTINGS, logger
 from connection import REDDIT_HELPER
 from notifications import notifier
-from reddit_sender import comment_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 
 
@@ -36,7 +36,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
             RESPONSE.COMMENT_PAGE_DISALLOWED.format(age=minimum_account_age_days)
             + RESPONSE.BOT_DISCLAIMER
         )
-        comment_reply(comment, reply_text)
+        reddit_reply(comment, reply_text)
         return
 
     # Go through the paging languages
@@ -65,7 +65,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     # Collate the languages for which there is nobody on file.
     if replying_text:
         lacking_page_languages_text: str = "\n\n".join(replying_text)
-        comment_reply(comment, lacking_page_languages_text + RESPONSE.BOT_DISCLAIMER)
+        reddit_reply(comment, lacking_page_languages_text + RESPONSE.BOT_DISCLAIMER)
         logger.info(
             "Left a comment letting users know which languages "
             "have no notifications coverage."

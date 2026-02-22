@@ -4,7 +4,7 @@
 
 from config import logger
 from lookup.wp_utils import wikipedia_lookup
-from reddit_sender import comment_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 
 
@@ -22,5 +22,5 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     if wikipedia_data:
         # Add comment anchor.
         wikipedia_data += RESPONSE.ANCHOR_WIKIPEDIA
-        comment_reply(comment, wikipedia_data)
+        reddit_reply(comment, wikipedia_data)
         logger.info(f"[ZW] Bot: COMMAND: Replied to comment `{comment.id}`.")

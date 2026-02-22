@@ -11,8 +11,7 @@ This module provides a safe abstraction layer for Reddit interactions:
 - All functions handle common exceptions (APIException, NotFound) gracefully
 
 Functions:
-    comment_reply: Reply to a Reddit comment
-    message_reply: Reply to a Comment, Message, or Submission
+    reddit_reply: Reply to a Comment, Message, or Submission
     message_send: Send a private message to a Redditor
 """
 
@@ -27,41 +26,10 @@ from testing import log_testing_mode
 testing_mode = SETTINGS["testing_mode"]
 
 
-def comment_reply(comment: Comment, reply_text: str) -> None:
-    """
-    Send a reply to a PRAW comment object, or logs it in testing mode.
-
-    Args:
-        comment: PRAW Comment object.
-        reply_text: Text to reply with.
-    """
-    if testing_mode:
-        logger.info(
-            f"[TESTING MODE] Would reply to comment ID "
-            f"{comment.id} by {comment.author}:"
-        )
-        logger.info(reply_text)
-
-        log_testing_mode(
-            output_text=reply_text,
-            title="Comment Reply",
-            metadata={
-                "Comment ID": comment.id,
-                "Author": str(comment.author),
-                "Permalink": comment.permalink,
-            },
-        )
-    else:
-        try:
-            comment.reply(reply_text)
-            logger.info(f"Replied to comment ID `{comment.id}` successfully.")
-        except (APIException, NotFound):  # Comment has been deleted.
-            logger.info(f"Comment ID `{comment.id}` has been deleted.")
-            pass
-
-
-def message_reply(
-    msg_obj: Comment | Message | Submission, reply_text: str
+def reddit_reply(
+    msg_obj: Comment | Message | Submission,
+    reply_text: str,
+    distinguish: bool = False,
 ) -> Comment | Submission | None:
     """
     Reply to a Reddit object (Comment, Message, or Submission).
@@ -70,6 +38,9 @@ def message_reply(
     Args:
         msg_obj: A PRAW Comment, Message, or Submission object.
         reply_text: The reply text to send.
+        distinguish: If True, distinguishes the reply as a mod comment.
+                     Only applies when the returned object is a Comment;
+                     distinguish is not supported on Message replies.
     """
     target_id = getattr(msg_obj, "id", "unknown")
     target_author = getattr(msg_obj, "author", "unknown")
@@ -81,7 +52,12 @@ def message_reply(
         log_testing_mode(
             output_text=reply_text,
             title="Reply",
-            metadata={"Reply Target": target_id, "Author": str(target_author)},
+            metadata={
+                "Object Type": type(msg_obj).__name__,
+                "Reply Target": target_id,
+                "Author": str(target_author),
+                "Distinguish": distinguish,
+            },
         )
         return None
 
@@ -90,7 +66,13 @@ def message_reply(
         try:
             returned_object = msg_obj.reply(reply_text)
             logger.info(f"Replied to `{target_id}` successfully.")
-        except (APIException, NotFound):
+
+            if distinguish and isinstance(returned_object, Comment):
+                returned_object.mod.distinguish(sticky=False)
+                logger.info(f"Distinguished reply to `{target_id}`.")
+        except NotFound:
+            logger.info(f"Object `{target_id}` has been deleted; reply not sent.")
+        except APIException:
             logger.exception(f"Unexpected error replying to `{target_id}`.")
         else:
             return returned_object

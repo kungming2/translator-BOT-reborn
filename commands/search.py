@@ -9,7 +9,7 @@ lookups.
 from config import logger
 from connection import REDDIT_HELPER
 from models.instruo import Instruo
-from reddit_sender import message_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 from search_handling import fetch_search_reddit_posts, build_search_results
 from wiki import search_integration
@@ -30,7 +30,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     # Check for frequently-translated text and return advisories first
     frequently_translated_info: str | None = search_integration(search_query)
     if frequently_translated_info and "Advisory" in frequently_translated_info:
-        message_reply(comment, frequently_translated_info + RESPONSE.BOT_DISCLAIMER)
+        reddit_reply(comment, frequently_translated_info + RESPONSE.BOT_DISCLAIMER)
         return
 
     # Fetch Google search results for r/translator
@@ -51,7 +51,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         if frequently_translated_info
         else f"{results_header}{search_results_body}"
     )
-    message_reply(comment, full_reply + RESPONSE.BOT_DISCLAIMER)
+    reddit_reply(comment, full_reply + RESPONSE.BOT_DISCLAIMER)
 
 
 if "__main__" == __name__:

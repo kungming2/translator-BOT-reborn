@@ -26,7 +26,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from config import SETTINGS, logger
 from connection import REDDIT, is_mod, search_removal_reasons
 from database import db
-from reddit_sender import message_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 from usage_statistics import action_counter
 
@@ -459,8 +459,7 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
             )
 
             if not testing_mode:
-                bot_reply = message_reply(dupe_post, duplicate_comment)
-                bot_reply.mod.distinguish()
+                bot_reply = reddit_reply(dupe_post, duplicate_comment, True)
 
             successfully_removed.append(dupe_id)
             logger.info(
@@ -720,8 +719,7 @@ def check_image_duplicate(
         commented = False
         if not testing_mode:
             try:
-                message_reply(post, comment_text)
-                # Don't distinguish - this is informational, not a removal
+                reddit_reply(post, comment_text, True)
                 commented = True
                 logger.info(
                     f"[ZW] Image Dupe Check: Posted duplicate notification on `{post.id}`"
@@ -948,8 +946,7 @@ def duplicate_detection_test():
 
 if __name__ == "__main__":
     start_time = time.time()
-    # duplicate_detection_test()
-    print(search_image_hash("e3c80e178acccc33", days=30))
+    duplicate_detection_test()
     end_time = time.time()
     elapsed = end_time - start_time
     print(f"\nTotal execution time: {elapsed:.2f} seconds")

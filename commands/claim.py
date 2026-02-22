@@ -15,7 +15,7 @@ from praw.models import Comment
 from connection import REDDIT, logger
 from languages import converter
 from models.kunulo import Kunulo
-from reddit_sender import comment_reply, message_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 from time_handling import get_current_utc_time
 
@@ -69,7 +69,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
             if language == claim_info["language"]:
                 if claim_info["claimer"] == comment.author.name:
                     # Same user trying to re-claim
-                    comment_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
+                    reddit_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
                     logger.info(
                         "[ZW] Bot: >> But this post is already claimed by them. Replied to them."
                     )
@@ -82,7 +82,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
                         claimer_name=claim_info["claimer"],
                         remaining_time=remaining_minutes,
                     )
-                    comment_reply(comment, reply_text)
+                    reddit_reply(comment, reply_text)
 
                 # Language is already claimed, skip adding it to claimed_languages
                 continue
@@ -106,7 +106,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
             )
             + RESPONSE.BOT_DISCLAIMER
         )
-        claim_comment = message_reply(parent_submission, claim_text)
+        claim_comment = reddit_reply(parent_submission, claim_text)
 
         # Sticky the comment if there is only one language, as there can
         # only be one stickied comment at a time.

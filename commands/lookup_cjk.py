@@ -11,7 +11,7 @@ from languages import converter
 from lookup.ja import ja_character, ja_word
 from lookup.ko import ko_word
 from lookup.zh import zh_character, zh_word
-from reddit_sender import comment_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 
 
@@ -303,7 +303,7 @@ def handle(comment, instruo, komando, ajo) -> None:
                 final_reply[:9000]
                 + "\n\n*Lookup information has been truncated due to excessive length.*"
             )
-        comment_reply(comment, final_reply)
+        reddit_reply(comment, final_reply)
         logger.info(
             f"[ZW] CJK Lookup: Replied with {len(all_lookup_results)} new lookup(s) "
             f"and {len(duplicate_responses)} duplicate notification(s)."

@@ -8,7 +8,7 @@ known by the short form !id, which is treated as a synonym.
 from config import logger
 from models.kunulo import Kunulo
 from notifications import notifier
-from reddit_sender import comment_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 from wiki import update_wiki_page
 
@@ -48,7 +48,7 @@ def handle(comment, instruo, komando, ajo) -> None:
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
             id_comment_body=comment.body
         )
-        comment_reply(comment, invalid_text)
+        reddit_reply(comment, invalid_text)
         logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
         return
 
@@ -66,7 +66,7 @@ def handle(comment, instruo, komando, ajo) -> None:
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
             id_comment_body=comment.body
         )
-        comment_reply(comment, invalid_text)
+        reddit_reply(comment, invalid_text)
         logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
         return
 

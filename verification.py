@@ -17,7 +17,7 @@ from connection import REDDIT, create_mod_note, is_mod
 from database import db
 from discord_utils import send_discord_alert
 from languages import converter
-from reddit_sender import message_reply, message_send
+from reddit_sender import reddit_reply, message_send
 from responses import RESPONSE
 
 if TYPE_CHECKING:
@@ -230,7 +230,7 @@ def verification_parser() -> None:
                     username=author_name,
                     request_link=comment.permalink,
                 )
-                message_reply(comment, redo_reply)
+                reddit_reply(comment, redo_reply)
                 logger.info(
                     f"Unable to parse verification request at https://www.reddit.com{comment.permalink}. "
                     f"Replied to {author_string} requesting them to start over."
@@ -271,7 +271,7 @@ def verification_parser() -> None:
             )
             + RESPONSE.BOT_DISCLAIMER
         )
-        message_reply(comment, reply_text)
+        reddit_reply(comment, reply_text)
 
         # Credit the person who helped mark the translation
         verified_note = f"Requested verification for ({language_lingvo.name})"

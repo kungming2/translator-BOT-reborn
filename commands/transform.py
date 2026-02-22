@@ -10,7 +10,7 @@ from config import SETTINGS, logger
 from connection import REDDIT_HELPER
 from image_handling import TRANSFORM_MAP, rotate_or_flip_image, upload_to_imgbb
 from models.instruo import Instruo
-from reddit_sender import message_reply
+from reddit_sender import reddit_reply
 from responses import RESPONSE
 from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
 
@@ -143,7 +143,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     # Get the transformation from komando data
     if not komando.data or len(komando.data) == 0:
-        message_reply(
+        reddit_reply(
             comment, RESPONSE.COMMENT_TRANSFORM_NO_DATA + RESPONSE.BOT_DISCLAIMER
         )
         return
@@ -152,7 +152,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     # Validate transformation
     if transformation not in VALID_TRANSFORMS:
-        message_reply(
+        reddit_reply(
             comment,
             RESPONSE.COMMENT_TRANSFORM_INVALID.format(transformation)
             + RESPONSE.BOT_DISCLAIMER,
@@ -167,7 +167,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     # Check if we found any images
     if not image_urls:
-        message_reply(
+        reddit_reply(
             comment, RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER
         )
         return
@@ -224,7 +224,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         error_msg = "Failed to process all images. Errors:\n"
         for idx, error in failed_images:
             error_msg += f"- Image {idx}: {error}\n"
-        message_reply(
+        reddit_reply(
             comment,
             RESPONSE.COMMENT_TRANSFORM_ERROR.format(error_msg)
             + RESPONSE.BOT_DISCLAIMER,
@@ -256,7 +256,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         for idx, error in failed_images:
             reply_text += f"- Image {idx}: {error}\n"
 
-    message_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
+    reddit_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
 
 
 if __name__ == "__main__":

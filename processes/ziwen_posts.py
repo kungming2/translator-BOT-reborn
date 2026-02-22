@@ -18,7 +18,7 @@ from error import error_log_extended
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
 from notifications import is_user_over_submission_limit, notifier
-from reddit_sender import message_reply
+from reddit_sender import reddit_reply
 from request_closeout import closeout_posts
 from responses import RESPONSE
 from startup import STATE
@@ -186,7 +186,7 @@ def ziwen_posts(post_limit=None):
                 title_text=post_title, author=post_author
             )
             removal_suggestion = suggested_title_replacement + RESPONSE.BOT_DISCLAIMER
-            message_reply(post, removal_suggestion)
+            reddit_reply(post, removal_suggestion)
 
             # Write the title to the log.
             record_filter_log(post_title, post.created_utc, filter_reason)
@@ -215,7 +215,7 @@ def ziwen_posts(post_limit=None):
             # Remove this post, as it is English-only.
             if not SETTINGS["testing_mode"]:
                 post.mod.remove()
-            message_reply(
+            reddit_reply(
                 post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author)
             )
 
@@ -363,7 +363,7 @@ def ziwen_posts(post_limit=None):
             post_ajo.is_long = True
 
             long_comment = RESPONSE.COMMENT_LONG + RESPONSE.BOT_DISCLAIMER
-            message_reply(post, long_comment)
+            reddit_reply(post, long_comment)
             logger.info(
                 f"[ZW] Posts: Left a comment informing that the post `{post_id}` is long."
             )
@@ -371,7 +371,7 @@ def ziwen_posts(post_limit=None):
         # Leave an "unknown" comment if it's an unknown post.
         if post_ajo.preferred_code == "unknown":
             unknown_comment = RESPONSE.COMMENT_UNKNOWN + RESPONSE.BOT_DISCLAIMER
-            message_reply(post, unknown_comment)
+            reddit_reply(post, unknown_comment)
             logger.info(
                 f"[ZW] Posts: Left an informative 'unknown' comment on post `{post_id}`."
             )
