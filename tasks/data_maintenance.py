@@ -3,7 +3,7 @@
 import json
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, Union
 
@@ -74,6 +74,31 @@ def log_trimmer():
         logger.debug("[WJ] Activity CSV within limits; no trimming needed.")
 
     return
+
+
+@task(schedule="weekly")
+def trim_error_log(error_log_path):
+    """Remove resolved errors older than one week from the error log."""
+    with open(error_log_path, "r", encoding="utf-8") as f:
+        entries = yaml.safe_load(f) or []
+
+    cutoff = datetime.now(timezone.utc) - timedelta(weeks=1)
+
+    trimmed = [
+        entry
+        for entry in entries
+        if not (
+            entry.get("resolved", False)
+            and datetime.fromisoformat(entry["timestamp"]) < cutoff
+        )
+    ]
+
+    with open(error_log_path, "w", encoding="utf-8") as f:
+        yaml.dump(trimmed, f, allow_unicode=True, sort_keys=False)
+
+    removed = len(entries) - len(trimmed)
+    if removed:
+        logger.info(f"[WJ] Removed {removed} resolved error(s) older than one week.")
 
 
 @task(schedule="daily")
@@ -180,11 +205,12 @@ def validate_data_files():
     return all_valid
 
 
+@task(schedule="weekly")
 def clean_processed_database():
     """
     Cleans up old entries in old_comments and old_posts,
     keeping only entries from the last 180 days based on the
-    created_utc column in each table.
+    created_utc column in each table. TODO make this work
     """
     max_age_days = SETTINGS["max_old_age"]
     cursor = db.cursor_main
@@ -227,7 +253,7 @@ def clean_processed_database():
 """STATISTICS WIKIPAGE MAINTAINER"""
 
 
-def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
+def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     """
     Parse a language wiki page or language name to extract statistics
     for a single language. Returns a JSON-compatible dictionary.
@@ -330,7 +356,7 @@ def wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     return language_data
 
 
-def statistics_list_updater(input_data: Dict[str, list]):
+def _statistics_list_updater(input_data: Dict[str, list]):
     """
     Generate a Markdown list for wiki/statistics, grouped by language family,
     and update the wiki page.
@@ -419,7 +445,7 @@ def refresh_language_statistics() -> None:
         )
 
         # Parse statistics
-        stats = wikipage_statistics_parser(page)
+        stats = _wikipage_statistics_parser(page)
         stats.update(
             {
                 "name": language_lingvo.name,
@@ -435,7 +461,7 @@ def refresh_language_statistics() -> None:
         json.dump(total_data, fp, sort_keys=True, indent=4)
 
     logger.info("[WJ] Statistics JSON file generated.")
-    statistics_list_updater(language_family_dict)
+    _statistics_list_updater(language_family_dict)
 
     return
 
