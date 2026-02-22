@@ -84,7 +84,7 @@ def handle(comment, instruo, komando, ajo) -> None:
                     formatted_date=get_current_utc_date(),
                     title=ajo.title_original,
                     post_id=ajo.id,
-                    flair_text=original_language.name,
+                    flair_text=original_language.name if original_language else "Generic",
                     new_flair=komando.data[0].name,
                     user=comment.author,
                 )
