@@ -226,8 +226,8 @@ def _move_bracketed_tag_to_front(title: str) -> str:
     """
     # **NEW: Don't move anything if title already starts with language pattern**
     # Pattern: "Word > Word:" or "Word to Word:" at the beginning
-    if re.match(r"^[A-Za-z\s]+\s*(?:>|to)\s*[A-Za-z]+\s*:", title, re.IGNORECASE):
-        return title  # Already properly formatted, don't touch it
+    if re.match(r"^[A-Za-z\s]+\s*(?:>|to)\s*[A-Za-z]+", title, re.IGNORECASE):
+        return title
 
     # Try to find bracketed tag first
     match = re.search(r"\[.*?]", title)
