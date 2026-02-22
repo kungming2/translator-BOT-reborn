@@ -129,7 +129,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                     f"User does not exist. Unable to send message to u/{username}."
                 )
             else:
-                logger.error(
+                logger.warning(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"
                 )
         except ServerError as ex:  # Server-side issue.
