@@ -262,8 +262,9 @@ def update_sidebar_statistics():
             reason=f"Updating sidebar at {current_time_str}",
         )
 
+        prefix = "### Last 24H: "
         logger.info(
-            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit}"
+            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit[len(prefix):]}"
         )
     except Exception as e:
         logger.error(f"[WJ] Failed to update Old Reddit sidebar: {e}")
@@ -369,7 +370,7 @@ def language_of_the_day(selected_language=None):
         get_language_reference(today_language.language_code_3)
         # Force refresh
         language_data = get_lingvos(force_refresh=True)
-        logger.info("Variable refreshed.")
+        logger.debug("Variable refreshed.")
         # Use the refreshed data directly
         today_language = language_data.get(today_language.language_code_3)
 

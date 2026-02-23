@@ -444,12 +444,12 @@ def collate_moderator_digest():
         f.write(digest_summary)
 
     logger.info(
-        f"[WJ] Daily administrative routine completed and saved to {output_path}"
+        f"[WJ] Daily administrative report completed and saved to {output_path}"
     )
 
     # Send as a Discord message.
     send_discord_alert(subject_line, total_data, "alert")
-    logger.info("Daily moderator digest completed.")
+    logger.info("[WJ] Daily moderator digest completed.")
 
     return
 
