@@ -164,7 +164,7 @@ def ziwen_commands():
             "automoderator",
             "translator-modteam",
         ]:
-            logger.info(
+            logger.debug(
                 f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping..."
             )
             continue
