@@ -264,7 +264,7 @@ def update_sidebar_statistics():
 
         prefix = "### Last 24H: "
         logger.info(
-            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit[len(prefix):]}"
+            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit[len(prefix) :]}"
         )
     except Exception as e:
         logger.error(f"[WJ] Failed to update Old Reddit sidebar: {e}")
@@ -367,19 +367,33 @@ def language_of_the_day(selected_language=None):
     # Fetch data from Ethnologue via the Wayback Machine if it's not an
     # ISO 639-1 language, and then refresh the Lingvo.
     if not today_language.language_code_1:
-        get_language_reference(today_language.language_code_3)
-        # Force refresh
-        language_data = get_lingvos(force_refresh=True)
-        logger.debug("Variable refreshed.")
-        # Use the refreshed data directly
-        today_language = language_data.get(today_language.language_code_3)
+        reference_result = get_language_reference(today_language.language_code_3)
+        if reference_result is not None:
+            # Only refresh if the reference fetch actually returned data
+            language_data = get_lingvos(force_refresh=True)
+            logger.debug("Variable refreshed.")
+            refreshed = language_data.get(today_language.language_code_3)
+            if refreshed is not None:
+                today_language = refreshed
+            else:
+                logger.warning(
+                    f"`{today_language.language_code_3}` not found in refreshed data "
+                    f"— keeping original Lingvo."
+                )
+        else:
+            logger.warning(
+                f"Could not retrieve Ethnologue reference for "
+                f"`{today_language.language_code_3}` — proceeding without it."
+            )
 
     # Get the language's country/region flag for better formatting.
-    # Use getattr to safely check if country attribute exists
-    if getattr(today_language, "country", None):
-        country_emoji = get_country_emoji(today_language.country)
-    else:
-        country_emoji = today_language.country_emoji
+    country_emoji = None
+    country_for_emoji = getattr(today_language, "country", None)
+    if country_for_emoji:
+        country_emoji = get_country_emoji(country_for_emoji) or None
+    if country_emoji is None:
+        # Fall back to the Lingvo's own property (derives emoji from language code)
+        country_emoji = today_language.country_emoji or None
 
     language_family_link = (
         f"https://en.wikipedia.org/wiki/"
