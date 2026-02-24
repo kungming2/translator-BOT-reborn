@@ -121,10 +121,10 @@ def get_page_location_data(wikipage_obj: wikipedia.WikipediaPage) -> str | None:
     try:
         coords = wikipage_obj.coordinates
         if not coords:
-            logger.warning("Wikipedia page contains no coordinates.")
+            logger.debug("Wikipedia page contains no coordinates.")
             return None
     except (KeyError, AttributeError):
-        logger.warning("Wikipedia page contains no coordinates.")
+        logger.debug("Wikipedia page error: Contains no coordinates.")
         return None
 
     logger.debug(f"Original detailed coordinates: {wikipage_obj.coordinates}")
