@@ -463,12 +463,12 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
 
             successfully_removed.append(dupe_id)
             logger.info(
-                f"[ZW] Duplicate Detector: Removed duplicate post {dupe_id} by u/{dupe_author}"
+                f"[ZW] Duplicate Detector: Removed duplicate post `{dupe_id}` by u/{dupe_author}"
             )
 
         except Exception as e:
             logger.error(
-                f"[ZW] Duplicate Detector: Error processing duplicate {dupe_id}: {e}"
+                f"[ZW] Duplicate Detector: Error processing duplicate `{dupe_id}`: {e}"
             )
             continue
 
