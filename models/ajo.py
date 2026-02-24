@@ -75,8 +75,9 @@ def ajo_writer(new_ajo):
                 (ajo_id, created_time, representation),
             )
             conn.commit()
-            logger.info("[ZW] ajo_writer: New Ajo not found in the database.")
-            logger.info("[ZW] ajo_writer: Wrote Ajo to local database.")
+            logger.info(
+                f"[ZW] ajo_writer: Ajo `{ajo_id}` not found in database. Created new record."
+            )
     finally:
         # Restore the cached submission after writing
         new_ajo.restore_submission_cache(cached_submission)
