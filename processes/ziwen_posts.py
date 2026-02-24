@@ -215,9 +215,7 @@ def ziwen_posts(post_limit=None):
             # Remove this post, as it is English-only.
             if not SETTINGS["testing_mode"]:
                 post.mod.remove()
-            reddit_reply(
-                post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author)
-            )
+            reddit_reply(post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author))
 
             record_filter_log(post_title, post.created_utc, "EE")
             # Mark post as filtered in database
