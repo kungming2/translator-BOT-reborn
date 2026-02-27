@@ -77,8 +77,10 @@ def log_trimmer():
 
 
 @task(schedule="weekly")
-def error_log_trimmer(error_log_path):
+def error_log_trimmer():
     """Remove resolved errors older than one week from the error log."""
+    error_log_path = Paths.LOGS["ERROR"]
+
     with open(error_log_path, "r", encoding="utf-8") as f:
         entries = yaml.safe_load(f) or []
 
