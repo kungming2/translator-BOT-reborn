@@ -24,7 +24,7 @@ def translation_challenge_poster():
 
     # Format title with current date (UTC)
     timestamp_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    weekly_title = f"[English > Any] Translation Challenge — {timestamp_utc}"
+    weekly_title = f"[Community] Translation Challenge — {timestamp_utc}"
 
     # Submit and sticky the post
     submission = REDDIT.subreddit(SETTINGS["subreddit"]).submit(
