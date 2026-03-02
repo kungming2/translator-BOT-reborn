@@ -24,7 +24,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from config import SETTINGS, logger
-from connection import REDDIT, is_mod, search_removal_reasons
+from connection import REDDIT, is_mod, remove_content
 from database import db
 from reddit_sender import reddit_reply
 from responses import RESPONSE
@@ -444,12 +444,11 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
 
             # Remove the duplicate post
             if not testing_mode:
-                # Try to use removal reasons if available
-                removal_kwargs = {
-                    "reason_id": search_removal_reasons("duplicate"),
-                    "mod_note": f"Duplicate of {original_post.id if original_post else 'earlier post'}",
-                }
-                dupe_post.mod.remove(**removal_kwargs)
+                remove_content(
+                    dupe_post,
+                    reason="duplicate",
+                    mod_note=f"Duplicate of {original_post.id if original_post else 'earlier post'}",
+                )
 
             # Reply to the author
             duplicate_comment = RESPONSE.COMMENT_DUPLICATE.format(

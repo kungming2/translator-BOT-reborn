@@ -253,12 +253,13 @@ def widget_update(widget_id, new_text):
         return False
 
 
+"""REMOVAL REASONS"""
+
+
 def _fetch_removal_reasons():
-    """
-    Fetches the removal reasons present on r/translator.
-    :return: `None` if there's nothing, a dictionary containing tuples
-    indexed by numbers otherwise.
-    """
+    global _removal_reasons_cache
+    if _removal_reasons_cache is not None:
+        return _removal_reasons_cache
 
     reasons = [
         (removal_reason.title, removal_reason.id, removal_reason.message)
@@ -267,28 +268,53 @@ def _fetch_removal_reasons():
         ).mod.removal_reasons
     ]
 
-    if reasons:
-        return {index + 1: value for index, value in enumerate(reasons)}
-    else:
-        return None
+    _removal_reasons_cache = (
+        {index + 1: value for index, value in enumerate(reasons)} if reasons else None
+    )
+    return _removal_reasons_cache
 
 
-def search_removal_reasons(prompt):
+def _search_removal_reasons(prompt):
     """Takes a prompt and searches through removal reasons fetched from
     the subreddit, returning the specific removal reason ID if found.
     E.g. the prompt could be "spam".
     """
 
     reasons_dict = _fetch_removal_reasons()
-    logger.info(f"Removal reason IDs: {reasons_dict}")
+    logger.debug(f"Removal reason IDs: {reasons_dict}")
 
     if not reasons_dict:
         return None
 
     for entry, entry_id, _description in reasons_dict.values():
         if prompt.lower().strip() in entry.lower():
+            logger.info(f"Found removal reason ID for {entry}: {entry_id}")
             return entry_id
     return None
+
+
+def remove_content(item, reason: str, mod_note: str = None):
+    """Removes an item using PRAW's mod.remove(), searching for a matching removal reason.
+
+    Args:
+        item: A PRAW item (submission or comment) object to remove.
+        reason: A string to search for in the subreddit's removal reasons (e.g. "duplicate").
+        mod_note: Optional mod note to attach. Defaults to a generic removal message.
+    """
+    removal_reason_id = _search_removal_reasons(reason)
+
+    removal_kwargs = {
+        "reason_id": removal_reason_id,
+        "mod_note": mod_note or f"Removed: {reason}",
+    }
+
+    logger.info(
+        f"Removing post {item.id} with reason '{reason}' (reason_id={removal_reason_id})"
+    )
+    item.mod.remove(**removal_kwargs)
+
+
+"""DEFINED GLOBALS"""
 
 
 credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
@@ -296,5 +322,56 @@ REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
 USERNAME = credentials_source["USERNAME"]
 
+_removal_reasons_cache = None
+
+
+def show_menu():
+    print("\nSelect an option to run:")
+    print("1. Reddit status check (fetch unresolved incidents)")
+    print("2. Search removal reasons (text search)")
+    print("3. Get a random user agent")
+    print("x. Exit")
+
+
 if __name__ == "__main__":
-    print(reddit_status_check())
+    while True:
+        show_menu()
+        choice = input("Enter your choice (1-3): ").strip()
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2", "3"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            result = reddit_status_check()
+            if result is None:
+                print("Could not reach the Reddit Status API.")
+            elif not result:
+                print("No unresolved Reddit incidents.")
+            else:
+                for test_incident in result:
+                    print(
+                        f"\n[{test_incident.get('status', '').upper()}] {test_incident.get('name')}"
+                        f"\n  Created : {test_incident.get('created_at')}"
+                        f"\n  Updated : {test_incident.get('updated_at')}"
+                    )
+
+        elif choice == "2":
+            test_prompt = input("Enter search prompt for removal reasons: ").strip()
+            if not test_prompt:
+                print("No prompt entered.")
+                continue
+            reason_id = _search_removal_reasons(test_prompt)
+            if reason_id:
+                print(f"Found removal reason ID: {reason_id}")
+            else:
+                print(f"No removal reason found matching '{test_prompt}'.")
+
+        elif choice == "3":
+            ua = get_random_useragent()
+            print(f"\nUser-Agent : {ua['User-Agent']}")
+            print(f"Accept     : {ua['Accept']}")

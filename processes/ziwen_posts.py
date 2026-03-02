@@ -11,7 +11,7 @@ import traceback
 from wasabi import msg
 
 from config import SETTINGS, logger
-from connection import REDDIT, is_internal_post, is_mod
+from connection import REDDIT, is_internal_post, is_mod, remove_content
 from database import db, record_filter_log
 from dupe_detector import check_image_duplicate, duplicate_detector
 from error import error_log_extended
@@ -181,7 +181,9 @@ def ziwen_posts(post_limit=None):
         if not post_okay:
             # Remove this post, it failed all routines.
             if not SETTINGS["testing_mode"]:
-                post.mod.remove()
+                remove_content(
+                    post, "title", "Removed: Failed all title filtration routines."
+                )
             suggested_title_replacement = format_title_correction_comment(
                 title_text=post_title, author=post_author
             )
@@ -214,7 +216,7 @@ def ziwen_posts(post_limit=None):
         if is_english_only(titolo_content):
             # Remove this post, as it is English-only.
             if not SETTINGS["testing_mode"]:
-                post.mod.remove()
+                remove_content(post, "title", "Removed: English-only post.")
             reddit_reply(post, RESPONSE.COMMENT_ENGLISH_ONLY.format(author=post_author))
 
             record_filter_log(post_title, post.created_utc, "EE")
