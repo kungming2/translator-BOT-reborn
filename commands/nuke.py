@@ -8,7 +8,7 @@ all their posts and comments. It can only be called by a mod.
 from praw.models import Comment, Submission
 
 from config import SETTINGS
-from connection import REDDIT, is_mod, logger, create_mod_note
+from connection import REDDIT, create_mod_note, is_mod, logger, remove_content
 from reddit_sender import message_send
 
 
@@ -44,8 +44,9 @@ def handle(comment, _instruo, _komando, _ajo) -> None:
         logger.info(f">> Parent submission: {parent.permalink}")
 
     # Ban the user.
+    nuke_reason = f"Mod u/{mod_caller} nuked this user."
     REDDIT.subreddit(SETTINGS["subreddit"]).banned.add(
-        nuked_person, ban_reason=f"Mod u/{mod_caller} nuked this user."
+        nuked_person, ban_reason=nuke_reason
     )
     logger.info(f">> Banned u/{nuked_person}.")
 
@@ -53,7 +54,7 @@ def handle(comment, _instruo, _komando, _ajo) -> None:
     def remove_items(generator, item_type: str) -> None:
         for item in generator:
             if item.subreddit.display_name.lower() == SETTINGS["subreddit"]:
-                item.mod.remove()
+                remove_content(item, "spam", nuke_reason)
         logger.info(f">> Removed all {item_type} from u/{nuked_person}.")
 
     # Remove any and all posts or comments on the subreddit.
