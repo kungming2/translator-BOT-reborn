@@ -469,38 +469,92 @@ def refresh_language_statistics() -> None:
 
 
 # noinspection SqlWithoutWhere
-@task(schedule="monthly")
+@task(schedule="weekly")
 def points_worth_cacher():
     """
     Caches the point values of frequently used languages into a local
-    database for fast access. This is run occasionally every week and at
-    the start of every month to populate the point values initially.
+    database for fast access. This is run weekly to populate the point
+    values initially.
     If the current month does not have entries, it'll purge the entries
     from the previous month and replace it.
     """
     # Get this month's representation.
     month_entry = get_current_month()
+    logger.info(f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'")
 
     # Check if cache already contains entries for the current month
+    # Note: cursor_cache is a property that creates a new cursor each time,
+    # so we must save it to a variable before calling execute() + fetchall()
     query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
-    db.cursor_cache.execute(query, (month_entry,))
-    cached_entries = db.cursor_cache.fetchall()
+    cursor = db.cursor_cache
+    cursor.execute(query, (month_entry,))
+    cached_entries = cursor.fetchall()
+    logger.info(
+        f"[points_worth_cacher] Found {len(cached_entries)} cached entries for '{month_entry}'."
+    )
+    if cached_entries:
+        logger.debug(
+            f"[points_worth_cacher] Cached entries: {[tuple(r) for r in cached_entries]}"
+        )
 
     # There is no cached points data.
     if not cached_entries:
-        # No up-to-date cache; clear old entries
+        logger.info(
+            "[points_worth_cacher] No up-to-date cache found. Clearing old entries and repopulating..."
+        )
         db.cursor_cache.execute("DELETE FROM multiplier_cache")
+        deleted = db.cursor_cache.rowcount
         db.conn_cache.commit()
+        logger.info(f"[points_worth_cacher] Deleted {deleted} old cache entries.")
 
         most_requested = fetch_most_requested_languages()
+        logger.info(
+            f"[points_worth_cacher] Fetched {len(most_requested)} most-requested languages: {most_requested}"
+        )
+
+        succeeded = []
+        failed = []
 
         # Retrieve point values and update the cache
         for language_code in most_requested:
             # This also handles inserting and committing to the DB
             try:
-                points_worth_determiner(converter(language_code))
-            except ValueError:
+                converted = converter(language_code)
+                logger.debug(
+                    f"[points_worth_cacher] Processing '{language_code}' -> converter result: {converted}"
+                )
+                result = points_worth_determiner(converted)
+                logger.debug(
+                    f"[points_worth_cacher] points_worth_determiner('{language_code}') returned: {result}"
+                )
+                succeeded.append(language_code)
+            except ValueError as e:
+                logger.warning(
+                    f"[points_worth_cacher] ValueError for language '{language_code}': {e}"
+                )
+                failed.append(language_code)
                 continue
+
+        logger.info(
+            f"[points_worth_cacher] Done. {len(succeeded)} succeeded, {len(failed)} failed."
+        )
+        if failed:
+            logger.warning(f"[points_worth_cacher] Failed languages: {failed}")
+
+        # Verify what was actually written to the cache
+        verify_cursor = db.cursor_cache
+        verify_cursor.execute(
+            "SELECT * FROM multiplier_cache WHERE month_year = ?", (month_entry,)
+        )
+        final_entries = verify_cursor.fetchall()
+        logger.info(
+            f"[points_worth_cacher] Cache now contains {len(final_entries)} entries for '{month_entry}'."
+        )
+        logger.debug(f"[points_worth_cacher] Final cache state: {final_entries}")
+    else:
+        logger.info(
+            "[points_worth_cacher] Cache is already populated for this month. Nothing to do."
+        )
 
     return
 
@@ -630,4 +684,5 @@ def archive_modmail() -> None:
 
 
 if __name__ == "__main__":
-    print(archive_modmail())
+    logger.setLevel("DEBUG")
+    print(points_worth_cacher())

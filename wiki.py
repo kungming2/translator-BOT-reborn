@@ -85,15 +85,16 @@ def _assess_most_requested_languages(table_text: str) -> dict[str, int]:
 
     for line in data_lines:
         columns = [col.strip() for col in line.split("|")]
-        if len(columns) < 10:
+        if len(columns) < 11:
             continue  # Skip malformed rows
 
         # Extract total requests (e.g. [159])
-        match_total = re.search(r"\[(\d+)]", columns[2])
+        # Note: rows start with a leading |, so columns[0] is empty, columns[1] is language name
+        match_total = re.search(r"\[(\d+)]", columns[3])
         total_requests = int(match_total.group(1)) if match_total else 0
 
         # Extract language code from last column
-        match_code = re.search(r"ISO_639:([a-zA-Z\-]+)", columns[9])
+        match_code = re.search(r"ISO_639:([a-zA-Z\-]+)", columns[10])
         lang_code = match_code.group(1) if match_code else None
 
         if lang_code:
@@ -108,7 +109,7 @@ def _assess_most_requested_languages(table_text: str) -> dict[str, int]:
 
 def fetch_most_requested_languages() -> list[str]:
     """This function will return the most requested languages
-    based on the statistics post from x months ago. This allows for
+    based on the statistics post from 3 months ago. This allows for
     some lead time in case statistics updates are not timely, for some
     reason.
 
@@ -327,4 +328,5 @@ def search_integration(search_term: str) -> str | None:
 
 
 if __name__ == "__main__":
+    logger.setLevel("DEBUG")
     print(fetch_most_requested_languages())
