@@ -35,6 +35,8 @@ def send_internal_post_digest():
     """
     posts = db.fetchall_main(query, (cutoff_time,))
 
+    post_type_counts: Dict[str, int] = {}
+
     for post in posts:
         post_id = post["id"]
         content_str = post["content"]
@@ -67,6 +69,7 @@ def send_internal_post_digest():
 
         # Send notifications
         notifier_internal(post_type, submission)
+        post_type_counts[post_type] = post_type_counts.get(post_type, 0) + 1
 
         # Update the processed flag in the database
         content["processed"] = True
@@ -80,6 +83,15 @@ def send_internal_post_digest():
         cursor = db.cursor_main
         cursor.execute(update_query, (updated_content, post_id))
         db.conn_main.commit()
+
+    if post_type_counts:
+        counts_summary = ", ".join(
+            f"{post_type}: {count}"
+            for post_type, count in sorted(post_type_counts.items())
+        )
+        logger.info(
+            f"[Digest] Sent {sum(post_type_counts.values())} notification(s) — {counts_summary}"
+        )
 
     return
 
