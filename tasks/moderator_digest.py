@@ -367,7 +367,7 @@ def note_language_tags():
 
     # Return early if there are no results.
     if not flagged_submissions:
-        return header + "\n\n*No recent posts with temporary or missing tags found.*"
+        return None
 
     rows = []
     for post in flagged_submissions:
@@ -422,15 +422,10 @@ def collate_moderator_digest():
     noted_entries_data = note_language_tags()
 
     # Compile the full Markdown summary.
-    total_data = "\n".join(
-        [
-            error_log_data,
-            filter_log_data,
-            activity_data,
-            command_data,
-            noted_entries_data,
-        ]
-    )
+    sections = [error_log_data, filter_log_data, activity_data, command_data]
+    if noted_entries_data is not None:
+        sections.append(noted_entries_data)
+    total_data = "\n".join(sections)
     subject_line = f"Moderator Digest for {today_date}"
     digest_summary = f"# {subject_line}\n{total_data}"
 
