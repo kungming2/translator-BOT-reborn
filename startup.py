@@ -65,11 +65,6 @@ def ziwen_startup() -> State:
 
     recent_submitters: list[str] = most_recent_submitters()
 
-    # Does not return anything. Run just to make sure there's data in
-    # the points cache.
-    points_worth_cacher()
-    logger.debug("[ZW] # Points cache updated.")
-
     return State(post_templates=post_templates, recent_submitters=recent_submitters)
 
 

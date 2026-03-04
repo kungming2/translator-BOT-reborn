@@ -84,7 +84,8 @@ def error_log_trimmer():
     with open(error_log_path, "r", encoding="utf-8") as f:
         entries = yaml.safe_load(f) or []
 
-    cutoff = datetime.now(timezone.utc) - timedelta(weeks=1)
+    retention_weeks = WENJU_SETTINGS["resolved_error_log_retention_weeks"]
+    cutoff = datetime.now(timezone.utc) - timedelta(weeks=retention_weeks)
 
     trimmed = [
         entry
@@ -100,7 +101,9 @@ def error_log_trimmer():
 
     removed = len(entries) - len(trimmed)
     if removed:
-        logger.info(f"[WJ] Removed {removed} resolved error(s) older than one week.")
+        logger.info(f"[WJ] Removed {removed} resolved error(s) older than {retention_weeks} weeks.")
+    else:
+        logger.info("[WJ] No resolved errors to remove.")
 
 
 @task(schedule="daily")
@@ -469,18 +472,18 @@ def refresh_language_statistics() -> None:
 
 
 # noinspection SqlWithoutWhere
-@task(schedule="weekly")
+@task(schedule="daily")
 def points_worth_cacher():
     """
     Caches the point values of frequently used languages into a local
-    database for fast access. This is run weekly to populate the point
+    database for fast access. This is run daily to populate the point
     values initially.
     If the current month does not have entries, it'll purge the entries
     from the previous month and replace it.
     """
     # Get this month's representation.
     month_entry = get_current_month()
-    logger.info(f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'")
+    logger.debug(f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'")
 
     # Check if cache already contains entries for the current month
     # Note: cursor_cache is a property that creates a new cursor each time,
@@ -489,7 +492,7 @@ def points_worth_cacher():
     cursor = db.cursor_cache
     cursor.execute(query, (month_entry,))
     cached_entries = cursor.fetchall()
-    logger.info(
+    logger.debug(
         f"[points_worth_cacher] Found {len(cached_entries)} cached entries for '{month_entry}'."
     )
     if cached_entries:
@@ -552,7 +555,7 @@ def points_worth_cacher():
         )
         logger.debug(f"[points_worth_cacher] Final cache state: {final_entries}")
     else:
-        logger.info(
+        logger.debug(
             "[points_worth_cacher] Cache is already populated for this month. Nothing to do."
         )
 
@@ -685,4 +688,4 @@ def archive_modmail() -> None:
 
 if __name__ == "__main__":
     logger.setLevel("DEBUG")
-    print(points_worth_cacher())
+    print(error_log_trimmer())
