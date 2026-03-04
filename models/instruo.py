@@ -189,7 +189,9 @@ if "__main__" == __name__:
                 test_comment = REDDIT_HELPER.comment(url=comment_url)
                 test_ajo = ajo_loader(test_comment.submission.id)
                 parent_lingvos = [test_ajo.lingvo] if test_ajo else []
-                test_instruo = Instruo.from_comment(test_comment, parent_languages=parent_lingvos)
+                test_instruo = Instruo.from_comment(
+                    test_comment, parent_languages=parent_lingvos
+                )
                 print(f"Instruo created: {test_instruo}\n")
                 print(vars(test_instruo))
             except Exception as ex:
