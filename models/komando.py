@@ -142,7 +142,7 @@ def _deduplicate_args(args):
     return result
 
 
-def extract_commands_from_text(text):
+def extract_commands_from_text(text, parent_languages=None):
     """
     Extract Komando commands from text.
 
@@ -163,6 +163,11 @@ def extract_commands_from_text(text):
     the command is in the skip-conversion list.
 
     :param text: The input text to parse for commands.
+    :param parent_languages: Optional list of Lingvo objects representing the language(s)
+        of the post this comment belongs to. The first Lingvo's preferred_code is used as
+        a fallback language for CJK backtick lookups when no language can be inferred from
+        the comment text itself (e.g. kanji-only terms with no kana). Ignored if the code
+        is ambiguous (e.g. 'multiple', 'generic', 'unknown') or not a 2-3 character ISO code.
     :return: A list of Komando objects with extracted commands and their arguments.
     """
     commands_dict = defaultdict(list)
@@ -288,9 +293,16 @@ def extract_commands_from_text(text):
         if has_disable_tokenization:
             disable_tokenization_dict["lookup_cjk"] = True
 
+        # This is to allow for better matching on specific posts.
+        language_code = None
+        if parent_languages:
+            code = parent_languages[0].preferred_code
+            if code not in {"multiple", "generic", "unknown"} and len(code) in (2, 3):
+                language_code = code
+
         # Pass disable_tokenization flag to lookup_matcher
         lookup_cjk = lookup_matcher(
-            original_text, None, disable_tokenization=has_disable_tokenization
+            original_text, language_code, disable_tokenization=has_disable_tokenization
         )
 
         # lookup_cjk now returns: {'zh': [('可能', False), ('麻将', False)], 'ko': [('시계', True)]}

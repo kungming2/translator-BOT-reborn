@@ -8,6 +8,7 @@ import re
 
 from config import SETTINGS
 from connection import REDDIT_HELPER
+from models.ajo import ajo_loader
 from models.komando import extract_commands_from_text
 
 
@@ -67,7 +68,7 @@ class Instruo:
         author_post = (
             str(comment.submission.author) if comment.submission.author else "[deleted]"
         )
-        commands = extract_commands_from_text(text)
+        commands = extract_commands_from_text(text, parent_languages=parent_languages)
         return cls(
             id_comment=id_comment,
             id_post=id_post,
@@ -186,7 +187,9 @@ if "__main__" == __name__:
             # Get comment from URL and process
             try:
                 test_comment = REDDIT_HELPER.comment(url=comment_url)
-                test_instruo = Instruo.from_comment(test_comment)
+                test_ajo = ajo_loader(test_comment.submission.id)
+                parent_lingvos = [test_ajo.lingvo] if test_ajo else []
+                test_instruo = Instruo.from_comment(test_comment, parent_languages=parent_lingvos)
                 print(f"Instruo created: {test_instruo}\n")
                 print(vars(test_instruo))
             except Exception as ex:

@@ -203,7 +203,7 @@ def ziwen_commands():
         instruo = None
         if comment_has_command(comment_body):
             # Initialize the variables the command handlers will require.
-            instruo = Instruo.from_comment(comment)
+            instruo = Instruo.from_comment(comment, parent_languages=[original_ajo.lingvo])
 
             logger.info(
                 f"[ZW] Commands: > Derived instruo and ajo for `{comment.id}` on "
