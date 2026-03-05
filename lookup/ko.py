@@ -7,7 +7,8 @@ Contains functions that deal with Korean-language content.
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
-from connection import credentials_source, logger
+from config import logger
+from connection import credentials_source
 from lookup.cache_helpers import (
     format_ko_word_from_cache,
     get_from_cache,

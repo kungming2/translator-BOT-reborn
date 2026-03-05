@@ -7,8 +7,8 @@ all their posts and comments. It can only be called by a mod.
 
 from praw.models import Comment, Submission
 
-from config import SETTINGS
-from connection import REDDIT, create_mod_note, is_mod, logger, remove_content
+from config import SETTINGS, logger
+from connection import REDDIT, create_mod_note, is_mod, remove_content
 from reddit_sender import message_send
 
 

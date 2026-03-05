@@ -9,7 +9,7 @@ from urllib.parse import quote
 
 import requests
 
-from connection import logger
+from config import logger
 
 
 def search_nominatim(

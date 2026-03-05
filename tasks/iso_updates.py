@@ -12,8 +12,8 @@ from lxml import html
 from praw.exceptions import PRAWException
 from pypdf import PdfReader
 
-from config import Paths
-from connection import REDDIT, get_random_useragent, logger
+from config import Paths, logger
+from connection import REDDIT, get_random_useragent
 from discord_utils import send_discord_alert
 from tasks import task
 

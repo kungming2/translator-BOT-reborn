@@ -7,8 +7,7 @@ Run independently and infrequently to update ISO 639-3 code points.
 import pandas as pd
 from pathlib import Path
 
-from config import Paths
-from connection import logger
+from config import Paths, logger
 
 # Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])

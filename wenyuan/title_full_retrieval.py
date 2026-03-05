@@ -8,13 +8,13 @@ for examination.
 
 import time
 import traceback
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List
-from dataclasses import dataclass
 
-from config import SETTINGS, get_reports_directory
-from connection import REDDIT_HELPER, logger
+from config import SETTINGS, get_reports_directory, logger
+from connection import REDDIT_HELPER
 from models.ajo import ajo_loader, determine_flair_and_update
 from title_handling import process_title
 from utility import format_markdown_table_with_padding

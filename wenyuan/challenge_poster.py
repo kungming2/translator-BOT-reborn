@@ -6,8 +6,8 @@ Handles posting the translation challenge.
 
 from datetime import datetime, timezone
 
-from config import SETTINGS, Paths
-from connection import logger, REDDIT
+from config import SETTINGS, Paths, logger
+from connection import REDDIT
 from discord_utils import send_discord_alert
 
 

@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 
 import ddgs
 
-from config import SETTINGS
-from connection import REDDIT_HELPER, credentials_source, logger
+from config import SETTINGS, logger
+from connection import REDDIT_HELPER, credentials_source
 
 if TYPE_CHECKING:
     from praw.models import Comment

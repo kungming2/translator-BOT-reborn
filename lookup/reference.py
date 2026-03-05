@@ -16,8 +16,8 @@ import yaml
 from lxml import html
 from waybackpy import exceptions
 
-from config import Paths
-from connection import get_random_useragent, logger
+from config import Paths, logger
+from connection import get_random_useragent
 from languages import converter, get_lingvos, select_random_language
 
 

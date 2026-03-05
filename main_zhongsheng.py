@@ -26,8 +26,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from config import Paths, load_settings
-from connection import logger
+from config import Paths, load_settings, logger
 from error import error_log_extended
 from zhongsheng import register_commands
 

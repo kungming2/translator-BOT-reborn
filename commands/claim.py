@@ -12,7 +12,8 @@ from typing import Any
 
 from praw.models import Comment
 
-from connection import REDDIT, logger
+from config import logger
+from connection import REDDIT
 from languages import converter
 from models.kunulo import Kunulo
 from reddit_sender import reddit_reply

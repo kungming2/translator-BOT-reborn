@@ -22,8 +22,8 @@ import MeCab  # mecab-python3
 import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
 
-from config import Paths, load_settings
-from connection import get_random_useragent, logger
+from config import Paths, load_settings, logger
+from connection import get_random_useragent
 from languages import converter
 from title_handling import extract_lingvos_from_text
 

@@ -21,3 +21,5 @@
 /_data/Logs/
 /_data/Reports/
 /_data/auth.yaml
+/_data/Databases/hermes.db
+/docs/logging_guidelines.pdf

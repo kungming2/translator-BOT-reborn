@@ -10,7 +10,7 @@ import time
 from collections.abc import Sequence
 from typing import Callable, Union
 
-from connection import logger
+from config import logger
 
 HANDLERS: dict[str, Callable] = {}
 
