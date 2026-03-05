@@ -213,6 +213,44 @@ def points_worth_determiner(lingvo_object: "Lingvo") -> int:
     return final_point_value
 
 
+def _credit_parent_as_translator(
+    comment_author: str,
+    parent_author: str,
+    multiplier: int,
+    points_status: list,
+    translators_to_record: list,
+    original_post: "Submission",
+    original_post_lingvo: "Lingvo",
+    commenter_label: str,
+    commenter_note: str,
+    log_message: str,
+) -> int:
+    """
+    Credits the parent comment author as the translator and the commenter
+    as the marker/verifier. Returns the points to add to the commenter's tally.
+    """
+    if parent_author not in translators_to_record:
+        translators_to_record.append(parent_author)
+    _update_points_status(points_status, parent_author, 1 + multiplier)
+
+    logger.info(log_message)
+
+    create_mod_note(
+        label="SOLID_CONTRIBUTOR",
+        username=parent_author,
+        included_note=(
+            f"Helped translate https://redd.it/{original_post.id} "
+            f"({original_post_lingvo.name})"
+        ),
+    )
+    create_mod_note(
+        label=commenter_label,
+        username=comment_author,
+        included_note=commenter_note,
+    )
+    return 1  # Points for the commenter
+
+
 def _update_points_status(
     status_list: list[list[str | int]], username: str, points: int
 ) -> None:
@@ -328,38 +366,63 @@ def points_tabulator(
                     # Verification case: crediting parent comment author
                     parent_author, parent_comment = get_parent_author(comment)
                     if parent_author:
-                        # Credit the parent author as translator
-                        if parent_author not in translators_to_record:
-                            translators_to_record.append(parent_author)
-                        _update_points_status(
-                            points_status, parent_author, 1 + multiplier
+                        points += _credit_parent_as_translator(
+                            comment_author=comment_author,
+                            parent_author=parent_author,
+                            multiplier=multiplier,
+                            points_status=points_status,
+                            translators_to_record=translators_to_record,
+                            original_post=original_post,
+                            original_post_lingvo=original_post_lingvo,
+                            commenter_label="HELPFUL_USER",
+                            commenter_note=(
+                                f"Verified translation on https://redd.it/{original_post.id} "
+                                f"({original_post_lingvo.name})"
+                            ),
+                            log_message=(
+                                f"[ZW] Verify: u/{comment_author} confirms "
+                                f"u/{parent_author} in {parent_comment}"
+                            ),
                         )
-                        # Credit verifier with smaller points
-                        points += 1
+                elif body.strip() == "!translated":
+                    # Bare !translated as a reply: credit the parent comment author as translator
+                    parent_author, parent_comment = get_parent_author(comment)
+                    if parent_author and parent_author != comment_author:
+                        points += _credit_parent_as_translator(
+                            comment_author=comment_author,
+                            parent_author=parent_author,
+                            multiplier=multiplier,
+                            points_status=points_status,
+                            translators_to_record=translators_to_record,
+                            original_post=original_post,
+                            original_post_lingvo=original_post_lingvo,
+                            commenter_label="HELPFUL_USER",
+                            commenter_note=(
+                                f"Marked translation as complete on https://redd.it/{original_post.id} "
+                                f"({original_post_lingvo.name})"
+                            ),
+                            log_message=(
+                                f"[ZW] Bare !translated: u/{comment_author} credited "
+                                f"u/{parent_author} in {parent_comment}"
+                            ),
+                        )
+                    else:
+                        # Parent author is same as commenter or not found — credit commenter
+                        points += 1 + multiplier
+                        if comment_author not in translators_to_record:
+                            translators_to_record.append(comment_author)
                         logger.info(
-                            f"[ZW] Verify: u/{comment_author} confirms u/{parent_author} in {parent_comment}"
+                            f"[ZW] Bare !translated (no distinct parent): credit u/{comment_author}"
                         )
 
-                        # Create mod note for the translator being verified
                         translator_note = (
                             f"Helped translate https://redd.it/{original_post.id} "
                             f"({original_post_lingvo.name})"
                         )
                         create_mod_note(
                             label="SOLID_CONTRIBUTOR",
-                            username=parent_author,
-                            included_note=translator_note,
-                        )
-
-                        # Create mod note for the verifier
-                        verifier_note = (
-                            f"Verified translation on https://redd.it/{original_post.id} "
-                            f"({original_post_lingvo.name})"
-                        )
-                        create_mod_note(
-                            label="HELPFUL_USER",
                             username=comment_author,
-                            included_note=verifier_note,
+                            included_note=translator_note,
                         )
                 else:
                     # Direct translation case: this user is the translator
@@ -530,7 +593,51 @@ def points_tabulator(
     return
 
 
+def show_menu():
+    print("\nSelect a test to run:")
+    print("1. Points worth determiner (enter a language to get its point value)")
+    print("2. Points user retriever (enter a username to get their point totals)")
+    print("3. Points post retriever (enter a post ID to get its point records)")
+    print("x. Exit")
+
+
 if __name__ == "__main__":
     while True:
-        my_search = input("Search query: ")
-        print(points_worth_determiner(converter(my_search)))
+        show_menu()
+        choice = input("Enter your choice (1-3 or x): ")
+
+        if choice == "x":
+            print("Exiting...")
+            break
+
+        if choice not in ["1", "2", "3"]:
+            print("Invalid choice, please try again.")
+            continue
+
+        if choice == "1":
+            my_search = input("Enter a language name or code: ")
+            my_lingvo = converter(my_search)
+            if my_lingvo:
+                my_result = points_worth_determiner(my_lingvo)
+                print(
+                    f"Language: {my_lingvo.name} ({my_lingvo.preferred_code}) → Points worth: {my_result}"
+                )
+            else:
+                print(f"Could not find a language matching: {my_search}")
+
+        elif choice == "2":
+            my_username = input("Enter a Reddit username: ")
+            my_result = points_user_retriever(my_username)
+            print(my_result)
+
+        elif choice == "3":
+            my_post_id = input("Enter a Reddit post ID: ")
+            my_result = points_post_retriever(my_post_id)
+            if my_result:
+                print(f"Point records for post {my_post_id}:")
+                for my_comment_id, my_username, my_points in my_result:
+                    print(
+                        f"  Comment {my_comment_id} | u/{my_username} | {my_points} points"
+                    )
+            else:
+                print(f"No point records found for post ID: {my_post_id}")
