@@ -68,7 +68,10 @@ class Instruo:
         author_post = (
             str(comment.submission.author) if comment.submission.author else "[deleted]"
         )
-        commands = extract_commands_from_text(text, parent_languages=[parent_languages])
+        # Normalise: accept either a bare Lingvo or a list of Lingvos
+        if parent_languages is not None and not isinstance(parent_languages, list):
+            parent_languages = [parent_languages]
+        commands = extract_commands_from_text(text, parent_languages=parent_languages)
         return cls(
             id_comment=id_comment,
             id_post=id_post,
