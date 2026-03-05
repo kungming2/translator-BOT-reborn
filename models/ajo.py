@@ -142,6 +142,31 @@ def ajo_loader(ajo_id):
         return None
 
 
+def ajo_delete(ajo_id: str) -> bool:
+    """
+    Permanently removes an Ajo record from the ajo_database table.
+    This is intentionally irreversible and should only be called when
+    reclassifying a post as a Diskuto (internal/non-request post).
+
+    :param ajo_id: The Reddit submission ID of the Ajo to remove.
+    :return: True if a row was deleted, False if no matching record existed.
+    """
+    cursor = db.cursor_ajo
+    conn = db.conn_ajo
+
+    cursor.execute("DELETE FROM ajo_database WHERE id = ?", (str(ajo_id),))
+    conn.commit()
+
+    deleted = cursor.rowcount > 0
+    if deleted:
+        logger.info(
+            f"[ZW] ajo_delete: Ajo `{ajo_id}` permanently removed from database."
+        )
+    else:
+        logger.warning(f"[ZW] ajo_delete: No Ajo found with id `{ajo_id}` to delete.")
+    return deleted
+
+
 def _normalize_lang_field(value):
     """
     Normalize the original_[source|target]_language_name field to

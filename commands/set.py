@@ -3,15 +3,107 @@
 """
 !set is a mod-accessible means of setting the post flair. The mod's
 comment is removed by AutoModerator so it looks like nothing happened.
+
+In addition to language-setting, mods can use !set to reclassify an
+Ajo-tracked post as a Diskuto (internal/non-request post), e.g.:
+    !set:meta
+    !set:community
+
+This migration is irreversible: the Ajo record is deleted and a new
+Diskuto record is written to internal_posts.
 """
 
-from config import logger
+from config import SETTINGS, logger
 from connection import is_mod
+from models.ajo import ajo_delete
+from models.diskuto import Diskuto, diskuto_writer
 from models.kunulo import Kunulo
 from reddit_sender import message_send
 from responses import RESPONSE
 
 from . import update_language
+
+
+def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto | None":
+    """
+    Reclassify an Ajo-tracked post as a Diskuto internal post.
+
+    Steps:
+    1. Build a Diskuto from the submission, overriding post_type with the
+       value the mod supplied (e.g. 'meta') rather than relying on the title tag.
+    2. Write the Diskuto to internal_posts (main.db).
+    3. Permanently delete the Ajo record from ajo_database (ajo.db).
+    4. Message the mod confirming the migration.
+
+    :param comment: The PRAW comment that triggered the command.
+    :param ajo: The Ajo object for the post being reclassified.
+    :param post_type: Lowercase diskuto type string, e.g. 'meta' or 'community'.
+    """
+    submission = ajo.submission
+    post_id = ajo.id
+
+    # Build Diskuto from the submission, then override post_type with the
+    # mod-supplied value so it's always accurate regardless of title format.
+    try:
+        diskuto_obj = Diskuto.process_post(submission)
+    except TypeError as e:
+        logger.error(
+            f"[ZW] Bot: Failed to build Diskuto from submission `{post_id}`: {e}"
+        )
+        message_send(
+            comment.author,
+            subject="!set reclassification failed",
+            body=(
+                f"Hello, moderator u/{comment.author},\n\n"
+                f"Could not reclassify post `{post_id}` as a Diskuto — "
+                f"the submission object was unavailable or invalid.\n\n"
+                f"No changes were made."
+            ),
+        )
+        return None
+
+    diskuto_obj.post_type = post_type
+
+    # Write to internal_posts first; only delete the Ajo if that succeeds.
+    try:
+        diskuto_writer(diskuto_obj)
+    except Exception as e:
+        logger.error(
+            f"[ZW] Bot: diskuto_writer failed for `{post_id}`: {type(e).__name__}: {e}"
+        )
+        message_send(
+            comment.author,
+            subject="!set reclassification failed",
+            body=(
+                f"Hello, moderator u/{comment.author},\n\n"
+                f"Could not write post `{post_id}` to the internal posts database. "
+                f"No changes were made to the Ajo record."
+            ),
+        )
+        return None
+
+    # Diskuto is safely stored — now remove the Ajo record.
+    ajo_delete(post_id)
+
+    logger.info(
+        f"[ZW] Bot: Post `{post_id}` reclassified from Ajo to Diskuto "
+        f"(type='{post_type}') by moderator u/{comment.author}."
+    )
+
+    message_send(
+        comment.author,
+        subject="!set reclassification successful",
+        body=(
+            f"Hello, moderator u/{comment.author},\n\n"
+            f"The [post](https://www.reddit.com{submission.permalink}) has been "
+            f"reclassified as a **{post_type}** internal post.\n\n"
+            f"It has been removed from the translation request database and added "
+            f"to the internal posts database. This change is permanent."
+        ),
+    )
+    logger.info(f"[ZW] Bot: Sent reclassification confirmation to u/{comment.author}.")
+
+    return diskuto_obj
 
 
 def handle(comment, _instruo, komando, ajo) -> None:
@@ -26,6 +118,35 @@ def handle(comment, _instruo, komando, ajo) -> None:
     logger.info(
         f"[ZW] Bot: COMMAND: !set, from moderator u/{comment.author} on `{ajo.id}`."
     )
+
+    # Check whether this is a diskuto reclassification command (e.g. !set:meta).
+    #
+    # Convention: when the upstream parser cannot resolve the keyword as a
+    # language it stores the raw lowercase string in komando.data as a plain
+    # string rather than a list of Lingvo objects. We detect that here.
+    raw_keyword: str | None = None
+    if isinstance(komando.data, str):
+        raw_keyword = komando.data.strip().lower()
+    elif (
+        isinstance(komando.data, list)
+        and len(komando.data) == 1
+        and isinstance(komando.data[0], str)
+    ):
+        raw_keyword = komando.data[0].strip().lower()
+
+    if raw_keyword in SETTINGS["internal_post_types"]:
+        logger.info(
+            f"[ZW] Bot: !set:{raw_keyword} — reclassifying `{ajo.id}` as Diskuto."
+        )
+        diskuto_result = _handle_diskuto_reclassification(
+            comment, ajo, post_type=raw_keyword
+        )
+        if diskuto_result:
+            diskuto_result.update_reddit()
+
+        return
+
+    # --- Standard language-setting path below ---
 
     # Invalid identification data.
     if not komando.data or None in komando.data:

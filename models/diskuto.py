@@ -10,9 +10,10 @@ import re
 
 import orjson
 
-from config import logger
-from connection import REDDIT_HELPER
+from config import SETTINGS, logger
+from connection import REDDIT, REDDIT_HELPER
 from database import db
+from testing import log_testing_mode
 
 
 class Diskuto:
@@ -92,6 +93,58 @@ class Diskuto:
         Flip the processed flag (True -> False or False -> True).
         """
         self.processed = not self.processed
+
+    def update_reddit(self) -> None:
+        """
+        Set the Reddit post flair to match this Diskuto's post_type
+        (e.g. 'meta' or 'community') and write the updated record to
+        the database.
+
+        The flair CSS class and text are both derived directly from
+        post_type, which must be a key in STATE.post_templates. If no
+        matching template is found, the flair is left unchanged.
+        """
+        from startup import STATE
+
+        testing_mode = SETTINGS["testing_mode"]
+        post_templates = STATE.post_templates
+
+        if not self.post_type:
+            logger.warning(
+                f"[Diskuto] update_reddit: No post_type set for `{self.id}`. Skipping flair update."
+            )
+            return
+
+        if self.post_type not in post_templates:
+            logger.warning(
+                f"[Diskuto] update_reddit: No flair template found for post_type "
+                f"'{self.post_type}' on `{self.id}`. Skipping flair update."
+            )
+            return
+
+        template_id = post_templates[self.post_type]
+        flair_text = self.post_type.capitalize()
+        submission = REDDIT.submission(id=self.id)
+
+        if not testing_mode:
+            submission.flair.select(flair_template_id=template_id, text=flair_text)
+            logger.info(
+                f"[Diskuto] update_reddit: Set flair for `{self.id}` to "
+                f"'{flair_text}' (template `{template_id}`)."
+            )
+        else:
+            log_testing_mode(
+                output_text=flair_text,
+                title=f"Flair Update Dry Run for Diskuto {self.id}",
+                metadata={
+                    "Submission ID": self.id,
+                    "Flair CSS": self.post_type,
+                    "Flair Template ID": template_id,
+                    "Post Type": self.post_type,
+                },
+            )
+
+        diskuto_writer(self)
 
 
 def diskuto_exists(post_id: str) -> bool:

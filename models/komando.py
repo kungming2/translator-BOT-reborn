@@ -225,9 +225,14 @@ def extract_commands_from_text(text, parent_languages=None):
 
             should_convert = cmd_lower not in SETTINGS["commands_skip_conversion"]
             args = [
-                converter(arg, specific_mode=specific_modes[i])
-                if should_convert
-                else arg
+                # Pass internal post type keywords (e.g. 'meta', 'community') through
+                # as raw strings so !set can reclassify an Ajo as a Diskuto without
+                # converter() treating them as invalid language lookups.
+                arg
+                if (
+                    not should_convert or arg.lower() in SETTINGS["internal_post_types"]
+                )
+                else converter(arg, specific_mode=specific_modes[i])
                 for i, arg in enumerate(raw_args)
             ]
             commands_dict[canonical].extend(args)

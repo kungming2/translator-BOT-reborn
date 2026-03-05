@@ -101,7 +101,9 @@ def error_log_trimmer():
 
     removed = len(entries) - len(trimmed)
     if removed:
-        logger.info(f"[WJ] Removed {removed} resolved error(s) older than {retention_weeks} weeks.")
+        logger.info(
+            f"[WJ] Removed {removed} resolved error(s) older than {retention_weeks} weeks."
+        )
     else:
         logger.info("[WJ] No resolved errors to remove.")
 
@@ -483,7 +485,9 @@ def points_worth_cacher():
     """
     # Get this month's representation.
     month_entry = get_current_month()
-    logger.debug(f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'")
+    logger.debug(
+        f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'"
+    )
 
     # Check if cache already contains entries for the current month
     # Note: cursor_cache is a property that creates a new cursor each time,
