@@ -10,7 +10,6 @@ from typing import Any
 
 from config import logger, SETTINGS
 from connection import REDDIT, USERNAME
-from tasks.data_maintenance import points_worth_cacher
 
 
 @dataclass
@@ -24,7 +23,8 @@ class State:
 
 def template_retriever() -> dict[str, str]:
     """
-    Retrieve the current link flair templates on r/translator.
+    Retrieve the current link flair templates on r/translator. This
+    avoids having to hard-code flair associations into bot data.
 
     :return: A dictionary keyed by preferred codes with template IDs as values.
              Returns an empty dictionary if no templates are found.
@@ -41,7 +41,7 @@ def most_recent_submitters() -> list[str]:
     Return a list of usernames who submitted to r/translator in the
     last 24 hours.
 
-    Ignores deleted users and the bot account.
+    Ignores deleted users and the bot's own user account.
     """
     cutoff: float = time.time() - 86400
     return [
@@ -54,7 +54,7 @@ def most_recent_submitters() -> list[str]:
 def ziwen_startup() -> State:
     """
     Group together common activities that need to be run on an occasional basis.
-    Usually activated at start-up. This is used in ajo.py.
+    Usually activated at start-up. This is used in ajo.py, among others.
 
     :return: A State object containing the current tasks state.
     """
