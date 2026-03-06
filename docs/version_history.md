@@ -23,7 +23,6 @@ This page records the version history of the various routines of translator-BOT.
 * 🚀 FEATURE: People can use `!transform:[value]` to change the post's image to the right direction for ease of translating.
     * `[value]` can be positive or negative values of `90` (e.g. `90` rotates the image clockwise, while `-90` rotates it counterclockwise). 
     * `[value]` can also be `horizontal`, `h` or `vertical`, `v` to flip the image horizontally or vertically respectively.
-    * Currently, this command works on image posts (not galleries). Gallery support may be added in a future update after we see how this current implementation shakes out.
 * 🚀 FEATURE: The post duplicates detector has been turned on. Duplicates may be detected in one of two ways:
     * Their titles are identical or near-identical and posted by the same author within a short period of time. 
     * Their image hashes (if applicable for image-only posts) are identical or very similar.
@@ -37,9 +36,22 @@ This page records the version history of the various routines of translator-BOT.
 * ✨ ADDITION: Wenju will post a weekly action report on its mod actions to r/translatorBOT.
 * ✨ ADDITION: Wenju will inform mods with a monthly overview of rule violations that resulted in mod post/comment removals.
 * ✨ ADDITION: Modmail conversations that are over 2 days old, where a mod was the last respondent, will now be archived automatically.
+* ✨ ADDITION: Reddit's native removal reasons are attached after post or comment removal.
+* ✨ ADDITION: Mods can now use `!set` to classify regular posts as internal posts. 
 * 🔄 CHANGE: Kunulo object's data for Chinese CJK lookups now properly include only the traditional characters as a base.  
+* 🔄 CHANGE: Mod posts ending with the emoji 🧪 in the title will not trigger notifications in case of testing. 
+* 🔄 CHANGE: Over-long cycle runtimes will trigger an alert to Discord.
+* 🔄 CHANGE: The `Data` folder has been renamed to `_data` for consistency.
+* 🔄 CHANGE: The prefix `[Notification]` has been removed from subjects of messages. This was a legacy of the first time when Reddit tried to merge chats and messages. 
+* 🔄 CHANGE: Renamed `message_reply` to the more appropriate `reddit_reply` as it works for more than just messages.
+* 🔄 CHANGE: [Jieba](https://github.com/fxsjy/jieba) has been replaced with [rjieba](https://github.com/messense/rjieba-py/tree/main).
 * 🛠️ BUG FIX: Chinese tokenization now uses simplified as a base in order to return more accurate results, particularly when it comes to chengyu. This was the behavior in previous 1.x versions of translator-BOT.
 * 🛠️ BUG FIX: Fixed an issue when searching katakana matches for Japanese SFX.
+* 🛠️ BUG FIX: Fixed the [verified](https://www.reddit.com/r/translator/wiki/verified) page not updating.
+* 🛠️ BUG FIX: Fixed the [identified](https://www.reddit.com/r/translator/wiki/identified) page not updating.
+* 🛠️ BUG FIX: The points multiplier for languages has been fixed.
+* 🛠️ BUG FIX: Slight fix for superscript numbered-tones in Wade-Giles and Yale Cantonese romanization looking strange on New Reddit.  
+* 🛠️ BUG FIX: Made sure that confirmatory replies to translating comments credit people appropriately with points.
 
 ##### translator-BOT 2.0 "The Reborn Update" (2025-10-20)
 

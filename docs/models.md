@@ -164,8 +164,9 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 
 # CJK lookup
 {'name': 'lookup_cjk',
- 'data': [['zh', '中文']], 
- 'specific_mode': False}
+ 'data': [('zh', '中文', False)], 
+ 'specific_mode': False,
+ 'disable_tokenization': False}
 
 # Wikipedia lookup
 {'name': 'lookup_wp', 
@@ -180,6 +181,7 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 | `name` | `str` | The command keyword or identifier being executed (e.g. `"translated"`, `"identify"`, `"lookup_cjk"`, `"lookup_wp"`).                                                                                                |
 | `data` | `list` | Argument(s) passed to the command. Can contain `Lingvo` objects, strings, or lists of values depending on the command type.                                                                                                |
 | `specific_mode` | `bool` | Indicates that a specific string or value within `data` was explicitly requested by the user, rather than inferred automatically. (e.g. `Latn` to specifically request the script identification rather than the language. |
+| `disable_tokenization` | `bool` | If `True`, disables tokenization for `lookup_cjk` commands, treating the entire term as a single unit rather than splitting it into individual characters. Activated by a trailing `!` on a backtick lookup (e.g. `` `中文`! ``). |
 
 ## Instruo
 
@@ -206,6 +208,17 @@ This class represents a Reddit comment *containing* commands as Komandos. For ex
 ```
 
 ### Attributes
+
+| Attribute | Type | Description                                                                                            |
+|------------|------|--------------------------------------------------------------------------------------------------------|
+| `id_comment` | `str` | The unique Reddit comment ID.                                                                          |
+| `id_post` | `str` | Reddit post ID of the submission this comment belongs to.                                              |
+| `created_utc` | `int` | UTC timestamp representing when the comment was created.                                               |
+| `author_comment` | `str` | Username of the comment's author (no `u/`). `"[deleted]"` if unavailable.                              |
+| `author_post` | `str \| None` | Username of the parent post's author (no `u/`). `"[deleted]"` if unavailable, `None` if not populated. |
+| `commands` | `list[Komando]` | List of `Komando` objects extracted from the comment body.                                             |
+| `languages` | `list[Lingvo]` | List of `Lingvo` objects representing the language(s) of the parent post, if available.                |
+| `body` | `str \| None` | Raw comment text. Optional if the Instruo was not created from a PRAW comment object.                  |
 
 ## Ajo
 

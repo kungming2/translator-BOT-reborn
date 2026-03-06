@@ -23,13 +23,15 @@ An exclamation mark ! appended to the lookup (`年年有余`!, `井底之蛙`:zh
 
 #### Dictionaries
 
-Information from the following dictionaries/databases are included directly in CJK lookup:
+The following sources are used by CJK lookup functions:
 
-* `zh_character`: [MDBG](https://www.mdbg.net/chinese/dictionary), [Chinese Character Web API](http://ccdb.hemiola.com/), [Dictionary of Chinese Character Variants](https://dict.variants.moe.edu.tw/), [书法字典](https://www.shufazidian.com/)
-* `zh_word`: [MDBG](https://www.mdbg.net/chinese/dictionary), [Soothill-Hodous Dictionary of Chinese Buddhist Terms](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms), [CC-Canto](https://cantonese.org/), [Babelcarp](https://babelcarp.org/babelcarp/)
-* `ja_character`: [Jisho](https://jisho.org/)  
-* `ja_word`: [Jisho](https://jisho.org/), [Japanese Onomatopoeia Search](https://nsk.sh/tools/jp-onomatopoeia/), [人名漢字辞典](https://kanji.reader.bz/), [四字熟語辞典](https://yoji.jitenon.jp/)
-* `ko_word`: [National Institute of Korean Language's Korean-English Learners' Dictionary](https://krdict.korean.go.kr/eng/mainAction)
+| Key | Language | Sources |
+|-----|----------|---------|
+| `zh_character` | Chinese (characters) | [MDBG](https://www.mdbg.net/chinese/dictionary) · [Chinese Character Web API](http://ccdb.hemiola.com/) · [Dictionary of Chinese Character Variants](https://dict.variants.moe.edu.tw/) · [书法字典](https://www.shufazidian.com/) |
+| `zh_word` | Chinese (words) | [MDBG](https://www.mdbg.net/chinese/dictionary) · [Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms) · [CC-Canto](https://cantonese.org/) · [Babelcarp](https://babelcarp.org/babelcarp/) |
+| `ja_character` | Japanese (characters) | [Jisho](https://jisho.org/) |
+| `ja_word` | Japanese (words) | [Jisho](https://jisho.org/) · [Japanese Onomatopoeia Search](https://nsk.sh/tools/jp-onomatopoeia/) · [人名漢字辞典](https://kanji.reader.bz/) · [四字熟語辞典](https://yoji.jitenon.jp/) |
+| `ko_word` | Korean (words) | [National Institute of Korean Language](https://krdict.korean.go.kr/eng/mainAction) |
 
 #### Notes
 
@@ -42,7 +44,7 @@ Information from the following dictionaries/databases are included directly in C
 
 ## Wikipedia Lookup
 
-Wrapping dual curly braces around a search term, tags something for Ziwen to look up on [Wikipedia](https://en.wikipedia.org/wiki/Main_Page) and returns the results in a comment reply. This is usually to give the requester more cultural context and information.
+Wrapping dual curly braces around a search term tags something for Ziwen to look up on [Wikipedia](https://en.wikipedia.org/wiki/Main_Page) and returns the results in a comment reply. This is usually to give the requester more cultural context and information.
 
 ```
 This is from the {{Qianlong Era}}, and it's {{Jingdezhen porcelain}} from China.
@@ -52,4 +54,4 @@ This example would return Wikipedia links and short summaries for "[Qianlong Emp
 
 #### Notes
 
-* If Wikipedia has a location coordinates that is associated with the page, Ziwen will try and include a relevant [OpenStreetMap](https://www.openstreetmap.org/) link to that location. 
+* If Wikipedia has location coordinates that are associated with the page, Ziwen will try and include a relevant [OpenStreetMap](https://www.openstreetmap.org/) link to that location (e.g. `{{Forbidden City}}`). 

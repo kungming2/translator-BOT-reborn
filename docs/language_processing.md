@@ -6,7 +6,7 @@
 
 #### Codes
 
-As noted in the index documentation, all routines support:
+As noted in the home/index documentation, all routines support:
 
 * [ISO 639-1/3](https://en.wikipedia.org/wiki/ISO_639), two or three-letter codes for languages (`ar`, `ja`, etc.)
 * [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes), four-letter codes for scripts (`Cyrl`, `Latn`, etc.)
@@ -18,26 +18,26 @@ Also supported, though rarely seen, is [Linguist Lists's local use codes](https:
 
 #### Unsupported
 
-Routines *do not* support the [rest of the ISO 639-2](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes) standard, as most of those codes are:
+Routines *do not* support the [rest of the ISO 639-2](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes) standard, as most of those codes:
 
 1. Also exist in ISO 639-3
-2. For a language family that contains multiple languages (e.g. `apa` for the [Apache](https://en.wikipedia.org/wiki/Southern_Athabaskan_languages) language family)
+2. Are for a language family that contains multiple individual languages (e.g. `apa` for the [Apache](https://en.wikipedia.org/wiki/Southern_Athabaskan_languages) language family)
 
 If someone wishes to use an ISO 639-2 code for a language family, they should instead choose a more specific ISO 639-3 code that fits. 
 
 ## Converter
 
-The `converter()` function in `languages.py` is the most used function in the codebase. Its purpose is to accept any input and interpret what language that input intended. The converter will accept the aforementioned codes, standard language names, but even misspelllings to help return accurate identification of languages from user input.
+The `converter()` function in `languages.py` is the most essential function in the codebase. Its purpose is to accept any input and interpret what language that input intended. The converter will accept the aforementioned codes, standard language names, but even misspelllings to help return accurate identification of languages from user input.
 
 #### The Lingvo Class 
 
 The converter returns language identifications as `Lingvo` objects ([Esperanto](https://en.wikipedia.org/wiki/Esperanto) for "[language](https://en.wiktionary.org/wiki/lingvo)"), which contain practically all the information needed for a language's details, including its name and code, but also statistical information from the subreddit and some reference data.
 
-All `Lingvo` objects also have a `preferred_code`, which is what is used most often in the code. For non-script languages, the `preferred_code` is the ISO 639-1 code if it exists, or the ISO 639-3 code if an ISO 639-1 does not exist. In previous documentation for translator-BOT 1.0 this was often referred to as the "CSS code".
+All `Lingvo` objects also have a `preferred_code`, which is also the attribute used most often in the code. For non-script languages, the `preferred_code` is the ISO 639-1 code if it exists, or the ISO 639-3 code if an ISO 639-1 does not exist. In previous documentation for translator-BOT v1.0+ this was often referred to as the "CSS code".
 
 Therefore, [German's](https://en.wikipedia.org/wiki/German_language) `preferred_code` is `de` (not `deu`), while [Cantonese](https://en.wikipedia.org/wiki/Cantonese), which does not have an ISO 639-1 code, has a `preferred_code` of `yue`. 
 
-Three non-language `preferred_code` are non-standard due to the need for backwards compatibility:
+Three non-language `preferred_code` attributes are non-standard due to the need for backwards compatibility:
 
 | Name               | Preferred Code | [Standard ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3#Special_codes) Code |
 |--------------------|----------------|----------------------------------------------------------------------------------|

@@ -117,7 +117,7 @@ These commands are used to help organize the subreddit and to provide supplement
 ### Command: *!id/!identify:[language]*
 
 
-OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name is more than one word, double quotation marks `"` should be used to mark the language name.
+OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name is comprised of more than one word, double quotation marks `"` should be used to mark the language name.
 
 This command also has a shorter synonym: `!id`. Both function exactly the same way, though Ziwen will always record its use internally as `!identify` in statistics.
 
@@ -125,7 +125,7 @@ This command also has a shorter synonym: `!id`. Both function exactly the same w
 
 #### Defined Multiple !identify
 
-If a post should be for more than one defined language, stringing language names or codes with `+` will change it to a *defined multiple* post. 
+If a post should be for more than one defined language, chaining language names or codes with `+` will change it to a *defined multiple* post. 
 
     !identify:ru+it+uzbek            # Changes the post flair to Multiple Languages [IT, RU, UZ]
 
@@ -165,7 +165,7 @@ A **!page:[ ]** command from a user will page other subreddit users who know the
 #### Limitations
 
 * Use of this function is restricted to users with accounts fourteen days and older in order to prevent abuse.
-* Multiple `!page` commands *can* be included in a single comment to page people from many different languages.
+* Multiple `!page` commands *can* be included in a single comment to page people from many different languages, but language chaining (e.g. `!page:fr+it`) is encouraged.
 * If there are no users listed for that language in the notifications database, Ziwen will reply to the command with a comment informing the user.
 
 #### Notes
@@ -195,7 +195,7 @@ This function also serves as a simple way to find thematically similar posts tha
 
 The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as a post. This command has strict value requirements:
 
-* `!transform:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `360` is an invalid value as that would just be the exact same image.
+* `!transform:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `0` and `360` are invalid values as that would just result in the exact same image.
 * `!transform:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid shortform values.
 
 #### Examples
@@ -209,8 +209,8 @@ The **!transform:[value]** command is used to transform a misaligned image, eith
 #### Notes
 
 * This function uploads transformed images to [ImgBB](https://imgbb.com/). Images uploaded by this bot through this function are automatically deleted after 7 days.
-  * The bot does downsample the image quality in order to reduce the load on ImgBB's servers and speed up operations.
-* This function currently only supports _direct image posts_ (not galleries). Gallery support will be supported in a future release.
+  * The bot downsamples the image quality in order to reduce the load on ImgBB's servers and speed up operations.
+* This function supports any post with an image attached, including text posts with an embedded image, link posts, and gallery posts.
 
 ## Moderator/OP Commands
 
@@ -221,5 +221,6 @@ OPs (users who made a request) can also use the following commands:
 
 Moderators can use the above commands as well as the following:
 
-* `!verify` sets the flair for a user who submitted a verification request.
 * `!nuke` bans a user permanently and removes all their posts and comments. This is generally only used for extremely serious trolls.
+* `!set` is functionally identical to `!identify` but can also be used to set a language translation post (ajo) to an internal post (diskuton.)
+* `!verify` sets the flair for a user who submitted a verification request.

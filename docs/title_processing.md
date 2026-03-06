@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This document covers the logic Ziwen uses when it parses incoming posts to r/translator. This logic is mostly contained in `title_handling.py`. When new requests are made to the community, the bot will parse its title in `ziwen_posts.py` and assign attributes to it based on its title.
+This document covers the logic Ziwen uses when it parses incoming posts to r/translator, which is mostly contained in `title_handling.py`. When new requests are made to the community, the bot will parse its title in `ziwen_posts.py` and assign attributes to it based on its title.
 
 ## Single-Language Posts
 
@@ -15,7 +15,7 @@ Ziwen will filter out/reject titles that match the following criteria:
 1. **The title does not include a target language.** An example of this would be the title `Translate pls`. 
 2. The post's long title "buries the lede" and puts the target language towards the end without brackets. An example of this would be the title `Could somebody please translate these two words from Japanese to English.`
 3. **The title does not include a source language.** An example of this would be the title `Translate to English please`. 
-4. **The post is only for English.** An example of this would be the title `[English >English] "seak out" meaning`. We redirect such inquiries to r/englishlearning or r/grammar.
+4. **The post is only for English.** An example of this would be the title `[English >English] "seak out" meaning`. We redirect such inquiries to [r/englishlearning](www.reddit.com/r/EnglishLearning/) or [r/grammar](https://www.reddit.com/r/grammar/).
 
 With each rejection, Ziwen also suggests a new title for the post that would adhere to the formatting guidelines. That new title is included in a comment that's posted to the post and Ziwen automatically generates a resubmit link for the OP that pre-fills that new title in.
 
@@ -28,7 +28,7 @@ If a post is:
 
 Ziwen will add the text `(Long)` after the flair text. Hence, a post with [this 16-minute video](https://www.youtube.com/watch?v=zwee-4O70FU) would have the flair text `Japanese (Long)`. 
 
-Moderators can manually toggle a post's "long" status by using the [command](./commands.md) `!long`. 
+Moderators and OPs can manually toggle a post's "long" status by using the [command](./commands.md) `!long`. 
 
 #### Badly-Formatted Title Posts
 
@@ -73,4 +73,4 @@ The state commands (`!doublecheck`, `!translated`, `!claim` and `!missing`) (see
 Internal posts are posts that are _not_ for a language; that is, they're not requests. Currently, there are two types of supported internal posts on r/translator:
 
 * **Meta** posts, which are information or discussion posts about the operations of the subreddit or community (e.g. rules discussions, bot updates).
-* **Community** posts, which include the translation challenges, thank-you posts, or other posts related to r/translator, but are not *about* it. 
+* **Community** posts, which include the translation challenges, thank-you posts, or other posts related to r/translator, but are not *about* it.

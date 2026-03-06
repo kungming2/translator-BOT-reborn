@@ -77,7 +77,7 @@ Moderators can also add the flag `--add_alt` and an alternate name for the langu
 This command retrieves a random quote from **[The Office API](https://akashrajpurohit.github.io/the-office-api/)**. It has nothing to do with r/translator, but is just a fun addition. It then also appends the last five entries in the events log and calculates how long ago the last entry was.
 
 ```
-/office
+/status
 ```
 
 ## Moderator Commands
