@@ -500,7 +500,7 @@ def points_tabulator(
 
         elif name == "identify":
             points += 3
-        elif name in {"claim", "page", "search", "missing"}:
+        elif name in {"claim", "page", "search", "missing", "transform"}:
             points += 1
         elif name == "lookup_cjk":
             points += 2
