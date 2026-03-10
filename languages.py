@@ -757,14 +757,19 @@ def _resolve_to_lingvo(
 
 
 def converter(input_text, fuzzy=True, specific_mode=False, preserve_country=False):
-    """Wrapper used to show the input and output."""
+    """
+    Wrapper used to show the input and output of resolving Lingvos for
+    debugging purposes.
+    """
+
     result = _resolve_to_lingvo(
         input_text,
         fuzzy=fuzzy,
         specific_mode=specific_mode,
         preserve_country=preserve_country,
     )
-    logger.info(f"Conversion: {input_text!r} → {result!r}")
+    logger.debug(f"Conversion: {input_text!r} → {result!r}")
+
     return result
 
 
