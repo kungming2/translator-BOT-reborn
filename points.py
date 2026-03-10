@@ -285,7 +285,7 @@ def points_tabulator(
     # Early return if lingvo is None
     if original_post_lingvo is None:
         logger.warning(
-            f"[ZW] Points tabulator: Skipping comment `{comment.id}` - no Lingvo object provided"
+            f"Skipping comment `{comment.id}` - no Lingvo object provided"
         )
         return
 
@@ -305,7 +305,7 @@ def points_tabulator(
         "automoderator",
         USERNAME.lower(),
     ):
-        logger.debug(f"[ZW] Ignoring bot or missing author for comment `{comment.id}`")
+        logger.debug(f"Ignoring bot or missing author for comment `{comment.id}`")
         return
 
     body = comment.body.strip().lower()
@@ -315,13 +315,13 @@ def points_tabulator(
         ajo = ajo_loader(original_post.id)
         if ajo is None:
             logger.warning(
-                f"[ZW] Points tabulator: Could not load Ajo for post `{original_post.id}`"
+                f"Could not load Ajo for post `{original_post.id}`"
             )
             # Continue without Ajo - we can still award points
 
     # Determine worth of the translation based on language
     logger.info(
-        f"[ZW] Processing comment by u/{comment_author} on post by u/{op_author} ({original_post_lingvo.name})"
+        f"Processing comment by u/{comment_author} on post by u/{op_author} ({original_post_lingvo.name})"
     )
     language_name = original_post_lingvo.name
     try:
@@ -329,7 +329,7 @@ def points_tabulator(
     except ValueError:
         multiplier = 20
 
-    logger.debug(f"[ZW] Points tabulator: {language_name}, multiplier: {multiplier}")
+    logger.debug(f"{language_name}, multiplier: {multiplier}")
 
     commands = extract_commands_from_text(body)
     points_status = []
@@ -375,7 +375,7 @@ def points_tabulator(
                                 f"({original_post_lingvo.name})"
                             ),
                             log_message=(
-                                f"[ZW] Verify: u/{comment_author} confirms "
+                                f"Verify: u/{comment_author} confirms "
                                 f"u/{parent_author} in {parent_comment}"
                             ),
                         )
@@ -397,7 +397,7 @@ def points_tabulator(
                                 f"({original_post_lingvo.name})"
                             ),
                             log_message=(
-                                f"[ZW] Bare !translated: u/{comment_author} credited "
+                                f"Bare !translated: u/{comment_author} credited "
                                 f"u/{parent_author} in {parent_comment}"
                             ),
                         )
@@ -407,7 +407,7 @@ def points_tabulator(
                         if comment_author not in translators_to_record:
                             translators_to_record.append(comment_author)
                         logger.info(
-                            f"[ZW] Bare !translated (no distinct parent): credit u/{comment_author}"
+                            f"Bare !translated (no distinct parent): credit u/{comment_author}"
                         )
 
                         translator_note = (
@@ -424,7 +424,7 @@ def points_tabulator(
                     points += 1 + multiplier
                     if comment_author not in translators_to_record:
                         translators_to_record.append(comment_author)
-                    logger.info(f"[ZW] Translation: Detected by u/{comment_author}")
+                    logger.info(f"Translation: Detected by u/{comment_author}")
 
                     # Create mod note for translator
                     translator_note = (
@@ -444,7 +444,7 @@ def points_tabulator(
                     if parent_author not in translators_to_record:
                         translators_to_record.append(parent_author)
                     _update_points_status(points_status, parent_author, 1 + multiplier)
-                    logger.info(f"[ZW] OP delegated !translated to u/{parent_author}")
+                    logger.info(f"OP delegated !translated to u/{parent_author}")
 
                     # Create mod note for translator credited by OP
                     translator_note = (
@@ -479,7 +479,7 @@ def points_tabulator(
 
                     _update_points_status(points_status, parent_author, 1 + multiplier)
                     logger.info(
-                        f"[ZW] Cleanup mark: u/{comment_author} marked u/{parent_author}'s work."
+                        f"Cleanup mark: u/{comment_author} marked u/{parent_author}'s work."
                     )
 
                     # Create mod note for the translator being credited
@@ -505,7 +505,7 @@ def points_tabulator(
             logger.debug(f"[Points] No point value set for command: {name}")
 
     logger.info(
-        f"[ZW] Commands processed for comment `{comment.id}`: {len(commands)} commands, "
+        f"Commands processed for comment `{comment.id}`: {len(commands)} commands, "
         f"total preliminary points {points}"
     )
 
@@ -518,7 +518,7 @@ def points_tabulator(
         and any(k in body for k in SETTINGS["thanks_keywords"])
         and len(body) < 20
     ):
-        logger.info(f"[ZW] OP short thank-you from u/{comment_author}")
+        logger.info(f"OP short thank-you from u/{comment_author}")
         parent_author, parent_comment = get_parent_author(comment)
         if parent_author:
             if parent_author not in translators_to_record:
@@ -563,27 +563,27 @@ def points_tabulator(
         for translator in translators_to_record:
             ajo.add_translators(translator)
             logger.info(
-                f"[ZW] Added u/{translator} to Ajo translators for `{original_post.id}`"
+                f"Added u/{translator} to Ajo translators for `{original_post.id}`"
             )
 
         # Write updated Ajo once after adding all translators
         ajo_writer(ajo)
         logger.info(
-            f"[ZW] Recorded {len(translators_to_record)} translator(s) to Ajo: {', '.join(translators_to_record)}"
+            f"Recorded {len(translators_to_record)} translator(s) to Ajo: {', '.join(translators_to_record)}"
         )
 
     # Write to DB
     logger.info(
-        f"[ZW] Writing {len(results)} point record(s) to DB for comment `{comment.id}`"
+        f"Writing {len(results)} point record(s) to DB for comment `{comment.id}`"
     )
     for username, user_points in results:
-        logger.debug(f"[ZW] Writing: ({username} with {user_points} points)")
+        logger.debug(f"Writing: ({username} with {user_points} points)")
         cursor_main.execute(
             "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
             (month_string, comment_id, username, str(user_points), original_post.id),
         )
     conn_main.commit()
-    logger.info(f"[ZW] Points tabulation complete for comment `{comment.id}`")
+    logger.info(f"Points tabulation complete for comment `{comment.id}`")
 
     return
 
