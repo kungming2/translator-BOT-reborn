@@ -4,14 +4,18 @@
 Main script to fetch and handle messages. Much of the logic for this
 module is in messaging.py; this function primarily reads the messages
 and then passes it on to that module.
+...
+
+Logger tag: [ZW:M]
 """
 
+import logging
 import traceback
 
 from praw.models import Message, Redditor
 from wasabi import msg
 
-from config import logger
+from config import logger as _base_logger
 from connection import REDDIT, is_mod, is_valid_user
 from error import error_log_extended
 from messaging import (
@@ -22,6 +26,8 @@ from messaging import (
     handle_subscribe,
     handle_unsubscribe,
 )
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:M"})
 
 
 def ziwen_messages() -> None:
@@ -41,6 +47,7 @@ def ziwen_messages() -> None:
     """
 
     messages: list[Message] = list(REDDIT.inbox.unread(limit=10))
+    logger.info(f"Processing {len(messages)} unread message(s)")
 
     # Iterate over the messages in the inbox.
     for message in messages:
@@ -53,7 +60,7 @@ def ziwen_messages() -> None:
 
         # Invalid user (e.g. shadow-banned)
         if not is_valid_user(message.author):
-            logger.warning(f"[ZW] Messages: Invalid author u/{message.author}.")
+            logger.warning(f"Messages: Invalid author u/{message.author}.")
             continue
 
         message_author: Redditor = message.author  # Redditor object
@@ -66,10 +73,14 @@ def ziwen_messages() -> None:
             handle_status(message, message_author)
         elif "points" in message_subject:
             handle_points(message, message_author)
-        elif "add" in message_subject and is_mod(message_author):
+        elif message_subject == "add" and is_mod(message_author):
             handle_add(message, message_author)
-        elif "remove" in message_subject and is_mod(message_author):
+        elif message_subject == "remove" and is_mod(message_author):
             handle_remove(message, message_author)
+        else:
+            logger.info(
+                f"Unrecognised message subject {message_subject!r} from u/{message.author}. Ignoring."
+            )
 
     return
 
