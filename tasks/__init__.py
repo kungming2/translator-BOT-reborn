@@ -1,12 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+Task registration and scheduling framework for the Wenju automation system.
+
+This package provides the @task decorator used throughout the tasks/ directory
+to register functions against a named schedule (e.g. 'hourly', 'daily', 'weekly').
+Calling run_schedule() will auto-discover and import all sibling modules, then
+execute every task registered under that schedule name.
+
+Schedules
+---------
+    hourly   -- Runs frequently
+    daily    -- Runs once per day
+    weekly   -- Runs once per week
+
+Usage
+-----
+    from tasks import task
+
+    @task(schedule="daily")
+    def my_task():
+        ...
+
+Logger tag: [WJ:I]
+"""
+
+import logging
 import importlib
 import traceback
 from pathlib import Path
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from discord_utils import send_discord_alert
 from error import error_log_basic
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 
 _tasks = {}
 
@@ -45,12 +74,12 @@ def run_schedule(schedule_name):
     executed_tasks = []
 
     for task_func in tasks_to_run:
-        logger.info(f"[WJ] > Running {task_func.__name__}...")
+        logger.info(f"> Running {task_func.__name__}...")
         try:
             task_func()
             executed_tasks.append(task_func.__name__)
         except Exception as e:
-            logger.exception(f"[WJ] > Error in {task_func.__name__}: {e}")
+            logger.exception(f"> Error in {task_func.__name__}: {e}")
             error_log_basic(f"{traceback.format_exc()}", f"Wenju ({schedule_name})")
 
     # Send Discord alert after all tasks have completed
@@ -70,7 +99,7 @@ def run_schedule(schedule_name):
             notify_message,
             "alert",
         )
-        logger.info(f"[WJ] Discord notification sent for ({schedule_name}).")
+        logger.info(f"Discord notification sent for ({schedule_name}).")
 
     return
 
