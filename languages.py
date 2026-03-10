@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-A collection of database sets and language functions that all r/translator bots use.
+A collection of database sets and language functions that all
+r/translator bots use.
+...
+
+Logger tag: [LANG]
 """
 
 import copy
@@ -17,11 +21,17 @@ import pycountry
 from rapidfuzz import fuzz
 import yaml
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG"})
+
 
 # Load the language module's settings and parse the file's content
 language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 _lingvos_cache = None  # for reloading purposes when the data changes
+_country_list_cache = None  # cached country list from CSV
+_language_full_data_cache = None  # cached language YAML data for emoji lookups
 
 
 class Lingvo:
@@ -522,13 +532,13 @@ def _iso_codes_deep_search(
                         return Lingvo.from_csv_row(row)
 
     except FileNotFoundError:
-        print(f"Dataset not found: {dataset_path}")
+        logger.error(f"Dataset not found: {dataset_path}")
         return None
 
     return None
 
 
-def converter(
+def _resolve_to_lingvo(
     input_text: str,
     fuzzy: bool = True,
     specific_mode: bool = False,
@@ -536,8 +546,9 @@ def converter(
 ) -> Lingvo | None:
     """
     Convert an input string to a Lingvo object.
-    Input can be a language code, name, or compound like zh-MO or
-    unknown-cyrl.
+    Input can be a language code, name, or compound like zh-CN or
+    unknown-cyrl. This was formerly called converter() but is now
+    wrapped in order to provide for better logging.
 
     :param input_text: The input string to resolve.
     :param fuzzy: Whether to apply fuzzy name matching.
@@ -745,6 +756,18 @@ def converter(
     return None
 
 
+def converter(input_text, fuzzy=True, specific_mode=False, preserve_country=False):
+    """Wrapper used to show the input and output."""
+    result = _resolve_to_lingvo(
+        input_text,
+        fuzzy=fuzzy,
+        specific_mode=specific_mode,
+        preserve_country=preserve_country,
+    )
+    logger.info(f"Conversion: {input_text!r} → {result!r}")
+    return result
+
+
 def parse_language_list(list_string: str) -> list[Lingvo]:
     """
     Splits a string of language codes or names using flexible delimiters.
@@ -761,68 +784,68 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         A sorted list of Lingvo objects, or an empty list if none found.
         Results are deduplicated by preferred code and sorted alphabetically.
     """
-    logger.debug(f"[PARSE] Input list_string: {repr(list_string)}")
+    logger.debug(f"Input list_string: {repr(list_string)}")
 
     if not list_string:
-        logger.debug("[PARSE] Empty list_string, returning empty list")
+        logger.debug("Empty list_string, returning empty list")
         return []
 
     # Strip 'LANGUAGES:' prefix if present
     if "LANGUAGES:" in list_string:
         list_string = list_string.rpartition("LANGUAGES:")[-1].strip()
-        logger.debug(f"[PARSE] After stripping LANGUAGES: prefix: {repr(list_string)}")
+        logger.debug(f"After stripping LANGUAGES: prefix: {repr(list_string)}")
     else:
         list_string = list_string.strip()
-        logger.debug(f"[PARSE] After strip (no LANGUAGES: prefix): {repr(list_string)}")
+        logger.debug(f"After strip (no LANGUAGES: prefix): {repr(list_string)}")
 
     # Normalize various delimiters to commas
     for delimiter in ["+", "\n", "/", ":", ";"]:
         list_string = list_string.replace(delimiter, ",")
-    logger.debug(f"[PARSE] After normalizing delimiters: {repr(list_string)}")
+    logger.debug(f"After normalizing delimiters: {repr(list_string)}")
 
     # Split on commas (or use the whole string if no commas)
     if "," in list_string:
         items = list_string.split(",")
-        logger.debug(f"[PARSE] Split on comma, items: {items}")
+        logger.debug(f"Split on comma, items: {items}")
     elif " " in list_string:
         # Space-delimited case - try the whole string first
         match = converter(list_string)
         items = [list_string] if match is None else list_string.split()
-        logger.debug(f"[PARSE] Space-delimited case, match={match}, items: {items}")
+        logger.debug(f"Space-delimited case, match={match}, items: {items}")
     else:
         # Single item, no delimiters
         items = [list_string]
-        logger.debug(f"[PARSE] Single item, no delimiters: {items}")
+        logger.debug(f"Single item, no delimiters: {items}")
 
     utility_codes = {"meta", "community", "all"}
     final_lingvos: dict[str, Lingvo] = {}
 
     for item in items:
         item = item.strip().lower()
-        logger.debug(f"[PARSE] Processing item: {repr(item)}")
+        logger.debug(f"Processing item: {repr(item)}")
 
         if not item:
-            logger.debug("[PARSE] Item is empty, skipping")
+            logger.debug("Item is empty, skipping")
             continue
 
         if item in utility_codes:
-            logger.debug(f"[PARSE] Item {repr(item)} is a utility code, skipping")
+            logger.debug(f"Item {repr(item)} is a utility code, skipping")
             continue
         else:
             lang = converter(item)
-            logger.debug(f"[PARSE] converter({repr(item)}) returned: {lang}")
+            logger.debug(f"converter({repr(item)}) returned: {lang}")
             if lang:
                 final_lingvos[lang.preferred_code] = lang
-                logger.debug(f"[PARSE] Added {lang.preferred_code} -> {lang.name}")
+                logger.debug(f"Added {lang.preferred_code} -> {lang.name}")
             else:
-                logger.debug(f"[PARSE] converter returned None for {repr(item)}")
+                logger.debug(f"converter returned None for {repr(item)}")
 
-    logger.debug(f"[PARSE] Final lingvos dict keys: {list(final_lingvos.keys())}")
+    logger.debug(f"Final lingvos dict keys: {list(final_lingvos.keys())}")
     result = sorted(
         final_lingvos.values(), key=lambda lingvo: lingvo.preferred_code.lower()
     )
     logger.debug(
-        f"[PARSE] Returning {len(result)} Lingvo objects: {[x.preferred_code for x in result]}"
+        f"Returning {len(result)} Lingvo objects: {[x.preferred_code for x in result]}"
     )
     return result
 
@@ -880,16 +903,18 @@ def get_country_emoji(country_name: str) -> str:
 
 def _get_language_emoji(language_code):
     """Intended for use primarily with ISO 639-1 codes."""
+    global _language_full_data_cache
     if not language_code:
         return ""
 
-    language_full_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
+    if _language_full_data_cache is None:
+        _language_full_data_cache = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
 
     # Check if the language code exists in the data
-    if language_code not in language_full_data:
+    if language_code not in _language_full_data_cache:
         return ""
 
-    country_listed = language_full_data[language_code]["country"]
+    country_listed = _language_full_data_cache[language_code]["country"]
 
     return get_country_emoji(country_listed)
 
@@ -904,6 +929,10 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
     Returns:
         List of tuples containing (name, alpha2, alpha3, numeric_code, keywords).
     """
+    global _country_list_cache
+    if _country_list_cache is not None:
+        return _country_list_cache
+
     country_list: list[tuple[str, str, str, str, list[str]]] = []
     with open(Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
@@ -916,7 +945,9 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
                 row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
             )
             country_list.append((name, alpha2, alpha3, numeric, keywords))
-    return country_list
+
+    _country_list_cache = country_list
+    return _country_list_cache
 
 
 def country_converter(
@@ -1060,7 +1091,6 @@ if __name__ == "__main__":
             pprint(parse_result)
 
         elif choice == "3":
-            print(pycountry.countries.search_fuzzy("Congo"))
             country_input = input("Enter a country name: ")
             emoji_result = get_country_emoji(country_input)
 
