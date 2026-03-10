@@ -3,6 +3,9 @@
 """
 Handles time-related conversion tasks.
 Adherence to ISO 8601 or timestamps is strongly emphasized.
+...
+
+Logger tag: [TIME]
 """
 
 from datetime import date, datetime, timezone

@@ -3,17 +3,25 @@
 """
 Contains functions related to statistics tabulation. Many of these
 functions are used by Wenyuan, the statistics calculator routine.
+...
+
+Logger tag: [USAGE]
 """
 
+import ast
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
 import orjson
 
-from config import Paths, logger
+from config import Paths
+from config import logger as _base_logger
 from database import db
 from tasks import WENJU_SETTINGS
 from time_handling import get_current_utc_date
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "USAGE"})
 
 
 def action_counter(messages_number, action_type):
@@ -30,6 +38,9 @@ def action_counter(messages_number, action_type):
         if count == 0:
             return
     except (ValueError, TypeError):
+        logger.debug(
+            f"action_counter: invalid messages_number {messages_number!r}, skipping."
+        )
         return
 
     # Normalize the action type
@@ -172,6 +183,7 @@ def generate_command_usage_report(start_time, end_time, days):
             dt = datetime.strptime(date_text, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             unix_timestamp = int(dt.timestamp())
         except ValueError:
+            logger.debug(f"Skipping malformed date entry: {date_text!r}.")
             continue  # Skip invalid date entries.
 
         if start_time <= unix_timestamp <= end_time:
@@ -198,12 +210,9 @@ def count_notifications(start_time, end_time):
     :param end_time: Period end time (Unix timestamp in UTC)
     :return: Formatted string with notification statistics
     """
-    from datetime import datetime
-    import json
-
     # Load counter log
-    with open(Paths.LOGS["COUNTER"], "r", encoding="utf-8") as f:
-        counter_dict = json.load(f)
+    with open(Paths.LOGS["COUNTER"], "rb") as f:
+        counter_dict = orjson.loads(f.read())
 
     total_notifications = 0
     days_with_data = 0
@@ -354,7 +363,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
     def fetch_data(query: str) -> Optional[dict]:
         cursor.execute(query, (username,))
         row = cursor.fetchone()
-        return eval(row[1]) if row else None  # Use eval only if trusted input
+        return ast.literal_eval(row[1]) if row else None
 
     def normalize_command(cmd: str) -> str:
         """Normalize command names for display."""
@@ -397,6 +406,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
     )
 
     if not commands_dict and not notifications_dict:
+        logger.debug(f"No statistics found for u/{username}.")
         return None
 
     command_lines = format_commands(commands_dict) if commands_dict else []
@@ -432,7 +442,7 @@ def user_statistics_writer(instruo):
         commands_dictionary = {}
         already_saved = False
     else:
-        commands_dictionary = eval(row["commands"])
+        commands_dictionary = ast.literal_eval(row["commands"])
         already_saved = True
 
     # Count occurrences of each command name

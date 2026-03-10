@@ -4,24 +4,32 @@
 Handles subreddit wiki reading and writing.
 Note this is distinct from Wikipedia functions, which are in
 lookup/wp_utils.py.
+...
+
+Logger tag: [WIKI]
 """
 
+import logging
 import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
-from dateutil.relativedelta import relativedelta
 import prawcore
 import yaml
+from dateutil.relativedelta import relativedelta
 from yaml.parser import ParserError
 
-from config import SETTINGS
-from connection import REDDIT, REDDIT_HELPER, logger
+from config import SETTINGS, enable_debug_logging
+from config import logger as _base_logger
+from connection import REDDIT, REDDIT_HELPER
 from discord_utils import send_discord_alert
 from responses import RESPONSE
 
 if TYPE_CHECKING:
     from languages import Lingvo
+
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WIKI"})
 
 
 def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
@@ -122,13 +130,18 @@ def fetch_most_requested_languages() -> list[str]:
     )
     three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
 
+    logger.debug(
+        f"Fetching most-requested languages from wiki page: {three_months_ago}."
+    )
     reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
         three_months_ago
     ]
     reference_page_content = reference_page.content_md.strip()
     reference_table = _extract_single_language_statistics_table(reference_page_content)
     languages_frequency_sorted = _assess_most_requested_languages(reference_table)
-
+    logger.debug(
+        f"Most-requested languages resolved: {list(languages_frequency_sorted.keys())}"
+    )
     return list(languages_frequency_sorted.keys())
 
 
@@ -182,7 +195,7 @@ def update_wiki_page(
         # This should not happen often, as Wenju automatically archives
         # entries every month, but is retained here just in case.
 
-        logger.warning(f"[ZW] Save_Wiki: The {action} wiki page is full.")
+        logger.warning(f"The {action} wiki page is full.")
         send_discord_alert(
             f"'{action}' Wiki Page Full",
             RESPONSE.MSG_WIKIPAGE_FULL.format(action),
@@ -195,7 +208,7 @@ def update_wiki_page(
         else:
             raise ValueError("Content too large for the wiki page")
     else:
-        logger.info(f"[ZW] Save_Wiki: Updated the {action} wiki page.")
+        logger.info(f"Updated the {action} wiki page.")
 
     return
 
@@ -256,13 +269,15 @@ def _frequently_requested_wiki() -> list[dict[str, Any]] | None:
 
 def search_integration(search_term: str) -> str | None:
     """
-    Searches the frequently-requested translation wikipage for a term.
+    Searches the frequently-requested translation (FRT) wikipage for
+    a term.
 
     :param search_term: Search term we are searching for.
     :return: None if the search term does not match anything,
              a formatted string of the results if found.
     """
     search_term = search_term.lower()  # All keywords should be in lower-case.
+    logger.debug(f"Searching FRT wiki for term: {search_term!r}.")
     frt_data = _frequently_requested_wiki()
     term_data = {}
     link_data = []
@@ -273,19 +288,13 @@ def search_integration(search_term: str) -> str | None:
         entry_keywords = entry["keywords"]
         entry_keywords = [x.lower() for x in entry_keywords]
         if search_term in entry_keywords:
-            logger.info(
-                "[ZW] search_integration: Keyword found in "
-                "frequently requested translations."
-            )
+            logger.info("> Keyword found in frequently requested translations.")
             term_data = entry
             break
 
     if not term_data:
         # Exit if no keywords were found.
-        logger.info(
-            "[ZW] search_integration: No keywords found in "
-            "frequently requested translations."
-        )
+        logger.info("> No keywords found in frequently requested translations.")
         return None
     else:
         # Format the header and the body text.
@@ -328,5 +337,5 @@ def search_integration(search_term: str) -> str | None:
 
 
 if __name__ == "__main__":
-    logger.setLevel("DEBUG")
+    enable_debug_logging()
     print(fetch_most_requested_languages())

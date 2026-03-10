@@ -2,14 +2,21 @@
 # -*- coding: UTF-8 -*-
 """
 Initializes Ziwen's runtime state and caches key data on startup.
+...
+
+Logger tag: [STARTUP]
 """
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Any
 
-from config import logger, SETTINGS
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, USERNAME
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "STARTUP"})
 
 
 @dataclass
@@ -59,11 +66,10 @@ def ziwen_startup() -> State:
     :return: A State object containing the current tasks state.
     """
     post_templates: dict[str, str] = template_retriever()
-    logger.debug(
-        "[ZW] # Current post templates retrieved: %d templates", len(post_templates)
-    )
+    logger.debug(f"Current post templates retrieved: {len(post_templates)} templates.")
 
     recent_submitters: list[str] = most_recent_submitters()
+    logger.debug(f"Recent submitters in last 24h: {len(recent_submitters)} users.")
 
     return State(post_templates=post_templates, recent_submitters=recent_submitters)
 

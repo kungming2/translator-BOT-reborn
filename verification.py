@@ -5,23 +5,30 @@ Functions that deal with the verification process on r/translator.
 There is usually only one valid verification post to analyze and
 watch for, and verification requests are submitted as comment replies
 to that post.
+...
+
+Logger tag: [VERIF]
 """
 
+import logging
 import re
 import sqlite3
 import time
 from typing import TYPE_CHECKING
 
-from config import SETTINGS, logger
+from config import SETTINGS, enable_debug_logging
+from config import logger as _base_logger
 from connection import REDDIT, create_mod_note, is_mod
 from database import db
 from discord_utils import send_discord_alert
 from languages import converter
-from reddit_sender import reddit_reply, message_send
+from reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
 
 if TYPE_CHECKING:
     from praw.models import Comment, Redditor
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "VERIF"})
 
 
 def get_verified_thread() -> str | None:
@@ -38,6 +45,7 @@ def get_verified_thread() -> str | None:
 
     for post in search:
         if is_mod(post.author):
+            logger.debug(f"Found current verified thread: `{post.id}`")
             return post.id
 
     return None
@@ -290,7 +298,7 @@ def verification_parser() -> None:
             "verification",
         )
         logger.info(
-            f"[ZW] Notified moderators about a new verification request from u/{author_string}."
+            f"Notified moderators about a new verification request from u/{author_string}."
         )
 
     return
@@ -298,5 +306,12 @@ def verification_parser() -> None:
 
 VERIFIED_POST_ID = get_verified_thread()
 
+if not VERIFIED_POST_ID:
+    logger.warning(
+        "VERIFIED_POST_ID could not be resolved at startup — "
+        "verification_parser will not work until the module is reloaded."
+    )
+
 if __name__ == "__main__":
+    enable_debug_logging()
     print(get_verified_thread())
