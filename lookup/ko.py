@@ -2,12 +2,17 @@
 # -*- coding: UTF-8 -*-
 """
 Contains functions that deal with Korean-language content.
+...
+
+Logger tag: [L:KO]
 """
+
+import logging
 
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
-from config import logger
+from config import logger as _base_logger
 from connection import credentials_source
 from lookup.cache_helpers import (
     format_ko_word_from_cache,
@@ -15,6 +20,8 @@ from lookup.cache_helpers import (
     parse_ko_output_to_json,
     save_to_cache,
 )
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:KO"})
 
 # Set the API key to use.
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
@@ -151,9 +158,9 @@ def _ko_word_fetch(korean_word: str) -> str | None:
     try:
         parsed_data = parse_ko_output_to_json(final_comment)
         save_to_cache(parsed_data, "ko", "ko_word")
-        logger.debug(f"[ZW] KO-Word: Cached result for '{korean_word}'")
+        logger.debug(f"Cached result for '{korean_word}'")
     except Exception as ex:
-        logger.error(f"[ZW] KO-Word: Failed to cache result for '{korean_word}': {ex}")
+        logger.error(f"Failed to cache result for '{korean_word}': {ex}")
 
     return final_comment
 
@@ -172,11 +179,11 @@ def ko_word(korean_word: str) -> str | None:
     cached = get_from_cache(korean_word, "ko", "ko_word")
 
     if cached and cached.get("word"):  # Check it's not empty dict
-        logger.info(f"[ZW] KO-Word: Retrieved '{korean_word}' from cache.")
+        logger.info(f"Retrieved '{korean_word}' from cache.")
         return format_ko_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from API
-    logger.info(f"[ZW] KO-Word: '{korean_word}' not found in cache, fetching from API.")
+    logger.info(f"'{korean_word}' not found in cache, fetching from API.")
     return _ko_word_fetch(korean_word)
 
 

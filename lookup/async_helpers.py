@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Async helper functions for lookup scripts."""
+"""
+Async helper functions for lookup scripts.
+...
+
+Logger tag: [L:ASYNC]
+"""
 
 import asyncio
+import logging
 from typing import Any, Callable
 
-from config import logger
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ASYNC"})
 
 
 async def fetch_json(session, url: str) -> dict | list | None:
@@ -30,7 +38,7 @@ async def fetch_json(session, url: str) -> dict | list | None:
         async with session.get(url) as response:
             return await response.json()
     except Exception as e:
-        logger.error(f"[ZW] Fetch failed for {url}: {e}")
+        logger.error(f"Fetch failed for {url}: {e}")
         return None
 
 

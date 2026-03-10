@@ -5,8 +5,12 @@ Contains functions that deal with retrieving data about specific
 languages from Wikipedia and Ethnologue. This is usually called
 'reference' data. This data is used to populate the main
 language data YAML file, among other things.
+...
+
+Logger tag: [L:REF]
 """
 
+import logging
 import re
 
 import requests
@@ -16,9 +20,12 @@ import yaml
 from lxml import html
 from waybackpy import exceptions
 
-from config import Paths, logger
+from config import Paths
+from config import logger as _base_logger
 from connection import get_random_useragent
 from languages import converter, get_lingvos, select_random_language
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})
 
 
 def _fetch_sil_language_data(language_code: str) -> dict | None:
@@ -37,17 +44,17 @@ def _fetch_sil_language_data(language_code: str) -> dict | None:
         response.raise_for_status()
         logger.debug(f"Response status: {response.status_code}")
     except requests.RequestException as e:
-        logger.error(f"[SIL DEBUG] Could not fetch page for `{language_code}`: {e}")
+        logger.error(f"Could not fetch page for `{language_code}`: {e}")
         return None
 
     tree = html.fromstring(response.content)
 
     # Find the main <h2> element containing the language name and code dynamically
     header_elements = tree.xpath('//div[contains(@class,"region-content")]//h2/text()')
-    logger.debug(f"[SIL DEBUG] Header elements found: {header_elements}")
+    logger.debug(f"Header elements found: {header_elements}")
 
     if not header_elements:
-        logger.warning(f"[SIL DEBUG] Could not find header for `{language_code}`")
+        logger.warning(f"Could not find header for `{language_code}`")
         return None
 
     header_text = header_elements[0].strip()
@@ -56,10 +63,10 @@ def _fetch_sil_language_data(language_code: str) -> dict | None:
 
     # Find the code sets table row dynamically
     code_sets_elements = tree.xpath("//table//tr/td[4]/text()")
-    logger.debug(f"[SIL DEBUG] Code sets found: {code_sets_elements}")
+    logger.debug(f"Code sets found: {code_sets_elements}")
 
     if not code_sets_elements:
-        logger.warning(f"[SIL DEBUG] Could not find code sets for `{language_code}`")
+        logger.warning(f"Could not find code sets for `{language_code}`")
         return None
 
     code_sets_text = code_sets_elements[0].strip()
@@ -156,16 +163,14 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         response.raise_for_status()
         tree = html.fromstring(response.content)
     except requests.RequestException as e:
-        logger.error(
-            f"[Reference] Could not fetch Ethnologue page for `{language_code}`: {e}"
-        )
+        logger.error(f"Could not fetch Ethnologue page for `{language_code}`: {e}")
 
         # SIL backup here. This is primarily for historical/extinct
         # languages, like Tangut.
         sil_data = _fetch_sil_language_data(language_code)
         if sil_data:
             logger.info(
-                f"[Reference] No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}"
+                f"No Ethnologue entry. Found SIL data for `{language_code}`: {sil_data}"
             )
             ref_data.update(sil_data)
             return ref_data
@@ -210,7 +215,7 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         ref_data["population"] = max(numbers) if numbers else 0
     except IndexError:
         logger.warning(
-            f"[Reference] Problem fetching population for `{language_code}`, defaulting to 0."
+            f"Problem fetching population for `{language_code}`, defaulting to 0."
         )
         ref_data["population"] = 0
 
@@ -231,12 +236,10 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         if country_list:
             ref_data["country"] = str(country_list[0]).strip()
         else:
-            logger.warning(f"[Reference] Could not find country for `{language_code}`.")
+            logger.warning(f"Could not find country for `{language_code}`.")
             ref_data["country"] = ""
     except Exception as e:
-        logger.warning(
-            f"[Reference] Error retrieving country for `{language_code}`: {e}"
-        )
+        logger.warning(f"Error retrieving country for `{language_code}`: {e}")
         ref_data["country"] = ""
 
     # Language family
@@ -278,7 +281,7 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         # Write updated YAML back to file
         with open(language_data_path, "w", encoding="utf-8") as f:
             yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
-            logger.info(f"[Reference] Data for `{language_code}` has been added.")
+            logger.info(f"Data for `{language_code}` has been added.")
 
     return ref_data
 
@@ -294,17 +297,13 @@ def get_language_reference(language_code: str) -> dict | None:
     # Step 1: Get archived Ethnologue page URL
     archived_url = _get_archived_ethnologue_page(language_code)
     if not archived_url:
-        logger.error(
-            f"[Reference] Could not retrieve archived URL for `{language_code}`."
-        )
+        logger.error(f"Could not retrieve archived URL for `{language_code}`.")
         return None
 
     # Step 2: Fetch and parse reference data from the archived page
     reference_data = _fetch_language_reference_data(archived_url, language_code)
     if not reference_data:
-        logger.error(
-            f"[Reference] Could not retrieve reference data for `{language_code}`."
-        )
+        logger.error(f"Could not retrieve reference data for `{language_code}`.")
         return None
 
     return reference_data
@@ -335,6 +334,6 @@ if __name__ == "__main__":
         elif choice == "2":
             random_selection = select_random_language()
             logger.info(
-                f"[Reference] Randomly selected {random_selection.name} (`{random_selection.preferred_code}`)."
+                f"Randomly selected {random_selection.name} (`{random_selection.preferred_code}`)."
             )
             print(get_language_reference(random_selection.language_code_3))

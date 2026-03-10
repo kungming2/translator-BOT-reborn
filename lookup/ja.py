@@ -2,9 +2,13 @@
 # -*- coding: UTF-8 -*-
 """
 Contains functions that deal with Japanese-language content.
+...
+
+Logger tag: [L:JA]
 """
 
 import asyncio
+import logging
 import re
 from time import sleep
 
@@ -15,7 +19,7 @@ from lxml import html
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
-from config import logger
+from config import logger as _base_logger
 from connection import get_random_useragent
 from lookup.async_helpers import call_sync_async, fetch_json
 from lookup.cache_helpers import (
@@ -26,6 +30,8 @@ from lookup.cache_helpers import (
     save_to_cache,
 )
 from lookup.zh import calligraphy_search
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:JA"})
 
 useragent = get_random_useragent()
 
@@ -116,7 +122,7 @@ def _ja_character_fetch(character: str) -> str:
         meaning: str = " / ".join(meanings).strip()
 
         if not meaning:
-            logger.info(f"[ZW] JA-Character: No results for {character}")
+            logger.info(f"No results for {character}")
             return (
                 f"There were no results for {character}. Please check to make sure it is a valid "
                 "Japanese character or word."
@@ -200,18 +206,16 @@ def _ja_character_fetch(character: str) -> str:
         )
 
     logger.info(
-        f"[ZW] JA-Character: Received lookup command for {character} in Japanese. Returned results."
+        f"Received lookup command for {character} in Japanese. Returned results."
     )
 
     # Cache the result before returning
     try:
         parsed_data = parse_ja_output_to_json(total_data)
         save_to_cache(parsed_data, "ja", "ja_character")
-        logger.debug(f"[ZW] JA-Character: Cached result for '{character}'")
+        logger.debug(f"Cached result for '{character}'")
     except Exception as ex:
-        logger.error(
-            f"[ZW] JA-Character: Failed to cache result for '{character}': {ex}"
-        )
+        logger.error(f"Failed to cache result for '{character}': {ex}")
 
     return total_data + lookup_line_3
 
@@ -229,13 +233,11 @@ def ja_character(character: str) -> str:
     cached = get_from_cache(character, "ja", "ja_character")
 
     if cached and cached.get("word"):  # Check it's not empty dict
-        logger.info(f"[ZW] JA-Character: Retrieved '{character}' from cache.")
+        logger.info(f"Retrieved '{character}' from cache.")
         return format_ja_character_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(
-        f"[ZW] JA-Character: '{character}' not found in cache, fetching from web."
-    )
+    logger.info(f"'{character}' not found in cache, fetching from web.")
     return _ja_character_fetch(character)
 
 
@@ -304,13 +306,13 @@ def _sfx_search(katakana_string: str) -> str | None:
         )
         finished_comment: str = f"{header}{formatted_line}"
         logger.info(
-            f"[ZW] JA-Word-SFX: Found a dictionary entry for {katakana_string} at {search_url}"
+            f"Found a SFX dictionary entry for {katakana_string} at {search_url}"
         )
 
         return finished_comment
 
     except Exception as e:
-        logger.warning(f"[ZW] JA-Word-SFX: Error searching for {katakana_string}: {e}")
+        logger.warning(f"Error searching for {katakana_string} as SFX: {e}")
         return None
     finally:
         driver.quit()
@@ -478,7 +480,7 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
         word_data: dict | list | None = await fetch_json(session, url)
 
     if not word_data or not word_data.get("data"):
-        logger.warning(f"[ZW] JA-Word: No JSON or empty data for `{japanese_word}`.")
+        logger.warning(f"No JSON or empty data for `{japanese_word}`.")
         word_reading: str = ""
         main_data = None
     else:
@@ -487,7 +489,7 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
 
     # If Jisho returned nothing useful
     if not word_reading:
-        logger.info(f"[ZW] JA-Word: No results for '{japanese_word}' on Jisho.")
+        logger.info(f"No results for '{japanese_word}' on Jisho.")
 
         katakana_test: re.Match | None = re.search(r"[\u30a0-\u30ff]", japanese_word)
         # Execute some searches asynchronously.
@@ -501,24 +503,22 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
 
         if not any([name_data, sfx_data, yojijukugo_data]):
             if not katakana_test:
-                logger.info(
-                    "[ZW] JA-Word: No matches. Falling back to single-character lookup."
-                )
+                logger.info("No matches. Falling back to single-character lookup.")
                 return await call_sync_async(ja_character, japanese_word)
             else:
-                logger.info("[ZW] JA-Word: Unknown katakana word.")
+                logger.info("Unknown katakana word.")
                 return None
 
         if name_data:
-            logger.info("[ZW] JA-Word: Found a Japanese name/surname.")
+            logger.info("> Found a Japanese name/surname.")
             return name_data
 
         if yojijukugo_data:
-            logger.info("[ZW] JA-Word: Found a Japanese yojijukugo (proverb).")
+            logger.info("> Found a Japanese yojijukugo (proverb).")
             return yojijukugo_data
 
         if sfx_data:
-            logger.info("[ZW] JA-Word: Found a Japanese sound effect.")
+            logger.info("> Found a Japanese sound effect.")
             return sfx_data
 
     if main_data:
@@ -544,17 +544,15 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             f"^[Weblio](https://ejje.weblio.jp/content/{japanese_word})"
         )
 
-        logger.info(f"[ZW] JA-Word: Final result for '{japanese_word}' returned.")
+        logger.info(f"Final result for '{japanese_word}' returned.")
 
         # Cache the result before returning
         try:
             parsed_data = parse_ja_output_to_json(return_comment)
             save_to_cache(parsed_data, "ja", "ja_word")
-            logger.debug(f"[ZW] JA-Word: Cached result for '{japanese_word}'")
+            logger.debug(f"Cached result for '{japanese_word}'")
         except Exception as ex:
-            logger.error(
-                f"[ZW] JA-Word: Failed to cache result for '{japanese_word}': {ex}"
-            )
+            logger.error(f"Failed to cache result for '{japanese_word}': {ex}")
 
         return return_comment + footer
     else:
@@ -577,13 +575,11 @@ async def ja_word(japanese_word: str) -> str | None:
     cached = get_from_cache(japanese_word, "ja", "ja_word")
 
     if cached and cached.get("word"):  # Check it's not empty dict
-        logger.info(f"[ZW] JA-Word: Retrieved '{japanese_word}' from cache.")
+        logger.info(f"Retrieved '{japanese_word}' from cache.")
         return format_ja_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(
-        f"[ZW] JA-Word: '{japanese_word}' not found in cache, fetching from web."
-    )
+    logger.info(f"'{japanese_word}' not found in cache, fetching from web.")
     return await _ja_word_fetch(japanese_word)
 
 

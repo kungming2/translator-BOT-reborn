@@ -9,10 +9,14 @@ information, but it requires a separate larger download.
 
 To install it, run:
 
-pip install unidic
-python -m unidic download
+    pip install unidic
+    python -m unidic download
+...
+
+Logger tag: [L:MATCH]
 """
 
+import logging
 import os
 import re
 from typing import Any
@@ -22,10 +26,13 @@ import MeCab  # mecab-python3
 import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from connection import get_random_useragent
 from languages import converter
 from title_handling import extract_lingvos_from_text
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
 
 useragent = get_random_useragent()
 

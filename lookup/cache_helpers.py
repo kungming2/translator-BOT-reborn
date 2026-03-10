@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Caching functions for lookup scripts."""
+"""
+Caching functions for lookup scripts.
+...
+
+Logger tag: [L:CACHE]
+"""
 
 import asyncio
 import json
+import logging
 import re
 import sqlite3
 import sys
@@ -12,6 +18,9 @@ import threading
 from typing import Dict
 
 from config import SETTINGS, Paths
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:CACHE"})
 
 
 """CACHE INPUT"""
@@ -125,12 +134,14 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
         "traditional": None,
         "simplified": None,
         "pronunciations": {},
-        "meanings": None,
+        "meanings": None,  # English translation
         "buddhist_meanings": None,
         "cantonese_meanings": None,
         "tea_meanings": None,
         "chengyu_meaning": None,  # for chengyu
         "chengyu_source": None,  # for chengyu
+        "chinese_meaning": None,  # for chengyu
+        "literary_source": None,  # for chengyu
         "calligraphy_links": {
             "sfzd_image": None,  # calligraphy image
             "sfds": None,  # SFDS calligraphy link

@@ -2,6 +2,9 @@
 # -*- coding: UTF-8 -*-
 """
 Unused Wiktionary parser (not feature-complete).
+...
+
+Logger tag: [L:WT]
 """
 
 import pprint

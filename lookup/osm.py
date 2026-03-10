@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Experimental module to return search results for locations via OSM.
+Module to return search results for locations via OpenStreetMap.
+...
+
+Logger tag: [L:OSM]
 """
 
+import logging
 from typing import Any
 from urllib.parse import quote
 
 import requests
 
-from config import logger
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:OSM"})
 
 
 def search_nominatim(
@@ -28,6 +34,7 @@ def search_nominatim(
     """
     # URL encode the query (double encoding for the UI link)
     encoded_query: str = quote(query)
+    logger.info(f"Initial query: {query!r}")
 
     # Build API URL
     url: str = (

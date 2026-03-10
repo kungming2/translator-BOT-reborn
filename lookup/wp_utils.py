@@ -2,15 +2,21 @@
 # -*- coding: UTF-8 -*-
 """
 Contains functions that deal with Wikipedia access.
+...
+
+Logger tag: [L:WP]
 """
 
+import logging
 import re
 
 import wikipedia
 
-from config import logger
+from config import logger as _base_logger
 from languages import converter
 from lookup.osm import search_nominatim
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:WP"})
 
 
 """WIKIPEDIA DETECTOR (COMMENTS)"""

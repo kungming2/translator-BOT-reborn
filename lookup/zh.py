@@ -2,6 +2,9 @@
 # -*- coding: UTF-8 -*-
 """
 Contains functions that deal with Chinese-language content.
+...
+
+Logger tag: [L:ZH]
 """
 
 import asyncio
@@ -25,7 +28,8 @@ from korean_romanizer.romanizer import Romanizer
 from lxml import html
 from pypinyin import Style, lazy_pinyin
 
-from config import Paths, logger
+from config import Paths
+from config import logger as _base_logger
 from connection import get_random_useragent
 from lookup.async_helpers import call_sync_async
 from lookup.cache_helpers import (
@@ -36,6 +40,8 @@ from lookup.cache_helpers import (
     save_to_cache,
 )
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
 useragent = get_random_useragent()
 
@@ -149,11 +155,11 @@ async def zh_word(word):
     cached = get_from_cache(trad_word, "zh", "zh_word")
 
     if cached:
-        logger.info(f"[ZW] ZH-Word: Retrieved '{word}' from cache.")
+        logger.info(f"Retrieved '{word}' from cache.")
         return format_zh_word_from_cache(cached) + " ^⚡"
 
     # Cache miss - fetch from web
-    logger.info(f"[ZW] ZH-Word: '{word}' not found in cache, fetching from web.")
+    logger.info(f"'{word}' not found in cache, fetching from web.")
     return await _zh_word_fetch(word)
 
 
@@ -227,19 +233,19 @@ def _zh_word_alternate_romanization(pinyin_string, original_input=None):
     # Process Yale and Wade-Giles romanizations
     for syllable in syllables:
         if len(syllable) < 2:
-            logger.error(f"⚠️ Skipping malformed syllable: '{syllable}'")
+            logger.error(f"Skipping malformed syllable: '{syllable}'")
             continue
 
         tone = syllable[-1]
         base = syllable[:-1].lower().strip()
 
         if not base:
-            logger.error(f"⚠️ Skipping syllable with empty base: '{syllable}'")
+            logger.error(f"Skipping syllable with empty base: '{syllable}'")
             continue
 
         if base not in corresponding_dict:
             logger.error(
-                f"❌ Missing key in dictionary: '{base}' from syllable '{syllable}'"
+                f"Missing key in dictionary: '{base}' from syllable '{syllable}'"
             )
             continue
 
@@ -522,7 +528,7 @@ def calligraphy_search(character):
         f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({gx_url})*, *{variant_formatted}*)"
     )
 
-    logger.debug(f"[ZW] ZH-Calligraphy: Found calligraphic image for {character}.")
+    logger.debug(f"Found calligraphic image for {character}.")
     return image_string
 
 
@@ -727,7 +733,7 @@ async def _zh_character_fetch(character):
         ]
         if not pronunciation:
             to_post = RESPONSE.COMMENT_INVALID_ZH_CHARACTER.format(character)
-            logger.info(f"[ZW] ZH-Character: No results for {character}")
+            logger.info(f"No results for {character}")
             return to_post
 
     # Yue pronunciation alternates with Mandarin in list: even idx Mandarin, odd idx Yue
@@ -749,9 +755,7 @@ async def _zh_character_fetch(character):
         meaning = "/ ".join(tree.xpath('//div[contains(@class,"defs")]/text()')).strip()
 
         if tradify(character) == simplify(character):
-            logger.debug(
-                f"[ZW] ZH-Character: The two versions of {character} are identical."
-            )
+            logger.debug(f"The two versions of {character} are identical.")
             lookup_line_1 = (
                 f"# [{character}](https://en.wiktionary.org/wiki/{character}#Chinese)\n\n"
                 "| Language | Pronunciation |\n"
@@ -762,9 +766,7 @@ async def _zh_character_fetch(character):
         else:
             trad_char = tradify(character)
             simp_char = simplify(character)
-            logger.debug(
-                f"[ZW] ZH-Character: The two versions of {character} are *not* identical."
-            )
+            logger.debug(f"The two versions of {character} are *not* identical.")
             lookup_line_1 = (
                 f"# [{trad_char} / {simp_char}](https://en.wiktionary.org/wiki/{trad_char}#Chinese)\n\n"
                 "| Language | Pronunciation |\n"
@@ -891,17 +893,15 @@ async def _zh_character_fetch(character):
 
     to_post = lookup_line_1 + lookup_line_2
     logger.info(
-        f"[ZW] ZH-Character: Received lookup command for {character} in Chinese. Returned search results."
+        f"Received lookup command for {character} in Chinese. Returned search results."
     )
 
     try:
         parsed_data = parse_zh_output_to_json(to_post)
         save_to_cache(parsed_data, "zh", "zh_character")
-        logger.debug(f"[ZW] ZH-Character: Cached result for '{character}'")
+        logger.debug(f"Cached result for '{character}'")
     except Exception as e:
-        logger.error(
-            f"[ZW] ZH-Character: Failed to cache result for '{character}': {e}"
-        )
+        logger.error(f"Failed to cache result for '{character}': {e}")
 
     return to_post
 
@@ -1050,11 +1050,11 @@ async def zh_word_chengyu_supplement(chengyu):
             page_tree = html.fromstring(response.text)
             chengyu_result_texts = page_tree.xpath("//table[2]//td//text()")
         except (UnicodeEncodeError, UnicodeDecodeError, httpx.RequestError) as e:
-            logger.error(f"[ZW] ZH-Chengyu: Unicode or connection error: {e}")
+            logger.error(f"Unicode or connection error: {e}")
             return None
 
         if "找到 0 个成语" in "".join(chengyu_result_texts):
-            logger.info(f"[ZW] ZH-Chengyu: No chengyu results found for {chengyu}.")
+            logger.info(f"No chengyu results found for {chengyu}.")
             return None
 
         link_elements = page_tree.xpath('//tr[contains(@bgcolor, "#ffffff")]/td/a')
@@ -1062,14 +1062,14 @@ async def zh_word_chengyu_supplement(chengyu):
             return None
 
         detail_url = link_elements[0].get("href")
-        logger.info(f"[ZW] > ZH-Chengyu: Found chengyu detail page at: {detail_url}")
+        logger.info(f"Found chengyu detail page at: {detail_url}")
 
         try:
             detail_response = await client.get(detail_url, headers=headers)
             detail_response.encoding = "gb2312"
             detail_tree = html.fromstring(detail_response.text)
         except httpx.RequestError as e:
-            logger.error(f"[ZW] ZH-Chengyu: Error fetching detail page: {e}")
+            logger.error(f"Error fetching detail page: {e}")
             return None
 
         meaning_xpath = (
@@ -1128,9 +1128,7 @@ async def _zh_word_fetch(word):
             search_cccanto = await _zh_word_dictionary_search(trad_word, "cantonese")
 
             if not any([search_buddhist, search_tea, search_cccanto]):
-                logger.info(
-                    "[ZW] ZH-Word: No results found. Getting individual characters instead."
-                )
+                logger.info("No results found. Getting individual characters instead.")
                 if len(word) < 2:
                     return await zh_character(word)
                 return "\n\n" + "\n\n".join([await zh_character(char) for char in word])
@@ -1143,7 +1141,7 @@ async def _zh_word_fetch(word):
                         alternate_jyutping = result["jyutping"]
 
             logger.info(
-                f"[ZW] ZH-Word: No results for '{word}', but specialty dictionaries returned matches."
+                f"No results for '{word}', but specialty dictionaries returned matches."
             )
 
         if not alternate_meanings:
@@ -1209,7 +1207,7 @@ async def _zh_word_fetch(word):
         if len(word) == 4:
             chengyu_info = await zh_word_chengyu_supplement(word)
             if chengyu_info:
-                logger.info("[ZW] ZH-Word: >> Added additional chengyu data.")
+                logger.info(">> Added additional chengyu data.")
                 meaning_section += chengyu_info
 
         buddhist_main = await _zh_word_dictionary_search(tradify(word), "buddhist")
@@ -1228,17 +1226,15 @@ async def _zh_word_fetch(word):
     )
 
     result = lookup_header + meaning_section + "\n\n" + footer
-    logger.info(
-        f"[ZW] ZH-Word: Received a lookup command for '{word}'. Returned search results."
-    )
+    logger.info(f"Received a lookup command for '{word}'. Returned search results.")
 
     # Cache the result before returning
     try:
         parsed_data = parse_zh_output_to_json(result)
         save_to_cache(parsed_data, "zh", "zh_word")
-        logger.debug(f"[ZW] ZH-Word: Cached result for '{word}'")
+        logger.debug(f"Cached result for '{word}'")
     except Exception as e:
-        logger.error(f"[ZW] ZH-Word: Failed to cache result for '{word}': {e}")
+        logger.error(f"Failed to cache result for '{word}': {e}")
 
     return result
 
