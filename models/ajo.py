@@ -70,7 +70,7 @@ def ajo_writer(new_ajo):
                 stored_ajo_dict = orjson.loads(row["ajo"])
             except orjson.JSONDecodeError:  # Stored in an old format.
                 logger.warning(
-                    f"[ZW] ajo_writer: Old Ajo format detected for `{ajo_id}`; "
+                    f"Old Ajo format detected for `{ajo_id}`; "
                     f"trying literal_eval fallback."
                 )
                 try:
@@ -78,7 +78,7 @@ def ajo_writer(new_ajo):
                     if not isinstance(stored_ajo_dict, dict):
                         raise ValueError("Fallback eval didn't yield a dict.")
                 except Exception as e:
-                    logger.error("[ZW] ajo_writer: Failed to decode legacy Ajo format.")
+                    logger.error("Failed to decode legacy Ajo format.")
                     raise e
             if new_ajo.to_dict() != stored_ajo_dict:
                 cursor.execute(
@@ -86,10 +86,10 @@ def ajo_writer(new_ajo):
                     (representation, ajo_id),
                 )
                 conn.commit()
-                logger.info(f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, data updated.")
+                logger.info(f"Ajo `{ajo_id}` exists, data updated.")
             else:
                 logger.debug(
-                    f"[ZW] ajo_writer: Ajo `{ajo_id}` exists, but no change in data."
+                    f"Ajo `{ajo_id}` exists, but no change in data."
                 )
         else:
             cursor.execute(
@@ -98,7 +98,7 @@ def ajo_writer(new_ajo):
             )
             conn.commit()
             logger.info(
-                f"[ZW] ajo_writer: Ajo `{ajo_id}` not found in database. Created new record."
+                f"Ajo `{ajo_id}` not found in database. Created new record."
             )
     finally:
         # Restore the cached submission after writing
@@ -124,7 +124,7 @@ def ajo_loader(ajo_id):
     """Loads Ajos from the local database."""
     result = db.fetch_ajo("SELECT * FROM ajo_database WHERE id = ?", (ajo_id,))
     if result is None:
-        logger.debug("[ZW] ajo_loader: No local Ajo stored.")
+        logger.debug("No local Ajo stored.")
         return None
 
     try:
@@ -155,11 +155,11 @@ def ajo_loader(ajo_id):
         if hasattr(ajo, "preferred_code") and ajo.preferred_code:
             ajo._lingvo = converter(ajo.preferred_code)
 
-        logger.debug(f"[ZW] ajo_loader: Loaded Ajo `{ajo_id}` from local database.")
+        logger.debug(f"Loaded Ajo `{ajo_id}` from local database.")
         return ajo
     except Exception as e:
         logger.error(
-            f"[ZW] ajo_loader: Failed to load or initialize Ajo `{ajo_id}`: {e}"
+            f"Failed to load or initialize Ajo `{ajo_id}`: {e}"
         )
         return None
 
@@ -182,10 +182,10 @@ def ajo_delete(ajo_id: str) -> bool:
     deleted = cursor.rowcount > 0
     if deleted:
         logger.info(
-            f"[ZW] ajo_delete: Ajo `{ajo_id}` permanently removed from database."
+            f"Ajo `{ajo_id}` permanently removed from database."
         )
     else:
-        logger.warning(f"[ZW] ajo_delete: No Ajo found with id `{ajo_id}` to delete.")
+        logger.warning(f"No Ajo found with id `{ajo_id}` to delete.")
     return deleted
 
 
@@ -499,7 +499,7 @@ class Ajo:
             self.language_history = [titolo.final_code] if titolo.final_code else []
 
         logger.info(
-            f"[ZW] Ajo: Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
+            f"Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
         )
 
     def to_dict(self):
@@ -696,12 +696,12 @@ class Ajo:
             if self.preferred_code == "multiple":
                 self.type = "multiple"
                 self.is_defined_multiple = False
-                logger.info("[ZW] Ajo: Set to non-defined multiple language post")
+                logger.info("Set to non-defined multiple language post")
             else:
                 # Reset multiple post flags when setting to single language
                 self.type = "single"
                 self.is_defined_multiple = False
-                logger.info(f"[ZW] Ajo: Single language post: {self.language_name}")
+                logger.info(f"Single language post: {self.language_name}")
 
             # Reset status to string format for single posts
             if isinstance(self.status, dict):
@@ -898,7 +898,7 @@ class Ajo:
         if translator_name not in self.recorded_translators:
             self.recorded_translators.append(translator_name)
             logger.debug(
-                f"[ZW] Ajo: Added translator to recorded translators: u/{translator_name}."
+                f"Added translator to recorded translators: u/{translator_name}."
             )
 
     def add_notified(self, notified_list: List[str]) -> None:
@@ -915,7 +915,7 @@ class Ajo:
         for name in notified_list:
             if name not in self.notified:
                 self.notified.append(name)
-                logger.debug(f"[ZW] Ajo: Added notified name u/{name}.")
+                logger.debug(f"Added notified name u/{name}.")
 
     def set_image_hash(self, reddit_submission):
         """
@@ -985,7 +985,7 @@ def _fetch_submission(post_id: str):
     try:
         return REDDIT.submission(id=post_id)
     except Exception as e:
-        logger.error(f"[ZW] Failed to fetch submission {post_id}: {e}")
+        logger.error(f"Failed to fetch submission {post_id}: {e}")
         return None
 
 
@@ -1058,7 +1058,7 @@ def determine_flair_and_update(
 
     if not ajo.lingvo:
         logger.error(
-            f"[ZW] No lingvo associated with `{ajo.id}`. Will not update flair."
+            f"No lingvo associated with `{ajo.id}`. Will not update flair."
         )
         # Set generic flair and return early
         output_flair_css = "generic"
@@ -1084,7 +1084,7 @@ def determine_flair_and_update(
                     },
                 )
             logger.warning(
-                f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` "
+                f"Set post `{ajo.id}` to CSS `{output_flair_css}` "
                 f"and text `{output_flair_text}` (no lingvo)."
             )
 
@@ -1189,7 +1189,7 @@ def determine_flair_and_update(
     if output_flair_css in post_templates:
         template_id = post_templates[output_flair_css]
         logger.debug(
-            f"[ZW] Update Reddit: Template for CSS `{output_flair_css}` is `{template_id}`."
+            f"Template for CSS `{output_flair_css}` is `{template_id}`."
         )
 
         # Get current flair info
@@ -1210,7 +1210,7 @@ def determine_flair_and_update(
                     flair_template_id=template_id, text=output_flair_text
                 )
                 logger.debug(
-                    f"[ZW] Updated post `{ajo.id}` flair to `{output_flair_text}` "
+                    f"Updated post `{ajo.id}` flair to `{output_flair_text}` "
                     f"(template `{template_id}`)."
                 )
             elif initial_update:
@@ -1218,12 +1218,12 @@ def determine_flair_and_update(
                     flair_template_id=template_id, text=output_flair_text
                 )
                 logger.info(
-                    f"[ZW] Initial flair set for post `{ajo.id}` to `{output_flair_text}` "
+                    f"Initial flair set for post `{ajo.id}` to `{output_flair_text}` "
                     f"(template `{template_id}`)."
                 )
             else:
                 logger.debug(
-                    f"[ZW] Skipped flair update for `{ajo.id}` "
+                    f"Skipped flair update for `{ajo.id}` "
                     f"(already `{output_flair_text}` / `{template_id}`)."
                 )
         else:
@@ -1239,7 +1239,7 @@ def determine_flair_and_update(
                 },
             )
         logger.debug(
-            f"[ZW] Set post `{ajo.id}` to CSS `{output_flair_css}` and text `{output_flair_text}`."
+            f"Set post `{ajo.id}` to CSS `{output_flair_css}` and text `{output_flair_text}`."
         )
 
     # Sync flair output back to Ajo instance
