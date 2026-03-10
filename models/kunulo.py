@@ -9,13 +9,20 @@ comments, like: [](#tag)
 
 This is a companion to the Ajo class, as it tells the bot quickly what
 actions that are public-facing can be done.
+...
+
+Logger tag: [M:KUNULO]
 """
 
+import logging
 import pprint
 import re
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER, USERNAME
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KUNULO"})
 
 
 class Kunulo:

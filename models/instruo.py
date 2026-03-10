@@ -1,15 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Defines the Instruo comment structure and class, along with related functions.
+Defines the Instruo class and related helpers for processing Reddit comments
+that contain bot commands.
+
+An Instruo wraps a PRAW comment (or plain text) and exposes the parsed list
+of Komando objects extracted from it, along with comment metadata such as
+author, post ID, and timestamp. It is the primary input object passed to
+command-handling logic elsewhere in the system.
+
+Key components:
+    Instruo              -- Dataclass-style model for a command-bearing comment.
+    Instruo.from_comment -- Construct from a live PRAW comment object.
+    Instruo.from_text    -- Construct from a plain string (testing only).
+    comment_has_command  -- Fast pre-check used to skip comments with no commands.
+...
+
+Logger tag: [M:INSTRUO]
 """
 
+import logging
 import re
 
 from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from models.ajo import ajo_loader
 from models.komando import extract_commands_from_text
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
 
 class Instruo:
@@ -72,6 +91,10 @@ class Instruo:
         if parent_languages is not None and not isinstance(parent_languages, list):
             parent_languages = [parent_languages]
         commands = extract_commands_from_text(text, parent_languages=parent_languages)
+        logger.debug(
+            f"from_comment: {id_comment} by u/{author_comment} — "
+            f"{len(commands)} komando(s) parsed."
+        )
         return cls(
             id_comment=id_comment,
             id_post=id_post,
@@ -161,6 +184,7 @@ def comment_has_command(comment):
         if cmd in text:
             return True
 
+    logger.debug("No commands detected in comment.")
     return False
 
 

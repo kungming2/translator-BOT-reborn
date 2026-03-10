@@ -4,16 +4,23 @@
 This Diskuto class covers internal posts that are *not* requests - e.g.
 Meta or Community posts. This is intended to make creating more granular
 types easier in the future.
+...
+
+Logger tag: [M:DISKUTO]
 """
 
+import logging
 import re
 
 import orjson
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from testing import log_testing_mode
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "M:DISKUTO"})
 
 
 class Diskuto:
@@ -110,14 +117,12 @@ class Diskuto:
         post_templates = STATE.post_templates
 
         if not self.post_type:
-            logger.warning(
-                f"[Diskuto] update_reddit: No post_type set for `{self.id}`. Skipping flair update."
-            )
+            logger.warning(f"No post_type set for `{self.id}`. Skipping flair update.")
             return
 
         if self.post_type not in post_templates:
             logger.warning(
-                f"[Diskuto] update_reddit: No flair template found for post_type "
+                f"No flair template found for post_type "
                 f"'{self.post_type}' on `{self.id}`. Skipping flair update."
             )
             return
@@ -129,7 +134,7 @@ class Diskuto:
         if not testing_mode:
             submission.flair.select(flair_template_id=template_id, text=flair_text)
             logger.info(
-                f"[Diskuto] update_reddit: Set flair for `{self.id}` to "
+                f"Set flair for `{self.id}` to "
                 f"'{flair_text}' (template `{template_id}`)."
             )
         else:
@@ -197,16 +202,16 @@ def diskuto_writer(diskuto_obj):
                 (created_time, content_json, post_id),
             )
             conn.commit()
-            logger.info(f"[Diskuto Writer] Diskuto `{post_id}` exists, data updated.")
+            logger.info(f"Diskuto `{post_id}` exists, data updated.")
         else:
-            logger.info(f"[Diskuto Writer] Diskuto `{post_id}` exists, no change.")
+            logger.info(f"Diskuto `{post_id}` exists, no change.")
     else:
         cursor.execute(
             "INSERT OR REPLACE INTO internal_posts (id, created_utc, content) VALUES (?, ?, ?)",
             (post_id, created_time, content_json),
         )
         conn.commit()
-        logger.info(f"[Diskuto Writer] New Diskuto `{post_id}` written to database.")
+        logger.info(f"New Diskuto `{post_id}` written to database.")
 
 
 def diskuto_loader(post_id):
@@ -221,15 +226,13 @@ def diskuto_loader(post_id):
     )
 
     if result is None:
-        logger.debug(f"[Diskuto Loader] No Diskuto found for id `{post_id}`.")
+        logger.debug(f"No Diskuto found for id `{post_id}`.")
         return None
 
     try:
         diskuto_dict = orjson.loads(result["content"])
     except orjson.JSONDecodeError:
-        logger.error(
-            f"[Diskuto Loader] Failed to decode Diskuto JSON for id `{post_id}`."
-        )
+        logger.error(f"Failed to decode Diskuto JSON for id `{post_id}`.")
         return None
 
     # Rebuild Diskuto object

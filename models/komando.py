@@ -4,14 +4,21 @@
 Defines the Komando command structure and class,
 along with related functions. This represents a command called within a
 comment, along with the data associated with that comment call.
+...
+
+Logger tag: [M:KOMANDO]
 """
 
+import logging
 import re
 from collections import defaultdict
 
 from config import SETTINGS
+from config import logger as _base_logger
 from languages import converter
 from utility import extract_text_within_curly_braces
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
 
 class Komando:
@@ -61,6 +68,8 @@ class Komando:
                 specific_mode=self.specific_mode,
                 disable_tokenization=self.disable_tokenization,
             )
+
+        logger.info(f"Remapping {len(self.data)} entries to '{target_lang_code}'.")
 
         # Handle both old format (lang, term) and new format (lang, term, explicit)
         remapped_data = []
@@ -187,6 +196,8 @@ def extract_commands_from_text(text, parent_languages=None):
     # Replace !id with synonym !identify.
     text = text.replace("!id:", "!identify:")
 
+    logger.debug(f"Parsing {len(text)} chars of text.")
+
     def process_args(arg_string, is_quoted):
         """Process arguments and extract specific_mode flags."""
         if is_quoted:
@@ -311,6 +322,10 @@ def extract_commands_from_text(text, parent_languages=None):
         )
 
         # lookup_cjk now returns: {'zh': [('可能', False), ('麻将', False)], 'ko': [('시계', True)]}
+        logger.debug(
+            f"lookup_cjk: found {sum(len(v) for v in lookup_cjk.values())} term(s) "
+            f"across {len(lookup_cjk)} language(s). disable_tokenization={has_disable_tokenization}"
+        )
         for lang, terms_with_flags in lookup_cjk.items():
             if lang == "lookup":
                 # Old format without explicit flag - shouldn't happen with new lookup_matcher
@@ -354,6 +369,7 @@ def extract_commands_from_text(text, parent_languages=None):
                 )
             )
 
+    logger.debug(f"Returning {len(commands)} komando(s): {[c.name for c in commands]}")
     return commands
 
 

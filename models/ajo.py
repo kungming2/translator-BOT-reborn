@@ -1,22 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Defines the Ajo post structure and class, along with related functions.
+Defines the Ajo class and related helpers for managing translation request posts.
+
+An Ajo is the canonical in-memory representation of a Reddit submission on
+r/translator. It tracks language identification, translation status, flair,
+translator credits, and notification history. Ajos are persisted to and
+loaded from a local SQLite database, and their flair is synced back to Reddit
+via PRAW.
+
+Key components:
+    Ajo                          -- Primary model class for a translation request post.
+    Ajo.from_titolo              -- Construct a new Ajo from a parsed Titolo instance.
+    Ajo.from_dict                -- Reconstruct an Ajo from a serialized dictionary.
+    ajo_writer                   -- Persist an Ajo to the local database (insert or update).
+    ajo_loader                   -- Load an Ajo from the local database by post ID.
+    ajo_delete                   -- Permanently remove an Ajo record from the database.
+    determine_flair_and_update   -- Compute and apply the correct Reddit flair for an Ajo.
+...
+
+Logger tag: [M:AJO]
 """
 
 import ast
+import logging
 import pprint
 from typing import List
 
 import orjson
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from languages import Lingvo, converter
 from testing import log_testing_mode
 from title_handling import Titolo, process_title
 from utility import check_url_extension, generate_image_hash
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "M:AJO"})
 
 
 def ajo_writer(new_ajo):
@@ -188,17 +210,17 @@ def _normalize_lang_field(value):
                 lingvo_obj = converter(x.strip())
                 normalized.append(lingvo_obj)
             else:
-                logger.debug(f"[DEBUG] skipping element {i}: {x}")
-        logger.debug("[DEBUG] normalized list result:", normalized)
+                logger.debug(f"Skipping element {i}: {x}")
+        logger.debug(f"Normalized lang list: {normalized}")
         return normalized
 
     elif isinstance(value, str) and value.strip():
         lingvo_obj = converter(value.strip())
-        logger.debug(f"[DEBUG] single string converted to Lingvo: {lingvo_obj}")
+        logger.debug(f"Single string converted to Lingvo: {lingvo_obj}")
         return [lingvo_obj]
 
     else:
-        logger.debug("[DEBUG] value is None or invalid, returning empty list")
+        logger.debug("Lang field is None or invalid, returning empty list.")
         return []
 
 
@@ -426,6 +448,10 @@ class Ajo:
             # If the submission is a link to an image, set the image hash
             ajo.set_image_hash(submission)
 
+        logger.debug(
+            f"from_titolo: created Ajo `{ajo.id}` — "
+            f"type={ajo.type}, preferred_code={ajo.preferred_code!r}, status={ajo.status!r}"
+        )
         return ajo
 
     def update_from_titolo(self, titolo: "Titolo"):
@@ -613,6 +639,10 @@ class Ajo:
             data.get("original_target_language_name")
         )
 
+        logger.debug(
+            f"from_dict: loaded Ajo `{ajo.id}` — "
+            f"type={ajo.type}, preferred_code={ajo.preferred_code!r}, status={ajo.status!r}"
+        )
         return ajo
 
     """FUNCTIONS THAT CHANGE STATES"""
@@ -650,6 +680,8 @@ class Ajo:
             # Append the list of codes to language_history only if it's not the last entry
             if not self.language_history or self.language_history[-1] != lang_codes:
                 self.language_history.append(lang_codes)
+
+            logger.debug(f"Language set to defined multiple: {lang_codes}")
         else:
             # Single language (default behavior)
             if isinstance(code_or_lingvo, str):
