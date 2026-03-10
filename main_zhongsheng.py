@@ -20,15 +20,23 @@ Bot features:
 - Role-based permission checking
 - Comprehensive logging of all command invocations
 - Async command processing via discord.py
+...
+
+Logger tag: [ZS]
 """
+
+import logging
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from error import error_log_extended
 from zhongsheng import register_commands
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS"})
 
 # Initialize the bot
 intents = discord.Intents.default()
@@ -53,7 +61,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     else:
         # Log the error.
         logger.critical(
-            f"[ZS] Critical error in command `/{ctx.command.name}` by user {ctx.author} "
+            f"Critical error in command `/{ctx.command.name}` by user {ctx.author} "
             f"(ID: {ctx.author.id}): {type(error).__name__}: {error}",
             exc_info=error,  # This includes the full traceback
         )
@@ -64,7 +72,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
 async def on_command_completion(ctx: Context) -> None:
     """Log command usage when a command completes successfully."""
     logger.info(
-        f"[ZS] Command `/{ctx.command.name}` called by user {ctx.author} "
+        f"Command `/{ctx.command.name}` called by user {ctx.author} "
         f"(ID: {ctx.author.id}) in {ctx.guild.name}"
     )
 
@@ -79,7 +87,7 @@ async def before_command(ctx: Context) -> None:
                 ctx.kwargs[key] = value.strip().strip("`").strip()
 
     logger.info(
-        f"[ZS] Invoking command `/{ctx.command.name}` by user {ctx.author} "
+        f"Invoking command `/{ctx.command.name}` by user {ctx.author} "
         f"with args: {ctx.args[2:]} kwargs: {ctx.kwargs}"
     )
 

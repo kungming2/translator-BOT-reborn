@@ -19,12 +19,15 @@ Features:
 
 The bot uses a separate Reddit account from the main translator bot
 and is configured via CHINESE_* credentials in the config.
+...
+
+Logger tag: [CC_REF]
 """
 
 import asyncio
+import logging
 import re
 import traceback
-import warnings
 from typing import TYPE_CHECKING
 
 import asyncpraw
@@ -32,21 +35,18 @@ from asyncpraw import exceptions
 from asyncprawcore import exceptions as asyncprawcore_exceptions
 from wasabi import msg
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import USERNAME, credentials_source
 from error import error_log_extended
 from lookup.match_helpers import lookup_zh_ja_tokenizer
 from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
 
-# Suppress jieba's pkg_resources deprecation warning;
-# setuptools is pinned to a compatible version.
-warnings.filterwarnings(
-    "ignore", message="pkg_resources is deprecated", category=UserWarning
-)
-
 if TYPE_CHECKING:
     from asyncpraw import Reddit
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "CC_REF"})
 
 
 async def _cc_ref(reddit: "Reddit") -> None:
@@ -54,12 +54,10 @@ async def _cc_ref(reddit: "Reddit") -> None:
     try:
         multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
     except asyncprawcore_exceptions.RequestException as e:
-        logger.warning(
-            f"[CC_REF]: Failed to fetch multireddit - network/auth error: {e}"
-        )
+        logger.warning(f"Failed to fetch multireddit - network/auth error: {e}")
         return
     except Exception as e:
-        logger.error(f"[CC_REF]: Unexpected error fetching multireddit: {e}")
+        logger.error(f"Unexpected error fetching multireddit: {e}")
         return
 
     comments = []
@@ -68,10 +66,10 @@ async def _cc_ref(reddit: "Reddit") -> None:
         async for comment in multireddit.comments(limit=SETTINGS["max_posts"]):
             comments.append(comment)
     except asyncprawcore_exceptions.RequestException as e:
-        logger.error(f"[CC_REF]: Failed to fetch comments - network/auth error: {e}")
+        logger.error(f"Failed to fetch comments - network/auth error: {e}")
         return
     except Exception as e:
-        logger.error(f"[CC_REF]: Unexpected error fetching comments: {e}")
+        logger.error(f"Unexpected error fetching comments: {e}")
         return
 
     for comment in comments:
@@ -119,13 +117,13 @@ async def _cc_ref(reddit: "Reddit") -> None:
                 try:
                     reply = await comment.reply(reply_text + cc_bot_disclaimer)
                     logger.info(
-                        f"[CC_REF]: Replied to lookup request for {tokenized_matches} "
+                        f"Replied to lookup request for {tokenized_matches} "
                         f"on r/{comment.subreddit.display_name}. Comment ID: {reply.id}"
                     )
                 except exceptions.RedditAPIException as ex:
-                    logger.error(f"[CC_REF]: Reddit API exception: {ex}")
+                    logger.error(f"Reddit API exception: {ex}")
                 except Exception as ex:
-                    logger.error(f"[CC_REF]: Unexpected exception: {ex}")
+                    logger.error(f"Unexpected exception: {ex}")
 
 
 async def _chinese_reference_login_async(credentials: dict[str, str]) -> "Reddit":

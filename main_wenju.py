@@ -39,14 +39,21 @@ MANUAL EXECUTION:
 You can run any schedule manually for testing:
     python main_wenju.py hourly
     python main_wenju.py daily
+...
+
+Logger tag: [WJ]
 """
 
+import logging
 import sys
 import traceback
 
-from config import logger, TRANSIENT_ERRORS
+from config import TRANSIENT_ERRORS
+from config import logger as _base_logger
 from error import error_log_extended
 from tasks import get_tasks, run_schedule
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ"})
 
 
 def wenju_runner() -> None:
@@ -70,14 +77,12 @@ if __name__ == "__main__":
 
     except TRANSIENT_ERRORS as e:
         # Just log transient errors at WARNING level, don't save to error log
-        logger.warning(
-            f"[WJ] Main: Transient error encountered: {type(e).__name__}: {e}"
-        )
-        logger.info("[WJ] Main: Will retry on next cycle.")
+        logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
+        logger.info("Will retry on next cycle.")
 
     except Exception as e:
         # Log all other unexpected exceptions
-        logger.critical(f"[WJ] Main: Encountered critical error {e}.")
+        logger.critical(f"Encountered critical error {e}.")
 
         error_text = f"{type(e).__name__}: {e}\n\n{traceback.format_exc()}"
         error_log_extended(error_text, "Wenju")

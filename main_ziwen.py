@@ -3,15 +3,20 @@
 """
 Handles the top-level functions that go through posts, messages, and
 comments. This is the actual module that is run.
+...
+
+Logger tag: [ZW]
 """
 
+import logging
 import os
 import time
 import traceback
 
 import psutil
 
-from config import SETTINGS, TRANSIENT_ERRORS, logger
+from config import SETTINGS, TRANSIENT_ERRORS
+from config import logger as _base_logger
 from connection import REDDIT, USERNAME
 from database import record_activity_csv
 from discord_utils import send_discord_alert
@@ -22,6 +27,9 @@ from processes.ziwen_messages import ziwen_messages
 from processes.ziwen_posts import ziwen_posts
 from time_handling import time_convert_to_string
 from verification import verification_parser
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW"})
+
 
 if __name__ == "__main__":
     start_time = time.time()
