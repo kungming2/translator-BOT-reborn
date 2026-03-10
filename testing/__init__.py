@@ -7,7 +7,7 @@ from time_handling import get_current_utc_time
 
 def log_testing_mode(output_text, title=None, metadata=None):
     """
-    Append dry-run or testing-mode output to a markdown log file.
+    Append dry-run or testing-mode output to a Markdown log file.
 
     Args:
         output_text (str): The body of the message or reply.
