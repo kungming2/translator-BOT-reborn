@@ -47,7 +47,8 @@ def ziwen_messages() -> None:
     """
 
     messages: list[Message] = list(REDDIT.inbox.unread(limit=10))
-    logger.info(f"Processing {len(messages)} unread message(s)")
+    if messages:
+        logger.info(f"Processing {len(messages)} unread message(s)")
 
     # Iterate over the messages in the inbox.
     for message in messages:
