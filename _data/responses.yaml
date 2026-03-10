@@ -444,7 +444,7 @@ TITLE_REFORMATTING_QUERY: >
   Based on the title, reformat and suggest a new title that strictly 
   follows the following format:
   
-  Format: [Source_Language > Target_Language] (Other Title Content)
+  Format: [Source_Language > Target_Language] Other Title Content
   
   Do not reply with anything other than the new, suggested title.
   
