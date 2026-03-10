@@ -16,8 +16,12 @@ This module manages the entire points system for r/translator:
 Point values are cached monthly and range from 4-20 depending on language
 frequency. Rarer languages receive higher multipliers to encourage diverse
 language support.
+...
+
+Logger tag: [POINTS]
 """
 
+import logging
 import re
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
@@ -26,7 +30,8 @@ import prawcore
 from praw.exceptions import RedditAPIException
 from praw.models import Comment
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT_HELPER, USERNAME, create_mod_note
 from database import db
 from languages import converter
@@ -42,6 +47,8 @@ if TYPE_CHECKING:
 
     from languages import Lingvo
     from models.ajo import Ajo
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "POINTS"})
 
 
 def points_user_retriever(username: str) -> str:
@@ -128,6 +135,7 @@ def points_post_retriever(post_id: str) -> list[tuple[str, str, int]] | None:
         username = row[1] if isinstance(row, tuple) else row["username"]
         points = row[2] if isinstance(row, tuple) else row["points"]
         results.append((comment_id, username, int(points)))
+    logger.debug(f"Post points records - {len(results)} record(s) for post {post_id!r}")
 
     return results
 
@@ -154,11 +162,10 @@ def points_worth_determiner(lingvo_object: "Lingvo") -> int:
     )
     row = cursor.fetchone()
     if row:
-        logger.info(
-            f"[ZW] Points determiner: Found cached multiplier for `{language_code}`: {row[0]}"
-        )
+        logger.info(f"Found cached multiplier for `{language_code}`: {row[0]}")
         return int(row[0])
 
+    logger.debug(f"No cached multiplier for {language_code!r}, fetching from wiki.")
     try:
         # Attempt to get the statistics wiki page URL
         page_url = fetch_wiki_statistics_page(lingvo_object)
@@ -194,9 +201,7 @@ def points_worth_determiner(lingvo_object: "Lingvo") -> int:
         IndexError,
         ZeroDivisionError,
     ) as e:
-        logger.debug(
-            f"[ZW] Points determiner: Fallback for `{language_code}` due to error: {e}"
-        )
+        logger.debug(f"Fallback for `{language_code}` due to error: {e}")
         final_point_value = 20  # Max score for unknown/rare/missing wiki entries
 
     # Cache the result
@@ -206,9 +211,7 @@ def points_worth_determiner(lingvo_object: "Lingvo") -> int:
     )
     db.conn_cache.commit()
 
-    logger.debug(
-        f"[ZW] Points determiner: Multiplier for {language_code} is {final_point_value}"
-    )
+    logger.debug(f"Multiplier for {language_code} is {final_point_value}")
 
     return final_point_value
 
@@ -306,14 +309,6 @@ def points_tabulator(
         return
 
     body = comment.body.strip().lower()
-
-    if (
-        comment_author == op_author
-        and any(k in body for k in SETTINGS["thanks_keywords"])
-        and len(body) < 20
-    ):
-        logger.info(f"[ZW] Skipping short OP thank-you comment `{comment.id}`")
-        return
 
     # Load Ajo if not provided
     if ajo is None:

@@ -5,12 +5,17 @@ Request Closeout checks posts which are older than a week, have not been
 marked as translated or needs review, and have above a certain amount of
 comments/activity. It then messages the requester to remind them to mark
 the post as translated if their request has been properly fulfilled.
+...
+
+Logger tag: [CLOSEOUT]
 """
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, is_valid_user
 from database import db
 from models.ajo import ajo_loader
@@ -21,6 +26,8 @@ if TYPE_CHECKING:
     from praw.models import Submission
 
     from models.ajo import Ajo
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "CLOSEOUT"})
 
 
 def _send_closeout_messages(
@@ -138,6 +145,7 @@ def closeout_posts() -> None:
             logger.debug(
                 f"Skipping post `{post.id}` for post closeout — deleted or removed."
             )
+            continue
 
         if post_praw.num_comments >= SETTINGS["close_out_comments_minimum"]:
             logger.info(

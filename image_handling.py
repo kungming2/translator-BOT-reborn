@@ -1,10 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Image handling functions, primarily for the transform command.
+...
+
+Logger tag: [IMAGE]
+"""
+
 import base64
+import logging
 from io import BytesIO
 
 import requests
 from PIL import Image
 
-from config import SETTINGS, Paths, load_settings, logger
+from config import SETTINGS, Paths, load_settings
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "IMAGE"})
 
 # Load API key
 access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
@@ -35,16 +48,16 @@ def rotate_or_flip_image(image_url, transformation):
     """
     # Normalize transformation using the map
     transformation = TRANSFORM_MAP.get(transformation, transformation)
-    logger.info(f"Image Handling: Downloading image from {image_url}")
+    logger.debug(f"Downloading image from {image_url}")
 
     # Download the image
-    response = requests.get(image_url)
+    response = requests.get(image_url, timeout=45)
     response.raise_for_status()
 
     # Open the image
     img = Image.open(BytesIO(response.content))
-    logger.info(
-        f"Image Handling: Image downloaded: {img.size[0]}x{img.size[1]} pixels, mode: {img.mode}"
+    logger.debug(
+        f"Image downloaded: {img.size[0]}x{img.size[1]} pixels, mode: {img.mode}"
     )
 
     # Apply transformation
@@ -63,7 +76,7 @@ def rotate_or_flip_image(image_url, transformation):
             f"Invalid transformation: {transformation}. Use '90', '180', '270', 'flip_h', or 'flip_v'"
         )
 
-    logger.info(f"Image Handling: Applied transformation: {transformation}")
+    logger.debug(f"Applied transformation: {transformation}")
     return img
 
 
@@ -89,9 +102,7 @@ def upload_to_imgbb(image, title=None):
     # Save as JPEG with 60% quality to reduce file size
     # Convert RGBA to RGB if necessary (JPEG doesn't support transparency)
     if image.mode in ("RGBA", "LA", "P"):
-        logger.info(
-            f"Image Handling: Converting image from {image.mode} to RGB for JPEG compression"
-        )
+        logger.debug(f"Converting image from {image.mode} to RGB for JPEG compression")
 
         # Create a white background
         rgb_image = Image.new("RGB", image.size, (255, 255, 255))
@@ -107,9 +118,7 @@ def upload_to_imgbb(image, title=None):
     jpeg_quality = SETTINGS["image_jpeg_quality"]
     image.save(buffered, format="JPEG", quality=jpeg_quality)
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    logger.info(
-        f"Image Handling: Image encoded to base64 (JPEG quality: {jpeg_quality}%)"
-    )
+    logger.debug(f"Image encoded to base64 (JPEG quality: {jpeg_quality}%)")
 
     # Prepare the API request
     url = "https://api.imgbb.com/1/upload"
@@ -119,10 +128,8 @@ def upload_to_imgbb(image, title=None):
         payload["name"] = title
 
     # Make the POST request
-    logger.info(
-        f"Image Handling: Uploading to ImgBB (expiration: {expiration_seconds}s)"
-    )
-    response = requests.post(url, data=payload)
+    logger.debug(f"Uploading to ImgBB (expiration: {expiration_seconds}s)")
+    response = requests.post(url, data=payload, timeout=45)
     response.raise_for_status()
 
     # Parse response and return the URL
@@ -191,4 +198,4 @@ if __name__ == "__main__":
                 logger.info(f"Image URL: {uploaded_url}")
 
         except Exception as e:
-            logger.info(f"Error: {e}")
+            logger.error(f"Error: {e}")

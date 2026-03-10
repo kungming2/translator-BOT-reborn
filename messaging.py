@@ -3,6 +3,9 @@
 """
 Handles messaging retrieval and sending functions.
 This is Reddit-native, rather than Discord.
+...
+
+Logger tag: [MESSAGING]
 """
 
 import logging
@@ -12,7 +15,8 @@ from praw.exceptions import APIException
 from praw.models import Message
 from wasabi import msg
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from connection import REDDIT, USERNAME, is_valid_user
 from discord_utils import send_discord_alert
 from languages import parse_language_list
@@ -28,6 +32,8 @@ from usage_statistics import (
     generate_language_frequency_markdown,
     user_statistics_loader,
 )
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MESSAGING"})
 
 
 def notify_op_translated_post(author, permalink):
@@ -76,7 +82,7 @@ def handle_subscribe(message, message_author):
     logger.debug(f"[SUB] commonly_excluded list length: {len(commonly_excluded)}")
     logger.debug(f"[SUB] First 10 excluded words: {commonly_excluded[:10]}")
 
-    logger.info(f"[ZW] Messages: New subscription request from u/{message_author}.")
+    logger.info(f"New subscription request from u/{message_author}.")
     language_matches = parse_language_list(body_text)  # Returns Lingvo objects.
     logger.debug(f"[SUB] After parse_language_list: {len(language_matches)} matches")
     logger.debug(
@@ -104,9 +110,7 @@ def handle_subscribe(message, message_author):
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
             + RESPONSE.BOT_DISCLAIMER,
         )
-        logger.warning(
-            f"[ZW] Messages: Subscription languages listed are not valid: {body_text}"
-        )
+        logger.warning(f"Subscription languages listed are not valid: {body_text}")
         return
 
     logger.debug(
@@ -140,15 +144,13 @@ def handle_subscribe(message, message_author):
         + RESPONSE.BOT_DISCLAIMER
         + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
     )
-    logger.info(
-        f"[ZW] Messages: Added notification subscriptions for u/{message_author}."
-    )
+    logger.info(f"Added notification subscriptions for u/{message_author}.")
     action_counter(len(language_matches), "Subscriptions")
 
 
 def handle_unsubscribe(message, message_author):
     """Handle unsubscription requests."""
-    logger.info(f"[ZW] Messages: New unsubscription request from u/{message_author}.")
+    logger.info(f"New unsubscription request from u/{message_author}.")
 
     # User wishes to unsubscribe from everything.
     if message.body.lower().strip().endswith("all"):
@@ -166,7 +168,7 @@ def handle_unsubscribe(message, message_author):
 
     # Continue processing the message.
     language_matches = parse_language_list(message.body)  # Returns Lingvo objects.
-    if language_matches is None:  # There are no valid codes to unsubscribe them from.
+    if not language_matches:  # There are no valid codes to unsubscribe them from.
         reddit_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
@@ -178,7 +180,7 @@ def handle_unsubscribe(message, message_author):
             "alert",
         )
         logger.info(
-            "[ZW] Messages: Unsubscription languages listed are invalid. Replied w/ more info."
+            "Unsubscription languages listed are invalid. Replied w/ more info."
         )
         return
 
@@ -197,15 +199,13 @@ def handle_unsubscribe(message, message_author):
         + RESPONSE.BOT_DISCLAIMER
         + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
     )
-    logger.info(
-        f"[ZW] Messages: Removed notification subscriptions for u/{message_author}."
-    )
+    logger.info(f"Removed notification subscriptions for u/{message_author}.")
     action_counter(len(language_matches), "Unsubscriptions")
 
 
 def handle_status(message, message_author):
     """Handle status requests."""
-    logger.info(f"[ZW] Messages: New status request from u/{message_author}.")
+    logger.info(f"New status request from u/{message_author}.")
 
     # Get language subscriptions
     final_match_entries = notifier_language_list_retriever(message_author)
@@ -263,10 +263,7 @@ def handle_status(message, message_author):
 
 def handle_add(message, message_author):
     """Handle add requests for notifications from moderators."""
-    logger.info(
-        f"[ZW] Messages: New username addition message from "
-        f"moderator u/{message_author}."
-    )
+    logger.info(f"New username addition message from moderator u/{message_author}.")
 
     body = message.body
 
@@ -291,12 +288,14 @@ def handle_add(message, message_author):
         if isinstance(message, Message):
             reddit_reply(message, reply_text=addition_message)
 
+        logger.debug(
+            f"handle_add: extracted username={add_username!r}, {len(language_matches)} language(s)"
+        )
+
 
 def handle_remove(message, message_author):
     """Handle remove requests for notifications from moderators."""
-    logger.info(
-        f"[ZW] Messages: New username removal message from moderator u/{message_author}."
-    )
+    logger.info(f"New username removal message from moderator u/{message_author}.")
 
     body = message.body.strip()
     if "USERNAME:" in body:
@@ -323,6 +322,8 @@ def handle_remove(message, message_author):
     if isinstance(message, Message):
         reddit_reply(message, reply_text=removal_message)
 
+    logger.debug(f"handle_remove: extracted username={remove_username!r}")
+
 
 def handle_points(message, message_author):
     """Handle points requests."""
@@ -339,7 +340,7 @@ def handle_points(message, message_author):
     else:
         commands_component = ""
     reply_body = user_points_output + commands_component
-    logger.info(f"[ZW] Messages: Points information is {reply_body}.")
+    has_commands = user_commands_statistics_data is not None
 
     try:
         reddit_reply(
@@ -349,6 +350,10 @@ def handle_points(message, message_author):
     except praw.exceptions.RedditAPIException:
         logger.error("[ZW] Messages: Rate limit reached.")
     else:
+        logger.info(
+            f"Sent points summary to u/{message_author.name} "
+            f"(commands stats included: {has_commands})"
+        )
         action_counter(1, "Points checks")
 
 

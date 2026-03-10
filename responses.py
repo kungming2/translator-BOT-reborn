@@ -13,6 +13,9 @@ Usage:
     # Access response templates as attributes
     message = RESPONSE.ANCHOR_WIKIPEDIA
     reply = RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(...)
+...
+
+Logger tag: [RESPONSES]
 """
 
 from pathlib import Path

@@ -3,8 +3,12 @@
 """
 Handles translation notification-related functions for
 the messaging system.
+...
+
+Logger tag: [NOTIF]
 """
 
+import logging
 import random
 import sqlite3
 import time
@@ -15,7 +19,8 @@ import orjson
 from praw import exceptions
 
 from ai import fetch_image_description
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
 from languages import Lingvo, converter, country_converter, language_module_settings
@@ -25,6 +30,9 @@ from responses import RESPONSE
 from startup import STATE
 from time_handling import time_convert_to_string
 from utility import check_url_extension
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "NOTIF"})
+
 
 """NOTIFICATIONS SUBSCRIPTIONS WITH DATABASE"""
 
@@ -96,14 +104,10 @@ def _prune_deleted_user_notifications(
     """
 
     if is_valid_user(username):
-        logger.info(
-            f"[ZW] prune_deleted_user_notifications: u/{username} exists. Skipping."
-        )
+        logger.debug(f"u/{username} exists. Skipping.")
         return None
 
-    logger.info(
-        f"[ZW] prune_deleted_user_notifications: Pruning u/{username} from the database..."
-    )
+    logger.info(f"Pruning u/{username} from the database...")
 
     cursor = db.cursor_main
     conn = db.conn_main
@@ -118,16 +122,10 @@ def _prune_deleted_user_notifications(
         formatted_list = ", ".join(f"`{code}`" for code in final_codes)
         cursor.execute(f"DELETE FROM {table_name} WHERE username = ?", (username,))
         conn.commit()
-        logger.info(
-            f"[ZW] prune_deleted_user_notifications: Deleted subscription info for u/{username}."
-        )
-        logger.info(
-            f"[ZW] prune_deleted_user_notifications: User was subscribed to: {formatted_list}."
-        )
+        logger.info(f"Deleted subscription info for u/{username}.")
+        logger.info(f"User was subscribed to: {formatted_list}.")
     else:
-        logger.info(
-            f"[ZW] prune_deleted_user_notifications: No subscription info found for u/{username}."
-        )
+        logger.info(f"No subscription info found for u/{username}.")
 
     return final_codes
 
@@ -148,6 +146,9 @@ def notifier_language_list_editor(
         username = user_object
     else:
         username = user_object.name
+    logger.debug(
+        f"Notifier List Editor: mode={mode!r}, user={username!r}, {len(language_list)} item(s)"
+    )
 
     # Purge all language notifications for this user (languages and internal)
     if mode == "purge":
@@ -176,6 +177,7 @@ def notifier_language_list_editor(
         if not processed_code:
             continue
 
+        logger.debug(f"{mode}: {processed_code!r} for u/{username} (table={table})")
         exists = _notifier_duplicate_checker(
             processed_code, username, internal=internal_flag
         )
@@ -474,6 +476,7 @@ def _should_send_language_notification(lingvo, messaging_ajo_history):
     # Allow sending notification only if language is either not in history
     # or is the last classification (to prevent duplicate notifications).
     if in_history and not is_last:
+        logger.debug(f"{language_code!r} already in history and is not last entry")
         return False
     return True
 
@@ -675,14 +678,10 @@ def notifier(lingvo, submission, mode="new_post"):
             _update_user_notification_count(username, lingvo)
 
         except UserNotFoundException:
-            logger.info(
-                f"[Notifier] u/{username} no longer exists. Pruning from database."
-            )
+            logger.info(f"u/{username} no longer exists. Pruning from database.")
             _prune_deleted_user_notifications(username)
         except exceptions.APIException as e:
-            logger.info(
-                f"[Notifier] Error sending message to u/{username}. Removing user."
-            )
+            logger.info(f"Error sending message to u/{username}. Removing user.")
             logger.error(f"API Exception for u/{username}: {e}")
             _prune_deleted_user_notifications(username)
 
@@ -702,7 +701,7 @@ def notifier(lingvo, submission, mode="new_post"):
     record_activity_csv(payload)
 
     logger.info(
-        f"[Notifier] Sent notifications to {len(notify_users_list)} "
+        f"Sent notifications to {len(notify_users_list)} "
         f"users signed up for {language_name}."
     )
 
@@ -762,14 +761,11 @@ def notifier_internal(post_type, submission):
             )
 
         except UserNotFoundException:
-            logger.info(
-                f"[Notifier] u/{username} no longer exists. Pruning from database."
-            )
+            logger.info(f"u/{username} no longer exists. Pruning from database.")
             _prune_deleted_user_notifications(username, True)
         except exceptions.APIException as e:
             logger.info(
-                f"[Notifier] Error sending internal message to "
-                f"u/{username}. Removing user."
+                f"Error sending internal message to u/{username}. Removing user."
             )
             logger.error(f"API Exception for u/{username}: {e}")
             _prune_deleted_user_notifications(username, True)

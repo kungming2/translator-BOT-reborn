@@ -2,19 +2,26 @@
 # -*- coding: UTF-8 -*-
 """
 Handles search tasks for frequently requested translations.
+...
+
+Logger tag: [SEARCH]
 """
 
+import logging
 import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import ddgs
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT_HELPER, credentials_source
 
 if TYPE_CHECKING:
     from praw.models import Comment
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "SEARCH"})
 
 
 def fetch_search_reddit_posts(search_term: str) -> list[str]:
@@ -73,6 +80,9 @@ def fetch_search_reddit_posts(search_term: str) -> list[str]:
 def build_search_results(post_ids: list[str], search_term: str) -> str:
     """Build formatted search results from Reddit submissions."""
     result_sections = []
+    logger.info(
+        f"Building search results for {len(post_ids)} post(s), term: {search_term!r}."
+    )
 
     for post_id in post_ids[:6]:  # Limit to 6 posts to avoid excessive length
         submission = REDDIT_HELPER.submission(id=post_id)
@@ -98,6 +108,7 @@ def _extract_relevant_comment(comment: "Comment", search_term: str) -> str | Non
     try:
         comment_author = comment.author.name
     except AttributeError:
+        logger.debug(f"Skipping comment {comment.id} — author deleted.")
         return None  # Author deleted
 
     if (

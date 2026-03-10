@@ -13,15 +13,22 @@ This module provides a safe abstraction layer for Reddit interactions:
 Functions:
     reddit_reply: Reply to a Comment, Message, or Submission
     message_send: Send a private message to a Redditor
+...
+
+Logger tag: [SENDER]
 """
 
+import logging
 from praw.exceptions import APIException
 from praw.models import Comment, Message, Redditor, Submission
 from prawcore import NotFound
 from prawcore.exceptions import ServerError
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from testing import log_testing_mode
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "SENDER"})
 
 
 class UserNotFoundException(Exception):
