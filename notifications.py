@@ -702,7 +702,7 @@ def notifier(lingvo, submission, mode="new_post"):
 
     logger.info(
         f"Sent notifications to {len(notify_users_list)} "
-        f"users signed up for {language_name}."
+        f"users signed up for '{language_name}'."
     )
 
     return notify_users_list
