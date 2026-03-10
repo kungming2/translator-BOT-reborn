@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Command registry for Zhongsheng bot.
+Command registry for the Zhongsheng Discord bot.
 Allows commands to be defined in separate modules and registered via decorator.
 """
 

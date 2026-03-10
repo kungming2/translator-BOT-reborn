@@ -89,7 +89,10 @@ async def lang_convert(ctx, *, language_input: str):
 
         if add_alt_flag and alt_value:
             if added_alt:
-                formatted_output = f"\n✅ Added alternate name: `{alt_value}`"
+                formatted_output = (
+                    f"\n✅ Added alternate name: `{alt_value}` "
+                    f"for language **{result.name}** (`{result.preferred_code}`)."
+                )
             else:
                 formatted_output = f"\nℹ️ Alternate name `{alt_value}` already exists or could not be added."
 
