@@ -2,17 +2,24 @@
 # -*- coding: UTF-8 -*-
 """
 Handler for the !transform command, which rotates or flips images from posts.
+...
+
+Logger tag: [ZW:TRANSFORM]
 """
 
+import logging
 import re
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from image_handling import TRANSFORM_MAP, rotate_or_flip_image, upload_to_imgbb
 from models.instruo import Instruo
 from reddit_sender import reddit_reply
 from responses import RESPONSE
 from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:TRANSFORM"})
 
 # Valid transformation values
 VALID_TRANSFORMS = {
@@ -97,14 +104,14 @@ def _extract_images_from_submission(submission):
 
     # Case 1: Gallery post
     if hasattr(submission, "is_gallery") and submission.is_gallery:
-        logger.info(f"[ZW] Transform: Detected gallery post for {submission.id}")
+        logger.info(f"Detected gallery post for {submission.id}")
         image_urls = _extract_gallery_images(submission)
-        logger.info(f"[ZW] Transform: Found {len(image_urls)} images in gallery")
+        logger.info(f"Found {len(image_urls)} images in gallery")
         return image_urls
 
     # Case 2: Self/text post
     if submission.is_self:
-        logger.info(f"[ZW] Transform: Detected text post for {submission.id}")
+        logger.info(f"Detected text post for {submission.id}")
         # Extract URLs from the selftext using regex
         # This pattern matches common image hosting URLs
         url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
@@ -117,17 +124,17 @@ def _extract_images_from_submission(submission):
                 cleaned_url = clean_reddit_image_url(url)
                 image_urls.append(cleaned_url)
 
-        logger.info(f"[ZW] Transform: Found {len(image_urls)} image URLs in text body")
+        logger.info(f"Found {len(image_urls)} image URLs in text body")
         return image_urls
 
     # Case 3: Single image post
     if submission.url and check_url_extension(submission.url):
-        logger.info(f"[ZW] Transform: Detected single image post for {submission.id}")
+        logger.info(f"Detected single image post for {submission.id}")
         image_urls.append(submission.url)
         return image_urls
 
     # No images found
-    logger.info(f"[ZW] Transform: No images found in submission {submission.id}")
+    logger.info(f"No images found in submission {submission.id}")
     return image_urls
 
 
@@ -139,7 +146,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         [Komando(name='transform', data=['h'])]
     """
 
-    logger.info("Transform handler initiated.")
+    logger.info(f"!transform, from u/{comment.author}.")
 
     # Get the transformation from komando data
     if not komando.data or len(komando.data) == 0:
@@ -173,7 +180,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         return
 
     logger.info(
-        f"[ZW] Transform: Processing {len(image_urls)} image(s) with transformation: {transformation}"
+        f"Processing {len(image_urls)} image(s) with transformation: {transformation}"
     )
 
     # Determine transformation description for reply
@@ -195,13 +202,11 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     for idx, image_url in enumerate(image_urls, 1):
         try:
-            logger.info(
-                f"[ZW] Transform: Processing image {idx}/{len(image_urls)}: {image_url}"
-            )
+            logger.info(f"Processing image {idx}/{len(image_urls)}: {image_url}")
 
             # Transform the image
             transformed_image = rotate_or_flip_image(image_url, transformation)
-            logger.info(f"[ZW] Transform: Image {idx} transformed successfully")
+            logger.info(f"Image {idx} transformed successfully")
 
             # Upload to ImgBB with submission title as the name
             title_suffix = f" ({idx}/{len(image_urls)})" if len(image_urls) > 1 else ""
@@ -211,11 +216,11 @@ def handle(comment, _instruo, komando, _ajo) -> None:
                     :200
                 ],  # Limit to 200 chars for API
             )
-            logger.info(f"[ZW] Transform: Image {idx} uploaded to {uploaded_url}")
+            logger.info(f"Image {idx} uploaded to {uploaded_url}")
             transformed_urls.append(uploaded_url)
 
         except Exception as e:
-            logger.error(f"[ZW] Transform: Error processing image {idx}: {e}")
+            logger.error(f"Error processing image {idx}: {e}")
             failed_images.append((idx, str(e)))
 
     # Prepare response

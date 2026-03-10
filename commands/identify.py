@@ -3,9 +3,14 @@
 """
 !identify is a public means of setting the post flair. This is also
 known by the short form !id, which is treated as a synonym.
+...
+
+Logger tag: [ZW:IDENTIFY]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from models.kunulo import Kunulo
 from notifications import notifier
 from reddit_sender import reddit_reply
@@ -14,6 +19,8 @@ from wiki import update_wiki_page
 
 from . import update_language
 from time_handling import get_current_utc_date
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
 
 def _send_notifications_okay(instruo, ajo) -> bool:
@@ -49,11 +56,11 @@ def handle(comment, instruo, komando, ajo) -> None:
             id_comment_body=comment.body
         )
         reddit_reply(comment, invalid_text)
-        logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
+        logger.info("Replied letting them know identification is invalid.")
         return
 
-    logger.info(f"[ZW] Bot: COMMAND: !identify, from u/{comment.author} on `{ajo.id}`.")
-    logger.info(f"[ZW] Bot: !identify data is: {komando.data}")
+    logger.info(f"!identify, from u/{comment.author} on `{ajo.id}`.")
+    logger.info(f"!identify data is: {komando.data}")
 
     # Capture the original language before update_language mutates ajo.lingvo.
     original_language = ajo.lingvo
@@ -62,12 +69,12 @@ def handle(comment, instruo, komando, ajo) -> None:
     try:
         update_language(ajo, komando)
     except ValueError as e:
-        logger.warning(f"[ZW] Bot: !identify data is invalid: {e}")
+        logger.warning(f"!identify data is invalid: {e}")
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
             id_comment_body=comment.body
         )
         reddit_reply(comment, invalid_text)
-        logger.info("[ZW] Bot: Replied letting them know identification is invalid.")
+        logger.info("Replied letting them know identification is invalid.")
         return
 
     # Handle notifications after identification.

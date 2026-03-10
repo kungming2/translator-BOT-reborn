@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Simple command wrapper for Wikipedia lookup."""
+"""
+Simple command wrapper for Wikipedia lookup.
+...
 
-from config import logger
+Logger tag: [ZW:WP]
+"""
+
+import logging
+
+from config import logger as _base_logger
 from lookup.wp_utils import wikipedia_lookup
 from reddit_sender import reddit_reply
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:WP"})
 
 
 def handle(comment, _instruo, komando, _ajo) -> None:
@@ -15,7 +24,7 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         Komando(name='lookup_wp', data=['Sanxing (deities)'])]
     """
     logger.info("Wikipedia Lookup handler initiated.")
-    logger.info(f"[ZW] Bot: COMMAND: Wikipedia Lookup, from u/{comment.author}.")
+    logger.info(f"Wikipedia Lookup, from u/{comment.author}.")
 
     wikipedia_data: str | None = wikipedia_lookup(komando.data)
 
@@ -23,4 +32,4 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         # Add comment anchor.
         wikipedia_data += RESPONSE.ANCHOR_WIKIPEDIA
         reddit_reply(comment, wikipedia_data)
-        logger.info(f"[ZW] Bot: COMMAND: Replied to comment `{comment.id}`.")
+        logger.info(f"> Replied to comment `{comment.id}`.")

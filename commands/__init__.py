@@ -2,15 +2,21 @@
 # -*- coding: UTF-8 -*-
 """
 Handles processing commands by users.
+...
+
+Logger tag: [ZW:CMD]
 """
 
 import importlib
+import logging
 import os
 import time
 from collections.abc import Sequence
 from typing import Callable, Union
 
-from config import logger
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CMD"})
 
 HANDLERS: dict[str, Callable] = {}
 

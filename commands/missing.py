@@ -3,23 +3,36 @@
 """
 This handles the !missing command, which designates a post as missing
 content to be translated and messages the OP about it.
+...
+
+Logger tag: [ZW:MISSING]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from connection import REDDIT
 from reddit_sender import message_send
 from responses import RESPONSE
 
 from . import update_status
 
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:MISSING"})
+
 
 def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     status_type: str = "missing"
     logger.info("Missing handler initiated.")
-    logger.info(
-        f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author} on `{ajo.id}`."
-    )
+    logger.info(f"!{status_type}, from u/{comment.author} on `{ajo.id}`.")
+
+    # Possible deletion of original post.
+    if ajo.author is None:
+        logger.warning(
+            f"Post `{ajo.id}` has no author (deleted/removed). Skipping missing handler."
+        )
+        return
+
     original_poster = REDDIT.redditor(ajo.author)
 
     # Handler logic to update the post status.
@@ -36,6 +49,6 @@ def handle(comment, _instruo, komando, ajo) -> None:
     )
 
     logger.info(
-        f"[ZW] Bot: > Marked post `{ajo.id}` by u/{original_poster} "
+        f"> Marked post `{ajo.id}` by u/{original_poster} "
         f"as missing assets and messaged them."
     )

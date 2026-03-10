@@ -4,15 +4,22 @@
 Handler for the !search command, which looks for strings in other posts
 on r/translator and can also handle frequently requested translation
 lookups.
+...
+
+Logger tag: [ZW:SEARCH]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from models.instruo import Instruo
 from reddit_sender import reddit_reply
 from responses import RESPONSE
 from search_handling import fetch_search_reddit_posts, build_search_results
 from wiki import search_integration
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SEARCH"})
 
 
 def handle(comment, _instruo, komando, _ajo) -> None:
@@ -36,10 +43,10 @@ def handle(comment, _instruo, komando, _ajo) -> None:
     # Fetch Google search results for r/translator
     post_ids = fetch_search_reddit_posts(search_query)
     if not post_ids:
-        logger.info(f"[ZW] Bot: > No results found for '{search_query}'.")
+        logger.info(f"> No results found for '{search_query}'.")
         return
 
-    logger.info(f"[ZW] Bot: > Results found for '{search_query}'...")
+    logger.info(f"> Results found for '{search_query}'...")
 
     # Build reply from Reddit submissions
     search_results_body: str = build_search_results(post_ids, search_query)

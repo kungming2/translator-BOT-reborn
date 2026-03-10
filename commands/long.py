@@ -4,11 +4,18 @@
 This handles the !long command, which toggles a post as being marked
 quite long for translators. This command can be used by the original
 poster of a submission or mods.
+...
+
+Logger tag: [ZW:LONG]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from connection import is_mod
 from models.kunulo import Kunulo
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
 
 def handle(comment, _instruo, _komando, ajo) -> None:
@@ -18,9 +25,7 @@ def handle(comment, _instruo, _komando, ajo) -> None:
     original_poster = comment.submission.author
 
     if is_mod(comment.author) or original_poster == comment.author:
-        logger.info(
-            f"[ZW] Bot: COMMAND: !long, from user u/{comment.author} on `{ajo.id}`."
-        )
+        logger.info(f"!long, from user u/{comment.author} on `{ajo.id}`.")
 
         # This command works as a flip switch.
         # It changes the state to the opposite.
@@ -34,6 +39,4 @@ def handle(comment, _instruo, _komando, ajo) -> None:
             kunulo_object.delete("comment_long")
 
         ajo.set_is_long(new_status)
-        logger.info(
-            f"[ZW] Bot: Changed post `{ajo.id}`'s long state to '{new_status}.'"
-        )
+        logger.info(f"Changed post `{ajo.id}`'s long state to '{new_status}.'")

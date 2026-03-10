@@ -4,15 +4,22 @@
 The paging !page function contacts a number of people and asks them to
 take a look at a post for a language that they're signed up for
 notifications. This was the original function Ziwen was written for.
+...
+
+Logger tag: [ZW:PAGE]
 """
 
+import logging
 import time
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from notifications import notifier
 from reddit_sender import reddit_reply
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:PAGE"})
 
 
 def handle(comment, _instruo, komando, ajo) -> None:
@@ -29,7 +36,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
     # paging system.
     if current_time - int(original_poster.created_utc) < minimum_account_age_seconds:
         logger.debug(
-            f"[ZW] Bot: > u/{original_poster}'s account is "
+            f"> u/{original_poster}'s account is "
             f"younger than {minimum_account_age_days} days."
         )
         reply_text: str = (
@@ -45,9 +52,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         # Send messages out.
         original_post = REDDIT_HELPER.submission(ajo.id)
         people_messaged: list = notifier(language, original_post, mode="page")
-        logger.info(
-            f"[ZW] Bot: >> Messaged {len(people_messaged)} people for {language.name}."
-        )
+        logger.info(f">> Messaged {len(people_messaged)} people for {language.name}.")
 
         # Check if there are people subscribed to the language in the
         # database. If there isn't, prep a reply.

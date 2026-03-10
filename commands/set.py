@@ -11,9 +11,15 @@ Ajo-tracked post as a Diskuto (internal/non-request post), e.g.:
 
 This migration is irreversible: the Ajo record is deleted and a new
 Diskuto record is written to internal_posts.
+...
+
+Logger tag: [ZW:SET]
 """
 
-from config import SETTINGS, logger
+import logging
+
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import is_mod
 from models.ajo import ajo_delete
 from models.diskuto import Diskuto, diskuto_writer
@@ -22,6 +28,8 @@ from reddit_sender import message_send
 from responses import RESPONSE
 
 from . import update_language
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SET"})
 
 
 def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto | None":
@@ -47,9 +55,7 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
     try:
         diskuto_obj = Diskuto.process_post(submission)
     except TypeError as e:
-        logger.error(
-            f"[ZW] Bot: Failed to build Diskuto from submission `{post_id}`: {e}"
-        )
+        logger.error(f"Failed to build Diskuto from submission `{post_id}`: {e}")
         message_send(
             comment.author,
             subject="!set reclassification failed",
@@ -68,9 +74,7 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
     try:
         diskuto_writer(diskuto_obj)
     except Exception as e:
-        logger.error(
-            f"[ZW] Bot: diskuto_writer failed for `{post_id}`: {type(e).__name__}: {e}"
-        )
+        logger.error(f"diskuto_writer failed for `{post_id}`: {type(e).__name__}: {e}")
         message_send(
             comment.author,
             subject="!set reclassification failed",
@@ -86,7 +90,7 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
     ajo_delete(post_id)
 
     logger.info(
-        f"[ZW] Bot: Post `{post_id}` reclassified from Ajo to Diskuto "
+        f"Post `{post_id}` reclassified from Ajo to Diskuto "
         f"(type='{post_type}') by moderator u/{comment.author}."
     )
 
@@ -101,7 +105,7 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
             f"to the internal posts database. This change is permanent."
         ),
     )
-    logger.info(f"[ZW] Bot: Sent reclassification confirmation to u/{comment.author}.")
+    logger.info(f"Sent reclassification confirmation to u/{comment.author}.")
 
     return diskuto_obj
 
@@ -115,9 +119,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         logger.debug(f"u/{comment.author} is not a mod. Skipping...")
         return
 
-    logger.info(
-        f"[ZW] Bot: COMMAND: !set, from moderator u/{comment.author} on `{ajo.id}`."
-    )
+    logger.info(f"!set, from moderator u/{comment.author} on `{ajo.id}`.")
 
     # Check whether this is a diskuto reclassification command (e.g. !set:meta).
     #
@@ -135,9 +137,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         raw_keyword = komando.data[0].strip().lower()
 
     if raw_keyword in SETTINGS["internal_post_types"]:
-        logger.info(
-            f"[ZW] Bot: !set:{raw_keyword} — reclassifying `{ajo.id}` as Diskuto."
-        )
+        logger.info(f"!set:{raw_keyword} — reclassifying `{ajo.id}` as Diskuto.")
         diskuto_result = _handle_diskuto_reclassification(
             comment, ajo, post_type=raw_keyword
         )
@@ -156,20 +156,20 @@ def handle(comment, _instruo, komando, ajo) -> None:
             "Invalid !set language",
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
-        logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
+        logger.info("Replied letting the mod know setting is invalid.")
         return
 
     # Update the Ajo's language(s) post.
     try:
         update_language(ajo, komando)
     except ValueError as e:
-        logger.error(f"[ZW] Bot: !set data is invalid: {e}")
+        logger.error(f"!set data is invalid: {e}")
         message_send(
             comment.author,
             "Invalid !set language",
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
-        logger.info("[ZW] Bot: Replied letting the mod know setting is invalid.")
+        logger.info("Replied letting the mod know setting is invalid.")
         return
 
     # Delete any pre-existing defined multiple or "Unknown" comment.
@@ -180,9 +180,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
     # Message the mod who called this command.
     languages = komando.data  # List of Lingvo objects
-    logger.info(
-        f"[ZW] Bot: Building !set success message for {len(languages)} language(s)."
-    )
+    logger.info(f"Building !set success message for {len(languages)} language(s).")
 
     if len(languages) == 1:
         new_language = languages[0]
@@ -191,9 +189,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
             f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
             f"{new_language.name} (`{new_language.preferred_code}`)."
         )
-        logger.info(
-            f"[ZW] Bot: Single-language message built for {new_language.preferred_code}."
-        )
+        logger.info(f"Single-language message built for {new_language.preferred_code}.")
     else:
         # Multiple languages - collate greetings (excluding "Hello")
         greetings = [lang.greetings for lang in languages if lang.greetings != "Hello"]
@@ -208,9 +204,9 @@ def handle(comment, _instruo, komando, ajo) -> None:
             f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the languages "
             f"{lang_string}."
         )
-        logger.info("[ZW] Bot: Multi-language message built.")
+        logger.info("Multi-language message built.")
 
-    logger.info(f"[ZW] Bot: Sending !set success message to u/{comment.author}.")
+    logger.info(f"Sending !set success message to u/{comment.author}.")
     try:
         message_send(
             comment.author,
@@ -218,9 +214,9 @@ def handle(comment, _instruo, komando, ajo) -> None:
             body=set_msg,
         )
         logger.info(
-            f"[ZW] Bot: Successfully informed moderator u/{comment.author} of command success."
+            f"Successfully informed moderator u/{comment.author} of command success."
         )
     except Exception as e:
         logger.error(
-            f"[ZW] Bot: Failed to send message to u/{comment.author}: {type(e).__name__}: {e}"
+            f"Failed to send message to u/{comment.author}: {type(e).__name__}: {e}"
         )

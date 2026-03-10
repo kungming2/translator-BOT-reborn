@@ -3,8 +3,12 @@
 """
 This handles the !claim command, which allows someone to alert others
 that they are currently working on translating a request.
+...
+
+Logger tag: [ZW:CLAIM]
 """
 
+import logging
 import re
 import time
 from datetime import datetime
@@ -12,7 +16,7 @@ from typing import Any
 
 from praw.models import Comment
 
-from config import logger
+from config import logger as _base_logger
 from connection import REDDIT
 from languages import converter
 from models.kunulo import Kunulo
@@ -21,6 +25,8 @@ from responses import RESPONSE
 from time_handling import get_current_utc_time
 
 from . import update_status
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CLAIM"})
 
 
 def handle(comment, _instruo, komando, ajo) -> None:
@@ -32,16 +38,13 @@ def handle(comment, _instruo, komando, ajo) -> None:
     current_time = int(time.time())
     time_formatted = get_current_utc_time()
 
-    logger.info(f"[ZW] Bot: COMMAND: !claim ({status_type}), from u/{comment.author}.")
+    logger.info(f"!claim ({status_type}), from u/{comment.author}.")
 
     # This is in an unlikely scenario where someone edits their original
     # claim comment with the translation, then marks it as !translated
     # or !doublecheck. We just want to ignore it then.
     if "!translated" in comment.body or "!doublecheck" in comment.body:
-        logger.info(
-            "[ZW] Bot: Claim comment contains a translated or "
-            "doublecheck status change."
-        )
+        logger.info("Claim comment contains a translated or doublecheck status change.")
         return
 
     # Fetch the kunulo and determine the languages we'll process claims for.
@@ -58,9 +61,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         claim_comment_id = kunulo_object.get_tag("comment_claim")
 
         if claim_comment_id:
-            logger.info(
-                f"[ZW] Bot: Pre-existing claim comment `{claim_comment_id}` found."
-            )
+            logger.info(f"Pre-existing claim comment `{claim_comment_id}` found.")
             existing_claim_comment = REDDIT.comment(claim_comment_id)
 
             # Pass current_time to the parser
@@ -72,7 +73,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
                     # Same user trying to re-claim
                     reddit_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
                     logger.info(
-                        "[ZW] Bot: >> But this post is already claimed by them. Replied to them."
+                        ">> But this post is already claimed by them. Replied to them."
                     )
                 else:
                     # Different user trying to claim
@@ -113,9 +114,9 @@ def handle(comment, _instruo, komando, ajo) -> None:
         # only be one stickied comment at a time.
         if isinstance(claim_comment, Comment):
             claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
-            logger.info(f"[ZW] Bot: > Left a claim comment for u/{comment.author}.")
+            logger.info(f"> Left a claim comment for u/{comment.author}.")
         else:
-            logger.error(f"[ZW] Bot: Unresolved claim comment by u/{comment.author}.")
+            logger.error(f"> Unresolved claim comment by u/{comment.author}.")
 
     return
 

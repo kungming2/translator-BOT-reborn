@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Command wrapper for CJK languages lookup."""
+"""
+Command wrapper for CJK languages lookup.
+...
+
+Logger tag: [ZW:CJK]
+"""
 
 import asyncio
+import logging
 import random
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from models.kunulo import Kunulo
 from languages import converter
 from lookup.ja import ja_character, ja_word
@@ -13,6 +20,8 @@ from lookup.ko import ko_word
 from lookup.zh import zh_character, zh_word
 from reddit_sender import reddit_reply
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CJK"})
 
 
 def _get_cjk_languages() -> dict:
@@ -142,7 +151,7 @@ def _check_for_duplicate_lookups(
 
     if existing:
         logger.info(
-            f"[ZW] CJK Lookup: Duplicate lookup detected for {existing['matched_terms']} "
+            f"Duplicate lookup detected for {existing['matched_terms']} "
             f"in {cjk_language}"
         )
         return existing
@@ -167,7 +176,7 @@ def handle(comment, instruo, komando, ajo) -> None:
           → Chinese: ['可能', '麻将'] (auto-detected)
     """
     logger.info("CJK Lookup handler initiated.")
-    logger.info(f"[ZW] Bot: COMMAND: CJK Lookup, from u/{comment.author}.")
+    logger.info(f"CJK Lookup, from u/{comment.author}.")
 
     # Check if there's an !identify command for auto-detected terms
     identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
@@ -179,7 +188,7 @@ def handle(comment, instruo, komando, ajo) -> None:
         default_language = _find_cjk_language(default_lingvo.preferred_code)
         if default_language:
             logger.info(
-                f"[ZW] CJK Lookup: !identify command found - using {default_language} "
+                f"!identify command found - using {default_language} "
                 f"as default for auto-detected terms"
             )
 
@@ -195,7 +204,7 @@ def handle(comment, instruo, komando, ajo) -> None:
             lang_code, term = entry
             is_explicit = False  # Assume auto-detected for backward compatibility
         else:
-            logger.warning(f"[ZW] CJK Lookup: Invalid entry format: {entry}")
+            logger.warning(f"Invalid entry format: {entry}")
             continue
 
         # Determine the language to use
@@ -222,19 +231,15 @@ def handle(comment, instruo, komando, ajo) -> None:
             terms_by_language[cjk_language].append(term)
         else:
             logger.warning(
-                f"[ZW] CJK Lookup: Could not map language code '{lang_code}' to a CJK language. "
+                f"Could not map language code '{lang_code}' to a CJK language. "
                 f"Skipping term '{term}'."
             )
 
     if not terms_by_language:
-        logger.warning(
-            "[ZW] CJK Lookup: No valid CJK terms found after language mapping."
-        )
+        logger.warning("No valid CJK terms found after language mapping.")
         return
 
-    logger.info(
-        f"[ZW] CJK Lookup: Processing terms grouped by language: {terms_by_language}"
-    )
+    logger.info(f"Processing terms grouped by language: {terms_by_language}")
 
     # Process each language group separately
     all_lookup_results = []
@@ -242,7 +247,7 @@ def handle(comment, instruo, komando, ajo) -> None:
 
     for cjk_language, search_terms in terms_by_language.items():
         logger.info(
-            f"[ZW] CJK Lookup: Processing {len(search_terms)} term(s) for {cjk_language}: {search_terms}"
+            f"Processing {len(search_terms)} term(s) for {cjk_language}: {search_terms}"
         )
 
         # Check for duplicates for this language group
@@ -271,7 +276,7 @@ def handle(comment, instruo, komando, ajo) -> None:
             duplicate_responses.append(duplicate_message)
 
             logger.info(
-                f"[ZW] CJK Lookup: Duplicate found for {cjk_language} terms {matched_terms} "
+                f"Duplicate found for {cjk_language} terms {matched_terms} "
                 f"in comment {comment_id}."
             )
             continue  # Skip to next language group
@@ -279,7 +284,7 @@ def handle(comment, instruo, komando, ajo) -> None:
         # No duplicates - perform lookups for this language
         lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, search_terms))
         all_lookup_results.extend(lookup_results)
-        logger.info(f"[ZW] CJK Lookup: Completed lookups for {cjk_language}.")
+        logger.info(f"Completed lookups for {cjk_language}.")
 
     # Prepare and send reply
     reply_parts = []
@@ -305,13 +310,11 @@ def handle(comment, instruo, komando, ajo) -> None:
             )
         reddit_reply(comment, final_reply)
         logger.info(
-            f"[ZW] CJK Lookup: Replied with {len(all_lookup_results)} new lookup(s) "
+            f"Replied with {len(all_lookup_results)} new lookup(s) "
             f"and {len(duplicate_responses)} duplicate notification(s)."
         )
     else:
-        logger.warning(
-            "[ZW] CJK Lookup: No results to reply with (all duplicates or no matches)."
-        )
+        logger.warning("No results to reply with (all duplicates or no matches).")
 
 
 if __name__ == "__main__":

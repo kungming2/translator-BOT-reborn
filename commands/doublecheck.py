@@ -3,14 +3,21 @@
 """
 Allows posts to be set as "Needs Review".
 This is generally used when asking for reviews of one's work.
+...
+
+Logger tag: [ZW:DBLCHK]
 """
+
+import logging
 
 from praw.models import Comment
 
-from config import logger
+from config import logger as _base_logger
 from models.kunulo import Kunulo
 
 from . import update_status
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:DBLCHK"})
 
 
 def handle(comment: Comment, _instruo, komando, ajo) -> None:
@@ -33,15 +40,13 @@ def handle(comment: Comment, _instruo, komando, ajo) -> None:
     """
     logger.info("Doublecheck handler initiated.")
     status_type: str = "doublecheck"
-    logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
+    logger.info(f"!{status_type}, from u/{comment.author}.")
 
     # Handler logic to update the post status.
     update_status(ajo, komando, status_type)
 
     # Update the Ajo and post.
-    logger.info(
-        f"[ZW] Bot: > Marked post `{ajo.id}` as 'Needs Review.' (`{status_type}`)"
-    )
+    logger.info(f"> Marked post `{ajo.id}` as 'Needs Review.' (`{status_type}`)")
 
     # Delete any previously claimed comment.
     kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)

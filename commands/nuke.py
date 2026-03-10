@@ -3,13 +3,21 @@
 """
 This handles the !nuke command, which bans a username and removes
 all their posts and comments. It can only be called by a mod.
+...
+
+Logger tag: [ZW:NUKE]
 """
+
+import logging
 
 from praw.models import Comment, Submission
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, create_mod_note, is_mod, remove_content
 from reddit_sender import message_send
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:NUKE"})
 
 
 def handle(comment, _instruo, _komando, _ajo) -> None:

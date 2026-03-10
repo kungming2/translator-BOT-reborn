@@ -4,26 +4,33 @@
 Allows posts to be set as "Translated".
 This is generally used when a translator believes the post's
 request to be fulfilled.
+...
+
+Logger tag: [ZW:TRANSLATED]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from messaging import notify_op_translated_post
 from models.kunulo import Kunulo
 
 from . import update_status
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:TRANSLATED"})
 
 
 def handle(comment, _instruo, komando, ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Translated handler initiated.")
     status_type: str = "translated"
-    logger.info(f"[ZW] Bot: COMMAND: !{status_type}, from u/{comment.author}.")
+    logger.info(f"!{status_type}, from u/{comment.author}.")
 
     # Handler logic to update the post status.
     update_status(ajo, komando, status_type)
 
     # Update the Ajo and post.
-    logger.info(f"[ZW] Bot: > Marked post `{ajo.id}` as {status_type}.")
+    logger.info(f"> Marked post `{ajo.id}` as {status_type}.")
 
     # Delete the claimed and long comments if present
     delete_comments: list[str] = ["comment_long", "comment_claim"]

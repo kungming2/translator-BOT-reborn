@@ -4,11 +4,18 @@
 Handler for the !reset command, to revert a post back to as if it
 were freshly processed. This command can only be called by a mod or the
 original author of a post.
+...
+
+Logger tag: [ZW:RESET]
 """
 
-from config import logger
+import logging
+
+from config import logger as _base_logger
 from connection import is_mod
 from reddit_sender import message_send
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:RESET"})
 
 
 def handle(comment, _instruo, _komando, ajo) -> None:
@@ -17,9 +24,7 @@ def handle(comment, _instruo, _komando, ajo) -> None:
     original_poster = comment.submission.author
 
     if is_mod(comment.author) or original_poster == comment.author:
-        logger.info(
-            f"[ZW] Bot: COMMAND: !reset, from user u/{comment.author} on `{ajo.id}`."
-        )
+        logger.info(f"!reset, from user u/{comment.author} on `{ajo.id}`.")
         ajo.reset()
 
         # Message the person who called it.
@@ -33,4 +38,4 @@ def handle(comment, _instruo, _komando, ajo) -> None:
             body=reset_msg,
         )
 
-        logger.info(f"[ZW] Bot: > Reset everything for the designated post `{ajo.id}`.")
+        logger.info(f"> Reset everything for the designated post `{ajo.id}`.")
