@@ -155,9 +155,20 @@ def set_up_logger() -> logging.Logger:
     logformatter: str = (
         "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
     )
-    logging.basicConfig(
-        format=logformatter, level=logging.INFO
-    )  # By default, only show INFO or higher levels.
+
+    # Manually configure the root logger so TagFormatter (which injects a
+    # default 'tag' field) applies to ALL handlers globally — including those
+    # used by third-party libraries like httpx/openai that bubble up to root.
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    if not root_logger.handlers:
+        root_handler = logging.StreamHandler()
+        root_handler.setLevel(logging.INFO)
+        root_fmt = TagFormatter(logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ")
+        root_fmt.converter = time.gmtime
+        root_handler.setFormatter(root_fmt)
+        root_logger.addHandler(root_handler)
+
     logger_object: logging.Logger = logging.getLogger(__name__)
 
     # Define the logging handler (the file to write to with formatting.)
