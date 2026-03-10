@@ -35,7 +35,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     try:
-        logger.info("[ZW] Main: Starting cycle run.")
+        logger.info("Starting cycle run.")
 
         # First it processes the titles of new posts.
         ziwen_posts()
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         mem_num = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = "{:.2f} MB".format(mem_num / (1024 * 1024))
         logger.info(
-            f"[ZW] Main: Run complete. Calls used: {used_calls}. {mem_usage} used."
+            f"Run complete. Calls used: {used_calls}. {mem_usage} used."
         )
 
     except (KeyboardInterrupt, SystemExit):
@@ -73,12 +73,12 @@ if __name__ == "__main__":
     except TRANSIENT_ERRORS as e:
         # Just log transient errors at WARNING level, don't save to error log
         logger.warning(
-            f"[ZW] Main: Transient error encountered: {type(e).__name__}: {e}"
+            f"Transient error encountered: {type(e).__name__}: {e}"
         )
-        logger.info("[ZW] Main: Will retry on next cycle.")
+        logger.info("Will retry on next cycle.")
 
     except Exception as e:  # The bot encountered a major error/exception.
-        logger.critical(f"[ZW] Main: Encountered critical error {e}.")
+        logger.critical(f"Encountered critical error {e}.")
 
         # Format the error text.
         error_entry = traceback.format_exc()
@@ -97,7 +97,7 @@ if __name__ == "__main__":
             elapsed_time,
         )
         record_activity_csv(run_information)
-        logger.info(f"[ZW] Main: Run {elapsed_time:.2f} minutes.")
+        logger.info(f"Run {elapsed_time:.2f} minutes.")
 
         # Send Discord alert if run took longer than 5 minutes
         cycle_time = SETTINGS["cycle_time"]
