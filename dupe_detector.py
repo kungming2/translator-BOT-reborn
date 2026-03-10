@@ -72,11 +72,11 @@ class DuplicateDetector:
                 logging.getLogger("tqdm").setLevel(logging.WARNING)
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.debug(
-                    "[ZW] Duplicate Detector: Semantic similarity model loaded successfully"
+                    "Semantic similarity model loaded successfully"
                 )
             except Exception as e:
                 logger.warning(
-                    f"[ZW] Duplicate Detector: Failed to load semantic model: {e}"
+                    f"Failed to load semantic model: {e}"
                 )
                 self.model = None
 
@@ -129,7 +129,7 @@ class DuplicateDetector:
             numbers.extend([int(m) for m in matches])
 
         logger.debug(
-            f"[ZW] Duplicate Detector: Extracted numbers from '{text}': {numbers}"
+            f"Extracted numbers from '{text}': {numbers}"
         )
         return numbers
 
@@ -157,7 +157,7 @@ class DuplicateDetector:
         if len(number_sets) < 2:
             return False
 
-        logger.debug(f"[ZW] Duplicate Detector: Numbers found in titles: {number_sets}")
+        logger.debug(f"Numbers found in titles: {number_sets}")
 
         # Check if numbers are incrementing consistently
         # Compare the last number in each set (usually the episode/part number)
@@ -171,7 +171,7 @@ class DuplicateDetector:
 
         avg_diff = sum(differences) / len(differences)
         logger.debug(
-            f"[ZW] Duplicate Detector: Average numerical difference: {avg_diff}"
+            f"Average numerical difference: {avg_diff}"
         )
 
         # If numbers are incrementing consistently (difference of 1-3), it's likely a series
@@ -210,7 +210,7 @@ class DuplicateDetector:
             return np.mean(similarities)
         except Exception as e:
             logger.error(
-                f"[ZW] Duplicate Detector: Error calculating semantic similarity: {e}"
+                f"Error calculating semantic similarity: {e}"
             )
             return None
 
@@ -306,14 +306,14 @@ class DuplicateDetector:
             # Skip approved posts
             if post.approved:
                 logger.debug(
-                    f"[ZW] Duplicate Detector: Post `{post.id}` already approved by moderator"
+                    f"Post `{post.id}` already approved by moderator"
                 )
                 continue
 
             # Skip moderator posts
             if is_mod(post_author):
                 logger.debug(
-                    f"[ZW] Duplicate Detector: Post `{post.id}` posted by moderator"
+                    f"Post `{post.id}` posted by moderator"
                 )
                 continue
 
@@ -337,13 +337,13 @@ class DuplicateDetector:
             titles = [p["title"] for p in posts]
 
             logger.debug(
-                f"[ZW] Duplicate Detector: Analyzing {len(posts)} posts by u/{author}"
+                f"Analyzing {len(posts)} posts by u/{author}"
             )
 
             # Check if titles are part of a numbered sequence
             if self.is_numerical_sequence(titles):
                 logger.info(
-                    f"[ZW] Duplicate Detector: Posts by u/{author} appear to be a series. Skipping."
+                    f"Posts by u/{author} appear to be a series. Skipping."
                 )
                 continue
 
@@ -374,7 +374,7 @@ class DuplicateDetector:
                 continue
 
             logger.debug(
-                f"[ZW] Duplicate Detector: Posts by u/{author} have {method_used} similarity: "
+                f"Posts by u/{author} have {method_used} similarity: "
                 f"{similarity_score:.2f}"
             )
 
@@ -391,7 +391,7 @@ class DuplicateDetector:
                 duplicate_ids = [p["id"] for p in posts[1:]]
                 actionable_posts.extend(duplicate_ids)
                 logger.info(
-                    f"[ZW] Duplicate Detector: Flagged duplicates for removal: {duplicate_ids}"
+                    f"Flagged duplicates for removal: {duplicate_ids}"
                 )
 
         # Remove any duplicates from actionable_posts and return
@@ -418,11 +418,11 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
     duplicate_ids = detector.detect_duplicates(list_posts)
 
     if not duplicate_ids:
-        logger.debug("[ZW] Duplicate Detector: No duplicates detected.")
+        logger.debug("No duplicates detected.")
         return None
 
     logger.info(
-        f"[ZW] Duplicate Detector: Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
+        f"Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
     )
 
     # Remove duplicates and notify authors
@@ -468,12 +468,12 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
 
             successfully_removed.append(dupe_id)
             logger.info(
-                f"[ZW] Duplicate Detector: Removed duplicate post `{dupe_id}` by u/{dupe_author}"
+                f"Removed duplicate post `{dupe_id}` by u/{dupe_author}"
             )
 
         except Exception as e:
             logger.error(
-                f"[ZW] Duplicate Detector: Error processing duplicate `{dupe_id}`: {e}"
+                f"Error processing duplicate `{dupe_id}`: {e}"
             )
             continue
 
@@ -506,7 +506,7 @@ def search_image_hash(
 
     if not image_hash:
         logger.warning(
-            "[ZW] Duplicate Detector: search_image_hash: Received empty hash"
+            "search_image_hash: Received empty hash"
         )
         return []
 
@@ -517,7 +517,7 @@ def search_image_hash(
         target_hash = imagehash.hex_to_hash(image_hash)
     except Exception as e:
         logger.error(
-            f"[ZW] Duplicate Detector: Failed to parse image hash '{image_hash}': {e}"
+            f"Failed to parse image hash '{image_hash}': {e}"
         )
         return []
 
@@ -526,7 +526,7 @@ def search_image_hash(
     if days is not None:
         cutoff_utc = int(time.time()) - (days * 86400)
         logger.debug(
-            f"[ZW] Duplicate Detector: Searching image hashes from last {days} days (cutoff: {cutoff_utc})"
+            f"Searching image hashes from last {days} days (cutoff: {cutoff_utc})"
         )
 
     try:
@@ -572,7 +572,7 @@ def search_image_hash(
                     distance = target_hash - stored_hash_obj
                 except Exception as e:
                     logger.debug(
-                        f"[ZW] Duplicate Detector: Error comparing hash for post {post_id}: {e}"
+                        f"Error comparing hash for post {post_id}: {e}"
                     )
                     continue
 
@@ -590,7 +590,7 @@ def search_image_hash(
                     )
 
             except Exception as e:
-                logger.debug(f"[ZW] Duplicate Detector: Error processing result: {e}")
+                logger.debug(f"Error processing result: {e}")
                 continue
 
         # Sort by distance (closest matches first)
@@ -598,13 +598,13 @@ def search_image_hash(
 
         time_range = f"last {days} days" if days is not None else "all time"
         logger.info(
-            f"[ZW] Duplicate Detector: Found {len(matches)} image hash matches "
+            f"Found {len(matches)} image hash matches "
             f"in {time_range} (max distance: {max_distance})"
         )
         return matches
 
     except Exception as e:
-        logger.error(f"[ZW] Duplicate Detector: Error searching image hashes: {e}")
+        logger.error(f"Error searching image hashes: {e}")
         return []
 
 
@@ -638,12 +638,12 @@ def check_image_duplicate(
     # Skip if no image hash (not an image post)
     if not ajo.image_hash:
         logger.debug(
-            f"[ZW] Image Dupe Check: Post `{post.id}` has no image hash, skipping"
+            f"Post `{post.id}` has no image hash, skipping"
         )
         return None
 
     logger.info(
-        f"[ZW] Image Dupe Check: Checking image hash for post `{post.id}` "
+        f"Checking image hash for post `{post.id}` "
         f"(hash: {ajo.image_hash})"
     )
 
@@ -658,7 +658,7 @@ def check_image_duplicate(
 
         if not matches:
             logger.info(
-                f"[ZW] Image Dupe Check: No similar images found for post `{post.id}`"
+                f"No similar images found for post `{post.id}`"
             )
             return None
 
@@ -667,7 +667,7 @@ def check_image_duplicate(
         distance = best_match["distance"]
 
         logger.info(
-            f"[ZW] Image Dupe Check: Found similar image for post `{post.id}`: "
+            f"Found similar image for post `{post.id}`: "
             f"matches post `{best_match['post_id']}` with distance {distance}"
         )
 
@@ -727,7 +727,7 @@ def check_image_duplicate(
                 reddit_reply(post, comment_text, True)
                 commented = True
                 logger.info(
-                    f"[ZW] Image Dupe Check: Posted duplicate notification on `{post.id}`"
+                    f"Posted duplicate notification on `{post.id}`"
                 )
 
                 # Log to action counter
@@ -735,11 +735,11 @@ def check_image_duplicate(
 
             except Exception as e:
                 logger.error(
-                    f"[ZW] Image Dupe Check: Failed to post comment on `{post.id}`: {e}"
+                    f"Failed to post comment on `{post.id}`: {e}"
                 )
         else:
             logger.info(
-                f"[ZW] Image Dupe Check: [TESTING MODE] Would have posted comment:\n{comment_text}"
+                f"[TESTING MODE] Would have posted comment:\n{comment_text}"
             )
             commented = True  # In testing mode, we "posted"
 
@@ -753,7 +753,7 @@ def check_image_duplicate(
 
     except Exception as e:
         logger.error(
-            f"[ZW] Image Dupe Check: Error checking image duplicate for `{post.id}`: {e}"
+            f"Error checking image duplicate for `{post.id}`: {e}"
         )
         return None
 
@@ -807,7 +807,7 @@ def get_image_duplicate_stats(days=7):
                         }
                     )
             except Exception as e:
-                logger.debug(f"[ZW] Image Stats: Error processing result: {e}")
+                logger.debug(f"Error processing result: {e}")
                 continue
 
         # Find duplicate groups (same hash, multiple posts)
@@ -832,7 +832,7 @@ def get_image_duplicate_stats(days=7):
         }
 
         logger.info(
-            f"[ZW] Image Stats: Found {total_posts} image posts with "
+            f"Found {total_posts} image posts with "
             f"{len(hash_groups)} unique hashes over {days} days. "
             f"{len(duplicate_groups)} groups with exact duplicates."
         )
@@ -840,7 +840,7 @@ def get_image_duplicate_stats(days=7):
         return stats
 
     except Exception as e:
-        logger.error(f"[ZW] Image Stats: Error getting statistics: {e}")
+        logger.error(f"Error getting statistics: {e}")
         return None
 
 
