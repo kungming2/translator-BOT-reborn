@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Status command"""
+"""
+Status command that helps check on the state of the bot.
+...
+
+Logger tag: [ZS:STATUS]
+"""
 
 import aiohttp
+import logging
 import traceback
 
-from config import logger
+from config import logger as _base_logger
 from connection import get_random_useragent
 from database import get_recent_event_log_lines
 
 from . import command
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 
 
 @command(
@@ -37,7 +45,7 @@ async def status(ctx):
                     office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
     except Exception as err:
         tb = traceback.format_exc()
-        logger.error(f"[WJ] Encountered {err} when fetching quote.")
+        logger.error(f"Encountered {err} when fetching quote.")
         office_response = f"⚠️ An error occurred fetching quote:\n```\n{tb}\n```\n\n"
 
     # Now get the events log status

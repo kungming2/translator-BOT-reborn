@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Notification management command for moderators."""
+"""
+Notification management command for moderators.
+...
+
+Logger tag: [ZS:NOTIF]
+"""
 
 import logging
 from typing import Optional
@@ -13,8 +18,9 @@ from notifications import (
 from utility import format_markdown_table_with_padding
 
 from . import command
+from config import logger as _base_logger
 
-logger = logging.getLogger("ziwen")
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
 
 
 @command(
@@ -52,7 +58,7 @@ async def notif(ctx, action: str, username: str, language: Optional[str] = None)
                 f"Valid actions are: `add`, `remove`, `status`"
             )
     except Exception as e:
-        logger.error(f"[ZW] Discord: Error in notif command: {e}", exc_info=True)
+        logger.error(f"Error in notif command: {e}", exc_info=True)
         await ctx.send(f"⚠️ An error occurred: `{type(e).__name__}: {e}`")
 
 
@@ -62,10 +68,7 @@ async def handle_notif_add(ctx, username: str, language: Optional[str]):
         await ctx.send("⚠️ Language codes are required for the `add` action.")
         return
 
-    logger.info(
-        f"[ZW] Discord: Notification add request for u/{username} "
-        f"from {ctx.author.name}"
-    )
+    logger.info(f"Notification add request for u/{username} from {ctx.author.name}")
 
     # Parse the language codes
     language_matches = parse_language_list(language)
@@ -88,16 +91,13 @@ async def handle_notif_add(ctx, username: str, language: Optional[str]):
             f"Languages: `{match_codes_print}`"
         )
     except Exception as e:
-        logger.error(f"[ZW] Discord: Error adding notifications: {e}", exc_info=True)
+        logger.error(f"Error adding notifications: {e}", exc_info=True)
         await ctx.send(f"⚠️ Failed to add notifications: `{e}`")
 
 
 async def handle_notif_remove(ctx, username: str):
     """Handle removing ALL notification subscriptions using the database editor directly."""
-    logger.info(
-        f"[ZW] Discord: Notification remove request for u/{username} "
-        f"from {ctx.author.name}"
-    )
+    logger.info(f"Notification remove request for u/{username} from {ctx.author.name}")
 
     # Get subscriptions before removal for confirmation message
     subscribed_codes = notifier_language_list_retriever(username)
@@ -119,16 +119,13 @@ async def handle_notif_remove(ctx, username: str):
             f"Previous subscriptions: `{final_match_codes_print}`"
         )
     except Exception as e:
-        logger.error(f"[ZW] Discord: Error removing notifications: {e}", exc_info=True)
+        logger.error(f"Error removing notifications: {e}", exc_info=True)
         await ctx.send(f"⚠️ Failed to remove notifications: `{e}`")
 
 
 async def handle_notif_status(ctx, username: str):
     """Handle status request for user subscriptions."""
-    logger.info(
-        f"[ZW] Discord: Notification status request for u/{username} "
-        f"from {ctx.author.name}"
-    )
+    logger.info(f"Notification status request for u/{username} from {ctx.author.name}")
 
     # Get language subscriptions
     final_match_entries = notifier_language_list_retriever(username)
