@@ -4,6 +4,9 @@
 This handles language processing from posts' titles and also
 filters out posts that do not match the community rules. The primary class
 associated with requests is the Titolo class.
+...
+
+Logger tag: [TITLE]
 """
 
 import json
@@ -17,11 +20,14 @@ from praw.models import Submission
 from rapidfuzz import fuzz
 
 from ai import ai_query, openai_access
-from config import SETTINGS, Paths, load_settings, logger
+from config import SETTINGS, Paths, load_settings
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from languages import Lingvo, converter, country_converter, define_language_lists
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "TITLE"})
 
 
 # When a post is processed, it is given this class which should contain
@@ -844,9 +850,9 @@ def _determine_title_direction(source_languages, target_languages):
     :return: One of 'english_from', 'english_to', 'english_both', or 'english_none'.
     """
 
-    # Work on copies to avoid mutating input lists
-    src = source_languages[:]
-    tgt = target_languages[:]
+    # Work on copies to avoid mutating input lists, filtering out any None entries
+    src = [lang for lang in source_languages if lang is not None]
+    tgt = [lang for lang in target_languages if lang is not None]
 
     # Remove 'English' from lists if all entries contain 'English' (like 'Middle English'),
     # and list length > 1 to avoid always returning 'english_both'
@@ -909,10 +915,10 @@ def _get_notification_languages(assess_request):
     # Remove English lingvo objects, as we do not notify for English.
     combined = [x for x in combined if x.name != "English"]
 
-    # Deduplicate by Lingvo code or another unique attribute
+    # Deduplicate by preferred_code
     unique = {}
     for lang in combined:
-        key = lang.code if hasattr(lang, "code") else lang.name
+        key = lang.preferred_code
         unique[key] = lang
 
     combined = list(unique.values())
@@ -1279,6 +1285,10 @@ def title_ai_parser(
     query_data: str = ai_query(**query_kwargs)
 
     # Parse AI response
+    if query_data is None:
+        logger.error("AI service returned no data for title parsing.")
+        return "error", "Service returned no data"
+
     try:
         query_dict: dict[str, Any] = json.loads(query_data)
     except json.decoder.JSONDecodeError:
@@ -1317,6 +1327,12 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
 
     # Send to AI
     query_data = ai_query(**query_kwargs)
+
+    if not query_data:
+        logger.error(
+            f"AI service returned no data for title reformatting: {title_text!r}"
+        )
+        return ""
 
     # Parse AI response
     suggested_title = query_data
