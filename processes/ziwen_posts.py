@@ -2,15 +2,20 @@
 # -*- coding: UTF-8 -*-
 """
 Main script to fetch posts and act upon them.
+...
+
+Logger tag: [ZW:P]
 """
 
+import logging
 import pprint
 import time
 import traceback
 
 from wasabi import msg
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, is_internal_post, is_mod, remove_content
 from database import db, record_filter_log
 from dupe_detector import check_image_duplicate, duplicate_detector
@@ -33,6 +38,8 @@ from usage_statistics import action_counter
 from utility import fetch_youtube_length
 from wiki import update_wiki_page
 
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:P"})
+
 
 def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
     """
@@ -44,7 +51,7 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
     """
     if not internal_post_type:
         logger.warning(
-            f"[ZW] Internal post `{post.id}` has no post_type, cannot assign flair."
+            f"Internal post `{post.id}` has no post_type, cannot assign flair."
         )
         return False
 
@@ -53,7 +60,7 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
 
     if not template_id:
         logger.warning(
-            f"[ZW] No flair template found for internal post type '{internal_post_type}' "
+            f"No flair template found for internal post type '{internal_post_type}' "
             f"on post `{post.id}`"
         )
         return False
@@ -63,11 +70,11 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
             flair_template_id=template_id, text=internal_post_type.title()
         )
         logger.info(
-            f"[ZW] Assigned '{internal_post_type}' flair to internal post `{post.id}`"
+            f"Assigned '{internal_post_type}' flair to internal post `{post.id}`"
         )
         return True
     except Exception as e:
-        logger.error(f"[ZW] Failed to assign flair to internal post `{post.id}`: {e}")
+        logger.error(f"Failed to assign flair to internal post `{post.id}`: {e}")
         return False
 
 
@@ -86,7 +93,7 @@ def ziwen_posts(post_limit=None):
     titolo_content = None
 
     current_time = int(time.time())  # This is the current time.
-    logger.debug(f"[ZW] Fetching new r/{subreddit_object} posts at {current_time}.")
+    logger.debug(f"Fetching new r/{subreddit_object} posts at {current_time}.")
     posts = []
 
     # We get the last X new posts.
@@ -94,11 +101,12 @@ def ziwen_posts(post_limit=None):
     # Reverse order so that we start processing the older posts, with
     # newest ones last.
     posts.reverse()
+    logger.debug(f"Fetched {len(posts)} posts to process.")
 
     # ========================================================================
     # DUPLICATE DETECTION - Run before main processing routine
     # ========================================================================
-    logger.info("[ZW] Running duplicate detection...")
+    logger.info("Running duplicate detection...")
     # Pass half the most recent fetched posts for faster processing
     detection_limit = int(fetch_amount // 4)
     dupes_removed = duplicate_detector(
@@ -107,11 +115,9 @@ def ziwen_posts(post_limit=None):
         testing_mode=False,
     )
     if dupes_removed:
-        logger.info(
-            f"[ZW] Completed duplicate detection. Removed {dupes_removed} posts."
-        )
+        logger.info(f"Completed duplicate detection. Removed {dupes_removed} posts.")
     else:
-        logger.info("[ZW] No duplicate posts found.")
+        logger.info("No duplicate posts found.")
 
     # Main processing logic.
     for post in posts:
@@ -154,11 +160,11 @@ def ziwen_posts(post_limit=None):
             "SELECT 1 FROM old_posts WHERE id = ?", (post_id,)
         ).fetchone():
             logger.debug(
-                f"[ZW] Posts: This post {post_id} already exists in the processed database."
+                f"This post {post_id} already exists in the processed database."
             )
             continue
 
-        logger.info(f"[ZW] Posts: Now processing `{post_id}`: {post_title}...")
+        logger.info(f"Now processing `{post_id}`: {post_title}...")
         # Mark post as processed.
         db.cursor_main.execute(
             "INSERT INTO old_posts (id, created_utc, filtered) VALUES (?, ?, ?)",
@@ -168,13 +174,11 @@ def ziwen_posts(post_limit=None):
 
         # Apply a filtration test to make sure this post is valid.
         logger.info(
-            f"[ZW] Posts: About to assess filtration for post `{post_id}` with title: "
+            f"About to assess filtration for post `{post_id}` with title: "
             f"{post_title} | `{post_id}`"
         )
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
-        logger.info(
-            f"[ZW] Posts: Filter result for `{post_id}`: {post_okay}, {filter_reason}"
-        )
+        logger.info(f"Filter result for `{post_id}`: {post_okay}, {filter_reason}")
 
         # If it fails this test, write to `record_filter_log` and then
         # skip processing it.
@@ -200,14 +204,14 @@ def ziwen_posts(post_limit=None):
 
             action_counter(1, "Removed posts")  # Write to the counter log
             logger.info(
-                f"[ZW] Posts: Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`"
+                f"Removed post that violated formatting guidelines. Title: {post_title} | `{post.id}`"
             )
             continue
 
         # Create a new Ajo here into memory if it doesn't already exist.
         if not post_ajo:
             logger.info(
-                f"[ZW] Posts: No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
+                f"No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
             )
             titolo_content = Titolo.process_title(post)
             post_ajo = Ajo.from_titolo(titolo_content, post)
@@ -227,7 +231,7 @@ def ziwen_posts(post_limit=None):
             db.conn_main.commit()
 
             action_counter(1, "Removed posts")  # Write to the counter log
-            logger.info(f"[ZW] Posts: Removed an English-only post. | `{post.id}`")
+            logger.info(f"Removed an English-only post. | `{post.id}`")
             continue
 
         # Check on Ajo status. We only want to deal with untranslated new posts.
@@ -238,12 +242,12 @@ def ziwen_posts(post_limit=None):
             "inprogress",
         ]:
             logger.info(
-                f"[ZW] Posts: Skipping post {post_id} because status is '{post_ajo.status}'."
+                f"Skipping post {post_id} because status is '{post_ajo.status}'."
             )
             continue
 
         # NEW: Check for image duplicates (image_hash is already set by from_titolo)
-        if post_ajo.image_hash:
+        if post_ajo and post_ajo.image_hash:
             duplicate_result = check_image_duplicate(
                 post=post,
                 ajo=post_ajo,
@@ -254,30 +258,27 @@ def ziwen_posts(post_limit=None):
 
             if duplicate_result and duplicate_result["found"]:
                 logger.info(
-                    f"[ZW] Posts: Image duplicate detected for `{post_id}`. "
+                    f"Image duplicate detected for `{post_id}`. "
                     f"Distance: {duplicate_result['distance']}, "
                     f"Same author: {duplicate_result['same_author']}"
                 )
 
         # Continue work on post.
-        logger.info(f"[ZW] Posts: Processing post `{post_id}`.")
+        logger.info(f"Processing post `{post_id}`.")
         if post_ajo.lingvo:
             logger.info(
-                f"[ZW] Posts: New {post_ajo.language_name} post submitted by "
+                f"New {post_ajo.language_name} post submitted by "
                 f"u/{post_author} | `{post_id}`."
             )
         else:
-            logger.warning(
-                f"[ZW] Posts: Post with ID `{post_id}` has no language name."
-            )
+            logger.warning(f"Post with ID `{post_id}` has no language name.")
 
         # Check post age to be younger than a period of time.
         # This is to speed up rare cases where there is a huge backlog
         # of posts due to an extremely long downtime.
         if post_age > valid_period:
             logger.info(
-                f"[ZW] Posts: Post `{post_id}` is too old for my action "
-                f"parameters. Skipping..."
+                f"Post `{post_id}` is too old for my action parameters. Skipping..."
             )
             continue
 
@@ -290,9 +291,7 @@ def ziwen_posts(post_limit=None):
         notifications_cutoff = SETTINGS["notification_cutoff_age"] * 60
         messages_send_okay = post_age < notifications_cutoff
         if not messages_send_okay:
-            logger.info(
-                f"[ZW] Posts: Post `{post_id}` is too old to send notifications for."
-            )
+            logger.info(f"Post `{post_id}` is too old to send notifications for.")
 
         # Check if this is a mod test post (contains test emoji and posted by mod)
         # If so, disable notifications
@@ -303,18 +302,18 @@ def ziwen_posts(post_limit=None):
                 if is_mod(post_author):
                     messages_send_okay = False
                     logger.info(
-                        f"[ZW] Posts: Post `{post_id}` is a moderator test post. "
+                        f"Post `{post_id}` is a moderator test post. "
                         f"Notifications disabled."
                     )
 
         # After this point, this post is something we can work with.
         # Length checks for overly long posts.
         if len(post.selftext) > SETTINGS["post_long_characters"]:
-            logger.info("[ZW] Posts: This is a long piece of text.")
+            logger.info("This is a long piece of text.")
             post_long_comment = True
         # Check for YouTube length.
         elif "youtube.com" in post.url or "youtu.be" in post.url:
-            logger.debug(f"[ZW] Posts: Analyzing YouTube video link at: {post.url}")
+            logger.debug(f"Analyzing YouTube video link at: {post.url}")
             video_length = fetch_youtube_length(post.url)
 
             # If the video is considered long by our settings,
@@ -325,14 +324,10 @@ def ziwen_posts(post_limit=None):
                 and video_length > SETTINGS["video_long_seconds"]
                 and "t=" not in post.url
             ):
-                logger.info(
-                    f"[ZW] Posts: This is a long YouTube video ({video_length} seconds)."
-                )
+                logger.info(f"This is a long YouTube video ({video_length} seconds).")
                 post_long_comment = True
             elif video_length is None:
-                logger.warning(
-                    f"[ZW] Posts: Could not fetch YouTube video length for {post.url}"
-                )
+                logger.warning(f"Could not fetch YouTube video length for {post.url}")
 
         # This is a boolean that is True if the user has posted too much
         # in a short period of time and False if they haven't.
@@ -353,7 +348,7 @@ def ziwen_posts(post_limit=None):
                     post_ajo.add_notified(notified)
             else:
                 logger.warning(
-                    f"[ZW] Posts: Cannot send notifications for post {post_id} -"
+                    f"Cannot send notifications for post {post_id} -"
                     f" titolo_content is None or missing notify_languages."
                 )
 
@@ -364,17 +359,13 @@ def ziwen_posts(post_limit=None):
 
             long_comment = RESPONSE.COMMENT_LONG + RESPONSE.BOT_DISCLAIMER
             reddit_reply(post, long_comment)
-            logger.info(
-                f"[ZW] Posts: Left a comment informing that the post `{post_id}` is long."
-            )
+            logger.info(f"Left a comment informing that the post `{post_id}` is long.")
 
         # Leave an "unknown" comment if it's an unknown post.
         if post_ajo.preferred_code == "unknown":
             unknown_comment = RESPONSE.COMMENT_UNKNOWN + RESPONSE.BOT_DISCLAIMER
             reddit_reply(post, unknown_comment)
-            logger.info(
-                f"[ZW] Posts: Left an informative 'unknown' comment on post `{post_id}`."
-            )
+            logger.info(f"Left an informative 'unknown' comment on post `{post_id}`.")
 
         # Add to the saved wiki page if it's not a commonly requested language.
         # Handle case where lingvo might be None
@@ -396,12 +387,12 @@ def ziwen_posts(post_limit=None):
         # the Ajo to the local database as well as updating the Reddit
         # flair.
         logger.debug(
-            f"[ZW] Posts: Created Ajo for new post and saved to local database. | `{post.id}`"
+            f"Created Ajo for new post and saved to local database. | `{post.id}`"
         )
-        logger.info(f"[ZW] Post Title: `{post.title}`")
-        logger.info(f"[ZW] Post Link: `https://www.reddit.com{post.permalink}`")
-        logger.info(f"[ZW] Post Ajo ID: `{post_ajo.id}`")
-        logger.info(f"[ZW] Post Ajo initial data:\n{pprint.pformat(vars(post_ajo))}")
+        logger.info(f"Post Title: `{post.title}`")
+        logger.info(f"Post Link: `https://www.reddit.com{post.permalink}`")
+        logger.info(f"Post Ajo ID: `{post_ajo.id}`")
+        logger.info(f"Post Ajo initial data:\n{pprint.pformat(vars(post_ajo))}")
 
         # Only update if we're not in testing mode. This also writes the
         # Ajo to disk.

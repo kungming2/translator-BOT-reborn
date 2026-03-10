@@ -2,8 +2,12 @@
 # -*- coding: UTF-8 -*-
 """
 Main script to fetch and handle commands called via comments.
+...
+
+Logger tag: [ZW:C]
 """
 
+import logging
 import time
 import traceback
 
@@ -11,7 +15,8 @@ from prawcore import exceptions
 from wasabi import msg
 
 from commands import HANDLERS
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, credentials_source, is_internal_post
 from database import db
 from error import error_log_extended
@@ -24,6 +29,8 @@ from responses import RESPONSE
 from title_handling import Titolo
 from usage_statistics import action_counter, user_statistics_writer
 from verification import VERIFIED_POST_ID
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
 
 
 def _mark_short_thanks_as_translated(comment, ajo):
@@ -61,7 +68,7 @@ def _mark_short_thanks_as_translated(comment, ajo):
     # and the post as being translated.
     current_time = int(time.time())
     logger.info(
-        f"[ZW] Commands: COMMAND: Short thanks from u/{author_name}. Sending user a message..."
+        f"COMMAND: Short thanks from u/{author_name}. Sending user a message..."
     )
     ajo.set_status("translated")
     ajo.set_time("translated", current_time)
@@ -120,6 +127,8 @@ def ziwen_commands():
         # Server issues.
         logger.error(f"Encountered a server error: {ex}")
         return
+    else:
+        logger.debug(f"Fetched {len(comments)} comments to process.")
 
     # Start processing comments.
     for comment in comments:
@@ -156,17 +165,13 @@ def ziwen_commands():
             logger.debug(f"Comment `{comment_id}` is now being processed.")
 
         # Skip the bot's own comments and AutoModerator comments.
-        logger.debug(
-            f"[ZW] Commands: Checking author: '{author_name}' against bot: '{username}'"
-        )
+        logger.debug(f"Checking author: '{author_name}' against bot: '{username}'")
         if author_name.lower() in [
             username.lower(),
             "automoderator",
             "translator-modteam",
         ]:
-            logger.debug(
-                f"[ZW] Commands: `{comment_id}` is from bot u/{author_name}. Skipping..."
-            )
+            logger.debug(f"`{comment_id}` is from bot u/{author_name}. Skipping...")
             continue
 
         # Skip comments on filtered posts
@@ -185,15 +190,11 @@ def ziwen_commands():
         original_ajo = ajo_loader(original_post.id)
         if not original_ajo:
             # On the off-chance that there is no Ajo associated...
-            logger.warning(
-                f"[ZW] Commands: Ajo for `{original_post.id}` does not exist. Creating..."
-            )
+            logger.warning(f"Ajo for `{original_post.id}` does not exist. Creating...")
             original_ajo = Ajo.from_titolo(
                 Titolo.process_title(original_post), original_post
             )
-        logger.debug(
-            f"[ZW] Commands: > Ajo lingvo is {original_ajo.lingvo}"
-        )  # loaded lazily
+        logger.debug(f"> Ajo lingvo is {original_ajo.lingvo}")  # loaded lazily
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
@@ -208,11 +209,11 @@ def ziwen_commands():
             )
 
             logger.info(
-                f"[ZW] Commands: > Derived instruo and ajo for `{comment.id}` on "
+                f"> Derived instruo and ajo for `{comment.id}` on "
                 f"post `{original_post.id}` as: `{instruo}`."
             )
             logger.info(
-                f"[ZW] Commands: > Comment can be viewed at https://www.reddit.com{comment.permalink}."
+                f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
             )
 
             # If this is the verified thread, only allow !verify commands
@@ -223,7 +224,7 @@ def ziwen_commands():
                 ]
                 if not allowed_commands:
                     logger.info(
-                        f"[ZW] Commands: Non-verify command attempted on verified thread `{original_post.id}`. "
+                        f"Non-verify command attempted on verified thread `{original_post.id}`. "
                         f"Skipping comment `{comment_id}`."
                     )
                     continue
@@ -242,7 +243,7 @@ def ziwen_commands():
                 # Pass off the information for it to handle.
                 if handler:
                     logger.info(
-                        f"[ZW] Commands: Command `{komando}` detected for `{comment_id}` on "
+                        f"Command `{komando}` detected for `{comment_id}` on "
                         f"post `{original_post.id}`. Passing to handler."
                     )
                     handler(comment, instruo, komando, original_ajo)
@@ -252,13 +253,11 @@ def ziwen_commands():
                     # This is unlikely to happen - basically happens when
                     # there is a command listed to be acted upon, but
                     # there is no code to actually process it.
-                    logger.error(
-                        f"[ZW] Commands: No handler for command: {komando.name}"
-                    )
+                    logger.error(f"No handler for command: {komando.name}")
 
             # Record data on user commands.
             user_statistics_writer(instruo)
-            logger.debug("[ZW] Commands: Recorded user commands in database.")
+            logger.debug("Recorded user commands in database.")
 
             # Calculate points for the comment and write them to database.
             # This is obviously skipped if the post is an internal post.
@@ -274,7 +273,7 @@ def ziwen_commands():
                 continue
 
             logger.debug(
-                f"[ZW] Commands: Post `{original_post.id}` does not contain "
+                f"Post `{original_post.id}` does not contain "
                 "any operational keywords and commands."
             )
 
@@ -286,7 +285,7 @@ def ziwen_commands():
         # Check if there was a 'set' command in this comment
         moderator_set = False
         skip_update = False
-        if instruo and comment_has_command(comment_body):
+        if instruo:
             moderator_set = any(
                 komando.name.lower() == "set" for komando in instruo.commands
             )
