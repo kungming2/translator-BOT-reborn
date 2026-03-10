@@ -4,8 +4,12 @@
 Uses the title_handling process to test a large amount of titles and
 then writes it to a local Markdown file, and flags titles of interest
 for examination.
+...
+
+Logger tag: [WY:TITLE]
 """
 
+import logging
 import time
 import traceback
 from dataclasses import dataclass
@@ -13,11 +17,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from config import SETTINGS, get_reports_directory, logger
+from config import SETTINGS, get_reports_directory
+from config import logger as _base_logger, enable_debug_logging
 from connection import REDDIT_HELPER
 from models.ajo import ajo_loader, determine_flair_and_update
 from title_handling import process_title
 from utility import format_markdown_table_with_padding
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
 
 
 @dataclass
@@ -377,4 +384,5 @@ def retrieve_titles_test(fetch_amount: int = 1000) -> None:
 
 
 if __name__ == "__main__":
+    enable_debug_logging()
     retrieve_titles_test(10)

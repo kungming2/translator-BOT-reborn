@@ -1,13 +1,28 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Contains functions pertaining to updating the statistics on the
+subreddit wiki.
+...
+
+Logger tag: [WY:WIKI]
+"""
+
+import logging
 from datetime import date
 
 import prawcore
 from praw.exceptions import RedditAPIException
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT
 from languages import converter
 
 from wenyuan import WENYUAN_SETTINGS
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
+
 
 # Template for new wiki pages - matches existing format
 WY_NEW_HEADER = (

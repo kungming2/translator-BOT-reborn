@@ -2,13 +2,20 @@
 # -*- coding: UTF-8 -*-
 """
 Handles posting the translation challenge.
+...
+
+Logger tag: [WY:POSTER]
 """
 
+import logging
 from datetime import datetime, timezone
 
-from config import SETTINGS, Paths, logger
+from config import SETTINGS, Paths
+from config import logger as _base_logger
 from connection import REDDIT
 from discord_utils import send_discord_alert
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:POSTER"})
 
 
 def translation_challenge_poster():

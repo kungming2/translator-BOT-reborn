@@ -1,13 +1,27 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+Contains functions pertaining to data validation and checking the
+integrity of the bot's databases and log files.
+...
+
+Logger tag: [WY:DATA]
+"""
+
 import datetime
 import json
+import logging
 import os
 import time
 from typing import Optional
 
 from wasabi import msg
 
-from config import Paths, logger
+from config import Paths
+from config import logger as _base_logger
 from database import db
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:DATA"})
 
 
 def data_validator() -> None:
