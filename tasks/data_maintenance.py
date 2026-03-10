@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+This module contains tasks related to maintaining the data files used
+by the bot, including cleaning out old entries and updating some
+databases.
+...
+
+Logger tag: [WJ:DATA]
+"""
+
 import json
+import logging
 import re
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Union
 
@@ -12,7 +22,8 @@ import prawcore
 import yaml
 from praw.models import WikiPage
 
-from config import SETTINGS, Paths, logger
+from config import SETTINGS, Paths, enable_debug_logging
+from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER, USERNAME
 from database import db
 from discord_utils import send_discord_alert
@@ -26,6 +37,8 @@ from time_handling import (
     time_convert_to_string_seconds,
 )
 from wiki import fetch_most_requested_languages
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
 
 
 """DATA TRIMMING"""
@@ -50,10 +63,10 @@ def log_trimmer():
         with events_path.open("w", encoding="utf-8") as f:
             f.write(trimmed)
         logger.debug(
-            f"[WJ] Trimmed the events log to keep the last {lines_to_keep} entries."
+            f"Trimmed the events log to keep the last {lines_to_keep} entries."
         )
     else:
-        logger.debug("[WJ] Events log within limits; no trimming needed.")
+        logger.debug("Events log within limits; no trimming needed.")
 
     # Trim activity CSV
     activity_path = Path(Paths.LOGS["ACTIVITY"])
@@ -68,10 +81,10 @@ def log_trimmer():
         with activity_path.open("w", encoding="utf-8") as f:
             f.write(trimmed_csv)
         logger.debug(
-            f"[WJ] Trimmed the activity CSV to keep the last {csv_lines_to_keep} entries (plus header)."
+            f"Trimmed the activity CSV to keep the last {csv_lines_to_keep} entries (plus header)."
         )
     else:
-        logger.debug("[WJ] Activity CSV within limits; no trimming needed.")
+        logger.debug("Activity CSV within limits; no trimming needed.")
 
     return
 
@@ -102,10 +115,10 @@ def error_log_trimmer():
     removed = len(entries) - len(trimmed)
     if removed:
         logger.info(
-            f"[WJ] Removed {removed} resolved error(s) older than {retention_weeks} weeks."
+            f"Removed {removed} resolved error(s) older than {retention_weeks} weeks."
         )
     else:
-        logger.info("[WJ] No resolved errors to remove.")
+        logger.info("No resolved errors to remove.")
 
 
 @task(schedule="daily")
@@ -394,7 +407,7 @@ def _statistics_list_updater(input_data: Dict[str, list]):
     r.wiki["statistics"].edit(
         content=new_content, reason="Updating the language statistics main table."
     )
-    logger.info("[WJ] > Statistics table on the wiki updated.")
+    logger.info("> Statistics table on the wiki updated.")
 
 
 @task(schedule="monthly")
@@ -421,10 +434,10 @@ def refresh_language_statistics() -> None:
 
         body = page.content_md
         if "%%statistics-x%%" in body:
-            logger.info(f"[WJ] Skipping deprecated language page {page.name}...")
+            logger.info(f"Skipping deprecated language page {page.name}...")
             continue
         if "%%statistics-h%%" not in body:
-            logger.info(f"[WJ] Skipping non-language page {page.name}...")
+            logger.info(f"Skipping non-language page {page.name}...")
             continue
 
         try:
@@ -432,7 +445,7 @@ def refresh_language_statistics() -> None:
                 re.search(r"##(.*?)\(", body).group(1).strip().replace("_", " ")
             )
         except AttributeError:
-            logger.error(f"[WJ] Problem with {page.name} header.")
+            logger.error(f"Problem with {page.name} header.")
             continue
         try:
             language_family = re.search(r" \((.*?)\)", body).group(1).strip()
@@ -467,7 +480,7 @@ def refresh_language_statistics() -> None:
     with open(Paths.DATASETS["STATISTICS"], "w") as fp:
         json.dump(total_data, fp, sort_keys=True, indent=4)
 
-    logger.info("[WJ] Statistics JSON file generated.")
+    logger.info("Statistics JSON file generated.")
     _statistics_list_updater(language_family_dict)
 
     return
@@ -485,9 +498,7 @@ def points_worth_cacher():
     """
     # Get this month's representation.
     month_entry = get_current_month()
-    logger.debug(
-        f"[points_worth_cacher] Starting. Current month entry: '{month_entry}'"
-    )
+    logger.debug(f"Starting. Current month entry: '{month_entry}'")
 
     # Check if cache already contains entries for the current month
     # Note: cursor_cache is a property that creates a new cursor each time,
@@ -496,27 +507,23 @@ def points_worth_cacher():
     cursor = db.cursor_cache
     cursor.execute(query, (month_entry,))
     cached_entries = cursor.fetchall()
-    logger.debug(
-        f"[points_worth_cacher] Found {len(cached_entries)} cached entries for '{month_entry}'."
-    )
+    logger.debug(f"Found {len(cached_entries)} cached entries for '{month_entry}'.")
     if cached_entries:
-        logger.debug(
-            f"[points_worth_cacher] Cached entries: {[tuple(r) for r in cached_entries]}"
-        )
+        logger.debug(f"Cached entries: {[tuple(r) for r in cached_entries]}")
 
     # There is no cached points data.
     if not cached_entries:
         logger.info(
-            "[points_worth_cacher] No up-to-date cache found. Clearing old entries and repopulating..."
+            "No up-to-date cache found. Clearing old entries and repopulating..."
         )
         db.cursor_cache.execute("DELETE FROM multiplier_cache")
         deleted = db.cursor_cache.rowcount
         db.conn_cache.commit()
-        logger.info(f"[points_worth_cacher] Deleted {deleted} old cache entries.")
+        logger.info(f"Deleted {deleted} old cache entries.")
 
         most_requested = fetch_most_requested_languages()
         logger.info(
-            f"[points_worth_cacher] Fetched {len(most_requested)} most-requested languages: {most_requested}"
+            f"Fetched {len(most_requested)} most-requested languages: {most_requested}"
         )
 
         succeeded = []
@@ -528,25 +535,21 @@ def points_worth_cacher():
             try:
                 converted = converter(language_code)
                 logger.debug(
-                    f"[points_worth_cacher] Processing '{language_code}' -> converter result: {converted}"
+                    f"Processing '{language_code}' -> converter result: {converted}"
                 )
                 result = points_worth_determiner(converted)
                 logger.debug(
-                    f"[points_worth_cacher] points_worth_determiner('{language_code}') returned: {result}"
+                    f"points_worth_determiner('{language_code}') returned: {result}"
                 )
                 succeeded.append(language_code)
             except ValueError as e:
-                logger.warning(
-                    f"[points_worth_cacher] ValueError for language '{language_code}': {e}"
-                )
+                logger.warning(f"ValueError for language '{language_code}': {e}")
                 failed.append(language_code)
                 continue
 
-        logger.info(
-            f"[points_worth_cacher] Done. {len(succeeded)} succeeded, {len(failed)} failed."
-        )
+        logger.info(f"Done. {len(succeeded)} succeeded, {len(failed)} failed.")
         if failed:
-            logger.warning(f"[points_worth_cacher] Failed languages: {failed}")
+            logger.warning(f"Failed languages: {failed}")
 
         # Verify what was actually written to the cache
         verify_cursor = db.cursor_cache
@@ -555,13 +558,11 @@ def points_worth_cacher():
         )
         final_entries = verify_cursor.fetchall()
         logger.info(
-            f"[points_worth_cacher] Cache now contains {len(final_entries)} entries for '{month_entry}'."
+            f"Cache now contains {len(final_entries)} entries for '{month_entry}'."
         )
-        logger.debug(f"[points_worth_cacher] Final cache state: {final_entries}")
+        logger.debug(f"Final cache state: {final_entries}")
     else:
-        logger.debug(
-            "[points_worth_cacher] Cache is already populated for this month. Nothing to do."
-        )
+        logger.debug("Cache is already populated for this month. Nothing to do.")
 
     return
 
@@ -589,7 +590,7 @@ def archive_identified_saved():
             wiki_page.edit(
                 content=top, reason=f"Archived tabular data for {get_current_month()}."
             )
-            logger.info(f"[WJ] {page_name} page archived.")
+            logger.info(f"{page_name} page archived.")
 
     # Process both pages
     archive_page(r.wiki["identified"], Paths.ARCHIVAL["ALL_IDENTIFIED"], "Identified")
@@ -691,5 +692,5 @@ def archive_modmail() -> None:
 
 
 if __name__ == "__main__":
-    logger.setLevel("DEBUG")
+    enable_debug_logging()
     print(error_log_trimmer())

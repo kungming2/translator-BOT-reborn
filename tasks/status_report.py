@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+Scheduled monitoring and reporting functions for the r/translator subreddit.
+
+This module contains tasks that run on hourly, daily, and weekly schedules
+to track subreddit health, generate statistics, and surface issues to moderators
+via Discord alerts and Markdown report files.
+...
+
+Logger tag: [WJ:REPORT]
+"""
+
 import json
+import logging
 import re
 import sqlite3
 import time
@@ -10,7 +22,8 @@ from datetime import date
 from praw.exceptions import RedditAPIException
 from praw.models import TextArea
 
-from config import SETTINGS, get_reports_directory, logger
+from config import SETTINGS, get_reports_directory
+from config import logger as _base_logger
 from connection import (
     REDDIT,
     REDDIT_HELPER,
@@ -38,6 +51,8 @@ from time_handling import (
 )
 from utility import format_markdown_table_with_padding
 from verification import get_verified_thread
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
 
 
 @task(schedule="hourly")
@@ -149,6 +164,11 @@ def monitor_controversial_comments():
                 "alert",
             )
 
+            logger.info(
+                f"Flagged controversial comment `{comment_id}` by "
+                f"u/{author_name} (score: {score}) — Discord alert sent."
+            )
+
             # Record this action in the database
             insert_query = """
                            INSERT INTO acted_comments (comment_id, created_utc, comment_author_username, action_type)
@@ -180,13 +200,11 @@ def _generate_24h_statistics_snippet():
             "SELECT * FROM ajo_database WHERE created_utc >= ?", (cutoff_timestamp,)
         )
     except sqlite3.Error as e:
-        logger.error(f"generate_24h_statistics_snippet: Database error: {e}")
+        logger.error(f"Database error: {e}")
         return None
 
     if not stored_ajos:
-        logger.info(
-            "generate_24h_statistics_snippet: No posts found in the last 24 hours."
-        )
+        logger.info("No posts found in the last 24 hours.")
         return None
 
     # Extract statuses safely.
@@ -202,7 +220,7 @@ def _generate_24h_statistics_snippet():
             logger.warning(f"Skipping malformed entry: {e}: {data}")
 
     if not statuses:
-        logger.info("generate_24h_statistics_snippet: No valid statuses found.")
+        logger.info("No valid statuses found.")
         return None
 
     # Count post categories.
@@ -221,7 +239,7 @@ def _generate_24h_statistics_snippet():
         f"({translated_percentage}%)"
     )
 
-    logger.debug(f"generate_24h_statistics_snippet: {snippet}")
+    logger.debug(f"{snippet}")
     return snippet
 
 
@@ -244,9 +262,7 @@ def update_sidebar_statistics():
         return
 
     if not sidebar_bit:
-        logger.error(
-            "update_sidebar_statistics: No posts found in the last 24 hours — sidebar not updated."
-        )
+        logger.error("No posts found in the last 24 hours — sidebar not updated.")
         return
 
     # --- Update Old Reddit sidebar ---
@@ -264,10 +280,10 @@ def update_sidebar_statistics():
 
         prefix = "### Last 24H: "
         logger.info(
-            f"[WJ] Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit[len(prefix) :]}"
+            f"Updated Old Reddit sidebar with 24-hour stats: {sidebar_bit[len(prefix) :]}"
         )
     except Exception as e:
-        logger.error(f"[WJ] Failed to update Old Reddit sidebar: {e}")
+        logger.error(f"Failed to update Old Reddit sidebar: {e}")
         return
 
     # --- Update New Reddit widget ---
@@ -293,9 +309,7 @@ def update_sidebar_statistics():
         active_widget.mod.update(text=widget_text)  # type: ignore[attr-defined]
         logger.debug("Updated New Reddit sidebar widget with latest statistics.")
     except RedditAPIException:
-        logger.error(
-            "[WJ] Reddit API error: failed to update New Reddit sidebar widget."
-        )
+        logger.error("Reddit API error: failed to update New Reddit sidebar widget.")
 
     return
 
@@ -734,7 +748,7 @@ def notify_list_statistics_calculator() -> None:
     )
 
     if not all_subscriptions:
-        logger.warning("[WY] No subscriptions found in notify_users.")
+        logger.warning("No subscriptions found in notify_users.")
         return
 
     # Extract unique language codes and ensure they are strings
@@ -778,7 +792,7 @@ def notify_list_statistics_calculator() -> None:
     header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
     total_table = header + "\n".join(format_lines)
     total_table = format_markdown_table_with_padding(total_table)
-    logger.debug(f"[WY] notify_list_statistics_calculator: Total = {total_subs:,}")
+    logger.debug(f"notify_list_statistics_calculator: Total = {total_subs:,}")
 
     # Calculate missing ISO 639-1 languages (type-safe)
     ignore_codes = {"bh", "en", "nn", "nb"}

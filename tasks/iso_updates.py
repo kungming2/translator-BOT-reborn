@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+This module contains tasks related to checking the SIL website for
+updates to the ISO 639-3 standard.
+...
+
+Logger tag: [WJ:ISO]
+"""
+
+import logging
 import re
 import urllib.request
 from datetime import datetime, timezone
@@ -12,13 +21,16 @@ from lxml import html
 from praw.exceptions import PRAWException
 from pypdf import PdfReader
 
-from config import Paths, logger
+from config import Paths
+from config import logger as _base_logger
 from connection import REDDIT, get_random_useragent
 from discord_utils import send_discord_alert
 from tasks import task
 
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:ISO"})
 
-def parse_iso639_newsletter(pdf_source):
+
+def _parse_iso639_newsletter(pdf_source):
     """
     Parse an ISO 639 MA Newsletter PDF and extract adopted change requests.
 
@@ -223,7 +235,7 @@ def post_iso_reports_to_reddit() -> None:
             else:
                 # Parse the PDF to extract adopted change requests
                 try:
-                    markdown_list = parse_iso639_newsletter(pdf_link)
+                    markdown_list = _parse_iso639_newsletter(pdf_link)
 
                     # Build Discord message with the extracted changes
                     discord_message = (

@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+"""
+This module contains tasks related to gathering and presenting
+information that is public-facing (that is, towards the community).
+Functions placed here generally will generate a report viewable by the
+public.
+...
+
+Logger tag: [WJ:DIGEST]
+"""
+
 import json
+import logging
 import re
 import time
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Dict
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, USERNAME
 from database import db
 from discord_utils import send_discord_alert
@@ -15,6 +27,8 @@ from notifications import notifier_internal
 from responses import RESPONSE
 from tasks import task
 from time_handling import get_current_utc_date
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DIGEST"})
 
 
 @task(schedule="daily")
@@ -120,7 +134,7 @@ def weekly_unknown_thread():
             )
 
     if not unknown_entries:
-        logger.debug("[WJ] unknown_thread: No 'Unknown' posts found this week.")
+        logger.debug("No 'Unknown' posts found this week.")
         return
 
     # Prepare the thread content
@@ -136,14 +150,12 @@ def weekly_unknown_thread():
     # Submit and distinguish the post
     submission = r.submit(title=thread_title, selftext=body, send_replies=False)
     submission.mod.distinguish()
-    logger.info(
-        f"[WJ] unknown_thread: Posted weekly 'Unknown' thread (Week {current_week_utc})."
-    )
+    logger.info(f"Posted weekly 'Unknown' thread (Week {current_week_utc}).")
 
     return
 
 
-def analyze_bot_mod_log(start_time: int, end_time: int) -> Dict[str, int]:
+def _analyze_bot_mod_log(start_time: int, end_time: int) -> Dict[str, int]:
     """
     Analyze mod log actions performed by u/translator-BOT in r/translator.
 
@@ -182,7 +194,7 @@ def weekly_bot_action_report():
     start_time = end_time - (7 * 24 * 60 * 60)  # 7 days ago
 
     # Get the action data
-    action_data = analyze_bot_mod_log(start_time, end_time)
+    action_data = _analyze_bot_mod_log(start_time, end_time)
 
     # Format dates
     start_date = datetime.fromtimestamp(start_time).strftime("%Y-%m-%d")
@@ -237,7 +249,7 @@ def weekly_bot_action_report():
 
     submission = subreddit.submit(title=title, selftext=report_content)
 
-    logger.info(f"[WJ] Report posted: {submission.url}")
+    logger.info(f"Report posted: {submission.url}")
 
     return
 
