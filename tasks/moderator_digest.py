@@ -3,16 +3,22 @@
 """
 Formerly posted to a wiki "dashboard", this provides a daily digest of
 information and statistics to moderators via Discord.
+...
+
+Logger tag: [WJ:MODDIG]
 """
 
 import csv
+import json
+import logging
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import yaml
 
-from config import SETTINGS, Paths, get_reports_directory, logger
+from config import SETTINGS, Paths, get_reports_directory
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
 from tasks import WENJU_SETTINGS, task
@@ -20,8 +26,10 @@ from time_handling import convert_to_day, get_current_utc_date
 from usage_statistics import generate_command_usage_report
 from utility import format_markdown_table_with_padding
 
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODDIG"})
 
-def activity_csv_handler():
+
+def _activity_csv_handler() -> tuple[str, dict[str, float | list[float]]]:
     """
     Manage and summarize the log_activity.csv file.
 
@@ -41,15 +49,15 @@ def activity_csv_handler():
             header = next(reader, None)
             main_lines = list(reader)
     except FileNotFoundError:
-        logger.warning("[WJ] csv_handler: Activity log file not found.")
-        return "* **Activity log**: File missing"
+        logger.warning("Activity log file not found.")
+        return "* **Activity log**: File missing", {}
     except Exception as e:
-        logger.error(f"[WJ] csv_handler: Failed to read CSV file — {e}")
-        return "* **Activity log**: Error reading file"
+        logger.error(f"Failed to read CSV file — {e}")
+        return "* **Activity log**: Error reading file", {}
 
     if not main_lines:
-        logger.info("[WJ] csv_handler: No data found in activity log.")
-        return "* **Activity log**: No data available"
+        logger.info("No data found in activity log.")
+        return "* **Activity log**: No data available", {}
 
     # --- Process the data: compute averages and detect outliers ---
     # API calls
@@ -100,21 +108,27 @@ def activity_csv_handler():
                 writer.writerow(header)
             writer.writerows(main_lines[-WENJU_SETTINGS["lines_to_keep"] :])
     except Exception as e:
-        logger.error(f"[WJ] csv_handler: Failed to write trimmed CSV — {e}")
+        logger.error(f"Failed to write trimmed CSV — {e}")
         summary += "\n*Warning: Failed to trim log file.*"
-        return summary
+        return summary, {}
 
     logger.debug(
-        f"[WJ] csv_handler: Trimmed activity CSV to last "
+        f"Trimmed activity CSV to last "
         f"{WENJU_SETTINGS['lines_to_keep']} entries. "
         f"Averages — API: {average_api_calls}, "
         f"Memory: {average_memory}, Cycle: {average_cycle}"
     )
 
-    return summary
+    data = {
+        "avgApiCalls": average_api_calls,
+        "avgMemoryMB": average_memory,
+        "avgCycleMin": average_cycle,
+        "longestCycles": longest_cycles,
+    }
+    return summary, data
 
 
-def error_log_count() -> str:
+def _error_log_count() -> tuple[str, dict[str, int | str | bool]]:
     """
     Count how many entries exist in the YAML-formatted error log.
 
@@ -134,15 +148,27 @@ def error_log_count() -> str:
         with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
             error_logs: list[dict] | None = yaml.safe_load(f) or []
     except FileNotFoundError:
-        logger.warning("[WJ] error_log_count: Error log file not found.")
-        return f"{header}\n* **Error log entries**: 0 (file missing)"
+        logger.warning("Error log file not found.")
+        return f"{header}\n* **Error log entries**: 0 (file missing)", {
+            "count": 0,
+            "lastEntry": "N/A",
+            "resolved": True,
+        }
     except yaml.YAMLError as e:
-        logger.error(f"[WJ] error_log_count: Failed to parse YAML — {e}")
-        return f"{header}\n* **Error log entries**: Unknown (YAML parse error)"
+        logger.error(f"Failed to parse YAML — {e}")
+        return f"{header}\n* **Error log entries**: Unknown (YAML parse error)", {
+            "count": 0,
+            "lastEntry": "N/A",
+            "resolved": True,
+        }
 
     # Handle empty or malformed logs.
     if not isinstance(error_logs, list) or not error_logs:
-        return f"{header}\n* **Error log entries**: 0"
+        return f"{header}\n* **Error log entries**: 0", {
+            "count": 0,
+            "lastEntry": "N/A",
+            "resolved": True,
+        }
 
     num_entries: int = len(error_logs)
 
@@ -169,12 +195,21 @@ def error_log_count() -> str:
         f"* **Last entry from**: {last_entry_time}{last_entry_resolved_status}"
     )
 
-    logger.debug(f"[WJ] error_log_count: Found {num_entries} entries in the error log.")
+    logger.debug(f"Found {num_entries} entries in the error log.")
 
-    return formatted_template
+    data = {
+        "count": num_entries,
+        "lastEntry": last_entry_time + last_entry_resolved_status,
+        "resolved": last_resolved,
+    }
+    return formatted_template, data
 
 
-def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=False):
+def _filter_log_tabulator(
+    start_date: date | int | float | None = None,
+    end_date: date | int | float | None = None,
+    include_detailed_stats: bool = False,
+) -> tuple[str, dict[str, float | str]]:
     """
     Calculate the filtration rate of bad titles for a specified time period.
 
@@ -197,15 +232,15 @@ def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=
         with open(Paths.LOGS["FILTER"], "r", encoding="utf-8") as f:
             filter_logs = f.read().strip()
     except FileNotFoundError:
-        logger.warning("[WJ] filter_log_tabulator: Filter log file not found.")
-        return "* **Filter rate**: Unknown (file missing)"
+        logger.warning("Filter log file not found.")
+        return "* **Filter rate**: Unknown (file missing)", {}
 
     # Remove header and get entries
     all_entries = filter_logs.splitlines()[2:]
 
     if len(all_entries) < 2:
-        logger.info("[WJ] filter_log_tabulator: Not enough data in filter log.")
-        return "* **Filter rate**: Insufficient data"
+        logger.info("Not enough data in filter log.")
+        return "* **Filter rate**: Insufficient data", {}
 
     # Determine which entries to analyze
     if start_date is not None:
@@ -214,10 +249,8 @@ def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=
             all_entries, start_date, end_date or today
         )
         if not entries:
-            logger.warning(
-                "[WJ] filter_log_tabulator: No entries found in specified date range."
-            )
-            return "* **Filter rate**: No data in specified range"
+            logger.warning("No entries found in specified date range.")
+            return "* **Filter rate**: No data in specified range", {}
 
         days_elapsed = (period_end - period_start).days or 1
         entry_count = len(entries)
@@ -231,8 +264,8 @@ def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=
             first_date_str = entries[0].split("|")[0].strip()
             period_start = datetime.strptime(first_date_str, "%Y-%m-%d").date()
         except Exception as e:
-            logger.error(f"[WJ] filter_log_tabulator: Failed to parse first date — {e}")
-            return "* **Filter rate**: Unknown (date parse error)"
+            logger.error(f"Failed to parse first date — {e}")
+            return "* **Filter rate**: Unknown (date parse error)", {}
 
         period_end = today
         days_elapsed = (period_end - period_start).days or 1
@@ -245,7 +278,7 @@ def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=
     filter_string = f"* **Filter rate**: {rate_per_day}/day ({period_label})"
 
     logger.debug(
-        f"[WJ] filter_log_tabulator: Average filtered posts: {rate_per_day}/day "
+        f"Average filtered posts: {rate_per_day}/day "
         f"over {days_elapsed} days ({entry_count} entries)."
     )
 
@@ -271,26 +304,32 @@ def filter_log_tabulator(start_date=None, end_date=None, include_detailed_stats=
                 )
 
                 logger.debug(
-                    f"[WJ] filter_log_tabulator: All-time average: {total_rate}/day. "
+                    f"All-time average: {total_rate}/day. "
                     f"Period comparison: {rate_diff:+.1f}%"
                 )
             else:
                 filter_string += f"\n* **Overall rate**: {total_rate}/day (all-time: {total_count} entries)"
 
                 logger.debug(
-                    f"[WJ] filter_log_tabulator: All-time average: {total_rate}/day. "
-                    f"Period comparison: N/A"
+                    f"All-time average: {total_rate}/day. Period comparison: N/A"
                 )
 
         except Exception as e:
-            logger.error(
-                f"[WJ] filter_log_tabulator: Failed to calculate detailed stats — {e}"
-            )
+            logger.error(f"Failed to calculate detailed stats — {e}")
 
-    return filter_string
+    data = {
+        "ratePerDay": rate_per_day,
+        "startDate": str(period_start),
+        "endDate": str(period_end),
+    }
+    return filter_string, data
 
 
-def _filter_entries_by_date_range(entries, start_date, end_date):
+def _filter_entries_by_date_range(
+    entries: list[str],
+    start_date: date | int | float,
+    end_date: date | int | float,
+) -> tuple[list[str], date, date]:
     """
     Filter log entries to those within the specified date range.
 
@@ -336,7 +375,7 @@ def _filter_entries_by_date_range(entries, start_date, end_date):
     return filtered, start_date, end_date
 
 
-def note_language_tags():
+def _note_language_tags() -> tuple[str | None, list[dict[str, str | int]]]:
     """
     Identify recent posts that have temporary or missing language tags.
 
@@ -362,12 +401,12 @@ def note_language_tags():
     flagged_submissions.sort(key=lambda s: s.created_utc)
 
     logger.debug(
-        f"[WJ] note_language_tags: Found {len(flagged_submissions)} posts with temporary or missing tags."
+        f"note_language_tags: Found {len(flagged_submissions)} posts with temporary or missing tags."
     )
 
     # Return early if there are no results.
     if not flagged_submissions:
-        return None
+        return None, []
 
     rows = []
     for post in flagged_submissions:
@@ -390,7 +429,19 @@ def note_language_tags():
 
     formatted_output = header + "\n".join(rows)
 
-    return formatted_output
+    flagged_data = [
+        {
+            "title": post.title.strip()[:30].rstrip()
+            + ("..." if len(post.title.strip()) > 30 else ""),
+            "url": f"https://redd.it/{post.id}",
+            "date": convert_to_day(post.created_utc),
+            "flair": post.link_flair_text or "(none)",
+            "comments": post.num_comments,
+        }
+        for post in flagged_submissions
+    ]
+
+    return formatted_output, flagged_data
 
 
 @task(schedule="daily")
@@ -398,7 +449,7 @@ def collate_moderator_digest():
     """
     Sends out an overall digest of the subreddit's state and things for
     moderators to note. Uses Discord. The daily information is also
-    saved to a local Markdown file for archival purposes.
+    saved to both a Markdown file and an HTML dashboard for archival purposes.
     :return: None
     """
     logger.info("Collating moderator digest...")
@@ -410,49 +461,124 @@ def collate_moderator_digest():
     back_start_date = current_time - time_delta
 
     # Collect the data.
-    error_log_data = error_log_count()
-    filter_log_data = filter_log_tabulator(
+    error_log_md, error_data = _error_log_count()
+    filter_log_md, filter_data = _filter_log_tabulator(
         start_date=back_start_date, end_date=today_date
     )
-    activity_data = activity_csv_handler()
-    command_data = generate_command_usage_report(
+    activity_md, activity_data = _activity_csv_handler()
+    command_data_raw = generate_command_usage_report(
         back_start_date, current_time, days_ago
     )
-    command_data = format_markdown_table_with_padding(command_data)
-    noted_entries_data = note_language_tags()
+    command_data_md = format_markdown_table_with_padding(command_data_raw)
+    noted_entries_md, flagged_data = _note_language_tags()
 
-    # Compile the full Markdown summary.
-    sections = [error_log_data, filter_log_data, activity_data, command_data]
-    if noted_entries_data is not None:
-        sections.append(noted_entries_data)
+    # --- Parse actions from command report ---
+    # generate_command_usage_report returns a markdown table; parse the rows
+    # directly from command_data_raw before padding is applied.
+    actions = []
+    for line in command_data_raw.splitlines():
+        line = line.strip()
+        if (
+            not line.startswith("|")
+            or line.startswith("| Action")
+            or line.startswith("|---")
+        ):
+            continue
+        parts = [p.strip() for p in line.strip("|").split("|")]
+        if len(parts) == 2:
+            try:
+                actions.append({"name": parts[0], "count": float(parts[1])})
+            except ValueError:
+                continue
+
+    # --- Pull new posts / notifications from actions for the top stat card ---
+    new_posts = next(
+        (a["count"] for a in actions if a["name"].lower() == "new posts"), 0.0
+    )
+    notifications = next(
+        (a["count"] for a in actions if a["name"].lower() == "notifications"), 0.0
+    )
+
+    # --- Compile the full Markdown summary (unchanged, still used for Discord + .md) ---
+    sections = [error_log_md, filter_log_md, activity_md, command_data_md]
+    if noted_entries_md is not None:
+        sections.append(noted_entries_md)
     total_data = "\n".join(sections)
-    subject_line = f"Moderator Digest for {today_date}"
+    subject_line = f"Moderator Digest for {today_date} Complete"
+    notification_body = "The digest dashboard has been updated."
+
     digest_summary = f"# {subject_line}\n{total_data}"
 
-    # Resolve the output file path.
-    folder_to_save = get_reports_directory()
-    output_path = Path(folder_to_save) / f"{today_date}.md"
+    # --- Build the dashboard DATA payload ---
+    dashboard_data = {
+        "date": today_date_str,
+        "errors": error_data
+        if error_data
+        else {"count": 0, "lastEntry": "N/A", "resolved": True},
+        "filter": filter_data
+        if filter_data
+        else {"ratePerDay": 0, "startDate": today_date_str, "endDate": today_date_str},
+        "activity": activity_data
+        if activity_data
+        else {
+            "avgApiCalls": 0,
+            "avgMemoryMB": 0,
+            "avgCycleMin": 0,
+            "longestCycles": [],
+        },
+        "newPosts": new_posts,
+        "notifications": notifications,
+        "actions": actions,
+        "flaggedPosts": flagged_data,
+    }
 
-    # Write to a file safely.
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as f:
+    # --- Resolve output paths ---
+    folder_to_save = get_reports_directory()
+    md_path = Path(folder_to_save) / f"{today_date}.md"
+    # HTML is a single fixed file, overwritten each run, so it can be
+    # bookmarked or referenced from a single stable path.
+    html_path = Path(folder_to_save).parent / "moderator_digest.html"
+
+    # --- Write Markdown ---
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    with md_path.open("w", encoding="utf-8") as f:
         f.write(digest_summary)
 
+    # --- Write HTML dashboard ---
+    html_content = _render_html_dashboard(today_date_str, dashboard_data)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    with html_path.open("w", encoding="utf-8") as f:
+        f.write(html_content)
+
     logger.info(
-        f"[WJ] Daily administrative report completed and saved to {output_path}"
+        f"Daily administrative report completed and saved to {md_path} and {html_path}"
     )
 
     # Send as a Discord message.
-    send_discord_alert(subject_line, total_data, "alert")
-    logger.info("[WJ] Daily moderator digest completed.")
+    send_discord_alert(subject_line, notification_body, "alert")
+    logger.info("Daily moderator digest completed.")
 
     return
 
 
-if __name__ == "__main__":
-    print(
-        filter_log_tabulator(
-            start_date=1759302000, end_date=1761030000, include_detailed_stats=True
-        )
+def _render_html_dashboard(date_str: str, data: dict) -> str:
+    """
+    Render the moderator digest data as a self-contained HTML dashboard.
+
+    Loads the HTML template from Paths.TEMPLATES["MODERATOR_DIGEST"] and
+    substitutes the __DATE_STR__ and __DATA_JSON__ placeholders.
+
+    :param date_str: The date string for the report (YYYY-MM-DD).
+    :param data: A dict matching the dashboard DATA schema.
+    :return: A complete HTML string.
+    """
+    with open(Paths.TEMPLATES["MODERATOR_DIGEST"], "r", encoding="utf-8") as f:
+        template = f.read()
+
+    return template.replace("__DATE_STR__", date_str).replace(
+        "__DATA_JSON__", json.dumps(data, indent=2)
     )
-    print(filter_log_tabulator())
+
+
+if __name__ == "__main__":
+    collate_moderator_digest()
