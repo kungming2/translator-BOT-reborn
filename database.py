@@ -24,10 +24,14 @@ the bot's three SQLite databases:
 The DatabaseManager class provides lazy-loaded connections and cursor access
 with convenient query methods. Additional functions handle CSV/text logging
 and complex search operations across the databases.
+...
+
+Logger tag: [DATA]
 """
 
 import csv
 import json
+import logging
 import os
 import pprint
 import sqlite3
@@ -36,13 +40,18 @@ from ast import literal_eval
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-from config import SETTINGS, Paths, logger
+from config import SETTINGS, Paths
+from config import logger as _base_logger
+
 from time_handling import convert_to_day
 
 if TYPE_CHECKING:
     from discord.ext.commands import Context
 
     from models.ajo import Ajo
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "DATA"})
+
 
 """SQLITE DATABASE ACCESS"""
 
@@ -354,7 +363,7 @@ def _initialize_db(db_path: str, statements: list[str]) -> None:
         conn.commit()
         logger.info(f"{os.path.basename(db_path)} initialized successfully.")
     except sqlite3.Error as e:
-        logger.info(f"Error initializing {db_path}: {e}")
+        logger.error(f"Error initializing {db_path}: {e}")
     finally:
         if conn:
             conn.close()
@@ -507,6 +516,7 @@ def search_database(
                 return []
 
         elif search_type == "user":
+            logger.warning("Searching for user in database... This can take a while.")
             query = "SELECT id, created_utc, ajo FROM ajo_database"
             results = db.fetchall_ajo(query)
 
@@ -529,7 +539,7 @@ def search_database(
                     matching_ajos.append(Ajo.from_dict(data))
 
             if parse_errors > 0:
-                logger.debug(f"Warning: {parse_errors} rows could not be parsed")
+                logger.warning(f"Warning: {parse_errors} rows could not be parsed")
 
             return matching_ajos
 
@@ -538,10 +548,10 @@ def search_database(
             return []
 
     except Exception as db_error:
-        logger.debug(f"Error querying database: {str(db_error)}")
         import traceback
 
-        traceback.print_exc()
+        logger.error(f"Error querying database: {traceback.print_exc()} {db_error}")
+
         return []
 
 

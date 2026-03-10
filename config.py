@@ -100,6 +100,13 @@ class Paths:
         "TRANSLATION_CHALLENGE": os.path.join(DATA_DIR, "translation_challenge.md"),
     }
 
+    # HTML templates for rendered output files
+    TEMPLATES: dict[str, str] = {
+        "MODERATOR_DIGEST": os.path.join(
+            DATA_DIR, "Templates", "moderator_digest.html"
+        ),
+    }
+
     # Archival output files
     ARCHIVAL: dict[str, str] = {
         "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
@@ -126,6 +133,18 @@ def get_reports_directory(base_dir: str | None = None) -> Path:
     return log_dir
 
 
+class TagFormatter(logging.Formatter):
+    """
+    Custom formatter that injects a default tag value for log records
+    that were not emitted through a LoggerAdapter with a 'tag' extra.
+    """
+
+    def format(self, record):
+        if not hasattr(record, "tag"):
+            record.tag = "-"
+        return super().format(record)
+
+
 def set_up_logger() -> logging.Logger:
     """
     Set up the unified logger for all routines.
@@ -133,7 +152,9 @@ def set_up_logger() -> logging.Logger:
     :return: A logger object.
     """
     # Logging code, defining the basic logger.
-    logformatter: str = "%(levelname)s: %(asctime)s - %(message)s"
+    logformatter: str = (
+        "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
+    )
     logging.basicConfig(
         format=logformatter, level=logging.INFO
     )  # By default, only show INFO or higher levels.
@@ -146,7 +167,7 @@ def set_up_logger() -> logging.Logger:
     )  # Change this level for debugging or to display more information.
 
     # Use UTC time in the formatter
-    handler_format: logging.Formatter = logging.Formatter(
+    handler_format: TagFormatter = TagFormatter(
         logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ"
     )
     handler_format.converter = time.gmtime  # Use UTC time
@@ -154,6 +175,13 @@ def set_up_logger() -> logging.Logger:
     logger_object.addHandler(handler)
 
     return logger_object
+
+
+def enable_debug_logging() -> None:
+    """Enable DEBUG level on all handlers for local test runs."""
+    logger.setLevel(logging.DEBUG)
+    for handler in logger.handlers:
+        handler.setLevel(logging.DEBUG)
 
 
 def load_settings(path: str | Path) -> dict:

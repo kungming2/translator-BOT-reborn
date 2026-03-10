@@ -2,12 +2,21 @@
 # -*- coding: UTF-8 -*-
 """
 Run independently and infrequently to update ISO 639-3 code points.
+...
+
+Logger tag: [CODE]
 """
 
-import pandas as pd
+import logging
 from pathlib import Path
 
-from config import Paths, logger
+import pandas as pd
+
+from config import Paths
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "CODE"})
+
 
 # Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
@@ -22,17 +31,16 @@ def load_csv():
         for encoding in encodings:
             try:
                 df = pd.read_csv(CSV_PATH, encoding=encoding)
+                logger.debug(f"Loaded CSV with encoding {encoding!r}")
                 return df
             except (UnicodeDecodeError, UnicodeError):
                 continue
 
         if df is None:
-            logger.error(
-                "[S] Database: ERROR: Could not decode file with any standard encoding"
-            )
+            logger.error("Could not decode file with any standard encoding")
             return None
     except FileNotFoundError:
-        logger.error(f"[S] Database: ERROR: File not found at `{CSV_PATH}`")
+        logger.error(f"File not found at `{CSV_PATH}`")
         return None
 
 
@@ -40,9 +48,9 @@ def save_csv(df):
     """Save DataFrame back to CSV file."""
     try:
         df.to_csv(CSV_PATH, index=False, encoding="utf-8")
-        logger.info("[S] Database: File saved successfully")
+        logger.info("File saved successfully")
     except Exception as e:
-        logger.error(f"[S] Database: ERROR: Failed to save file: {e}")
+        logger.error(f"Failed to save file: {e}")
 
 
 def create_entry():
@@ -55,13 +63,13 @@ def create_entry():
 
     # Check if code already exists
     if iso_639_3 in df["ISO 639-3"].values:
-        print(f"Error: ISO 639-3 code '{iso_639_3}' already exists.")
+        print(f"ISO 639-3 code '{iso_639_3}' already exists.")
         return
 
     language_name = input("Enter Language Name: ").strip()
 
     if not iso_639_3 or not language_name:
-        print("Error: ISO 639-3 and Language Name cannot be empty.")
+        print("ISO 639-3 and Language Name cannot be empty.")
         return
 
     # Create new row with empty ISO 639-1 and Alternate Names
@@ -86,7 +94,7 @@ def update_entry():
     iso_639_3 = input("Enter ISO 639-3 code to update: ").strip()
 
     if iso_639_3 not in df["ISO 639-3"].values:
-        print(f"Error: ISO 639-3 code '{iso_639_3}' not found.")
+        print(f"ISO 639-3 code '{iso_639_3}' not found.")
         return
 
     current_name = df[df["ISO 639-3"] == iso_639_3]["Language Name"].values[0]
@@ -95,7 +103,7 @@ def update_entry():
     new_name = input("Enter updated Language Name: ").strip()
 
     if not new_name:
-        print("Error: Language Name cannot be empty.")
+        print("Language Name cannot be empty.")
         return
 
     df.loc[df["ISO 639-3"] == iso_639_3, "Language Name"] = new_name
@@ -112,7 +120,7 @@ def deprecate_entry():
     iso_639_3 = input("Enter ISO 639-3 code to deprecate: ").strip()
 
     if iso_639_3 not in df["ISO 639-3"].values:
-        print(f"Error: ISO 639-3 code '{iso_639_3}' not found.")
+        print(f"ISO 639-3 code '{iso_639_3}' not found.")
         return
 
     language_name = df[df["ISO 639-3"] == iso_639_3]["Language Name"].values[0]

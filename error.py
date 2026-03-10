@@ -25,18 +25,25 @@ Typical usage:
         # risky operation
     except Exception:
         error_log_extended(traceback.format_exc(), "Ziwen")
+...
+
+Logger tag: [ERROR]
 """
 
+import logging
 import os
 from datetime import datetime, timedelta
 from typing import Any
 
 import yaml
 
-from config import SETTINGS, Paths, logger
+from config import SETTINGS, Paths
+from config import logger as _base_logger
 from connection import REDDIT
 from database import get_recent_event_log_lines
 from time_handling import get_current_utc_time, time_convert_to_string
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ERROR"})
 
 
 class CustomDumper(yaml.SafeDumper):
@@ -221,8 +228,11 @@ def retrieve_error_log() -> str:
     """
     paragraphs = []
 
-    with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
-        data: list[dict[str, Any]] = yaml.safe_load(f)
+    try:
+        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+            data: list[dict[str, Any]] = yaml.safe_load(f) or []
+    except FileNotFoundError:
+        return "No error log found."
 
     for entry in data:
         lines = []
@@ -263,9 +273,9 @@ def display_event_errors(days=7):
             for line in f:
                 # Check if line contains ERROR
                 if "ERROR:" in line:
-                    # Extract timestamp (format: 2025-10-26T23:47:21Z)
+                    # Extract timestamp (format: ERROR: 2025-10-26T23:47:21Z - ...)
                     try:
-                        timestamp_str = line.split(" - ")[0].replace("ERROR: ", "")
+                        timestamp_str = line.split(" - ")[0].split(": ")[1]
                         log_date = datetime.strptime(
                             timestamp_str, "%Y-%m-%dT%H:%M:%SZ"
                         )

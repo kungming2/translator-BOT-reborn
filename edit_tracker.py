@@ -26,8 +26,12 @@ This module provides two main tracking functions:
 
 Both functions help maintain data integrity by catching changes that
 might otherwise be missed in normal processing.
+...
+
+Logger tag: [EDIT]
 """
 
+import logging
 import time
 from typing import TYPE_CHECKING
 
@@ -35,7 +39,8 @@ from praw import models
 from wasabi import msg
 
 from commands.claim import parse_claim_comment
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER
 from database import db
 from models.ajo import Ajo, ajo_loader
@@ -45,6 +50,8 @@ from title_handling import Titolo
 
 if TYPE_CHECKING:
     from praw.models import Comment
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "EDIT"})
 
 
 def _is_comment_within_edit_window(comment: "Comment") -> bool:
@@ -79,9 +86,7 @@ def _remove_from_processed(comment_id: str) -> None:
     cursor = db.cursor_main
     cursor.execute("DELETE FROM old_comments WHERE id = ?", (comment_id,))
     db.conn_main.commit()
-    logger.debug(
-        f"[ZW] Edit Tracker: Removed comment '{comment_id}' from processed database."
-    )
+    logger.debug(f"Removed comment '{comment_id}' from processed database.")
 
 
 def _cleanup_comment_cache(limit: int) -> None:
@@ -95,7 +100,7 @@ def _cleanup_comment_cache(limit: int) -> None:
     """
     cursor.execute(cleanup, (limit,))
     db.conn_cache.commit()
-    logger.debug("[ZW] Edit Finder: Cleaned up the edited comments cache.")
+    logger.debug("Cleaned up the edited comments cache.")
 
 
 def edit_tracker() -> None:
@@ -124,6 +129,7 @@ def edit_tracker() -> None:
 
         # If not in cache, insert it
         if not cached:
+            logger.debug(f"Cached new comment `{comment_id}`")
             _update_comment_cache(comment_id, comment_body)
             continue
 
@@ -189,6 +195,7 @@ def progress_tracker() -> None:
     """
     current_time = int(time.time())
     search_query = 'flair:"in progress"'
+    posts_checked = 0
     search_results = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).search(
         search_query, time_filter="week", sort="new"
     )
@@ -196,22 +203,16 @@ def progress_tracker() -> None:
     for post in search_results:
         post_id = post.id
         permalink = post.permalink
+        posts_checked += 1
 
         # Load Ajo object from local cache or create from Reddit
         ajo = ajo_loader(post_id)
         if ajo is None:  # Unlikely to happen, but just in case.
-            logger.debug(
-                "[ZW] progress_tracker: Couldn't find Ajo in "
-                "local database. Loading from Reddit."
-            )
+            logger.debug("Couldn't find Ajo in local database. Loading from Reddit.")
             ajo = Ajo.from_titolo(Titolo.process_title(post.title))
 
         # Skip if the data doesn't match an in progress post for some reason.
-        if (
-            ajo.type == "single"
-            or ajo.type == "multiple"
-            and not ajo.is_defined_multiple
-        ):
+        if (ajo.type in ("single", "multiple")) and not ajo.is_defined_multiple:
             if ajo.status != "inprogress":
                 continue  # Skip posts without the correct flair
         else:  # Defined multiple
@@ -225,8 +226,7 @@ def progress_tracker() -> None:
         # Skip if there's no claim comment ID
         if not comment_claim_id:
             logger.warning(
-                f"[ZW] progress_tracker: No comment_claim found for post {post_id}. "
-                f"Skipping. {permalink}"
+                f"No comment_claim found for post {post_id}. Skipping. {permalink}"
             )
             continue
 
@@ -236,7 +236,7 @@ def progress_tracker() -> None:
             time_diff = claim_comment_data.get("claim_time_diff")
         except Exception as e:
             logger.warning(
-                f"[ZW] progress_tracker: Failed to fetch/parse claim comment for post {post_id}. "
+                f"Failed to fetch/parse claim comment for post {post_id}. "
                 f"Error: {e}. Skipping. {permalink}"
             )
             continue
@@ -247,9 +247,7 @@ def progress_tracker() -> None:
             continue
 
         # Claim expired: remove claim comment and reset post
-        logger.info(
-            f"[ZW] progress_tracker: Post exceeded claim period. Resetting. {permalink}"
-        )
+        logger.info(f"Post exceeded claim period. Resetting. {permalink}")
         if ajo.type == "single":
             kunulo_object.delete("comment_claim")
             ajo.set_status("untranslated")
@@ -265,6 +263,8 @@ def progress_tracker() -> None:
                     ajo.set_defined_multiple_status("untranslated")
 
         ajo.update_reddit()
+
+    logger.debug(f"Checked {posts_checked} in-progress post(s)")
 
     return
 

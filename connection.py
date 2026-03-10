@@ -2,8 +2,12 @@
 # -*- coding: UTF-8 -*-
 """
 Handles connections with Reddit.
+...
+
+Logger tag: [CONN]
 """
 
+import logging
 import re
 
 import praw
@@ -14,7 +18,10 @@ from prawcore import exceptions
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
 
-from config import SETTINGS, Paths, load_settings, logger
+from config import SETTINGS, Paths, load_settings
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "CONN"})
 
 
 def reddit_login(credentials):
@@ -70,7 +77,7 @@ def reddit_status_check() -> list[dict] | None:
 
     for incident in incidents:
         logger.info(
-            f"[Reddit Incident] {incident.get('name')} | "
+            f"Reddit incident: {incident.get('name')} | "
             f"Status: {incident.get('status')} | "
             f"Created: {incident.get('created_at')} | "
             f"Updated: {incident.get('updated_at')}"
@@ -140,8 +147,11 @@ def is_valid_user(username):
         # Just try to access fullname; no need to assign it if unused
         _ = REDDIT_HELPER.redditor(username).fullname
         return True
-    except (exceptions.NotFound, AttributeError):
-        logger.warning(f"User {username} not found.")
+    except exceptions.NotFound:
+        logger.debug(f"User {username!r} not found (shadowbanned or deleted).")
+        return False
+    except AttributeError:
+        logger.debug(f"User {username!r} is suspended.")
         return False
 
 
@@ -203,11 +213,11 @@ def create_mod_note(
             redditor=REDDIT.redditor(username),
         )
 
-        logger.info(f"[ModNote] Created {label} note for u/{username}: {included_note}")
+        logger.info(f"Created {label} note for u/{username}: {included_note}")
         return True
 
     except Exception as e:
-        logger.error(f"[ModNote] Failed to create note for u/{username}: {e}")
+        logger.error(f"Failed to create note for u/{username}: {e}")
         return False
 
 
@@ -236,7 +246,7 @@ def widget_update(widget_id, new_text):
                     break
 
         if active_widget is None:
-            logger.info(f"Widget with ID `{widget_id}` not found.")
+            logger.warning(f"Widget with ID `{widget_id}` not found.")
             return False
 
         # Update the widget
@@ -267,6 +277,7 @@ def _fetch_removal_reasons():
             SETTINGS["subreddit"]
         ).mod.removal_reasons
     ]
+    logger.debug(f"Fetched {len(reasons)} removal reason(s) from Reddit")
 
     _removal_reasons_cache = (
         {index + 1: value for index, value in enumerate(reasons)} if reasons else None

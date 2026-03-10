@@ -3,6 +3,9 @@
 """
 Interfaces with processes.ziwen_posts to help assess posts which might
 be duplicates from the same user.
+...
+
+Logger tag: [DUPE]
 """
 
 import hashlib
@@ -23,12 +26,15 @@ from rapidfuzz import fuzz
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from config import SETTINGS, logger
+from config import SETTINGS
+from config import logger as _base_logger
 from connection import REDDIT, is_mod, remove_content
 from database import db
 from reddit_sender import reddit_reply
 from responses import RESPONSE
 from usage_statistics import action_counter
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "DUPE"})
 
 
 class DuplicateDetector:

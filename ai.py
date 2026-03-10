@@ -2,7 +2,12 @@
 # -*- coding: UTF-8 -*-
 """
 Handles interfacing for AI queries.
+...
+
+Logger tag: [AI]
 """
+
+import logging
 
 from openai import (
     APIError,  # Used for both DeepSeek and OpenAI
@@ -10,8 +15,11 @@ from openai import (
     OpenAI,
 )
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
 from responses import RESPONSE
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "AI"})
 
 access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
 
@@ -76,7 +84,7 @@ def ai_query(
                 {"type": "text", "text": query},
                 {"type": "image_url", "image_url": {"url": image_url}},
             ]
-            logger.debug(f"[S] AI: API: Image attached to input: {image_url}")
+            logger.debug(f"Image attached to input: {image_url}")
         else:
             user_content: list[dict] | str = query
 
@@ -100,21 +108,19 @@ def ai_query(
 
     except BadRequestError as e:
         # Handle invalid requests (e.g., bad image URL, invalid parameters)
-        logger.error(f"[S] AI: ERROR: {service.upper()} BadRequestError: {e}")
+        logger.error(f"{service.upper()} BadRequestError: {e}")
         if image_url:
-            logger.warning(f"[S] AI: Warning: Problematic image URL: {image_url}")
+            logger.warning(f"Problematic image URL: {image_url}")
         return None
 
     except APIError as e:
         # Handle other API errors (rate limits, server errors, etc.)
-        logger.warning(f"[S] AI: Warning: {service.upper()} APIError: {e}")
+        logger.warning(f"{service.upper()} APIError: {e}")
         return None
 
     except Exception as e:
         # Catch any other unexpected errors
-        logger.error(
-            f"[S] AI: ERROR: Unexpected error in ai_query for ({service}): {e}"
-        )
+        logger.error(f"Unexpected error in ai_query for ({service}): {e}")
         return None
 
 
@@ -147,7 +153,7 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
     )
 
     # Send to AI (needs to use OpenAI for image assessment)
-    logger.debug("[S] AI: PROCESS: Fetching image description")
+    logger.debug("Fetching image description...")
     description: str = ai_query(
         service="openai",
         client_object=openai_access(),
@@ -156,7 +162,7 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
         image_url=image_url,
     )
 
-    return description
+    return description or ""
 
 
 if __name__ == "__main__":

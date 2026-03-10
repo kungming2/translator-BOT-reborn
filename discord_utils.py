@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Handles simple functions to send one-way notifications for Discord.
+Handles simple functions to send one-way notifications for Discord via
+webhooks.
+...
+
+Logger tag: [DISCORD]
 """
 
+import logging
 import requests
 
-from config import Paths, load_settings, logger
+from config import Paths, load_settings
+from config import logger as _base_logger
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "DISCORD"})
 
 webhook_settings: dict = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 
@@ -65,3 +73,5 @@ def send_discord_alert(
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord alert: {e}")
+    else:
+        logger.info(f"Discord alert sent to webhook {webhook_name!r}: {subject!r}")
