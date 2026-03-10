@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>r/translator Moderator Digest — __DATE_STR__</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface2: #eef0f5;
+    --border: #d8dce8;
+    --accent: #2563eb;
+    --accent2: #7c3aed;
+    --green: #16a34a;
+    --yellow: #b45309;
+    --red: #dc2626;
+    --text: #1a1d2e;
+    --muted: #6b7280;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 120%;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; }
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left h1 {
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .header-left .date {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .header-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--green);
+    letter-spacing: 0.06em;
+    background: rgba(61,220,132,0.08);
+    border: 1px solid rgba(61,220,132,0.2);
+    padding: 0.35rem 0.75rem;
+    border-radius: 3px;
+  }
+  .header-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0.6;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .card-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+  .stat-big { font-family: var(--mono); font-size: 2rem; font-weight: 600; color: var(--text); line-height: 1; }
+  .stat-unit { font-size: 0.8rem; color: var(--muted); margin-left: 0.3rem; }
+  .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; font-family: var(--mono); }
+  .info-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .info-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; font-size: 0.82rem; }
+  .info-key { color: var(--muted); font-family: var(--mono); font-size: 0.72rem; flex-shrink: 0; }
+  .info-val { color: var(--text); font-family: var(--mono); text-align: right; }
+  .info-sep { flex: 1; border-bottom: 1px dotted var(--border); margin: 0 0.5rem; align-self: center; }
+  .cycle-bars { display: flex; align-items: flex-end; gap: 6px; height: 48px; margin-top: 0.75rem; }
+  .cycle-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .cycle-bar { width: 100%; background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px 2px 0 0; opacity: 0.75; transition: opacity 0.2s; }
+  .cycle-bar:hover { opacity: 1; }
+  .cycle-val { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+  .actions-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .actions-table th { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 0 0.6rem; border-bottom: 1px solid var(--border); }
+  .actions-table th:last-child { text-align: right; }
+  .actions-table td { padding: 0.45rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: 0.78rem; color: var(--text); }
+  .actions-table td:last-child { text-align: right; color: var(--accent); font-weight: 500; }
+  .actions-table tr:last-child td { border-bottom: none; }
+  .bar-cell { display: flex; align-items: center; gap: 0.5rem; }
+  .bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; }
+  .flagged-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .flagged-item { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.5rem 0.75rem; background: var(--surface2); border-radius: 4px; border-left: 2px solid var(--yellow); font-size: 0.78rem; }
+  .flagged-title { color: var(--accent); font-family: var(--mono); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flagged-meta { color: var(--muted); font-family: var(--mono); font-size: 0.7rem; flex-shrink: 0; }
+  .tag-badge { font-family: var(--mono); font-size: 0.65rem; background: rgba(245,197,66,0.1); border: 1px solid rgba(245,197,66,0.25); color: var(--yellow); padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+  .error-dot { display: inline-block; width: 8px; height: 8px; background: var(--red); border-radius: 50%; margin-right: 0.4rem; vertical-align: middle; }
+  .resolved-dot { background: var(--green); }
+  .section-label { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 0.75rem; }
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    .grid { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <div class="header-left">
+      <h1>r/translator Moderator Digest</h1>
+      <div class="date" id="digest-date">Loading…</div>
+    </div>
+    <div class="header-badge">DAILY REPORT</div>
+  </header>
+  <div class="grid grid-3">
+    <div class="card" style="animation-delay:0.05s">
+      <div class="card-label">Error Log</div>
+      <div class="stat-big" id="error-count"></div>
+      <div class="stat-sub" id="error-last"></div>
+    </div>
+    <div class="card" style="animation-delay:0.1s">
+      <div class="card-label">Filter Rate</div>
+      <div class="stat-big" id="filter-rate"></div>
+      <div class="stat-sub" id="filter-range"></div>
+    </div>
+    <div class="card" style="animation-delay:0.15s">
+      <div class="card-label">New Posts (avg/day)</div>
+      <div class="stat-big" id="new-posts"></div>
+      <div class="stat-sub" id="notifications"></div>
+    </div>
+  </div>
+  <div class="section-label">Performance</div>
+  <div class="grid">
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-label">Cycle Averages</div>
+      <div class="info-list">
+        <div class="info-row">
+          <span class="info-key">API calls</span>
+          <span class="info-sep"></span>
+          <span class="info-val" id="avg-api"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Memory</span>
+          <span class="info-sep"></span>
+          <span class="info-val" id="avg-mem"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Avg cycle</span>
+          <span class="info-sep"></span>
+          <span class="info-val" id="avg-cycle"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="animation-delay:0.25s">
+      <div class="card-label">Longest Cycles (min)</div>
+      <div class="cycle-bars" id="cycle-chart"></div>
+    </div>
+  </div>
+  <div class="section-label">Actions — Daily Average</div>
+  <div class="card" style="animation-delay:0.3s">
+    <table class="actions-table" id="actions-table">
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th style="width:55%">Volume</th>
+          <th>Avg / day</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="flagged-section" style="display:none">
+    <div class="section-label">Entries with Tags to Note</div>
+    <div class="card" style="animation-delay:0.35s">
+      <div class="flagged-list" id="flagged-list"></div>
+    </div>
+  </div>
+</div>
+<script>
+const DATA = __DATA_JSON__;
+
+document.getElementById('digest-date').textContent = 'Generated for ' + DATA.date;
+
+// Error log
+const errCount = document.getElementById('error-count');
+errCount.textContent = DATA.errors.count;
+errCount.style.color = DATA.errors.resolved ? 'var(--green)' : 'var(--red)';
+const errLast = document.getElementById('error-last');
+const dot = document.createElement('span');
+dot.className = 'error-dot' + (DATA.errors.resolved ? ' resolved-dot' : '');
+errLast.appendChild(dot);
+errLast.appendChild(document.createTextNode('Last: ' + DATA.errors.lastEntry));
+
+// Filter
+const filterRate = document.getElementById('filter-rate');
+filterRate.innerHTML = DATA.filter.ratePerDay + '<span class="stat-unit">/day</span>';
+document.getElementById('filter-range').textContent =
+  DATA.filter.startDate + ' → ' + DATA.filter.endDate;
+
+// New posts / notifications
+document.getElementById('new-posts').textContent = DATA.newPosts.toFixed(1);
+document.getElementById('notifications').textContent =
+  'Notifications: ' + DATA.notifications.toFixed(1) + '/day';
+
+// Cycle averages
+document.getElementById('avg-api').textContent = DATA.activity.avgApiCalls + ' / cycle';
+document.getElementById('avg-mem').textContent = DATA.activity.avgMemoryMB + ' MB';
+document.getElementById('avg-cycle').textContent = DATA.activity.avgCycleMin + ' min';
+
+// Longest cycles bar chart
+const cycles = DATA.activity.longestCycles || [];
+if (cycles.length > 0) {
+  const maxCycle = Math.max(...cycles);
+  const chartEl = document.getElementById('cycle-chart');
+  cycles.forEach(val => {
+    const wrap = document.createElement('div');
+    wrap.className = 'cycle-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'cycle-bar';
+    bar.style.height = Math.round((val / maxCycle) * 44) + 'px';
+    bar.title = val + ' min';
+    const label = document.createElement('div');
+    label.className = 'cycle-val';
+    label.textContent = val;
+    wrap.appendChild(bar);
+    wrap.appendChild(label);
+    chartEl.appendChild(wrap);
+  });
+}
+
+// Actions table — exclude top-card items already shown above
+const EXCLUDED_ACTIONS = new Set(['new posts', 'notifications']);
+const filteredActions = DATA.actions.filter(a => !EXCLUDED_ACTIONS.has(a.name.toLowerCase()));
+const maxCount = Math.max(...filteredActions.map(a => a.count), 1);
+const tbody = document.querySelector('#actions-table tbody');
+filteredActions.forEach(({ name, count }) => {
+  const pct = (count / maxCount * 100).toFixed(1);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${name}</td>
+    <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div></td>
+    <td>${count.toFixed(2)}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// Flagged posts
+if (DATA.flaggedPosts && DATA.flaggedPosts.length > 0) {
+  document.getElementById('flagged-section').style.display = 'block';
+  const list = document.getElementById('flagged-list');
+  DATA.flaggedPosts.forEach(post => {
+    const item = document.createElement('div');
+    item.className = 'flagged-item';
+    item.innerHTML = `
+      <a class="flagged-title" href="${post.url}" target="_blank">${post.title}</a>
+      <span class="tag-badge">${post.flair}</span>
+      <span class="flagged-meta">${post.date} · ${post.comments} comments</span>
+    `;
+    list.appendChild(item);
+  });
+}
+</script>
+</body>
+</html>
