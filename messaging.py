@@ -60,8 +60,7 @@ def notify_op_translated_post(author, permalink):
         pass
 
     logger.info(
-        f"[ZW] messaging_translated_message: Messaged the OP "
-        f"u/{author} about their translated post."
+        f"Messaged the OP u/{author} about their translated post."
     )
 
 
@@ -302,7 +301,7 @@ def handle_remove(message, message_author):
         remove_username = body.split("USERNAME:", 1)[1].strip()
     else:
         logger.warning(
-            "[ZW] USERNAME: not found in message body; using full message instead."
+            "USERNAME: not found in message body; using full message instead."
         )
         remove_username = body
 
@@ -327,7 +326,7 @@ def handle_remove(message, message_author):
 
 def handle_points(message, message_author):
     """Handle points requests."""
-    logger.info(f"[ZW] Messages: New points status request from u/{message_author}.")
+    logger.info(f"New points status request from u/{message_author}.")
 
     user_points_output = "### Points on r/translator\n\n" + points_user_retriever(
         message_author.name
@@ -348,7 +347,7 @@ def handle_points(message, message_author):
             reply_text=reply_body + RESPONSE.BOT_DISCLAIMER,
         )
     except praw.exceptions.RedditAPIException:
-        logger.error("[ZW] Messages: Rate limit reached.")
+        logger.error("Rate limit reached.")
     else:
         logger.info(
             f"Sent points summary to u/{message_author.name} "

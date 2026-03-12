@@ -1132,7 +1132,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
                 )
                 logger.info(
-                    f"[ZW] Title: AI assessment of title performed for '{post.title}' | `{post.id}`."
+                    f"AI assessment of title performed for '{post.title}' | `{post.id}`."
                 )
             else:
                 updating_subject = "AI Parsed Title and Assigned Language (Test Mode)"
@@ -1141,7 +1141,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"Test mode - no post object available."
                 )
                 logger.info(
-                    "[ZW] Title: AI assessment of title performed for test title."
+                    "AI assessment of title performed for test title."
                 )
 
         else:
@@ -1158,7 +1158,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"\n\n**Post Title**: [{post.title}](https://www.reddit.com{post.permalink})"
                 )
                 logger.info(
-                    f"[ZW] Posts: AI assessment of title failed for '{post.title}' | `{post.id}`. "
+                    f"AI assessment of title failed for '{post.title}' | `{post.id}`. "
                     "Assigned completely generic category."
                 )
             else:
@@ -1168,7 +1168,7 @@ def process_title(title, post=None, discord_notify=True):
                     "Test mode - no post object available."
                 )
                 logger.info(
-                    "[ZW] Posts: AI assessment of title failed for test title. "
+                    "AI assessment of title failed for test title. "
                     "Assigned completely generic category."
                 )
 

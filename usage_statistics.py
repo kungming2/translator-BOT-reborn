@@ -455,7 +455,7 @@ def user_statistics_writer(instruo):
 
     # Skip saving if nothing to store
     if not commands_dictionary:
-        logger.debug("[ZW] messaging_user_statistics_writer: No commands to write.")
+        logger.debug("No commands to write.")
         return
 
     # Store or update the command usage in the database
@@ -472,7 +472,7 @@ def user_statistics_writer(instruo):
 
     conn.commit()
     logger.debug(
-        f"[ZW] messaging_user_statistics_writer: Stats written for u/{username}."
+        f"Stats written for u/{username}."
     )
 
 

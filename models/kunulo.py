@@ -372,7 +372,7 @@ class Kunulo:
                 comment.delete()
                 deleted_count += 1
                 logger.info(
-                    f"[ZW] Kunulo: Deleted comment `{comment_id}` associated with {tag}."
+                    f"Deleted comment `{comment_id}` associated with {tag}."
                 )
             except Exception as e:
                 # Log the error but continue trying to delete other comments
