@@ -61,9 +61,7 @@ if __name__ == "__main__":
         # Record memory usage at the end of a run.
         mem_num = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = "{:.2f} MB".format(mem_num / (1024 * 1024))
-        logger.info(
-            f"Run complete. Calls used: {used_calls}. {mem_usage} used."
-        )
+        logger.info(f"Run complete. Calls used: {used_calls}. {mem_usage} used.")
 
     except (KeyboardInterrupt, SystemExit):
         # Don't treat intentional exits or Ctrl+C as "errors"
@@ -72,9 +70,7 @@ if __name__ == "__main__":
 
     except TRANSIENT_ERRORS as e:
         # Just log transient errors at WARNING level, don't save to error log
-        logger.warning(
-            f"Transient error encountered: {type(e).__name__}: {e}"
-        )
+        logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
         logger.info("Will retry on next cycle.")
 
     except Exception as e:  # The bot encountered a major error/exception.
@@ -95,6 +91,8 @@ if __name__ == "__main__":
             mem_usage,
             None,
             elapsed_time,
+            None,
+            os.getpid(),
         )
         record_activity_csv(run_information)
         logger.info(f"Run {elapsed_time:.2f} minutes.")
@@ -115,5 +113,5 @@ if __name__ == "__main__":
                 webhook_name="alert",
             )
             logger.warning(
-                f"[ZW] Discord alert sent for overly-long run time: {elapsed_time:.2f} minutes."
+                f"Discord alert sent for overly-long run time: {elapsed_time:.2f} minutes."
             )
