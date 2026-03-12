@@ -186,7 +186,7 @@
           <span class="info-val" id="avg-mem"></span>
         </div>
         <div class="info-row">
-          <span class="info-key">Avg cycle</span>
+          <span class="info-key">Cycle length</span>
           <span class="info-sep"></span>
           <span class="info-val" id="avg-cycle"></span>
         </div>
@@ -244,7 +244,7 @@ document.getElementById('notifications').textContent =
   'Notifications: ' + DATA.notifications.toFixed(1) + '/day';
 
 // Cycle averages
-document.getElementById('avg-api').textContent = DATA.activity.avgApiCalls + ' / cycle';
+document.getElementById('avg-api').textContent = DATA.activity.avgApiCalls + ' calls';
 document.getElementById('avg-mem').textContent = DATA.activity.avgMemoryMB + ' MB';
 document.getElementById('avg-cycle').textContent = DATA.activity.avgCycleMin + ' min';
 
