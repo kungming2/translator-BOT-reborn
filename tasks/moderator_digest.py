@@ -17,7 +17,7 @@ from pathlib import Path
 
 import yaml
 
-from config import SETTINGS, Paths, get_reports_directory
+from config import SETTINGS, Paths, get_reports_directory, load_settings
 from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
@@ -500,12 +500,13 @@ def collate_moderator_digest():
     )
 
     # --- Compile the full Markdown summary (unchanged, still used for Discord + .md) ---
+    mod_page_address = load_settings(Paths.AUTH["CREDENTIALS"])["MODERATOR_DIGEST_URL"]
     sections = [error_log_md, filter_log_md, activity_md, command_data_md]
     if noted_entries_md is not None:
         sections.append(noted_entries_md)
     total_data = "\n".join(sections)
     subject_line = f"Moderator Digest for {today_date} Complete"
-    notification_body = "The digest dashboard has been updated."
+    notification_body = f"The [digest dashboard]({mod_page_address}/moderator_digest.html) has been updated."
 
     digest_summary = f"# {subject_line}\n{total_data}"
 
