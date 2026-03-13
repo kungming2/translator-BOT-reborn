@@ -51,7 +51,7 @@ import traceback
 from config import TRANSIENT_ERRORS
 from config import logger as _base_logger
 from error import error_log_extended
-from tasks import get_tasks, run_schedule
+from wenju import get_tasks, run_schedule
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ"})
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         # Log all other unexpected exceptions
-        logger.critical(f"Encountered critical error {e}.")
+        logger.critical(f"Encountered critical error: {e}.")
 
         error_text = f"{type(e).__name__}: {e}\n\n{traceback.format_exc()}"
         error_log_extended(error_text, "Wenju")
