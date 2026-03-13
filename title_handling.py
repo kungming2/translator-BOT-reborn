@@ -1140,9 +1140,7 @@ def process_title(title, post=None, discord_notify=True):
                     f"Passed to AI service; AI assessed it as **{result.final_text}** (`{result.final_code}`). "
                     f"Test mode - no post object available."
                 )
-                logger.info(
-                    "AI assessment of title performed for test title."
-                )
+                logger.info("AI assessment of title performed for test title.")
 
         else:
             # AI parsing failed. Assign generic categories.

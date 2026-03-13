@@ -12,7 +12,6 @@ import logging
 import random
 import sqlite3
 import time
-from usage_statistics import action_counter
 from typing import List
 
 import orjson
@@ -25,10 +24,11 @@ from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
 from languages import Lingvo, converter, country_converter, language_module_settings
 from models.ajo import ajo_loader
-from reddit_sender import message_send, UserNotFoundException
+from reddit_sender import UserNotFoundException, message_send
 from responses import RESPONSE
 from startup import STATE
 from time_handling import time_convert_to_string
+from usage_statistics import action_counter
 from utility import check_url_extension
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "NOTIF"})

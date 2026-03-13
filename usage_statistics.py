@@ -18,8 +18,8 @@ import orjson
 from config import Paths
 from config import logger as _base_logger
 from database import db
-from tasks import WENJU_SETTINGS
 from time_handling import get_current_utc_date
+from wenju import WENJU_SETTINGS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "USAGE"})
 
@@ -471,9 +471,7 @@ def user_statistics_writer(instruo):
         )
 
     conn.commit()
-    logger.debug(
-        f"Stats written for u/{username}."
-    )
+    logger.debug(f"Stats written for u/{username}.")
 
 
 if "__main__" == __name__:

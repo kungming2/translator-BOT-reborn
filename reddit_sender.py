@@ -19,6 +19,7 @@ Logger tag: [SENDER]
 """
 
 import logging
+
 from praw.exceptions import APIException
 from praw.models import Comment, Message, Redditor, Submission
 from prawcore import NotFound

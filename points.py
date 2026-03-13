@@ -284,9 +284,7 @@ def points_tabulator(
     """
     # Early return if lingvo is None
     if original_post_lingvo is None:
-        logger.warning(
-            f"Skipping comment `{comment.id}` - no Lingvo object provided"
-        )
+        logger.warning(f"Skipping comment `{comment.id}` - no Lingvo object provided")
         return
 
     cursor_main = db.cursor_main
@@ -314,9 +312,7 @@ def points_tabulator(
     if ajo is None:
         ajo = ajo_loader(original_post.id)
         if ajo is None:
-            logger.warning(
-                f"Could not load Ajo for post `{original_post.id}`"
-            )
+            logger.warning(f"Could not load Ajo for post `{original_post.id}`")
             # Continue without Ajo - we can still award points
 
     # Determine worth of the translation based on language

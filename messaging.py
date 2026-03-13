@@ -25,7 +25,7 @@ from notifications import (
     notifier_language_list_retriever,
 )
 from points import points_user_retriever
-from reddit_sender import reddit_reply, message_send
+from reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
 from usage_statistics import (
     action_counter,
@@ -59,9 +59,7 @@ def notify_op_translated_post(author, permalink):
         # User doesn't allow messages or other API exceptions - fail silently
         pass
 
-    logger.info(
-        f"Messaged the OP u/{author} about their translated post."
-    )
+    logger.info(f"Messaged the OP u/{author} about their translated post.")
 
 
 """ZIWEN MESSAGES"""
