@@ -2,12 +2,16 @@
 # -*- coding: UTF-8 -*-
 """Language conversion command"""
 
-import importlib
 import shlex
 
 import languages
-from languages import add_alt_language_name, converter, select_random_language
-from lookup.reference import get_language_reference
+from languages import (
+    add_alt_language_name,
+    converter,
+    get_lingvos,
+    select_random_language,
+)
+from ziwen_lookup.reference import get_language_reference
 
 from . import command
 
@@ -57,7 +61,6 @@ async def lang_convert(ctx, *, language_input: str):
             if random_lang_obj:
                 lang_ref = get_language_reference(random_lang_obj.name)
                 language_input = lang_ref["language_code_3"]
-                importlib.reload(languages)
             else:  # rare; no results in random selection.
                 await ctx.send("⚠️ An error occurred. No valid random results found.")
                 return
@@ -81,6 +84,10 @@ async def lang_convert(ctx, *, language_input: str):
                 added_alt = add_alt_language_name(
                     converter(language_input).preferred_code, alt_value
                 )
+                if added_alt:
+                    get_lingvos(
+                        force_refresh=True
+                    )  # flush stale caches after YAML write
 
         # Format output
         formatted_output = "**Language Conversion Results:**\n\n"

@@ -10,6 +10,7 @@ Logger tag: [ZS:NOTIF]
 import logging
 from typing import Optional
 
+from config import logger as _base_logger
 from messaging import parse_language_list, user_statistics_loader
 from notifications import (
     notifier_language_list_editor,
@@ -18,7 +19,6 @@ from notifications import (
 from utility import format_markdown_table_with_padding
 
 from . import command
-from config import logger as _base_logger
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
 

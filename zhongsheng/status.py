@@ -7,9 +7,10 @@ Status command that helps check on the state of the bot.
 Logger tag: [ZS:STATUS]
 """
 
-import aiohttp
 import logging
 import traceback
+
+import aiohttp
 
 from config import logger as _base_logger
 from connection import get_random_useragent
