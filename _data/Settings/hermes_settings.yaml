@@ -1,0 +1,18 @@
+# This file stores settings for Hermes.
+# How long (in seconds) before an entry is deleted from the database
+cut_off: 7776000  # 90 days
+
+# How old (in seconds) a post must be before the bot will act on it
+cut_off_reply: 7200  # 2 hours
+
+# Posts with more comments than this will be skipped
+cut_off_comments_min: 5
+
+# Maximum number of matched users to display in a reply
+num_of_entries: 7
+
+# Minimum relevance score for a match to be included in a reply
+score_cutoff: 3
+
+# Maximum number of raw matches to consider before selecting final results
+matches_limit: 200

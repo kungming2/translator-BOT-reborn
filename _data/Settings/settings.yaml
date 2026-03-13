@@ -8,6 +8,7 @@ bot_shortform_tags:
   Zhongsheng: ZS
   Wenju: WJ
   Chinese Reference: CCREF
+  Hermes: HM
 
 commands_with_args:
   - "!id:"
