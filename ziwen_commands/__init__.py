@@ -9,9 +9,9 @@ Logger tag: [ZW:CMD]
 
 import importlib
 import logging
-import os
 import time
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Callable, Union
 
 from config import logger as _base_logger
@@ -25,14 +25,11 @@ def discover_handlers() -> None:
     """
     List all .py files under commands/ (excluding __init__.py)
     """
-    files = [
-        f
-        for f in os.listdir(os.path.dirname(__file__))
-        if f.endswith(".py") and f != "__init__.py"
-    ]
-    for f in files:
-        cmd_name = f[:-3]  # Strip .py
-        mod = importlib.import_module(f"commands.{cmd_name}")
+    for file_path in Path(__file__).parent.glob("*.py"):
+        if file_path.name == "__init__.py":
+            continue
+        cmd_name = file_path.stem
+        mod = importlib.import_module(f".{cmd_name}", package=__package__)
         if hasattr(mod, "handle"):
             HANDLERS[cmd_name] = mod.handle
 

@@ -60,7 +60,7 @@ def task(schedule):
 def run_schedule(schedule_name):
     """Run all tasks for a given schedule"""
 
-    # Dynamically import all task modules in the tasks/ directory
+    # Dynamically import all task modules in the wenju/ directory
     # to register them. This automatically includes any .py files
     # without needing to manually list them.
     current_dir = Path(__file__).parent
@@ -82,7 +82,7 @@ def run_schedule(schedule_name):
             logger.exception(f"> Error in {task_func.__name__}: {e}")
             error_log_basic(f"{traceback.format_exc()}", f"Wenju ({schedule_name})")
 
-    # Send Discord alert after all tasks have completed
+    # Send Discord alert for some schedules after all tasks have completed
     if executed_tasks:
         task_list = "\n".join(f"* `{task_run}`" for task_run in sorted(executed_tasks))
         notify_message = (
