@@ -270,9 +270,11 @@ COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
 COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
   Hey there u/{author}, 
   
-  It looks like the image hash of this post is {similarity} an image that was posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
 
-  You may want to check that post to see if it has already been translated. Please disregard this message if the images are dissimilar.
+  You may want to check that post to see if it has already been translated. 
+  
+  Note: If the images are different, feel free to ignore this. Among other things, images of text often produce similar hashes even when the content differs.
 
   [](#comment_image_duplicate_different_author)
 
@@ -332,6 +334,18 @@ COMMENT_TRANSFORM_SUCCESS_REPLY: |
   *Note: This image will be automatically deleted after {2} days.*
 
   [](#comment_transform_success_reply)
+
+COMMENT_TRANSFORM_INDEX_SINGLE: |
+  The image index argument (e.g. `!transform:90:2`) only applies to gallery posts with multiple images. 
+  This post only has one image — use `!transform:90` instead.
+
+  [](#comment_transform_index_single)
+
+COMMENT_TRANSFORM_INDEX_OOB: |
+  Image index `{0}` is out of range — this post only has `{1}` image(s). 
+  Use a number between `1` and `{1}`.
+
+  [](#comment_transform_index_oob)
 
 # ANCHORS - THESE ARE ADDED TO CONTENT GENERATED ELSEWHERE
 
