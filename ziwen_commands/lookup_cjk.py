@@ -292,7 +292,7 @@ def handle(comment, instruo, komando, ajo) -> None:
     # Add duplicate notifications if any
     if duplicate_responses:
         duplicate_section = "\n\n".join(duplicate_responses)
-        duplicate_section += "\n\nIf you need additional information or have questions, feel free to ask!"
+        duplicate_section += "\n\nIf this is in error, please let a moderator know."
         reply_parts.append(duplicate_section)
 
     # Add new lookup results if any
