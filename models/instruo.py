@@ -31,6 +31,48 @@ from models.komando import extract_commands_from_text
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
 
+def _strip_commands(text):
+    """
+    Return a copy of *text* with all recognized bot commands removed,
+    leaving only the remainder prose.
+
+    Patterns removed (in order):
+      1. Backtick CJK lookups   – `term`, `term`:lang, `term`!, `term`:lang!
+      2. Wikipedia lookups      – {{term}}
+      3. commands_with_args     – !cmd:\"quoted arg\"  or  !cmd:arg  or  !cmd arg
+      4. commands_optional_args – !cmd:\"quoted arg\"  or  !cmd:arg  or  bare !cmd
+      5. commands_no_args       – bare !cmd
+
+    After stripping, runs of blank lines are collapsed and the result is
+    stripped of leading/trailing whitespace.
+    """
+    # 1. Backtick CJK lookups: `term`:lang! / `term`:lang / `term`! / `term`
+    text = re.sub(r"`[^`]+`(?::\w+)?!?", "", text)
+
+    # 2. Wikipedia lookups: {{term}}
+    text = re.sub(r"\{\{[^}]+}}", "", text)
+
+    # 3. commands_with_args  (!cmd:"quoted arg"  |  !cmd:arg  |  !cmd arg)
+    for cmd in SETTINGS["commands_with_args"]:
+        escaped = re.escape(cmd)
+        pattern = r"(?i)" + escaped + r'(?:"[^"]*"|[^\s]+)'
+        text = re.sub(pattern, "", text)
+
+    # 4. commands_optional_args  (!cmd:"quoted arg"  |  !cmd:arg  |  bare !cmd)
+    for cmd in SETTINGS["commands_optional_args"]:
+        escaped = re.escape(cmd)
+        pattern = r"(?i)" + escaped + r'(?::"[^"]*"|:[^\s]+)?'
+        text = re.sub(pattern, "", text)
+
+    # 5. commands_no_args  (bare !cmd)
+    for cmd in SETTINGS["commands_no_args"]:
+        text = re.sub(re.escape(cmd), "", text, flags=re.IGNORECASE)
+
+    # Collapse runs of blank lines (3+ newlines -> 2) and trim
+    result = re.sub(r"\n{3,}", "\n\n", text).strip()
+    return result if result else None
+
+
 class Instruo:
     """
     Defines a class that is derived from a PRAW comment with commands.
@@ -52,6 +94,7 @@ class Instruo:
         languages,
         body=None,
         author_post=None,
+        body_remainder=None,
     ):
         self.id_comment = id_comment
         self.id_post = id_post
@@ -61,6 +104,7 @@ class Instruo:
         self.commands = commands  # List of Komando objects
         self.languages = languages  # List of Lingvo objects
         self.body = body  # Raw comment text, optional if not created from PRAW
+        self.body_remainder = body_remainder  # Body with all bot commands stripped out
 
     def __repr__(self):
         return f"Instruo (id={self.id_comment!r}, commands={self.commands!r})"
@@ -75,6 +119,7 @@ class Instruo:
             "commands": [cmd.to_dict() for cmd in self.commands],
             "languages": [str(lang) for lang in self.languages],
             "body": self.body,
+            "body_remainder": self.body_remainder,
         }
 
     @classmethod
@@ -104,6 +149,7 @@ class Instruo:
             commands=commands,
             languages=parent_languages or [],
             body=text,
+            body_remainder=_strip_commands(text),
         )
 
     @classmethod
@@ -133,6 +179,7 @@ class Instruo:
             commands=commands,
             languages=parent_languages or [],
             body=text,
+            body_remainder=_strip_commands(text),
         )
 
 
