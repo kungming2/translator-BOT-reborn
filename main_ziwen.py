@@ -22,7 +22,7 @@ from database import record_activity_csv
 from discord_utils import send_discord_alert
 from edit_tracker import edit_tracker, progress_tracker
 from error import error_log_extended
-from processes.ziwen_commands import ziwen_commands
+from processes.ziwen_comments import ziwen_commands
 from processes.ziwen_messages import ziwen_messages
 from processes.ziwen_posts import ziwen_posts
 from time_handling import time_convert_to_string
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         logger.info("Will retry on next cycle.")
 
     except Exception as e:  # The bot encountered a major error/exception.
-        logger.critical(f"Encountered critical error {e}.")
+        logger.critical(f"Encountered critical error: {e}.")
 
         # Format the error text.
         error_entry = traceback.format_exc()
