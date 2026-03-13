@@ -39,9 +39,9 @@ from config import SETTINGS
 from config import logger as _base_logger
 from connection import USERNAME, credentials_source
 from error import error_log_extended
-from lookup.match_helpers import lookup_zh_ja_tokenizer
-from lookup.zh import zh_character, zh_word
 from responses import RESPONSE
+from ziwen_lookup.match_helpers import lookup_zh_ja_tokenizer
+from ziwen_lookup.zh import zh_character, zh_word
 
 if TYPE_CHECKING:
     from asyncpraw import Reddit
