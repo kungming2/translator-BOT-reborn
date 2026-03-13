@@ -38,7 +38,6 @@ from typing import TYPE_CHECKING
 from praw import models
 from wasabi import msg
 
-from commands.claim import parse_claim_comment
 from config import SETTINGS
 from config import logger as _base_logger
 from connection import REDDIT, REDDIT_HELPER
@@ -47,6 +46,7 @@ from models.ajo import Ajo, ajo_loader
 from models.instruo import comment_has_command
 from models.kunulo import Kunulo
 from title_handling import Titolo
+from ziwen_commands.claim import parse_claim_comment
 
 if TYPE_CHECKING:
     from praw.models import Comment
@@ -71,12 +71,13 @@ def _get_cached_comment(comment_id: str) -> str | None:
     return result[0] if result else None  # Just the body text, or None
 
 
-def _update_comment_cache(comment_id: str, comment_body: str) -> None:
+def _update_comment_cache(comment_id: str, comment_body: str, created_utc: int) -> None:
     """Replace old comment text with new version."""
     cursor = db.cursor_cache
     cursor.execute("DELETE FROM comment_cache WHERE id = ?", (comment_id,))
     cursor.execute(
-        "INSERT INTO comment_cache VALUES (?, ?)", (comment_id, comment_body)
+        "INSERT INTO comment_cache VALUES (?, ?, ?)",
+        (comment_id, comment_body, created_utc),
     )
     db.conn_cache.commit()
 
@@ -130,7 +131,7 @@ def edit_tracker() -> None:
         # If not in cache, insert it
         if not cached:
             logger.debug(f"Cached new comment `{comment_id}`")
-            _update_comment_cache(comment_id, comment_body)
+            _update_comment_cache(comment_id, comment_body, int(comment.created_utc))
             continue
 
     # Phase 2: Fetch only the edited comments from the subreddit.
@@ -178,7 +179,7 @@ def edit_tracker() -> None:
             _remove_from_processed(comment_id)
 
         # Update the cache.
-        _update_comment_cache(comment_id, comment_new_body)
+        _update_comment_cache(comment_id, comment_new_body, int(item.created_utc))
 
     # Phase 3: Cache cleanup
     _cleanup_comment_cache(total_keep_num)

@@ -8,7 +8,7 @@ This module provides a unified interface for all database operations across
 the bot's three SQLite databases:
 
 1. cache.db - Temporary data and caching:
-   - comment_cache: Stores comment content for edit detection
+   - comment_cache: Stores comment content and creation time for edit detection
    - multiplier_cache: Caches language point multipliers by month
 
 2. main.db - Core operational data:
@@ -42,7 +42,6 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
-
 from time_handling import convert_to_day
 
 if TYPE_CHECKING:
@@ -162,7 +161,8 @@ def _initialize_cache_db() -> None:
         """
         CREATE TABLE comment_cache (
             id TEXT PRIMARY KEY,
-            content TEXT
+            content TEXT,
+            created_utc INTEGER
         )
         """,
         """
