@@ -14,7 +14,6 @@ import traceback
 from prawcore import exceptions
 from wasabi import msg
 
-from commands import HANDLERS
 from config import SETTINGS
 from config import logger as _base_logger
 from connection import REDDIT, credentials_source, is_internal_post
@@ -29,6 +28,7 @@ from responses import RESPONSE
 from title_handling import Titolo
 from usage_statistics import action_counter, user_statistics_writer
 from verification import VERIFIED_POST_ID
+from ziwen_commands import HANDLERS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
 
