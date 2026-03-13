@@ -53,4 +53,4 @@ class ResponseLoader:
 
 
 # To use: RESPONSE.VARIABLE_NAME
-RESPONSE = ResponseLoader(Paths.RESPONSES["TEXT"])
+RESPONSE = ResponseLoader(Paths.TEMPLATES["RESPONSES"])

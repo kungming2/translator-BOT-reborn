@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 Handles directing of paths as well as the logger.
+No prefix for this as this is where the logger is defined.
 """
 
 import logging
@@ -17,7 +18,7 @@ from time_handling import get_current_month
 # Base directory configuration
 BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 # Note that since this is a storage folder and not a module,
-# it has a leading underscore.
+# it has a leading underscore to place it towards the top.
 DATA_DIR: str = os.path.join(BASE_DIR, "_data")
 
 
@@ -29,7 +30,7 @@ class Paths:
         Paths.SETTINGS["TITLE_MODULE_SETTINGS"]
     """
 
-    # Core database files
+    # Core translator-BOT database files
     DATABASE: dict[str, str] = {
         "AJO": os.path.join(DATA_DIR, "Databases", "ajo.db"),
         "MAIN": os.path.join(DATA_DIR, "Databases", "main.db"),
@@ -44,8 +45,15 @@ class Paths:
     # Written responses and templates by the bot.
     # Included here for completion; for regular use, utilize
     # responses.py's RESPONSE object instead.
-    RESPONSES: dict[str, str] = {
-        "TEXT": os.path.join(DATA_DIR, "responses.yaml"),
+    # Also has a HTML template for the rendered moderator digest.
+    TEMPLATES: dict[str, str] = {
+        "RESPONSES": os.path.join(DATA_DIR, "Templates", "responses.yaml"),
+        "MODERATOR_DIGEST": os.path.join(
+            DATA_DIR, "Templates", "moderator_digest.html"
+        ),
+        "TRANSLATION_CHALLENGE": os.path.join(
+            DATA_DIR, "Templates", "translation_challenge.md"
+        ),
     }
 
     # Language reference datasets (infrequently changed)
@@ -97,20 +105,19 @@ class Paths:
         "MONTHLY_STATISTICS": os.path.join(
             DATA_DIR, "Wenyuan", "monthly_statistics_output.md"
         ),
-        "TRANSLATION_CHALLENGE": os.path.join(DATA_DIR, "translation_challenge.md"),
-    }
-
-    # HTML templates for rendered output files
-    TEMPLATES: dict[str, str] = {
-        "MODERATOR_DIGEST": os.path.join(
-            DATA_DIR, "Templates", "moderator_digest.html"
-        ),
     }
 
     # Archival output files
     ARCHIVAL: dict[str, str] = {
         "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
         "ALL_SAVED": os.path.join(DATA_DIR, "Archival", "all_saved.md"),
+    }
+
+    # Hermes-specific files
+    HERMES: dict[str, str] = {
+        "HERMES_DATABASE": os.path.join(DATA_DIR, "Databases", "hermes.db"),
+        "HERMES_SETTINGS": os.path.join(DATA_DIR, "Settings", "hermes_settings.yaml"),
+        "HERMES_EVENTS": os.path.join(DATA_DIR, "Logs", "log_events_hermes.md"),
     }
 
 
@@ -186,6 +193,36 @@ def set_up_logger() -> logging.Logger:
     logger_object.addHandler(handler)
 
     return logger_object
+
+
+def get_hermes_logger(tag: str = "HM") -> logging.LoggerAdapter:
+    """
+    Return a LoggerAdapter that writes to both the shared console handler
+    and a Hermes-specific log file, without touching the root logger.
+    """
+    hermes_logger = logging.getLogger("hermes")
+    hermes_logger.propagate = False  # don't bubble up to root/events log
+
+    if not hermes_logger.handlers:
+        logformatter = "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
+
+        # File handler — Hermes-only log
+        file_handler = logging.FileHandler(Paths.HERMES["HERMES_EVENTS"])
+        file_handler.setLevel(logging.INFO)
+        fmt = TagFormatter(logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ")
+        fmt.converter = time.gmtime
+        file_handler.setFormatter(fmt)
+        hermes_logger.addHandler(file_handler)
+
+        # Console handler — mirrors what the root logger does
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(fmt)
+        hermes_logger.addHandler(console_handler)
+
+        hermes_logger.setLevel(logging.INFO)
+
+    return logging.LoggerAdapter(hermes_logger, {"tag": tag})
 
 
 def enable_debug_logging() -> None:

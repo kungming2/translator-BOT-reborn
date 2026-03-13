@@ -55,6 +55,25 @@ def reddit_helper_login(credentials):
     return reddit
 
 
+def reddit_hermes_login(credentials):
+    """
+    Logs in to Reddit with Hermes's dedicated credentials.
+    Hermes is a separate bot account for r/Language_Exchange matching.
+    """
+    reddit = praw.Reddit(
+        client_id=credentials["HERMES_APP_ID"],
+        client_secret=credentials["HERMES_APP_SECRET"],
+        username=credentials["HERMES_USERNAME"],
+        password=credentials["HERMES_PASSWORD"],
+        user_agent=(
+            f"Hermes, a language-exchange matching assistant for r/Language_Exchange. "
+            f"u/{credentials['HERMES_USERNAME']}"
+        ),
+    )
+
+    return reddit
+
+
 def reddit_status_check() -> list[dict] | None:
     """
     Fetch unresolved Reddit incidents from their API.
@@ -331,6 +350,7 @@ def remove_content(item, reason: str, mod_note: str = None):
 credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
 REDDIT = reddit_login(credentials_source)
 REDDIT_HELPER = reddit_helper_login(credentials_source)
+REDDIT_HERMES = reddit_hermes_login(credentials_source)
 USERNAME = credentials_source["USERNAME"]
 
 _removal_reasons_cache = None
