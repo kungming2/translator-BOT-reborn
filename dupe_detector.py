@@ -71,13 +71,9 @@ class DuplicateDetector:
                 logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
                 logging.getLogger("tqdm").setLevel(logging.WARNING)
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
-                logger.debug(
-                    "Semantic similarity model loaded successfully"
-                )
+                logger.debug("Semantic similarity model loaded successfully")
             except Exception as e:
-                logger.warning(
-                    f"Failed to load semantic model: {e}"
-                )
+                logger.warning(f"Failed to load semantic model: {e}")
                 self.model = None
 
     @staticmethod
@@ -128,9 +124,7 @@ class DuplicateDetector:
             matches = re.findall(pattern, text, re.IGNORECASE)
             numbers.extend([int(m) for m in matches])
 
-        logger.debug(
-            f"Extracted numbers from '{text}': {numbers}"
-        )
+        logger.debug(f"Extracted numbers from '{text}': {numbers}")
         return numbers
 
     def is_numerical_sequence(self, titles):
@@ -170,9 +164,7 @@ class DuplicateDetector:
             return False
 
         avg_diff = sum(differences) / len(differences)
-        logger.debug(
-            f"Average numerical difference: {avg_diff}"
-        )
+        logger.debug(f"Average numerical difference: {avg_diff}")
 
         # If numbers are incrementing consistently (difference of 1-3), it's likely a series
         if 0 < avg_diff <= 3:
@@ -209,9 +201,7 @@ class DuplicateDetector:
 
             return np.mean(similarities)
         except Exception as e:
-            logger.error(
-                f"Error calculating semantic similarity: {e}"
-            )
+            logger.error(f"Error calculating semantic similarity: {e}")
             return None
 
     @staticmethod
@@ -305,16 +295,12 @@ class DuplicateDetector:
 
             # Skip approved posts
             if post.approved:
-                logger.debug(
-                    f"Post `{post.id}` already approved by moderator"
-                )
+                logger.debug(f"Post `{post.id}` already approved by moderator")
                 continue
 
             # Skip moderator posts
             if is_mod(post_author):
-                logger.debug(
-                    f"Post `{post.id}` posted by moderator"
-                )
+                logger.debug(f"Post `{post.id}` posted by moderator")
                 continue
 
             normalized_title = self.normalize_text(post.title)
@@ -336,15 +322,11 @@ class DuplicateDetector:
             posts.sort(key=lambda x: x["created_utc"])
             titles = [p["title"] for p in posts]
 
-            logger.debug(
-                f"Analyzing {len(posts)} posts by u/{author}"
-            )
+            logger.debug(f"Analyzing {len(posts)} posts by u/{author}")
 
             # Check if titles are part of a numbered sequence
             if self.is_numerical_sequence(titles):
-                logger.info(
-                    f"Posts by u/{author} appear to be a series. Skipping."
-                )
+                logger.info(f"Posts by u/{author} appear to be a series. Skipping.")
                 continue
 
             # Calculate similarity using the best available method
@@ -390,9 +372,7 @@ class DuplicateDetector:
                 # Keep the oldest post, remove the rest
                 duplicate_ids = [p["id"] for p in posts[1:]]
                 actionable_posts.extend(duplicate_ids)
-                logger.info(
-                    f"Flagged duplicates for removal: {duplicate_ids}"
-                )
+                logger.info(f"Flagged duplicates for removal: {duplicate_ids}")
 
         # Remove any duplicates from actionable_posts and return
         actionable_posts = list(set(actionable_posts))
@@ -421,9 +401,7 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
         logger.debug("No duplicates detected.")
         return None
 
-    logger.info(
-        f"Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}"
-    )
+    logger.info(f"Found {len(duplicate_ids)} duplicate(s) to remove: {duplicate_ids}")
 
     # Remove duplicates and notify authors
     successfully_removed = []
@@ -467,14 +445,10 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
                 reddit_reply(dupe_post, duplicate_comment, True)
 
             successfully_removed.append(dupe_id)
-            logger.info(
-                f"Removed duplicate post `{dupe_id}` by u/{dupe_author}"
-            )
+            logger.info(f"Removed duplicate post `{dupe_id}` by u/{dupe_author}")
 
         except Exception as e:
-            logger.error(
-                f"Error processing duplicate `{dupe_id}`: {e}"
-            )
+            logger.error(f"Error processing duplicate `{dupe_id}`: {e}")
             continue
 
     # Log to action counter
@@ -505,9 +479,7 @@ def search_image_hash(
     from database import db
 
     if not image_hash:
-        logger.warning(
-            "search_image_hash: Received empty hash"
-        )
+        logger.warning("search_image_hash: Received empty hash")
         return []
 
     try:
@@ -516,9 +488,7 @@ def search_image_hash(
 
         target_hash = imagehash.hex_to_hash(image_hash)
     except Exception as e:
-        logger.error(
-            f"Failed to parse image hash '{image_hash}': {e}"
-        )
+        logger.error(f"Failed to parse image hash '{image_hash}': {e}")
         return []
 
     # Calculate cutoff time if days parameter is provided
@@ -571,9 +541,7 @@ def search_image_hash(
                     stored_hash_obj = imagehash.hex_to_hash(stored_hash)
                     distance = target_hash - stored_hash_obj
                 except Exception as e:
-                    logger.debug(
-                        f"Error comparing hash for post {post_id}: {e}"
-                    )
+                    logger.debug(f"Error comparing hash for post {post_id}: {e}")
                     continue
 
                 # Only include if within distance threshold
@@ -637,15 +605,10 @@ def check_image_duplicate(
     """
     # Skip if no image hash (not an image post)
     if not ajo.image_hash:
-        logger.debug(
-            f"Post `{post.id}` has no image hash, skipping"
-        )
+        logger.debug(f"Post `{post.id}` has no image hash, skipping")
         return None
 
-    logger.info(
-        f"Checking image hash for post `{post.id}` "
-        f"(hash: {ajo.image_hash})"
-    )
+    logger.info(f"Checking image hash for post `{post.id}` (hash: {ajo.image_hash})")
 
     try:
         # Search for similar images in the database
@@ -657,9 +620,7 @@ def check_image_duplicate(
         matches = [m for m in matches if m["post_id"] != post.id]
 
         if not matches:
-            logger.info(
-                f"No similar images found for post `{post.id}`"
-            )
+            logger.info(f"No similar images found for post `{post.id}`")
             return None
 
         # Get the best match (closest distance)
@@ -726,21 +687,15 @@ def check_image_duplicate(
             try:
                 reddit_reply(post, comment_text, True)
                 commented = True
-                logger.info(
-                    f"Posted duplicate notification on `{post.id}`"
-                )
+                logger.info(f"Posted duplicate notification on `{post.id}`")
 
                 # Log to action counter
                 action_counter(1, "Removed image duplicates")
 
             except Exception as e:
-                logger.error(
-                    f"Failed to post comment on `{post.id}`: {e}"
-                )
+                logger.error(f"Failed to post comment on `{post.id}`: {e}")
         else:
-            logger.info(
-                f"[TESTING MODE] Would have posted comment:\n{comment_text}"
-            )
+            logger.info(f"[TESTING MODE] Would have posted comment:\n{comment_text}")
             commented = True  # In testing mode, we "posted"
 
         return {
@@ -752,9 +707,7 @@ def check_image_duplicate(
         }
 
     except Exception as e:
-        logger.error(
-            f"Error checking image duplicate for `{post.id}`: {e}"
-        )
+        logger.error(f"Error checking image duplicate for `{post.id}`: {e}")
         return None
 
 

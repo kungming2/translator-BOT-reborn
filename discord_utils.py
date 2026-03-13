@@ -9,6 +9,7 @@ Logger tag: [DISCORD]
 """
 
 import logging
+
 import requests
 
 from config import Paths, load_settings

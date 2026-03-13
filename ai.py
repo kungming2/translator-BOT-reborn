@@ -9,11 +9,8 @@ Logger tag: [AI]
 
 import logging
 
-from openai import (
-    APIError,  # Used for both DeepSeek and OpenAI
-    BadRequestError,
-    OpenAI,
-)
+from openai import APIError  # Used for both DeepSeek and OpenAI
+from openai import BadRequestError, OpenAI
 
 from config import Paths, load_settings
 from config import logger as _base_logger
