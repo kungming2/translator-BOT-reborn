@@ -88,18 +88,14 @@ def ajo_writer(new_ajo):
                 conn.commit()
                 logger.info(f"Ajo `{ajo_id}` exists, data updated.")
             else:
-                logger.debug(
-                    f"Ajo `{ajo_id}` exists, but no change in data."
-                )
+                logger.debug(f"Ajo `{ajo_id}` exists, but no change in data.")
         else:
             cursor.execute(
                 "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
                 (ajo_id, created_time, representation),
             )
             conn.commit()
-            logger.info(
-                f"Ajo `{ajo_id}` not found in database. Created new record."
-            )
+            logger.info(f"Ajo `{ajo_id}` not found in database. Created new record.")
     finally:
         # Restore the cached submission after writing
         new_ajo.restore_submission_cache(cached_submission)
@@ -158,9 +154,7 @@ def ajo_loader(ajo_id):
         logger.debug(f"Loaded Ajo `{ajo_id}` from local database.")
         return ajo
     except Exception as e:
-        logger.error(
-            f"Failed to load or initialize Ajo `{ajo_id}`: {e}"
-        )
+        logger.error(f"Failed to load or initialize Ajo `{ajo_id}`: {e}")
         return None
 
 
@@ -181,9 +175,7 @@ def ajo_delete(ajo_id: str) -> bool:
 
     deleted = cursor.rowcount > 0
     if deleted:
-        logger.info(
-            f"Ajo `{ajo_id}` permanently removed from database."
-        )
+        logger.info(f"Ajo `{ajo_id}` permanently removed from database.")
     else:
         logger.warning(f"No Ajo found with id `{ajo_id}` to delete.")
     return deleted
@@ -1057,9 +1049,7 @@ def determine_flair_and_update(
     unq_types = {"Unknown", "Generic"}
 
     if not ajo.lingvo:
-        logger.error(
-            f"No lingvo associated with `{ajo.id}`. Will not update flair."
-        )
+        logger.error(f"No lingvo associated with `{ajo.id}`. Will not update flair.")
         # Set generic flair and return early
         output_flair_css = "generic"
         output_flair_text = "Unknown"
@@ -1188,9 +1178,7 @@ def determine_flair_and_update(
     # Update flair on Reddit if template exists
     if output_flair_css in post_templates:
         template_id = post_templates[output_flair_css]
-        logger.debug(
-            f"Template for CSS `{output_flair_css}` is `{template_id}`."
-        )
+        logger.debug(f"Template for CSS `{output_flair_css}` is `{template_id}`.")
 
         # Get current flair info
         current_flair: str | None = getattr(submission, "link_flair_text", None)

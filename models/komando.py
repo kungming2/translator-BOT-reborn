@@ -290,7 +290,7 @@ def extract_commands_from_text(text, parent_languages=None):
 
     # Special: CJK lookup using lookup_matcher
     # Supports: `term`, `term`:lang, `term`!, `term`:lang! formats
-    from lookup.match_helpers import lookup_matcher
+    from ziwen_lookup.match_helpers import lookup_matcher
 
     if text.count("`") >= 1:
         # Check for disable_tokenization flag (trailing !)

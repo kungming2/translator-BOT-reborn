@@ -371,9 +371,7 @@ class Kunulo:
                 comment = REDDIT.comment(id=comment_id)
                 comment.delete()
                 deleted_count += 1
-                logger.info(
-                    f"Deleted comment `{comment_id}` associated with {tag}."
-                )
+                logger.info(f"Deleted comment `{comment_id}` associated with {tag}.")
             except Exception as e:
                 # Log the error but continue trying to delete other comments
                 logger.warning(f"Warning: Failed to delete comment {comment_id}: {e}")
