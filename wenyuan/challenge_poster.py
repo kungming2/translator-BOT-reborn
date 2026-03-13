@@ -26,7 +26,7 @@ def translation_challenge_poster():
     the current date, stickies it, and sends a Discord notification.
     """
     # Read challenge content from file
-    with open(Paths.WENYUAN["TRANSLATION_CHALLENGE"], "r", encoding="utf-8") as f:
+    with open(Paths.TEMPLATES["TRANSLATION_CHALLENGE"], "r", encoding="utf-8") as f:
         weekly_challenge_md = f.read()
 
     # Format title with current date (UTC)
