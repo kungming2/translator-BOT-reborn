@@ -47,7 +47,7 @@ PROFICIENCY_LEVELS = {"Native", "N", "A1", "A2", "B1", "B2", "C1", "C2"}
 # Make a specific bot disclaimer for the bot
 HERMES_BOT_DISCLAIMER = RESPONSE.BOT_DISCLAIMER.replace(
     "r/translator ", "r/Language_Exchange "
-)
+).replace("Ziwen", "Hermes")
 
 
 # ─── Language parsing ──────────────────────────────────────────────────────────

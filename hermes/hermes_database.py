@@ -148,14 +148,21 @@ class HermesDatabaseManager(DatabaseManager):
         """
         serialised = orjson.dumps(user_data).decode()
         cur = self.cursor_hermes
-        cur.execute(
-            """
-            INSERT INTO entries (username, user_data, posted_utc)
-            VALUES (?, ?, ?)
-            ON CONFLICT(username) DO UPDATE SET user_data = excluded.user_data
-            """,
-            (username, serialised, posted_utc),
-        )
+        # Use an explicit INSERT-or-UPDATE so this works regardless of whether
+        # the live schema declared username as PRIMARY KEY or UNIQUE — the
+        # ON CONFLICT(col) target syntax requires the constraint to be
+        # present in the live DB, which may not be the case on older schemas.
+        cur.execute("SELECT 1 FROM entries WHERE username = ?", (username,))
+        if cur.fetchone() is None:
+            cur.execute(
+                "INSERT INTO entries (username, user_data, posted_utc) VALUES (?, ?, ?)",
+                (username, serialised, posted_utc),
+            )
+        else:
+            cur.execute(
+                "UPDATE entries SET user_data = ? WHERE username = ?",
+                (serialised, username),
+            )
         self.conn_hermes.commit()
         logger.info(f"Upserted entry for u/{username}.")
 

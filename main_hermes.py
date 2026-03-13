@@ -120,7 +120,7 @@ def get_submissions() -> None:
             match_body = format_matches(match_data, REDDIT_HERMES)
             if match_body:
                 reply_body = (
-                    f"{greeting}*I found the following users who may fit your language exchange criteria:*\n\n"
+                    f"{greeting}I found the following users who may fit your language exchange criteria:\n\n"
                     + match_body
                     + HERMES_BOT_DISCLAIMER
                 )
@@ -201,5 +201,5 @@ if __name__ == "__main__":
             sys.exit(0)
         except Exception as exc:
             entry = f"### {exc}\n\n{traceback.format_exc()}"
-            logger.error(entry)
+            logger.critical(entry)
             error_log_basic(entry, "Hermes")
