@@ -21,15 +21,15 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from config import logger as _base_logger
 from connection import get_random_useragent
-from lookup.async_helpers import call_sync_async, fetch_json
-from lookup.cache_helpers import (
+from ziwen_lookup.async_helpers import call_sync_async, fetch_json
+from ziwen_lookup.cache_helpers import (
     format_ja_character_from_cache,
     format_ja_word_from_cache,
     get_from_cache,
     parse_ja_output_to_json,
     save_to_cache,
 )
-from lookup.zh import calligraphy_search
+from ziwen_lookup.zh import calligraphy_search
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:JA"})
 

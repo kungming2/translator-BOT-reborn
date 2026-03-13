@@ -13,8 +13,8 @@ import logging
 import re
 import sqlite3
 import sys
-import time
 import threading
+import time
 from typing import Dict
 
 from config import SETTINGS, Paths

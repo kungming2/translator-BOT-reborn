@@ -21,8 +21,8 @@ import os
 import re
 from typing import Any
 
-import rjieba as jieba
 import MeCab  # mecab-python3
+import rjieba as jieba
 import unidic  # or unidic-lite
 from kiwipiepy import Kiwi
 
@@ -60,7 +60,7 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
         )
 
     if language_code == "zh":
-        from lookup.zh import simplify
+        from ziwen_lookup.zh import simplify
 
         # Simplify Traditional Chinese to Simplified for better tokenization
         simplified_phrase = simplify(phrase)

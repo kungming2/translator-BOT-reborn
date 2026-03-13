@@ -31,15 +31,15 @@ from pypinyin import Style, lazy_pinyin
 from config import Paths
 from config import logger as _base_logger
 from connection import get_random_useragent
-from lookup.async_helpers import call_sync_async
-from lookup.cache_helpers import (
+from responses import RESPONSE
+from ziwen_lookup.async_helpers import call_sync_async
+from ziwen_lookup.cache_helpers import (
     format_zh_word_from_cache,
     get_cached_or_fetch_zh_character,
     get_from_cache,
     parse_zh_output_to_json,
     save_to_cache,
 )
-from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
