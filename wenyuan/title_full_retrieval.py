@@ -17,8 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from config import SETTINGS, get_reports_directory
-from config import logger as _base_logger, enable_debug_logging
+from config import SETTINGS, enable_debug_logging, get_reports_directory
+from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from models.ajo import ajo_loader, determine_flair_and_update
 from title_handling import process_title

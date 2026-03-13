@@ -18,7 +18,6 @@ from config import SETTINGS
 from config import logger as _base_logger
 from connection import REDDIT
 from languages import converter
-
 from wenyuan import WENYUAN_SETTINGS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
