@@ -205,6 +205,7 @@ The **!transform:[value]** command is used to transform a misaligned image, eith
     !transform:180  # Rotates image 180 degrees clockwise
     !transform:horizontal  # Flips the image horizontally
     !transform:v  # Flips the image vertically
+    !transform:90:3  # Flips the third image in a gallery 90 degrees clockwise
 
 #### Notes
 

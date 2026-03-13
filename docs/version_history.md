@@ -18,6 +18,22 @@ This page records the version history of the various routines of translator-BOT.
 
 *Entries which are crossed out indicate [removed or irrelevant functionality](deprecated.md).*
 
+##### translator-BOT 2.2 "The Hermes Update" (2026-03-12)
+
+* ✨ ADDITION: Hermes ([u/language_exchangeBOT](www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the languages parser). 
+    * Hermes now returns seven results for a language match (up from five).
+    * Hermes now will prefix its comments with a language-specific greeting.
+* ✨ ADDITION: Specific images in galleries can be selected for transformation. For example, `!transform:h:3` will flip the third image in a gallery horizontally. (suggestion for feature and syntax made by u/Stunning_Pen_8332)
+* 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
+* 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
+* 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
+    * `/commands` -> `/ziwen_commands`
+    * `/lookup` -> `/ziwen_lookup`
+    * `/tasks` -> `/wenju`
+* 🔄 CHANGE: The moderator digest alert has been simplified and its contents are now updated on a local HTML page instead.
+* 🔄 CHANGE: Added PID counters to the logger and activity CSV for better disambiguation.
+* 🔄 CHANGE: Added a `created_utc` column to the `comment_cache` table to allow for future improvements. 
+
 ##### translator-BOT 2.1 "The Transformation Update" (2026-02-01)
 
 * 🚀 FEATURE: People can use `!transform:[value]` to change the post's image to the right direction for ease of translating.

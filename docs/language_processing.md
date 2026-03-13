@@ -48,3 +48,17 @@ Three non-language `preferred_code` attributes are non-standard due to the need 
 In all of these cases, the standard code will also work in `converter()`.
 
 Scripts' `preferred_code` are their ISO 15924 codes in lowercase. As an example, [Siddham's](https://en.wikipedia.org/wiki/Siddha%E1%B9%83_script) `preferred_code` is `sidd`.
+
+###### Regional Codes
+
+By default, Lingvos are *not* associated with a country and will not have a `country` attribute. Note that the `language_data` YAML file will have a country associated with each language, but that is the [Ethnologue](https://www.ethnologue.com/) association and not relevant for Lingvos, as it is considered over-descriptive to have every Japanese post be a `ja-JP` Lingvo.
+
+However, specific identifications made by users or country/region-language combination strings can be used to further define a language and give its Lingvo a country attribute. For example:
+
+```markdown
+!identify:pt-BR                                             # Portuguese {Brazil}
+!identify:french-canada                                     # French {Canada}
+!translate:cantonese-HK                                     # Cantonese {Hong Kong}
+```
+
+Such regional language combinations are formatted as `language_name {country/region}`.

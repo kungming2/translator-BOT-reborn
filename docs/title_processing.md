@@ -47,7 +47,6 @@ With each rejection, Ziwen also suggests a new title for the post that would adh
 
 The vast majority of posts on r/translator are for a single language, but Ziwen also has support for posts that request translations for multiple languages. If the title has certain keywords instead (e.g. `all`, `any`, `every`), the "multiple" category will be a broad one meant for any language.
 
-
 #### Defined Multiple Posts
 
 "Defined multiple" posts are posts where the requester has *defined multiple* specific languages that they'd like their request to be for. A post with the title `[English > German, French, Italian] My genealogical records` would be such an example. Defined multiple posts are treated somewhat differently by Ziwen, as they have specific requirements that can be fulfilled, unlike regular multiple posts.  

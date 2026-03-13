@@ -6,7 +6,7 @@
 
 **[Wenju](https://en.wikipedia.org/wiki/Kong_Rong)** is a maintenance script that collates various tasks needed for maintenance and information. It runs on four different timings, with different functions called on during each timing.
 
-The functions are in `/tasks` and are categorized by their rough function. They are collated by timing in this documentation. Tasks have been gradually added over the years, and consequently the functions vary quite widely in terms of their naming and scope.
+The functions are in `/wenju` and are categorized by their rough function. They are collated by timing in this documentation. Tasks have been gradually added over the years, and consequently the functions vary quite widely in terms of their naming and scope.
 
 ## Hourly Functions
 

@@ -13,6 +13,7 @@ This repository encompasses several routines that primarily serve **[r/translato
 
 #### Other Routines
 
+* **Hermes (Ἑρμῆς)** is a language-matching bot that pairs users together based on the languages they know and seek to learn. It serves [r/language_exchange](https://www.reddit.com/r/language_exchange/) and posts under the username [u/language_exchangeBOT](https://www.reddit.com/user/language_exchangeBOT).
 * **Chinese Reference** is a streamlined lookup bot for Chinese-language subreddits that provides users with character and word lookup. It posts under the username [u/ChineseLanguageMods](https://www.reddit.com/user/ChineseLanguageMods).
 
 ## Language Codes and Syntax
@@ -29,7 +30,7 @@ For information on language processing can be found at the page of the same name
 
 ## Documentation Directory
 
-**Main Processes**
+**Primary r/translator Processes**
 
 * [Commands (Ziwen, Reddit)](./commands.md)
 * [Commands (Zhongsheng, Discord)](./commands_discord.md)
@@ -44,7 +45,10 @@ For information on language processing can be found at the page of the same name
 * [Wenju](./wenju.md)
 * [Wenyuan](./wenyuan.md)
 
-**Other**
+**Other Routines**
+* [Hermes](./hermes.md)
+
+**Miscellaneous**
 
 * [Deprecated](./deprecated.md)
 * [Version History](./version_history.md)

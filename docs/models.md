@@ -204,21 +204,23 @@ This class represents a Reddit comment *containing* commands as Komandos. For ex
     ],
     "languages": [],
     "body": "Confirm !translated and to give OP dates: {{Guangxu era}}",
+    'body_remainder': 'Confirm  and to give OP dates:',
 }
 ```
 
 ### Attributes
 
-| Attribute | Type | Description                                                                                            |
-|------------|------|--------------------------------------------------------------------------------------------------------|
-| `id_comment` | `str` | The unique Reddit comment ID.                                                                          |
-| `id_post` | `str` | Reddit post ID of the submission this comment belongs to.                                              |
-| `created_utc` | `int` | UTC timestamp representing when the comment was created.                                               |
-| `author_comment` | `str` | Username of the comment's author (no `u/`). `"[deleted]"` if unavailable.                              |
-| `author_post` | `str \| None` | Username of the parent post's author (no `u/`). `"[deleted]"` if unavailable, `None` if not populated. |
-| `commands` | `list[Komando]` | List of `Komando` objects extracted from the comment body.                                             |
-| `languages` | `list[Lingvo]` | List of `Lingvo` objects representing the language(s) of the parent post, if available.                |
-| `body` | `str \| None` | Raw comment text. Optional if the Instruo was not created from a PRAW comment object.                  |
+| Attribute        | Type | Description                                                                                                   |
+|------------------|------|---------------------------------------------------------------------------------------------------------------|
+| `id_comment`     | `str` | The unique Reddit comment ID.                                                                                 |
+| `id_post`        | `str` | Reddit post ID of the submission this comment belongs to.                                                     |
+| `created_utc`    | `int` | UTC timestamp representing when the comment was created.                                                      |
+| `author_comment` | `str` | Username of the comment's author (no `u/`). `"[deleted]"` if unavailable.                                     |
+| `author_post`    | `str \| None` | Username of the parent post's author (no `u/`). `"[deleted]"` if unavailable, `None` if not populated.        |
+| `commands`       | `list[Komando]` | List of `Komando` objects extracted from the comment body.                                                    |
+| `languages`      | `list[Lingvo]` | List of `Lingvo` objects representing the language(s) of the parent post, if available.                       |
+| `body`           | `str \| None` | Raw comment text. Optional if the Instruo was not created from a PRAW comment object.                         |
+| `body_remainder` | `str \| None` | The remainder of the comment text after the removal of the commands. Returns `None` if there is no remainder. |
 
 ## Ajo
 
@@ -282,7 +284,7 @@ This class represents a Reddit translation request. It includes many attributes 
 
 From Esperanto *[kunulo](https://en.wiktionary.org/wiki/kunulo#Esperanto)*, "companion".
 
-This class is perhaps the most idiosyncratic of the classes here. A Kunulo represents all the comments on a post that have been previously made by the bot. The bot looks at invisible Markdown codes in its comments, that are not visible to readers (e.g. `[](#comment_unknown)`), so that functions required to delete or update those comments can be easily made.
+This class is perhaps the most idiosyncratic of the classes here. A Kunulo represents all the comments on a post that have been previously made by the bot. The bot looks at invisible Markdown code anchors in its comments that are not visible to readers (e.g. `[](#comment_unknown)`), so that functions required to delete or update those comments can be easily made.
 
 This was formerly (and confusingly) called Komento in the 1.x versions of the bot, and was renamed to avoid confusion.
 
