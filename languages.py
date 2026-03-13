@@ -18,10 +18,10 @@ from typing import Any, Optional
 
 import orjson  # Using for faster performance
 import pycountry
-from rapidfuzz import fuzz
 import yaml
+from rapidfuzz import fuzz
 
-from config import Paths, load_settings
+from config import Paths, enable_debug_logging, load_settings
 from config import logger as _base_logger
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG"})
@@ -30,6 +30,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG"})
 # Load the language module's settings and parse the file's content
 language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 _lingvos_cache = None  # for reloading purposes when the data changes
+_language_lists_cache = None  # cached output of define_language_lists()
 _country_list_cache = None  # cached country list from CSV
 _language_full_data_cache = None  # cached language YAML data for emoji lookups
 
@@ -60,7 +61,7 @@ class Lingvo:
         self.rate_daily = kwargs.get("rate_daily")
         self.rate_monthly = kwargs.get("rate_monthly")
         self.rate_yearly = kwargs.get("rate_yearly")
-        self.link_statistics = kwargs.get(
+        self.link_statistics = kwargs.get("link_statistics") or kwargs.get(
             "permalink"
         )  # Maps permalink → statistics_page
 
@@ -290,15 +291,18 @@ def get_lingvos(force_refresh: bool = False) -> dict[str, Lingvo]:
     Returns:
         Dictionary mapping language codes to Lingvo instances.
     """
-    global _lingvos_cache
+    global _lingvos_cache, _language_lists_cache
     if _lingvos_cache is None or force_refresh:
         _lingvos_cache = _load_lingvo_dataset()
+        _language_lists_cache = None  # invalidate derived cache when lingvos reload
     return _lingvos_cache
 
 
 def define_language_lists() -> dict[str, Any]:
     """
     Generate various language code and name mappings from a language dataset.
+    Result is cached since lingvos themselves are cached — no need to rebuild
+    on every converter() call.
 
     Returns:
         A dictionary with structured language metadata lists and mappings:
@@ -312,6 +316,10 @@ def define_language_lists() -> dict[str, Any]:
         - MISTAKE_ABBREVIATIONS: Mapping of common mistakes to correct codes
         - LANGUAGE_COUNTRY_ASSOCIATED: Mapping of codes to associated countries
     """
+    global _language_lists_cache
+    if _language_lists_cache is not None:
+        return _language_lists_cache
+
     lingvos = get_lingvos()
 
     supported_codes: list[str] = []
@@ -356,7 +364,7 @@ def define_language_lists() -> dict[str, Any]:
         if hasattr(lingvo, "language_code_2b") and lingvo.language_code_2b:
             iso_639_2b[lingvo.language_code_2b] = code_1
 
-    return {
+    _language_lists_cache = {
         "SUPPORTED_CODES": supported_codes,
         "SUPPORTED_LANGUAGES": supported_languages,
         "ISO_DEFAULT_ASSOCIATED": iso_default_associated,
@@ -367,6 +375,7 @@ def define_language_lists() -> dict[str, Any]:
         "MISTAKE_ABBREVIATIONS": mistake_abbreviations,
         "LANGUAGE_COUNTRY_ASSOCIATED": language_country_associated,
     }
+    return _language_lists_cache
 
 
 def normalize(text: str) -> str:
@@ -450,7 +459,7 @@ def add_alt_language_name(language_code: str, alt_name: str):
             lang_entry["name_alternates"] = []
 
         # Add new alternate name if not already present
-        if alt_name not in lang_entry["name_alternates"]:
+        if alt_name.title().strip() not in lang_entry["name_alternates"]:
             lang_entry["name_alternates"].append(alt_name.title().strip())
             existing_data[language_code] = lang_entry
 
@@ -642,13 +651,30 @@ def _resolve_to_lingvo(
 
         # Step 3: Language-region combo (fallback, less strict)
         country_info = country_converter(specific, abbreviations_okay=True)
-        if country_info:
+        if country_info[0]:
             country_code = country_info[0].upper()
             language_code = broader.lower()
             if language_code in lingvos:
                 lingvo = copy.deepcopy(lingvos[language_code])
-                lingvo.name += f" {{{country_info[1]}}}"  # e.g., "Chinese {China}"
-                lingvo.country = country_code  # e.g. 'IN'
+            else:
+                # broader may be a full name like "portuguese" — look it up directly
+                # without recursing into _resolve_to_lingvo, which risks re-entering
+                # the compound-code branch and infinite recursion on inputs like
+                # "anglo-saxon-br".
+                broader_title = broader.title()
+                lingvo = None
+                for candidate in lingvos.values():
+                    if broader_title == candidate.name or broader_title in (
+                        a.title() for a in candidate.name_alternates or []
+                    ):
+                        lingvo = copy.deepcopy(candidate)
+                        break
+                # also try direct code lookup as fallback (e.g. broader is "por")
+                if lingvo is None and language_code in lingvos:
+                    lingvo = copy.deepcopy(lingvos[language_code])
+            if lingvo:
+                lingvo.name += f" {{{country_info[1]}}}"  # e.g., "Portuguese {Brazil}"
+                lingvo.country = country_code  # e.g. 'BR'
                 return lingvo
 
     # Search by name or alternate name
@@ -666,6 +692,57 @@ def _resolve_to_lingvo(
                 lingvo_copy.country = None
             return lingvo_copy
 
+    # For multi-word inputs (including parenthetical forms like "french (canada)"),
+    # check if part of the input names a country and the rest names a language.
+    # Strategy 1: extract a parenthesized token as the country hint first.
+    # e.g. "french (canada)" -> country_hint="canada", lang_part="french"
+    paren_match = re.search(r"\(([^)]+)\)", input_text)
+    if paren_match:
+        country_hint = paren_match.group(1).strip()
+        lang_part = (
+            input_text[: paren_match.start()].strip()
+            + " "
+            + input_text[paren_match.end() :].strip()
+        ).strip()
+        if lang_part:
+            country_info = country_converter(country_hint, abbreviations_okay=False)
+            if country_info[0]:
+                # Valid country found — resolve language and attach country
+                lang_result = _resolve_to_lingvo(
+                    lang_part, fuzzy=fuzzy, preserve_country=False
+                )
+                if lang_result:
+                    lang_result = copy.deepcopy(lang_result)
+                    lang_result.name += f" {{{country_info[1]}}}"
+                    lang_result.country = country_info[0].upper()
+                    return lang_result
+            else:
+                # Paren content wasn't a country — resolve lang_part as plain language
+                lang_result = _resolve_to_lingvo(
+                    lang_part, fuzzy=fuzzy, preserve_country=False
+                )
+                if lang_result:
+                    return lang_result
+
+    # Strategy 2: scan each bare word as a potential country name.
+    # e.g. "canadian french" or "brazil portuguese"
+    # abbreviations_okay=False prevents short words like "in" matching country codes.
+    words = input_text.split()
+    if len(words) >= 2:
+        for i, word in enumerate(words):
+            bare_word = re.sub(r"\W", "", word)  # strip stray punctuation like parens
+            country_info = country_converter(bare_word, abbreviations_okay=False)
+            if country_info[0]:
+                remaining = " ".join(w for j, w in enumerate(words) if j != i)
+                lang_result = _resolve_to_lingvo(
+                    remaining, fuzzy=fuzzy, preserve_country=False
+                )
+                if lang_result:
+                    lang_result = copy.deepcopy(lang_result)
+                    lang_result.name += f" {{{country_info[1]}}}"
+                    lang_result.country = country_info[0].upper()
+                    return lang_result
+
     # Try to find a Lingvo by 2-letter code first
     if input_lower in reference_lists["ISO_639_1"]:
         lingvo = lingvos.get(input_lower)
@@ -676,23 +753,10 @@ def _resolve_to_lingvo(
                 lingvo_copy.country = None
             return lingvo_copy
 
-    # If input is 3 letters, check if it maps to a 2-letter code, then prefer that Lingvo
+    # If input is 3 letters, find the entry whose language_code_3 matches
     if len(input_lower) == 3:
         for code_1, lingvo in lingvos.items():
             if lingvo.language_code_3 == input_lower:
-                if code_1 in lingvos:
-                    lingvo_copy = copy.deepcopy(lingvos[code_1])
-                    if not preserve_country:
-                        lingvo_copy.country = None
-                    return lingvo_copy
-                else:
-                    lingvo_copy = copy.deepcopy(lingvo)
-                    if not preserve_country:
-                        lingvo_copy.country = None
-                    return lingvo_copy
-
-        for lingvo in lingvos.values():
-            if input_lower == lingvo.language_code_3:
                 lingvo_copy = copy.deepcopy(lingvo)
                 if not preserve_country:
                     lingvo_copy.country = None
@@ -1061,6 +1125,7 @@ def show_menu():
 
 
 if __name__ == "__main__":
+    enable_debug_logging()
     while True:
         show_menu()
         choice = input("Enter your choice (1-3 or x): ")
