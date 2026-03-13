@@ -25,8 +25,8 @@ Usage
 Logger tag: [WJ:I]
 """
 
-import logging
 import importlib
+import logging
 import traceback
 from pathlib import Path
 

@@ -40,10 +40,7 @@ from languages import (
     get_lingvos,
     select_random_language,
 )
-from lookup.reference import get_language_reference
-from lookup.wp_utils import wikipedia_lookup
 from models.ajo import Ajo, ajo_loader
-from tasks import WENJU_SETTINGS, task
 from time_handling import (
     get_current_utc_date,
     get_current_utc_time,
@@ -51,6 +48,9 @@ from time_handling import (
 )
 from utility import format_markdown_table_with_padding
 from verification import get_verified_thread
+from wenju import WENJU_SETTINGS, task
+from ziwen_lookup.reference import get_language_reference
+from ziwen_lookup.wp_utils import wikipedia_lookup
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
 

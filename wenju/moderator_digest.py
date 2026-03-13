@@ -21,10 +21,10 @@ from config import SETTINGS, Paths, get_reports_directory, load_settings
 from config import logger as _base_logger
 from connection import REDDIT_HELPER
 from discord_utils import send_discord_alert
-from tasks import WENJU_SETTINGS, task
 from time_handling import convert_to_day, get_current_utc_date
 from usage_statistics import generate_command_usage_report
 from utility import format_markdown_table_with_padding
+from wenju import WENJU_SETTINGS, task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODDIG"})
 

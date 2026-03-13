@@ -29,13 +29,13 @@ from database import db
 from discord_utils import send_discord_alert
 from languages import converter, validate_lingvo_dataset
 from points import points_worth_determiner
-from tasks import WENJU_SETTINGS, task
 from time_handling import (
     get_current_month,
     get_previous_month,
     messaging_months_elapsed,
     time_convert_to_string_seconds,
 )
+from wenju import WENJU_SETTINGS, task
 from wiki import fetch_most_requested_languages
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})

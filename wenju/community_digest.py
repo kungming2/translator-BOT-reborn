@@ -25,8 +25,8 @@ from database import db
 from discord_utils import send_discord_alert
 from notifications import notifier_internal
 from responses import RESPONSE
-from tasks import task
 from time_handling import get_current_utc_date
+from wenju import task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DIGEST"})
 
