@@ -16,7 +16,7 @@ from connection import REDDIT_HELPER
 from models.instruo import Instruo
 from reddit_sender import reddit_reply
 from responses import RESPONSE
-from search_handling import fetch_search_reddit_posts, build_search_results
+from search_handling import build_search_results, fetch_search_reddit_posts
 from wiki import search_integration
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SEARCH"})

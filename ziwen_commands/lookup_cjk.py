@@ -13,13 +13,13 @@ import random
 
 from config import Paths, load_settings
 from config import logger as _base_logger
-from models.kunulo import Kunulo
 from languages import converter
-from lookup.ja import ja_character, ja_word
-from lookup.ko import ko_word
-from lookup.zh import zh_character, zh_word
+from models.kunulo import Kunulo
 from reddit_sender import reddit_reply
 from responses import RESPONSE
+from ziwen_lookup.ja import ja_character, ja_word
+from ziwen_lookup.ko import ko_word
+from ziwen_lookup.zh import zh_character, zh_word
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CJK"})
 

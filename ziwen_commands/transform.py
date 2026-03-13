@@ -157,6 +157,17 @@ def handle(comment, _instruo, komando, _ajo) -> None:
 
     transformation = komando.data[0]
 
+    # Check for optional image index argument (only valid for !transform, e.g. !transform:90:2).
+    # Re-parsed from the raw comment body here rather than in komando.py to keep this
+    # transform-specific logic isolated — !translate:de:et should still only yield 'de'.
+    target_index = None
+    index_match = re.search(
+        r"!transform\s*:\s*\S+?\s*:\s*(\d+)", comment.body, re.IGNORECASE
+    )
+    if index_match:
+        target_index = int(index_match.group(1))
+        logger.info(f"Image index argument detected: target image {target_index}")
+
     # Validate transformation
     if transformation not in VALID_TRANSFORMS:
         reddit_reply(
@@ -178,6 +189,27 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             comment, RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER
         )
         return
+
+    # If a specific image index was requested, validate and filter to just that image
+    if target_index is not None:
+        if len(image_urls) <= 1:
+            # Index argument only makes sense for multi-image posts
+            reddit_reply(
+                comment,
+                RESPONSE.COMMENT_TRANSFORM_INDEX_SINGLE + RESPONSE.BOT_DISCLAIMER,
+            )
+            return
+        if target_index < 1 or target_index > len(image_urls):
+            reddit_reply(
+                comment,
+                RESPONSE.COMMENT_TRANSFORM_INDEX_OOB.format(
+                    target_index, len(image_urls)
+                )
+                + RESPONSE.BOT_DISCLAIMER,
+            )
+            return
+        logger.info(f"Filtering to image {target_index} of {len(image_urls)}")
+        image_urls = [image_urls[target_index - 1]]
 
     logger.info(
         f"Processing {len(image_urls)} image(s) with transformation: {transformation}"

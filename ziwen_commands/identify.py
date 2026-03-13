@@ -15,10 +15,10 @@ from models.kunulo import Kunulo
 from notifications import notifier
 from reddit_sender import reddit_reply
 from responses import RESPONSE
+from time_handling import get_current_utc_date
 from wiki import update_wiki_page
 
 from . import update_language
-from time_handling import get_current_utc_date
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
