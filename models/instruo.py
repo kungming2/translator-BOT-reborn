@@ -24,9 +24,9 @@ import re
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
 from models.ajo import ajo_loader
 from models.komando import extract_commands_from_text
+from reddit.connection import REDDIT_HELPER
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 

@@ -15,7 +15,7 @@ from collections import defaultdict
 
 from config import SETTINGS
 from config import logger as _base_logger
-from languages import converter
+from lang.languages import converter
 from utility import extract_text_within_curly_braces
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})

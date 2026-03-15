@@ -16,8 +16,8 @@ import orjson
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER
 from database import db
+from reddit.connection import REDDIT, REDDIT_HELPER
 from testing import log_testing_mode
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:DISKUTO"})
@@ -111,7 +111,7 @@ class Diskuto:
         post_type, which must be a key in STATE.post_templates. If no
         matching template is found, the flair is left unchanged.
         """
-        from startup import STATE
+        from reddit.startup import STATE
 
         testing_mode = SETTINGS["testing_mode"]
         post_templates = STATE.post_templates

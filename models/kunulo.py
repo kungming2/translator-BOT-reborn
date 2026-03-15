@@ -20,7 +20,7 @@ import re
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER, USERNAME
+from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KUNULO"})
 

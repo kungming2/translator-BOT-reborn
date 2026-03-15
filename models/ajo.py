@@ -31,11 +31,13 @@ import orjson
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER
 from database import db
-from languages import Lingvo, converter
+from lang.languages import converter
+from models.lingvo import Lingvo
+from models.titolo import Titolo
+from reddit.connection import REDDIT, REDDIT_HELPER
 from testing import log_testing_mode
-from title_handling import Titolo, process_title
+from title.title_handling import process_title
 from utility import check_url_extension, generate_image_hash
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:AJO"})
@@ -368,7 +370,7 @@ class Ajo:
         """
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
         This is the primary way to construct an Ajo, as simple as:
-        Ajo.from_titolo(Titolo.process_title(submission.title))
+        Ajo.from_titolo(process_title(submission.title))
 
         :param titolo: A Titolo instance containing parsed title information.
         :param submission: (Optional) A PRAW submission object to populate Ajo fields.
@@ -1036,7 +1038,7 @@ def determine_flair_and_update(
                        and skips adding "(Identified)" to the flair text
                        (default: False).
     """
-    from startup import STATE
+    from reddit.startup import STATE
 
     testing_mode = SETTINGS["testing_mode"]
     post_templates = STATE.post_templates
@@ -1305,7 +1307,7 @@ if __name__ == "__main__":
             submission_id = test_url.split("comments/")[1].split("/")[0]
             test_post = REDDIT_HELPER.submission(id=submission_id)
 
-            test_titolo = Titolo.process_title(test_post)
+            test_titolo = process_title(test_post.title)
             pprint.pprint(vars(test_titolo))
 
             post_ajo = Ajo.from_titolo(test_titolo, test_post)
@@ -1317,7 +1319,7 @@ if __name__ == "__main__":
             ):
                 print(f"Title: {submission_new.title}")
                 ajo_new = Ajo.from_titolo(
-                    Titolo.process_title(submission_new), submission_new
+                    process_title(submission_new.title), submission_new
                 )
                 pprint.pprint(vars(ajo_new))
                 print("------------------")
