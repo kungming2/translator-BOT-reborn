@@ -11,27 +11,27 @@ Logger tag: [MESSAGING]
 import logging
 
 import praw
-from praw.exceptions import APIException
-from praw.models import Message
-from wasabi import msg
-
-from config import Paths, load_settings
-from config import logger as _base_logger
 from connection import REDDIT, USERNAME, is_valid_user
-from discord_utils import send_discord_alert
-from languages import parse_language_list
 from notifications import (
     notifier_language_list_editor,
     notifier_language_list_retriever,
 )
-from points import points_user_retriever
+from praw.exceptions import APIException
+from praw.models import Message
 from reddit_sender import message_send, reddit_reply
-from responses import RESPONSE
-from usage_statistics import (
+from wasabi import msg
+
+from config import Paths, load_settings
+from config import logger as _base_logger
+from integrations.discord_utils import send_discord_alert
+from lang.languages import parse_language_list
+from monitoring.points import points_user_retriever
+from monitoring.usage_statistics import (
     action_counter,
     generate_language_frequency_markdown,
     user_statistics_loader,
 )
+from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MESSAGING"})
 

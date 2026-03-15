@@ -12,9 +12,10 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from connection import REDDIT, USERNAME
+
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, USERNAME
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "STARTUP"})
 

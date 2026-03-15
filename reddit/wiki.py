@@ -16,17 +16,17 @@ from typing import TYPE_CHECKING, Any
 
 import prawcore
 import yaml
+from connection import REDDIT, REDDIT_HELPER
 from dateutil.relativedelta import relativedelta
 from yaml.parser import ParserError
 
 from config import SETTINGS, enable_debug_logging
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER
-from discord_utils import send_discord_alert
+from integrations.discord_utils import send_discord_alert
 from responses import RESPONSE
 
 if TYPE_CHECKING:
-    from languages import Lingvo
+    from models.lingvo import Lingvo
 
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WIKI"})

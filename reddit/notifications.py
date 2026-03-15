@@ -15,20 +15,22 @@ import time
 from typing import List
 
 import orjson
+from connection import REDDIT, is_valid_user
 from praw import exceptions
+from reddit_sender import UserNotFoundException, message_send
+from startup import STATE
 
-from ai import fetch_image_description
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, is_valid_user
 from database import db, record_activity_csv
-from languages import Lingvo, converter, country_converter, language_module_settings
+from integrations.ai import fetch_image_description
+from lang.countries import country_converter
+from lang.languages import converter, language_module_settings
 from models.ajo import ajo_loader
-from reddit_sender import UserNotFoundException, message_send
+from models.lingvo import Lingvo
+from monitoring.usage_statistics import action_counter
 from responses import RESPONSE
-from startup import STATE
 from time_handling import time_convert_to_string
-from usage_statistics import action_counter
 from utility import check_url_extension
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "NOTIF"})
@@ -691,14 +693,12 @@ def notifier(lingvo, submission, mode="new_post"):
     payload = (
         time_convert_to_string(messaging_start),
         "Messaging run",
-        None,
         len(notify_users_list),
-        None,
         search_code,
         round(messaging_mins, 2),
         round(seconds_per_message, 2),
     )
-    record_activity_csv(payload)
+    record_activity_csv("messaging", payload)
 
     logger.info(
         f"Sent notifications to {len(notify_users_list)} "
