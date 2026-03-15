@@ -1,6 +1,6 @@
 [project]
 name = "translator-BOT"
-version = "2.2"
+version = "2.2.1"
 description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -9,3 +9,6 @@ authors = [
     {name = "kungming2"},
     {name = "youraveragebear"},
 ]
+
+[project.optional-dependencies]
+dev = ["types-PyYAML", "types-psutil", "types-requests"]
