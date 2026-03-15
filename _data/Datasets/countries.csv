@@ -41,8 +41,8 @@ Chile,CL,CHL,152,Chilean
 China,CN,CHN,156,Zhongguo
 Colombia,CO,COL,170,Colombian
 Comoros,KM,COM,174,
-Congo,CG,COG,178,
-"Congo, Democratic Republic of the",CD,COD,180,Congolese
+Congo,CG,COG,178,Republic of the Congo
+"Congo, Democratic Republic of the",CD,COD,180,Congolese;Democratic Republic Of The Congo
 Cook Islands,CK,COK,184,
 Costa Rica,CR,CRI,188,Costa Rican
 Côte d'Ivoire,CI,CIV,384,Ivory Coast
@@ -190,7 +190,7 @@ Tokelau,TK,TKL,772,
 Tonga,TO,TON,776,
 Trinidad and Tobago,TT,TTO,780,
 Tunisia,TN,TUN,788,Tunisian
-Turkey,TR,TUR,792,
+Turkey,TR,TUR,792,Türkiye
 Turkmenistan,TM,TKM,795,
 Tuvalu,TV,TUV,798,
 Uganda,UG,UGA,800,Ugandan
