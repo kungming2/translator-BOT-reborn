@@ -16,8 +16,8 @@ from praw.exceptions import RedditAPIException
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT
-from languages import converter
+from lang.languages import converter
+from reddit.connection import REDDIT
 from wenyuan import WENYUAN_SETTINGS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})

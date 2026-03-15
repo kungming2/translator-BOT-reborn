@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
-from connection import REDDIT
-from discord_utils import send_discord_alert
+from integrations.discord_utils import send_discord_alert
+from reddit.connection import REDDIT
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:POSTER"})
 

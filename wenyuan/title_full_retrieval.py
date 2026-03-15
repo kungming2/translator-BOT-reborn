@@ -19,9 +19,9 @@ from typing import List
 
 from config import SETTINGS, enable_debug_logging, get_reports_directory
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
 from models.ajo import ajo_loader, determine_flair_and_update
-from title_handling import process_title
+from reddit.connection import REDDIT_HELPER
+from title.title_handling import process_title
 from utility import format_markdown_table_with_padding
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
