@@ -5,7 +5,7 @@
 import traceback
 
 from database import search_logs
-from points import points_post_retriever
+from monitoring.points import points_post_retriever
 
 from . import command
 

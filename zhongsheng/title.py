@@ -5,7 +5,8 @@
 import asyncio
 import traceback
 
-from title_handling import process_title, title_ai_parser
+from title.title_ai import title_ai_parser
+from title.title_handling import process_title
 
 from . import command
 

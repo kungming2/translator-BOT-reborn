@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """CJK lookup command"""
 
-from languages import converter
+from lang.languages import converter
 from ziwen_commands.lookup_cjk import perform_cjk_lookups
 
 from . import command, send_long_message

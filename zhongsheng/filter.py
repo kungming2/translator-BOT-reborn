@@ -4,7 +4,7 @@
 
 import asyncio
 
-from title_handling import main_posts_filter
+from title.title_handling import main_posts_filter
 
 from . import command
 

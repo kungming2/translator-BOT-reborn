@@ -3,7 +3,7 @@
 """User search command"""
 
 from database import search_logs
-from usage_statistics import user_statistics_loader
+from monitoring.usage_statistics import user_statistics_loader
 from utility import format_markdown_table_with_padding
 
 from . import command

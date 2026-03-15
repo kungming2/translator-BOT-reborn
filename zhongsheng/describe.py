@@ -4,7 +4,7 @@
 
 import asyncio
 
-from ai import fetch_image_description
+from integrations.ai import fetch_image_description
 
 from . import command
 

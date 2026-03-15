@@ -11,8 +11,8 @@ import logging
 from typing import Optional
 
 from config import logger as _base_logger
-from messaging import parse_language_list, user_statistics_loader
-from notifications import (
+from reddit.messaging import parse_language_list, user_statistics_loader
+from reddit.notifications import (
     notifier_language_list_editor,
     notifier_language_list_retriever,
 )

@@ -4,8 +4,8 @@
 
 import logging
 
-from connection import REDDIT_HELPER
 from models.instruo import Instruo
+from reddit.connection import REDDIT_HELPER
 
 from . import command
 

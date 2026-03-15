@@ -13,8 +13,8 @@ import traceback
 import aiohttp
 
 from config import logger as _base_logger
-from connection import get_random_useragent
 from database import get_recent_event_log_lines
+from reddit.connection import get_random_useragent
 
 from . import command
 

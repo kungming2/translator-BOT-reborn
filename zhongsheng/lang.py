@@ -4,8 +4,7 @@
 
 import shlex
 
-import languages
-from languages import (
+from lang.languages import (
     add_alt_language_name,
     converter,
     get_lingvos,
@@ -66,7 +65,7 @@ async def lang_convert(ctx, *, language_input: str):
                 return
 
         # Run conversion
-        result = languages.converter(language_input, preserve_country=True)
+        result = converter(language_input, preserve_country=True)
         if not result:  # No results from converter
             await ctx.send("🈚 No matching results found by converter.")
             return

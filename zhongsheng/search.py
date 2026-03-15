@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """Search command wrapper, searches DDG or Reddit for a term."""
 
-from search_handling import build_search_results, fetch_search_reddit_posts
+from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 
 from . import command, send_long_message
 
