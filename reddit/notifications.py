@@ -15,10 +15,7 @@ import time
 from typing import List
 
 import orjson
-from connection import REDDIT, is_valid_user
 from praw import exceptions
-from reddit_sender import UserNotFoundException, message_send
-from startup import STATE
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -29,6 +26,9 @@ from lang.languages import converter, language_module_settings
 from models.ajo import ajo_loader
 from models.lingvo import Lingvo
 from monitoring.usage_statistics import action_counter
+from reddit.connection import REDDIT, is_valid_user
+from reddit.reddit_sender import UserNotFoundException, message_send
+from reddit.startup import STATE
 from responses import RESPONSE
 from time_handling import time_convert_to_string
 from utility import check_url_extension

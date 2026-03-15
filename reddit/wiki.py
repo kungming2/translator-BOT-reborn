@@ -16,13 +16,13 @@ from typing import TYPE_CHECKING, Any
 
 import prawcore
 import yaml
-from connection import REDDIT, REDDIT_HELPER
 from dateutil.relativedelta import relativedelta
 from yaml.parser import ParserError
 
 from config import SETTINGS, enable_debug_logging
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
+from reddit.connection import REDDIT, REDDIT_HELPER
 from responses import RESPONSE
 
 if TYPE_CHECKING:

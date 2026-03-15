@@ -16,13 +16,12 @@ import sqlite3
 import time
 from typing import TYPE_CHECKING
 
-from connection import REDDIT, create_mod_note, is_mod
-
 from config import SETTINGS, enable_debug_logging
 from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
+from reddit.connection import REDDIT, create_mod_note, is_mod
 from reddit.reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
 
