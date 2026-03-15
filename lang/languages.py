@@ -1,11 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-A collection of database sets and language functions that all
-r/translator bots use.
-...
+Language dataset loader, converter, and list-building utilities for the
+r/translator bot ecosystem.
 
-Logger tag: [LANG]
+This module owns the in-memory language dataset (a dict of Lingvo objects),
+exposes the converter() entry point for resolving arbitrary strings to Lingvo
+instances, and provides helpers for list parsing and dataset maintenance.
+
+Dependency note: Lingvo lives in models/lingvo.py. Country utilities (emoji,
+country_converter) live in services/countries.py. This module imports from
+both; neither of those imports back here at module load time.
+
+Key components:
+    get_lingvos          -- Return (and cache) the full {code: Lingvo} dict.
+    define_language_lists -- Return (and cache) derived lookup structures.
+    converter            -- Resolve a string to a Lingvo; main public entry point.
+    parse_language_list  -- Split a delimited string into a list of Lingvos.
+    normalize            -- Lowercase + strip punctuation for fuzzy matching.
+    add_alt_language_name -- Write a new alternate name back to the YAML dataset.
+    validate_lingvo_dataset -- Report codes missing required fields.
+    select_random_language  -- Pick a random Lingvo from the ISO CSV.
+
+Logger tag: [LANG:LANGUAGES]
 """
 
 import copy
@@ -16,162 +33,27 @@ import re
 from pprint import pprint
 from typing import Any, Optional
 
-import orjson  # Using for faster performance
-import pycountry
+import orjson
 import yaml
 from rapidfuzz import fuzz
 
 from config import Paths, enable_debug_logging, load_settings
 from config import logger as _base_logger
+from lang.countries import country_converter
+from models.lingvo import Lingvo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG"})
 
-
-# Load the language module's settings and parse the file's content
+# Load the language module's settings
 language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
-_lingvos_cache = None  # for reloading purposes when the data changes
+
+_lingvos_cache = None  # cached {code: Lingvo} dict
 _language_lists_cache = None  # cached output of define_language_lists()
-_country_list_cache = None  # cached country list from CSV
-_language_full_data_cache = None  # cached language YAML data for emoji lookups
 
 
-class Lingvo:
-    def __init__(self, **kwargs):
-        self.name = kwargs.get("name")
-        self.name_alternates = kwargs.get("name_alternates", [])
-        self.language_code_1 = kwargs.get("language_code_1")
-        self.language_code_2b = kwargs.get("language_code_2b")
-        self.language_code_3 = kwargs.get("language_code_3")
-        self.script_code = kwargs.get("script_code")  # For script entries
-        self.country = kwargs.get("country")  # country code
-        self.countries_default = kwargs.get("countries_default")
-        self.countries_associated = kwargs.get("countries_associated")
-        self.family = kwargs.get("family")
-        self.mistake_abbreviation = kwargs.get("mistake_abbreviation")
-        self.population = kwargs.get("population")
-        self.subreddit = kwargs.get("subreddit")
-        self.supported = kwargs.get("supported", False)
-        self.thanks = kwargs.get("thanks", "Thanks")
-        self.greetings = kwargs.get("greetings", "Hello")
-        self.link_ethnologue = kwargs.get("link_ethnologue")
-        self.link_wikipedia = kwargs.get("link_wikipedia")
-
-        # New statistics fields
-        self.num_months = kwargs.get("num_months")
-        self.rate_daily = kwargs.get("rate_daily")
-        self.rate_monthly = kwargs.get("rate_monthly")
-        self.rate_yearly = kwargs.get("rate_yearly")
-        self.link_statistics = kwargs.get("link_statistics") or kwargs.get(
-            "permalink"
-        )  # Maps permalink → statistics_page
-
-    # Define the preferred code to be used.
-    @property
-    def preferred_code(self):
-        for code in (self.language_code_1, self.language_code_3):
-            if code:
-                lowered = code.lower()
-                if lowered in {"multiple", "generic"}:
-                    return lowered
-                if lowered != "unknown":
-                    return lowered
-        return (self.script_code or "unknown").lower()
-
-    def __repr__(self):
-        code = self.preferred_code
-        is_script = self.script_code is not None or len(code) == 4
-        script_label = " | (script)" if is_script else ""  # Denote scripts
-        return f"<Lingvo: {self.name} ({code}){script_label}>"
-
-    def __str__(self):
-        return self.preferred_code
-
-    def __eq__(self, other):
-        if not isinstance(other, Lingvo):
-            return NotImplemented
-        return self.preferred_code == other.preferred_code
-
-    def __hash__(self):
-        # hash should be consistent with __eq__
-        return hash(self.preferred_code)
-
-    @classmethod
-    def from_csv_row(cls, row: dict):
-        """
-        Create a Lingvo object from a language CSV row in Datasets.
-        Expected keys: 'ISO 639-3', 'ISO 639-1', 'Language Name', 'Alternate Names'
-        """
-        alt_names = row.get("Alternate Names", "")
-        name_alternates = [alt.strip() for alt in alt_names.split(";") if alt.strip()]
-
-        return cls(
-            name=row.get("Language Name") or None,
-            name_alternates=name_alternates,
-            language_code_1=row.get("ISO 639-1") or None,
-            language_code_2b=None,
-            language_code_3=row.get("ISO 639-3") or None,
-            country=None,
-            countries_default=None,
-            countries_associated=None,
-            family=None,
-            mistake_abbreviation=None,
-            population=0,
-            subreddit=None,
-            supported=False,
-            link_ethnologue=None,
-            link_wikipedia=None,
-            # Explicitly set statistics fields to None
-            num_months=None,
-            rate_daily=None,
-            rate_monthly=None,
-            rate_yearly=None,
-            link_statistics=None,
-        )
-
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "name_alternates": self.name_alternates,
-            "language_code_1": self.language_code_1,
-            "language_code_2b": self.language_code_2b,
-            "language_code_3": self.language_code_3,
-            "script_code": self.script_code,
-            "country": self.country,
-            "countries_default": self.countries_default,
-            "countries_associated": self.countries_associated,
-            "family": self.family,
-            "mistake_abbreviation": self.mistake_abbreviation,
-            "population": self.population,
-            "subreddit": self.subreddit,
-            "supported": self.supported,
-            "thanks": self.thanks,
-            "greetings": self.greetings,
-            "link_ethnologue": self.link_ethnologue,
-            "link_wikipedia": self.link_wikipedia,
-            "preferred_code": self.preferred_code,
-            # Export statistics fields
-            "num_months": self.num_months,
-            "rate_daily": self.rate_daily,
-            "rate_monthly": self.rate_monthly,
-            "rate_yearly": self.rate_yearly,
-            "link_statistics": self.link_statistics,
-        }
-
-    # Dynamically retrieve country emoji if present
-    @property
-    def country_emoji(self):
-        """
-        Dynamically retrieves the country emoji for this language.
-        Uses _get_language_emoji with the preferred code.
-
-        Returns:
-            The country's flag emoji as a string, or empty string if not available.
-        """
-        emoji = _get_language_emoji(self.preferred_code)
-        return emoji if emoji else None
-
-
-"""MAIN LOADER"""
+# ---------------------------------------------------------------------------
+# Dataset loader
+# ---------------------------------------------------------------------------
 
 
 def _combine_language_data() -> dict[str, dict[str, Any]]:
@@ -184,7 +66,7 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
     3. Statistics data (filtered overlay from statistics.json)
 
     Returns:
-        A dictionary mapping language codes to their combined attribute dictionaries.
+        A dictionary mapping language codes to their combined attribute dicts.
     """
     allowed_keys = {
         "num_months",
@@ -201,18 +83,15 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
 
     combined_data: dict[str, dict[str, Any]] = {}
 
-    # Process raw data
     for code, attrs in raw_data.items():
         combined_data[code] = attrs.copy()
 
-    # Overlay utility data
     for code, attrs in utility_data.items():
         if code in combined_data:
             combined_data[code].update(attrs)
         else:
             combined_data[code] = attrs.copy()
 
-    # Add statistics
     for code, stats in statistics_data.items():
         filtered_stats = {k: v for k, v in stats.items() if k in allowed_keys}
         if not filtered_stats:
@@ -225,33 +104,10 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
     return combined_data
 
 
-def validate_lingvo_dataset() -> list[str]:
-    """
-    Validates the language dataset by checking for codes that are
-    missing required fields.
-
-    Returns:
-        List of language codes missing required fields (name or language_code).
-    """
-    combined_data = _combine_language_data()
-
-    # Check for problematic codes
-    problematic_codes: list[str] = []
-    for code, attrs in combined_data.items():
-        name = attrs.get("name")
-        lang_code = attrs.get("language_code", code)
-
-        if not name or not lang_code:
-            problematic_codes.append(code)
-            logger.debug(f"Problematic code: `{code}`")
-
-    return problematic_codes
-
-
 def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
     """
-    Loads the language dataset by combining raw language data and
-    utility language data, then returns a dictionary of Lingvo instances.
+    Loads the language dataset by combining raw language data and utility data,
+    then returns a dictionary of Lingvo instances.
 
     Args:
         debug: If True, log detailed information about each language code.
@@ -260,19 +116,15 @@ def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
         Dictionary mapping language codes to Lingvo instances.
     """
     combined_data = _combine_language_data()
-
-    # Create Lingvo instances
     lingvo_dict: dict[str, Lingvo] = {}
 
     for code, attrs in combined_data.items():
         if debug:
             logger.debug(f"combined_data[{code}] = {attrs}")
 
-        # Get values and remove from attrs so they are not passed twice
         name = attrs.pop("name", None)
         lang_code = attrs.pop("language_code", code)
 
-        # Create Lingvo with cleaned attrs
         lingvo_dict[code] = Lingvo(
             language_code=lang_code, name=name or "unknown", **attrs
         )
@@ -282,11 +134,11 @@ def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
 
 def get_lingvos(force_refresh: bool = False) -> dict[str, Lingvo]:
     """
-    Get lingvos dataset, optionally forcing a refresh.
+    Get the lingvos dataset, optionally forcing a refresh.
 
     Args:
-        force_refresh: If True, reload the dataset even if cached. This
-        is especially used when the underlying data has been altered.
+        force_refresh: If True, reload the dataset even if cached. Used
+                       when the underlying data has been altered.
 
     Returns:
         Dictionary mapping language codes to Lingvo instances.
@@ -300,7 +152,7 @@ def get_lingvos(force_refresh: bool = False) -> dict[str, Lingvo]:
 
 def define_language_lists() -> dict[str, Any]:
     """
-    Generate various language code and name mappings from a language dataset.
+    Generate various language code and name mappings from the language dataset.
     Result is cached since lingvos themselves are cached — no need to rebuild
     on every converter() call.
 
@@ -339,7 +191,6 @@ def define_language_lists() -> dict[str, Any]:
         if lingvo.language_code_3:
             iso_639_3.append(lingvo.language_code_3)
 
-        # Handle 3-letter synonyms (if supported in the class)
         if hasattr(lingvo, "language_code_synonym") and lingvo.language_code_synonym:
             iso_639_3.append(lingvo.language_code_synonym)
 
@@ -376,6 +227,11 @@ def define_language_lists() -> dict[str, Any]:
         "LANGUAGE_COUNTRY_ASSOCIATED": language_country_associated,
     }
     return _language_lists_cache
+
+
+# ---------------------------------------------------------------------------
+# Converter
+# ---------------------------------------------------------------------------
 
 
 def normalize(text: str) -> str:
@@ -425,64 +281,6 @@ def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
             best_match = language
 
     return best_match
-
-
-"""EDITING FUNCTIONS"""
-
-
-def add_alt_language_name(language_code: str, alt_name: str):
-    """
-    Adds an alternate name for a given language in the LANGUAGE_DATA YAML file.
-    If the language doesn't have a 'name_alternates' field, it is created.
-    If the alt_name already exists, nothing is changed.
-    """
-    try:
-        language_data_path = Paths.DATASETS["LANGUAGE_DATA"]
-
-        # Load the existing language data
-        with open(language_data_path, "r", encoding="utf-8") as f:
-            existing_data = yaml.safe_load(f) or {}
-
-        # Check if the language entry exists
-        if language_code not in existing_data:
-            logger.warning(
-                f"[AddAlt] Language code '{language_code}' not found in dataset."
-            )
-            return False
-
-        lang_entry = existing_data[language_code]
-
-        # Ensure 'name_alternates' exists and is a list
-        if "name_alternates" not in lang_entry or not isinstance(
-            lang_entry["name_alternates"], list
-        ):
-            lang_entry["name_alternates"] = []
-
-        # Add new alternate name if not already present
-        if alt_name.title().strip() not in lang_entry["name_alternates"]:
-            lang_entry["name_alternates"].append(alt_name.title().strip())
-            existing_data[language_code] = lang_entry
-
-            # Write updated YAML back to file
-            with open(language_data_path, "w", encoding="utf-8") as f:
-                yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
-
-            logger.info(
-                f"[AddAlt] Added alternate name '{alt_name}' to '{language_code}'."
-            )
-            return True
-        else:
-            logger.info(
-                f"[AddAlt] Alternate name '{alt_name}' already exists for '{language_code}'."
-            )
-            return False
-
-    except Exception as e:
-        logger.error(f"[AddAlt] Error while adding alternate name: {e}")
-        return False
-
-
-"""MAIN CONVERTER FUNCTIONS"""
 
 
 def _iso_codes_deep_search(
@@ -556,8 +354,7 @@ def _resolve_to_lingvo(
     """
     Convert an input string to a Lingvo object.
     Input can be a language code, name, or compound like zh-CN or
-    unknown-cyrl. This was formerly called converter() but is now
-    wrapped in order to provide for better logging.
+    unknown-cyrl. This is wrapped by converter() for debug logging.
 
     :param input_text: The input string to resolve.
     :param fuzzy: Whether to apply fuzzy name matching.
@@ -567,14 +364,12 @@ def _resolve_to_lingvo(
                             If False (default), clear country for simple lookups.
     :return: A Lingvo instance or None if not found.
     """
-    # Get the current (possibly refreshed) lingvos data
     lingvos = get_lingvos()
 
     input_text = input_text.strip()
     input_lower = input_text.lower()
     reference_lists = define_language_lists()
 
-    # Too-short input.
     if len(input_text) <= 1:
         logger.debug(f"Skipping {input_text} as it's too short.")
         return None
@@ -582,7 +377,6 @@ def _resolve_to_lingvo(
     # Specific mode: strict lookups only
     if specific_mode:
         if len(input_text) == 2:
-            # Only search in ISO 639-1
             if input_lower in reference_lists.get("ISO_639_1", {}):
                 lingvo = lingvos.get(input_lower)
                 if lingvo:
@@ -592,7 +386,6 @@ def _resolve_to_lingvo(
                     return lingvo_copy
             return None
         elif len(input_text) == 3:
-            # Only search in ISO 639-3
             iso_search = _iso_codes_deep_search(input_text, script_search=False)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
@@ -601,7 +394,6 @@ def _resolve_to_lingvo(
                 return lingvo_copy
             return None
         elif len(input_text) == 4:
-            # Only search in ISO 15924
             iso_search = _iso_codes_deep_search(input_text, script_search=True)
             if iso_search:
                 lingvo_copy = copy.deepcopy(iso_search)
@@ -610,10 +402,9 @@ def _resolve_to_lingvo(
                 return lingvo_copy
             return None
         else:
-            # Invalid length for specific_mode
             return None
 
-    # Normal mode: existing logic
+    # Normal mode
     # Handle compound codes like zh-CN or unknown-Cyrl first,
     # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
@@ -632,7 +423,7 @@ def _resolve_to_lingvo(
                     lingvo_copy.country = None
                 return lingvo_copy
 
-        # Step 2: Prefixed script code ("unknown-Cyrl")
+        # Prefixed script code ("unknown-Cyrl")
         if broader.lower() == "unknown":
             try:
                 result = _iso_codes_deep_search(specific, script_search=True)
@@ -649,7 +440,7 @@ def _resolve_to_lingvo(
             except (AttributeError, TypeError):
                 return None
 
-        # Step 3: Language-region combo (fallback, less strict)
+        # Language-region combo (fallback, less strict)
         country_info = country_converter(specific, abbreviations_okay=True)
         if country_info[0]:
             country_code = country_info[0].upper()
@@ -669,7 +460,6 @@ def _resolve_to_lingvo(
                     ):
                         lingvo = copy.deepcopy(candidate)
                         break
-                # also try direct code lookup as fallback (e.g. broader is "por")
                 if lingvo is None and language_code in lingvos:
                     lingvo = copy.deepcopy(lingvos[language_code])
             if lingvo:
@@ -681,7 +471,6 @@ def _resolve_to_lingvo(
     input_title = input_text.title()
     for code, lingvo in lingvos.items():
         if input_title == lingvo.name:
-            # Return a copy with no country info since input has no region
             lingvo_copy = copy.deepcopy(lingvo)
             if not preserve_country:
                 lingvo_copy.country = None
@@ -707,7 +496,6 @@ def _resolve_to_lingvo(
         if lang_part:
             country_info = country_converter(country_hint, abbreviations_okay=False)
             if country_info[0]:
-                # Valid country found — resolve language and attach country
                 lang_result = _resolve_to_lingvo(
                     lang_part, fuzzy=fuzzy, preserve_country=False
                 )
@@ -717,7 +505,6 @@ def _resolve_to_lingvo(
                     lang_result.country = country_info[0].upper()
                     return lang_result
             else:
-                # Paren content wasn't a country — resolve lang_part as plain language
                 lang_result = _resolve_to_lingvo(
                     lang_part, fuzzy=fuzzy, preserve_country=False
                 )
@@ -748,7 +535,6 @@ def _resolve_to_lingvo(
         lingvo = lingvos.get(input_lower)
         if lingvo:
             lingvo_copy = copy.deepcopy(lingvo)
-            # Clear country info for simple 2-letter code inputs
             if not preserve_country:
                 lingvo_copy.country = None
             return lingvo_copy
@@ -762,14 +548,12 @@ def _resolve_to_lingvo(
                     lingvo_copy.country = None
                 return lingvo_copy
 
-    # First try language codes.
+    # Try ISO deep search (language codes then script codes)
     iso_search = _iso_codes_deep_search(input_text)
     if not iso_search:
         iso_search = _iso_codes_deep_search(input_text, script_search=True)
 
     if iso_search:
-        # _iso_codes_deep_search returns a Lingvo instance.
-        # Copy it and clear country for simple inputs
         lingvo_copy = copy.deepcopy(iso_search)
         if not preserve_country:
             lingvo_copy.country = None
@@ -822,10 +606,11 @@ def _resolve_to_lingvo(
 
 def converter(input_text, fuzzy=True, specific_mode=False, preserve_country=False):
     """
-    Wrapper used to show the input and output of resolving Lingvos for
-    debugging purposes.
-    """
+    Resolve an arbitrary string to a Lingvo object.
 
+    Wraps _resolve_to_lingvo to provide debug logging of every conversion.
+    This is the primary public entry point for language resolution.
+    """
     result = _resolve_to_lingvo(
         input_text,
         fuzzy=fuzzy,
@@ -833,7 +618,6 @@ def converter(input_text, fuzzy=True, specific_mode=False, preserve_country=Fals
         preserve_country=preserve_country,
     )
     logger.debug(f"Conversion: {input_text!r} → {result!r}")
-
     return result
 
 
@@ -877,12 +661,11 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         items = list_string.split(",")
         logger.debug(f"Split on comma, items: {items}")
     elif " " in list_string:
-        # Space-delimited case - try the whole string first
+        # Space-delimited case — try the whole string first
         match = converter(list_string)
         items = [list_string] if match is None else list_string.split()
         logger.debug(f"Space-delimited case, match={match}, items: {items}")
     else:
-        # Single item, no delimiters
         items = [list_string]
         logger.debug(f"Single item, no delimiters: {items}")
 
@@ -900,14 +683,14 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         if item in utility_codes:
             logger.debug(f"Item {repr(item)} is a utility code, skipping")
             continue
+
+        lang = converter(item)
+        logger.debug(f"converter({repr(item)}) returned: {lang}")
+        if lang:
+            final_lingvos[lang.preferred_code] = lang
+            logger.debug(f"Added {lang.preferred_code} -> {lang.name}")
         else:
-            lang = converter(item)
-            logger.debug(f"converter({repr(item)}) returned: {lang}")
-            if lang:
-                final_lingvos[lang.preferred_code] = lang
-                logger.debug(f"Added {lang.preferred_code} -> {lang.name}")
-            else:
-                logger.debug(f"converter returned None for {repr(item)}")
+            logger.debug(f"converter returned None for {repr(item)}")
 
     logger.debug(f"Final lingvos dict keys: {list(final_lingvos.keys())}")
     result = sorted(
@@ -919,164 +702,78 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
     return result
 
 
-"""MANAGING COUNTRIES DATA"""
+# ---------------------------------------------------------------------------
+# Editing / validation
+# ---------------------------------------------------------------------------
 
 
-def get_country_emoji(country_name: str) -> str:
+def add_alt_language_name(language_code: str, alt_name: str):
     """
-    Return the flag emoji for a given country name.
-
-    Attempts multiple lookup strategies:
-    1. Direct name match
-    2. Common name match (e.g., "UK", "South Korea")
-    3. Fuzzy search for partial matches
-
-    Args:
-        country_name: The country name to look up.
-
-    Returns:
-        The country's flag emoji as a string, or empty string if not found.
+    Adds an alternate name for a given language in the LANGUAGE_DATA YAML file.
+    If the language doesn't have a 'name_alternates' field, it is created.
+    If the alt_name already exists, nothing is changed.
     """
-    if not country_name:
-        return ""
-
     try:
-        # Try direct name match first
-        country = pycountry.countries.get(name=country_name)
-    except LookupError:
-        country = None
+        language_data_path = Paths.DATASETS["LANGUAGE_DATA"]
 
-    if not country:
-        # Try using common_name (like "UK" or "South Korea")
-        try:
-            country = pycountry.countries.get(common_name=country_name)
-        except LookupError:
-            country = None
+        with open(language_data_path, "r", encoding="utf-8") as f:
+            existing_data = yaml.safe_load(f) or {}
 
-    if not country:
-        # Try fuzzy lookup (partial match)
-        try:
-            matches = pycountry.countries.search_fuzzy(country_name)
-            if matches:
-                country = matches[0]
-        except LookupError:
-            country = None
-
-    if country:
-        # Form the emoji.
-        code = country.alpha_2
-        return chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
-    else:
-        return ""
-
-
-def _get_language_emoji(language_code):
-    """Intended for use primarily with ISO 639-1 codes."""
-    global _language_full_data_cache
-    if not language_code:
-        return ""
-
-    if _language_full_data_cache is None:
-        _language_full_data_cache = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
-
-    # Check if the language code exists in the data
-    if language_code not in _language_full_data_cache:
-        return ""
-
-    country_listed = _language_full_data_cache[language_code]["country"]
-
-    return get_country_emoji(country_listed)
-
-
-def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
-    """
-    Load countries from a CSV file.
-
-    Expected CSV columns: CountryName, Alpha2, Alpha3, NumericCode,
-                          Keywords (semicolon-separated)
-
-    Returns:
-        List of tuples containing (name, alpha2, alpha3, numeric_code, keywords).
-    """
-    global _country_list_cache
-    if _country_list_cache is not None:
-        return _country_list_cache
-
-    country_list: list[tuple[str, str, str, str, list[str]]] = []
-    with open(Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            name: str = row[0].strip()
-            alpha2: str = row[1].strip()
-            alpha3: str = row[2].strip()
-            numeric: str = row[3].strip()
-            keywords: list[str] = (
-                row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
+        if language_code not in existing_data:
+            logger.warning(
+                f"[AddAlt] Language code '{language_code}' not found in dataset."
             )
-            country_list.append((name, alpha2, alpha3, numeric, keywords))
+            return False
 
-    _country_list_cache = country_list
-    return _country_list_cache
+        lang_entry = existing_data[language_code]
+
+        if "name_alternates" not in lang_entry or not isinstance(
+            lang_entry["name_alternates"], list
+        ):
+            lang_entry["name_alternates"] = []
+
+        if alt_name.title().strip() not in lang_entry["name_alternates"]:
+            lang_entry["name_alternates"].append(alt_name.title().strip())
+            existing_data[language_code] = lang_entry
+
+            with open(language_data_path, "w", encoding="utf-8") as f:
+                yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
+
+            logger.info(
+                f"[AddAlt] Added alternate name '{alt_name}' to '{language_code}'."
+            )
+            return True
+        else:
+            logger.info(
+                f"[AddAlt] Alternate name '{alt_name}' already exists for '{language_code}'."
+            )
+            return False
+
+    except Exception as e:
+        logger.error(f"[AddAlt] Error while adding alternate name: {e}")
+        return False
 
 
-def country_converter(
-    text_input: str, abbreviations_okay: bool = True
-) -> tuple[str, str]:
+def validate_lingvo_dataset() -> list[str]:
     """
-    Detects a country based on input. Supports full names, 2-letter
-    and 3-letter codes, or associated keywords.
-
-    Args:
-        text_input: The input text to match.
-        abbreviations_okay: If True, allow matching by abbreviations,
-                           like 'CN' or 'MX'. Default is True.
+    Validates the language dataset by checking for codes that are
+    missing required fields.
 
     Returns:
-        Tuple of (country_code, country_name). Returns ("", "") if no match found.
+        List of language codes missing required fields (name or language_code).
     """
-    country_list = _load_country_list()
+    combined_data = _combine_language_data()
 
-    text: str = text_input.strip()
-    if len(text) <= 1:
-        return "", ""
+    problematic_codes: list[str] = []
+    for code, attrs in combined_data.items():
+        name = attrs.get("name")
+        lang_code = attrs.get("language_code", code)
 
-    text_upper: str = text.upper()
-    text_title: str = text.title()
+        if not name or not lang_code:
+            problematic_codes.append(code)
+            logger.debug(f"Problematic code: `{code}`")
 
-    # Match 2-letter code
-    if len(text) == 2 and abbreviations_okay:
-        for name, alpha2, _, _, _ in country_list:
-            if text_upper == alpha2:
-                return alpha2, name
-
-    # Match 3-letter code
-    if len(text) == 3 and abbreviations_okay:
-        for name, alpha2, alpha3, _, _ in country_list:
-            if text_upper == alpha3:
-                return alpha2, name
-
-    # Initialize fallback match variables
-    possible_code: str = ""
-    possible_name: str = ""
-
-    # Match exact or partial name
-    for name, alpha2, _, _, _ in country_list:
-        if text_title == name:
-            return alpha2, name
-        elif text_title in name and len(text_title) >= 3:
-            possible_code = alpha2
-            possible_name = name
-
-    # Match keyword
-    for name, alpha2, _, _, keywords in country_list:
-        if any(text_title == kw for kw in keywords):
-            return alpha2, name
-
-    # Fallback to partial name match
-    if possible_code and possible_name:
-        return possible_code, possible_name
-
-    return "", ""
+    return problematic_codes
 
 
 def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
@@ -1112,29 +809,32 @@ def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
     chosen = random.choice(filtered)
     code_index: int = 1 if iso_639_1 else 0
     selected_language = converter(chosen[code_index])
-
     return selected_language
 
 
-def show_menu():
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def _show_menu():
     print("\nSelect a test to run:")
     print("1. Converter test (enter a string to test with the converter)")
     print("2. Parse language list (enter a language list string to parse)")
-    print("3. Get country emoji (enter a country name to get its flag emoji)")
     print("x. Exit")
 
 
 if __name__ == "__main__":
     enable_debug_logging()
     while True:
-        show_menu()
-        choice = input("Enter your choice (1-3 or x): ")
+        _show_menu()
+        choice = input("Enter your choice (1-2 or x): ")
 
         if choice == "x":
             print("Exiting...")
             break
 
-        if choice not in ["1", "2", "3"]:
+        if choice not in ["1", "2"]:
             print("Invalid choice, please try again.")
             continue
 
@@ -1159,12 +859,3 @@ if __name__ == "__main__":
             )
             parse_result = parse_language_list(language_list_input)
             pprint(parse_result)
-
-        elif choice == "3":
-            country_input = input("Enter a country name: ")
-            emoji_result = get_country_emoji(country_input)
-
-            if emoji_result:
-                print(f"Country: {country_input} → Flag emoji: {emoji_result}")
-            else:
-                print(f"Could not find flag emoji for: {country_input}")
