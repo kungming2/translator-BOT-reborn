@@ -16,27 +16,23 @@ from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, is_internal_post, is_mod, remove_content
 from database import db, record_filter_log
-from dupe_detector import check_image_duplicate, duplicate_detector
 from error import error_log_extended
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
-from notifications import is_user_over_submission_limit, notifier
-from reddit_sender import reddit_reply
-from request_closeout import closeout_posts
+from monitoring.dupe_detector import check_image_duplicate, duplicate_detector
+from monitoring.request_closeout import closeout_posts
+from monitoring.usage_statistics import action_counter
+from reddit.connection import REDDIT, is_internal_post, is_mod, remove_content
+from reddit.notifications import is_user_over_submission_limit, notifier
+from reddit.reddit_sender import reddit_reply
+from reddit.startup import STATE
+from reddit.wiki import update_wiki_page
 from responses import RESPONSE
-from startup import STATE
 from time_handling import get_current_utc_date
-from title_handling import (
-    Titolo,
-    format_title_correction_comment,
-    is_english_only,
-    main_posts_filter,
-)
-from usage_statistics import action_counter
+from title.title_ai import format_title_correction_comment
+from title.title_handling import is_english_only, main_posts_filter, process_title
 from utility import fetch_youtube_length
-from wiki import update_wiki_page
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:P"})
 
@@ -213,8 +209,8 @@ def ziwen_posts(post_limit=None):
             logger.info(
                 f"No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
             )
-            titolo_content = Titolo.process_title(post)
-            post_ajo = Ajo.from_titolo(titolo_content, post)
+            titolo_content = process_title(post)
+            post_ajo = Ajo.from_titolo(process_title(titolo_content), post)
 
         # Check for English-only POSTS.
         if is_english_only(titolo_content):

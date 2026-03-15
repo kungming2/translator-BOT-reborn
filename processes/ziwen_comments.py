@@ -16,18 +16,18 @@ from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, credentials_source, is_internal_post
 from database import db
 from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
-from points import points_tabulator
-from reddit_sender import message_send
+from monitoring.points import points_tabulator
+from monitoring.usage_statistics import action_counter, user_statistics_writer
+from reddit.connection import REDDIT, credentials_source, is_internal_post
+from reddit.reddit_sender import message_send
+from reddit.verification import VERIFIED_POST_ID
 from responses import RESPONSE
-from title_handling import Titolo
-from usage_statistics import action_counter, user_statistics_writer
-from verification import VERIFIED_POST_ID
+from title.title_handling import process_title
 from ziwen_commands import HANDLERS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
@@ -191,9 +191,7 @@ def ziwen_commands():
         if not original_ajo:
             # On the off-chance that there is no Ajo associated...
             logger.warning(f"Ajo for `{original_post.id}` does not exist. Creating...")
-            original_ajo = Ajo.from_titolo(
-                Titolo.process_title(original_post), original_post
-            )
+            original_ajo = Ajo.from_titolo(process_title(original_post), original_post)
         logger.debug(f"> Ajo lingvo is {original_ajo.lingvo}")  # loaded lazily
 
         # Derive an Instruo, and act on it if there are commands.

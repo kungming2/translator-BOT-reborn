@@ -26,8 +26,9 @@ from functools import lru_cache
 from typing import Any
 
 from database import db, search_database
-from languages import Lingvo, converter, parse_language_list
+from lang.languages import converter, parse_language_list
 from models.ajo import Ajo, ajo_loader
+from models.lingvo import Lingvo
 from time_handling import time_convert_to_string
 
 # Type aliases for clarity
