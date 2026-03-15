@@ -947,7 +947,7 @@ class Ajo:
         initial parsing via from_titolo.
         """
         submission = REDDIT_HELPER.submission(id=self.id)
-        titolo = process_title(submission.title, submission)
+        titolo = process_title(submission)
         self.update_from_titolo(titolo)
 
     def update_reddit(self, initial_update: bool = False, moderator_set: bool = False):

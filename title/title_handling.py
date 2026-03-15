@@ -869,11 +869,11 @@ def process_title(title_or_post, post=None, discord_notify: bool = True) -> Tito
     Returns:
         Titolo: Fully populated with source, target, direction, flair, and title fields.
     """
-    if hasattr(title_or_post, "title"):  # PRAW Submission
+    if isinstance(title_or_post, str):
+        title = title_or_post
+    else:  # PRAW Submission
         title = str(title_or_post.title)
         post = title_or_post
-    else:
-        title = str(title_or_post)
 
     processed = _preprocess_title(title)
     logger.debug(f"Title as Processed: {processed}")
