@@ -76,10 +76,8 @@ def get_previous_month(year_month: str) -> str:
     else:
         previous_year = int(year)
         previous_month = int(month) - 1
-        if previous_month < 10:
-            previous_month = f"0{previous_month}"
 
-    previous = f"{previous_year}-{previous_month}"
+    previous = f"{previous_year}-{previous_month:02d}"
 
     return previous
 
