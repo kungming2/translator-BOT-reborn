@@ -22,6 +22,7 @@ Logger tag: [HM]
 """
 
 import sys
+import time
 import traceback
 
 from config import get_hermes_logger
@@ -167,6 +168,8 @@ def database_maintenance() -> None:
 
 
 if __name__ == "__main__":
+    start_time = time.time()
+
     logger.info("Hermes starting up. Logged in...")
     logger.debug(f"Settings: {HERMES_SETTINGS}")
 
@@ -198,3 +201,6 @@ if __name__ == "__main__":
             entry = f"### {exc}\n\n{traceback.format_exc()}"
             logger.critical(entry)
             error_log_basic(entry, "Hermes")
+        else:
+            elapsed_time = round((time.time() - start_time) / 60, 2)
+            logger.info(f"Run {elapsed_time:.2f} minutes.")
