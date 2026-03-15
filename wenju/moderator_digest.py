@@ -19,10 +19,10 @@ import yaml
 
 from config import SETTINGS, Paths, get_reports_directory, load_settings
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
-from discord_utils import send_discord_alert
+from integrations.discord_utils import send_discord_alert
+from monitoring.usage_statistics import generate_command_usage_report
+from reddit.connection import REDDIT_HELPER
 from time_handling import convert_to_day, get_current_utc_date
-from usage_statistics import generate_command_usage_report
 from utility import format_markdown_table_with_padding
 from wenju import WENJU_SETTINGS, task
 
@@ -67,7 +67,7 @@ def _activity_csv_handler() -> tuple[str, dict[str, float | list[float]]]:
     # Memory usage (strip " MB" or similar)
     memory_data = []
     for row in main_lines:
-        cell = row[4].strip()
+        cell = row[3].strip()
         if cell.endswith(" MB"):
             cell = cell[:-3]
         if cell:
@@ -81,9 +81,7 @@ def _activity_csv_handler() -> tuple[str, dict[str, float | list[float]]]:
 
     # Cycle run time (minutes)
     cycle_times = [
-        float(row[6])
-        for row in main_lines
-        if len(row) > 6 and row[1] == "Cycle run" and row[6].strip()
+        float(row[4]) for row in main_lines if len(row) > 4 and row[4].strip()
     ]
     average_cycle = (
         round(sum(cycle_times) / len(cycle_times), 2) if cycle_times else 0.0
@@ -505,7 +503,7 @@ def collate_moderator_digest():
     if noted_entries_md is not None:
         sections.append(noted_entries_md)
     total_data = "\n".join(sections)
-    subject_line = f"Moderator Digest for {today_date} Complete"
+    subject_line = f"Moderator Digest for {today_date} Compiled"
     notification_body = f"The [digest dashboard]({mod_page_address}/moderator_digest.html) has been updated."
 
     digest_summary = f"# {subject_line}\n{total_data}"

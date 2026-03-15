@@ -20,10 +20,10 @@ from typing import Dict
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, USERNAME
 from database import db
-from discord_utils import send_discord_alert
-from notifications import notifier_internal
+from integrations.discord_utils import send_discord_alert
+from reddit.connection import REDDIT, USERNAME
+from reddit.notifications import notifier_internal
 from responses import RESPONSE
 from time_handling import get_current_utc_date
 from wenju import task

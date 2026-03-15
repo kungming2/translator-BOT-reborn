@@ -32,8 +32,8 @@ from pathlib import Path
 
 from config import Paths, load_settings
 from config import logger as _base_logger
-from discord_utils import send_discord_alert
 from error import error_log_basic
+from integrations.discord_utils import send_discord_alert
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 

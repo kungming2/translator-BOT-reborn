@@ -24,11 +24,12 @@ from praw.models import WikiPage
 
 from config import SETTINGS, Paths, enable_debug_logging
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER, USERNAME
 from database import db
-from discord_utils import send_discord_alert
-from languages import converter, validate_lingvo_dataset
-from points import points_worth_determiner
+from integrations.discord_utils import send_discord_alert
+from lang.languages import converter, validate_lingvo_dataset
+from monitoring.points import points_worth_determiner
+from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
+from reddit.wiki import fetch_most_requested_languages
 from time_handling import (
     get_current_month,
     get_previous_month,
@@ -36,7 +37,6 @@ from time_handling import (
     time_convert_to_string_seconds,
 )
 from wenju import WENJU_SETTINGS, task
-from wiki import fetch_most_requested_languages
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
 
@@ -68,23 +68,27 @@ def log_trimmer():
     else:
         logger.debug("Events log within limits; no trimming needed.")
 
-    # Trim activity CSV
-    activity_path = Path(Paths.LOGS["ACTIVITY"])
+    # Trim activity CSVs
     csv_lines_to_keep = lines_to_keep // 5
-    with activity_path.open("r", encoding="utf-8", errors="ignore") as f:
-        csv_lines = f.read().splitlines()
+    for activity_path in [Path(Paths.LOGS["ACTIVITY"]), Path(Paths.LOGS["MESSAGING"])]:
+        if not activity_path.exists():
+            logger.debug(f"Activity CSV not found, skipping: {activity_path.name}")
+            continue
 
-    if len(csv_lines) > csv_lines_to_keep + 1:  # +1 for header
-        header = csv_lines[0]
-        trimmed_data = csv_lines[-csv_lines_to_keep:]
-        trimmed_csv = "\n".join([header] + trimmed_data) + "\n"
-        with activity_path.open("w", encoding="utf-8") as f:
-            f.write(trimmed_csv)
-        logger.debug(
-            f"Trimmed the activity CSV to keep the last {csv_lines_to_keep} entries (plus header)."
-        )
-    else:
-        logger.debug("Activity CSV within limits; no trimming needed.")
+        with activity_path.open("r", encoding="utf-8", errors="ignore") as f:
+            csv_lines = f.read().splitlines()
+
+        if len(csv_lines) > csv_lines_to_keep + 1:  # +1 for header
+            header = csv_lines[0]
+            trimmed_data = csv_lines[-csv_lines_to_keep:]
+            trimmed_csv = "\n".join([header] + trimmed_data) + "\n"
+            with activity_path.open("w", encoding="utf-8") as f:
+                f.write(trimmed_csv)
+            logger.debug(
+                f"Trimmed {activity_path.name} to keep the last {csv_lines_to_keep} entries (plus header)."
+            )
+        else:
+            logger.debug(f"{activity_path.name} within limits; no trimming needed.")
 
     return
 

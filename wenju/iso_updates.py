@@ -23,8 +23,8 @@ from pypdf import PdfReader
 
 from config import Paths
 from config import logger as _base_logger
-from connection import REDDIT, get_random_useragent
-from discord_utils import send_discord_alert
+from integrations.discord_utils import send_discord_alert
+from reddit.connection import REDDIT, get_random_useragent
 from wenju import task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:ISO"})

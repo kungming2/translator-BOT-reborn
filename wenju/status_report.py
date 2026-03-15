@@ -24,30 +24,30 @@ from praw.models import TextArea
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
-from connection import (
+from database import db
+from integrations.discord_utils import send_discord_alert
+from lang.countries import get_country_emoji
+from lang.languages import (
+    converter,
+    define_language_lists,
+    get_lingvos,
+    select_random_language,
+)
+from models.ajo import Ajo, ajo_loader
+from reddit.connection import (
     REDDIT,
     REDDIT_HELPER,
     create_mod_note,
     reddit_status_check,
     widget_update,
 )
-from database import db
-from discord_utils import send_discord_alert
-from languages import (
-    converter,
-    define_language_lists,
-    get_country_emoji,
-    get_lingvos,
-    select_random_language,
-)
-from models.ajo import Ajo, ajo_loader
+from reddit.verification import get_verified_thread
 from time_handling import (
     get_current_utc_date,
     get_current_utc_time,
     time_convert_to_utc,
 )
 from utility import format_markdown_table_with_padding
-from verification import get_verified_thread
 from wenju import WENJU_SETTINGS, task
 from ziwen_lookup.reference import get_language_reference
 from ziwen_lookup.wp_utils import wikipedia_lookup
