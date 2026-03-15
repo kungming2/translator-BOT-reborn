@@ -75,8 +75,8 @@ def search_nominatim(
             osm_id: str = result.get("osm_id", "")
             category: str = result.get("category", "unknown")
             place_type: str = result.get("type", "unknown")
-            lat: float = round(float(result.get("lat", "")), 3)
-            lon: float = round(float(result.get("lon", "")), 3)
+            lat = round(float(result.get("lat", "")), 3)
+            lon = round(float(result.get("lon", "")), 3)
 
             # Convert osm_type to single letter: node->N, way->W, relation->R
             osm_type_letter: str = osm_type[0].upper() if osm_type else ""
@@ -88,10 +88,10 @@ def search_nominatim(
             )
 
             # Create map links
-            osm_map_link: str = (
+            osm_map_link = (
                 f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=15"
             )
-            google_maps_link: str = f"https://www.google.com/maps?q={lat},{lon}"
+            google_maps_link = f"https://www.google.com/maps?q={lat},{lon}"
 
             # Format output
             formatted: str = (
