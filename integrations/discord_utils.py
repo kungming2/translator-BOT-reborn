@@ -8,7 +8,9 @@ webhooks.
 Logger tag: [DISCORD]
 """
 
+import json
 import logging
+from pathlib import Path
 
 import requests
 
@@ -33,10 +35,13 @@ def send_discord_alert(
     message: str,
     webhook_name: str,
     roles: list[str] | None = None,
+    image_path=None,
 ) -> None:
     """Sends an alert message to the specified Discord webhook
     using an embed with an optional icon and color.
-    It can accept an optional roles payload, given as a list."""
+    It can accept an optional roles payload, given as a list.
+    If image_path is provided and the file exists, it will be attached
+    to the message as a file upload."""
 
     webhook_data: tuple[str, str, str] | None = select_webhook(webhook_name)
     if not webhook_data:
@@ -50,11 +55,12 @@ def send_discord_alert(
 
     # Format the roles section. This must be included outside the
     # embed in order to work properly. Roles are sent as a list.
+    roles_content: str | None
     if roles:
-        roles_content: str | None = " ".join(f"<@&{role}>" for role in roles)
+        roles_content = " ".join(f"<@&{role}>" for role in roles)
         logger.debug(f"Roles: {roles_content}")
     else:
-        roles_content: str | None = None
+        roles_content = None
 
     embed: dict = {
         "title": subject,
@@ -64,13 +70,28 @@ def send_discord_alert(
     }
 
     # Include a roles section before the embed, if present.
+    payload: dict
     if roles_content:
-        payload: dict = {"content": roles_content, "embeds": [embed]}
+        payload = {"content": roles_content, "embeds": [embed]}
     else:
-        payload: dict = {"embeds": [embed]}
+        payload = {"embeds": [embed]}
 
     try:
-        response = requests.post(webhook_url, json=payload)
+        attach = Path(image_path) if image_path else None
+        if attach and attach.exists():
+            # Multipart request: embed payload + file attachment
+            with attach.open("rb") as img_file:
+                response = requests.post(
+                    webhook_url,
+                    data={"payload_json": json.dumps(payload)},
+                    files={"file": (attach.name, img_file, "image/png")},
+                )
+        else:
+            if image_path:
+                logger.warning(
+                    f"Screenshot file not found, sending without image: {image_path}"
+                )
+            response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord alert: {e}")
