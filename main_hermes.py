@@ -25,7 +25,6 @@ import sys
 import traceback
 
 from config import get_hermes_logger
-from connection import REDDIT_HERMES
 from error import error_log_basic
 from hermes import HERMES_SETTINGS
 from hermes.hermes_database import hermes_db, initialize_hermes_db
@@ -37,6 +36,7 @@ from hermes.matching import (
     title_parser,
 )
 from hermes.tools import get_statistics, test_parser
+from reddit.connection import REDDIT_HERMES
 
 logger = get_hermes_logger("HM")
 
@@ -46,6 +46,8 @@ CUT_OFF_REPLY: int = HERMES_SETTINGS["cut_off_reply"]
 CUT_OFF_COMMENTS_MIN: int = HERMES_SETTINGS["cut_off_comments_min"]
 # 90-day retention window
 CUT_OFF: int = HERMES_SETTINGS["cut_off"]
+# Post fetch amount
+FETCH_AMOUNT: int = HERMES_SETTINGS["fetch_limit"]
 
 
 # ─── Core routines ────────────────────────────────────────────────────────────
@@ -53,10 +55,10 @@ CUT_OFF: int = HERMES_SETTINGS["cut_off"]
 
 def get_submissions() -> None:
     """
-    Fetch the 25 most recent posts from r/Language_Exchange (oldest first),
+    Fetch the most recent posts from r/Language_Exchange (oldest first),
     store/update author entries, then post match replies where appropriate.
     """
-    posts = list(REDDIT_HERMES.subreddit("language_exchange").new(limit=25))
+    posts = list(REDDIT_HERMES.subreddit("language_exchange").new(limit=FETCH_AMOUNT))
     posts.reverse()  # Process oldest first for chronological ordering
 
     import time
@@ -136,10 +138,7 @@ def database_maintenance() -> None:
     # 1. Prune by age
     pruned_ids = hermes_db.prune_old_entries(CUT_OFF)
     if pruned_ids:
-        logger.info(
-            f"Database Maintenance: Pruned {len(pruned_ids)} expired entries: "
-            f"{pruned_ids}"
-        )
+        logger.info(f"Pruned {len(pruned_ids)} expired entries: {pruned_ids}")
 
     # 2. Check remaining posts still exist on REDDIT_HERMES
     entries = hermes_db.get_all_entries()
@@ -154,14 +153,10 @@ def database_maintenance() -> None:
     for submission in REDDIT_HERMES.info(fullnames=full_names):
         try:
             author_name = submission.author.name  # raises AttributeError if deleted
-            logger.debug(
-                f"Database Maintenance: Verified post by u/{author_name} "
-                f"at {submission.permalink}"
-            )
+            logger.debug(f"Verified post by u/{author_name} at {submission.permalink}")
         except AttributeError:
             logger.info(
-                f"Database Maintenance: Post {submission.id} deleted/removed. "
-                "Removing from database."
+                f"Post {submission.id} deleted/removed. Removing from database."
             )
             user_to_delete = author_by_post.get(submission.id)
             if user_to_delete:
