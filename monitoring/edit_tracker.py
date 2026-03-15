@@ -13,8 +13,8 @@ This module provides two main tracking functions:
    - Caches comment content and compares against new versions
    - Triggers reprocessing when new commands are added via edits
    - Uses a three-phase approach:
-     * Phase 1: Cache all recent comments
-     * Phase 2: Check edited comments for new commands
+     * Phase 1: Cache all recent comments (with their parsed command names)
+     * Phase 2: Check edited comments for genuinely new commands
      * Phase 3: Clean up old cache entries
 
 2. progress_tracker():
@@ -43,8 +43,9 @@ from config import logger as _base_logger
 from database import db
 from models.ajo import Ajo, ajo_loader
 from models.instruo import comment_has_command
+from models.komando import extract_commands_from_text
 from models.kunulo import Kunulo
-from reddit.connection import REDDIT, REDDIT_HELPER
+from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
 from title.title_handling import process_title
 from ziwen_commands.claim import parse_claim_comment
 
@@ -52,6 +53,9 @@ if TYPE_CHECKING:
     from praw.models import Comment
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "EDIT"})
+
+# Sentinel used when a comment has no commands at all.
+_NO_COMMANDS = ""
 
 
 def _is_comment_within_edit_window(comment: "Comment") -> bool:
@@ -63,21 +67,93 @@ def _is_comment_within_edit_window(comment: "Comment") -> bool:
     return not time_diff > age_in_seconds
 
 
-def _get_cached_comment(comment_id: str) -> str | None:
-    """Retrieve comment text from cache."""
+# ---------------------------------------------------------------------------
+# Cache helpers
+# ---------------------------------------------------------------------------
+
+
+def _serialize_komandos(text: str) -> str:
+    """
+    Parse *text* for commands and return a comma-separated string of the
+    unique command names found (e.g. ``"identify,translated"``).
+
+    Returns an empty string when no commands are present, which is stored
+    as-is so callers can distinguish "cached with no commands" from
+    "not in cache at all" (the latter returns None from _get_cached_comment).
+    """
+    commands = extract_commands_from_text(text)
+    # Preserve order while deduplicating, matching _deduplicate_args behaviour.
+    seen: set[str] = set()
+    names: list[str] = []
+    for cmd in commands:
+        if cmd.name not in seen:
+            seen.add(cmd.name)
+            names.append(cmd.name)
+    return ",".join(names)
+
+
+def _deserialize_komandos(komandos_str: str) -> set[str]:
+    """
+    Convert a stored komandos string back into a set of command names.
+    Returns an empty set for the empty-string sentinel.
+    """
+    if not komandos_str:
+        return set()
+    return set(komandos_str.split(","))
+
+
+class _CachedComment:
+    """Thin container for what we read back from comment_cache."""
+
+    __slots__ = ("body", "_komandos_str", "_komando_set")
+
+    def __init__(self, body: str, komandos: str):
+        self.body = body
+        # Parsed lazily on first access via property below.
+        self._komandos_str = komandos
+        self._komando_set: set[str] | None = None
+
+    @property
+    def command_names(self) -> set[str]:
+        if self._komando_set is None:
+            self._komando_set = _deserialize_komandos(self._komandos_str)
+        return self._komando_set
+
+
+def _get_cached_comment(comment_id: str) -> "_CachedComment | None":
+    """Retrieve cached body and komandos for *comment_id*.
+    Returns None if the comment is not in the cache."""
     cursor = db.cursor_cache
-    cursor.execute("SELECT content FROM comment_cache WHERE id = ?", (comment_id,))
+    cursor.execute(
+        "SELECT content, komandos FROM comment_cache WHERE id = ?", (comment_id,)
+    )
     result = cursor.fetchone()
-    return result[0] if result else None  # Just the body text, or None
+    if result is None:
+        return None
+    body, komandos = result
+    return _CachedComment(body=body, komandos=komandos or _NO_COMMANDS)
 
 
-def _update_comment_cache(comment_id: str, comment_body: str, created_utc: int) -> None:
-    """Replace old comment text with new version."""
+def _update_comment_cache(
+    comment_id: str,
+    comment_body: str,
+    created_utc: int,
+    komandos: str | None = None,
+) -> None:
+    """Replace old cache entry with the new body and komandos string.
+
+    If *komandos* is None the column is derived from *comment_body* here,
+    so callers that have already parsed the commands can pass them in to
+    avoid double-parsing.
+    """
+    if komandos is None:
+        komandos = _serialize_komandos(comment_body)
+
     cursor = db.cursor_cache
     cursor.execute("DELETE FROM comment_cache WHERE id = ?", (comment_id,))
     cursor.execute(
-        "INSERT INTO comment_cache VALUES (?, ?, ?)",
-        (comment_id, comment_body, created_utc),
+        "INSERT INTO comment_cache VALUES (?, ?, ?, ?)",
+        (comment_id, comment_body, created_utc, komandos),
     )
     db.conn_cache.commit()
 
@@ -94,7 +170,7 @@ def _cleanup_comment_cache(limit: int) -> None:
     """Remove oldest entries beyond comment limit."""
     cursor = db.cursor_cache
     cleanup = """
-        DELETE FROM comment_cache 
+        DELETE FROM comment_cache
         WHERE id NOT IN (
             SELECT id FROM comment_cache ORDER BY id DESC LIMIT ?
         )
@@ -104,15 +180,27 @@ def _cleanup_comment_cache(limit: int) -> None:
     logger.debug("Cleaned up the edited comments cache.")
 
 
+# ---------------------------------------------------------------------------
+# Main tracker
+# ---------------------------------------------------------------------------
+
+
 def edit_tracker() -> None:
     """
-    Detects edited r/translator comments that involve commands or
-    lookup items. If a meaningful change is detected, the comment is
-    removed from the processed database for reprocessing.
+    Detects edited r/translator comments that introduce new commands.
+    If a meaningful change is detected, the comment is removed from the
+    processed database so ziwen_commands will reprocess it.
+
+    The comparison is command-set aware: reprocessing is only triggered
+    when the edited version contains command names that were not present
+    in the cached (pre-edit) version.  This correctly handles the case
+    where a comment already had one command (e.g. !identify) and the
+    user edits in a second one (e.g. !translated) — something the old
+    boolean comment_has_command() check would have missed.
     """
-    # Phase 1: Iterate over comments. This only needs to get the comments
-    # which may have been "ninja-edited"; that is, they were edited in
-    # the last 3 minutes and therefore do not have an 'edited' flag.
+    # Phase 1: Iterate over recent comments to seed / refresh the cache.
+    # This catches "ninja edits" made within Reddit's 3-minute no-flag
+    # window before they appear in the mod.edited queue.
     total_fetch_num = SETTINGS["comment_edit_num_limit"] * 2
     total_keep_num = total_fetch_num * 5
     for comment in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).comments(
@@ -125,63 +213,85 @@ def edit_tracker() -> None:
         comment_id = comment.id
         comment_body = comment.body.strip()
 
-        # Check against the pre-existing cache.
+        # Only insert; never overwrite in Phase 1 (we want the *original*
+        # body to stay cached so Phase 2 can diff against it later).
         cached = _get_cached_comment(comment_id)
-
-        # If not in cache, insert it
         if not cached:
-            logger.debug(f"Cached new comment `{comment_id}`")
-            _update_comment_cache(comment_id, comment_body, int(comment.created_utc))
-            continue
+            # Don't record komandos for the bot's own comments — they would
+            # produce false positives when the edit diff runs in Phase 2.
+            author = str(comment.author) if comment.author else ""
+            komandos = (
+                _NO_COMMANDS
+                if author.lower() == USERNAME.lower()
+                else _serialize_komandos(comment_body)
+            )
+            logger.debug(
+                f"Cached new comment `{comment_id}` "
+                f"(komandos: {komandos if komandos else 'none'})"
+            )
+            _update_comment_cache(
+                comment_id, comment_body, int(comment.created_utc), komandos
+            )
 
     # Phase 2: Fetch only the edited comments from the subreddit.
-    # This produces a generator that includes both comments and
-    # submissions.
+    # This produces a generator that includes both comments and submissions.
     for item in REDDIT.subreddit(SETTINGS["subreddit"]).mod.edited(
         limit=SETTINGS["comment_edit_num_limit"]
     ):
-        # Skip submissions, keep only comments
+        # Skip submissions, keep only comments.
         if isinstance(item, models.Submission):
             continue
 
         comment_id = item.id
         comment_new_body = item.body.strip()
 
-        # Check the comment's age.
+        # Comment is beyond our monitoring window.
         if not _is_comment_within_edit_window(item):
             continue
 
-        # Comment has no actionable command.
+        # Fast pre-check: if the new version has no commands at all,
+        # there is nothing to reprocess regardless of what the old
+        # version contained.
         if not comment_has_command(item):
             continue
 
-        # Fetch the old stored information.
+        # Read the cached (pre-edit) state.
         cached = _get_cached_comment(comment_id)
-        comment_old_body = cached if cached else ""
+        comment_old_body = cached.body if cached else ""
+
         if comment_old_body == comment_new_body:
-            logger.debug("The comment stored is the same.")
+            logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
             continue
 
-        # Compare command relevance between old and new versions
-        old_had_command = (
-            comment_has_command(comment_old_body) if comment_old_body else False
-        )
-        new_has_command = comment_has_command(item)
+        # Determine which command names are genuinely new.
+        old_command_names: set[str] = cached.command_names if cached else set()
+        new_commands = extract_commands_from_text(comment_new_body)
+        new_command_names: set[str] = {cmd.name for cmd in new_commands}
 
-        # There's a new command in the new comment text.
-        if new_has_command and not old_had_command:
+        added_commands = new_command_names - old_command_names
+
+        if added_commands:
             logger.info(
-                f"[Edit_Tracker] Reprocessing triggered: "
-                f"{comment_id} at https://www.reddit.com{item.permalink}"
+                f"[Edit_Tracker] Reprocessing triggered for `{comment_id}`: "
+                f"new command(s) {sorted(added_commands)} detected. "
+                f"https://www.reddit.com{item.permalink}"
             )
-            # Remove the comment ID from the database so that
-            # ziwen_commands will reprocess it.
             _remove_from_processed(comment_id)
+        else:
+            logger.debug(
+                f"Comment `{comment_id}` edited but no new commands added "
+                f"(had={sorted(old_command_names)}, now={sorted(new_command_names)})."
+            )
 
-        # Update the cache.
-        _update_comment_cache(comment_id, comment_new_body, int(item.created_utc))
+        # Persist the updated body and freshly-parsed komandos.
+        new_komandos = ",".join(
+            dict.fromkeys(cmd.name for cmd in new_commands)  # ordered dedup
+        )
+        _update_comment_cache(
+            comment_id, comment_new_body, int(item.created_utc), new_komandos
+        )
 
-    # Phase 3: Cache cleanup
+    # Phase 3: Cache cleanup.
     _cleanup_comment_cache(total_keep_num)
 
     return
