@@ -697,6 +697,7 @@ def notifier(lingvo, submission, mode="new_post"):
         search_code,
         round(messaging_mins, 2),
         round(seconds_per_message, 2),
+        post_id,
     )
     record_activity_csv("messaging", payload)
 
