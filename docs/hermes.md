@@ -26,16 +26,15 @@ The bot was renamed, rewritten, and relaunched on [July 11, 2020](https://www.re
 
 In making matches, Hermes ranks users in its database in a table by a relevance score:
 
-* 5 points if the OP and the matched user match in both a single offered and sought language pair.
+* **5 points** if the OP and the matched user match in both a single offered and sought language pair.
     * e.g., OP is offering Arabic and seeking Spanish, and the relevant user is seeking Arabic and offering Spanish.
-* 3 points if the matched user just offers a language that the OP seeks.
+* **3 points** if the matched user just offers a language that the OP seeks.
     * e.g., OP is offering Arabic and seeking Spanish, and the relevant user is offering Spanish (but not seeking Arabic).
-* 2 points if the matched user is seeking a language that the OP offers.
+* **2 points** if the matched user is seeking a language that the OP offers.
     * e.g., OP is offering Arabic and seeking Spanish, and the relevant user is seeking Arabic (but not offering Spanish).
+* **1 point** if the matched user has native-level proficiency for the language the OP is seeking.
 
-These points are *cumulative*, so if the OP and a matched user match in more than one language, that user will then be ranked higher in the results. If there are multiple individuals with the same relevance score, the bot will randomly select up to five users with that score. 
-
-The bot *does not* currently weigh native speakers higher in the relevance score, but it will include that information, where available, in the matched table.
+These points are *cumulative*, so if the OP and a matched user match in more than one language, that user will then be ranked higher in the results. If there are multiple individuals with the same relevance score, the bot will randomly select up to seven users with that score.
 
 ## Notes
 
