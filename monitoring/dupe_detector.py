@@ -25,14 +25,14 @@ from rapidfuzz import fuzz
 # For semantic similarity
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from usage_statistics import action_counter
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, is_mod, remove_content
 from database import db
-from reddit_sender import reddit_reply
+from reddit.connection import REDDIT, is_mod, remove_content
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
-from usage_statistics import action_counter
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "DUPE"})
 

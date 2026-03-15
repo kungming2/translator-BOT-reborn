@@ -32,21 +32,21 @@ from praw.models import Comment
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT_HELPER, USERNAME, create_mod_note
 from database import db
-from languages import converter
+from lang.languages import converter
 from models.ajo import ajo_loader, ajo_writer
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
+from reddit.connection import REDDIT_HELPER, USERNAME, create_mod_note
+from reddit.wiki import fetch_wiki_statistics_page
 from responses import RESPONSE
 from time_handling import get_current_month
-from wiki import fetch_wiki_statistics_page
 
 if TYPE_CHECKING:
     from praw.models import Submission
 
-    from languages import Lingvo
     from models.ajo import Ajo
+    from models.lingvo import Lingvo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "POINTS"})
 
@@ -488,17 +488,15 @@ def points_tabulator(
                         username=parent_author,
                         included_note=translator_note,
                     )
-
-        elif name == "identify":
-            points += 3
-        elif name in {"claim", "page", "search", "missing", "transform"}:
-            points += 1
-        elif name == "lookup_cjk":
-            points += 2
-        elif name == "lookup_wp":
-            points += 1
+        elif name not in {
+            cmd.lstrip("!").rstrip(":") for cmd in SETTINGS["commands_no_args"]
+        }:
+            default = 1
+            # Special cases (identify, lookup_cjk) are in settings.yaml;
+            # all others default to 1
+            points += SETTINGS["command_points"].get(name, default)
         else:
-            logger.debug(f"[Points] No point value set for command: {name}")
+            logger.debug(f"[Points] No point value for no-arg command: {name}")
 
     logger.info(
         f"Commands processed for comment `{comment.id}`: {len(commands)} commands, "

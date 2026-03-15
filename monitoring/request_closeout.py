@@ -16,10 +16,10 @@ from typing import TYPE_CHECKING
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, is_valid_user
 from database import db
 from models.ajo import ajo_loader
-from reddit_sender import message_send
+from reddit.connection import REDDIT, is_valid_user
+from reddit.reddit_sender import message_send
 from responses import RESPONSE
 
 if TYPE_CHECKING:

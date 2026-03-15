@@ -40,12 +40,12 @@ from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, REDDIT_HELPER
 from database import db
 from models.ajo import Ajo, ajo_loader
 from models.instruo import comment_has_command
 from models.kunulo import Kunulo
-from title_handling import Titolo
+from reddit.connection import REDDIT, REDDIT_HELPER
+from title.title_handling import process_title
 from ziwen_commands.claim import parse_claim_comment
 
 if TYPE_CHECKING:
@@ -210,7 +210,7 @@ def progress_tracker() -> None:
         ajo = ajo_loader(post_id)
         if ajo is None:  # Unlikely to happen, but just in case.
             logger.debug("Couldn't find Ajo in local database. Loading from Reddit.")
-            ajo = Ajo.from_titolo(Titolo.process_title(post.title))
+            ajo = Ajo.from_titolo(process_title(post.title))
 
         # Skip if the data doesn't match an in progress post for some reason.
         if (ajo.type in ("single", "multiple")) and not ajo.is_defined_multiple:
