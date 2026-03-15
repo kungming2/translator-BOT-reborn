@@ -382,17 +382,56 @@ def initialize_all_databases() -> None:
 """NON-SQLITE FILE WRITING"""
 
 
-def record_activity_csv(data_tuple: tuple) -> None:
+def record_activity_csv(run_type: str, data_tuple: tuple) -> None:
     """
-    Append a tuple of data to a CSV file. The tuple should start with
-    an activity type, followed by date and time, etc. This CSV file is
-    generally used to record parameters like memory used, notifications
-    time sent, etc.
+    Append a row of activity data to the appropriate CSV log file.
 
-    :param data_tuple: Tuple of data to write as a CSV row.
+    Two run types are supported, each writing to its own file:
+
+    - ``"cycle"``: Records a cycle run. Columns are:
+      Date, Activity Type, Used Calls, Memory Usage, Duration (Minutes), PID
+
+    - ``"messaging"``: Records a messaging run. Columns are:
+      Date, Activity Type, Notifications Sent, Language,
+      Duration (Minutes), Time Per Notification (Seconds)
+
+    The CSV file is created with a header row if it does not yet exist.
+
+    :param run_type: Either ``"cycle"`` or ``"messaging"``.
+    :param data_tuple: Tuple of values matching the columns for the given run type.
+    :raises ValueError: If ``run_type`` is not ``"cycle"`` or ``"messaging"``.
     """
-    with open(Paths.LOGS["ACTIVITY"], mode="a", newline="") as csv_file:
+    if run_type == "cycle":
+        log_path = Paths.LOGS["ACTIVITY"]
+        header = [
+            "Date",
+            "Activity Type",
+            "Used Calls",
+            "Memory Usage",
+            "Duration (Minutes)",
+            "PID",
+        ]
+    elif run_type == "messaging":
+        log_path = Paths.LOGS["MESSAGING"]
+        header = [
+            "Date",
+            "Activity Type",
+            "Notifications Sent",
+            "Language",
+            "Duration (Minutes)",
+            "Time Per Notification (Seconds)",
+        ]
+    else:
+        raise ValueError(
+            f"Invalid run_type '{run_type}': must be 'cycle' or 'messaging'."
+        )
+
+    file_exists = os.path.exists(log_path)
+
+    with open(log_path, mode="a", newline="") as csv_file:
         writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)  # type: ignore[arg-type]
+        if not file_exists:
+            writer.writerow(header)
         writer.writerow(data_tuple)
 
 

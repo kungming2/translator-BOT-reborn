@@ -11,7 +11,11 @@ import time
 from pathlib import Path
 
 import yaml
-from prawcore.exceptions import RequestException, ResponseException, ServerError
+from prawcore.exceptions import (  # type: ignore[import-untyped]
+    RequestException,
+    ResponseException,
+    ServerError,
+)
 
 from time_handling import get_current_month
 
@@ -84,6 +88,7 @@ class Paths:
         "FILTER": os.path.join(DATA_DIR, "Logs", "log_filter.md"),
         "EVENTS": os.path.join(DATA_DIR, "Logs", "log_events.md"),
         "ACTIVITY": os.path.join(DATA_DIR, "Logs", "log_activity.csv"),
+        "MESSAGING": os.path.join(DATA_DIR, "Logs", "log_messaging.csv"),
         "TESTING": os.path.join(DATA_DIR, "Logs", "log_testing.md"),
     }
 
