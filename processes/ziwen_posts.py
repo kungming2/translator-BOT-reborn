@@ -209,8 +209,8 @@ def ziwen_posts(post_limit=None):
             logger.info(
                 f"No Ajo stored in existing database for `{post.id}`. Creating new Ajo..."
             )
-            titolo_content = process_title(post)
-            post_ajo = Ajo.from_titolo(process_title(titolo_content), post)
+            titolo_content = process_title(post_title)
+            post_ajo = Ajo.from_titolo(titolo_content, post)
 
         # Check for English-only POSTS.
         if is_english_only(titolo_content):
