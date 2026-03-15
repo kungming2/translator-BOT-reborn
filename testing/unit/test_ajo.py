@@ -8,8 +8,6 @@ Tests the Ajo class, serialization, state management, and related functions.
 import unittest
 from unittest.mock import MagicMock
 
-from languages import Lingvo
-
 # noinspection PyProtectedMember
 from models.ajo import (
     Ajo,
@@ -18,6 +16,7 @@ from models.ajo import (
     ajo_defined_multiple_flair_former,
     parse_ajo_data,
 )
+from models.lingvo import Lingvo
 
 
 class TestAjoInitialization(unittest.TestCase):

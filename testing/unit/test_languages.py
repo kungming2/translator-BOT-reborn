@@ -7,15 +7,15 @@ Tests Lingvo class, converter functions, and language utilities.
 
 import unittest
 
-from languages import (
-    Lingvo,
+from lang.countries import country_converter
+from lang.languages import (
     converter,
-    country_converter,
     define_language_lists,
     get_lingvos,
     normalize,
     parse_language_list,
 )
+from models.lingvo import Lingvo
 
 
 class TestLingvoClass(unittest.TestCase):
