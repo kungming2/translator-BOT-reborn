@@ -24,14 +24,17 @@ from praw.exceptions import PRAWException
 from config import get_hermes_logger
 from hermes import HERMES_SETTINGS
 from hermes.hermes_database import hermes_db
-from languages import converter
+from lang.languages import converter
 from responses import RESPONSE
 from time_handling import convert_to_day
-from title_handling import title_settings
+from title.title_handling import title_settings
 
 logger = get_hermes_logger("HM:MATCH")
 
-# ─── English word filter lists (sourced from title_settings YAML) ─────────────
+
+# ─── Module-level constants ───────────────────────────────────────────────────
+
+# English word filter lists sourced from title_settings YAML.
 # title_settings["ENGLISH_2_WORDS"] is a list of Title-cased strings.
 # title_settings["ENGLISH_3_WORDS"] is a single space-separated string.
 _ENGLISH_2_WORDS: frozenset[str] = frozenset(
@@ -42,21 +45,90 @@ _ENGLISH_3_WORDS: frozenset[str] = frozenset(
 )
 
 # "N" is a common shorthand for Native seen in real post titles e.g. "(N)", "(N1)"
-PROFICIENCY_LEVELS = {"Native", "N", "A1", "A2", "B1", "B2", "C1", "C2"}
+PROFICIENCY_LEVELS: frozenset[str] = frozenset(HERMES_SETTINGS["proficiency_levels"])
 
-# Make a specific bot disclaimer for the bot
-HERMES_BOT_DISCLAIMER = RESPONSE.BOT_DISCLAIMER.replace(
+# Module-level constant so language_matcher doesn't re-read settings on every call.
+_CUT_OFF: int = HERMES_SETTINGS["cut_off"]
+
+# Bot disclaimer text adapted for r/Language_Exchange.
+HERMES_BOT_DISCLAIMER: str = RESPONSE.BOT_DISCLAIMER.replace(
     "r/translator ", "r/Language_Exchange "
 ).replace("Ziwen", "Hermes")
 
 
-# ─── Language parsing ──────────────────────────────────────────────────────────
+# ─── Private helpers ──────────────────────────────────────────────────────────
 
 
 def _tokenize(text: str) -> list[str]:
     """Extract alpha words (including extended Latin) and title-case them."""
     words = re.findall(r"[a-zA-Z\u00c0-\u017f]+", text)
     return [w.title() for w in words]
+
+
+def _extract_segments(title: str) -> tuple[str | None, str | None]:
+    """
+    Split a normalised (lowercased, alias-replaced) title into raw offering
+    and seeking text segments, handling three structural variants:
+
+    1. Standard  — ``offering: <langs> | seeking: <langs>``
+    2. Reversed  — ``seeking: <langs> | offering: <langs>``
+    3. Bracket   — ``[offering] <langs> [seeking] <langs>``
+
+    Returns ``(offering_raw, seeking_raw)``, either of which may be None if
+    the corresponding keyword was not found.
+    """
+    # ── Bracket style: [Offering] … [Seeking] … (order-independent) ──────────
+    bm_o = re.search(r"\[offering]\s*:?\s*(.*?)(?=\[|$)", title)
+    bm_s = re.search(r"\[seeking]\s*:?\s*(.*?)(?=\[|$)", title)
+    if bm_o or bm_s:
+        return (
+            bm_o.group(1).strip() if bm_o else None,
+            bm_s.group(1).strip() if bm_s else None,
+        )
+
+    # ── Locate keyword positions to determine order ───────────────────────────
+    offer_m = re.search(r"offering", title)
+    seek_m = re.search(r"seeking", title)
+
+    if not offer_m and not seek_m:
+        return None, None
+
+    offering_raw: str | None = None
+    seeking_raw: str | None = None
+
+    if offer_m and seek_m:
+        offer_pos = offer_m.start()
+        seek_pos = seek_m.start()
+
+        if offer_pos < seek_pos:
+            # Normal order: offering … seeking …
+            seg_o = title[offer_m.end() :]
+            offering_raw = seg_o.split("seeking")[0].strip()
+            seg_s = title[seek_m.end() :]
+            seeking_raw = seg_s.split("offering")[0].strip()
+        else:
+            # Reversed order: seeking … offering …
+            seg_s = title[seek_m.end() :]
+            seeking_raw = seg_s.split("offering")[0].strip()
+            seg_o = title[offer_m.end() :]
+            offering_raw = seg_o.split("seeking")[0].strip()
+
+    elif offer_m:
+        offering_raw = title[offer_m.end() :].strip()
+    else:
+        seeking_raw = title[seek_m.end() :].strip()  # type: ignore[union-attr]
+
+    # Strip leading punctuation left by separators like ": ", "- ", "] "
+    _punct_prefix = re.compile(r"^[\s:;\-\[\]|/.,]+")
+    if offering_raw:
+        offering_raw = _punct_prefix.sub("", offering_raw).strip() or None
+    if seeking_raw:
+        seeking_raw = _punct_prefix.sub("", seeking_raw).strip() or None
+
+    return offering_raw, seeking_raw
+
+
+# ─── Language parsing ─────────────────────────────────────────────────────────
 
 
 def language_parser(
@@ -160,69 +232,6 @@ def level_parser(
     return language_levels
 
 
-def _extract_segments(title: str) -> tuple[str | None, str | None]:
-    """
-    Split a normalised (lowercased, alias-replaced) title into raw offering
-    and seeking text segments, handling three structural variants:
-
-    1. Standard    — ``offering: <langs> | seeking: <langs>``
-    2. Reversed    — ``seeking: <langs> | offering: <langs>``
-    3. Bracket     — ``[offering] <langs> [seeking] <langs>``
-
-    Returns ``(offering_raw, seeking_raw)``, either of which may be None if
-    the corresponding keyword was not found.
-    """
-    # ── Bracket style: [Offering] … [Seeking] … (order-independent) ──────────
-    bm_o = re.search(r"\[offering]\s*:?\s*(.*?)(?=\[|$)", title)
-    bm_s = re.search(r"\[seeking]\s*:?\s*(.*?)(?=\[|$)", title)
-    if bm_o or bm_s:
-        return (
-            bm_o.group(1).strip() if bm_o else None,
-            bm_s.group(1).strip() if bm_s else None,
-        )
-
-    # ── Locate keyword positions to determine order ───────────────────────────
-    offer_m = re.search(r"offering", title)
-    seek_m = re.search(r"seeking", title)
-
-    if not offer_m and not seek_m:
-        return None, None
-
-    offering_raw: str | None = None
-    seeking_raw: str | None = None
-
-    if offer_m and seek_m:
-        offer_pos = offer_m.start()
-        seek_pos = seek_m.start()
-
-        if offer_pos < seek_pos:
-            # Normal order: offering … seeking …
-            seg_o = title[offer_m.end() :]
-            offering_raw = seg_o.split("seeking")[0].strip()
-            seg_s = title[seek_m.end() :]
-            seeking_raw = seg_s.split("offering")[0].strip()
-        else:
-            # Reversed order: seeking … offering …
-            seg_s = title[seek_m.end() :]
-            seeking_raw = seg_s.split("offering")[0].strip()
-            seg_o = title[offer_m.end() :]
-            offering_raw = seg_o.split("seeking")[0].strip()
-
-    elif offer_m:
-        offering_raw = title[offer_m.end() :].strip()
-    else:
-        seeking_raw = title[seek_m.end() :].strip()  # type: ignore[union-attr]
-
-    # Strip leading punctuation left by separators like ": ", "- ", "] "
-    _punct_prefix = re.compile(r"^[\s:;\-\[\]|/.,]+")
-    if offering_raw:
-        offering_raw = _punct_prefix.sub("", offering_raw).strip() or None
-    if seeking_raw:
-        seeking_raw = _punct_prefix.sub("", seeking_raw).strip() or None
-
-    return offering_raw, seeking_raw
-
-
 def title_parser(
     title: str,
     include_iso_639_3: bool = False,
@@ -268,10 +277,6 @@ def title_parser(
 # ─── Matching ─────────────────────────────────────────────────────────────────
 
 
-# Module-level constant so language_matcher doesn't re-read settings on every call.
-_CUT_OFF: int = HERMES_SETTINGS["cut_off"]
-
-
 def get_language_greeting(offering: list[str], seeking: list[str]) -> str:
     """
     Pick a random non-English language from the combined offering/seeking
@@ -303,9 +308,8 @@ def get_language_greeting(offering: list[str], seeking: list[str]) -> str:
 
     if not lingvo:
         return ""
-    else:
-        logger.debug(f"Selected language: {lingvo.name} (`{lingvo.preferred_code}`).")
 
+    logger.debug(f"Selected language: {lingvo.name} (`{lingvo.preferred_code}`).")
     greeting = lingvo.greetings or "Hello"
     return f"{greeting}, "
 
@@ -320,9 +324,11 @@ def language_matcher(
 
     Match-weight rules
     ------------------
-    +3 per language  : target *offers* something the querier *seeks*
-    +2 per language  : target *seeks* something the querier *offers*
-    +2 bonus         : single-language exact bilateral match
+    +5 flat          : target both offers something querier seeks AND seeks
+                       something querier offers (mutual match in both directions)
+    +1 per language  : target offers a matched language at Native level (stacks)
+    +3 per language  : target *only* offers something the querier seeks
+    +2 per language  : target *only* seeks something the querier offers
 
     Args:
         query_offering: Language codes the querying user offers.
@@ -350,37 +356,44 @@ def language_matcher(
         matched_o = sorted(set(target_offering) & set(query_seeking))
         matched_s = sorted(set(target_seeking) & set(query_offering))
 
-        if matched_o:
+        if matched_o and matched_s:
+            # 5 points: target both offers something the OP seeks AND seeks
+            # something the OP offers — a mutual match in both directions.
+            # This is a flat score, not additive, per the scoring spec.
+            score = 5
+            native_bonus = sum(
+                1 for code in matched_o if target_levels.get(code) in {"Native", "N"}
+            )
             matches[username] = [
-                3 * len(matched_o),
+                score + native_bonus,
+                matched_o,
+                matched_s,
+                user_post_id,
+                target_levels,
+            ]
+
+        elif matched_o:
+            # 3 points per language: target offers what the OP seeks.
+            native_bonus = sum(
+                1 for code in matched_o if target_levels.get(code) in {"Native", "N"}
+            )
+            matches[username] = [
+                3 * len(matched_o) + native_bonus,
                 matched_o,
                 None,
                 user_post_id,
                 target_levels,
             ]
 
-        if matched_s:
-            if username in matches:
-                matches[username][0] += 2 * len(matched_s)
-                matches[username][2] = matched_s
-            else:
-                matches[username] = [
-                    2 * len(matched_s),
-                    None,
-                    matched_s,
-                    user_post_id,
-                    target_levels,
-                ]
-
-        # Bilateral "perfect swap" bonus: each party offers exactly what the
-        # other seeks and nothing else (e.g. I offer Spanish/seek French,
-        # they offer French/seek Spanish).
-        if (
-            username in matches
-            and query_offering == target_seeking
-            and query_seeking == target_offering
-        ):
-            matches[username][0] += 2
+        elif matched_s:
+            # 2 points per language: target seeks what the OP offers.
+            matches[username] = [
+                2 * len(matched_s),
+                None,
+                matched_s,
+                user_post_id,
+                target_levels,
+            ]
 
     return matches or None
 
@@ -486,7 +499,3 @@ def format_matches(
         "to get in contact with their authors.*"
     )
     return header + "\n".join(lines) + footer
-
-
-if __name__ == "__main__":
-    print(get_language_greeting(["es", "zh", "fi", "fo"], ["fr", "kk", "sc"]))

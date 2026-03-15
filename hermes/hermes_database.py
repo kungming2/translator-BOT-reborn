@@ -32,7 +32,7 @@ logger = get_hermes_logger("HM:DB")
 HERMES_DB_PATH = Paths.HERMES["HERMES_DATABASE"]
 
 
-# ─── Schema setup ────────────────────────────────────────────────────────────
+# ─── Schema setup ─────────────────────────────────────────────────────────────
 
 
 def initialize_hermes_db() -> None:
@@ -80,7 +80,28 @@ def initialize_hermes_db() -> None:
             conn.close()
 
 
-# ─── Manager ─────────────────────────────────────────────────────────────────
+# ─── Private helpers ──────────────────────────────────────────────────────────
+
+
+def _parse_user_data(raw: str) -> dict[str, Any] | None:
+    """
+    Deserialise a user_data string stored in the database.
+    Accepts both JSON (new rows) and Python-literal strings (legacy rows).
+    """
+    if not raw:
+        return None
+    try:
+        return orjson.loads(raw)
+    except (orjson.JSONDecodeError, ValueError):
+        pass
+    try:
+        return literal_eval(raw)
+    except (ValueError, SyntaxError):
+        pass
+    return None
+
+
+# ─── Database manager ─────────────────────────────────────────────────────────
 
 
 class HermesDatabaseManager(DatabaseManager):
@@ -92,6 +113,8 @@ class HermesDatabaseManager(DatabaseManager):
     def __init__(self) -> None:
         super().__init__()
         self._conn_hermes: sqlite3.Connection | None = None
+
+    # ── Connection properties ─────────────────────────────────────────────────
 
     @property
     def conn_hermes(self) -> sqlite3.Connection:
@@ -108,7 +131,7 @@ class HermesDatabaseManager(DatabaseManager):
         if self._conn_hermes:
             self._conn_hermes.close()
 
-    # ── processed table ──────────────────────────────────────────────────────
+    # ── processed table ───────────────────────────────────────────────────────
 
     def is_processed(self, post_id: str) -> bool:
         """Return True if post_id has already been handled."""
@@ -125,7 +148,7 @@ class HermesDatabaseManager(DatabaseManager):
         )
         self.conn_hermes.commit()
 
-    # ── entries table ─────────────────────────────────────────────────────────
+    # ── entries table — reads ─────────────────────────────────────────────────
 
     def get_entry(self, username: str) -> dict[str, Any] | None:
         """
@@ -137,6 +160,26 @@ class HermesDatabaseManager(DatabaseManager):
         if row is None:
             return None
         return _parse_user_data(row[0])
+
+    def get_all_entries(self) -> list[tuple[str, dict[str, Any], int]]:
+        """
+        Return all entries as a list of (username, user_data_dict, posted_utc)
+        triples.  Rows that cannot be deserialised are skipped with a warning.
+        """
+        cur = self.cursor_hermes
+        cur.execute("SELECT username, user_data, posted_utc FROM entries")
+        rows = cur.fetchall()
+
+        results: list[tuple[str, dict[str, Any], int]] = []
+        for username, raw, posted_utc in rows:
+            data = _parse_user_data(raw)
+            if data is None:
+                logger.warning(f"Could not parse user_data for u/{username}. Skipped.")
+                continue
+            results.append((username, data, posted_utc))
+        return results
+
+    # ── entries table — writes ────────────────────────────────────────────────
 
     def upsert_entry(
         self, username: str, user_data: dict[str, Any], posted_utc: int
@@ -179,23 +222,7 @@ class HermesDatabaseManager(DatabaseManager):
         cur.execute("DELETE FROM entries WHERE posted_utc = ?", (posted_utc,))
         self.conn_hermes.commit()
 
-    def get_all_entries(self) -> list[tuple[str, dict[str, Any], int]]:
-        """
-        Return all entries as a list of (username, user_data_dict, posted_utc)
-        triples.  Rows that cannot be deserialised are skipped with a warning.
-        """
-        cur = self.cursor_hermes
-        cur.execute("SELECT username, user_data, posted_utc FROM entries")
-        rows = cur.fetchall()
-
-        results: list[tuple[str, dict[str, Any], int]] = []
-        for username, raw, posted_utc in rows:
-            data = _parse_user_data(raw)
-            if data is None:
-                logger.warning(f"Could not parse user_data for u/{username}. Skipped.")
-                continue
-            results.append((username, data, posted_utc))
-        return results
+    # ── entries table — maintenance ───────────────────────────────────────────
 
     def prune_old_entries(self, cut_off_seconds: int) -> list[str]:
         """
@@ -214,27 +241,6 @@ class HermesDatabaseManager(DatabaseManager):
                 pruned.append(post_id)
                 logger.info(f"Pruned expired entry: post {post_id} by u/{username}.")
         return pruned
-
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-
-def _parse_user_data(raw: str) -> dict[str, Any] | None:
-    """
-    Deserialise a user_data string stored in the database.
-    Accepts both JSON (new rows) and Python-literal strings (legacy rows).
-    """
-    if not raw:
-        return None
-    try:
-        return orjson.loads(raw)
-    except (orjson.JSONDecodeError, ValueError):
-        pass
-    try:
-        return literal_eval(raw)
-    except (ValueError, SyntaxError):
-        pass
-    return None
 
 
 # ─── Module-level singleton ───────────────────────────────────────────────────

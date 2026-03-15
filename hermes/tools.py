@@ -17,6 +17,9 @@ from config import get_hermes_logger
 logger = get_hermes_logger("HM:TOOLS")
 
 
+# ─── Database inspection ──────────────────────────────────────────────────────
+
+
 def get_statistics() -> None:
     """
     Print aggregated language statistics from the current database to stdout.
@@ -25,7 +28,7 @@ def get_statistics() -> None:
     from collections import Counter
 
     from hermes.hermes_database import hermes_db
-    from languages import converter
+    from lang.languages import converter
 
     entries = hermes_db.get_all_entries()
     if not entries:
@@ -65,6 +68,9 @@ def get_statistics() -> None:
         print(f"## {label}\n" + header + "\n".join(lines) + "\n")
 
 
+# ─── Parser diagnostics ───────────────────────────────────────────────────────
+
+
 def test_parser(reddit, limit: int = 100) -> None:
     """
     Fetch the most recent *limit* posts from r/Language_Exchange, run each
@@ -80,7 +86,7 @@ def test_parser(reddit, limit: int = 100) -> None:
         python hermes/main_hermes.py --test 50
     """
     from hermes.matching import title_parser
-    from languages import converter
+    from lang.languages import converter
 
     posts = list(reddit.subreddit("language_exchange").new(limit=limit))
     posts.reverse()  # oldest first, matching normal processing order
