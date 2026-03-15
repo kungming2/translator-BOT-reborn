@@ -12,12 +12,12 @@ Logger tag: [ZW:SEARCH]
 import logging
 
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
+from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 from models.instruo import Instruo
-from reddit_sender import reddit_reply
+from reddit.connection import REDDIT_HELPER
+from reddit.reddit_sender import reddit_reply
+from reddit.wiki import search_integration
 from responses import RESPONSE
-from search_handling import build_search_results, fetch_search_reddit_posts
-from wiki import search_integration
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SEARCH"})
 

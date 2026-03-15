@@ -11,8 +11,8 @@ Logger tag: [ZW:MISSING]
 import logging
 
 from config import logger as _base_logger
-from connection import REDDIT
-from reddit_sender import message_send
+from reddit.connection import REDDIT
+from reddit.reddit_sender import message_send
 from responses import RESPONSE
 
 from . import update_status

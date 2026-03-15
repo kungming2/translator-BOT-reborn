@@ -14,9 +14,9 @@ import time
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
-from notifications import notifier
-from reddit_sender import reddit_reply
+from reddit.connection import REDDIT_HELPER
+from reddit.notifications import notifier
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:PAGE"})

@@ -14,8 +14,8 @@ from praw.models import Comment, Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT, create_mod_note, is_mod, remove_content
-from reddit_sender import message_send
+from reddit.connection import REDDIT, create_mod_note, is_mod, remove_content
+from reddit.reddit_sender import message_send
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:NUKE"})
 

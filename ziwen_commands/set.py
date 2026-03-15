@@ -20,11 +20,11 @@ import logging
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import is_mod
 from models.ajo import ajo_delete
 from models.diskuto import Diskuto, diskuto_writer
 from models.kunulo import Kunulo
-from reddit_sender import message_send
+from reddit.connection import is_mod
+from reddit.reddit_sender import message_send
 from responses import RESPONSE
 
 from . import update_language

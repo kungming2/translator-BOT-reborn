@@ -17,10 +17,10 @@ from typing import Any
 from praw.models import Comment
 
 from config import logger as _base_logger
-from connection import REDDIT
-from languages import converter
+from lang.languages import converter
 from models.kunulo import Kunulo
-from reddit_sender import reddit_reply
+from reddit.connection import REDDIT
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from time_handling import get_current_utc_time
 

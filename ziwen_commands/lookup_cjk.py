@@ -13,9 +13,9 @@ import random
 
 from config import Paths, load_settings
 from config import logger as _base_logger
-from languages import converter
+from lang.languages import converter
 from models.kunulo import Kunulo
-from reddit_sender import reddit_reply
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word

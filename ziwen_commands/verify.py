@@ -10,7 +10,7 @@ Logger tag: [ZW:VERIFY]
 import logging
 
 from config import logger as _base_logger
-from verification import process_verification
+from reddit.verification import process_verification
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:VERIFY"})
 

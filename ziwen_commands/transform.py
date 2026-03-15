@@ -12,10 +12,14 @@ import re
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import REDDIT_HELPER
-from image_handling import TRANSFORM_MAP, rotate_or_flip_image, upload_to_imgbb
+from integrations.image_handling import (
+    TRANSFORM_MAP,
+    rotate_or_flip_image,
+    upload_to_imgbb,
+)
 from models.instruo import Instruo
-from reddit_sender import reddit_reply
+from reddit.connection import REDDIT_HELPER
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
 

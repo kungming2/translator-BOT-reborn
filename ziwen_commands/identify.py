@@ -12,11 +12,11 @@ import logging
 
 from config import logger as _base_logger
 from models.kunulo import Kunulo
-from notifications import notifier
-from reddit_sender import reddit_reply
+from reddit.notifications import notifier
+from reddit.reddit_sender import reddit_reply
+from reddit.wiki import update_wiki_page
 from responses import RESPONSE
 from time_handling import get_current_utc_date
-from wiki import update_wiki_page
 
 from . import update_language
 

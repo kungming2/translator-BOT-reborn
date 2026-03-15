@@ -10,7 +10,7 @@ Logger tag: [ZW:WP]
 import logging
 
 from config import logger as _base_logger
-from reddit_sender import reddit_reply
+from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from ziwen_lookup.wp_utils import wikipedia_lookup
 

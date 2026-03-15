@@ -12,8 +12,8 @@ Logger tag: [ZW:LONG]
 import logging
 
 from config import logger as _base_logger
-from connection import is_mod
 from models.kunulo import Kunulo
+from reddit.connection import is_mod
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 

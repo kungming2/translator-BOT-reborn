@@ -12,8 +12,8 @@ Logger tag: [ZW:TRANSLATED]
 import logging
 
 from config import logger as _base_logger
-from messaging import notify_op_translated_post
 from models.kunulo import Kunulo
+from reddit.messaging import notify_op_translated_post
 
 from . import update_status
 

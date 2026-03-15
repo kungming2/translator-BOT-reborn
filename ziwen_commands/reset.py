@@ -12,8 +12,8 @@ Logger tag: [ZW:RESET]
 import logging
 
 from config import logger as _base_logger
-from connection import is_mod
-from reddit_sender import message_send
+from reddit.connection import is_mod
+from reddit.reddit_sender import message_send
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:RESET"})
 
