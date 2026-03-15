@@ -20,7 +20,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from config import logger as _base_logger
-from connection import get_random_useragent
+from reddit.connection import get_random_useragent
 from ziwen_lookup.async_helpers import call_sync_async, fetch_json
 from ziwen_lookup.cache_helpers import (
     format_ja_character_from_cache,

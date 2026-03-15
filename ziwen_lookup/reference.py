@@ -22,8 +22,8 @@ from waybackpy import exceptions
 
 from config import Paths
 from config import logger as _base_logger
-from connection import get_random_useragent
-from languages import converter, get_lingvos, select_random_language
+from lang.languages import converter, get_lingvos, select_random_language
+from reddit.connection import get_random_useragent
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})
 

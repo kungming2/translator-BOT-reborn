@@ -13,7 +13,7 @@ import krdict
 from korean_romanizer.romanizer import Romanizer
 
 from config import logger as _base_logger
-from connection import credentials_source
+from reddit.connection import credentials_source
 from ziwen_lookup.cache_helpers import (
     format_ko_word_from_cache,
     get_from_cache,

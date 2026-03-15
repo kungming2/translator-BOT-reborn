@@ -30,7 +30,7 @@ from pypinyin import Style, lazy_pinyin
 
 from config import Paths
 from config import logger as _base_logger
-from connection import get_random_useragent
+from reddit.connection import get_random_useragent
 from responses import RESPONSE
 from ziwen_lookup.async_helpers import call_sync_async
 from ziwen_lookup.cache_helpers import (

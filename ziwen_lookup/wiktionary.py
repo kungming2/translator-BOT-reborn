@@ -12,8 +12,8 @@ import re
 
 import requests
 
-from connection import get_random_useragent
-from languages import converter
+from lang.languages import converter
+from reddit.connection import get_random_useragent
 
 
 def parse_wiktionary(text, search_language=None):

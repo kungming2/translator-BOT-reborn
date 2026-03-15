@@ -13,7 +13,7 @@ import re
 import wikipedia
 
 from config import logger as _base_logger
-from languages import converter
+from lang.languages import converter
 from ziwen_lookup.osm import search_nominatim
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:WP"})
