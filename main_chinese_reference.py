@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 Chinese Reference Bot for Chinese language learning subreddits.
-Often referred to as cc_ref for short.
+Often referred to as CR for short.
 
 This asynchronous bot monitors a multireddit of Chinese language communities
 and provides automated character and word lookups. Users can request lookups
@@ -21,7 +21,7 @@ The bot uses a separate Reddit account from the main translator bot
 and is configured via CHINESE_* credentials in the config.
 ...
 
-Logger tag: [CC_REF]
+Logger tag: [CR]
 """
 
 import asyncio
@@ -37,8 +37,8 @@ from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
-from connection import USERNAME, credentials_source
 from error import error_log_extended
+from reddit.connection import USERNAME, credentials_source
 from responses import RESPONSE
 from ziwen_lookup.match_helpers import lookup_zh_ja_tokenizer
 from ziwen_lookup.zh import zh_character, zh_word
@@ -46,10 +46,10 @@ from ziwen_lookup.zh import zh_character, zh_word
 if TYPE_CHECKING:
     from asyncpraw import Reddit
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "CC_REF"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "CR"})
 
 
-async def _cc_ref(reddit: "Reddit") -> None:
+async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
     """Runtime for Chinese language subreddits."""
     try:
         multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
@@ -138,11 +138,11 @@ async def _chinese_reference_login_async(credentials: dict[str, str]) -> "Reddit
     return reddit
 
 
-async def cc_ref_main() -> None:
+async def chinese_reference_main() -> None:
     """Initialize async PRAW and run the Chinese reference bot."""
     reddit = await _chinese_reference_login_async(credentials_source)
     try:
-        await _cc_ref(reddit)
+        await _fetch_and_reply_chinese_comments(reddit)
     finally:
         await reddit.close()
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     msg.good("Launching Chinese Reference...")
     # noinspection PyBroadException
     try:
-        asyncio.run(cc_ref_main())
+        asyncio.run(chinese_reference_main())
     except Exception:
         error_entry = traceback.format_exc()
         error_log_extended(error_entry, "Chinese Reference")

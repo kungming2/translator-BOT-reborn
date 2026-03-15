@@ -17,16 +17,16 @@ import psutil
 
 from config import SETTINGS, TRANSIENT_ERRORS
 from config import logger as _base_logger
-from connection import REDDIT, USERNAME
 from database import record_activity_csv
-from discord_utils import send_discord_alert
-from edit_tracker import edit_tracker, progress_tracker
 from error import error_log_extended
+from integrations.discord_utils import send_discord_alert
+from monitoring.edit_tracker import edit_tracker, progress_tracker
 from processes.ziwen_comments import ziwen_commands
 from processes.ziwen_messages import ziwen_messages
 from processes.ziwen_posts import ziwen_posts
+from reddit.connection import REDDIT, USERNAME
+from reddit.verification import verification_parser
 from time_handling import time_convert_to_string
-from verification import verification_parser
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW"})
 
@@ -87,14 +87,11 @@ if __name__ == "__main__":
             run_time,
             "Cycle run",
             used_calls,
-            None,
             mem_usage,
-            None,
             elapsed_time,
-            None,
             os.getpid(),
         )
-        record_activity_csv(run_information)
+        record_activity_csv("cycle", run_information)
         logger.info(f"Run {elapsed_time:.2f} minutes.")
 
         # Send Discord alert if run took longer than 5 minutes

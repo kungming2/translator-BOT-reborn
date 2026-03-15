@@ -39,8 +39,8 @@ import yaml
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
-from connection import REDDIT
 from database import get_recent_event_log_lines
+from reddit.connection import REDDIT
 from time_handling import get_current_utc_time, time_convert_to_string
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ERROR"})
