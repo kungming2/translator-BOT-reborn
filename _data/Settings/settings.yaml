@@ -43,18 +43,12 @@ command_aliases:
   '!id:': identify
   '!identify:': identify
 
-# Note that translated and doublecheck have variable scores,
-# calculated separately.
+# Commands with non-default point values. All other commands not in
+# commands_no_args default to 1 point. Note that translated and
+# doublecheck have variable scores, calculated separately.
 command_points:
   identify: 3
-  claim: 1
-  page: 1
-  search: 1
-  missing: 1
-  transform: 1
-  reference: 1
   lookup_cjk: 2
-  lookup_wp: 1
 
 thanks_keywords:  # Must be lowercase.
   - appreciate

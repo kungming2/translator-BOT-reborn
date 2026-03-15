@@ -1,4 +1,8 @@
 # This file stores settings for Hermes.
+
+# Number of posts to fetch each run.
+fetch_limit: 25
+
 # How long (in seconds) before an entry is deleted from the database
 cut_off: 7776000  # 90 days
 
@@ -16,3 +20,14 @@ score_cutoff: 3
 
 # Maximum number of raw matches to consider before selecting final results
 matches_limit: 200
+
+# Common European Framework of Reference for Languages levels (plus native)
+proficiency_levels:
+  - Native
+  - N
+  - A1
+  - A2
+  - B1
+  - B2
+  - C1
+  - C2

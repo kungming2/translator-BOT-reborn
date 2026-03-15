@@ -63,9 +63,14 @@ ENGLISH_2_WORDS:
   - El
   - He
   - Hi
+  - Id
+  - Io
   - Is
   - It
   - La
+  - Li
+  - Mi
+  - Ms
   - My
   - 'No'
   - Om
@@ -75,6 +80,7 @@ ENGLISH_2_WORDS:
   - Te
   - To
   - Tw
+  - Uk
 
 # Note that this is actually formatted as a really long string. This
 # has to be split into a list for scripts to parse it correctly.
