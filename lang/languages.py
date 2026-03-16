@@ -201,7 +201,8 @@ def define_language_lists() -> dict[str, Any]:
 
         if getattr(lingvo, "supported", False):
             supported_codes.append(code_1)
-            supported_languages.append(lingvo.name)
+            if lingvo.name is not None:
+                supported_languages.append(lingvo.name)
 
         if lingvo.countries_default:
             iso_default_associated.append(f"{code_1}-{lingvo.countries_default}")
@@ -463,7 +464,9 @@ def _resolve_to_lingvo(
                 if lingvo is None and language_code in lingvos:
                     lingvo = copy.deepcopy(lingvos[language_code])
             if lingvo:
-                lingvo.name += f" {{{country_info[1]}}}"  # e.g., "Portuguese {Brazil}"
+                lingvo.name = (
+                    lingvo.name or ""
+                ) + f" {{{country_info[1]}}}"  # e.g., "Portuguese {Brazil}"
                 lingvo.country = country_code  # e.g. 'BR'
                 return lingvo
 
@@ -483,6 +486,15 @@ def _resolve_to_lingvo(
 
     # For multi-word inputs (including parenthetical forms like "french (canada)"),
     # check if part of the input names a country and the rest names a language.
+    def _apply_country(base: Lingvo, cc: str, country_name: str) -> Lingvo:
+        """Return a deep copy of base with the country name and code applied."""
+        lingvo_with_country = copy.deepcopy(base)
+        lingvo_with_country.name = (
+            lingvo_with_country.name or ""
+        ) + f" {{{country_name}}}"
+        lingvo_with_country.country = cc.upper()
+        return lingvo_with_country
+
     # Strategy 1: extract a parenthesized token as the country hint first.
     # e.g. "french (canada)" -> country_hint="canada", lang_part="french"
     paren_match = re.search(r"\(([^)]+)\)", input_text)
@@ -500,10 +512,7 @@ def _resolve_to_lingvo(
                     lang_part, fuzzy=fuzzy, preserve_country=False
                 )
                 if lang_result:
-                    lang_result = copy.deepcopy(lang_result)
-                    lang_result.name += f" {{{country_info[1]}}}"
-                    lang_result.country = country_info[0].upper()
-                    return lang_result
+                    return _apply_country(lang_result, country_info[0], country_info[1])
             else:
                 lang_result = _resolve_to_lingvo(
                     lang_part, fuzzy=fuzzy, preserve_country=False
@@ -525,10 +534,7 @@ def _resolve_to_lingvo(
                     remaining, fuzzy=fuzzy, preserve_country=False
                 )
                 if lang_result:
-                    lang_result = copy.deepcopy(lang_result)
-                    lang_result.name += f" {{{country_info[1]}}}"
-                    lang_result.country = country_info[0].upper()
-                    return lang_result
+                    return _apply_country(lang_result, country_info[0], country_info[1])
 
     # Try to find a Lingvo by 2-letter code first
     if input_lower in reference_lists["ISO_639_1"]:
