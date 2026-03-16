@@ -1045,7 +1045,7 @@ def determine_flair_and_update(
     submission = REDDIT.submission(id=ajo.id)
 
     # Initialize flair defaults
-    code_tag = "[--]"
+    code_tag: str | None = "[--]"
     output_flair_css = "generic"
 
     unq_types = {"Unknown", "Generic"}
@@ -1081,8 +1081,8 @@ def determine_flair_and_update(
             )
 
         # Sync flair output back to Ajo instance
-        ajo.output_flair_css = output_flair_css
-        ajo.output_flair_text = output_flair_text
+        ajo.output_post_flair_css = output_flair_css
+        ajo.output_post_flair_text = output_flair_text
         return  # Early return to prevent AttributeError
 
     language_name = ajo.lingvo.name or ""
