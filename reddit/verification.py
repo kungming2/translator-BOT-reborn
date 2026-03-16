@@ -220,8 +220,9 @@ def verification_parser() -> None:
             notes = ""
 
             for i, comp in enumerate(components[1:], start=1):
-                if re.search(url_pattern, comp):
-                    urls.append(re.search(url_pattern, comp).group(0))
+                url_match = re.search(url_pattern, comp)
+                if url_match:
+                    urls.append(url_match.group(0))
                 else:
                     # If it's not a URL, treat everything from here as notes
                     notes = " ".join(components[i:])

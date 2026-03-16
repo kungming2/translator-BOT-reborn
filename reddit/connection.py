@@ -323,7 +323,7 @@ def _search_removal_reasons(prompt):
     return None
 
 
-def remove_content(item, reason: str, mod_note: str = None):
+def remove_content(item, reason: str, mod_note: str | None = None):
     """Removes an item using PRAW's mod.remove(), searching for a matching removal reason.
 
     Args:

@@ -59,6 +59,11 @@ async def lang_convert(ctx, *, language_input: str):
             random_lang_obj = select_random_language()
             if random_lang_obj:
                 lang_ref = get_language_reference(random_lang_obj.name)
+                if not lang_ref:
+                    await ctx.send(
+                        "⚠️ An error occurred. No reference found for random language."
+                    )
+                    return
                 language_input = lang_ref["language_code_3"]
             else:  # rare; no results in random selection.
                 await ctx.send("⚠️ An error occurred. No valid random results found.")

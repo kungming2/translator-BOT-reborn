@@ -128,16 +128,21 @@ def fetch_most_requested_languages() -> list[str]:
     three_months_ago = datetime.now(timezone.utc) - relativedelta(
         months=months_difference
     )
-    three_months_ago = three_months_ago.strftime("%Y_%m")  # Underscore is intentional
+    three_months_ago_str: str = three_months_ago.strftime(
+        "%Y_%m"
+    )  # Underscore is intentional
 
     logger.debug(
-        f"Fetching most-requested languages from wiki page: {three_months_ago}."
+        f"Fetching most-requested languages from wiki page: {three_months_ago_str}."
     )
     reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
-        three_months_ago
+        three_months_ago_str
     ]
     reference_page_content = reference_page.content_md.strip()
     reference_table = _extract_single_language_statistics_table(reference_page_content)
+    if reference_table is None:
+        logger.warning("No statistics table found on wiki page.")
+        return []
     languages_frequency_sorted = _assess_most_requested_languages(reference_table)
     logger.debug(
         f"Most-requested languages resolved: {list(languages_frequency_sorted.keys())}"
@@ -234,21 +239,22 @@ def _frequently_requested_wiki() -> list[dict[str, Any]] | None:
     ]
     processed_data = wiki_page.content_md
     alert_mods = False
+    frt_data: list[Any] | None = None
 
     # Convert YAML text into a Python list.
     yaml_data = processed_data.split("### Entries")[1].strip()
     yaml_data = yaml_data.replace("    ---", "---")
+    raw_yaml: Any = None
     try:
-        frt_data = yaml.safe_load_all(yaml_data)
+        raw_yaml = yaml.safe_load_all(yaml_data)
     except yaml.YAMLError:
-        frt_data = None
         alert_mods = True
 
     # Valid YAML to process.
     # Convert to Python list and remove blank entries.
     if not alert_mods:
         try:
-            frt_data = list(frt_data)
+            frt_data = list(raw_yaml)
         except ParserError:
             frt_data = None
             alert_mods = True
@@ -279,9 +285,12 @@ def search_integration(search_term: str) -> str | None:
     search_term = search_term.lower()  # All keywords should be in lower-case.
     logger.debug(f"Searching FRT wiki for term: {search_term!r}.")
     frt_data = _frequently_requested_wiki()
-    term_data = {}
-    link_data = []
-    example_data = []
+    term_data: dict[str, Any] = {}
+    link_data: list[str] = []
+    example_data: list[str] = []
+
+    if frt_data is None:
+        return None
 
     # Iterate over the entries, looking for the search term.
     for entry in frt_data:
@@ -309,29 +318,28 @@ def search_integration(search_term: str) -> str | None:
         body = body.replace("  ", " ")  # In case of extra spaces.
 
         # Format the external links.
-        if term_data.get("links")[0]:
+        link_str: str = ""
+        example_str: str = ""
+
+        if term_data.get("links") and term_data["links"][0]:
             for link in term_data["links"]:
                 actual_index = term_data["links"].index(link) + 1
                 link_data.append(f"[Link {actual_index}]({link})")
-            link_data = ", ".join(link_data)
-        else:
-            link_data = ""
+            link_str = ", ".join(link_data)
 
         # Format the Reddit examples.
-        if term_data.get("examples")[0]:
+        if term_data.get("examples") and term_data["examples"][0]:
             for example in term_data["examples"]:
                 example_index = term_data["examples"].index(example) + 1
                 example_data.append(f"[Example {example_index}]({example})")
-            example_data = ", ".join(example_data)
-        else:
-            example_data = ""
+            example_str = ", ".join(example_data)
 
         # Put everything together.
         total_term = f"{header}{body}\n"
-        if link_data:
-            total_term += "\n* " + link_data
-        if example_data:
-            total_term += "\n* " + example_data
+        if link_str:
+            total_term += "\n* " + link_str
+        if example_str:
+            total_term += "\n* " + example_str
 
         return total_term
 

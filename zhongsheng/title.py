@@ -4,6 +4,7 @@
 
 import asyncio
 import traceback
+from typing import Any
 
 from title.title_ai import title_ai_parser
 from title.title_handling import process_title
@@ -26,6 +27,7 @@ async def title_search(ctx, *, title: str):
         title = title[:-5].strip()  # Remove ' --ai' from the end
 
     try:
+        result: Any
         # Show typing indicator for AI processing
         if use_ai:
             async with ctx.typing():

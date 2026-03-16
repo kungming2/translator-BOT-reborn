@@ -165,7 +165,3 @@ def closeout_posts() -> None:
     _send_closeout_messages(actionable_posts, ajos_map, time_delta)
 
     return
-
-
-if __name__ == "__main__":
-    print(closeout_posts())

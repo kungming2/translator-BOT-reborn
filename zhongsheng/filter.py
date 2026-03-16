@@ -55,7 +55,7 @@ async def filter_post(ctx, *, title: str):
             else:
                 response += f"**Title:** {title}"
         else:
-            reason_code = filter_reason
+            reason_code = filter_reason or "Unknown"
             reason_desc = FILTER_REASONS.get(reason_code, "Unknown reason")
             response = f"❌ **Post Title Rejected**\n**Rule #{reason_code}:** {reason_desc}\n**Title:** {title}"
 

@@ -257,18 +257,18 @@ def fetch_usernames_for_lingvo(lingvo, max_num=None) -> List[str]:
     except AttributeError:
         return []
 
-    usernames = set()
+    usernames: set[str] = set()
     cursor = db.conn_main.cursor()
     logger.debug(f"Now executing search for {code}...")
     cursor.execute("SELECT username FROM notify_users WHERE language_code = ?", (code,))
     usernames.update(row["username"] for row in cursor.fetchall())
 
-    usernames = list(usernames)
+    usernames_list: list[str] = list(usernames)
 
-    if max_num is not None and max_num < len(usernames):
-        usernames = random.sample(usernames, k=max_num)
+    if max_num is not None and max_num < len(usernames_list):
+        usernames_list = random.sample(usernames_list, k=max_num)
 
-    return usernames
+    return usernames_list
 
 
 def _notifier_specific_language_filter(lingvo_object) -> list[str]:
@@ -389,7 +389,7 @@ def _notification_rate_limiter(
     subscribed_users: list,
     lingvo_object,
     monthly_limit: int,
-    already_contacted: list = None,
+    already_contacted: list | None = None,
 ) -> list:
     """
     Equalizes notification volume for high-traffic languages. Returns

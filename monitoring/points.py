@@ -23,7 +23,7 @@ Logger tag: [POINTS]
 
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import prawcore
@@ -255,7 +255,7 @@ def _credit_parent_as_translator(
 
 
 def _update_points_status(
-    status_list: list[list[str | int]], username: str, points: int
+    status_list: list[list[Any]], username: str, points: int
 ) -> None:
     """
     Adds or updates a user's points total in the list.
@@ -271,7 +271,7 @@ def points_tabulator(
     comment: Comment,
     original_post: "Submission",
     original_post_lingvo: "Lingvo",
-    ajo: "Ajo" = None,
+    ajo: "Ajo | None" = None,
 ) -> None:
     """
     Tabulates points for a Reddit comment based on detected translation
@@ -328,11 +328,11 @@ def points_tabulator(
     logger.debug(f"{language_name}, multiplier: {multiplier}")
 
     commands = extract_commands_from_text(body)
-    points_status = []
+    points_status: list[list] = []
     comment_id = instruo.id_comment
 
     points = 0
-    translators_to_record = []  # FIX: Track multiple translators instead of just one
+    translators_to_record: list[str] = []
 
     def get_parent_author(checked_comment: Comment) -> tuple[str | None, str | None]:
         try:
@@ -607,24 +607,24 @@ if __name__ == "__main__":
             my_search = input("Enter a language name or code: ")
             my_lingvo = converter(my_search)
             if my_lingvo:
-                my_result = points_worth_determiner(my_lingvo)
+                my_points_result = points_worth_determiner(my_lingvo)
                 print(
-                    f"Language: {my_lingvo.name} ({my_lingvo.preferred_code}) → Points worth: {my_result}"
+                    f"Language: {my_lingvo.name} ({my_lingvo.preferred_code}) → Points worth: {my_points_result}"
                 )
             else:
                 print(f"Could not find a language matching: {my_search}")
 
         elif choice == "2":
             my_username = input("Enter a Reddit username: ")
-            my_result = points_user_retriever(my_username)
-            print(my_result)
+            my_user_result = points_user_retriever(my_username)
+            print(my_user_result)
 
         elif choice == "3":
             my_post_id = input("Enter a Reddit post ID: ")
-            my_result = points_post_retriever(my_post_id)
-            if my_result:
+            my_post_result = points_post_retriever(my_post_id)
+            if my_post_result:
                 print(f"Point records for post {my_post_id}:")
-                for my_comment_id, my_username, my_points in my_result:
+                for my_comment_id, my_username, my_points in my_post_result:
                     print(
                         f"  Comment {my_comment_id} | u/{my_username} | {my_points} points"
                     )

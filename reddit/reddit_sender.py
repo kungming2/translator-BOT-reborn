@@ -91,6 +91,7 @@ def reddit_reply(
             logger.exception(f"Unexpected error replying to `{target_id}`.")
         else:
             return returned_object
+        return None  # reached if NotFound or APIException was raised
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."

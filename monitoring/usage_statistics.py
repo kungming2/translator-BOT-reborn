@@ -380,7 +380,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
 
     def format_commands(commands: dict) -> list[str]:
         # Aggregate commands by normalized name
-        normalized_commands = {}
+        normalized_commands: dict[str, int] = {}
         for cmd, count in commands.items():
             if cmd == "Notifications":
                 continue

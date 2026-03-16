@@ -48,7 +48,7 @@ COMMAND_ROLES = {
     help_text="Display this informative message",
     roles=["Moderator", "Helper"],
 )
-async def guide_command(ctx, command_name: str = None):
+async def guide_command(ctx, command_name: str | None = None):
     """
     Display help information for all commands or a specific command.
 
