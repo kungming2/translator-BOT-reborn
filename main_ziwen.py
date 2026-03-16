@@ -31,6 +31,24 @@ from time_handling import time_convert_to_string
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW"})
 
 
+def _maybe_alert_slow_run(elapsed_minutes, run_start, api_calls, memory_usage):
+    if elapsed_minutes <= SETTINGS["cycle_time"]:
+        return
+    send_discord_alert(
+        subject="Excessive Run Time Alert",
+        message=(
+            f"Run took {elapsed_minutes:.2f} minutes (> {SETTINGS['cycle_time']} minutes)\n\n"
+            f"* **Run start time**: {run_start}\n"
+            f"* **API calls used**: {api_calls}\n"
+            f"* **Memory usage**: {memory_usage}"
+        ),
+        webhook_name="alert",
+    )
+    logger.warning(
+        f"Discord alert sent for overly-long run time: {elapsed_minutes:.2f} minutes."
+    )
+
+
 if __name__ == "__main__":
     start_time = time.time()
 
@@ -59,8 +77,8 @@ if __name__ == "__main__":
         used_calls = REDDIT.auth.limits["used"]
 
         # Record memory usage at the end of a run.
-        mem_num = psutil.Process(os.getpid()).memory_info().rss
-        mem_usage = "{:.2f} MB".format(mem_num / (1024 * 1024))
+        mem_bytes = psutil.Process(os.getpid()).memory_info().rss
+        mem_usage = f"{mem_bytes / (1024**2):.2f} MB"
         logger.info(f"Run complete. Calls used: {used_calls}. {mem_usage} used.")
 
     except (KeyboardInterrupt, SystemExit):
@@ -75,14 +93,13 @@ if __name__ == "__main__":
 
     except Exception as e:  # The bot encountered a major error/exception.
         logger.critical(f"Encountered critical error: {e}.")
+        error_log_extended(traceback.format_exc(), "Ziwen Main")
 
-        # Format the error text.
-        error_entry = traceback.format_exc()
-        error_log_extended(error_entry, "Ziwen Main")
     else:
-        # Package data for this run and write it to a record.
-        elapsed_time = round((time.time() - start_time) / 60, 2)
+        elapsed_time = (time.time() - start_time) / 60
         run_time = time_convert_to_string(start_time)
+
+        # run_information fields: run_time, label, used_calls, mem_usage, elapsed_time, pid
         run_information = (
             run_time,
             "Cycle run",
@@ -94,21 +111,4 @@ if __name__ == "__main__":
         record_activity_csv("cycle", run_information)
         logger.info(f"Run {elapsed_time:.2f} minutes.")
 
-        # Send Discord alert if run took longer than 5 minutes
-        cycle_time = SETTINGS["cycle_time"]
-        if elapsed_time > cycle_time:
-            alert_subject = "Excessive Run Time Alert"
-            alert_message = (
-                f"Run took {elapsed_time:.2f} minutes (> {cycle_time} minutes)\n\n"
-                f"* **Run start time**: {run_time}\n"
-                f"* **API calls used**: {used_calls}\n"
-                f"* **Memory usage**: {mem_usage}"
-            )
-            send_discord_alert(
-                subject=alert_subject,
-                message=alert_message,
-                webhook_name="alert",
-            )
-            logger.warning(
-                f"Discord alert sent for overly-long run time: {elapsed_time:.2f} minutes."
-            )
+        _maybe_alert_slow_run(elapsed_time, run_time, used_calls, mem_usage)
