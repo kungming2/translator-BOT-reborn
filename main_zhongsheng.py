@@ -48,10 +48,13 @@ DISCORD_TOKEN = load_settings(Paths.AUTH["CREDENTIALS"])["ZHONGSHENG_DISCORD_TOK
 @bot.event
 async def on_ready() -> None:
     guild = discord.utils.get(bot.guilds, name="r/Translator Oversight")
-    print(
-        f"{bot.user} is connected to the following guild:\n"
-        f"{guild.name} (id: {guild.id})"
-    )
+    if guild:
+        print(
+            f"{bot.user} is connected to the following guild:\n"
+            f"{guild.name} (id: {guild.id})"
+        )
+    else:
+        print(f"{bot.user} is connected but could not find the expected guild.")
 
 
 @bot.event
@@ -59,11 +62,11 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.errors.CheckFailure):
         await ctx.send("You do not have the correct role for this command.")
     else:
-        # Log the error.
+        command_name = ctx.command.name if ctx.command else "<unknown>"
         logger.critical(
-            f"Critical error in command `/{ctx.command.name}` by user {ctx.author} "
+            f"Critical error in command `/{command_name}` by user {ctx.author} "
             f"(ID: {ctx.author.id}): {type(error).__name__}: {error}",
-            exc_info=error,  # This includes the full traceback
+            exc_info=error,
         )
         error_log_extended(str(error), "Zhongsheng")
 
@@ -71,23 +74,25 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
 @bot.event
 async def on_command_completion(ctx: Context) -> None:
     """Log command usage when a command completes successfully."""
+    command_name = ctx.command.name if ctx.command else "<unknown>"
+    guild_name = ctx.guild.name if ctx.guild else "<unknown guild>"
     logger.info(
-        f"Command `/{ctx.command.name}` called by user {ctx.author} "
-        f"(ID: {ctx.author.id}) in {ctx.guild.name}"
+        f"Command `/{command_name}` called by user {ctx.author} "
+        f"(ID: {ctx.author.id}) in {guild_name}"
     )
 
 
 @bot.before_invoke
 async def before_command(ctx: Context) -> None:
     """Log command invocation and clean arguments before it runs."""
-    # Clean arguments by stripping backticks and extra whitespace
     if ctx.kwargs:
         for key, value in ctx.kwargs.items():
             if isinstance(value, str):
                 ctx.kwargs[key] = value.strip().strip("`").strip()
 
+    command_name = ctx.command.name if ctx.command else "<unknown>"
     logger.info(
-        f"Invoking command `/{ctx.command.name}` by user {ctx.author} "
+        f"Invoking command `/{command_name}` by user {ctx.author} "
         f"with args: {ctx.args[2:]} kwargs: {ctx.kwargs}"
     )
 
