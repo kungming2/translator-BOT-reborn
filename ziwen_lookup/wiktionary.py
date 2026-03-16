@@ -32,7 +32,7 @@ def parse_wiktionary(text, search_language=None):
     if search_language is None:
         search_language = "English"
 
-    result = {
+    result: dict[str, str | list[str] | None] = {
         "word": None,
         "etymology": None,
         "pronunciation": None,
@@ -164,13 +164,13 @@ def parse_wiktionary(text, search_language=None):
 
     # Clean up and assign results
     if etymology_lines:
-        result["etymology"] = " ".join(etymology_lines)
+        result["etymology"] = etymology_lines
 
     if pronunciation_lines:
-        result["pronunciation"] = "\n".join(pronunciation_lines)
+        result["pronunciation"] = pronunciation_lines
 
     if definition_lines:
-        result["definition"] = " ".join(definition_lines)
+        result["definition"] = definition_lines
 
     return result
 
