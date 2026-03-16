@@ -47,6 +47,8 @@ def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
 
     # Format the language name to match subreddit wiki naming conventions.
     # Replace dashes and apostrophes with underscores.
+    if lingvo_object.name is None:
+        return None
     wiki_page_name = lingvo_object.name.replace(" ", "_").replace("'", "_")
     logger.debug(f"Accessing wiki page at /{wiki_page_name.lower()}.")
     wiki_page = f"{wiki_page_name.lower()}"

@@ -95,7 +95,7 @@ def title_ai_parser(
     if image_url:
         query_kwargs["image_url"] = image_url
 
-    query_data: str = ai_query(**query_kwargs)
+    query_data = ai_query(**query_kwargs)
 
     if query_data is None:
         logger.error("AI service returned no data for title parsing.")

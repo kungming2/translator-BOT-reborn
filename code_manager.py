@@ -27,7 +27,6 @@ def load_csv() -> pd.DataFrame | None:
     try:
         # Try different encodings
         encodings = ["utf-8", "latin-1", "iso-8859-1", "cp1252"]
-        df = None
         for encoding in encodings:
             try:
                 df = pd.read_csv(CSV_PATH, encoding=encoding)
@@ -36,9 +35,8 @@ def load_csv() -> pd.DataFrame | None:
             except (UnicodeDecodeError, UnicodeError):
                 continue
 
-        if df is None:
-            logger.error("Could not decode file with any standard encoding")
-            return None
+        logger.error("Could not decode file with any standard encoding")
+        return None
     except FileNotFoundError:
         logger.error(f"File not found at `{CSV_PATH}`")
         return None

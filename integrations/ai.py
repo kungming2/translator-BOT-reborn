@@ -61,29 +61,33 @@ def ai_query(
     :param image_url: Optional public image URL (OpenAI Vision only).
     :return: The AI-generated response content, or None if an error occurred.
     """
+    ai_model: str
+    user_content: list[dict] | str
+    messages: list[dict]
+
     if service == "deepseek":
-        ai_model: str = access_credentials["DEEPSEEK_MODEL"]
+        ai_model = access_credentials["DEEPSEEK_MODEL"]
 
         # DeepSeek does not support image input, so ignore image_url.
-        messages: list[dict] = [
+        messages = [
             {"role": "system", "content": behavior},
             {"role": "user", "content": query},
         ]
 
     elif service == "openai":
-        ai_model: str = access_credentials["OPENAI_MODEL"]
+        ai_model = access_credentials["OPENAI_MODEL"]
 
         if image_url:
             image_url = image_url.strip().rstrip(".")
-            user_content: list[dict] | str = [
+            user_content = [
                 {"type": "text", "text": query},
                 {"type": "image_url", "image_url": {"url": image_url}},
             ]
             logger.debug(f"Image attached to input: {image_url}")
         else:
-            user_content: list[dict] | str = query
+            user_content = query
 
-        messages: list[dict] = [
+        messages = [
             {"role": "system", "content": behavior},
             {"role": "user", "content": user_content},
         ]

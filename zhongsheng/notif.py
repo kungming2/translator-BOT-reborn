@@ -84,7 +84,9 @@ async def handle_notif_add(ctx, username: str, language: Optional[str]):
     try:
         notifier_language_list_editor(language_matches, username, "insert")
 
-        match_codes_print = ", ".join(lang.name for lang in language_matches)
+        match_codes_print = ", ".join(
+            lang.name for lang in language_matches if lang.name is not None
+        )
 
         await ctx.send(
             f"✅ **Added notifications for u/{username}**\n"
