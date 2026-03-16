@@ -17,6 +17,15 @@ full pipeline.
 Logger tag: [M:TITOLO]
 """
 
+from __future__ import annotations
+
+from typing import Literal
+
+from models.lingvo import Lingvo
+
+# The four possible translation directions relative to English
+Direction = Literal["english_from", "english_to", "english_both", "english_none"]
+
 
 class Titolo:
     """
@@ -25,25 +34,25 @@ class Titolo:
     All fields are populated by title.title_handling.process_title.
     """
 
-    def __init__(self):
-        self.source = []  # List of source Lingvo objects
-        self.target = []  # List of target Lingvo objects
-        self.final_code = None  # CSS flair code
-        self.final_text = None  # CSS flair display text
-        self.title_original = None  # Original title as-is
-        self.title_actual = None  # Original title minus language tag
-        self.title_processed = None  # Preprocessed title
-        self.notify_languages = []  # Languages to notify subscribers for
-        self.language_country = None  # Optional country specification
-        self.direction = (
-            None  # 'english_from' | 'english_to' | 'english_both' | 'english_none'
+    def __init__(self) -> None:
+        self.source: list[Lingvo] = []  # Source language(s)
+        self.target: list[Lingvo] = []  # Target language(s)
+        self.final_code: str | None = None  # CSS flair code
+        self.final_text: str | None = None  # CSS flair display text
+        self.title_original: str | None = None  # Original title as-is
+        self.title_actual: str | None = None  # Original title minus language tag
+        self.title_processed: str | None = None  # Preprocessed title
+        self.notify_languages: list[Lingvo] = []  # Languages to notify subscribers for
+        self.language_country: str | None = None  # Optional country specification
+        self.direction: Direction | None = (
+            None  # Translation direction relative to English
         )
-        self.ai_assessed = False  # True if the AI fallback was used
+        self.ai_assessed: bool = False  # True if the AI fallback was used
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Titolo: ({self.source} > {self.target}) | {self.title_original}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Titolo(\n"
             f"  source={self.source},\n"
@@ -59,10 +68,10 @@ class Titolo:
             f"  ai_assessed={self.ai_assessed}\n)"
         )
 
-    def add_final_code(self, code):
+    def add_final_code(self, code: str) -> None:
         """Set the CSS flair code."""
         self.final_code = code
 
-    def add_final_text(self, text):
+    def add_final_text(self, text: str) -> None:
         """Set the CSS flair display text."""
         self.final_text = text

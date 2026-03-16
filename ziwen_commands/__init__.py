@@ -120,7 +120,3 @@ def update_language(ajo, komando) -> None:
 
 
 discover_handlers()  # surface which commands are available
-
-
-if __name__ == "__main__":
-    print(HANDLERS)

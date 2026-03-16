@@ -76,4 +76,4 @@ if "__main__" == __name__:
         test_comment = REDDIT_HELPER.comment(url=comment_url)
         test_instruo: Instruo = Instruo.from_comment(test_comment)
         print(f"Instruo created: {test_instruo}\n")
-        print(handle(test_comment, test_instruo, test_instruo.commands[0], None))
+        handle(test_comment, test_instruo, test_instruo.commands[0], None)

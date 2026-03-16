@@ -194,7 +194,7 @@ def handle(comment, instruo, komando, ajo) -> None:
 
     # Group terms by their CJK language category
     # This allows handling mixed-language lookups like Chinese + Korean in one command
-    terms_by_language = {}
+    terms_by_language: dict[str, list[str]] = {}
 
     for entry in komando.data:
         # Handle both old format (lang, term) and new format (lang, term, explicit)

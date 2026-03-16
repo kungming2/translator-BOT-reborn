@@ -27,7 +27,7 @@ import logging
 import re
 import string
 from pprint import pprint
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from rapidfuzz import fuzz
 
@@ -91,7 +91,7 @@ def _generate_multi_flair_text(language_codes: list[str], max_length: int = 64) 
     suffix = "]"
     max_content_length = max_length - len(prefix) - len(suffix)
 
-    included_codes = []
+    included_codes: list[str] = []
     current_length = 0
 
     for code in sorted_codes:
@@ -160,7 +160,7 @@ def _determine_flair(titolo_object: Titolo) -> None:
         if len(candidates) == 1:
             lang = candidates[0]
             titolo_object.add_final_code(_resolve_flair_code(lang))
-            titolo_object.add_final_text(lang.name)
+            titolo_object.add_final_text(lang.name or "Unknown")
             return
 
         # candidates is empty — fall through to direction-based logic below
@@ -172,7 +172,7 @@ def _determine_flair(titolo_object: Titolo) -> None:
             return
         lang = source[0]
         titolo_object.add_final_code(_resolve_flair_code(lang))
-        titolo_object.add_final_text(lang.name)
+        titolo_object.add_final_text(lang.name or "Unknown")
         return
 
     # --- Case 4: english_from / english_none ---
@@ -194,14 +194,14 @@ def _determine_flair(titolo_object: Titolo) -> None:
                 titolo_object.add_final_text("Multiple Languages")
             else:
                 titolo_object.add_final_code(_resolve_flair_code(lang))
-                titolo_object.add_final_text(lang.name if lang else "Unknown")
+                titolo_object.add_final_text(lang.name or "Unknown")
             return
 
         # No targets — fall back to source
         if source:
             lang = source[0]
             titolo_object.add_final_code(_resolve_flair_code(lang))
-            titolo_object.add_final_text(lang.name if lang else "Unknown")
+            titolo_object.add_final_text(lang.name or "Unknown")
             return
 
     # Nothing resolved — assign generic
@@ -215,7 +215,9 @@ def _determine_flair(titolo_object: Titolo) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _determine_title_direction(source_languages: list, target_languages: list) -> str:
+def _determine_title_direction(
+    source_languages: list, target_languages: list
+) -> Literal["english_from", "english_to", "english_both", "english_none"]:
     """
     Determine the direction of English language usage in a translation request.
     Used for statistics in Ajos and Wenyuan.
@@ -271,7 +273,7 @@ def _get_notification_languages(assess_request: Titolo) -> Optional[list]:
         logger.warning("Both English. Not sending notifications.")
         return None
 
-    combined = set(assess_request.source) | set(assess_request.target)
+    combined = list(set(assess_request.source) | set(assess_request.target))
     combined = [x for x in combined if x.name != "English"]
 
     unique = {lang.preferred_code: lang for lang in combined}
@@ -309,7 +311,7 @@ def extract_lingvos_from_text(
                 if lingvo not in found:
                     found.append(lingvo)
 
-    return sorted(found, key=lambda ling: ling.name) if found else None
+    return sorted(found, key=lambda ling: ling.name or "") if found else None
 
 
 def _english_fuzz(word: str) -> bool:
@@ -529,9 +531,9 @@ def _reformat_detected_languages_in_title(title: str) -> str | None:
             continue
         match = extract_lingvos_from_text(word.title())
         if match:
-            detected_languages[word] = match[0].name
+            detected_languages[word] = match[0].name or "Unknown"
             if not first_lang:
-                first_lang = match[0].name
+                first_lang = match[0].name or "Unknown"
 
     # Scan last ~5 words (reversed) for target language
     for word in reversed(title_words[-5:]):
@@ -544,7 +546,14 @@ def _reformat_detected_languages_in_title(title: str) -> str | None:
             last_lang_word = word
             break
         # Same as source — only use it if it appears multiple times
-        if sum(1 for w in title_words if potential_lang.lower() in w.lower()) > 1:
+        if (
+            sum(
+                1
+                for w in title_words
+                if potential_lang and potential_lang.lower() in w.lower()
+            )
+            > 1
+        ):
             last_lang = potential_lang
             last_lang_word = word
             break
@@ -795,8 +804,9 @@ def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
         if all_languages:
             unique: dict[str, Lingvo] = {}
             for lang in all_languages:
-                key = lang.name if hasattr(lang, "name") else lang.language_code_3
-                unique[key] = lang
+                key = lang.name or lang.language_code_3 or ""
+                if key:
+                    unique[key] = lang
             return list(unique.values())
 
     words = [w for w in chunk.split() if not _is_punctuation_only(w)]
@@ -830,15 +840,16 @@ def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
             if " " in word:
                 break  # Multi-word match found — stop here
 
-    unique = {}
+    resolved_unique: dict[str, Lingvo] = {}
     for lang in resolved:
-        key = lang.name if hasattr(lang, "name") else lang.language_code_3
-        unique[key] = lang
+        key = lang.name or lang.language_code_3 or ""
+        if key:
+            resolved_unique[key] = lang
 
     logger.debug(
-        f"{'Source' if is_source else 'Target'} resolved: {list(unique.values())}"
+        f"{'Source' if is_source else 'Target'} resolved: {list(resolved_unique.values())}"
     )
-    return list(unique.values())
+    return list(resolved_unique.values())
 
 
 def _extract_actual_title(title: str) -> str:
@@ -908,15 +919,18 @@ def process_title(title_or_post, post=None, discord_notify: bool = True) -> Tito
     if not combined_languages:
         logger.info(f"> Could not make sense of title ({title!r}). Asking AI...")
         ai_result = title_ai_parser(title, post)
-        update_titolo_from_ai_result(
-            result,
-            ai_result,
-            post,
-            discord_notify,
-            determine_flair_fn=_determine_flair,
-            determine_direction_fn=_determine_title_direction,
-            get_notification_languages_fn=_get_notification_languages,
-        )
+        if isinstance(ai_result, dict):
+            update_titolo_from_ai_result(
+                result,
+                ai_result,
+                post,
+                discord_notify,
+                determine_flair_fn=_determine_flair,
+                determine_direction_fn=_determine_title_direction,
+                get_notification_languages_fn=_get_notification_languages,
+            )
+        else:
+            logger.error(f"AI parser failed for title ({title!r}): {ai_result[1]}")
     else:
         _determine_flair(result)
 

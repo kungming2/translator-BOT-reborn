@@ -138,6 +138,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
     if raw_keyword in SETTINGS["internal_post_types"]:
         logger.info(f"!set:{raw_keyword} — reclassifying `{ajo.id}` as Diskuto.")
+        assert raw_keyword is not None
         diskuto_result = _handle_diskuto_reclassification(
             comment, ajo, post_type=raw_keyword
         )
@@ -182,9 +183,10 @@ def handle(comment, _instruo, komando, ajo) -> None:
     languages = komando.data  # List of Lingvo objects
     logger.info(f"Building !set success message for {len(languages)} language(s).")
 
+    set_msg: str
     if len(languages) == 1:
         new_language = languages[0]
-        set_msg: str = (
+        set_msg = (
             f"{new_language.greetings}, moderator u/{comment.author},\n\n"
             f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
             f"{new_language.name} (`{new_language.preferred_code}`)."
@@ -199,7 +201,7 @@ def handle(comment, _instruo, komando, ajo) -> None:
         lang_parts = [f"{lang.name} (`{lang.preferred_code}`)" for lang in languages]
         lang_string = ", ".join(lang_parts[:-1]) + f", and {lang_parts[-1]}"
 
-        set_msg: str = (
+        set_msg = (
             f"{greeting_string}, moderator u/{comment.author},\n\n"
             f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the languages "
             f"{lang_string}."
