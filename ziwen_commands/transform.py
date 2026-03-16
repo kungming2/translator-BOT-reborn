@@ -158,8 +158,11 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             comment, RESPONSE.COMMENT_TRANSFORM_NO_DATA + RESPONSE.BOT_DISCLAIMER
         )
         return
-
     transformation = komando.data[0]
+
+    # Strip any trailing index suffix the command parser may have included
+    # (e.g. "h:1" → "h"). The index is re-parsed from the raw comment body below.
+    transformation = transformation.split(":")[0]
 
     # Check for optional image index argument (only valid for !transform, e.g. !transform:90:2).
     # Re-parsed from the raw comment body here rather than in komando.py to keep this
@@ -379,9 +382,7 @@ if __name__ == "__main__":
                         break
 
                 if test_transform_komando:
-                    print(
-                        handle(test_comment, test_instruo, test_transform_komando, None)
-                    )
+                    handle(test_comment, test_instruo, test_transform_komando, None)
                 else:
                     print("No !transform command found in comment")
 
