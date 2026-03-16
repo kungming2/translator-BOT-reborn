@@ -58,12 +58,13 @@ def _format_kun_on_readings(tree) -> tuple[str, str]:
         '//div[contains(@class,"kanji-details__main-readings")]/dl[1]/dd/a/text()'
     )
 
+    on_readings: list[str]
     if not kun_readings:
-        on_readings: list[str] = tree.xpath(
+        on_readings = tree.xpath(
             '//*[@id="result_area"]/div/div[1]/div[2]/div/div[1]/div[2]/dl/dd/a/text()'
         )
     else:
-        on_readings: list[str] = tree.xpath(
+        on_readings = tree.xpath(
             '//div[contains(@class,"kanji-details__main-readings")]/dl[2]/dd/a/text()'
         )
 
@@ -119,7 +120,7 @@ def _ja_character_fetch(character: str) -> str:
         meanings: list[str] = tree.xpath(
             '//div[contains(@class,"kanji-details__main-meanings")]/text()'
         )
-        meaning: str = " / ".join(meanings).strip()
+        meaning = " / ".join(meanings).strip()
 
         if not meaning:
             logger.info(f"No results for {character}")
@@ -141,7 +142,7 @@ def _ja_character_fetch(character: str) -> str:
             lookup_line_1 += calligraphy_image
 
         lookup_line_2: str = f'\n\n**Meanings**: "{meaning}."'
-        total_data: str = lookup_line_1 + lookup_line_2
+        total_data = lookup_line_1 + lookup_line_2
 
     else:
         # Multi-kanji mode
@@ -160,10 +161,10 @@ def _ja_character_fetch(character: str) -> str:
 
             kun_chunk, on_chunk = _format_kun_on_readings(tree)
 
-            meanings: list[str] = tree.xpath(
+            meanings = tree.xpath(
                 '//div[contains(@class,"kanji-details__main-meanings")]/text()'
             )
-            meaning: str = f'"{" / ".join(meanings).strip()}."'
+            meaning = f'"{" / ".join(meanings).strip()}."'
 
             multi_character_dict[moji] = {
                 "kun": kun_chunk,
@@ -187,19 +188,20 @@ def _ja_character_fetch(character: str) -> str:
         ooi_on += " |"
         ooi_meaning += " |"
 
-        total_data: str = (
+        total_data = (
             ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
         )
 
     # Append resource links
+    lookup_line_3: str
     if is_kana:
-        lookup_line_3: str = (
+        lookup_line_3 = (
             f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{character}%20%23particle) ^| "
             f"^[Tangorin](https://tangorin.com/general/{character}%20particle) ^| "
             f"^[Weblio](https://ejje.weblio.jp/content/{character})"
         )
     else:
-        lookup_line_3: str = (
+        lookup_line_3 = (
             f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{character}%20%23kanji) ^| "
             f"^[Tangorin](https://tangorin.com/kanji/{character}) ^| "
             f"^[Weblio](https://ejje.weblio.jp/content/{character})"
@@ -440,6 +442,10 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
 
         logger.debug(f"Retrieved explanation and literary source for {yojijukugo}")
 
+        if not reading:
+            logger.warning(f"No reading found for {yojijukugo}, skipping.")
+            return None
+
         # Build the final Markdown output
         formatted_section: str = (
             f"# [{yojijukugo}](https://en.wiktionary.org/wiki/{yojijukugo}#Japanese)\n\n"
@@ -479,13 +485,13 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
     async with aiohttp.ClientSession() as session:
         word_data: dict | list | None = await fetch_json(session, url)
 
-    if not word_data or not word_data.get("data"):
+    if not word_data or not isinstance(word_data, dict) or not word_data.get("data"):
         logger.warning(f"No JSON or empty data for `{japanese_word}`.")
         word_reading: str = ""
         main_data = None
     else:
         main_data = word_data["data"][0]
-        word_reading: str = main_data.get("japanese", [{}])[0].get("reading", "")
+        word_reading = main_data.get("japanese", [{}])[0].get("reading", "")
 
     # If Jisho returned nothing useful
     if not word_reading:

@@ -15,7 +15,7 @@ import sqlite3
 import sys
 import threading
 import time
-from typing import Dict
+from typing import Any, Dict
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
@@ -121,7 +121,7 @@ def _get_thread_local_cursor() -> tuple[sqlite3.Cursor, sqlite3.Connection]:
 """CHINESE CACHING"""
 
 
-def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
+def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
     """
     Parse the markdown output from zh_word or zh_character into structured
     JSON.
@@ -130,7 +130,7 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
                             zh_character
     :return: Dictionary with structured data
     """
-    result: Dict[str, any] = {
+    result: Dict[str, Any] = {
         "traditional": None,
         "simplified": None,
         "pronunciations": {},
@@ -282,7 +282,7 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, any]:
 """JAPANESE CACHING"""
 
 
-def parse_ja_output_to_json(markdown_output: str) -> Dict[str, any]:
+def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
     """
     Parse the markdown output from ja_word or ja_character into structured
     JSON.
@@ -307,7 +307,7 @@ def parse_ja_output_to_json(markdown_output: str) -> Dict[str, any]:
             if len(char_links) > 1:
                 return {}
 
-    result: Dict[str, any] = {
+    result: Dict[str, Any] = {
         "word": None,
         "type": None,  # "word" or "character"
         "part_of_speech": None,
@@ -393,14 +393,14 @@ def parse_ja_output_to_json(markdown_output: str) -> Dict[str, any]:
 """KOREAN CACHING"""
 
 
-def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
+def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
     """
     Parse the markdown output from ko_word into structured JSON.
 
     :param markdown_output: The markdown string returned by ko_word
     :return: Dictionary with structured data
     """
-    result: Dict[str, any] = {
+    result: Dict[str, Any] = {
         "word": None,
         "romanization": None,
         "entries": [],  # List of {part_of_speech, meanings: [{origin, definition}]}
@@ -425,7 +425,7 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, any]:
         pos = pos_sections[i].strip()
         content = pos_sections[i + 1]
 
-        entry: Dict[str, any] = {"part_of_speech": pos.lower(), "meanings": []}
+        entry: Dict[str, Any] = {"part_of_speech": pos.lower(), "meanings": []}
 
         # Extract romanization (only once, should be same for all entries)
         if not result["romanization"]:

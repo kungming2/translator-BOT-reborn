@@ -49,7 +49,7 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
     # Look up the terms and format them appropriately.
     for term in terms[:5]:  # Limit to five terms.
         term_entry: str | None = None
-        term: str = re.sub(r"[^\w\s:]", "", term)  # Strip punctuation but allow colons
+        term = re.sub(r"[^\w\s:]", "", term)  # Strip punctuation but allow colons
         logger.info(f"> Now searching for '{term}'...")
 
         # By default, turn off auto suggest.
@@ -64,9 +64,9 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
         ):
             # No direct matches, try auto suggest.
             try:
-                term_summary: str = wikipedia.summary(term.strip(), sentences=3)
+                term_summary = wikipedia.summary(term.strip(), sentences=3)
                 wikipage_obj = wikipedia.page(term.strip())
-                term_entry: str = wikipage_obj.url
+                term_entry = wikipage_obj.url
             except (
                 wikipedia.exceptions.DisambiguationError,
                 wikipedia.exceptions.PageError,

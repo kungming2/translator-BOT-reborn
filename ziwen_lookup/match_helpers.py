@@ -59,6 +59,8 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
             token,
         )
 
+    tokens: list[str] = []
+
     if language_code == "zh":
         from ziwen_lookup.zh import simplify
 
@@ -67,7 +69,6 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
         simplified_tokens: list[str] = list(jieba.cut(simplified_phrase))
 
         # Map simplified tokens back to original Traditional Chinese characters
-        tokens: list[str] = []
         original_idx = 0
 
         for simp_token in simplified_tokens:
@@ -83,8 +84,6 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
         tagger: MeCab.Tagger = MeCab.Tagger(f'-r "{mecab_rc_path}" -d "{dic_dir}"')
         tagger.parse(phrase)  # Workaround for Unicode bug in MeCab
         node: Any = tagger.parseToNode(phrase.strip())
-
-        tokens: list[str] = []
         while node:
             surface: str = node.surface
             if surface:
@@ -128,7 +127,7 @@ def lookup_ko_tokenizer(phrase: str) -> list[str]:
 
 def lookup_matcher(
     content_text: str, language_code: str | None, disable_tokenization: bool = False
-) -> dict[str, list[str]]:
+) -> dict[str, list[str | tuple[str, bool]]]:
     """
     Evaluate a comment for lookup and return detected text keyed by language code.
     Only text enclosed in backticks (`) is processed, excluding triple-backtick code blocks.
@@ -167,26 +166,23 @@ def lookup_matcher(
     cjk_languages: dict = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 
     # --- Handle !identify or !id command ---
+    language_codes: list[str] = []
     match: re.Match | None = re.search(r"!(?:identify|id):\s*(\S+)", original_text)
     if match:
         raw_codes: list[str] = match.group(1).split("+")
-        language_codes: list[str] = []
         for code in raw_codes:
-            parsed: str = converter(code).preferred_code
-            parsed = map_cjk_code(parsed, cjk_languages)
-            if parsed not in language_codes:
-                language_codes.append(parsed)
+            mapped = map_cjk_code(converter(code).preferred_code, cjk_languages)
+            if mapped not in language_codes:
+                language_codes.append(mapped)
     elif language_code:
         if isinstance(language_code, str):
-            language_codes: list[str] = language_code.split("+")
+            language_codes = language_code.split("+")
         else:
-            language_codes: list[str] = [language_code]
+            language_codes = [language_code]
     else:
         mentions = extract_lingvos_from_text(content_text)
         if mentions and len(mentions) == 1:
-            language_codes: list[str] = [mentions[0].preferred_code]
-        else:
-            language_codes: list[str] = []
+            language_codes = [mentions[0].preferred_code]
 
     # --- Extract all segments between backticks with optional inline language spec ---
     backtick_pattern: str = r"`([^`]+?)`(?::([^!\s]+))?"
@@ -207,10 +203,11 @@ def lookup_matcher(
         matches.append(text)
 
         if inline_lang:
-            parsed: str = converter(inline_lang).preferred_code
-            parsed = map_cjk_code(parsed, cjk_languages)
-            inline_language_codes.append(parsed)
-            logger.debug(f"Inline language found: {inline_lang} → {parsed}")
+            mapped_inline = map_cjk_code(
+                converter(inline_lang).preferred_code, cjk_languages
+            )
+            inline_language_codes.append(mapped_inline)
+            logger.debug(f"Inline language found: {inline_lang} → {mapped_inline}")
         else:
             inline_language_codes.append(None)
             logger.debug(f"No inline language for: {text}")
@@ -241,10 +238,11 @@ def lookup_matcher(
         )
 
         # Determine which language codes apply to this segment
+        seg_language_codes: list[str]
         if inline_lang:
-            seg_language_codes: list[str] = [inline_lang]
+            seg_language_codes = [inline_lang]
         else:
-            seg_language_codes: list[str] = language_codes
+            seg_language_codes = language_codes
 
         # If no language codes determined yet, infer from script detection FOR THIS SEGMENT
         if not seg_language_codes:
@@ -281,12 +279,13 @@ def lookup_matcher(
             tokenized: list[str] = []
             for token in cjk_tokens:
                 if len(token) >= 2:
+                    new_tokens: list[str]
                     if "zh" in seg_language_codes and not has_kana:
-                        new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "zh")
+                        new_tokens = lookup_zh_ja_tokenizer(token, "zh")
                     elif "ja" in seg_language_codes or has_kana:
-                        new_tokens: list[str] = lookup_zh_ja_tokenizer(token, "ja")
+                        new_tokens = lookup_zh_ja_tokenizer(token, "ja")
                     else:
-                        new_tokens: list[str] = [token]
+                        new_tokens = [token]
                     tokenized.extend(new_tokens)
                 else:
                     tokenized.append(token)

@@ -149,7 +149,13 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     try:
         language_code = lookup_url.rsplit("/", 1)[-1].lower()
         if len(language_code) == 2:
-            language_code = lingvo_object.language_code_3  # Fetch the 639-3 version
+            if lingvo_object is None:
+                logger.error(f"No lingvo data found for `{language_code}`.")
+                return None
+            if lingvo_object.language_code_3 is None:
+                logger.error(f"No ISO 639-3 code found for `{language_code}`.")
+                return None
+            language_code = lingvo_object.language_code_3
         logger.info(f"Now searching for: `{language_code}` at {lookup_url}.")
     except Exception as e:
         logger.error(f"Error extracting language code from URL `{lookup_url}`: {e}")
@@ -333,7 +339,13 @@ if __name__ == "__main__":
             print(get_language_reference(my_input))
         elif choice == "2":
             random_selection = select_random_language()
+            if random_selection is None:
+                print("Could not select a random language.")
+                continue
             logger.info(
                 f"Randomly selected {random_selection.name} (`{random_selection.preferred_code}`)."
             )
+            if random_selection.language_code_3 is None:
+                print("Could not retrieve language code for random selection.")
+                continue
             print(get_language_reference(random_selection.language_code_3))
