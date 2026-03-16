@@ -283,10 +283,10 @@ COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
 COMMENT_TRANSFORM_NO_DATA: |
   No transformation specified. Valid transformations are:
   
-  * `90`, `180`, `270` (clockwise rotation)
-  * `-90`, `-180`, `-270` (counterclockwise rotation)
-  * `h` or `horizontal` (flip horizontally)
-  * `v` or `vertical` (flip vertically)
+  * ↩️ `90`, `180`, `270` (clockwise rotation)
+  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
+  * ↔️ `h` or `horizontal` (flip horizontally)
+  * ↕️ `v` or `vertical` (flip vertically)
   
   Example: `!transform:90`
   
@@ -295,10 +295,10 @@ COMMENT_TRANSFORM_NO_DATA: |
 COMMENT_TRANSFORM_INVALID: |
   Invalid transformation: `{0}`. Valid transformations are:
   
-  * `90`, `180`, `270` (clockwise rotation)
-  * `-90`, `-180`, `-270` (counterclockwise rotation)
-  * `h` or `horizontal` (flip horizontally)
-  * `v` or `vertical` (flip vertically)
+  * ↩️ `90`, `180`, `270` (clockwise rotation)
+  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
+  * ↔️ `h` or `horizontal` (flip horizontally)
+  * ↕️ `v` or `vertical` (flip vertically)
   
   Example: `!transform:90`
   
