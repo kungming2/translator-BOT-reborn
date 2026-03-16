@@ -591,7 +591,7 @@ def search_database(
     except Exception as db_error:
         import traceback
 
-        logger.error(f"Error querying database: {traceback.print_exc()} {db_error}")
+        logger.error(f"Error querying database: {traceback.format_exc()} {db_error}")
 
         return []
 

@@ -120,7 +120,7 @@ def fetch_iso_reports() -> None:
         xpath = "/html/body/div[4]/div/section/div[2]/section/div/div/ul[2]//a"
         links = tree.xpath(xpath)
 
-        reports: List[Dict[str, str]] = []
+        reports: List[Dict[str, str | bool]] = []
 
         for link in links:
             # Get the href attribute
@@ -143,7 +143,7 @@ def fetch_iso_reports() -> None:
                 reports.append(report)
 
         # Load existing data to preserve posted status
-        existing_data = []
+        existing_data: list[dict] = []
         try:
             with open(Paths.DATASETS["ISO_CODES_UPDATES"], "r") as f:
                 existing_data = yaml.safe_load(f) or []
@@ -151,12 +151,16 @@ def fetch_iso_reports() -> None:
             pass
 
         # Create a mapping of existing reports by link for quick lookup
-        existing_map = {r.get("link"): r.get("posted", False) for r in existing_data}
+        existing_map: Dict[str, bool] = {
+            link: r.get("posted", False)
+            for r in existing_data
+            if (link := r.get("link")) is not None
+        }
 
         # Preserve posted status for reports that already exist
         for report in reports:
             if report["link"] in existing_map:
-                report["posted"] = existing_map[report["link"]]
+                report["posted"] = existing_map[str(report["link"])]
 
         # Check if contents have changed
         if existing_data == reports:

@@ -56,7 +56,7 @@ def rotate_or_flip_image(image_url: str, transformation: str) -> Image.Image:
     response = requests.get(image_url, timeout=45)
     response.raise_for_status()
 
-    img = Image.open(BytesIO(response.content))
+    img: Image.Image = Image.open(BytesIO(response.content))
     logger.debug(
         f"Image downloaded: {img.size[0]}x{img.size[1]} pixels, mode: {img.mode}"
     )

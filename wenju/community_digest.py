@@ -16,7 +16,7 @@ import re
 import time
 from collections import Counter
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -32,16 +32,14 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DIGEST"})
 
 
 @task(schedule="daily")
-def send_internal_post_digest():
+def send_internal_post_digest() -> None:
     """
     Check for new internal posts in the last 24 hours and send
     notifications for unprocessed ones. This is usually meta/community,
     and this allows for messages to be sent en masse at once.
     """
-    # Calculate timestamp for 24 hours ago
     cutoff_time = int(time.time()) - (24 * 60 * 60)
 
-    # Fetch all posts from the last 24 hours
     query = """
         SELECT id, created_utc, content 
         FROM internal_posts 
@@ -49,7 +47,7 @@ def send_internal_post_digest():
     """
     posts = db.fetchall_main(query, (cutoff_time,))
 
-    post_type_counts: Dict[str, int] = {}
+    post_type_counts: dict[str, int] = {}
 
     for post in posts:
         post_id = post["id"]
@@ -111,7 +109,7 @@ def send_internal_post_digest():
 
 
 @task(schedule="weekly")
-def weekly_unknown_thread():
+def weekly_unknown_thread() -> None:
     """
     Posts the Weekly 'Unknown' thread: a round-up of all posts from the last
     seven days still marked as "Unknown".
@@ -119,10 +117,9 @@ def weekly_unknown_thread():
     r = REDDIT.subreddit(SETTINGS["subreddit"])
     today_str = get_current_utc_date()
 
-    # Get the current week number for the post title
     current_week_utc = datetime.now(timezone.utc).strftime("%U")
 
-    unknown_entries = []
+    unknown_entries: list[str] = []
 
     # Retrieve 'Unknown' posts from the past week
     for item in r.search('flair:"Unknown"', sort="new", time_filter="week"):
@@ -155,7 +152,7 @@ def weekly_unknown_thread():
     return
 
 
-def _analyze_bot_mod_log(start_time: int, end_time: int) -> Dict[str, int]:
+def _analyze_bot_mod_log(start_time: int, end_time: int) -> dict[str, int]:
     """
     Analyze mod log actions performed by u/translator-BOT in r/translator.
 
@@ -164,11 +161,10 @@ def _analyze_bot_mod_log(start_time: int, end_time: int) -> Dict[str, int]:
         end_time: Unix timestamp for the end of the time range
 
     Returns:
-        Dictionary mapping action types to their counts
-        Example: {'removelink': 5, 'approvelink': 3, 'sticky': 1}
+        Mapping of action type (e.g. 'removelink') to occurrence count.
     """
     subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
-    action_counts: Dict[str, int] = {}
+    action_counts: dict[str, int] = {}
 
     # Fetch mod log entries for translator-BOT
     # limit=None fetches as many as possible (PRAW will paginate automatically)
@@ -185,32 +181,25 @@ def _analyze_bot_mod_log(start_time: int, end_time: int) -> Dict[str, int]:
 
 
 @task(schedule="weekly")
-def weekly_bot_action_report():
+def weekly_bot_action_report() -> None:
     """
     Generate a weekly report of u/translator-BOT mod actions and post to r/translatorBOT.
     """
-    # Get timestamps for the last week
     end_time = int(time.time())
     start_time = end_time - (7 * 24 * 60 * 60)  # 7 days ago
 
-    # Get the action data
     action_data = _analyze_bot_mod_log(start_time, end_time)
 
-    # Format dates
     start_date = datetime.fromtimestamp(start_time).strftime("%Y-%m-%d")
     end_date = datetime.fromtimestamp(end_time).strftime("%Y-%m-%d")
 
-    # Get week number
     end_datetime = datetime.fromtimestamp(end_time)
-    week_number = end_datetime.isocalendar()[1]
+    week_number: int = end_datetime.isocalendar()[1]
 
-    # Calculate total actions
     total_actions = sum(action_data.values())
 
-    # Build the report content
-    report_sections = []
+    report_sections: list[str] = []
 
-    # Summary section
     avg_actions_per_day = total_actions / 7  # 7 days in a week
 
     summary = f"""## Summary
@@ -254,7 +243,11 @@ def weekly_bot_action_report():
     return
 
 
-def _analyze_mod_removals(start_time: int, end_time: int) -> dict:
+# Type alias for the structured result returned by _analyze_mod_removals
+ModRemovalReport = dict[str, Any]
+
+
+def _analyze_mod_removals(start_time: int, end_time: int) -> ModRemovalReport:
     """
     Analyze mod removal comments to count rule violations.
 
@@ -263,16 +256,17 @@ def _analyze_mod_removals(start_time: int, end_time: int) -> dict:
         end_time: UTC timestamp for the end of the analysis period
 
     Returns:
-        Dictionary with rule counts and metadata
+        Report dict with keys: start_time, end_time, start_date, end_date,
+        total_comments_checked, total_violations, unique_rules_violated,
+        violation_counts.
     """
     subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
     mod_team_account = REDDIT.redditor(f"{subreddit}-ModTeam")
 
-    # Regex pattern to match rules like [Rule #T1], [Rule #G4], etc.
     rule_pattern = re.compile(r"\[Rule #([A-Z]\d+)]", re.IGNORECASE)
 
-    rule_violations = []
-    total_comments_checked = 0
+    rule_violations: list[str] = []
+    total_comments_checked: int = 0
 
     # 1. Fetch comments from u/translator-ModTeam
     logger.info(f"Fetching comments from u/{subreddit}-ModTeam...")
@@ -304,7 +298,7 @@ def _analyze_mod_removals(start_time: int, end_time: int) -> dict:
     logger.info("Fetching distinguished mod comments from r/translator...")
     try:
         # Get moderators list
-        moderators = [mod.name for mod in subreddit.moderator()]
+        moderators: list[str] = [mod.name for mod in subreddit.moderator()]
 
         # Fetch recent comments from the subreddit
         for comment in subreddit.comments(limit=None):
@@ -364,24 +358,23 @@ def _analyze_mod_removals(start_time: int, end_time: int) -> dict:
 
 
 @task(schedule="monthly")
-def monthly_rule_violation_report():
+def monthly_rule_violation_report() -> ModRemovalReport:
     """
     Generate a monthly report of rule violations and send via Discord webhook.
-    """
 
-    # Get timestamps for the last month
+    Returns:
+        The raw ModRemovalReport produced by _analyze_mod_removals.
+    """
     end_time = int(time.time())
     start_time = end_time - (30 * 24 * 60 * 60)  # 30 days ago
 
-    results = _analyze_mod_removals(start_time, end_time)
+    results: ModRemovalReport = _analyze_mod_removals(start_time, end_time)
 
-    # Format the report
     subject_line = (
         f"Monthly r/translator Rule Violation Report - {results['end_date'][:10]}"
     )
 
-    # Build the report content
-    report_sections = []
+    report_sections: list[str] = []
 
     # Summary section
     summary = f"""## Summary

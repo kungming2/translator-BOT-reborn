@@ -12,3 +12,15 @@ authors = [
 
 [project.optional-dependencies]
 dev = ["types-PyYAML", "types-psutil", "types-requests"]
+
+[tool.mypy]
+disallow_untyped_defs = false  # off globally for now
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "code_manager",
+    "config",
+    "title",
+]
+disallow_untyped_defs = true

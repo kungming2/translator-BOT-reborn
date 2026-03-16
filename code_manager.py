@@ -22,7 +22,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "CODE"})
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
 
 
-def load_csv():
+def load_csv() -> pd.DataFrame | None:
     """Load the CSV file and return as DataFrame."""
     try:
         # Try different encodings
@@ -44,7 +44,7 @@ def load_csv():
         return None
 
 
-def save_csv(df):
+def save_csv(df: pd.DataFrame) -> None:
     """Save DataFrame back to CSV file."""
     try:
         df.to_csv(CSV_PATH, index=False, encoding="utf-8")
@@ -53,7 +53,7 @@ def save_csv(df):
         logger.error(f"Failed to save file: {e}")
 
 
-def create_entry():
+def create_entry() -> None:
     """Create a new ISO 639-3 entry."""
     df = load_csv()
     if df is None:
@@ -85,7 +85,7 @@ def create_entry():
     print(f"✓ Created new entry: {iso_639_3} - {language_name}")
 
 
-def update_entry():
+def update_entry() -> None:
     """Update the Language Name for an existing ISO 639-3 code."""
     df = load_csv()
     if df is None:
@@ -111,7 +111,7 @@ def update_entry():
     print(f"✓ Updated {iso_639_3}: {current_name} → {new_name}")
 
 
-def deprecate_entry():
+def deprecate_entry() -> None:
     """Remove a row with the specified ISO 639-3 code."""
     df = load_csv()
     if df is None:
@@ -141,7 +141,7 @@ def deprecate_entry():
     print(f"✓ Deprecated {iso_639_3} - {language_name}")
 
 
-def main():
+def main() -> None:
     """Main menu loop."""
     while True:
         print("\n--- ISO Codes Manager ---")

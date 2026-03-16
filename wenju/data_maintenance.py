@@ -15,7 +15,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import orjson
 import prawcore
@@ -286,7 +286,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     :return: Dictionary containing language statistics.
     """
     r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
-    language_data = {}
+    language_data: dict[str, Any] = {}
     monthly_totals = []
     months_elapsed = messaging_months_elapsed()
 
@@ -313,11 +313,13 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
         cols = [col.strip() for col in entry.split("|")]
         year, month = cols[0], cols[1]
 
-        total = int(re.search(r"\[(.*?)]", cols[2]).group(1))
+        total_match = re.search(r"\[(.*?)]", cols[2])
+        total = int(total_match.group(1)) if total_match else 0
         monthly_totals.append(total)
         percentage_total = round(float(cols[3].rstrip("%")) * 0.01, 4)
+        untranslated_match = re.search(r"\[(.*?)]", cols[4]) if "[" in cols[4] else None
         num_untranslated = int(
-            re.search(r"\[(.*?)]", cols[4]).group(1) if "[" in cols[4] else cols[4]
+            untranslated_match.group(1) if untranslated_match else cols[4]
         )
         percentage_translated = round(float(cols[5].rstrip("%")) * 0.01, 4)
         ri = None
@@ -429,8 +431,8 @@ def refresh_language_statistics() -> None:
     # The following pages have different formatting and should not be
     # assessed.
     ignore_pages = {"app", "conlang", "multiple", "nonlanguage", "unknown"}
-    total_data = {}
-    language_family_dict = {}
+    total_data: dict[str, Any] = {}
+    language_family_dict: dict[str, list[tuple[str, str, str]]] = {}
 
     for page in r.wiki:
         if page.name in ignore_pages or "20" in page.name or "config" in page.name:
@@ -445,14 +447,18 @@ def refresh_language_statistics() -> None:
             continue
 
         try:
+            name_match = re.search(r"##(.*?)\(", body)
             language_name = (
-                re.search(r"##(.*?)\(", body).group(1).strip().replace("_", " ")
+                name_match.group(1).strip().replace("_", " ") if name_match else None
             )
+            if not language_name:
+                raise AttributeError
         except AttributeError:
             logger.error(f"Problem with {page.name} header.")
             continue
         try:
-            language_family = re.search(r" \((.*?)\)", body).group(1).strip()
+            family_match = re.search(r" \((.*?)\)", body)
+            language_family = family_match.group(1).strip() if family_match else None
         except AttributeError:
             language_family = None
 
@@ -464,7 +470,8 @@ def refresh_language_statistics() -> None:
         language_code = language_lingvo.preferred_code
 
         # Update language family dictionary
-        language_family_dict.setdefault(language_family, []).append(
+        family_key: str = language_family if language_family is not None else "Unknown"
+        language_family_dict.setdefault(family_key, []).append(
             (language_name, page.name, language_code)
         )
 

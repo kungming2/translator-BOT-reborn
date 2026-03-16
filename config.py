@@ -151,7 +151,8 @@ class TagFormatter(logging.Formatter):
     that were not emitted through a LoggerAdapter with a 'tag' extra.
     """
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
+        """Inject a default tag if absent, then delegate to the parent formatter."""
         if not hasattr(record, "tag"):
             record.tag = "-"
         return super().format(record)

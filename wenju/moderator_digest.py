@@ -29,7 +29,7 @@ from wenju import WENJU_SETTINGS, task
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODDIG"})
 
 
-def _activity_csv_handler() -> tuple[str, dict[str, float | list[float]]]:
+def _activity_csv_handler() -> tuple[str, dict[str, object]]:
     """
     Manage and summarize the log_activity.csv file.
 
@@ -126,7 +126,7 @@ def _activity_csv_handler() -> tuple[str, dict[str, float | list[float]]]:
     return summary, data
 
 
-def _error_log_count() -> tuple[str, dict[str, int | str | bool]]:
+def _error_log_count() -> tuple[str, dict[str, object]]:
     """
     Count how many entries exist in the YAML-formatted error log.
 
@@ -207,7 +207,7 @@ def _filter_log_tabulator(
     start_date: date | int | float | None = None,
     end_date: date | int | float | None = None,
     include_detailed_stats: bool = False,
-) -> tuple[str, dict[str, float | str]]:
+) -> tuple[str, dict[str, object]]:
     """
     Calculate the filtration rate of bad titles for a specified time period.
 
