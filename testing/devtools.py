@@ -82,45 +82,29 @@ from ziwen_lookup.zh import (
 def check_lang_converter():
     """Interactive test for the language converter."""
     enable_debug_logging()
-    while True:
-        msg.divider("lang / converter")
-        msg.info("1. Converter test (enter a string to test with the converter)")
-        msg.info("2. Parse language list (enter a language list string to parse)")
-        msg.info("x. Exit")
+    my_test = input("Enter the string you wish to test with the converter: ")
+    with msg.loading(f"Converting '{my_test}'..."):
+        converter_result = converter(my_test)
+    if converter_result:
+        msg.good(
+            f"Input: `{my_test}` → Preferred Code: {converter_result.country_emoji} "
+            f"`{converter_result.preferred_code}`"
+        )
+        pprint(vars(converter_result))
+        msg.info(f"Country flag emoji: {converter_result.country_emoji}")
+    else:
+        msg.warn("Did not match anything.")
 
-        choice = input("Enter your choice (1-2 or x): ")
 
-        if choice == "x":
-            msg.info("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            msg.warn("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            my_test = input("Enter the string you wish to test with the converter: ")
-            with msg.loading(f"Converting '{my_test}'..."):
-                converter_result = converter(my_test)
-
-            if converter_result:
-                msg.good(
-                    f"Input: `{my_test}` → Preferred Code: {converter_result.country_emoji} "
-                    f"`{converter_result.preferred_code}`"
-                )
-                pprint(vars(converter_result))
-                msg.info(f"Country flag emoji: {converter_result.country_emoji}")
-            else:
-                msg.warn("Did not match anything.")
-
-        elif choice == "2":
-            lang_logger.setLevel(logging.DEBUG)
-            language_list_input = input(
-                "Enter the language list from a subscription message to parse: "
-            )
-            with msg.loading("Parsing language list..."):
-                parse_result = parse_language_list(language_list_input)
-            pprint(parse_result)
+def check_lang_parse():
+    """Interactive test for the language list parser."""
+    lang_logger.setLevel(logging.DEBUG)
+    language_list_input = input(
+        "Enter the language list from a subscription message to parse: "
+    )
+    with msg.loading("Parsing language list..."):
+        parse_result = parse_language_list(language_list_input)
+    pprint(parse_result)
 
 
 # ── Section: integrations ─────────────────────────────────────────────────────
@@ -548,7 +532,8 @@ SECTIONS = {
     "4": (
         "lang",
         {
-            "1": ("converter & parse", check_lang_converter),
+            "1": ("converter", check_lang_converter),
+            "2": ("parse language list", check_lang_parse),
         },
     ),
     "5": (
