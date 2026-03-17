@@ -23,18 +23,32 @@ from collections import Counter, defaultdict
 from collections.abc import Iterator
 from datetime import datetime
 from functools import lru_cache
-from typing import Any
+from typing import Any, TypedDict
 
 from database import db, search_database
 from lang.languages import converter, parse_language_list
 from models.ajo import Ajo, ajo_loader
 from models.lingvo import Lingvo
-from time_handling import time_convert_to_string
 
 # Type aliases for clarity
 TimeRange = tuple[int, int]  # (start_timestamp, end_timestamp)
 LanguageStats = dict[str, Any]  # Statistics dictionary for a language
-FastestStats = dict[str, dict[str, float | None | str] | float]  # Nested timing stats
+
+
+class FastestEntry(TypedDict):
+    """A single fastest-time record: elapsed seconds and the post ID."""
+
+    time: float | int
+    id: str | None
+
+
+class FastestStats(TypedDict, total=False):
+    """Fastest-time statistics for a language, keyed by state type."""
+
+    to_translated: FastestEntry
+    to_review: FastestEntry
+    to_claimed: FastestEntry
+    average_translation_hours: float
 
 
 def get_effective_status(ajo: Ajo) -> str:
@@ -198,6 +212,8 @@ class Lumo:
             ValueError: If time parameters are not provided and no defaults exist
         """
         # Handle all_time flag
+        start: int | None
+        end: int | None
         if all_time:
             start, end = self.all_time_range()
         else:
@@ -460,7 +476,11 @@ class Lumo:
             Dictionary mapping language names to their stats
         """
         lingvos = parse_language_list(language_string)
-        return {lingvo.name: self.get_language_stats(lingvo.name) for lingvo in lingvos}
+        return {
+            lingvo.name: self.get_language_stats(lingvo.name)
+            for lingvo in lingvos
+            if lingvo.name is not None
+        }
 
     def get_all_languages(self) -> list[str]:
         """Get list of all unique languages in the dataset."""
@@ -602,9 +622,9 @@ class Lumo:
     def get_fastest_translations(self) -> FastestStats:
         """Find the fastest processed requests."""
         fastest: FastestStats = {
-            "to_translated": {"time": float("inf"), "id": None},
-            "to_review": {"time": float("inf"), "id": None},
-            "to_claimed": {"time": float("inf"), "id": None},
+            "to_translated": FastestEntry(time=float("inf"), id=None),
+            "to_review": FastestEntry(time=float("inf"), id=None),
+            "to_claimed": FastestEntry(time=float("inf"), id=None),
         }
 
         translation_times = []
@@ -622,19 +642,19 @@ class Lumo:
                 diff = time_delta["translated"] - created
                 translation_times.append(diff)
                 if diff < fastest["to_translated"]["time"]:
-                    fastest["to_translated"] = {"time": int(diff), "id": ajo_id}
+                    fastest["to_translated"] = FastestEntry(time=int(diff), id=ajo_id)
 
             # Check doublecheck
             if "doublecheck" in time_delta:
                 diff = time_delta["doublecheck"] - created
                 if diff < fastest["to_review"]["time"]:
-                    fastest["to_review"] = {"time": int(diff), "id": ajo_id}
+                    fastest["to_review"] = FastestEntry(time=int(diff), id=ajo_id)
 
             # Check in progress
             if "inprogress" in time_delta:
                 diff = time_delta["inprogress"] - created
                 if diff < fastest["to_claimed"]["time"]:
-                    fastest["to_claimed"] = {"time": int(diff), "id": ajo_id}
+                    fastest["to_claimed"] = FastestEntry(time=int(diff), id=ajo_id)
 
         # Calculate averages
         if translation_times:
@@ -650,8 +670,8 @@ class Lumo:
         Analyze posts that were identified from 'Unknown'.
         Now normalizes language names/codes to prevent duplicates.
         """
-        identified = defaultdict(int)
-        misidentified = defaultdict(int)
+        identified: defaultdict[str, int] = defaultdict(int)
+        misidentified: defaultdict[str, int] = defaultdict(int)
 
         for ajo in self.ajos:
             if not hasattr(ajo, "language_history") or not ajo.language_history:
@@ -786,76 +806,3 @@ class Lumo:
             "identifications": self.get_identification_stats(),
             "fastest": self.get_fastest_translations(),
         }
-
-
-# ==================== Usage Example ====================
-
-if __name__ == "__main__":
-    # Example 1: Initialize and load a specific month
-    lumo = Lumo()
-
-    # Load all posts from September 2023
-    start_x, end_x = Lumo.month_to_unix_range(2023, 9)
-    print(f"September 2023 Unix range: {start_x} to {end_x}")
-
-    # Example 2: Load with instance defaults
-    lumo_with_defaults = Lumo(
-        start_time=Lumo.date_to_unix(2024, 9, 1),
-        end_time=Lumo.date_to_unix(2024, 9, 30, 23, 59, 59),
-    )
-
-    lumo_with_defaults.load_ajos()
-    print(f"Total posts: {len(lumo_with_defaults)}")
-
-    while True:
-        # Get language input from user
-        desired_language = input(
-            "\nEnter language (name or code, or 'x' to exit): "
-        ).strip()
-
-        if desired_language.lower() == "x":
-            break
-
-        # Use converter for flexible language matching
-        lingvo_input = converter(desired_language)
-        if not lingvo_input:
-            print(f"Language '{desired_language}' not recognized. Try again.")
-            continue
-
-        # Filter by language
-        filtered_ajos = lumo_with_defaults.filter_by_language(lingvo_input)
-
-        if not filtered_ajos:
-            print(f"No posts found for {lingvo_input.name}")
-            continue
-
-        print(f"\n=== Found {len(filtered_ajos)} posts for {lingvo_input.name} ===\n")
-
-        for ajo_x in filtered_ajos[:10]:  # Show first 10
-            print(f"Title: {ajo_x.title_original}")
-            print(f"Link: https://redd.it/{ajo_x.id}")
-            print(f"Status: {ajo_x.status}")
-            print(f"Date: {time_convert_to_string(ajo_x.created_utc)}")
-            print("-" * 50)
-
-        # Show statistics for this language
-        stats = lumo_with_defaults.get_language_stats(lingvo_input.name)
-        if stats:
-            print(f"\n=== Statistics for {lingvo_input.name} ===")
-            print(f"Total requests: {stats['total_requests']}")
-            print(f"Translated: {stats['translated']}")
-            print(f"Translation %: {stats['translation_percentage']}%")
-            print(f"Direction ratio: {stats['directions']}")
-
-    print("\n=== Lumo Session Complete ===")
-    print("Available methods:")
-    print("  - lumo.load_month(year, month)")
-    print("  - lumo.load_last_days(days)")
-    print("  - lumo.load_all_time()")
-    print("  - lumo.load_for_user(username)")
-    print("  - lumo.load_single_post(post_id)")
-    print("  - lumo.filter_by_language(language)  # Accepts codes or names!")
-    print("  - lumo.get_language_stats(language)")
-    print("  - lumo.get_stats_for_languages('German, French, Spanish')")
-    print("  - lumo.get_overall_stats()")
-    print("  - lumo.get_direction_stats()")

@@ -9,15 +9,12 @@ Logger tag: [ZW:C]
 
 import logging
 import time
-import traceback
 
 from prawcore import exceptions
-from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
-from error import error_log_extended
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
@@ -86,7 +83,7 @@ def _mark_short_thanks_as_translated(comment, ajo):
     return
 
 
-def ziwen_commands():
+def ziwen_commands() -> None:
     """
     Main runtime for r/translator that checks for keywords and commands.
 
@@ -299,14 +296,3 @@ def ziwen_commands():
         # Also skip if the only command was 'verify'.
         if not SETTINGS["testing_mode"] and not skip_update:
             original_ajo.update_reddit(moderator_set=moderator_set)
-
-
-if __name__ == "__main__":
-    msg.good("Launching Ziwen commands...")
-    # noinspection PyBroadException
-    try:
-        ziwen_commands()
-    except Exception:  # intentionally broad: catch all exceptions for logging
-        error_entry = traceback.format_exc()
-        error_log_extended(error_entry, "Ziwen Commands")
-    msg.info("Ziwen commands routine completed.")

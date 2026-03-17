@@ -10,13 +10,10 @@ Logger tag: [ZW:M]
 """
 
 import logging
-import traceback
 
 from praw.models import Message, Redditor
-from wasabi import msg
 
 from config import logger as _base_logger
-from error import error_log_extended
 from reddit.connection import REDDIT, is_mod, is_valid_user
 from reddit.messaging import (
     handle_add,
@@ -84,15 +81,3 @@ def ziwen_messages() -> None:
             )
 
     return
-
-
-# Primary runtime.
-if __name__ == "__main__":
-    msg.good("Launching Ziwen messages...")
-    # noinspection PyBroadException
-    try:
-        ziwen_messages()
-    except Exception:  # intentionally broad: catch all exceptions for logging
-        error_entry = traceback.format_exc()
-        error_log_extended(error_entry, "Ziwen Messages")
-    msg.info("Ziwen messages routine completed.")

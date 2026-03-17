@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
+
 """
 AI-assisted title parsing and correction for r/translator posts.
 
@@ -22,7 +24,7 @@ Key components:
     format_title_correction_comment -- Build a correction comment for bad titles.
     update_titolo_from_ai_result -- Write AI result back into a Titolo object.
 
-Logger tag: [TITLE:AI]
+Logger tag: [T:AI]
 """
 
 import json
@@ -40,7 +42,7 @@ from responses import RESPONSE
 if TYPE_CHECKING:
     from title.title_handling import Titolo
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "TITLE:AI"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "T:AI"})
 
 
 def title_ai_parser(
@@ -157,7 +159,7 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
 
 
 def update_titolo_from_ai_result(
-    result: "Titolo",
+    result: Titolo,
     ai_result: dict[str, Any],
     post: Optional[Submission],
     discord_notify: bool,

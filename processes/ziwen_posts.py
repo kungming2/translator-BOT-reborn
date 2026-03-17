@@ -10,14 +10,12 @@ Logger tag: [ZW:P]
 import logging
 import pprint
 import time
-import traceback
 
-from wasabi import msg
+from praw.models import Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db, record_filter_log
-from error import error_log_extended
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
 from monitoring.dupe_detector import check_image_duplicate, duplicate_detector
@@ -37,7 +35,9 @@ from utility import fetch_youtube_length
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:P"})
 
 
-def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
+def _assign_internal_post_flair(
+    post: Submission, internal_post_type: str | None
+) -> bool:
     """
     Assign the appropriate flair template to an internal post based on its type.
 
@@ -74,7 +74,7 @@ def _assign_internal_post_flair(post, internal_post_type: str | None) -> bool:
         return False
 
 
-def ziwen_posts(post_limit=None):
+def ziwen_posts(post_limit: int | None = None) -> None:
     """
     The primary top-level post filtering runtime for r/translator.
     It removes posts that do not meet the subreddit's guidelines.
@@ -399,15 +399,3 @@ def ziwen_posts(post_limit=None):
         closeout_posts()
 
     return
-
-
-# Primary runtime.
-if __name__ == "__main__":
-    msg.good("Launching Ziwen posts...")
-    # noinspection PyBroadException
-    try:
-        ziwen_posts(15)
-    except Exception:  # intentionally broad: catch all exceptions for logging
-        error_entry = traceback.format_exc()
-        error_log_extended(error_entry, "Ziwen Posts")
-    msg.info("Ziwen posts routine completed.")

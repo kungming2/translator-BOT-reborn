@@ -20,27 +20,25 @@ Key components:
 
 Note: The Titolo class lives in models/titolo.py.
 
-Logger tag: [TITLE]
+Logger tag: [T:TITLE]
 """
 
 import logging
 import re
 import string
-from pprint import pprint
 from typing import List, Literal, Optional
 
 from rapidfuzz import fuzz
 
-from config import SETTINGS, Paths, load_settings
+from config import Paths, load_settings
 from config import logger as _base_logger
 from lang.countries import country_converter
 from lang.languages import converter, define_language_lists
 from models.lingvo import Lingvo
 from models.titolo import Titolo
-from reddit.connection import REDDIT_HELPER
 from title.title_ai import title_ai_parser, update_titolo_from_ai_result
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "TITLE"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "T:TITLE"})
 
 # Load the title module's settings.
 title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
@@ -953,53 +951,3 @@ def is_english_only(titolo_content: Titolo) -> bool:
     return all(getattr(lng, "preferred_code", None) == "en" for lng in source) and all(
         getattr(lng, "preferred_code", None) == "en" for lng in target
     )
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-
-def _show_menu():
-    print("\nSelect a search to run:")
-    print("1. Title testing (enter your own title to test)")
-    print("2. Reddit titles (retrieve the last few Reddit posts to test against)")
-    print("3. AI title testing (test AI output for a malformed title)")
-    print("4. Test filtration against a title")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    while True:
-        _show_menu()
-        choice = input("Enter your choice (1-4): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2", "3", "4"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            logger.setLevel(logging.DEBUG)
-            my_test = input("Enter the string you wish to test: ")
-            titolo_output = process_title(my_test, None, False)
-            pprint(vars(titolo_output))
-        elif choice == "2":
-            logger.setLevel(logging.INFO)
-            submissions = list(
-                REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=50)
-            )
-            for submission in submissions:
-                print(f"POST TITLE: {submission.title}")
-                titolo_output = process_title(submission.title, submission, False)
-                pprint(vars(titolo_output))
-                print("\n\n")
-        elif choice == "3":
-            my_test = input("Enter the string you wish to test: ")
-            print(title_ai_parser(my_test))
-        elif choice == "4":
-            my_test = input("Enter the title you wish to test: ")
-            print(main_posts_filter(my_test))
