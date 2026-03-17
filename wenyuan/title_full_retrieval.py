@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from config import SETTINGS, enable_debug_logging, get_reports_directory
+from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
 from models.ajo import ajo_loader, determine_flair_and_update
 from reddit.connection import REDDIT_HELPER
@@ -38,7 +38,8 @@ class PostCategories:
     regional: List[str]
     ai_assessed: List[str]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialise all category lists to empty."""
         self.display = []
         self.problematic = []
         self.non_css = []
@@ -381,8 +382,3 @@ def retrieve_titles_test(fetch_amount: int = 1000) -> None:
 
     # Save to file
     _save_to_file(full_document)
-
-
-if __name__ == "__main__":
-    enable_debug_logging()
-    retrieve_titles_test(10)

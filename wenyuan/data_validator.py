@@ -212,7 +212,3 @@ def _calculate_days_old(date_str: str, current_timestamp: float) -> int:
         return int(days_old)
     except (ValueError, TypeError):
         return 0
-
-
-if __name__ == "__main__":
-    data_validator()
