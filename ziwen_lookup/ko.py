@@ -59,16 +59,25 @@ def _ko_search_raw(target_word: str) -> list[dict]:
     :return: List of simplified entry dictionaries.
     """
     filtered_data: list[dict] = []
-    try:
-        korean_input = krdict.search(
-            query=target_word.strip(),
-            search_type=krdict.SearchType.WORD,
-            translation_language=krdict.TranslationLanguage.ENGLISH,
-            raise_api_errors=True,
-        )
-    except (krdict.types.exceptions.KRDictException, Exception) as e:
-        # Catch 404s and other API errors - just return empty list
-        logger.warning(f"Korean lookup failed for '{target_word}': {e}")
+    for attempt in range(3):
+        try:
+            korean_input = krdict.search(
+                query=target_word.strip(),
+                search_type=krdict.SearchType.WORD,
+                translation_language=krdict.TranslationLanguage.ENGLISH,
+                raise_api_errors=True,
+            )
+            break
+        except (krdict.types.exceptions.KRDictException, Exception) as e:
+            if attempt == 2:
+                logger.warning(
+                    f"Korean lookup failed for '{target_word}' after 3 attempts: {e}"
+                )
+                return []
+            logger.debug(
+                f"Korean lookup attempt {attempt + 1} failed for '{target_word}', retrying: {e}"
+            )
+    else:
         return []
 
     for entry in korean_input.data.results:
