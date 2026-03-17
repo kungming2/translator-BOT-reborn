@@ -24,6 +24,9 @@ from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KUNULO"})
 
+EntryData = list[str] | None
+KunuloEntry = tuple[str, EntryData]
+
 
 class Kunulo:
     """
@@ -71,7 +74,7 @@ class Kunulo:
         }
 
     @staticmethod
-    def _normalize_entry(entry):
+    def _normalize_entry(entry: "KunuloEntry | str") -> "KunuloEntry":
         """
         Convert entry to (comment_id, data) format for internal consistency.
         Handles legacy format where entries might be just strings.
@@ -144,7 +147,7 @@ class Kunulo:
 
         return terms
 
-    def _add_entry(self, tag, comment_id, data=None):
+    def _add_entry(self, tag: str, comment_id: str, data: EntryData = None) -> None:
         """
         Add an entry, storing as tuple (comment_id, data).
 
@@ -230,7 +233,9 @@ class Kunulo:
         entry = self._normalize_entry(entries[0])
         return entry[0]  # Return just the comment ID
 
-    def get_tag_with_data(self, tag, index=0):
+    def get_tag_with_data(
+        self, tag: str, index: int = 0
+    ) -> KunuloEntry | tuple[None, None]:
         """
         Get the comment ID and its associated data for a tag.
 
@@ -247,7 +252,7 @@ class Kunulo:
         entry = self._normalize_entry(entries[index])
         return entry  # Return (comment_id, data) tuple
 
-    def get_all_entries(self, tag):
+    def get_all_entries(self, tag: str) -> list[KunuloEntry]:
         """
         Get all entries for a tag as a list of (comment_id, data) tuples.
 

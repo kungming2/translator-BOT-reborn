@@ -28,7 +28,7 @@ Both functions help maintain data integrity by catching changes that
 might otherwise be missed in normal processing.
 ...
 
-Logger tag: [EDIT]
+Logger tag: [MN:EDIT]
 """
 
 import logging
@@ -36,7 +36,6 @@ import time
 from typing import TYPE_CHECKING
 
 from praw import models
-from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -52,7 +51,7 @@ from ziwen_commands.claim import parse_claim_comment
 if TYPE_CHECKING:
     from praw.models import Comment
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "EDIT"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:EDIT"})
 
 # Sentinel used when a comment has no commands at all.
 _NO_COMMANDS = ""
@@ -108,6 +107,7 @@ class _CachedComment:
     __slots__ = ("body", "_komandos_str", "_komando_set")
 
     def __init__(self, body: str, komandos: str):
+        """Store the cached comment body and raw komandos string."""
         self.body = body
         # Parsed lazily on first access via property below.
         self._komandos_str = komandos
@@ -115,6 +115,7 @@ class _CachedComment:
 
     @property
     def command_names(self) -> set[str]:
+        """Deserialised set of command names; parsed lazily on first access."""
         if self._komando_set is None:
             self._komando_set = _deserialize_komandos(self._komandos_str)
         return self._komando_set
@@ -382,6 +383,6 @@ def progress_tracker() -> None:
 
 if __name__ == "__main__":
     start_time = time.time()
-    with msg.loading("Running Edit Tracker..."):
-        edit_tracker()
-    msg.info(f"Finished. {round(time.time() - start_time, 2)} seconds elapsed.")
+    logger.info("Running Edit Tracker...")
+    edit_tracker()
+    logger.info(f"Finished. {round(time.time() - start_time, 2)} seconds elapsed.")

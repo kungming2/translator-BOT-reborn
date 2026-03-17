@@ -5,7 +5,7 @@ Interfaces with processes.ziwen_posts to help assess posts which might
 be duplicates from the same user.
 ...
 
-Logger tag: [DUPE]
+Logger tag: [MN:DUPE]
 """
 
 import hashlib
@@ -35,7 +35,7 @@ from responses import RESPONSE
 
 from .usage_statistics import action_counter
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "DUPE"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:DUPE"})
 
 
 class DuplicateDetector:
@@ -801,7 +801,7 @@ def get_image_duplicate_stats(days=7):
 """TESTING ROUTINE"""
 
 
-def duplicate_detection_test():
+def duplicate_detection_test() -> None:
     """
     Test the duplicate detector on r/translator posts.
     """
@@ -901,11 +901,3 @@ def duplicate_detection_test():
         print("All posts appear to be unique.")
 
     print()
-
-
-if __name__ == "__main__":
-    start_time = time.time()
-    duplicate_detection_test()
-    end_time = time.time()
-    elapsed = end_time - start_time
-    print(f"\nTotal execution time: {elapsed:.2f} seconds")

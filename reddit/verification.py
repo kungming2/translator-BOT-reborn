@@ -7,7 +7,7 @@ watch for, and verification requests are submitted as comment replies
 to that post.
 ...
 
-Logger tag: [VERIF]
+Logger tag: [R:VERIF]
 """
 
 import logging
@@ -16,7 +16,7 @@ import sqlite3
 import time
 from typing import TYPE_CHECKING
 
-from config import SETTINGS, enable_debug_logging
+from config import SETTINGS
 from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
@@ -28,7 +28,7 @@ from responses import RESPONSE
 if TYPE_CHECKING:
     from praw.models import Comment, Redditor
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "VERIF"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:VERIF"})
 
 
 def get_verified_thread() -> str | None:
@@ -312,7 +312,3 @@ if not VERIFIED_POST_ID:
         "VERIFIED_POST_ID could not be resolved at startup — "
         "verification_parser will not work until the module is reloaded."
     )
-
-if __name__ == "__main__":
-    enable_debug_logging()
-    print(get_verified_thread())

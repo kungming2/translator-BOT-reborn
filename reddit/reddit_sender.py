@@ -15,7 +15,7 @@ Functions:
     message_send: Send a private message to a Redditor
 ...
 
-Logger tag: [SENDER]
+Logger tag: [R:SENDER]
 """
 
 import logging
@@ -29,7 +29,7 @@ from config import SETTINGS
 from config import logger as _base_logger
 from testing import log_testing_mode
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "SENDER"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:SENDER"})
 
 
 class UserNotFoundException(Exception):

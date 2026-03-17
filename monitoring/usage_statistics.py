@@ -5,7 +5,7 @@ Contains functions related to statistics tabulation. Many of these
 functions are used by Wenyuan, the statistics calculator routine.
 ...
 
-Logger tag: [USAGE]
+Logger tag: [MN:USAGE]
 """
 
 import ast
@@ -21,7 +21,7 @@ from database import db
 from time_handling import get_current_utc_date
 from wenju import WENJU_SETTINGS
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "USAGE"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:USAGE"})
 
 
 def action_counter(messages_number, action_type):
@@ -472,9 +472,3 @@ def user_statistics_writer(instruo):
 
     conn.commit()
     logger.debug(f"Stats written for u/{username}.")
-
-
-if "__main__" == __name__:
-    while True:
-        my_input = input("Check on the user statistics for this username: ")
-        print(user_statistics_loader(my_input))

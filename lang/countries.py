@@ -26,7 +26,7 @@ import pycountry
 from config import Paths, load_settings
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "COUNTRIES"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG:COUNTRIES"})
 
 _country_list_cache = None  # cached country list from CSV
 _language_full_data_cache = None  # cached language YAML data for emoji lookups

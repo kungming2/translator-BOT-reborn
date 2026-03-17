@@ -13,7 +13,6 @@ import logging
 import praw
 from praw.exceptions import APIException
 from praw.models import Message
-from wasabi import msg
 
 from config import Paths, load_settings
 from config import logger as _base_logger
@@ -25,7 +24,7 @@ from monitoring.usage_statistics import (
     generate_language_frequency_markdown,
     user_statistics_loader,
 )
-from reddit.connection import REDDIT, USERNAME, is_valid_user
+from reddit.connection import REDDIT, USERNAME
 from reddit.notifications import (
     notifier_language_list_editor,
     notifier_language_list_retriever,
@@ -352,31 +351,3 @@ def handle_points(message, message_author):
             f"(commands stats included: {has_commands})"
         )
         action_counter(1, "Points checks")
-
-
-if __name__ == "__main__":
-    user_check = is_valid_user(USERNAME)
-    if user_check:
-        msg.good("This user exists!")
-    else:
-        msg.fail("This user does not exist!")
-
-    # Mock message class
-    class MockMessage:
-        def __init__(self, body):
-            self.body = body
-
-    # Enable debug logging
-    logging.getLogger().setLevel(logging.DEBUG)
-
-    # Interactive mode
-    while True:
-        print("\nEnter custom test (or 'x' to exit):")
-        custom_input = input("Message body: ")
-
-        if custom_input.lower() == "x":
-            break
-
-        message_custom = MockMessage(custom_input)
-        handle_subscribe(message_custom, "test_user_custom")
-        print("\n" + "=" * 50 + "\n")

@@ -22,9 +22,13 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
 
 class Komando:
+    """Represents a single parsed bot command with its name, arguments,
+    and mode flags."""
+
     def __init__(
         self, name, data=None, specific_mode=False, disable_tokenization=False
     ):
+        """Initialise a Komando with its name, argument data, and mode flags."""
         self.name = name  # e.g., "identify", "translated"
         # For data, ["es"], ["la", "grc"] as Lingvos or None
         # lookup_cjk gets tuples: ('lang', 'term', explicit_bool)
@@ -40,6 +44,7 @@ class Komando:
         )
 
     def to_dict(self):
+        """Serialize the Komando to a plain dictionary."""
         return {
             "name": self.name,
             "data": self.data,
@@ -371,17 +376,3 @@ def extract_commands_from_text(text, parent_languages=None):
 
     logger.debug(f"Returning {len(commands)} komando(s): {[c.name for c in commands]}")
     return commands
-
-
-if "__main__" == __name__:
-    while True:
-        my_input = input(
-            "Enter the comment text with commands you'd like to test here: "
-        )
-        commands_new = extract_commands_from_text(my_input)
-        if not commands_new:
-            print("No commands found.")
-        else:
-            for command_new in commands_new:
-                print(f"* {command_new}")
-                print("=" * 10)

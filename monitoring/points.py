@@ -18,7 +18,7 @@ frequency. Rarer languages receive higher multipliers to encourage diverse
 language support.
 ...
 
-Logger tag: [POINTS]
+Logger tag: [MN:POINTS]
 """
 
 import logging
@@ -33,7 +33,6 @@ from praw.models import Comment
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
-from lang.languages import converter
 from models.ajo import ajo_loader, ajo_writer
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
@@ -48,7 +47,7 @@ if TYPE_CHECKING:
     from models.ajo import Ajo
     from models.lingvo import Lingvo
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "POINTS"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:POINTS"})
 
 
 def points_user_retriever(username: str) -> str:
@@ -580,53 +579,3 @@ def points_tabulator(
     logger.info(f"Points tabulation complete for comment `{comment.id}`")
 
     return
-
-
-def show_menu():
-    print("\nSelect a test to run:")
-    print("1. Points worth determiner (enter a language to get its point value)")
-    print("2. Points user retriever (enter a username to get their point totals)")
-    print("3. Points post retriever (enter a post ID to get its point records)")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-3 or x): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2", "3"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            my_search = input("Enter a language name or code: ")
-            my_lingvo = converter(my_search)
-            if my_lingvo:
-                my_points_result = points_worth_determiner(my_lingvo)
-                print(
-                    f"Language: {my_lingvo.name} ({my_lingvo.preferred_code}) → Points worth: {my_points_result}"
-                )
-            else:
-                print(f"Could not find a language matching: {my_search}")
-
-        elif choice == "2":
-            my_username = input("Enter a Reddit username: ")
-            my_user_result = points_user_retriever(my_username)
-            print(my_user_result)
-
-        elif choice == "3":
-            my_post_id = input("Enter a Reddit post ID: ")
-            my_post_result = points_post_retriever(my_post_id)
-            if my_post_result:
-                print(f"Point records for post {my_post_id}:")
-                for my_comment_id, my_username, my_points in my_post_result:
-                    print(
-                        f"  Comment {my_comment_id} | u/{my_username} | {my_points} points"
-                    )
-            else:
-                print(f"No point records found for post ID: {my_post_id}")

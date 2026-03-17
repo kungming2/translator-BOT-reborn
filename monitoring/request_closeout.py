@@ -7,7 +7,7 @@ comments/activity. It then messages the requester to remind them to mark
 the post as translated if their request has been properly fulfilled.
 ...
 
-Logger tag: [CLOSEOUT]
+Logger tag: [MN:CLOSEOUT]
 """
 
 import logging
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from models.ajo import Ajo
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "CLOSEOUT"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:CLOSEOUT"})
 
 
 def _send_closeout_messages(

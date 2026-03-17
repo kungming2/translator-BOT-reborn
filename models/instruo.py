@@ -24,9 +24,7 @@ import re
 
 from config import SETTINGS
 from config import logger as _base_logger
-from models.ajo import ajo_loader
 from models.komando import extract_commands_from_text
-from reddit.connection import REDDIT_HELPER
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
@@ -96,6 +94,8 @@ class Instruo:
         author_post=None,
         body_remainder=None,
     ):
+        """Initialize an Instruo with comment metadata, parsed commands,
+        and languages."""
         self.id_comment = id_comment
         self.id_post = id_post
         self.created_utc = created_utc  # integer Unix timestamp
@@ -110,6 +110,7 @@ class Instruo:
         return f"Instruo (id={self.id_comment!r}, commands={self.commands!r})"
 
     def to_dict(self):
+        """Serialize the Instruo and its commands to a plain dictionary."""
         return {
             "id_comment": self.id_comment,
             "id_post": self.id_post,
@@ -124,6 +125,7 @@ class Instruo:
 
     @classmethod
     def from_comment(cls, comment, parent_languages=None):
+        """Construct an Instruo from a live PRAW comment object."""
         text = comment.body
         id_comment = comment.id
         id_post = comment.submission.id
@@ -233,43 +235,3 @@ def comment_has_command(comment):
 
     logger.debug("No commands detected in comment.")
     return False
-
-
-def show_menu():
-    print("\nSelect a query to run:")
-    print("1. Enter Reddit comment URL to parse ")
-    print("2. Enter text to parse for commands ")
-
-
-if "__main__" == __name__:
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-2): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            # Get comment URL from user
-            comment_url = input("Enter Reddit comment URL: ").strip()
-
-            # Get comment from URL and process
-            try:
-                test_comment = REDDIT_HELPER.comment(url=comment_url)
-                test_ajo = ajo_loader(test_comment.submission.id)
-                parent_lingvos = [test_ajo.lingvo] if test_ajo else []
-                test_instruo = Instruo.from_comment(
-                    test_comment, parent_languages=parent_lingvos
-                )
-                print(f"Instruo created: {test_instruo}\n")
-                print(vars(test_instruo))
-            except Exception as ex:
-                print(f"Error: {ex}\n")
-        elif choice == "2":
-            testing_text = input("Enter text to parse for commands: ")
-            print(comment_has_command(testing_text.strip()))

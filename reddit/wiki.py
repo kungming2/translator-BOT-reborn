@@ -6,7 +6,7 @@ Note this is distinct from Wikipedia functions, which are in
 lookup/wp_utils.py.
 ...
 
-Logger tag: [WIKI]
+Logger tag: [R:WIKI]
 """
 
 import logging
@@ -19,7 +19,7 @@ import yaml
 from dateutil.relativedelta import relativedelta
 from yaml.parser import ParserError
 
-from config import SETTINGS, enable_debug_logging
+from config import SETTINGS
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
 from reddit.connection import REDDIT, REDDIT_HELPER
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from models.lingvo import Lingvo
 
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "WIKI"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:WIKI"})
 
 
 def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
@@ -73,6 +73,8 @@ def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
 
 
 def _extract_single_language_statistics_table(markdown_text: str) -> str | None:
+    """Extract the 'Single-Language Requests' Markdown table from the wiki page."""
+
     # Use regex to extract the table under "### Single-Language Requests"
     pattern = re.compile(
         r"### Single-Language Requests\s*\n"  # Match the header
@@ -344,8 +346,3 @@ def search_integration(search_term: str) -> str | None:
             total_term += "\n* " + example_str
 
         return total_term
-
-
-if __name__ == "__main__":
-    enable_debug_logging()
-    print(fetch_most_requested_languages())

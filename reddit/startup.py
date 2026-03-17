@@ -4,7 +4,7 @@
 Initializes Ziwen's runtime state and caches key data on startup.
 ...
 
-Logger tag: [STARTUP]
+Logger tag: [R:STARTUP]
 """
 
 import logging
@@ -16,7 +16,7 @@ from config import SETTINGS
 from config import logger as _base_logger
 from reddit.connection import REDDIT, USERNAME
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "STARTUP"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:STARTUP"})
 
 
 @dataclass
@@ -75,9 +75,3 @@ def ziwen_startup() -> State:
 
 
 STATE: State = ziwen_startup()
-
-
-if __name__ == "__main__":
-    start_time = time.time()
-    print(template_retriever())
-    print(round(time.time() - start_time, 2))

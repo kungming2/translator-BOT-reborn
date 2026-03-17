@@ -35,6 +35,7 @@ class Titolo:
     """
 
     def __init__(self) -> None:
+        """Initialize all Titolo fields to their empty/None defaults."""
         self.source: list[Lingvo] = []  # Source language(s)
         self.target: list[Lingvo] = []  # Target language(s)
         self.final_code: str | None = None  # CSS flair code

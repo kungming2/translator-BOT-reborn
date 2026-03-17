@@ -4,7 +4,7 @@
 Handles connections with Reddit.
 ...
 
-Logger tag: [CONN]
+Logger tag: [R:CONN]
 """
 
 import logging
@@ -13,7 +13,7 @@ import re
 import praw
 import requests
 from praw.exceptions import RedditAPIException
-from praw.models import Redditor
+from praw.models import Redditor, Submission
 from prawcore import exceptions
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
@@ -21,10 +21,10 @@ from random_user_agent.user_agent import UserAgent
 from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "CONN"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:CONN"})
 
 
-def reddit_login(credentials):
+def reddit_login(credentials: dict[str, str]) -> praw.Reddit:
     """
     Logs in to Reddit with the standard credentials.
     """
@@ -39,7 +39,7 @@ def reddit_login(credentials):
     return reddit
 
 
-def reddit_helper_login(credentials):
+def reddit_helper_login(credentials: dict[str, str]) -> praw.Reddit:
     """
     Logs in to Reddit with the helper credentials. This is used for non-
     moderation tasks in order to reduce API calls.
@@ -55,7 +55,7 @@ def reddit_helper_login(credentials):
     return reddit
 
 
-def reddit_hermes_login(credentials):
+def reddit_hermes_login(credentials: dict[str, str]) -> praw.Reddit:
     """
     Logs in to Reddit with Hermes's dedicated credentials.
     Hermes is a separate bot account for r/Language_Exchange matching.
@@ -105,7 +105,7 @@ def reddit_status_check() -> list[dict] | None:
     return incidents
 
 
-def get_random_useragent():
+def get_random_useragent() -> dict[str, str]:
     """
     Returns a dictionary with a random User-Agent and a
     default Accept header. Generally used with website accessing
@@ -130,7 +130,7 @@ def get_random_useragent():
     }
 
 
-def is_mod(user) -> bool:
+def is_mod(user: str | Redditor) -> bool:
     """
     Checks whether the given user is a moderator of r/translator.
 
@@ -149,7 +149,7 @@ def is_mod(user) -> bool:
     )
 
 
-def is_valid_user(username):
+def is_valid_user(username: str) -> bool:
     """
     Simple function that tests if a Redditor is a valid user.
     Used to keep the notifications database clean.
@@ -240,7 +240,7 @@ def create_mod_note(
         return False
 
 
-def widget_update(widget_id, new_text):
+def widget_update(widget_id: str, new_text: str) -> bool:
     """
     Update a text widget on the subreddit with new content.
 
@@ -285,7 +285,8 @@ def widget_update(widget_id, new_text):
 """REMOVAL REASONS"""
 
 
-def _fetch_removal_reasons():
+def _fetch_removal_reasons() -> dict[int, tuple[str, str, str]] | None:
+    """Fetch and cache removal reasons from the subreddit's mod settings."""
     global _removal_reasons_cache
     if _removal_reasons_cache is not None:
         return _removal_reasons_cache
@@ -304,7 +305,7 @@ def _fetch_removal_reasons():
     return _removal_reasons_cache
 
 
-def _search_removal_reasons(prompt):
+def search_removal_reasons(prompt: str) -> str | None:
     """Takes a prompt and searches through removal reasons fetched from
     the subreddit, returning the specific removal reason ID if found.
     E.g. the prompt could be "spam".
@@ -323,7 +324,11 @@ def _search_removal_reasons(prompt):
     return None
 
 
-def remove_content(item, reason: str, mod_note: str | None = None):
+def remove_content(
+    item: praw.models.Submission | praw.models.Comment,
+    reason: str,
+    mod_note: str | None = None,
+) -> None:
     """Removes an item using PRAW's mod.remove(), searching for a matching removal reason.
 
     Args:
@@ -331,7 +336,7 @@ def remove_content(item, reason: str, mod_note: str | None = None):
         reason: A string to search for in the subreddit's removal reasons (e.g. "duplicate").
         mod_note: Optional mod note to attach. Defaults to a generic removal message.
     """
-    removal_reason_id = _search_removal_reasons(reason)
+    removal_reason_id = search_removal_reasons(reason)
 
     removal_kwargs = {
         "reason_id": removal_reason_id,
@@ -344,6 +349,39 @@ def remove_content(item, reason: str, mod_note: str | None = None):
     item.mod.remove(**removal_kwargs)
 
 
+def submission_from_input(user_input: str) -> Submission | None:
+    """
+    Resolve a Reddit post ID, full URL, or short redd.it URL to a PRAW
+    Submission object using REDDIT_HELPER.
+
+    Accepts any of:
+        - Bare post ID:   1rvpshb
+        - Full URL:       https://www.reddit.com/r/sub/comments/1rvpshb/title/
+        - Short URL:      https://redd.it/1rvpshb
+
+    :param user_input: A post ID or any Reddit URL format.
+    :return: A PRAW Submission object.
+    :raises ValueError: If the post ID cannot be extracted from the input.
+    """
+    user_input = user_input.strip()
+
+    # Short URL: https://redd.it/1rvpshb
+    short_match = re.search(r"redd\.it/([A-Za-z0-9]+)", user_input)
+    if short_match:
+        return REDDIT_HELPER.submission(id=short_match.group(1))
+
+    # Full URL: .../comments/1rvpshb/...
+    full_match = re.search(r"comments/([A-Za-z0-9]+)", user_input)
+    if full_match:
+        return REDDIT_HELPER.submission(id=full_match.group(1))
+
+    # Bare post ID: alphanumeric, typically 5-7 chars
+    if re.fullmatch(r"[A-Za-z0-9]+", user_input):
+        return REDDIT_HELPER.submission(id=user_input)
+
+    raise ValueError(f"Could not extract a post ID from: {user_input!r}")
+
+
 """DEFINED GLOBALS"""
 
 
@@ -353,56 +391,4 @@ REDDIT_HELPER = reddit_helper_login(credentials_source)
 REDDIT_HERMES = reddit_hermes_login(credentials_source)
 USERNAME = credentials_source["USERNAME"]
 
-_removal_reasons_cache = None
-
-
-def show_menu():
-    print("\nSelect an option to run:")
-    print("1. Reddit status check (fetch unresolved incidents)")
-    print("2. Search removal reasons (text search)")
-    print("3. Get a random user agent")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-3): ").strip()
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2", "3"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            result = reddit_status_check()
-            if result is None:
-                print("Could not reach the Reddit Status API.")
-            elif not result:
-                print("No unresolved Reddit incidents.")
-            else:
-                for test_incident in result:
-                    print(
-                        f"\n[{test_incident.get('status', '').upper()}] {test_incident.get('name')}"
-                        f"\n  Created : {test_incident.get('created_at')}"
-                        f"\n  Updated : {test_incident.get('updated_at')}"
-                    )
-
-        elif choice == "2":
-            test_prompt = input("Enter search prompt for removal reasons: ").strip()
-            if not test_prompt:
-                print("No prompt entered.")
-                continue
-            reason_id = _search_removal_reasons(test_prompt)
-            if reason_id:
-                print(f"Found removal reason ID: {reason_id}")
-            else:
-                print(f"No removal reason found matching '{test_prompt}'.")
-
-        elif choice == "3":
-            ua = get_random_useragent()
-            print(f"\nUser-Agent : {ua['User-Agent']}")
-            print(f"Accept     : {ua['Accept']}")
+_removal_reasons_cache: dict[int, tuple[str, str, str]] | None = None

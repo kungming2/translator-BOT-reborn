@@ -27,7 +27,10 @@ from typing import Any
 
 
 class Lingvo:
+    """Data model representing a single language or script entry."""
+
     def __init__(self, **kwargs: Any) -> None:
+        """Initialise all Lingvo attributes from keyword arguments."""
         self.name: str | None = kwargs.get("name")
         self.name_alternates: list[str] = kwargs.get("name_alternates", [])
         self.language_code_1: str | None = kwargs.get("language_code_1")
@@ -119,6 +122,7 @@ class Lingvo:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise all Lingvo attributes to a plain dictionary."""
         return {
             "name": self.name,
             "name_alternates": self.name_alternates,

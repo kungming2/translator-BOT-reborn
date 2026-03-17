@@ -5,7 +5,7 @@ Handles translation notification-related functions for
 the messaging system.
 ...
 
-Logger tag: [NOTIF]
+Logger tag: [R:NOTIF]
 """
 
 import logging
@@ -33,7 +33,7 @@ from responses import RESPONSE
 from time_handling import time_convert_to_string
 from utility import check_url_extension
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "NOTIF"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "R:NOTIF"})
 
 
 """NOTIFICATIONS SUBSCRIPTIONS WITH DATABASE"""
@@ -733,6 +733,9 @@ def notifier_internal(post_type, submission):
     cursor = db.conn_main.cursor()
     cursor.execute(sql_pt, (post_type_search,))
     notify_targets = cursor.fetchall()
+    logger.info(
+        f"Internal notifications: post_type={post_type_search!r}, targets={len(notify_targets)}"
+    )
 
     if not notify_targets:
         return []
@@ -772,15 +775,3 @@ def notifier_internal(post_type, submission):
             _prune_deleted_user_notifications(username, True)
 
     return notify_targets
-
-
-if __name__ == "__main__":
-    while True:
-        notifications_test = input(
-            "Please enter the language you'd like to retrieve notifications for: "
-        )
-        notifications_data = fetch_usernames_for_lingvo(converter(notifications_test))
-        print(
-            f"Number of signups for `{notifications_test}`: {len(notifications_data)}"
-        )
-        print(notifications_data)

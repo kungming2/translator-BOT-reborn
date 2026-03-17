@@ -24,7 +24,6 @@ Logger tag: [M:AJO]
 
 import ast
 import logging
-import pprint
 from typing import List
 
 import orjson
@@ -227,6 +226,7 @@ class Ajo:
     """
 
     def __init__(self):
+        """Initialize an Ajo with all fields set to their default values."""
         self._id = None
         self._created_utc = None
         self._author = None
@@ -289,6 +289,7 @@ class Ajo:
 
     @property
     def id(self):
+        """The post ID; immutable once set."""
         return self._id
 
     @id.setter
@@ -299,6 +300,7 @@ class Ajo:
 
     @property
     def created_utc(self):
+        """The post creation timestamp; immutable once set."""
         return self._created_utc
 
     @created_utc.setter
@@ -309,6 +311,7 @@ class Ajo:
 
     @property
     def author(self):
+        """The post author username; immutable once set."""
         return self._author
 
     @author.setter
@@ -319,6 +322,7 @@ class Ajo:
 
     @property
     def lingvo(self):
+        """The Lingvo object for this post's language; initialized lazily from preferred_code."""
         if not self._lingvo:
             self.initialize_lingvo()
         return self._lingvo
@@ -335,34 +339,42 @@ class Ajo:
 
     @property
     def language_code_1(self):
+        """ISO 639-1 code delegated from the Lingvo object."""
         return self.lingvo.language_code_1
 
     @property
     def language_code_3(self):
+        """ISO 639-3 code delegated from the Lingvo object."""
         return self.lingvo.language_code_3
 
     @property
     def language_name(self):
+        """Language name delegated from the Lingvo object."""
         return self.lingvo.name
 
     @property
     def country_code(self):
+        """Country code delegated from the Lingvo object."""
         return self.lingvo.country
 
     @property
     def is_supported(self):
+        """Whether the language is supported, delegated from the Lingvo object."""
         return self.lingvo.supported
 
     @property
     def script_code(self):
+        """Script code delegated from the Lingvo object."""
         return self.lingvo.script_code
 
     @property
     def script_name(self):
+        """Human-readable script name resolved from script_code, or None."""
         return converter(self.script_code).name if self.script_code else None
 
     @property
     def is_script(self):
+        """True if this post's language has an associated script code."""
         return self.script_code is not None
 
     @classmethod
@@ -548,6 +560,8 @@ class Ajo:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Ajo":
+        """Reconstruct an Ajo from a serialized dictionary,
+        handling legacy (Python-syntax) formats."""
         ajo = cls()
 
         # Determine preferred_code early
@@ -1275,77 +1289,3 @@ def _convert_to_dict(input_string):
 
     # If both methods fail, raise an error
     raise ValueError("Input could not be parsed as a Python dictionary or JSON")
-
-
-"""INQUIRY SECTION"""
-
-
-def show_menu():
-    print("\nSelect a search to run:")
-    print("1. Ajo testing (enter a URL of a Reddit post to test)")
-    print("2. Reddit posts (retrieve the last few Reddit posts to test against)")
-    print("3. Text testing (paste a dictionary of an Ajo to test)")
-    print("4. Load an Ajo (paste an ID to test)")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-4): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2", "3", "4"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            test_url = input("Enter the URL of the Reddit post to test: ")
-            submission_id = test_url.split("comments/")[1].split("/")[0]
-            test_post = REDDIT_HELPER.submission(id=submission_id)
-
-            test_titolo = process_title(test_post.title)
-            pprint.pprint(vars(test_titolo))
-
-            post_ajo = Ajo.from_titolo(test_titolo, test_post)
-            pprint.pprint(vars(post_ajo))
-
-        elif choice == "2":
-            for submission_new in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(
-                limit=3
-            ):
-                print(f"Title: {submission_new.title}")
-                ajo_new = Ajo.from_titolo(
-                    process_title(submission_new.title), submission_new
-                )
-                pprint.pprint(vars(ajo_new))
-                print("------------------")
-
-        elif choice == "3":
-            test_dict = input("Paste an Ajo as a Python dictionary or JSON: ")
-            test_dict = _convert_to_dict(test_dict)
-            pprint.pp(vars(Ajo.from_dict(test_dict)))
-
-        elif choice == "4":
-            test_ajo_input = input("Enter the ID of the Ajo: ")
-            test_ajo = ajo_loader(test_ajo_input)
-
-            if test_ajo is None:
-                print(f"Could not load Ajo with ID: {test_ajo_input}")
-            else:
-                print("=" * 60)
-                print(f"ID: {test_ajo.id}")
-                print(f"Lingvo: {test_ajo.lingvo}")
-                print(f"Language Name: {test_ajo.language_name}")
-
-                print("FULL OBJECT DATA:")
-                print("=" * 60)
-                pprint.pp(vars(test_ajo))
-                print("=" * 60)
-
-                determine_flair_and_update(test_ajo)
-                print(f"Determined flair CSS: {test_ajo.output_post_flair_css}")
-                print(f"Determined flair text: {test_ajo.output_post_flair_text}")

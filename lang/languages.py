@@ -30,19 +30,18 @@ import csv
 import logging
 import random
 import re
-from pprint import pprint
 from typing import Any, Optional
 
 import orjson
 import yaml
 from rapidfuzz import fuzz
 
-from config import Paths, enable_debug_logging, load_settings
+from config import Paths, load_settings
 from config import logger as _base_logger
 from lang.countries import country_converter
 from models.lingvo import Lingvo
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG:LANGUAGES"})
 
 # Load the language module's settings
 language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
@@ -610,7 +609,12 @@ def _resolve_to_lingvo(
     return None
 
 
-def converter(input_text, fuzzy=True, specific_mode=False, preserve_country=False):
+def converter(
+    input_text: str,
+    fuzzy: bool = True,
+    specific_mode: bool = False,
+    preserve_country: bool = False,
+) -> Lingvo | None:
     """
     Resolve an arbitrary string to a Lingvo object.
 
@@ -713,7 +717,7 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
 # ---------------------------------------------------------------------------
 
 
-def add_alt_language_name(language_code: str, alt_name: str):
+def add_alt_language_name(language_code: str, alt_name: str) -> bool:
     """
     Adds an alternate name for a given language in the LANGUAGE_DATA YAML file.
     If the language doesn't have a 'name_alternates' field, it is created.
@@ -726,9 +730,7 @@ def add_alt_language_name(language_code: str, alt_name: str):
             existing_data = yaml.safe_load(f) or {}
 
         if language_code not in existing_data:
-            logger.warning(
-                f"[AddAlt] Language code '{language_code}' not found in dataset."
-            )
+            logger.warning(f"Language code '{language_code}' not found in dataset.")
             return False
 
         lang_entry = existing_data[language_code]
@@ -745,18 +747,16 @@ def add_alt_language_name(language_code: str, alt_name: str):
             with open(language_data_path, "w", encoding="utf-8") as f:
                 yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
 
-            logger.info(
-                f"[AddAlt] Added alternate name '{alt_name}' to '{language_code}'."
-            )
+            logger.info(f"Added alternate name '{alt_name}' to '{language_code}'.")
             return True
         else:
             logger.info(
-                f"[AddAlt] Alternate name '{alt_name}' already exists for '{language_code}'."
+                f"Alternate name '{alt_name}' already exists for '{language_code}'."
             )
             return False
 
     except Exception as e:
-        logger.error(f"[AddAlt] Error while adding alternate name: {e}")
+        logger.error(f"Error while adding alternate name: {e}")
         return False
 
 
@@ -816,52 +816,3 @@ def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
     code_index: int = 1 if iso_639_1 else 0
     selected_language = converter(chosen[code_index])
     return selected_language
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-
-def _show_menu():
-    print("\nSelect a test to run:")
-    print("1. Converter test (enter a string to test with the converter)")
-    print("2. Parse language list (enter a language list string to parse)")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    enable_debug_logging()
-    while True:
-        _show_menu()
-        choice = input("Enter your choice (1-2 or x): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            my_test = input("Enter the string you wish to test with the converter: ")
-            converter_result = converter(my_test)
-
-            if converter_result:
-                print(
-                    f"Your Input: `{my_test}` → Preferred Code: {converter_result.country_emoji} "
-                    f"`{converter_result.preferred_code}`"
-                )
-                pprint(vars(converter_result))
-                print(f"Country flag emoji: {converter_result.country_emoji}")
-            else:
-                print("Did not match anything.")
-
-        elif choice == "2":
-            logger.setLevel(logging.DEBUG)
-            language_list_input = input(
-                "Enter the language list from a subscription message to parse: "
-            )
-            parse_result = parse_language_list(language_list_input)
-            pprint(parse_result)

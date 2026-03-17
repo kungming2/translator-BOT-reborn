@@ -17,13 +17,16 @@ import orjson
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
-from reddit.connection import REDDIT, REDDIT_HELPER
+from reddit.connection import REDDIT
 from testing import log_testing_mode
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:DISKUTO"})
 
 
 class Diskuto:
+    """Represents an internal (non-request) subreddit post such as a
+    Meta or Community post."""
+
     def __init__(
         self,
         title_original=None,
@@ -32,6 +35,8 @@ class Diskuto:
         created_utc=None,
         processed=False,
     ):
+        """Initialize a Diskuto with title, post type, ID, timestamp,
+        and processed flag."""
         self.title_original = title_original
         self.post_type = post_type
         self.id = _id
@@ -95,7 +100,7 @@ class Diskuto:
             processed=False,
         )
 
-    def toggle_processed(self):
+    def toggle_processed(self) -> None:
         """
         Flip the processed flag (True -> False or False -> True).
         """
@@ -243,22 +248,3 @@ def diskuto_loader(post_id):
         created_utc=diskuto_dict.get("created_utc"),
         processed=diskuto_dict.get("processed", False),
     )
-
-
-if __name__ == "__main__":
-    url_input = input("Please enter a non-request Reddit URL to test: ")
-    reddit_submission = REDDIT_HELPER.submission(url=url_input)
-
-    # Process into a Diskuto
-    diskuto_test = Diskuto.process_post(reddit_submission)
-
-    # Print Diskuto info
-    print("Diskuto object:")
-    print(diskuto_test)
-
-    # Write to the database
-    try:
-        diskuto_writer(diskuto_test)
-        print(f"> Diskuto `{diskuto_test.id}` written to database successfully.")
-    except Exception as e:
-        print(f"> Failed to write Diskuto: {e}")
