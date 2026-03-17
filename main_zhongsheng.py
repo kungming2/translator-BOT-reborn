@@ -47,6 +47,7 @@ DISCORD_TOKEN = load_settings(Paths.AUTH["CREDENTIALS"])["ZHONGSHENG_DISCORD_TOK
 
 @bot.event
 async def on_ready() -> None:
+    """Log the connected guild (server) name and ID when the bot comes online."""
     guild = discord.utils.get(bot.guilds, name="r/Translator Oversight")
     if guild:
         print(
@@ -59,6 +60,7 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
+    """Handle command errors, rejecting unauthorized roles and logging all others."""
     if isinstance(error, commands.errors.CheckFailure):
         await ctx.send("You do not have the correct role for this command.")
     else:

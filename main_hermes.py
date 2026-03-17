@@ -25,7 +25,7 @@ import sys
 import time
 import traceback
 
-from config import get_hermes_logger
+from config import TRANSIENT_ERRORS, get_hermes_logger
 from error import error_log_basic
 from hermes import HERMES_SETTINGS
 from hermes.hermes_database import hermes_db, initialize_hermes_db
@@ -193,14 +193,22 @@ if __name__ == "__main__":
         try:
             database_maintenance()
             get_submissions()
+
         except KeyboardInterrupt:
             logger.info("Hermes stopped by user (KeyboardInterrupt).")
             hermes_db.close_all()
             sys.exit(0)
+
+        except TRANSIENT_ERRORS as e:
+            # Just log transient errors at WARNING level, don't save to error log
+            logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
+            logger.info("Will retry on next cycle.")
+
         except Exception as exc:
             entry = f"### {exc}\n\n{traceback.format_exc()}"
             logger.critical(entry)
             error_log_basic(entry, "Hermes")
+
         else:
             elapsed_time = round((time.time() - start_time) / 60, 2)
             logger.info(f"Run {elapsed_time:.2f} minutes.")

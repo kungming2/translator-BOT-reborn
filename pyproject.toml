@@ -1,6 +1,6 @@
 [project]
 name = "translator-BOT"
-version = "2.2.1"
+version = "2.2.2"
 description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,8 +19,14 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
-    "code_manager",
     "config",
     "title",
 ]
 disallow_untyped_defs = true
+
+[tool.interrogate]
+ignore-nested-functions = true
+ignore-init-module = true
+ignore-private = true
+ignore-magic = true
+ignore-setters = true

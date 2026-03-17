@@ -34,7 +34,6 @@ import csv
 import json
 import logging
 import os
-import pprint
 import sqlite3
 import time
 from ast import literal_eval
@@ -62,47 +61,56 @@ class DatabaseManager:
     """
 
     def __init__(self) -> None:
+        """Initialize the manager with deferred connections to all three databases."""
         self._conn_cache: sqlite3.Connection | None = None
         self._conn_main: sqlite3.Connection | None = None
         self._conn_ajo: sqlite3.Connection | None = None
 
     @staticmethod
     def _connect(file_path: str) -> sqlite3.Connection:
+        """Open a SQLite connection to *file_path* with row_factory set to sqlite3.Row."""
         conn = sqlite3.connect(file_path)
         conn.row_factory = sqlite3.Row  # Optional: allows dictionary-like row access
         return conn
 
     @property
     def conn_cache(self) -> sqlite3.Connection:
+        """Lazy connection to the cache database; opens on first access."""
         if self._conn_cache is None:
             self._conn_cache = self._connect(Paths.DATABASE["CACHE"])
         return self._conn_cache
 
     @property
     def conn_main(self) -> sqlite3.Connection:
+        """Lazy connection to the main database; opens on first access."""
         if self._conn_main is None:
             self._conn_main = self._connect(Paths.DATABASE["MAIN"])
         return self._conn_main
 
     @property
     def conn_ajo(self) -> sqlite3.Connection:
+        """Lazy connection to the Ajo database; opens on first access."""
         if self._conn_ajo is None:
             self._conn_ajo = self._connect(Paths.DATABASE["AJO"])
         return self._conn_ajo
 
     @property
     def cursor_cache(self) -> sqlite3.Cursor:
+        """Return a fresh cursor on the cache database connection."""
         return self.conn_cache.cursor()
 
     @property
     def cursor_main(self) -> sqlite3.Cursor:
+        """Return a fresh cursor on the main database connection."""
         return self.conn_main.cursor()
 
     @property
     def cursor_ajo(self) -> sqlite3.Cursor:
+        """Return a fresh cursor on the Ajo database connection."""
         return self.conn_ajo.cursor()
 
     def close_all(self) -> None:
+        """Close all open database connections."""
         for conn in (self._conn_cache, self._conn_main, self._conn_ajo):
             if conn:
                 conn.close()
@@ -771,36 +779,5 @@ def get_recent_event_log_lines(
     return log_content, time_ago
 
 
-def _show_menu() -> None:
-    print("\nSelect a search to run:")
-    print("1. Database search (enter a query to test)")
-    print("2. Initialize databases if they do not already exist")
-
-
 # Instantiate a global shared database manager (singleton-like)
 db = DatabaseManager()
-
-
-if __name__ == "__main__":
-    while True:
-        _show_menu()
-        choice = input("Enter your choice (1-2): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            term_to_search = input("Enter the search term (username or post_id): ")
-            type_to_search = input("Enter the search type (user/post): ")
-            derived_ajos = search_database(term_to_search, type_to_search)
-            for item in derived_ajos:
-                pprint.pprint(vars(item))
-                print("\n\n")
-
-        elif choice == "2":
-            initialize_all_databases()

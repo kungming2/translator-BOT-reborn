@@ -31,7 +31,14 @@ from time_handling import time_convert_to_string
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW"})
 
 
-def _maybe_alert_slow_run(elapsed_minutes, run_start, api_calls, memory_usage):
+def _maybe_alert_slow_run(
+    elapsed_minutes: float,
+    run_start: str,
+    api_calls: int,
+    memory_usage: str,
+) -> None:
+    """Alert moderators via a Discord message if the run time of the
+    routine exceeds that of the scheduled cycle time."""
     if elapsed_minutes <= SETTINGS["cycle_time"]:
         return
     send_discord_alert(

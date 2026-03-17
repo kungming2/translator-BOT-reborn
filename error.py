@@ -259,39 +259,26 @@ def retrieve_error_log() -> str:
 """CHECKING FOR ERRORS IN EVENTS LOG"""
 
 
-def display_event_errors(days=7):
-    """
-    Print only ERROR entries from the last N days from a log file.
-
-    Args:
-        days: Number of days to look back (default: 7)
-    """
+def display_event_errors(days: int = 7) -> list[str]:
     cutoff_date = datetime.now() - timedelta(days=days)
+    results = []
 
     try:
         with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
             for line in f:
-                # Check if line contains ERROR
                 if "ERROR:" in line:
-                    # Extract timestamp (format: ERROR: 2025-10-26T23:47:21Z - ...)
                     try:
                         timestamp_str = line.split(" - ")[0].split(": ")[1]
                         log_date = datetime.strptime(
                             timestamp_str, "%Y-%m-%dT%H:%M:%SZ"
                         )
-
-                        # Only print if within last week
                         if log_date >= cutoff_date:
-                            print(line.rstrip())
+                            results.append(line.rstrip())
                     except (ValueError, IndexError):
-                        # If timestamp parsing fails, print anyway to be safe
-                        print(line.rstrip())
+                        results.append(line.rstrip())
     except FileNotFoundError:
-        print("Error: Log file not found.")
+        pass
     except Exception as e:
-        print(f"Error reading log file: {e}")
+        results.append(f"Error reading log file: {e}")
 
-
-if __name__ == "__main__":
-    print(retrieve_error_log())
-    display_event_errors()
+    return results

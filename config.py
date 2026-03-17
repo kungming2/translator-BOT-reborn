@@ -43,7 +43,7 @@ class Paths:
 
     # Authentication and configuration files
     AUTH: dict[str, str] = {
-        "CREDENTIALS": os.path.join(DATA_DIR, "auth.yaml"),
+        "CREDENTIALS": os.path.join(DATA_DIR, "_auth.yaml"),
     }
 
     # Written responses and templates by the bot.

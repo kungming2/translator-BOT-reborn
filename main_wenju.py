@@ -57,6 +57,17 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ"})
 
 
 def wenju_runner() -> None:
+    """
+    Parse the command-line schedule argument and dispatch to the matching
+    registered tasks.
+
+    Reads ``sys.argv[1]`` for the schedule name (e.g. ``hourly``, ``daily``,
+    ``weekly``, ``monthly``) and passes it to ``run_schedule()``. Exits with
+    status 1 and prints usage hints if no argument is provided.
+
+    Intended to be called from ``__main__`` only; error handling for transient
+    and critical failures is managed by the enclosing ``try/except`` block.
+    """
     if len(sys.argv) > 1:
         schedule_name: str = sys.argv[1]
         run_schedule(schedule_name)

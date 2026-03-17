@@ -323,13 +323,3 @@ def format_markdown_table_with_padding(table_text: str) -> str:
     logger.debug(f"Formatted table with {len(rows)} rows, {num_cols} columns.")
 
     return result
-
-
-if __name__ == "__main__":
-    test_url = input("Enter a YouTube URL: ").strip()
-    length_seconds = fetch_youtube_length(test_url)
-
-    if length_seconds is not None:
-        print(f"Video length: {length_seconds} seconds")
-    else:
-        print("Failed to fetch video length.")

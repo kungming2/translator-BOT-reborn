@@ -40,11 +40,15 @@ class ResponseLoader:
     """
 
     def __init__(self, yaml_path: Path | str) -> None:
+        """Load response templates from *yaml_path* and expose them as
+        attributes."""
         self._data: dict[str, Any] = self._load_yaml(yaml_path)
         self.responses: SimpleNamespace = SimpleNamespace(**self._data)
 
     @staticmethod
     def _load_yaml(path: Path | str) -> dict[str, Any]:
+        """Read and parse a YAML file containing the bot's responses,
+        returning its contents as a dictionary."""
         with open(path, "r", encoding="utf-8") as file:
             return yaml.safe_load(file)
 
@@ -52,5 +56,5 @@ class ResponseLoader:
         return getattr(self.responses, item)
 
 
-# To use: RESPONSE.VARIABLE_NAME
+# To use in code: RESPONSE.VARIABLE_NAME
 RESPONSE = ResponseLoader(Paths.TEMPLATES["RESPONSES"])

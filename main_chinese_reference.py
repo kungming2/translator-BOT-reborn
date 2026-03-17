@@ -33,7 +33,6 @@ from typing import TYPE_CHECKING
 import asyncpraw
 from asyncpraw import exceptions
 from asyncprawcore import exceptions as asyncprawcore_exceptions
-from wasabi import msg
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -148,11 +147,11 @@ async def chinese_reference_main() -> None:
 
 
 if __name__ == "__main__":
-    msg.good("Launching Chinese Reference...")
+    logger.info("Launching Chinese Reference...")
     # noinspection PyBroadException
     try:
         asyncio.run(chinese_reference_main())
     except Exception:
         error_entry = traceback.format_exc()
         error_log_extended(error_entry, "Chinese Reference")
-    msg.info("Chinese Reference routine completed.")
+    logger.info("Chinese Reference routine completed.")
