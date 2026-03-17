@@ -4,7 +4,7 @@
 Run independently and infrequently to update ISO 639-3 code points.
 ...
 
-Logger tag: [CODE]
+Logger tag: [WY:CODE]
 """
 
 import logging
@@ -15,7 +15,7 @@ import pandas as pd
 from config import Paths
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "CODE"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:CODE"})
 
 
 # Location of our primary ISO dataset for codes
