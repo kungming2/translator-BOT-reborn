@@ -105,12 +105,3 @@ def search_nominatim(
     except requests.RequestException as e:
         logger.error(f"Error: {e}")
         return []
-
-
-# Example usage
-if __name__ == "__main__":
-    while True:
-        search_area = input("Please enter the place you want to search for: ")
-        results_test = search_nominatim(search_area)
-        for result_x in results_test:
-            print(result_x)

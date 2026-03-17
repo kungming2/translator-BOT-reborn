@@ -6,6 +6,7 @@ from io import BytesIO
 
 import discord
 import yaml
+from discord.ext.commands import Context
 
 from config import Paths
 from error import display_event_errors
@@ -18,7 +19,7 @@ from . import command
     help_text="Displays the 3 most recent error log entries",
     roles=["Moderator"],
 )
-async def error_logs(ctx):
+async def error_logs(ctx: Context):
     """Returns the last few error log entries for analysis."""
     try:
         # Read the YAML file

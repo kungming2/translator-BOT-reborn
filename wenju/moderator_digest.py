@@ -443,7 +443,7 @@ def _note_language_tags() -> tuple[str | None, list[dict[str, str | int]]]:
 
 
 @task(schedule="daily")
-def collate_moderator_digest():
+def collate_moderator_digest() -> None:
     """
     Sends out an overall digest of the subreddit's state and things for
     moderators to note. Uses Discord. The daily information is also
@@ -577,7 +577,3 @@ def _render_html_dashboard(date_str: str, data: dict) -> str:
     return template.replace("__DATE_STR__", date_str).replace(
         "__DATA_JSON__", json.dumps(data, indent=2)
     )
-
-
-if __name__ == "__main__":
-    collate_moderator_digest()

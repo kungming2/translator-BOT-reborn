@@ -28,6 +28,8 @@ krdict.set_key(credentials_source["KRDICT_API_KEY"])
 
 
 def _translate_part_of_speech(korean_pos: str) -> str:
+    """Translates the dictionary's Korean part of speech to its English
+    equivalent."""
     mapping: dict[str, str] = {
         "명사": "noun",
         "동사": "verb",
@@ -185,41 +187,3 @@ def ko_word(korean_word: str) -> str | None:
     # Cache miss - fetch from API
     logger.info(f"'{korean_word}' not found in cache, fetching from API.")
     return _ko_word_fetch(korean_word)
-
-
-if __name__ == "__main__":
-    import logging
-
-    # Configure logging to DEBUG level
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    # Also set the module logger to DEBUG explicitly
-    logger.setLevel(logging.DEBUG)
-
-    def show_menu():
-        print("\nSelect a search to run:")
-        print("1. ko_word (search for a Korean word)")
-        print("x. Exit")
-
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1, or x): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        my_input = input("Enter a Korean word to search for: ")
-
-        if choice == "1":
-            result = ko_word(my_input)
-            if result:
-                print(result)
-            else:
-                print(f"No results found for '{my_input}'")

@@ -7,15 +7,13 @@ Caching functions for lookup scripts.
 Logger tag: [L:CACHE]
 """
 
-import asyncio
 import json
 import logging
 import re
 import sqlite3
-import sys
 import threading
 import time
-from typing import Any, Dict
+from typing import Any, Awaitable, Callable, Dict
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
@@ -818,7 +816,10 @@ def format_ko_word_from_cache(cached_data: Dict) -> str:
 """CACHE RETRIEVAL WITH FALLBACK"""
 
 
-async def get_cached_or_fetch_zh_character(character: str, fetch_func) -> str:
+async def get_cached_or_fetch_zh_character(
+    character: str,
+    fetch_func: Callable[[str], Awaitable[str]],
+) -> str:
     """
     Try to get data from cache first, otherwise fetch from web.
 
@@ -834,103 +835,3 @@ async def get_cached_or_fetch_zh_character(character: str, fetch_func) -> str:
 
     # Cache miss - fetch from web
     return await fetch_func(character)
-
-
-# Testing Usage
-if __name__ == "__main__":
-    # Add parent directory to path to import zh module
-    sys.path.insert(0, "..")
-    from zh import zh_character, zh_word
-
-    async def cache_writer():
-        """Interactive test function for caching zh_word and zh_character
-        lookups."""
-        print("\n=== Chinese Word/Character Lookup Cache Tester ===\n")
-
-        while True:
-            print("\nOptions:")
-            print("1. Look up and cache a word (zh_word)")
-            print("2. Look up and cache a character (zh_character)")
-            print("3. Check cache for a term")
-            print("x. Exit")
-
-            choice = input("\nEnter your choice: ").strip()
-
-            if choice == "x":
-                print("Exiting...")
-                break
-
-            if choice == "1":
-                word = input("Enter Chinese word to look up: ").strip()
-                if not word:
-                    print("No input provided.")
-                    continue
-
-                print(f"\nLooking up '{word}'...")
-                try:
-                    result = await zh_word(word)
-                    print("\n--- Raw Result ---")
-                    print(result)
-
-                    print("\n--- Parsing to JSON ---")
-                    parsed = parse_zh_output_to_json(result)
-                    print(json.dumps(parsed, ensure_ascii=False, indent=2))
-
-                    print("\n--- Saving to cache ---")
-                    save_to_cache(parsed, "zh", "zh_word")
-                    print("✓ Saved to cache successfully!")
-
-                except Exception as e:
-                    print(f"Error: {e}")
-                    import traceback
-
-                    traceback.print_exc()
-
-            elif choice == "2":
-                char = input("Enter Chinese character to look up: ").strip()
-                if not char:
-                    print("No input provided.")
-                    continue
-
-                print(f"\nLooking up '{char}'...")
-                try:
-                    result = await zh_character(char)
-                    print("\n--- Raw Result ---")
-                    print(result)
-
-                    print("\n--- Parsing to JSON ---")
-                    parsed = parse_zh_output_to_json(result)
-                    print(json.dumps(parsed, ensure_ascii=False, indent=2))
-
-                    print("\n--- Saving to cache ---")
-                    save_to_cache(parsed, "zh", "zh_character")
-                    print("✓ Saved to cache successfully!")
-
-                except Exception as e:
-                    print(f"Error: {e}")
-                    import traceback
-
-                    traceback.print_exc()
-
-            elif choice == "3":
-                term = input("Enter term to check in cache: ").strip()
-                if not term:
-                    print("No input provided.")
-                    continue
-
-                lookup_type = input("Type (zh_word/zh_character): ").strip()
-                if lookup_type not in ["zh_word", "zh_character"]:
-                    print("Invalid type. Must be 'zh_word' or 'zh_character'")
-                    continue
-
-                print(f"\nChecking cache for '{term}' ({lookup_type})...")
-                cached = get_from_cache(term, "zh", lookup_type)
-
-                if cached:
-                    print("\n✓ Found in cache:")
-                    print(json.dumps(cached, ensure_ascii=False, indent=2))
-                else:
-                    print("\n✗ Not found in cache (or expired)")
-
-    # Run the async test function
-    asyncio.run(cache_writer())

@@ -409,9 +409,10 @@ def language_of_the_day(selected_language=None):
         # Fall back to the Lingvo's own property (derives emoji from language code)
         country_emoji = today_language.country_emoji or None
 
+    # Guard against a missing family (e.g. when Ethnologue fetch fails).
+    language_family = today_language.family or "Unknown"
     language_family_link = (
-        f"https://en.wikipedia.org/wiki/"
-        f"{today_language.family.replace('_', ' ')}_languages"
+        f"https://en.wikipedia.org/wiki/{language_family.replace('_', ' ')}_languages"
     )
 
     # Format the text together.
@@ -427,7 +428,7 @@ def language_of_the_day(selected_language=None):
         country_line = f"* **Country**: {country_emoji} {today_language.country}\n"
 
     body = (
-        f"* **Family**: [{today_language.family}]({language_family_link})\n"
+        f"* **Family**: [{language_family}]({language_family_link})\n"
         f"{country_line}"
         f"* **Population**: {today_language.population:,}"
     )
@@ -441,18 +442,14 @@ def language_of_the_day(selected_language=None):
     update_success = widget_update("widget_1dn822a2cowgr", full_text)
     if update_success:
         # Choose 'a' or 'an' based on the first letter of the language family
-        article = (
-            "an"
-            if today_language.family and today_language.family[0].lower() in "aeiou"
-            else "a"
-        )
+        article = "an" if language_family[0].lower() in "aeiou" else "a"
         code_string = f"`{today_language.preferred_code}`"
 
         # Notify Discord.
         language_blurb = (
             f"The language of the day is **[{today_language.name}]"
             f"({wikipedia_redirect_link})** ({code_string}), "
-            f"{article} {today_language.family} language. {language_entry_summary}"
+            f"{article} {language_family} language. {language_entry_summary}"
         )
 
         # Build the title with conditional emoji
@@ -698,7 +695,7 @@ def deleted_posts_assessor(
         )
         impolite_text = (
             "\n\n#### Deleted Without Thanks (Impolite)\n\n"
-            "| Username | Link |\n|----|----|\n" + impolite_table
+            "| Username | Link |\n|----------|------|\n" + impolite_table
         )
     else:
         impolite_text = "\n\n#### Deleted Without Thanks (Impolite)\n\n_None_"
@@ -821,7 +818,3 @@ def notify_list_statistics_calculator() -> None:
     logger.info(f"notify_list_statistics_calculator: Report saved to {output_path}.")
 
     return
-
-
-if __name__ == "__main__":
-    print(deleted_posts_assessor())

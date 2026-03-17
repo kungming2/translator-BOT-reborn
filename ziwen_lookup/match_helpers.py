@@ -330,18 +330,3 @@ def lookup_matcher(
     logger.info(f"Lookup Matcher Result: {result}")
 
     return result
-
-
-if __name__ == "__main__":
-    while True:
-        print("=" * 30)
-        print("Note: Backticks will be automatically added around your phrase.\n")
-
-        test_phrase = input("Enter phrase: ")
-        lang_code = input("Enter language code (zh/ja/ko): ")
-
-        # Add backticks around the phrase
-        phrase_with_backticks = f"`{test_phrase.strip()}`"
-
-        test_result = lookup_matcher(phrase_with_backticks, lang_code)
-        print(f"\nResult: {test_result}")

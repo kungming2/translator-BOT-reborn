@@ -40,7 +40,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 _tasks = {}
 
 
-def _fetch_wenju_settings():
+def _fetch_wenju_settings() -> dict:
     """Fetches Wenju-specific settings."""
     return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
 
@@ -57,7 +57,7 @@ def task(schedule):
     return decorator
 
 
-def run_schedule(schedule_name):
+def run_schedule(schedule_name) -> None:
     """Run all tasks for a given schedule"""
 
     # Dynamically import all task modules in the wenju/ directory
@@ -104,7 +104,7 @@ def run_schedule(schedule_name):
     return
 
 
-def get_tasks():
+def get_tasks() -> dict:
     """Get all registered tasks"""
     return _tasks
 

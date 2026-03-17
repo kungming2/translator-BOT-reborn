@@ -164,7 +164,7 @@ def fetch_iso_reports() -> None:
 
         # Check if contents have changed
         if existing_data == reports:
-            logger.debug("No changes detected. ISO Codes Updates dataset not updated.")
+            logger.info("No changes detected. ISO Codes Updates dataset not updated.")
             return
 
         # Write to YAML file
@@ -272,8 +272,3 @@ def post_iso_reports_to_reddit() -> None:
         logger.error(f"Error processing reports: {e}")
 
     return
-
-
-if __name__ == "__main__":
-    fetch_iso_reports()
-    post_iso_reports_to_reddit()

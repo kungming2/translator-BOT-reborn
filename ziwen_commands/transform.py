@@ -17,8 +17,6 @@ from integrations.image_handling import (
     rotate_or_flip_image,
     upload_to_imgbb,
 )
-from models.instruo import Instruo
-from reddit.connection import REDDIT_HELPER
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
@@ -301,90 +299,3 @@ def handle(comment, _instruo, komando, _ajo) -> None:
             reply_text += f"- Image {idx}: {error}\n"
 
     reddit_reply(comment, reply_text + RESPONSE.BOT_DISCLAIMER)
-
-
-if __name__ == "__main__":
-    import logging
-
-    # Configure logging to DEBUG level
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    # Also set the module logger to DEBUG explicitly
-    logger.setLevel(logging.DEBUG)
-
-    def show_menu():
-        print("\nSelect a test to run:")
-        print("1. Test _extract_images_from_submission (enter submission ID)")
-        print("2. Test full transform handler (enter comment URL)")
-        print("x. Exit")
-
-    while True:
-        show_menu()
-        menu_choice = input("Enter your choice (1-2, or x): ")
-
-        if menu_choice == "x":
-            print("Exiting...")
-            break
-
-        if menu_choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if menu_choice == "1":
-            test_submission_id = input("Enter Reddit submission ID: ").strip()
-            try:
-                test_submission = REDDIT_HELPER.submission(id=test_submission_id)
-                print(f"\nSubmission: {test_submission.title}")
-                print(f"Is self post: {test_submission.is_self}")
-                print(
-                    f"Is gallery: {hasattr(test_submission, 'is_gallery') and test_submission.is_gallery}"
-                )
-                print(f"URL: {test_submission.url}")
-
-                if test_submission.is_self:
-                    print(f"\nSelf-text body:\n{test_submission.selftext}\n")
-
-                    # Debug: show what URLs are found
-                    url_pattern_test = r'https?://[^\s<>"{}|\\^`\[\]]+'
-                    found_urls = re.findall(url_pattern_test, test_submission.selftext)
-                    print(f"URLs found in self-text: {len(found_urls)}")
-                    for test_idx, found_url in enumerate(found_urls, 1):
-                        is_valid = is_valid_image_url(found_url)
-                        print(f"  {test_idx}. {found_url}")
-                        print(f"      Valid image URL: {is_valid}")
-
-                extracted_image_urls = _extract_images_from_submission(test_submission)
-
-                print(f"\n{'=' * 60}")
-                print(f"Found {len(extracted_image_urls)} image(s):")
-                print(f"{'=' * 60}")
-                for img_idx, img_url in enumerate(extracted_image_urls, 1):
-                    print(f"{img_idx}. {img_url}")
-                print(f"{'=' * 60}\n")
-
-            except Exception as err:
-                print(f"Error: {err}")
-
-        elif menu_choice == "2":
-            test_comment_url = input("Enter Reddit comment URL: ").strip()
-            try:
-                test_comment = REDDIT_HELPER.comment(url=test_comment_url)
-                test_instruo = Instruo.from_comment(test_comment)
-                print(f"Instruo created: {test_instruo}\n")
-
-                # Find the transform command in the instruo
-                test_transform_komando = None
-                for test_komando in test_instruo.commands:
-                    if test_komando.name == "transform":
-                        test_transform_komando = test_komando
-                        break
-
-                if test_transform_komando:
-                    handle(test_comment, test_instruo, test_transform_komando, None)
-                else:
-                    print("No !transform command found in comment")
-
-            except Exception as err:
-                print(f"Error: {err}")

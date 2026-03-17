@@ -22,7 +22,7 @@ import prawcore
 import yaml
 from praw.models import WikiPage
 
-from config import SETTINGS, Paths, enable_debug_logging
+from config import SETTINGS, Paths
 from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
@@ -230,7 +230,7 @@ def validate_data_files():
 
 
 @task(schedule="weekly")
-def clean_processed_database():
+def clean_processed_database() -> None:
     """
     Cleans up old entries in old_comments and old_posts,
     keeping only entries from the last 180 days based on the
@@ -499,7 +499,7 @@ def refresh_language_statistics() -> None:
 
 # noinspection SqlWithoutWhere
 @task(schedule="daily")
-def points_worth_cacher():
+def points_worth_cacher() -> None:
     """
     Caches the point values of frequently used languages into a local
     database for fast access. This is run daily to populate the point
@@ -579,7 +579,7 @@ def points_worth_cacher():
 
 
 @task(schedule="monthly")
-def archive_identified_saved():
+def archive_identified_saved() -> None:
     """
     Archive the wikipages of 'identified' and 'saved' to local Markdown
     files to prevent the wikipages from getting too large. 'Saved' is
@@ -700,8 +700,3 @@ def archive_modmail() -> None:
                 f"Conversation by u/{convo.participant} not archived. "
                 f"({readable_age}, {skip_reason.title()})."
             )
-
-
-if __name__ == "__main__":
-    enable_debug_logging()
-    print(error_log_trimmer())

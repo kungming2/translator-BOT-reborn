@@ -48,14 +48,14 @@ useragent = get_random_useragent()
 """TRADITIONAL/SIMPLIFIED CONVERSION"""
 
 
-def simplify(input_text):
+def simplify(input_text: str) -> str:
     """Returns a simplified version (if available) of the input."""
     used_converter = opencc.OpenCC("t2s.json")
 
     return used_converter.convert(input_text)
 
 
-def tradify(input_text):
+def tradify(input_text: str) -> str:
     """Returns a traditional version (if available) of the input."""
     used_converter = opencc.OpenCC("s2tw.json")
 
@@ -65,7 +65,7 @@ def tradify(input_text):
 """PINYIN/ROMANIZATION HELPERS"""
 
 
-def _sanitize_pinyin_input(pinyin_string):
+def _sanitize_pinyin_input(pinyin_string: str) -> str:
     """Fix common issues with pinyin strings and filter out invalid parts.
 
     Keeps only parts that are at least two characters long and end with a digit (tone number).
@@ -79,7 +79,7 @@ def _sanitize_pinyin_input(pinyin_string):
     )
 
 
-def _convert_numbered_pinyin(s):
+def _convert_numbered_pinyin(s: str) -> str:
     """
     Function to convert numbered pin1 yin1 into proper tone marks.
     CC-CEDICT's format uses numerical pinyin.
@@ -142,7 +142,7 @@ def _convert_numbered_pinyin(s):
     return result
 
 
-async def zh_word(word):
+async def zh_word(word: str) -> str:
     """
     Defines a Chinese word (typically >1 character) with caching support.
     Checks cache first, falls back to web fetch if not found.
@@ -163,7 +163,7 @@ async def zh_word(word):
     return await _zh_word_fetch(word)
 
 
-def vowel_neighbor(letter, word):
+def vowel_neighbor(letter: str, word: str) -> bool:
     """Checks a letter to see if vowels are around it."""
     vowels = "aeiouy"
 
@@ -176,7 +176,7 @@ def vowel_neighbor(letter, word):
     return False
 
 
-def _vowel_preceder(letter, word):
+def _vowel_preceder(letter: str, word: str) -> bool:
     """Checks a letter to see if vowels precede it."""
     vowels = "aeiouy"
 
@@ -186,7 +186,7 @@ def _vowel_preceder(letter, word):
     return False
 
 
-def _pair_syllables_with_tones(raw_syllables):
+def _pair_syllables_with_tones(raw_syllables: list[str]) -> str:
     """Pairs Cantonese syllables and tone numbers correctly."""
     pairs = []
     for i in range(0, len(raw_syllables) - 1, 2):
@@ -196,7 +196,9 @@ def _pair_syllables_with_tones(raw_syllables):
     return " ".join(pairs)
 
 
-def _zh_word_alternate_romanization(pinyin_string, original_input=None):
+def _zh_word_alternate_romanization(
+    pinyin_string: str, original_input: str | None = None
+) -> tuple[str, str, str]:
     """
     Takes a pinyin with tone-number string and returns a version of it in the
     legacy Yale, Wade-Giles, and Gwoyeu Romatzyh romanization schemes.
@@ -285,7 +287,7 @@ def _zh_word_alternate_romanization(pinyin_string, original_input=None):
 """CHARACTER FUNCTIONS"""
 
 
-def _old_chinese_search(character):
+def old_chinese_search(character: str) -> str | None:
     """
     Retrieves Middle and Old Chinese readings for a character from a CSV
     using Baxter-Sagart's reconstruction.
@@ -315,7 +317,7 @@ def _old_chinese_search(character):
     return result
 
 
-def variant_character_search(search_term, retries=3):
+def variant_character_search(search_term: str, retries: int = 3) -> str | None:
     """
     Search the MOE dictionary for a link to character variants.
     Returns the full URL if found, else None.
@@ -358,7 +360,7 @@ def variant_character_search(search_term, retries=3):
     return None
 
 
-def _min_hakka_readings(character):
+def _min_hakka_readings(character: str) -> str:
     """
     Returns Hokkien and Hakka (Sixian) readings for a given Chinese
     character or word using the ROC Ministry of Education dictionary.
@@ -404,12 +406,14 @@ def _min_hakka_readings(character):
     return min_reading + hak_reading
 
 
-def _contains_latin(text):
+def _contains_latin(text: str) -> bool:
     """Helper function used to help detect Vietnamese readings."""
     return bool(re.search(r"[a-zA-ZÀ-ÿĀ-ž]", text))
 
 
-async def _vietnamese_readings(character, max_readings=4, timeout_seconds=5):
+async def _vietnamese_readings(
+    character: str, max_readings: int = 4, timeout_seconds: int = 5
+) -> str | None:
     """
     Function to obtain more accurate readings for Chinese characters
     in Vietnamese. Unicode's standard listings include lots of
@@ -477,7 +481,7 @@ async def _vietnamese_readings(character, max_readings=4, timeout_seconds=5):
         return None
 
 
-def calligraphy_search(character):
+def calligraphy_search(character: str) -> str | None:
     """
     Get an overall image of Chinese calligraphic styles from various
     sources. This can also be called by the Japanese character routine.
@@ -532,7 +536,7 @@ def calligraphy_search(character):
     return image_string
 
 
-def _fetch_from_zitools(character):
+def _fetch_from_zitools(character: str) -> dict | None:
     """
     Fetch character readings from zi.tools API as a fallback when ccdb.hemiola.com is down.
 
@@ -621,7 +625,7 @@ def _fetch_from_zitools(character):
         return None
 
 
-async def _zh_character_other_readings(character):
+async def _zh_character_other_readings(character: str) -> str | None:
     """
     Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
     character from the Chinese Character Web API. Note that the Chinese
@@ -708,7 +712,7 @@ async def _zh_character_other_readings(character):
         return None
 
 
-async def _zh_character_fetch(character):
+async def _zh_character_fetch(character: str) -> str:
     """
     Internal function to fetch Chinese character data from web sources.
     This is called by zh_character when cache miss occurs.
@@ -737,10 +741,10 @@ async def _zh_character_fetch(character):
             return to_post
 
     # Yue pronunciation alternates with Mandarin in list: even idx Mandarin, odd idx Yue
-    cmn_pronunciation = pronunciation[::2]
+    cmn_pronunciation_list = pronunciation[::2]
 
     if not multi_mode:
-        cmn_pronunciation = " / ".join(cmn_pronunciation)
+        cmn_pronunciation = " / ".join(cmn_pronunciation_list)
         yue_pronunciation_list = tree.xpath(
             '//a[contains(@onclick,"pronounce-jyutping")]/text()'
         )
@@ -783,7 +787,7 @@ async def _zh_character_fetch(character):
         # Old Chinese readings
         try:
             ocmc_pronunciation = await call_sync_async(
-                _old_chinese_search, tradify(character)
+                old_chinese_search, tradify(character)
             )
             if ocmc_pronunciation:
                 lookup_line_1 += ocmc_pronunciation
@@ -815,7 +819,7 @@ async def _zh_character_fetch(character):
         duo_cantonese = "\n**Cantonese**"
         duo_meaning = "\n**Meanings**"
 
-        multi_character_dict = {}
+        multi_character_dict: dict[str, dict[str, str]] = {}
 
         for wenzi in multi_character_list:
             character_url = f"https://www.mdbg.net/chindict/chindict.php?page=chardict&cdcanoce=0&cdqchi={wenzi}"
@@ -906,7 +910,7 @@ async def _zh_character_fetch(character):
     return to_post
 
 
-async def zh_character(character):
+async def zh_character(character: str) -> str:
     """
     Look up a Chinese character's pronunciations and meanings with caching support.
     Checks cache first, falls back to web fetch if not found.
@@ -920,7 +924,9 @@ async def zh_character(character):
 """WORD FUNCTIONS"""
 
 
-async def _zh_word_dictionary_search(chinese_word, dictionary_type):
+async def _zh_word_dictionary_search(
+    chinese_word: str, dictionary_type: str
+) -> dict | None:
     """Searches the Buddhist and Cantonese local dictionaries for
     definitions."""
     if dictionary_type == "buddhist":
@@ -931,8 +937,8 @@ async def _zh_word_dictionary_search(chinese_word, dictionary_type):
         raise ValueError("dictionary_type must be either 'buddhist' or 'cantonese'")
 
     async with aiofiles.open(file_address, "r", encoding="utf-8") as f:
-        lines = await f.read()
-    lines = lines.splitlines()
+        file_content = await f.read()
+    lines = file_content.splitlines()
 
     relevant_line = None
     for entry in lines:
@@ -971,7 +977,7 @@ async def _zh_word_dictionary_search(chinese_word, dictionary_type):
         return {"meaning": formatted_meaning, "pinyin": pinyin, "jyutping": jyutping}
 
 
-async def _zh_word_tea_dictionary_search(chinese_word):
+async def _zh_word_tea_dictionary_search(chinese_word: str) -> dict | None:
     """Searches the Babelcarp dictionary for tea definitions."""
     general_dictionary = {}
     web_search = (
@@ -1025,7 +1031,7 @@ async def _zh_word_tea_dictionary_search(chinese_word):
     return general_dictionary
 
 
-async def zh_word_chengyu_supplement(chengyu):
+async def zh_word_chengyu_supplement(chengyu: str) -> str | None:
     """Searches the dictionaries for chengyu definitions to supplement
     zh_word."""
     headers = {
@@ -1095,7 +1101,7 @@ async def zh_word_chengyu_supplement(chengyu):
         )
 
 
-async def _zh_word_fetch(word):
+async def _zh_word_fetch(word: str) -> str:
     """
     Internal function to fetch Chinese word data from web sources.
     This is called by zh_word when cache miss occurs.
@@ -1104,7 +1110,7 @@ async def _zh_word_fetch(word):
     :return: Formatted string containing pronunciation and meanings.
     """
     alternate_meanings = []
-    alternate_pinyin = ()
+    alternate_pinyin: str = ""
     alternate_jyutping = None
 
     async with httpx.AsyncClient(timeout=10) as client:
@@ -1284,4 +1290,4 @@ if __name__ == "__main__":
         elif choice == "4":
             print(variant_character_search(my_test))
         elif choice == "5":
-            print(_old_chinese_search(my_test))
+            print(old_chinese_search(my_test))

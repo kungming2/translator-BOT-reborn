@@ -7,7 +7,6 @@ Contains functions that deal with Japanese-language content.
 Logger tag: [L:JA]
 """
 
-import asyncio
 import logging
 import re
 from time import sleep
@@ -247,6 +246,8 @@ def ja_character(character: str) -> str:
 
 
 def _sfx_search(katakana_string: str) -> str | None:
+    """Search a Japanese onomatopoeia dictionary for a term. Best for
+    things like sound effects (frequently present in manga)."""
     if not re.search(r"[\u30A0-\u30FF]", katakana_string):
         return None
 
@@ -587,40 +588,3 @@ async def ja_word(japanese_word: str) -> str | None:
     # Cache miss - fetch from web
     logger.info(f"'{japanese_word}' not found in cache, fetching from web.")
     return await _ja_word_fetch(japanese_word)
-
-
-if __name__ == "__main__":
-    import logging
-
-    # Configure logging to DEBUG level
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    # Also set the module logger to DEBUG explicitly
-    logger.setLevel(logging.DEBUG)
-
-    def show_menu():
-        print("\nSelect a search to run:")
-        print("1. ja_character (search for a single Japanese character)")
-        print("2. ja_word (search for a Japanese word)")
-        print("x. Exit")
-
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-2, or x): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        my_input = input("Enter the string you wish to test: ")
-
-        if choice == "1":
-            print(ja_character(my_input))
-        elif choice == "2":
-            print(asyncio.run(ja_word(my_input)))

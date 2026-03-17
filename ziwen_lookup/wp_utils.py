@@ -154,9 +154,3 @@ def get_page_location_data(wikipage_obj: wikipedia.WikipediaPage) -> str | None:
         logger.debug(markdown_output)
 
     return markdown_output
-
-
-if "__main__" == __name__:
-    while True:
-        my_search = input("What would you like to search Wikipedia for? ")
-        print(wikipedia_lookup([my_search], "en"))

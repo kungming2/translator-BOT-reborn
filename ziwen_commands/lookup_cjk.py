@@ -13,7 +13,6 @@ import random
 
 from config import Paths, load_settings
 from config import logger as _base_logger
-from lang.languages import converter
 from models.kunulo import Kunulo
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
@@ -315,14 +314,3 @@ def handle(comment, instruo, komando, ajo) -> None:
         )
     else:
         logger.warning("No results to reply with (all duplicates or no matches).")
-
-
-if __name__ == "__main__":
-    while True:
-        my_language = input("Enter a CJK language code or name to use: ")
-        my_input = input("Please enter a string to lookup: ")
-        search_language = converter(my_language).name
-        test_search_data: list[str] = asyncio.run(
-            perform_cjk_lookups(search_language, [my_input])
-        )
-        print(_format_reply(test_search_data))

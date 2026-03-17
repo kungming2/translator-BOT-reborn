@@ -11,12 +11,14 @@ import asyncio
 import logging
 from typing import Any, Callable
 
+import aiohttp
+
 from config import logger as _base_logger
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ASYNC"})
 
 
-async def fetch_json(session, url: str) -> dict | list | None:
+async def fetch_json(session: aiohttp.ClientSession, url: str) -> dict | list | None:
     """
     Fetch and parse a JSON response asynchronously.
 

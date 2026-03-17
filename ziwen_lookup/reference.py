@@ -22,7 +22,7 @@ from waybackpy import exceptions
 
 from config import Paths
 from config import logger as _base_logger
-from lang.languages import converter, get_lingvos, select_random_language
+from lang.languages import converter, get_lingvos
 from reddit.connection import get_random_useragent
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})
@@ -313,39 +313,3 @@ def get_language_reference(language_code: str) -> dict | None:
         return None
 
     return reference_data
-
-
-def show_menu():
-    print("\nSelect a search to run:")
-    print("1. Language selection (enter your own language code)")
-    print("2. Random (retrieve information for a random language code)")
-
-
-if __name__ == "__main__":
-    while True:
-        show_menu()
-        choice = input("Enter your choice (1-2): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        if choice == "1":
-            my_input = input("Enter a language code to search for: ")
-            print(get_language_reference(my_input))
-        elif choice == "2":
-            random_selection = select_random_language()
-            if random_selection is None:
-                print("Could not select a random language.")
-                continue
-            logger.info(
-                f"Randomly selected {random_selection.name} (`{random_selection.preferred_code}`)."
-            )
-            if random_selection.language_code_3 is None:
-                print("Could not retrieve language code for random selection.")
-                continue
-            print(get_language_reference(random_selection.language_code_3))

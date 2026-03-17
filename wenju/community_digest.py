@@ -67,6 +67,9 @@ def send_internal_post_digest() -> None:
         # Get the post_type and submission ID
         post_type = content.get("post_type")
         submission_id = content.get("id")
+        logger.info(
+            f"Post {post_id}: post_type={post_type!r}, submission_id={submission_id!r}"
+        )
 
         if not post_type or not submission_id:
             logger.warning(f"Warning: Missing post_type or id for post {post_id}")
@@ -98,11 +101,11 @@ def send_internal_post_digest() -> None:
 
     if post_type_counts:
         counts_summary = ", ".join(
-            f"{post_type}: {count}"
+            f"{post_type}: {count} post(s)"
             for post_type, count in sorted(post_type_counts.items())
         )
         logger.info(
-            f"[Digest] Sent {sum(post_type_counts.values())} notification(s) — {counts_summary}"
+            f"Processed {sum(post_type_counts.values())} internal post(s) — {counts_summary}"
         )
 
     return
@@ -415,7 +418,3 @@ def monthly_rule_violation_report() -> ModRemovalReport:
     logger.info("Monthly rule violation report sent via Discord.")
 
     return results
-
-
-if __name__ == "__main__":
-    weekly_bot_action_report()

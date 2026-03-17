@@ -13,8 +13,6 @@ import logging
 
 from config import logger as _base_logger
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
-from models.instruo import Instruo
-from reddit.connection import REDDIT_HELPER
 from reddit.reddit_sender import reddit_reply
 from reddit.wiki import search_integration
 from responses import RESPONSE
@@ -59,21 +57,3 @@ def handle(comment, _instruo, komando, _ajo) -> None:
         else f"{results_header}{search_results_body}"
     )
     reddit_reply(comment, full_reply + RESPONSE.BOT_DISCLAIMER)
-
-
-if "__main__" == __name__:
-    while True:
-        # Get comment URL from user
-        comment_url: str = input(
-            "Enter Reddit comment URL (or 'quit' to exit): "
-        ).strip()
-
-        # Check for exit
-        if comment_url.lower() in ["quit", "exit", "q"]:
-            break
-
-        # Get comment from URL and process
-        test_comment = REDDIT_HELPER.comment(url=comment_url)
-        test_instruo: Instruo = Instruo.from_comment(test_comment)
-        print(f"Instruo created: {test_instruo}\n")
-        handle(test_comment, test_instruo, test_instruo.commands[0], None)
