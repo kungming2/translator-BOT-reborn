@@ -4,7 +4,7 @@
 Image handling functions, primarily for the transform command.
 ...
 
-Logger tag: [IMAGE]
+Logger tag: [I:IMAGE]
 """
 
 import base64
@@ -17,7 +17,7 @@ from PIL import Image
 from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "IMAGE"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
 
 
 # ─── Module-level constants ───────────────────────────────────────────────────
@@ -141,62 +141,3 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
 
     logger.error(f"Upload failed: {result}")
     raise Exception(f"Upload failed: {result}")
-
-
-# ─── Entry point ──────────────────────────────────────────────────────────────
-
-
-def _show_menu() -> None:
-    print("\nSelect an operation:")
-    print("1. Rotate/Flip image from URL (without uploading)")
-    print("2. Rotate/Flip image and upload to ImgBB")
-    print("x. Exit")
-
-
-def _prompt_transformation() -> str:
-    print("\nTransformation options:")
-    print("  90     - Rotate 90° clockwise")
-    print("  180    - Rotate 180° (upside-down)")
-    print("  270    - Rotate 270° clockwise")
-    print("  flip_h - Flip horizontally")
-    print("  flip_v - Flip vertically")
-    return input("Enter transformation: ")
-
-
-if __name__ == "__main__":
-    while True:
-        _show_menu()
-        choice = input("Enter your choice (1-2 or x): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ("1", "2"):
-            print("Invalid choice, please try again.")
-            continue
-
-        image_test_url = input("Enter the image URL: ")
-        transformation_type = _prompt_transformation()
-
-        try:
-            img_test = rotate_or_flip_image(image_test_url, transformation_type)
-
-            if choice == "1":
-                logger.info(
-                    f"Image transformed successfully: "
-                    f"{img_test.size} pixels, format: {img_test.format}"
-                )
-                if input("Save locally? (y/n): ").lower() == "y":
-                    filename = input("Enter filename (e.g., output.png): ")
-                    img_test.save(filename)
-                    logger.info(f"Saved to {filename}")
-
-            elif choice == "2":
-                logger.info("Image transformed, uploading to ImgBB...")
-                uploaded_url = upload_to_imgbb(img_test)
-                print("\nUploaded successfully!")
-                logger.info(f"Image URL: {uploaded_url}")
-
-        except Exception as e:
-            logger.error(f"Error: {e}")

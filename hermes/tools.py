@@ -101,6 +101,7 @@ def test_parser(reddit, limit: int = 100) -> None:
         offering, seeking, levels = title_parser(title, include_iso_639_3=True)
 
         def _fmt_codes(codes: list[str]) -> str:
+            """Format a list of ISO codes as 'Language Name [code]' strings."""
             if not codes:
                 return "—"
             parts = []
@@ -111,6 +112,7 @@ def test_parser(reddit, limit: int = 100) -> None:
             return ", ".join(parts)
 
         def _fmt_levels(lvls: dict[str, str]) -> str:
+            """Format a levels dict as a space-separated 'code=level' string."""
             if not lvls:
                 return ""
             return "  ".join(f"{k}={v}" for k, v in lvls.items())

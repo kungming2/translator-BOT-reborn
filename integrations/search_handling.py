@@ -4,7 +4,7 @@
 Handles search tasks for frequently requested translations.
 ...
 
-Logger tag: [SEARCH]
+Logger tag: [I:SEARCH]
 """
 
 import logging
@@ -21,7 +21,7 @@ from reddit.connection import REDDIT_HELPER, credentials_source
 if TYPE_CHECKING:
     from praw.models import Comment
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "SEARCH"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:SEARCH"})
 
 
 # ─── Post ID retrieval ────────────────────────────────────────────────────────
@@ -166,12 +166,3 @@ def build_search_results(post_ids: list[str], search_term: str) -> str:
                 result_sections.append(formatted)
 
     return "\n\n".join(result_sections)
-
-
-# ─── Entry point ──────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    while True:
-        my_search = input("Please enter your search term: ")
-        searched_posts = fetch_search_reddit_posts(my_search)
-        print(build_search_results(searched_posts, my_search))

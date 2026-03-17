@@ -111,6 +111,7 @@ class HermesDatabaseManager(DatabaseManager):
     """
 
     def __init__(self) -> None:
+        """Initialise the manager and defer the Hermes DB connection."""
         super().__init__()
         self._conn_hermes: sqlite3.Connection | None = None
 
@@ -118,15 +119,18 @@ class HermesDatabaseManager(DatabaseManager):
 
     @property
     def conn_hermes(self) -> sqlite3.Connection:
+        """Lazy connection to hermes.db; opens on first access."""
         if self._conn_hermes is None:
             self._conn_hermes = self._connect(HERMES_DB_PATH)
         return self._conn_hermes
 
     @property
     def cursor_hermes(self) -> sqlite3.Cursor:
+        """Return a fresh cursor on the Hermes DB connection."""
         return self.conn_hermes.cursor()
 
     def close_all(self) -> None:
+        """Close the Hermes DB connection in addition to any parent connections."""
         super().close_all()
         if self._conn_hermes:
             self._conn_hermes.close()

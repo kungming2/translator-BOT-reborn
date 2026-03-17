@@ -5,7 +5,7 @@ Handles simple functions to send one-way notifications for Discord via
 webhooks.
 ...
 
-Logger tag: [DISCORD]
+Logger tag: [I:DISCORD]
 """
 
 import json
@@ -17,7 +17,7 @@ import requests
 from config import Paths, load_settings
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "DISCORD"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:DISCORD"})
 
 webhook_settings: dict = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 
@@ -35,7 +35,7 @@ def send_discord_alert(
     message: str,
     webhook_name: str,
     roles: list[str] | None = None,
-    image_path=None,
+    image_path: str | Path | None = None,
 ) -> None:
     """Sends an alert message to the specified Discord webhook
     using an embed with an optional icon and color.

@@ -4,19 +4,19 @@
 Handles interfacing for AI queries.
 ...
 
-Logger tag: [AI]
+Logger tag: [I:AI]
 """
 
 import logging
 
 from openai import APIError  # Used for both DeepSeek and OpenAI
-from openai import BadRequestError, OpenAI
+from openai import BadRequestError, OpenAI, Stream
 
 from config import Paths, load_settings
 from config import logger as _base_logger
 from responses import RESPONSE
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "AI"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:AI"})
 
 
 # ─── Module-level constants ───────────────────────────────────────────────────
@@ -99,9 +99,10 @@ def ai_query(
         # noinspection PyTypeChecker
         ai_response = client_object.chat.completions.create(
             model=ai_model,
-            messages=messages,
-            stream=False,  # type: ignore
+            messages=messages,  # type: ignore[arg-type]
+            stream=False,
         )
+        assert not isinstance(ai_response, Stream)
         return ai_response.choices[0].message.content
 
     except BadRequestError as e:
@@ -156,15 +157,3 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
         image_url=image_url,
     )
     return description or ""
-
-
-# ─── Entry point ──────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    deepseek_access()
-    openai_access()
-    while True:
-        image_test: str = input(
-            "Please enter the image URL you'd like a description of: "
-        )
-        print(fetch_image_description(image_test))
