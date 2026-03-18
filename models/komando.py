@@ -3,7 +3,7 @@
 """
 Defines the Komando command structure and class,
 along with related functions. This represents a command called within a
-comment, along with the data associated with that comment call.
+comment, along with the data associated with that command call.
 ...
 
 Logger tag: [M:KOMANDO]
@@ -12,6 +12,7 @@ Logger tag: [M:KOMANDO]
 import logging
 import re
 from collections import defaultdict
+from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -26,8 +27,12 @@ class Komando:
     and mode flags."""
 
     def __init__(
-        self, name, data=None, specific_mode=False, disable_tokenization=False
-    ):
+        self,
+        name: str,
+        data: list | None = None,
+        specific_mode: bool = False,
+        disable_tokenization: bool = False,
+    ) -> None:
         """Initialise a Komando with its name, argument data, and mode flags."""
         self.name = name  # e.g., "identify", "translated"
         # For data, ["es"], ["la", "grc"] as Lingvos or None
@@ -36,14 +41,14 @@ class Komando:
         self.specific_mode = specific_mode
         self.disable_tokenization = disable_tokenization
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"Komando(name={self.name!r}, data={self.data!r}, "
             f"specific_mode={self.specific_mode!r}, "
             f"disable_tokenization={self.disable_tokenization!r})"
         )
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Serialize the Komando to a plain dictionary."""
         return {
             "name": self.name,
@@ -52,7 +57,7 @@ class Komando:
             "disable_tokenization": self.disable_tokenization,
         }
 
-    def remap_language(self, target_lang_code):
+    def remap_language(self, target_lang_code: str) -> "Komando":
         """
         Remap all language codes in self.data to a target language code.
         Only works for 'lookup_cjk' komandos.
@@ -86,7 +91,7 @@ class Komando:
             elif len(entry) == 2:
                 # Old format: (lang, term)
                 _, term = entry
-                remapped_data.append((target_lang_code, term))
+                remapped_data.append((target_lang_code, term, None))
             else:
                 remapped_data.append(entry)
 
@@ -98,7 +103,7 @@ class Komando:
         )
 
 
-def _check_specific_mode(arg_str):
+def _check_specific_mode(arg_str: str) -> tuple[str | None, bool]:
     """
     Check if argument ends with ! and has 2-4 chars before it.
     Returns (cleaned_arg, specific_mode_flag).
@@ -116,7 +121,7 @@ def _check_specific_mode(arg_str):
     return arg_str, False
 
 
-def _deduplicate_args(args):
+def _deduplicate_args(args: list) -> list:
     """
     Deduplicate arguments while preserving order.
 
@@ -156,7 +161,9 @@ def _deduplicate_args(args):
     return result
 
 
-def extract_commands_from_text(text, parent_languages=None):
+def extract_commands_from_text(
+    text: str, parent_languages: list | None = None
+) -> list[Komando]:
     """
     Extract Komando commands from text.
 
@@ -184,14 +191,14 @@ def extract_commands_from_text(text, parent_languages=None):
         is ambiguous (e.g. 'multiple', 'generic', 'unknown') or not a 2-3 character ISO code.
     :return: A list of Komando objects with extracted commands and their arguments.
     """
-    commands_dict = defaultdict(list)
+    commands_dict: defaultdict[str, list[Any]] = defaultdict(list)
     specific_mode_dict = defaultdict(bool)
     disable_tokenization_dict = defaultdict(bool)
     original_text = text.strip()
 
     # Normalize curly quotes in both cases
-    text = original_text.replace(""", '"').replace(""", '"')
-    text = text.replace("'", "'").replace("'", "'")
+    text = original_text.replace("\u201c", '"').replace("\u201d", '"')
+    text = text.replace("\u2018", "'").replace("\u2019", "'")
 
     # Remove backslash escapes before backticks (from Reddit's rich text formatter)
     text = text.replace("\\`", "`")
@@ -203,20 +210,22 @@ def extract_commands_from_text(text, parent_languages=None):
 
     logger.debug(f"Parsing {len(text)} chars of text.")
 
-    def process_args(arg_string, is_quoted):
+    def process_args(arg_string: str, is_quoted: bool) -> tuple[list[str], list[bool]]:
         """Process arguments and extract specific_mode flags."""
         if is_quoted:
             return [arg_string], [False]
 
         args_temp = re.split(r"[,+]", arg_string)
-        processed_args = []
-        mode_flags = []
+        processed_args: list[str] = []
+        mode_flags: list[bool] = []
 
         for arg in args_temp:
+            logger.debug(f"Command argument before cleaning: {arg}")
             cleaned, is_specific_mode = _check_specific_mode(arg)
             if cleaned is None:
                 # Invalid specific mode: skip this arg
                 continue
+            logger.debug(f"Command argument after cleaning: {cleaned}")
             processed_args.append(cleaned)
             mode_flags.append(is_specific_mode)
 
@@ -225,8 +234,9 @@ def extract_commands_from_text(text, parent_languages=None):
     # Commands with required arguments
     for cmd in SETTINGS["commands_with_args"]:
         cmd_lower = cmd.lower()
-        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|[ ]?([^\s]+))"
+        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|[ ]?([^\s,]+))"
         matches = re.findall(pattern, text)
+        logger.debug(f"Regex matches for commands (required): {matches}")
 
         for match in matches:
             canonical = (
@@ -263,6 +273,7 @@ def extract_commands_from_text(text, parent_languages=None):
         base = cmd_lower.lstrip("!")
         pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|:[ ]?([^\s]+))?"
         matches = re.findall(pattern, text)
+        logger.debug(f"Regex matches for commands (optional): {matches}")
 
         for match in matches:
             raw = match[0] or match[1]
@@ -336,9 +347,10 @@ def extract_commands_from_text(text, parent_languages=None):
                 # Old format without explicit flag - shouldn't happen with new lookup_matcher
                 commands_dict["lookup_cjk"].extend(terms_with_flags)
             else:
-                for term, is_explicit in terms_with_flags:
-                    # Store as 3-tuple: (lang, term, explicit)
-                    commands_dict["lookup_cjk"].append((lang, term, is_explicit))
+                for item in terms_with_flags:
+                    if isinstance(item, tuple):
+                        term, is_explicit = item
+                        commands_dict["lookup_cjk"].append((lang, term, is_explicit))
 
     # Special: Wikipedia lookup using {{braces}}
     if text.count("{{") > 0 and text.count("}}") > 0:
@@ -347,7 +359,7 @@ def extract_commands_from_text(text, parent_languages=None):
             commands_dict["lookup_wp"].extend(wiki_terms)
 
     # Finalize Komando list with deduplication
-    commands = []
+    commands: list[Komando] = []
     for name, args in commands_dict.items():
         is_specific = specific_mode_dict.get(name, False)
         disable_tokenization = disable_tokenization_dict.get(name, False)

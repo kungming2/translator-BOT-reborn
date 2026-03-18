@@ -11,6 +11,7 @@ Logger tag: [M:DISKUTO]
 
 import logging
 import re
+from typing import Any
 
 import orjson
 
@@ -29,12 +30,12 @@ class Diskuto:
 
     def __init__(
         self,
-        title_original=None,
-        post_type=None,
-        _id=None,
-        created_utc=None,
-        processed=False,
-    ):
+        title_original: str | None = None,
+        post_type: str | None = None,
+        _id: str | None = None,
+        created_utc: int | None = None,
+        processed: bool = False,
+    ) -> None:
         """Initialize a Diskuto with title, post type, ID, timestamp,
         and processed flag."""
         self.title_original = title_original
@@ -43,13 +44,13 @@ class Diskuto:
         self.created_utc = created_utc
         self.processed = processed
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<Diskuto: id={self.id}, type={self.post_type}, "
             f"processed={self.processed} | {self.title_original}>"
         )
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert Diskuto instance to a dictionary representation.
 
@@ -64,7 +65,7 @@ class Diskuto:
             "processed": self.processed,
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Diskuto(\n"
             f"  id='{self.id}',\n"
@@ -76,7 +77,7 @@ class Diskuto:
         )
 
     @classmethod
-    def process_post(cls, praw_submission):
+    def process_post(cls, praw_submission: Any) -> "Diskuto":
         """
         Build a Diskuto directly from a PRAW submission:
         - id: praw_submission.id
@@ -169,7 +170,7 @@ def diskuto_exists(post_id: str) -> bool:
     return cursor.fetchone() is not None
 
 
-def diskuto_writer(diskuto_obj):
+def diskuto_writer(diskuto_obj: Diskuto) -> None:
     """
     Takes a Diskuto object and saves it to the main database
     (the internal_posts table).
@@ -219,7 +220,7 @@ def diskuto_writer(diskuto_obj):
         logger.info(f"New Diskuto `{post_id}` written to database.")
 
 
-def diskuto_loader(post_id):
+def diskuto_loader(post_id: str) -> Diskuto | None:
     """
     Load a Diskuto object from the internal_posts table by its post_id.
 

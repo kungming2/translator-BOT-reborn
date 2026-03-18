@@ -15,8 +15,8 @@ Logger tag: [M:KUNULO]
 """
 
 import logging
-import pprint
 import re
+from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -44,15 +44,16 @@ class Kunulo:
 
     anchor_pattern = re.compile(r"\[]\(#([a-zA-Z0-9_]+)\)")
 
-    def __init__(self, data=None, op_thanks=False):
-        self._data = data or {}
+    def __init__(self, data: dict | None = None, op_thanks: bool = False) -> None:
+        """Initialise all Kunulo attributes from keyword arguments."""
+        self._data: dict[str, list] = data or {}
         self._op_thanks = op_thanks
-        self._submission = None  # Store submission for delete functionality
+        self._submission: Any = None  # Store submission for delete functionality
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert Kunulo instance to a dictionary representation.
 
@@ -90,7 +91,7 @@ class Kunulo:
         return entry, None  # Legacy format: just ID, no associated data
 
     @staticmethod
-    def _extract_cjk_characters(comment_body):
+    def _extract_cjk_characters(comment_body: str) -> list[str]:
         """
         Extract CJK characters from markdown headers in comment body.
 
@@ -121,7 +122,7 @@ class Kunulo:
         return cjk_chars
 
     @staticmethod
-    def _extract_wikipedia_terms(comment_body):
+    def _extract_wikipedia_terms(comment_body: str) -> list[str]:
         """
         Extract Wikipedia search terms from bold Markdown links in comment body.
 
@@ -159,7 +160,7 @@ class Kunulo:
         self._data.setdefault(tag, []).append((comment_id, data))
 
     @classmethod
-    def from_submission(cls, submission):
+    def from_submission(cls, submission: Any) -> "Kunulo":
         """
         Create a Kunulo instance from a PRAW submission object.
 
@@ -206,7 +207,7 @@ class Kunulo:
         instance._submission = submission  # Store submission reference
         return instance
 
-    def __getattr__(self, tag):
+    def __getattr__(self, tag: str) -> Any:
         """
         Allow attribute-style access to tags.
         Returns list of (comment_id, data) tuples for backward compatibility.
@@ -217,7 +218,7 @@ class Kunulo:
             return self._data[tag]
         raise AttributeError(f"'Kunulo' object has no attribute '{tag}'")
 
-    def get_tag(self, tag):
+    def get_tag(self, tag: str) -> str | None:
         """
         Get the first comment ID associated with a tag (backward compatible).
 
@@ -265,7 +266,7 @@ class Kunulo:
         entries = self._data.get(tag, [])
         return [self._normalize_entry(e) for e in entries]
 
-    def get_comment_ids(self, tag):
+    def get_comment_ids(self, tag: str) -> list[str]:
         """
         Get all comment IDs for a tag (without associated data).
 
@@ -278,7 +279,9 @@ class Kunulo:
         entries = self._data.get(tag, [])
         return [self._normalize_entry(e)[0] for e in entries]
 
-    def check_existing_cjk_lookups(self, requested_characters, exact_match=True):
+    def check_existing_cjk_lookups(
+        self, requested_characters: list[str], exact_match: bool = True
+    ) -> dict[str, Any] | None:
         """
         Check if requested CJK characters have already been looked up.
 
@@ -325,7 +328,7 @@ class Kunulo:
 
         return None
 
-    def get_comment_permalink(self, comment_id):
+    def get_comment_permalink(self, comment_id: str) -> str:
         """
         Generate a Reddit permalink for a comment.
 
@@ -345,7 +348,7 @@ class Kunulo:
 
         return f"https://www.reddit.com{self._submission.permalink}{comment_id}"
 
-    def delete(self, tag):
+    def delete(self, tag: str) -> int:
         """
         Delete all comments associated with the given tag from Reddit.
 
@@ -388,7 +391,7 @@ class Kunulo:
         return deleted_count
 
 
-def get_submission_from_comment(comment_reference):
+def get_submission_from_comment(comment_reference: Any) -> Any:
     """
     Retrieves the parent submission of a Reddit comment.
     Accepts either a comment ID string or a PRAW Comment object.

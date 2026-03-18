@@ -21,15 +21,16 @@ Logger tag: [M:INSTRUO]
 
 import logging
 import re
+from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
-from models.komando import extract_commands_from_text
+from models.komando import Komando, extract_commands_from_text
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
 
-def _strip_commands(text):
+def _strip_commands(text: str) -> str | None:
     """
     Return a copy of *text* with all recognized bot commands removed,
     leaving only the remainder prose.
@@ -84,16 +85,16 @@ class Instruo:
 
     def __init__(
         self,
-        id_comment,
-        id_post,
-        created_utc,
-        author_comment,
-        commands,
-        languages,
-        body=None,
-        author_post=None,
-        body_remainder=None,
-    ):
+        id_comment: str,
+        id_post: str,
+        created_utc: int,
+        author_comment: str,
+        commands: list[Komando],
+        languages: list,
+        body: str | None = None,
+        author_post: str | None = None,
+        body_remainder: str | None = None,
+    ) -> None:
         """Initialize an Instruo with comment metadata, parsed commands,
         and languages."""
         self.id_comment = id_comment
@@ -106,10 +107,10 @@ class Instruo:
         self.body = body  # Raw comment text, optional if not created from PRAW
         self.body_remainder = body_remainder  # Body with all bot commands stripped out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Instruo (id={self.id_comment!r}, commands={self.commands!r})"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the Instruo and its commands to a plain dictionary."""
         return {
             "id_comment": self.id_comment,
@@ -124,7 +125,9 @@ class Instruo:
         }
 
     @classmethod
-    def from_comment(cls, comment, parent_languages=None):
+    def from_comment(
+        cls, comment: Any, parent_languages: list | None = None
+    ) -> "Instruo":
         """Construct an Instruo from a live PRAW comment object."""
         text = comment.body
         id_comment = comment.id
@@ -155,7 +158,7 @@ class Instruo:
         )
 
     @classmethod
-    def from_text(cls, text, parent_languages=None):
+    def from_text(cls, text: str, parent_languages: list | None = None) -> "Instruo":
         """
         Creates an Instruo instance from a plain text string for testing purposes only.
 
@@ -185,7 +188,7 @@ class Instruo:
         )
 
 
-def comment_has_command(comment):
+def comment_has_command(comment: Any) -> bool:
     """
     Returns True if the comment contains any recognized command,
     False otherwise. This is used to skip comments which have no

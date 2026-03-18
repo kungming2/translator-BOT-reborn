@@ -24,7 +24,7 @@ Logger tag: [M:AJO]
 
 import ast
 import logging
-from typing import List
+from typing import Any, List, cast
 
 import orjson
 
@@ -201,7 +201,8 @@ def _normalize_lang_field(value):
                 normalized.append(x)
             elif isinstance(x, str) and x.strip():
                 lingvo_obj = converter(x.strip())
-                normalized.append(lingvo_obj)
+                if lingvo_obj is not None:
+                    normalized.append(lingvo_obj)
             else:
                 logger.debug(f"Skipping element {i}: {x}")
         logger.debug(f"Normalized lang list: {normalized}")
@@ -225,7 +226,7 @@ class Ajo:
     The primary class we work with that represents translation requests.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an Ajo with all fields set to their default values."""
         self._id = None
         self._created_utc = None
@@ -237,7 +238,7 @@ class Ajo:
         self.preferred_code = None  # store this in the DB
         self.language_history = []
 
-        self.status = "untranslated"
+        self.status: str | dict[str, str] = "untranslated"
         self.output_post_flair_css = None
         self.output_post_flair_text = None
         self.original_source_language_name = None
@@ -259,7 +260,7 @@ class Ajo:
         self._lingvo = None  # initialized lazily from preferred_code
         self._submission = None  # cached PRAW submission
 
-    def initialize_lingvo(self):
+    def initialize_lingvo(self) -> None:
         """
         Initialize self._lingvo from the preferred_code.
         """
@@ -321,14 +322,23 @@ class Ajo:
         self._author = value
 
     @property
-    def lingvo(self):
-        """The Lingvo object for this post's language; initialized lazily from preferred_code."""
+    def lingvo(self) -> "Lingvo | None":
+        """The Lingvo object for this post's language; initialized
+        lazily from preferred_code."""
         if not self._lingvo:
             self.initialize_lingvo()
         return self._lingvo
 
     @property
-    def submission(self):
+    def _lingvo_safe(self) -> "Lingvo":
+        """Internal: returns lingvo, raising if None.
+        Used by delegating properties."""
+        if self._lingvo is None:
+            raise AttributeError(f"Ajo `{self._id}` has no lingvo initialized.")
+        return self._lingvo
+
+    @property
+    def submission(self) -> Any:
         """
         Lazily load and cache the PRAW submission object.
         Returns None if no ID is set.
@@ -338,43 +348,48 @@ class Ajo:
         return self._submission
 
     @property
-    def language_code_1(self):
+    def language_code_1(self) -> str | None:
         """ISO 639-1 code delegated from the Lingvo object."""
-        return self.lingvo.language_code_1
+        return self._lingvo_safe.language_code_1
 
     @property
-    def language_code_3(self):
+    def language_code_3(self) -> str | None:
         """ISO 639-3 code delegated from the Lingvo object."""
-        return self.lingvo.language_code_3
+        return self._lingvo_safe.language_code_3
 
     @property
-    def language_name(self):
+    def language_name(self) -> str | None:
         """Language name delegated from the Lingvo object."""
-        return self.lingvo.name
+        return self._lingvo_safe.name
 
     @property
-    def country_code(self):
+    def country_code(self) -> str | None:
         """Country code delegated from the Lingvo object."""
-        return self.lingvo.country
+        return self._lingvo_safe.country
 
     @property
-    def is_supported(self):
-        """Whether the language is supported, delegated from the Lingvo object."""
-        return self.lingvo.supported
+    def is_supported(self) -> bool:
+        """Whether the language is supported with the subreddit's flairs,
+        delegated from the Lingvo object."""
+        return self._lingvo_safe.supported
 
     @property
-    def script_code(self):
+    def script_code(self) -> str | None:
         """Script code delegated from the Lingvo object."""
-        return self.lingvo.script_code
+        return self._lingvo_safe.script_code
 
     @property
-    def script_name(self):
-        """Human-readable script name resolved from script_code, or None."""
-        return converter(self.script_code).name if self.script_code else None
+    def script_name(self) -> str | None:
+        """Human-readable script name (e.g. Han Characters) resolved
+        from script_code, or None."""
+        if not self.script_code:
+            return None
+        _sc = converter(self.script_code)
+        return _sc.name if _sc is not None else None
 
     @property
-    def is_script(self):
-        """True if this post's language has an associated script code."""
+    def is_script(self) -> bool:
+        """True if this is a script Lingvo."""
         return self.script_code is not None
 
     @classmethod
@@ -400,7 +415,10 @@ class Ajo:
         # Set the language via preferred code
         # Use final_text to get the actual language, not final_code which is for CSS
         if titolo.final_text:
-            ajo.preferred_code = converter(titolo.final_text).preferred_code
+            _lingvo = converter(titolo.final_text)
+            ajo.preferred_code = (
+                _lingvo.preferred_code if _lingvo is not None else titolo.final_code
+            )
         else:
             ajo.preferred_code = titolo.final_code  # fallback
         ajo.initialize_lingvo()
@@ -460,7 +478,7 @@ class Ajo:
         )
         return ajo
 
-    def update_from_titolo(self, titolo: "Titolo"):
+    def update_from_titolo(self, titolo: "Titolo") -> None:
         """
         Update this Ajo instance in-place based on a Titolo instance.
         This is used by reset() to restore an Ajo to its original state.
@@ -508,7 +526,7 @@ class Ajo:
             f"Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
         )
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Serialize only JSON-safe fields of this Ajo object.
         Excludes internal and derived attributes like `_lingvo`, `_submission`,
@@ -655,7 +673,9 @@ class Ajo:
 
     """FUNCTIONS THAT CHANGE STATES"""
 
-    def set_language(self, code_or_lingvo, is_identified: bool = True):
+    def set_language(
+        self, code_or_lingvo: "str | Lingvo | list", is_identified: bool = True
+    ) -> None:
         """
         Change the Lingvo for this Ajo and update relevant fields.
 
@@ -831,7 +851,7 @@ class Ajo:
 
         # Initialize status as a dict if it's not already
         if not isinstance(self.status, dict):
-            self.status = {}
+            self.status = cast(dict[str, str], {})
 
         # Set the status for the specific language
         self.status[language_code] = status_value
@@ -845,7 +865,7 @@ class Ajo:
         """
         self.is_defined_multiple = bool(value)
 
-    def toggle_is_defined_multiple(self):
+    def toggle_is_defined_multiple(self) -> bool:
         """
         Toggle the is_defined_multiple attribute between True and False.
         Returns the new value after toggling.
@@ -863,7 +883,7 @@ class Ajo:
         """
         self.closed_out = bool(value)
 
-    def set_time(self, status, moment):
+    def set_time(self, status: str, moment: int) -> None:
         """
         Create or update a dictionary marking times when the status/state of the Ajo changed.
         The dictionary is keyed by status and contains Unix times of the changes.
@@ -889,7 +909,7 @@ class Ajo:
         """
         self.author_messaged = is_messaged
 
-    def add_translators(self, translator_name):
+    def add_translators(self, translator_name: str) -> None:
         """
         Add the username of who translated what to the Ajo of a post
         by appending their name to the list. This allows Ziwen to track translators.
@@ -925,7 +945,7 @@ class Ajo:
                 self.notified.append(name)
                 logger.debug(f"Added notified name u/{name}.")
 
-    def set_image_hash(self, reddit_submission):
+    def set_image_hash(self, reddit_submission: Any) -> None:
         """
         If the submission is a link post and links to an image, generate an image hash.
         """
@@ -933,7 +953,7 @@ class Ajo:
             if check_url_extension(reddit_submission.url):
                 self.image_hash = generate_image_hash(reddit_submission.url)
 
-    def clear_submission_cache(self):
+    def clear_submission_cache(self) -> Any:
         """
         Clear the cached PRAW submission object.
         Useful before serialization to avoid storing large objects.
@@ -944,7 +964,7 @@ class Ajo:
         self._submission = None
         return cached
 
-    def restore_submission_cache(self, submission):
+    def restore_submission_cache(self, submission: Any) -> None:
         """
         Restore a previously cached PRAW submission object.
 
@@ -964,7 +984,9 @@ class Ajo:
         titolo = process_title(submission)
         self.update_from_titolo(titolo)
 
-    def update_reddit(self, initial_update: bool = False, moderator_set: bool = False):
+    def update_reddit(
+        self, initial_update: bool = False, moderator_set: bool = False
+    ) -> None:
         """
         Thin wrapper that calls the external flair update function.
         It also writes changes to the database.
@@ -983,7 +1005,7 @@ class Ajo:
         )
 
 
-def _fetch_submission(post_id: str):
+def _fetch_submission(post_id: str) -> Any:
     """
     Fetch a PRAW submission by ID.
 
@@ -1016,7 +1038,9 @@ def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
         lingvo_obj = converter(lang_code)
 
         # Convert ISO 639-3 to ISO 639-1 if possible
-        used_code = lingvo_obj.language_code_1 or lang_code
+        used_code = (
+            lingvo_obj.language_code_1 if lingvo_obj is not None else None
+        ) or lang_code
 
         # Find the symbol corresponding to the status in the legend, default to empty string
         symbol = next(
@@ -1112,7 +1136,7 @@ def determine_flair_and_update(
     )
 
     # Helper to set code_tag and css for a given code and css
-    def set_code_and_css(code, css):
+    def set_code_and_css(code: str, css: str) -> None:
         nonlocal code_tag, output_flair_css
         code_tag = f"[{code.upper()}]"
         output_flair_css = css
@@ -1254,7 +1278,7 @@ def determine_flair_and_update(
 """INTERNAL USE"""
 
 
-def _convert_to_dict(input_string):
+def _convert_to_dict(input_string: str) -> dict:
     """
     Converts a Python dictionary string or JSON string to a Python dictionary.
 
