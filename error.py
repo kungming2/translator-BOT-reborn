@@ -52,7 +52,7 @@ class CustomDumper(yaml.SafeDumper):
     pass
 
 
-def _str_representer(dumper: yaml.SafeDumper, data: str) -> yaml.ScalarNode:
+def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
     """
     Custom string representer for YAML that formats multi-line strings
     with pipe notation (|) for better readability in error logs.
@@ -63,6 +63,7 @@ def _str_representer(dumper: yaml.SafeDumper, data: str) -> yaml.ScalarNode:
 
 
 # PyCharm incorrectly flags this - SafeDumper is compatible with CustomDumper
+# noinspection PyTypeChecker
 CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
 
 
@@ -260,6 +261,8 @@ def retrieve_error_log() -> str:
 
 
 def display_event_errors(days: int = 7) -> list[str]:
+    """Display errors recorded in the events log (as opposed to
+    the error log)."""
     cutoff_date = datetime.now() - timedelta(days=days)
     results = []
 

@@ -11,11 +11,7 @@ import time
 from pathlib import Path
 
 import yaml
-from prawcore.exceptions import (  # type: ignore[import-untyped]
-    RequestException,
-    ResponseException,
-    ServerError,
-)
+from prawcore.exceptions import RequestException, ResponseException, ServerError
 
 from time_handling import get_current_month
 

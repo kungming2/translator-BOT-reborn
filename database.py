@@ -439,7 +439,7 @@ def record_activity_csv(run_type: str, data_tuple: tuple) -> None:
     file_exists = os.path.exists(log_path)
 
     with open(log_path, mode="a", newline="") as csv_file:
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)  # type: ignore[arg-type]
+        writer = csv.writer(csv_file, quoting=0)  # 0 == csv.QUOTE_MINIMAL
         if not file_exists:
             writer.writerow(header)
         writer.writerow(data_tuple)

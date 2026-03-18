@@ -1,6 +1,6 @@
 [project]
 name = "translator-BOT"
-version = "2.2.2"
+version = "2.2.1"
 description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,15 +16,15 @@ dev = ["types-PyYAML", "types-psutil", "types-requests"]
 [tool.mypy]
 disallow_untyped_defs = false  # off globally for now
 ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = [
-    "config",
-    "title",
-]
-disallow_untyped_defs = true
+module = "testing.unit.*"
+ignore_errors = true
 
 [tool.interrogate]
+exclude = ["testing"]
 ignore-nested-functions = true
 ignore-init-module = true
 ignore-private = true
