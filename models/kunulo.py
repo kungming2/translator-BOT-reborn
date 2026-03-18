@@ -416,12 +416,3 @@ def get_submission_from_comment(comment_reference):
         return REDDIT_HELPER.submission(id=comment.link_id[3:])
     except AttributeError:
         raise ValueError("Invalid comment reference - missing link_id")
-
-
-if __name__ == "__main__":
-    while True:
-        test_url = input("Enter the URL of the Reddit post with comments to test: ")
-        submission_id = test_url.split("comments/")[1].split("/")[0]
-        test_post = REDDIT.submission(id=submission_id)
-        test_kunulo = Kunulo.from_submission(test_post)
-        pprint.pprint(test_kunulo)

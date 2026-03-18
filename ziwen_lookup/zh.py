@@ -151,6 +151,7 @@ async def zh_word(word: str) -> str:
     :return: Formatted string containing pronunciation and meanings.
     """
     # Check cache directly with traditional form
+    word = word.strip()
     trad_word = tradify(word)
     cached = get_from_cache(trad_word, "zh", "zh_word")
 
@@ -1079,10 +1080,10 @@ async def zh_word_chengyu_supplement(chengyu: str) -> str | None:
             return None
 
         meaning_xpath = (
-            "//tr[td[1][contains(normalize-space(.), '解释:')]]/td[2]/text()"
+            "//tr[td[1][contains(normalize-space(.), '解释：')]]/td[2]//text()"
         )
         literary_source_xpath = (
-            "//tr[td[1][contains(normalize-space(.), '出处:')]]/td[2]/text()"
+            "//tr[td[1][contains(normalize-space(.), '出处：')]]/td[2]//text()"
         )
 
         meaning_list = detail_tree.xpath(meaning_xpath)
@@ -1093,6 +1094,9 @@ async def zh_word_chengyu_supplement(chengyu: str) -> str | None:
             literary_source_list[0].strip() if literary_source_list else ""
         )
         logger.debug(f" Found {meaning}, {literary_source}")
+
+        if not meaning:
+            return None
 
         return (
             f"\n\n**Chinese Meaning**: {meaning}\n\n"
@@ -1243,51 +1247,3 @@ async def _zh_word_fetch(word: str) -> str:
         logger.error(f"Failed to cache result for '{word}': {e}")
 
     return result
-
-
-"""INQUIRY SECTION"""
-
-
-def show_menu():
-    print("\nSelect a search to run:")
-    print("1. zh_character (search for a single Chinese character)")
-    print("2. zh_word (search for a Chinese word)")
-    print("3. zh_word_chengyu_supplement (search for a chengyu addition)")
-    print("4. variant_character_search (search for a variant character)")
-    print("5. Other readings search ")
-    print("x. Exit")
-
-
-if __name__ == "__main__":
-    # Configure logging to DEBUG level
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    # Also set the module logger to DEBUG explicitly
-    logger.setLevel(logging.DEBUG)
-
-    while True:
-        show_menu()
-        choice = input("Enter your choice (0-5): ")
-
-        if choice == "x":
-            print("Exiting...")
-            break
-
-        if choice not in ["1", "2", "3", "4", "5"]:
-            print("Invalid choice, please try again.")
-            continue
-
-        my_test = input("Enter the string you wish to test: ")
-
-        if choice == "1":
-            print(asyncio.run(zh_character(my_test)))
-        elif choice == "2":
-            print(asyncio.run(zh_word(my_test)))
-        elif choice == "3":
-            print(zh_word_chengyu_supplement(my_test))
-        elif choice == "4":
-            print(variant_character_search(my_test))
-        elif choice == "5":
-            print(old_chinese_search(my_test))
