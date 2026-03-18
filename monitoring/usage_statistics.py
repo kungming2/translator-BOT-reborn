@@ -177,7 +177,7 @@ def generate_command_usage_report(start_time, end_time, days):
         return formatted_content
 
     # Aggregate command counts within the specified time range.
-    command_totals = {}
+    command_totals: dict[str, int] = {}
     for date_text, command_counts in counter_data.items():
         try:
             dt = datetime.strptime(date_text, "%Y-%m-%d").replace(tzinfo=timezone.utc)

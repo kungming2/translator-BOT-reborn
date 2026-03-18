@@ -306,7 +306,7 @@ def update_sidebar_statistics():
     widget_text = sidebar_bit.replace("Last 24H", "Posts").strip()
 
     try:
-        active_widget.mod.update(text=widget_text)  # type: ignore[attr-defined]
+        active_widget.mod.update(text=widget_text)
         logger.debug("Updated New Reddit sidebar widget with latest statistics.")
     except RedditAPIException:
         logger.error("Reddit API error: failed to update New Reddit sidebar widget.")
@@ -315,7 +315,7 @@ def update_sidebar_statistics():
 
 
 @task(schedule="daily")
-def language_of_the_day(selected_language=None):
+def language_of_the_day(selected_language=None) -> str | None:
     """
     Formats text for a randomly selected language of the day (ISO 639-3
     by default) in Markdown for inclusion in the sidebar of the
@@ -349,6 +349,13 @@ def language_of_the_day(selected_language=None):
     else:
         today_language = converter(selected_language, preserve_country=True)
 
+    if not today_language:
+        logger.warning(
+            f"Selection was {today_language}, which was invalid. No LOTD selected."
+        )
+
+        return None
+
     wikipedia_search_term = f"ISO_639:{today_language.language_code_3}"
     wikipedia_redirect_link = f"https://en.wikipedia.org/wiki/{wikipedia_search_term}"
     logger.info(
@@ -381,24 +388,27 @@ def language_of_the_day(selected_language=None):
     # Fetch data from Ethnologue via the Wayback Machine if it's not an
     # ISO 639-1 language, and then refresh the Lingvo.
     if not today_language.language_code_1:
-        reference_result = get_language_reference(today_language.language_code_3)
-        if reference_result is not None:
-            # Only refresh if the reference fetch actually returned data
-            language_data = get_lingvos(force_refresh=True)
-            logger.debug("Variable refreshed.")
-            refreshed = language_data.get(today_language.language_code_3)
-            if refreshed is not None:
-                today_language = refreshed
+        if today_language.language_code_3 is None:
+            logger.warning("No ISO 639-3 code available, skipping reference fetch.")
+        else:
+            reference_result = get_language_reference(today_language.language_code_3)
+            if reference_result is not None:
+                # Only refresh if the reference fetch actually returned data
+                language_data = get_lingvos(force_refresh=True)
+                logger.debug("Variable refreshed.")
+                refreshed = language_data.get(today_language.language_code_3)
+                if refreshed is not None:
+                    today_language = refreshed
+                else:
+                    logger.warning(
+                        f"`{today_language.language_code_3}` not found in refreshed data "
+                        f"— keeping original Lingvo."
+                    )
             else:
                 logger.warning(
-                    f"`{today_language.language_code_3}` not found in refreshed data "
-                    f"— keeping original Lingvo."
+                    f"Could not retrieve Ethnologue reference for "
+                    f"`{today_language.language_code_3}` — proceeding without it."
                 )
-        else:
-            logger.warning(
-                f"Could not retrieve Ethnologue reference for "
-                f"`{today_language.language_code_3}` — proceeding without it."
-            )
 
     # Get the language's country/region flag for better formatting.
     country_emoji = None
@@ -516,7 +526,7 @@ def update_verified_list():
     formatted_text = []
     users_to_fix = []
     master_list = {}
-    users_by_flair = {}
+    users_by_flair: dict[str, list[str]] = {}
 
     # Retrieve all users with flair on the subreddit.
     for flair in REDDIT.subreddit(SETTINGS["subreddit"]).flair(limit=None):
@@ -556,7 +566,8 @@ def update_verified_list():
         if language_code == "en":  # Always exclude English.
             continue
 
-        language_name = converter(language_code).name
+        _lingvo = converter(language_code)
+        language_name = _lingvo.name if _lingvo is not None else language_code
         unique_users = sorted({u.lower() for u in users_by_flair[language_code]})
         header = f"\n###### `{language_code}` {language_name} ({len(unique_users)})"
         formatted_text.append(header)
@@ -763,7 +774,11 @@ def notify_list_statistics_calculator() -> None:
             (code,),
         )
         code_count = row[0] if row else 0
-        name = converter(code).name
+        _lingvo = converter(code)
+        if _lingvo is None:
+            logger.warning(f"Could not resolve language code '{code}'. Skipping.")
+            continue
+        name = _lingvo.name
         format_lines.append(f"| {name} | `{code}` | {code_count} |")
 
     # Calculate statistics
@@ -795,9 +810,12 @@ def notify_list_statistics_calculator() -> None:
     ignore_codes = {"bh", "en", "nn", "nb"}
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
-        f"| `{code}` | {converter(code).name} |"
+        f"| `{code}` | {_l.name} |"
         for code in iso_sorted
-        if code not in all_lang_codes and len(code) == 2 and code not in ignore_codes
+        if (_l := converter(code)) is not None
+        and code not in all_lang_codes
+        and len(code) == 2
+        and code not in ignore_codes
     ]
     missing_num = len(missing_codes)
 

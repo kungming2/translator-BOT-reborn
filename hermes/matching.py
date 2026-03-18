@@ -458,9 +458,10 @@ def format_matches(
             parts: list[str] = []
             for code in data[1]:
                 lingvo = converter(code)
-                name = lingvo.name if lingvo else code
+                if lingvo is None or lingvo.name is None:
+                    continue
                 level = offered_levels.get(code)
-                parts.append(f"{name} ({level})" if level else name)
+                parts.append(f"{lingvo.name} ({level})" if level else lingvo.name)
             offered_str = ", ".join(parts)
         else:
             offered_str = "---"
@@ -470,7 +471,9 @@ def format_matches(
             parts_s: list[str] = []
             for code in data[2]:
                 lingvo = converter(code)
-                parts_s.append(lingvo.name if lingvo else code)
+                if lingvo is None or lingvo.name is None:
+                    continue
+                parts_s.append(lingvo.name)
             sought_str = ", ".join(parts_s)
         else:
             sought_str = "---"

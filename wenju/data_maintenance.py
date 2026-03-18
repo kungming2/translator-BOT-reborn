@@ -548,6 +548,12 @@ def points_worth_cacher() -> None:
                 logger.debug(
                     f"Processing '{language_code}' -> converter result: {converted}"
                 )
+                if converted is None:
+                    logger.warning(
+                        f"Could not resolve language code '{language_code}'. Skipping."
+                    )
+                    failed.append(language_code)
+                    continue
                 result = points_worth_determiner(converted)
                 logger.debug(
                     f"points_worth_determiner('{language_code}') returned: {result}"

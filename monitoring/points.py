@@ -291,7 +291,7 @@ def points_tabulator(
 
     month_string = get_current_month()
 
-    instruo = Instruo.from_comment(comment, original_post_lingvo)
+    instruo = Instruo.from_comment(comment, [original_post_lingvo])
     if original_post and original_post.author:
         op_author = original_post.author.name
     else:

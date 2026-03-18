@@ -37,7 +37,7 @@ from integrations.discord_utils import send_discord_alert
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 
-_tasks = {}
+_tasks: dict[str, list] = {}
 
 
 def _fetch_wenju_settings() -> dict:

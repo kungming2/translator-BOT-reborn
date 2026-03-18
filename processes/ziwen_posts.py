@@ -191,7 +191,9 @@ def ziwen_posts(post_limit: int | None = None) -> None:
             reddit_reply(post, removal_suggestion)
 
             # Write the title to the log.
-            record_filter_log(post_title, post.created_utc, filter_reason)
+            record_filter_log(
+                post_title, post.created_utc, filter_reason or "Unknown filter reason"
+            )
             # Mark post as filtered in database
             db.cursor_main.execute(
                 "UPDATE old_posts SET filtered = 1 WHERE id = ?", (post_id,)

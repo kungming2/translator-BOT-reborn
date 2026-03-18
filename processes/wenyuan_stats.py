@@ -707,17 +707,25 @@ class Lumo:
                     normalized_history.append(lingvo.name)
                 else:
                     # Keep original if can't convert (e.g., "Unknown", "Generic")
-                    normalized_history.append(lang)
+                    if lingvo is not None:
+                        normalized_history.append(
+                            lingvo.name if lingvo.name is not None else lang
+                        )
+                    else:
+                        normalized_history.append(lang)
 
             if len(normalized_history) < 2:
                 continue
 
             # Posts identified from Unknown
-            if normalized_history[0] == "Unknown" and normalized_history[-1] not in [
-                "Unknown",
-                "Multiple Languages",
-            ]:
-                identified[normalized_history[-1]] += 1
+            first = normalized_history[0]
+            last = normalized_history[-1]
+            if (
+                first == "Unknown"
+                and last is not None
+                and last not in ("Unknown", "Multiple Languages")
+            ):
+                identified[last] += 1
 
             # Posts misidentified (wrong initial language)
             elif normalized_history[0] not in [

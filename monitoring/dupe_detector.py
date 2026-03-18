@@ -436,11 +436,13 @@ def duplicate_detector(list_posts, reddit_instance, testing_mode=False, **kwargs
                 )
 
             # Reply to the author
-            duplicate_comment = RESPONSE.COMMENT_DUPLICATE.format(
-                author=dupe_author,
-                original_link=original_post.permalink,
-                dupe_link=dupe_post.permalink,
-            )
+            duplicate_comment: str = ""
+            if original_post is not None and dupe_post is not None:
+                duplicate_comment = RESPONSE.COMMENT_DUPLICATE.format(
+                    author=dupe_author,
+                    original_link=original_post.permalink,
+                    dupe_link=dupe_post.permalink,
+                )
 
             if not testing_mode:
                 reddit_reply(dupe_post, duplicate_comment, True)
@@ -821,7 +823,7 @@ def duplicate_detection_test() -> None:
     print(f"Fetched {len(posts)} posts\n")
 
     # Show some basic stats
-    authors = {}
+    authors: dict[str, list[str]] = {}
     for post in posts:
         try:
             author = post.author.name
