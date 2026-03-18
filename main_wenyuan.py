@@ -15,23 +15,23 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Callable
 
-from config import SETTINGS
-from connection import REDDIT, logger
-from discord_utils import send_discord_alert
-from languages import converter
-from lookup.reference import get_language_reference
-from processes.wenyuan_stats import Lumo
+from config import SETTINGS, logger
+from integrations.discord_utils import send_discord_alert
+from lang.languages import converter
+from monitoring.usage_statistics import get_month_points_summary
+from processes.wenyuan_stats import FastestEntry, Lumo
+from reddit.connection import REDDIT
 from time_handling import time_convert_to_string_seconds
-from usage_statistics import get_month_points_summary
 from wenyuan.challenge_poster import translation_challenge_poster
 from wenyuan.data_validator import data_validator
 from wenyuan.title_full_retrieval import retrieve_titles_test
 from wenyuan.update_wiki_stats import (
     calculate_ri,
     update_language_wiki_pages,
-    update_statistics_index_page,
     update_monthly_wiki_page,
+    update_statistics_index_page,
 )
+from ziwen_lookup.reference import get_language_reference
 
 # Utility codes that get special handling
 UTILITY_CODES = [
@@ -39,7 +39,6 @@ UTILITY_CODES = [
     "Generic",
     "Nonlanguage",
     "Conlang",
-    "App",
     "Multiple Languages",
 ]
 
@@ -57,7 +56,9 @@ class MenuOption:
 class CommandRegistry:
     """Registry for menu options with automatic display generation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the registry with an empty command map and default
+        categories."""
         self.commands: dict[str, MenuOption] = {}
         self.categories = {
             "posts": "Create Posts",
@@ -81,7 +82,7 @@ class CommandRegistry:
         lines = ["\n" + "=" * 70, "WENYUAN COMMAND MENU", "=" * 70]
 
         # Group commands by category
-        categorized = {}
+        categorized: dict[str, list] = {}
         for cmd in self.commands.values():
             categorized.setdefault(cmd.category, []).append(cmd)
 
@@ -109,7 +110,7 @@ class CommandRegistry:
                 cmd.function()
             except Exception as e:
                 print(f"\n❌ Error executing command: {e}")
-                logger.error(f"[WY] Command execution error: {e}", exc_info=True)
+                logger.error(f"Command execution error: {e}", exc_info=True)
         else:
             print(f"\n⚠️  Unknown command: '{key}'")
 
@@ -126,7 +127,7 @@ registry = CommandRegistry()
 
 
 @registry.register("challenge", "Post the weekly translation challenge", "posts")
-def post_challenge():
+def post_challenge() -> None:
     """Post the weekly translation challenge."""
     translation_challenge_poster()
 
@@ -146,7 +147,7 @@ def title_full_retrieval():
     "Fetch reference data for a language from Ethnologue/Wikipedia",
     "data",
 )
-def fetch_language_reference():
+def fetch_language_reference() -> None:
     """Fetch reference data for a language from archived Ethnologue and Wikipedia."""
 
     language_input = input("\n  Enter language code (ISO 639-1 or ISO 639-3): ").strip()
@@ -267,7 +268,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     content += "----|----|----\n"
 
     # Group languages by family (excluding utility codes and scripts)
-    family_counts = {}
+    family_counts: dict[str, int] = {}
     all_languages = sorted(lumo.get_all_languages())
 
     for lang in all_languages:
@@ -444,7 +445,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         content += "\n"
 
     def _format_fastest_post(
-        post_data: dict, post_label: str, post_action: str
+        post_data: FastestEntry | None, post_label: str, post_action: str
     ) -> str | None:
         """
         Helper to format a fastest post entry.
@@ -506,7 +507,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     content += "---|---\n"
 
     # Get counts for each utility code
-    for utility_code in ["Generic", "Unknown", "Nonlanguage", "Conlang"]:
+    for utility_code in [c for c in UTILITY_CODES if c != "Multiple Languages"]:
         utility_ajos = lumo.filter_by_language(utility_code)
         count = len(utility_ajos)
 
@@ -524,8 +525,8 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
             search_flair = "Conlang"
             code = "ART"
         else:
-            search_flair = utility_code
-            code = utility_code.upper()
+            logger.warning(f"No flair mapping for utility code: {utility_code}")
+            continue
 
         search_url = (
             f"[{count}](https://www.reddit.com/r/translator/search?q=flair:%22{search_flair}%22+"
@@ -542,7 +543,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     unknown_scripts = {}
     for lang in all_languages:
         lingvo = converter(lang)
-        if lingvo and len(lingvo.preferred_code) == 4 and lingvo.script_code:
+        if lingvo and (len(lingvo.preferred_code) == 4 or lingvo.script_code):
             stats = lumo.get_language_stats(lang)
             if stats:
                 unknown_scripts[lang] = stats["total_requests"]
@@ -647,7 +648,7 @@ def retrieve_post_stats():
 @registry.register(
     "post_monthly", "Analyze and post full monthly statistics to Reddit", "admin"
 )
-def post_monthly_statistics_menu():
+def post_monthly_statistics_menu() -> None:
     """Menu wrapper for posting monthly statistics."""
     month_year = input("\n  Enter month (YYYY-MM) to post statistics for: ").strip()
 
@@ -783,7 +784,7 @@ def post_monthly_statistics(month_year: str):
         monthly_post.mod.distinguish()
 
         logger.info(
-            "[WY] Created a monthly entry page for the last month and posted a text post."
+            "Created a monthly entry page for the last month and posted a text post."
         )
         print(f"✓ Posted to Reddit: https://redd.it/{monthly_post.id}")
     else:
@@ -801,17 +802,16 @@ def post_monthly_statistics(month_year: str):
     if okay_to_post and monthly_post:
         print("\n[5/5] Adding points summary comment...")
 
-        # Calculate previous month for points
-        if month_number != "01":  # January would reset so...
-            points_use_month = str(month_int)
-            if len(points_use_month) < 2:
-                points_use_month = "0" + points_use_month
-        else:  # It's January. Get the month and year from last.
-            points_use_month = "12"
-            year_number = str(year_int - 1)
+        # Calculate previous month for points (handles January → December of prior year)
+        if month_int == 1:
+            points_year = year_int - 1
+            points_month = 12
+        else:
+            points_year = year_int
+            points_month = month_int - 1
+        month_use_string = f"{points_year}-{points_month:02d}"
 
         # Format the points comment
-        month_use_string = f"{year_number}-{points_use_month}"
         points_summary = get_month_points_summary(month_use_string)
         points_comment = monthly_post.reply(points_summary)
         points_comment.mod.distinguish(sticky=True)
@@ -863,7 +863,7 @@ def _print_language_stats(stats: dict[str, object]) -> None:
 @registry.register(
     "lang_stats", "Get detailed statistics for specific language(s)", "data"
 )
-def get_language_details():
+def get_language_details() -> None:
     """Get detailed statistics for a specific language or multiple languages."""
     language_input = input(
         "\n  Enter language(s) (name/code, comma-separated for multiple): "
@@ -936,7 +936,7 @@ def get_language_details():
 # ============================================================================
 
 
-def main():
+def main() -> None:
     """Main application loop."""
     print("\n" + "=" * 70)
     print("WENYUAN - Translation Statistics & Analytics System for r/translator")
