@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Callable
 
+from wasabi import Printer
+
 from config import SETTINGS, logger
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
@@ -41,6 +43,7 @@ UTILITY_CODES = [
     "Conlang",
     "Multiple Languages",
 ]
+msg = Printer()
 
 
 @dataclass
@@ -109,10 +112,10 @@ class CommandRegistry:
             try:
                 cmd.function()
             except Exception as e:
-                print(f"\n❌ Error executing command: {e}")
+                msg.fail(f"Error executing command: {e}")
                 logger.error(f"Command execution error: {e}", exc_info=True)
         else:
-            print(f"\n⚠️  Unknown command: '{key}'")
+            msg.warn(f"Unknown command: '{key}'")
 
         return True
 
@@ -139,7 +142,7 @@ def title_full_retrieval():
     try:
         retrieve_titles_test(int(num_retrieve))
     except ValueError:
-        print("Invalid number. Please enter a valid integer.")
+        msg.fail("Invalid number. Please enter a valid integer.")
 
 
 @registry.register(
@@ -153,53 +156,49 @@ def fetch_language_reference() -> None:
     language_input = input("\n  Enter language code (ISO 639-1 or ISO 639-3): ").strip()
 
     if not language_input:
-        print("No language code specified.")
+        msg.warn("No language code specified.")
         return
 
-    print(f"\nFetching reference data for '{language_input}'...")
-    print("(This may take a moment as it accesses archived web pages)\n")
+    msg.info(f"Fetching reference data for '{language_input}'...")
+    msg.text("(This may take a moment as it accesses archived web pages)\n")
 
     reference_data = get_language_reference(language_input)
 
     if not reference_data:
-        print(f"❌ Could not retrieve reference data for '{language_input}'")
-        print("   This could mean:")
-        print("   - The language code is invalid")
-        print("   - No archived Ethnologue page exists")
-        print("   - There was a network error")
+        msg.fail(
+            f"Could not retrieve reference data for '{language_input}'",
+            "Possible reasons: invalid language code, no archived Ethnologue page, or network error.",
+        )
         return
 
-    # Display the retrieved data
-    print("=" * 70)
-    print(f"REFERENCE DATA FOR: {reference_data.get('name', 'Unknown')}")
-    print("=" * 70)
-    print(
-        f"\nLanguage Code (ISO 639-3): {reference_data.get('language_code_3', 'N/A')}"
+    msg.divider(f"REFERENCE DATA FOR: {reference_data.get('name', 'Unknown')}")
+    msg.text(
+        f"Language Code (ISO 639-3): {reference_data.get('language_code_3', 'N/A')}"
     )
-    print(f"Primary Name: {reference_data.get('name', 'N/A')}")
+    msg.text(f"Primary Name: {reference_data.get('name', 'N/A')}")
 
     alt_names = reference_data.get("name_alternates", [])
     if alt_names:
-        print(f"Alternate Names: {', '.join(alt_names)}")
+        msg.text(f"Alternate Names: {', '.join(alt_names)}")
 
-    print(f"\nCountry: {reference_data.get('country', 'N/A')}")
-    print(f"Language Family: {reference_data.get('family', 'N/A')}")
+    msg.text(f"Country: {reference_data.get('country', 'N/A')}")
+    msg.text(f"Language Family: {reference_data.get('family', 'N/A')}")
 
     population = reference_data.get("population", 0)
     if population > 0:
-        print(f"Population: {population:,} speakers")
+        msg.text(f"Population: {population:,} speakers")
     else:
-        print("Population: Unknown")
+        msg.text("Population: Unknown")
 
-    print("\nLinks:")
+    msg.text("Links:")
     if reference_data.get("link_wikipedia"):
-        print(f"  Wikipedia: {reference_data['link_wikipedia']}")
+        msg.text(f"  Wikipedia: {reference_data['link_wikipedia']}")
     if reference_data.get("link_ethnologue"):
-        print(f"  Ethnologue: {reference_data['link_ethnologue']}")
+        msg.text(f"  Ethnologue: {reference_data['link_ethnologue']}")
     if reference_data.get("link_sil"):
-        print(f"  SIL: {reference_data['link_sil']}")
+        msg.text(f"  SIL: {reference_data['link_sil']}")
 
-    print("\n✓ Reference data retrieval complete")
+    msg.good("Reference data retrieval complete")
 
 
 # ============================================================================
@@ -595,53 +594,54 @@ def retrieve_post_stats():
             lumo.load_month(year, month_num)
             period_desc = f"{year}-{month_num:02d}"
         except (ValueError, IndexError):
-            print("Invalid date format. Please use YYYY-MM format.")
+            msg.fail("Invalid date format. Please use YYYY-MM format.")
             return None
     else:
         # Load last 30 days
         lumo.load_last_days(30)
         period_desc = "last 30 days"
 
-    # Get and display statistics
-    print(f"\n=== Statistics for {period_desc} ===")
-    print(f"Total posts loaded: {len(lumo)}\n")
+    msg.divider(f"Statistics for {period_desc}")
+    msg.text(f"Total posts loaded: {len(lumo)}\n")
 
     # Overall statistics
     overall = lumo.get_overall_stats()
-    print("--- Overall Statistics ---")
-    print(f"Total requests: {overall['total_requests']}")
-    print(f"Translated: {overall['translated']} ({overall['translation_percentage']}%)")
-    print(f"Needs review: {overall['needs_review']}")
-    print(f"Untranslated: {overall['untranslated']}")
-    print(f"In progress: {overall['in_progress']}")
-    print(f"Missing assets: {overall['missing_assets']}")
-    print(f"Unique languages: {overall['unique_languages']}\n")
+    msg.divider("Overall Statistics", char="-")
+    msg.text(f"Total requests: {overall['total_requests']}")
+    msg.text(
+        f"Translated: {overall['translated']} ({overall['translation_percentage']}%)"
+    )
+    msg.text(f"Needs review: {overall['needs_review']}")
+    msg.text(f"Untranslated: {overall['untranslated']}")
+    msg.text(f"In progress: {overall['in_progress']}")
+    msg.text(f"Missing assets: {overall['missing_assets']}")
+    msg.text(f"Unique languages: {overall['unique_languages']}\n")
 
     # Direction statistics
     directions = lumo.get_direction_stats()
-    print("--- Translation Directions ---")
-    print(
+    msg.divider("Translation Directions", char="-")
+    msg.text(
         f"To English: {directions['to_english']['count']} ({directions['to_english']['percentage']}%)"
     )
-    print(
+    msg.text(
         f"From English: {directions['from_english']['count']} ({directions['from_english']['percentage']}%)"
     )
-    print(
+    msg.text(
         f"Non-English: {directions['non_english']['count']} ({directions['non_english']['percentage']}%)\n"
     )
 
     # Top languages
     top_langs = lumo.get_language_rankings(by="total")[:10]
     if top_langs:
-        print("--- Top 10 Languages ---")
+        msg.divider("Top 10 Languages", char="-")
         for i, (lang, count) in enumerate(top_langs, 1):
             stats = lumo.get_language_stats(lang)
             if stats:
-                print(
+                msg.text(
                     f"{i}. {lang}: {count} requests ({stats['translation_percentage']}% translated)"
                 )
 
-    print("\n✓ Statistics retrieval complete")
+    msg.good("Statistics retrieval complete")
     return lumo  # Return the Lumo instance for further use
 
 
@@ -653,12 +653,12 @@ def post_monthly_statistics_menu() -> None:
     month_year = input("\n  Enter month (YYYY-MM) to post statistics for: ").strip()
 
     if not month_year or len(month_year) != 7 or month_year[4] != "-":
-        print("Invalid format. Please use YYYY-MM format (e.g., 2024-09)")
+        msg.fail("Invalid format. Please use YYYY-MM format (e.g., 2024-09)")
         return
 
     confirm = input(f"  Analyze statistics for {month_year}? (y/n): ").strip().lower()
     if confirm != "y":
-        print("Cancelled.")
+        msg.warn("Cancelled.")
         return
 
     post_monthly_statistics(month_year)
@@ -688,33 +688,30 @@ def post_monthly_statistics(month_year: str):
         year_int, month_int = int(year_number), int(month_number)
         month_english_name = date(1900, month_int, 1).strftime("%B")
     except (ValueError, IndexError):
-        print("Invalid date format. Please use YYYY-MM format.")
+        msg.fail("Invalid date format. Please use YYYY-MM format.")
         return
 
     # Generate the post title
     post_title = f"[META] r/translator Statistics – {month_english_name} {year_number}"
 
     # Initialize Lumo and load data for the specified month
-    print(f"Loading statistics for {month_english_name} {year_number}...")
+    msg.info(f"Loading statistics for {month_english_name} {year_number}...")
     lumo = Lumo()
     lumo.load_month(year_int, month_int)
 
     if len(lumo) == 0:
-        print(f"❌ No data found for {month_year}")
+        msg.fail(f"No data found for {month_year}")
         return
 
-    print(f"✓ Loaded {len(lumo)} requests. Generating statistics...")
+    msg.good(f"Loaded {len(lumo)} requests. Generating statistics...")
 
     # Format the statistics content
     new_page_content = format_lumo_stats_for_reddit(lumo, month_year)
 
     # Display the generated content for review
-    print("\n" + "=" * 70)
-    print("GENERATED STATISTICS CONTENT")
-    print("=" * 70)
-    print(new_page_content)
-    print("=" * 70)
-    print()
+    msg.divider("GENERATED STATISTICS CONTENT")
+    msg.text(new_page_content)
+    msg.divider()
 
     # Manual approval check
     approval = (
@@ -725,7 +722,7 @@ def post_monthly_statistics(month_year: str):
         .lower()
     )
     if approval != "y":
-        print("\n❌ Operation cancelled by user.")
+        msg.warn("Operation cancelled by user.")
         return
 
     # Check if there's already been a post for this month
@@ -735,14 +732,16 @@ def post_monthly_statistics(month_year: str):
 
     if len(previous_stats_post_check) > 0:
         previous_post = previous_stats_post_check[0]
-        print("\n⚠️  A statistics post for this month already exists:")
-        print(f"  https://redd.it/{previous_post}")
+        msg.warn(
+            f"A statistics post for this month already exists: https://redd.it/{previous_post}"
+        )
 
         # Ask if they want to continue anyway
         continue_anyway = (
             input("  Continue with wiki updates only? (y/n): ").strip().lower()
         )
         if continue_anyway != "y":
+            msg.warn("Cancelled.")
             return
 
         okay_to_post = False
@@ -750,13 +749,13 @@ def post_monthly_statistics(month_year: str):
         okay_to_post = True
 
     # Step 1: Create/Update the monthly wiki page
-    print("\n[1/5] Creating monthly wiki page...")
+    msg.info("[1/5] Creating monthly wiki page...")
     wiki_url = update_monthly_wiki_page(month_year, new_page_content)
 
     if wiki_url:
-        print(f"✓ Wiki page created/updated: {wiki_url}")
+        msg.good(f"Wiki page created/updated: {wiki_url}")
     else:
-        print("⚠️  Warning: Could not create/update wiki page")
+        msg.warn("Could not create/update wiki page")
 
     # Step 2: Post to Reddit (if no previous post exists)
     monthly_post = None
@@ -776,7 +775,7 @@ def post_monthly_statistics(month_year: str):
         new_page_content = new_page_content.replace("![](%%statistics-h%%)", "")
 
         # Submit the post
-        print("Submitting post to Reddit...")
+        msg.info("Submitting post to Reddit...")
         monthly_post = r.submit(
             title=post_title, selftext=new_page_content, send_replies=True
         )
@@ -786,21 +785,18 @@ def post_monthly_statistics(month_year: str):
         logger.info(
             "Created a monthly entry page for the last month and posted a text post."
         )
-        print(f"✓ Posted to Reddit: https://redd.it/{monthly_post.id}")
+        msg.good(f"Posted to Reddit: https://redd.it/{monthly_post.id}")
     else:
-        print("\n[2/5] Skipping Reddit post (already exists)")
+        msg.info("[2/5] Skipping Reddit post (already exists)")
 
-    # Step 3: Update individual language wiki pages
-    print("\n[3/5] Updating individual language wiki pages...")
+    msg.info("[3/5] Updating individual language wiki pages...")
     update_language_wiki_pages(lumo, month_year)
 
-    # Step 4: Update the statistics index page
-    print("\n[4/5] Updating statistics index page...")
+    msg.info("[4/5] Updating statistics index page...")
     update_statistics_index_page(month_year)
 
-    # Step 5: Add points comment (only if we posted)
     if okay_to_post and monthly_post:
-        print("\n[5/5] Adding points summary comment...")
+        msg.info("[5/5] Adding points summary comment...")
 
         # Calculate previous month for points (handles January → December of prior year)
         if month_int == 1:
@@ -815,7 +811,7 @@ def post_monthly_statistics(month_year: str):
         points_summary = get_month_points_summary(month_use_string)
         points_comment = monthly_post.reply(points_summary)
         points_comment.mod.distinguish(sticky=True)
-        print("✓ Added points data comment")
+        msg.good("Added points data comment")
 
         # Send a Discord notification
         subject_line = (
@@ -827,17 +823,17 @@ def post_monthly_statistics(month_year: str):
         )
         send_discord_alert(subject_line, message, "notification")
 
-        print(
-            f"\n✓ Successfully posted statistics for {month_english_name} {year_number}"
+        msg.good(
+            f"Successfully posted statistics for {month_english_name} {year_number}",
+            f"Post URL: https://redd.it/{monthly_post.id}"
+            + (f"\nWiki URL: {wiki_url}" if wiki_url else ""),
         )
-        print(f"  Post URL: https://redd.it/{monthly_post.id}")
-        if wiki_url:
-            print(f"  Wiki URL: {wiki_url}")
     else:
-        print("\n[5/5] Skipping points comment (no new post)")
-        print(f"\n✓ Wiki updates complete for {month_english_name} {year_number}")
-        if wiki_url:
-            print(f"  Wiki URL: {wiki_url}")
+        msg.info("[5/5] Skipping points comment (no new post)")
+        msg.good(
+            f"Wiki updates complete for {month_english_name} {year_number}",
+            f"Wiki URL: {wiki_url}" if wiki_url else "",
+        )
 
     return
 
@@ -845,19 +841,18 @@ def post_monthly_statistics(month_year: str):
 def _print_language_stats(stats: dict[str, object]) -> None:
     """Pretty-print language statistics in a consistent format."""
     if not stats:
-        print("No data available for this language.\n")
+        msg.warn("No data available for this language.")
         return
 
-    print(f"--- {stats.get('language', 'Unknown Language')} ---")
-    print(f"Total requests: {stats.get('total_requests', 0)}")
-    print(
+    msg.divider(str(stats.get("language", "Unknown Language")), char="-")
+    msg.text(f"Total requests: {stats.get('total_requests', 0)}")
+    msg.text(
         f"Translated: {stats.get('translated', 0)} ({stats.get('translation_percentage', 0)}%)"
     )
-    print(f"Needs review: {stats.get('needs_review', 0)}")
-    print(f"Untranslated: {stats.get('untranslated', 0)}")
-    print(f"% of all requests: {stats.get('percent_of_all_requests', 0)}%")
-    print(f"Direction ratio: {stats.get('directions', 'N/A')}")
-    print()
+    msg.text(f"Needs review: {stats.get('needs_review', 0)}")
+    msg.text(f"Untranslated: {stats.get('untranslated', 0)}")
+    msg.text(f"% of all requests: {stats.get('percent_of_all_requests', 0)}%")
+    msg.text(f"Direction ratio: {stats.get('directions', 'N/A')}")
 
 
 @registry.register(
@@ -870,7 +865,7 @@ def get_language_details() -> None:
     ).strip()
 
     if not language_input:
-        print("No language specified.")
+        msg.warn("No language specified.")
         return
 
     # Ask for time period
@@ -885,14 +880,14 @@ def get_language_details() -> None:
             lumo.load_month(year, month_num)
             period_desc = f"{year}-{month_num:02d}"
         except (ValueError, IndexError):
-            print("Invalid date format. Using last 30 days.")
+            msg.warn("Invalid date format. Using last 30 days.")
             lumo.load_last_days(30)
             period_desc = "last 30 days"
     else:
         lumo.load_last_days(30)
         period_desc = "last 30 days"
 
-    print(f"\n=== Language Statistics for {period_desc} ===\n")
+    msg.divider(f"Language Statistics for {period_desc}")
 
     # Check if multiple languages requested
     if "," in language_input or "+" in language_input:
@@ -906,13 +901,13 @@ def get_language_details() -> None:
                 # Try to get frequency info
                 freq_info = Lumo.get_language_frequency_info(lang_name)
                 if freq_info:
-                    print(
+                    msg.text(
                         f"Typical frequency: {freq_info['rate_monthly']:.2f} posts/month"
                     )
-                print()
             else:
-                print(f"--- {lang_name} ---")
-                print("No data found for this language in the specified period.\n")
+                msg.warn(
+                    f"{lang_name}: No data found for this language in the specified period."
+                )
     else:
         # Single language
         stats = lumo.get_language_stats(language_input)
@@ -923,12 +918,12 @@ def get_language_details() -> None:
             # Try to get frequency info
             freq_info = Lumo.get_language_frequency_info(language_input)
             if freq_info:
-                print("\nTypical frequency data:")
-                print(f"  Daily: {freq_info['rate_daily']:.2f} posts/day")
-                print(f"  Monthly: {freq_info['rate_monthly']:.2f} posts/month")
-                print(f"  Yearly: {freq_info['rate_yearly']:.2f} posts/year")
+                msg.text("Typical frequency data:")
+                msg.text(f"  Daily: {freq_info['rate_daily']:.2f} posts/day")
+                msg.text(f"  Monthly: {freq_info['rate_monthly']:.2f} posts/month")
+                msg.text(f"  Yearly: {freq_info['rate_yearly']:.2f} posts/year")
         else:
-            print(f"No data found for '{language_input}' in {period_desc}")
+            msg.warn(f"No data found for '{language_input}' in {period_desc}")
 
 
 # ============================================================================
@@ -938,19 +933,15 @@ def get_language_details() -> None:
 
 def main() -> None:
     """Main application loop."""
-    print("\n" + "=" * 70)
-    print("WENYUAN - Translation Statistics & Analytics System for r/translator")
-    print("=" * 70)
+    msg.divider("WENYUAN - Translation Statistics & Analytics System for r/translator")
 
     # Validate data on startup
-    print("\nValidating data files...")
+    msg.info("Validating data files...")
     data_validator()
-    print("✓ Data validation complete")
+    msg.good("Data validation complete")
 
     while True:
-        print("\n" + "=" * 70)
-        print("Logged in as u/translator-BOT")
-        print("=" * 70)
+        msg.divider("Logged in as u/translator-BOT")
 
         print(registry.display_menu())
 
@@ -961,11 +952,11 @@ def main() -> None:
         elapsed = time.time() - start_time
 
         if not should_continue:
-            print("\n👋 Goodbye!")
+            msg.text("Goodbye!")
             break
 
         if elapsed > 0.1:  # Only show timing for substantial operations
-            print(f"\n⏱️  Completed in {elapsed:.2f}s")
+            msg.text(f"Completed in {elapsed:.2f}s")
 
 
 if __name__ == "__main__":
