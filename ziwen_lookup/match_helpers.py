@@ -171,7 +171,10 @@ def lookup_matcher(
     if match:
         raw_codes: list[str] = match.group(1).split("+")
         for code in raw_codes:
-            mapped = map_cjk_code(converter(code).preferred_code, cjk_languages)
+            _lingvo = converter(code)
+            mapped = map_cjk_code(
+                _lingvo.preferred_code if _lingvo is not None else code, cjk_languages
+            )
             if mapped not in language_codes:
                 language_codes.append(mapped)
     elif language_code:
@@ -203,8 +206,10 @@ def lookup_matcher(
         matches.append(text)
 
         if inline_lang:
+            _lingvo = converter(inline_lang)
             mapped_inline = map_cjk_code(
-                converter(inline_lang).preferred_code, cjk_languages
+                _lingvo.preferred_code if _lingvo is not None else inline_lang,
+                cjk_languages,
             )
             inline_language_codes.append(mapped_inline)
             logger.debug(f"Inline language found: {inline_lang} → {mapped_inline}")

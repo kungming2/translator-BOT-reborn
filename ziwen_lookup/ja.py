@@ -10,6 +10,7 @@ Logger tag: [L:JA]
 import logging
 import re
 from time import sleep
+from typing import Any
 
 import aiohttp
 import pykakasi
@@ -45,7 +46,7 @@ def _to_hepburn(input_text: str) -> str:
     return " ".join([item["hepburn"] for item in result])
 
 
-def _format_kun_on_readings(tree) -> tuple[str, str]:
+def _format_kun_on_readings(tree: Any) -> tuple[str, str]:
     """
     Extract and format kun and on readings from the parsed HTML tree.
 

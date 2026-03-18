@@ -194,7 +194,8 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         return None
 
     # Language names
-    ref_data["name"] = converter(language_code).name
+    _lingvo = converter(language_code)
+    ref_data["name"] = _lingvo.name if _lingvo is not None else language_code
     try:
         alt_names_raw = tree.xpath(
             '//div[contains(@class,"alternate-names")]/div[2]/div/text()'

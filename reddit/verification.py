@@ -70,7 +70,10 @@ def _set_user_flair(user: "Redditor", verified_language: str) -> None:
 
     # Define the elements we want to pick out.
     # Then reconstitute the flair.
-    verified_language_code = f":{converter(verified_language).preferred_code}:"
+    _lingvo = converter(verified_language)
+    verified_language_code = (
+        f":{_lingvo.preferred_code if _lingvo is not None else verified_language}:"
+    )
     if verified_language_code in user_original_flair:
         user_new_flair = user_original_flair.replace(verified_language_code, "")
     if verified_language in user_original_flair:
@@ -251,6 +254,11 @@ def verification_parser() -> None:
             continue
 
         language_lingvo = converter(language_name)
+        if language_lingvo is None:
+            logger.warning(
+                f"Could not resolve language '{language_name}' for {author_string}. Skipping."
+            )
+            continue
 
         # Insert into database to mark as processed
         try:

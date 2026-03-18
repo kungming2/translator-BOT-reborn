@@ -28,6 +28,7 @@ import re
 import string
 from typing import List, Literal, Optional
 
+from praw.models import Submission
 from rapidfuzz import fuzz
 
 from config import Paths, load_settings
@@ -49,7 +50,7 @@ title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
 # ---------------------------------------------------------------------------
 
 
-def _resolve_flair_code(lang_obj) -> str:
+def _resolve_flair_code(lang_obj: Lingvo) -> str:
     """
     Return the best flair CSS code for a Lingvo, or 'generic' if none applies.
 
@@ -595,7 +596,8 @@ def _preprocess_title(post_title: str) -> str:
     has_clear_format = bool(re.match(r"^[A-Za-z\s]+\s+to\s+[A-Za-z]+\s*:", title))
 
     # Correct known spelling/alias issues
-    for spelling in converter("en").name_alternates:
+    _en_lingvo = converter("en")
+    for spelling in _en_lingvo.name_alternates if _en_lingvo is not None else []:
         title = title.replace(spelling, "English")
     title = title.replace("english", "English")
     title = title.replace("Old English", "Anglosaxon")
@@ -784,7 +786,11 @@ def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
 
     if cleaned in {"unknown", "unk", "???", "n/a"}:
         logger.debug("Handling 'unknown' chunk explicitly.")
-        return [converter("unknown")]
+        _unknown = converter("unknown")
+        assert _unknown is not None, (
+            "converter('unknown') returned None — check language data"
+        )
+        return [_unknown]
 
     if "]" in chunk:
         chunk = chunk.split("]", 1)[0]
@@ -861,7 +867,11 @@ def _extract_actual_title(title: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def process_title(title_or_post, post=None, discord_notify: bool = True) -> Titolo:
+def process_title(
+    title_or_post: str | Submission,
+    post: Submission | None = None,
+    discord_notify: bool = True,
+) -> Titolo:
     """
     Parse a Reddit post title and return a populated Titolo object.
 

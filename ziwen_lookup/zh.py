@@ -252,7 +252,7 @@ def _zh_word_alternate_romanization(
             )
             continue
 
-        def add_tone(roman):
+        def add_tone(roman: str) -> str:
             return f"{roman}^{tone}" if tone != "5" else roman
 
         yale_list.append(add_tone(corresponding_dict[base][0]))
@@ -267,7 +267,7 @@ def _zh_word_alternate_romanization(
 
     # Wrap the tone number of the last syllable in parentheses to avoid
     # Reddit's markdown parser consuming the trailing superscript incorrectly.
-    def _parenthesize_last_tone(lst):
+    def _parenthesize_last_tone(lst: list[str]) -> list[str]:
         if lst:
             lst[-1] = re.sub(r"\^(\d)$", r"^(\1)", lst[-1])
         return lst
@@ -370,7 +370,7 @@ def _min_hakka_readings(character: str) -> str:
     :return: A formatted string with available readings.
     """
 
-    def get_min_reading(char):
+    def get_min_reading(char: str) -> str:
         url = f"https://www.moedict.tw/'{char}"
         response = requests.get(url, headers=useragent)
         tree = html.fromstring(response.content)
@@ -382,7 +382,7 @@ def _min_hakka_readings(character: str) -> str:
             return f"\n| **Southern Min** | *{annotation}* |"
         return ""
 
-    def get_hak_reading(char):
+    def get_hak_reading(char: str) -> str:
         url = f"https://www.moedict.tw/:{char}"
         response = requests.get(url, headers=useragent)
         tree = html.fromstring(response.content)
@@ -585,8 +585,8 @@ def _fetch_from_zitools(character: str) -> dict | None:
             allver = yi_data["allver"]
             logger.debug("Using allver")
 
-            def get_latest_value(field_name):
-                """Get the latest value from a unihan field array."""
+            def get_latest_value(field_name: str) -> str | None:
+                """Get the latest value from a Unihan field array."""
                 if field_name in allver and allver[field_name]:
                     # Get the last (most recent) entry
                     latest_entry = allver[field_name][-1]
@@ -1154,6 +1154,7 @@ async def _zh_word_fetch(word: str) -> str:
                 f"No results for '{word}', but specialty dictionaries returned matches."
             )
 
+        yue_pronunciation: str = ""
         if not alternate_meanings:
             try:
                 onclick = tree.xpath('//div[contains(@class,"pinyin")]/a/@onclick')[0]
@@ -1186,7 +1187,7 @@ async def _zh_word_fetch(word: str) -> str:
         else:
             cmn_pronunciation = _convert_numbered_pinyin(alternate_pinyin)
             alt_romanize = _zh_word_alternate_romanization(alternate_pinyin, word)
-            yue_pronunciation = alternate_jyutping or None
+            yue_pronunciation = alternate_jyutping or ""
             meaning = "\n".join(alternate_meanings)
 
     is_same_script = tradify(word) == simplify(word)
@@ -1235,15 +1236,15 @@ async def _zh_word_fetch(word: str) -> str:
         f"^[ZDIC](https://www.zdic.net/hans/{simplify(word)})"
     )
 
-    result = lookup_header + meaning_section + "\n\n" + footer
+    lookup_result = lookup_header + meaning_section + "\n\n" + footer
     logger.info(f"Received a lookup command for '{word}'. Returned search results.")
 
     # Cache the result before returning
     try:
-        parsed_data = parse_zh_output_to_json(result)
+        parsed_data = parse_zh_output_to_json(lookup_result)
         save_to_cache(parsed_data, "zh", "zh_word")
         logger.debug(f"Cached result for '{word}'")
     except Exception as e:
         logger.error(f"Failed to cache result for '{word}': {e}")
 
-    return result
+    return lookup_result

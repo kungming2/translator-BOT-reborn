@@ -118,7 +118,8 @@ def handle_subscribe(message, message_author):
 
     # Get the language names of those codes for use in the reply message.
     for lingvo in language_matches:
-        lingvo_names_formatted.append(lingvo.name)
+        if lingvo.name is not None:
+            lingvo_names_formatted.append(lingvo.name)
     logger.debug(f"[SUB] Language names: {lingvo_names_formatted}")
 
     # Add the various components of the reply.
@@ -183,7 +184,8 @@ def handle_unsubscribe(message, message_author):
     final_match_names = []  # For formatting
     notifier_language_list_editor(language_matches, message_author, "delete")
     for lingvo in language_matches:
-        final_match_names.append(lingvo.name)
+        if lingvo.name is not None:
+            final_match_names.append(lingvo.name)
 
     bullet_list = "\n* ".join(final_match_names)
 
@@ -274,7 +276,9 @@ def handle_add(message, message_author):
     if language_matches:
         notifier_language_list_editor(language_matches, add_username, "insert")
         # Join the name attributes if they exist, otherwise use the items as-is
-        match_codes_print = ", ".join(lang.name for lang in language_matches)
+        match_codes_print = ", ".join(
+            lang.name or lang.preferred_code for lang in language_matches
+        )
 
         addition_message = (
             f"Added the language codes **{match_codes_print}** "

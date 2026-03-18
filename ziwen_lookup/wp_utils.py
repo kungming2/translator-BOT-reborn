@@ -42,7 +42,8 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
 
     # Code for searching non-English Wikipedia, currently not needed.
     if language_code != "en":
-        lang_code: str = converter(language_code).preferred_code
+        lingvo = converter(language_code)
+        lang_code: str = lingvo.preferred_code if lingvo is not None else language_code
         wikipedia.set_lang(lang_code)
     logger.info(f"Looking up term {terms} on the `{language_code}` Wikipedia.")
 

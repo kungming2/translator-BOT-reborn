@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from __future__ import annotations
-
 """
 AI-assisted title parsing and correction for r/translator posts.
 
@@ -26,6 +24,8 @@ Key components:
 
 Logger tag: [T:AI]
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -195,9 +195,13 @@ def update_titolo_from_ai_result(
             tgt: Optional[dict[str, Any]] = ai_result.get("target_language")
 
             if src and "code" in src:
-                result.source = [converter(src["code"])]
+                _src_lingvo = converter(src["code"])
+                if _src_lingvo is not None:
+                    result.source = [_src_lingvo]
             if tgt and "code" in tgt:
-                result.target = [converter(tgt["code"])]
+                _tgt_lingvo = converter(tgt["code"])
+                if _tgt_lingvo is not None:
+                    result.target = [_tgt_lingvo]
 
             result.direction = determine_direction_fn(result.source, result.target)
             result.notify_languages = get_notification_languages_fn(result) or []

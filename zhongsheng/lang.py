@@ -85,9 +85,7 @@ async def lang_convert(ctx, *, language_input: str):
                 await ctx.send("🚫 You do not have permission to use `--add_alt`.")
                 add_alt_flag = False  # disable further processing
             elif alt_value is not None:
-                added_alt = add_alt_language_name(
-                    converter(language_input).preferred_code, alt_value
-                )
+                added_alt = add_alt_language_name(result.preferred_code, alt_value)
                 if added_alt:
                     get_lingvos(
                         force_refresh=True

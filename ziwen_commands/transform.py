@@ -51,7 +51,7 @@ def _extract_gallery_images(submission):
         list: List of image URLs from the gallery (videos and non-images excluded)
               Limited to first 5 images to avoid processing too many images.
     """
-    image_urls = []
+    image_urls: list[str] = []
 
     # Check if the submission has a gallery
     if hasattr(submission, "is_gallery") and submission.is_gallery:

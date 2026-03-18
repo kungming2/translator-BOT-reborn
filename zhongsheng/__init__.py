@@ -13,7 +13,7 @@ from discord.ext import commands
 _commands = []
 
 
-def command(name, help_text, roles=None):
+def command(name, help_text: str, roles: list | None = None):
     """
     Decorator to register a Discord bot command.
 
