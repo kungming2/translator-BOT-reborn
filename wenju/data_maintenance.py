@@ -93,7 +93,7 @@ def log_trimmer():
     return
 
 
-@task(schedule="weekly")
+@task(schedule="daily")
 def error_log_trimmer():
     """Remove resolved errors older than one week from the error log."""
     error_log_path = Paths.LOGS["ERROR"]
