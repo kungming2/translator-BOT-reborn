@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+from typing import Optional, Mapping, Any
+
 from config import Paths
 from time_handling import get_current_utc_time
 
 
-def log_testing_mode(output_text, title=None, metadata=None):
+def log_testing_mode(
+    output_text: str,
+    title: str | None = None,
+    metadata: Optional[Mapping[str, Any]] = None,
+) -> None:
     """
     Append dry-run or testing-mode output to a Markdown log file.
 

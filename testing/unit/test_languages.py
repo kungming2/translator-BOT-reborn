@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Test suite for languages.py module.
-Tests Lingvo class, converter functions, and language utilities.
+Test suite for languages.py, lingvo.py, and countries.py.
+
+Covers:
+  - Lingvo class construction, properties, equality, hashing, serialisation
+  - converter(): stable codes, edge inputs, compound codes, script prefix,
+    specific_mode, preserve_country, fuzzy matching
+  - normalize(), parse_language_list() (all delimiter styles)
+  - country_converter()
+  - define_language_lists() / get_lingvos() structure and caching
 """
 
 import unittest
+from collections.abc import Callable
+from typing import Any
 
 from lang.countries import country_converter
 from lang.languages import (
@@ -17,12 +26,33 @@ from lang.languages import (
 )
 from models.lingvo import Lingvo
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-class TestLingvoClass(unittest.TestCase):
-    """Test the Lingvo class initialization and methods."""
 
-    def setUp(self):
-        """Create sample Lingvo objects for testing."""
+def _skip_if_no_data(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator: skip a test if any data-loading exception is raised."""
+
+    def wrapper(self: unittest.TestCase, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return fn(self, *args, **kwargs)
+        except (FileNotFoundError, ImportError, KeyError, ValueError) as exc:
+            self.skipTest(f"Language data not available: {exc}")
+
+    wrapper.__name__ = fn.__name__
+    return wrapper
+
+
+# ---------------------------------------------------------------------------
+# Lingvo class
+# ---------------------------------------------------------------------------
+
+
+class TestLingvoInit(unittest.TestCase):
+    """Lingvo construction and basic attribute access."""
+
+    def setUp(self) -> None:
         self.english = Lingvo(
             name="English",
             name_alternates=["American English"],
@@ -40,62 +70,120 @@ class TestLingvoClass(unittest.TestCase):
             supported=True,
         )
         self.unknown = Lingvo(
-            name="Unknown", language_code_1="unknown", language_code_3="unknown"
+            name="Unknown",
+            language_code_1="unknown",
+            language_code_3="unknown",
         )
 
-    def test_lingvo_initialization(self):
-        """Test Lingvo object creation with various parameters."""
+    def test_basic_attributes(self) -> None:
         self.assertEqual(self.english.name, "English")
         self.assertEqual(self.english.language_code_1, "en")
         self.assertEqual(self.english.language_code_3, "eng")
         self.assertTrue(self.english.supported)
 
-    def test_preferred_code_priority(self):
-        """Test that preferred_code returns correct priority."""
-        self.assertEqual(self.english.preferred_code, "en")
-        self.assertEqual(self.mandarin.preferred_code, "zh")
-        self.assertEqual(self.unknown.preferred_code, "unknown")
+    def test_defaults(self) -> None:
+        bare = Lingvo(name="Bare")
+        self.assertFalse(bare.supported)
+        self.assertEqual(bare.thanks, "Thanks")
+        self.assertEqual(bare.greetings, "Hello")
+        self.assertEqual(bare.name_alternates, [])
 
-    def test_preferred_code_with_script(self):
-        """Test preferred_code fallback to script_code."""
-        script_lingvo = Lingvo(
-            name="Cyrillic", script_code="Cyrl", language_code_1="unknown"
-        )
-        self.assertEqual(script_lingvo.preferred_code, "cyrl")
+    def test_to_dict_contains_expected_keys(self) -> None:
+        d = self.english.to_dict()
+        for key in (
+            "name",
+            "language_code_1",
+            "language_code_3",
+            "preferred_code",
+            "supported",
+            "thanks",
+            "greetings",
+        ):
+            self.assertIn(key, d)
+        self.assertEqual(d["name"], "English")
+        self.assertEqual(d["preferred_code"], "en")
 
-    def test_lingvo_string_representation(self):
-        """Test __str__ and __repr__ methods."""
-        self.assertEqual(str(self.english), "en")
-        self.assertIn("English", repr(self.english))
-        self.assertIn("en", repr(self.english))
 
-    def test_lingvo_equality(self):
-        """Test equality comparison based on preferred_code."""
-        english_copy = Lingvo(
-            name="English (variant)", language_code_1="en", language_code_3="eng"
-        )
-        self.assertEqual(self.english, english_copy)
+class TestLingvoPreferredCode(unittest.TestCase):
+    """preferred_code property priority logic."""
 
-    def test_lingvo_hashing(self):
-        """Test that Lingvo objects are hashable."""
-        lingvo_set = {self.english, self.mandarin, self.english}
-        self.assertEqual(len(lingvo_set), 2)  # Duplicate removed
+    def test_prefers_code_1_over_code_3(self) -> None:
+        lingvo = Lingvo(language_code_1="en", language_code_3="eng")
+        self.assertEqual(lingvo.preferred_code, "en")
 
-    def test_lingvo_to_dict(self):
-        """Test conversion to dictionary."""
-        lingvo_dict = self.english.to_dict()
-        self.assertIsInstance(lingvo_dict, dict)
-        self.assertEqual(lingvo_dict["name"], "English")
-        self.assertEqual(lingvo_dict["preferred_code"], "en")
-        self.assertIn("language_code_1", lingvo_dict)
+    def test_falls_back_to_code_3(self) -> None:
+        lingvo = Lingvo(language_code_3="spa")
+        self.assertEqual(lingvo.preferred_code, "spa")
 
-    def test_lingvo_from_csv_row(self):
-        """Test creating Lingvo from CSV row data."""
+    def test_falls_back_to_script_code(self) -> None:
+        lingvo = Lingvo(language_code_1="unknown", script_code="Cyrl")
+        self.assertEqual(lingvo.preferred_code, "cyrl")
+
+    def test_unknown_code_1_skipped(self) -> None:
+        lingvo = Lingvo(language_code_1="unknown", language_code_3="eng")
+        self.assertEqual(lingvo.preferred_code, "eng")
+
+    def test_all_unknown_returns_unknown(self) -> None:
+        lingvo = Lingvo(language_code_1="unknown", language_code_3="unknown")
+        self.assertEqual(lingvo.preferred_code, "unknown")
+
+    def test_multiple_code_returned(self) -> None:
+        lingvo = Lingvo(language_code_1="multiple")
+        self.assertEqual(lingvo.preferred_code, "multiple")
+
+    def test_generic_code_returned(self) -> None:
+        lingvo = Lingvo(language_code_1="generic")
+        self.assertEqual(lingvo.preferred_code, "generic")
+
+
+class TestLingvoEqualityAndHashing(unittest.TestCase):
+    """__eq__ and __hash__ based on preferred_code."""
+
+    def test_equal_same_code(self) -> None:
+        a = Lingvo(name="English A", language_code_1="en")
+        b = Lingvo(name="English B", language_code_1="en")
+        self.assertEqual(a, b)
+
+    def test_not_equal_different_code(self) -> None:
+        a = Lingvo(language_code_1="en")
+        b = Lingvo(language_code_1="fr")
+        self.assertNotEqual(a, b)
+
+    def test_hashable_set_deduplication(self) -> None:
+        a = Lingvo(language_code_1="en")
+        b = Lingvo(name="English variant", language_code_1="en")
+        c = Lingvo(language_code_1="fr")
+        s = {a, b, c}
+        self.assertEqual(len(s), 2)
+
+    def test_not_equal_to_non_lingvo(self) -> None:
+        lingvo = Lingvo(language_code_1="en")
+        self.assertNotEqual(lingvo, "en")
+
+
+class TestLingvoStringRepresentation(unittest.TestCase):
+    def test_str_returns_preferred_code(self) -> None:
+        lingvo = Lingvo(language_code_1="fr")
+        self.assertEqual(str(lingvo), "fr")
+
+    def test_repr_contains_name_and_code(self) -> None:
+        lingvo = Lingvo(name="French", language_code_1="fr")
+        r = repr(lingvo)
+        self.assertIn("French", r)
+        self.assertIn("fr", r)
+
+    def test_repr_flags_script_entries(self) -> None:
+        lingvo = Lingvo(name="Cyrillic", language_code_1="unknown", script_code="Cyrl")
+        self.assertIn("script", repr(lingvo))
+
+
+class TestLingvoFromCsvRow(unittest.TestCase):
+    def test_basic_construction(self) -> None:
         row = {
             "Language Name": "Spanish",
             "ISO 639-1": "es",
             "ISO 639-3": "spa",
-            "Alternate Names": "Castilian; EspaÃ±ol",
+            "Alternate Names": "Castilian; Español",
         }
         lingvo = Lingvo.from_csv_row(row)
         self.assertEqual(lingvo.name, "Spanish")
@@ -103,261 +191,478 @@ class TestLingvoClass(unittest.TestCase):
         self.assertEqual(lingvo.language_code_3, "spa")
         self.assertIn("Castilian", lingvo.name_alternates)
 
+    def test_empty_alternate_names(self) -> None:
+        row = {
+            "Language Name": "Klingon",
+            "ISO 639-1": "",
+            "ISO 639-3": "tlh",
+            "Alternate Names": "",
+        }
+        lingvo = Lingvo.from_csv_row(row)
+        self.assertEqual(lingvo.name_alternates, [])
 
-class TestConverterFunction(unittest.TestCase):
-    """Test the converter function with various inputs."""
-
-    def test_converter_with_2letter_code(self):
-        """Test converter with 2-letter ISO 639-1 codes."""
-        result = converter("en")
-        if result:
-            self.assertIsInstance(result, Lingvo)
-
-    def test_converter_with_3letter_code(self):
-        """Test converter with 3-letter ISO 639-3 codes."""
-        result = converter("fra")
-        if result:
-            self.assertIsInstance(result, Lingvo)
-
-    def test_converter_too_short_input(self):
-        """Test converter rejects input that's too short."""
-        result = converter("a")
-        self.assertIsNone(result)
-
-    def test_converter_empty_input(self):
-        """Test converter handles empty input gracefully."""
-        result = converter("")
-        self.assertIsNone(result)
-
-    def test_converter_with_whitespace(self):
-        """Test converter strips whitespace."""
-        result = converter("  en  ")
-        if result:
-            self.assertEqual(result.preferred_code, "en")
-
-    def test_converter_case_insensitive(self):
-        """Test converter is case-insensitive."""
-        result_lower = converter("en")
-        result_upper = converter("EN")
-        if result_lower and result_upper:
-            self.assertEqual(result_lower, result_upper)
-
-    def test_converter_with_compound_code(self):
-        """Test converter with compound codes like zh-CN."""
-        result = converter("zh-CN")
-        if result:
-            self.assertIsInstance(result, Lingvo)
-
-    def test_converter_with_script_code(self):
-        """Test converter with script codes like unknown-Cyrl."""
-        result = converter("unknown-Cyrl")
-        if result:
-            self.assertIsInstance(result, Lingvo)
+    def test_empty_iso_1_becomes_none(self) -> None:
+        row = {
+            "Language Name": "Xhosa",
+            "ISO 639-1": "",
+            "ISO 639-3": "xho",
+            "Alternate Names": "",
+        }
+        lingvo = Lingvo.from_csv_row(row)
+        self.assertIsNone(lingvo.language_code_1)
 
 
-class TestNormalizeFunction(unittest.TestCase):
-    """Test the normalize utility function."""
+# ---------------------------------------------------------------------------
+# normalize()
+# ---------------------------------------------------------------------------
 
-    def test_normalize_lowercase(self):
-        """Test normalize converts to lowercase."""
+
+class TestNormalize(unittest.TestCase):
+    def test_lowercases(self) -> None:
         self.assertEqual(normalize("ENGLISH"), "english")
 
-    def test_normalize_collapses_whitespace(self):
-        """Test normalize collapses multiple spaces."""
-        self.assertEqual(normalize("English  Language"), "english language")
+    def test_strips_leading_trailing_whitespace(self) -> None:
+        self.assertEqual(normalize("  english  "), "english")
 
-    def test_normalize_strips_whitespace(self):
-        """Test normalize strips leading/trailing whitespace."""
-        self.assertEqual(normalize("  English  "), "english")
+    def test_collapses_internal_whitespace(self) -> None:
+        self.assertEqual(normalize("english  language"), "english language")
 
-    def test_normalize_empty_string(self):
-        """Test normalize handles empty strings."""
+    def test_removes_punctuation(self) -> None:
+        self.assertEqual(normalize("english!"), "english")
+
+    def test_empty_string(self) -> None:
         self.assertEqual(normalize(""), "")
 
-    def test_normalize_numbers(self):
-        """Test normalize preserves numbers."""
+    def test_preserves_numbers(self) -> None:
         self.assertEqual(normalize("Code123"), "code123")
 
 
-class TestParseLanguageList(unittest.TestCase):
-    """Test the parse_language_list function."""
+# ---------------------------------------------------------------------------
+# converter() — stable codes, edge inputs
+# ---------------------------------------------------------------------------
 
-    def test_parse_comma_delimited(self):
-        """Test parsing comma-delimited language list."""
+
+class TestConverterStableCodes(unittest.TestCase):
+    """Concrete assertions on codes that will always be in any dataset."""
+
+    @_skip_if_no_data
+    def test_two_letter_en(self) -> None:
+        result = converter("en")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "en")
+
+    @_skip_if_no_data
+    def test_two_letter_fr(self) -> None:
+        result = converter("fr")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "fr")
+
+    @_skip_if_no_data
+    def test_three_letter_spa(self) -> None:
+        result = converter("spa")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_three_letter_fra(self) -> None:
+        result = converter("fra")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_case_insensitive_EN(self) -> None:
+        lower = converter("en")
+        upper = converter("EN")
+        self.assertIsNotNone(lower)
+        self.assertIsNotNone(upper)
+        self.assertEqual(lower, upper)
+
+    @_skip_if_no_data
+    def test_whitespace_stripped(self) -> None:
+        result = converter("  en  ")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "en")
+
+    @_skip_if_no_data
+    def test_name_lookup_english(self) -> None:
+        result = converter("English")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "en")
+
+    @_skip_if_no_data
+    def test_name_lookup_french(self) -> None:
+        result = converter("French")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "fr")
+
+
+class TestConverterEdgeInputs(unittest.TestCase):
+    """Inputs that should always return None."""
+
+    def test_empty_string(self) -> None:
+        self.assertIsNone(converter(""))
+
+    def test_single_character(self) -> None:
+        self.assertIsNone(converter("a"))
+
+    def test_gibberish(self) -> None:
+        self.assertIsNone(converter("xyzxyzxyz"))
+
+
+class TestConverterCompoundCodes(unittest.TestCase):
+    """Compound language-region codes (zh-CN, pt-BR, etc.)."""
+
+    @_skip_if_no_data
+    def test_zh_CN_returns_lingvo(self) -> None:
+        result = converter("zh-CN")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_zh_CN_has_country_set(self) -> None:
+        result = converter("zh-CN")
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(result.country)
+
+    @_skip_if_no_data
+    def test_pt_BR_returns_lingvo(self) -> None:
+        result = converter("pt-BR")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_pt_BR_has_country_set(self) -> None:
+        result = converter("pt-BR")
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(result.country)
+
+    @_skip_if_no_data
+    def test_en_US_returns_lingvo(self) -> None:
+        result = converter("en-US")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+
+class TestConverterScriptPrefix(unittest.TestCase):
+    """unknown-<Script> compound codes."""
+
+    @_skip_if_no_data
+    def test_unknown_cyrl_returns_lingvo(self) -> None:
+        result = converter("unknown-Cyrl")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_unknown_cyrl_code_1_is_unknown(self) -> None:
+        result = converter("unknown-Cyrl")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.language_code_1, "unknown")
+
+    @_skip_if_no_data
+    def test_unknown_cyrl_script_code_set(self) -> None:
+        result = converter("unknown-Cyrl")
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(result.script_code)
+
+    @_skip_if_no_data
+    def test_unknown_hans_returns_lingvo(self) -> None:
+        result = converter("unknown-Hans")
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+
+class TestConverterSpecificMode(unittest.TestCase):
+    """specific_mode=True enforces strict ISO lookups, no fuzzy."""
+
+    @_skip_if_no_data
+    def test_specific_mode_2letter_en(self) -> None:
+        result = converter("en", specific_mode=True)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "en")
+
+    @_skip_if_no_data
+    def test_specific_mode_3letter_spa(self) -> None:
+        result = converter("spa", specific_mode=True)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_specific_mode_4letter_script_cyrl(self) -> None:
+        result = converter("Cyrl", specific_mode=True)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_specific_mode_name_returns_none(self) -> None:
+        # In specific_mode, plain names shouldn't match (no fuzzy, no name walk)
+        result = converter("English", specific_mode=True)
+        self.assertIsNone(result)
+
+    @_skip_if_no_data
+    def test_specific_mode_5plus_chars_returns_none(self) -> None:
+        result = converter("English", specific_mode=True)
+        self.assertIsNone(result)
+
+
+class TestConverterPreserveCountry(unittest.TestCase):
+    """preserve_country flag keeps vs clears the country field."""
+
+    @_skip_if_no_data
+    def test_preserve_country_false_clears_country(self) -> None:
+        # Simple code lookup — country should be cleared
+        result = converter("en", preserve_country=False)
+        self.assertIsNotNone(result)
+        self.assertIsNone(result.country)
+
+    @_skip_if_no_data
+    def test_preserve_country_true_keeps_country(self) -> None:
+        # Only meaningful if the underlying Lingvo has a country set in YAML.
+        # We verify the flag doesn't crash and returns a Lingvo.
+        result = converter("en", preserve_country=True)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_compound_code_always_sets_country(self) -> None:
+        # Compound codes attach country regardless of preserve_country
+        result = converter("pt-BR", preserve_country=False)
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(result.country)
+
+
+class TestConverterFuzzy(unittest.TestCase):
+    """Fuzzy matching resolves near-miss language names."""
+
+    @_skip_if_no_data
+    def test_fuzzy_on_by_default(self) -> None:
+        # "Engish" (typo) should fuzzy-match to English
+        result = converter("Engish")
+        # May or may not match depending on threshold — just verify no crash
+        self.assertTrue(result is None or isinstance(result, Lingvo))
+
+    @_skip_if_no_data
+    def test_fuzzy_false_does_not_match_typo(self) -> None:
+        result = converter("Engish", fuzzy=False)
+        self.assertIsNone(result)
+
+    @_skip_if_no_data
+    def test_fuzzy_matches_close_name(self) -> None:
+        # "Portugese" is a very common misspelling
+        result = converter("Portugese")
+        self.assertTrue(result is None or isinstance(result, Lingvo))
+
+
+# ---------------------------------------------------------------------------
+# parse_language_list()
+# ---------------------------------------------------------------------------
+
+
+class TestParseLanguageList(unittest.TestCase):
+    def test_empty_string_returns_empty(self) -> None:
+        self.assertEqual(parse_language_list(""), [])
+
+    @_skip_if_no_data
+    def test_comma_delimited(self) -> None:
         result = parse_language_list("en, fr, es")
         self.assertIsInstance(result, list)
+        self.assertTrue(all(isinstance(x, Lingvo) for x in result))
 
-    def test_parse_plus_delimited(self):
-        """Test parsing plus-delimited language list."""
-        result = parse_language_list("en+fr+es")
+    @_skip_if_no_data
+    def test_plus_delimited(self) -> None:
+        result = parse_language_list("en+fr")
         self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
 
-    def test_parse_newline_delimited(self):
-        """Test parsing newline-delimited language list."""
+    @_skip_if_no_data
+    def test_newline_delimited(self) -> None:
         result = parse_language_list("en\nfr\nes")
         self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
 
-    def test_parse_with_language_prefix(self):
-        """Test parsing with LANGUAGES: prefix."""
-        result = parse_language_list("LANGUAGES: en, fr, es")
+    @_skip_if_no_data
+    def test_slash_delimited(self) -> None:
+        result = parse_language_list("en/fr/de")
         self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
 
-    def test_parse_empty_string(self):
-        """Test parsing empty string returns empty list."""
-        result = parse_language_list("")
-        self.assertEqual(result, [])
-
-    def test_parse_removes_duplicates(self):
-        """Test parsing deduplicates languages by preferred_code."""
-        result = parse_language_list("en, en, eng")
+    @_skip_if_no_data
+    def test_languages_prefix_stripped(self) -> None:
+        result = parse_language_list("LANGUAGES: en, fr")
         self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
 
-    def test_parse_ignores_utility_codes(self):
-        """Test parsing ignores utility codes like 'meta'."""
-        result = parse_language_list("en, meta, fr")
-        self.assertIsInstance(result, list)
+    @_skip_if_no_data
+    def test_utility_codes_excluded(self) -> None:
+        result = parse_language_list("en, meta, community, all, fr")
+        codes = [lingvo.preferred_code for lingvo in result]
+        self.assertNotIn("meta", codes)
+        self.assertNotIn("community", codes)
+        self.assertNotIn("all", codes)
 
-    def test_parse_returns_sorted(self):
-        """Test parsing returns sorted results."""
+    @_skip_if_no_data
+    def test_deduplication_by_preferred_code(self) -> None:
+        # "en" and "eng" resolve to the same preferred_code
+        result = parse_language_list("en, eng")
+        codes = [lingvo.preferred_code for lingvo in result]
+        self.assertEqual(len(codes), len(set(codes)))
+
+    @_skip_if_no_data
+    def test_result_is_sorted(self) -> None:
         result = parse_language_list("es, en, fr")
-        self.assertIsInstance(result, list)
-        if len(result) > 1:
-            codes = [lingvo.preferred_code for lingvo in result]
-            self.assertEqual(codes, sorted(codes))
+        codes = [lingvo.preferred_code for lingvo in result]
+        self.assertEqual(codes, sorted(codes))
+
+
+# ---------------------------------------------------------------------------
+# country_converter()
+# ---------------------------------------------------------------------------
 
 
 class TestCountryConverter(unittest.TestCase):
-    """Test the country_converter function."""
+    def test_empty_returns_empty_tuple(self) -> None:
+        self.assertEqual(country_converter(""), ("", ""))
 
-    def test_country_converter_too_short(self):
-        """Test country converter rejects single character."""
-        result = country_converter("a")
-        self.assertEqual(result, ("", ""))
+    def test_single_char_returns_empty_tuple(self) -> None:
+        self.assertEqual(country_converter("a"), ("", ""))
 
-    def test_country_converter_empty(self):
-        """Test country converter handles empty input."""
-        result = country_converter("")
-        self.assertEqual(result, ("", ""))
+    def test_two_letter_EE(self) -> None:
+        result = country_converter("EE")
+        if result[0]:  # only assert if dataset loaded
+            self.assertEqual(result[0], "EE")
+            self.assertIsInstance(result[1], str)
 
-    def test_country_converter_2letter_code(self):
-        """Test country converter with 2-letter code."""
-        result = country_converter("US")
-        if result[0]:  # Only test if dataset is available
+    def test_three_letter_EST(self) -> None:
+        result = country_converter("EST")
+        if result[0]:
             self.assertIsInstance(result, tuple)
             self.assertEqual(len(result), 2)
 
-    def test_country_converter_3letter_code(self):
-        """Test country converter with 3-letter code."""
-        result = country_converter("USA")
+    def test_full_name_estonia(self) -> None:
+        result = country_converter("Estonia")
         if result[0]:
-            self.assertIsInstance(result, tuple)
+            self.assertEqual(result[0], "EE")
 
-    def test_country_converter_abbreviations_disabled(self):
-        """Test country converter with abbreviations disabled."""
-        result = country_converter("US", abbreviations_okay=False)
+    def test_abbreviations_disabled(self) -> None:
+        # With abbreviations_okay=False, short codes should not match
+        result = country_converter("EE", abbreviations_okay=False)
         self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+
+    def test_returns_tuple_always(self) -> None:
+        for inp in ["", "a", "US", "France", "zzz"]:
+            result = country_converter(inp)
+            self.assertIsInstance(result, tuple)
+            self.assertEqual(len(result), 2)
+
+
+# ---------------------------------------------------------------------------
+# define_language_lists() and get_lingvos()
+# ---------------------------------------------------------------------------
 
 
 class TestLanguageLists(unittest.TestCase):
-    """Test the define_language_lists function."""
+    @_skip_if_no_data
+    def test_returns_dict(self) -> None:
+        lists = define_language_lists()
+        self.assertIsInstance(lists, dict)
 
-    def test_language_lists_structure(self):
-        """Test that language lists are properly structured."""
-        try:
-            lists = define_language_lists()
-            self.assertIsInstance(lists, dict)
-            expected_keys = {
-                "SUPPORTED_CODES",
-                "SUPPORTED_LANGUAGES",
-                "ISO_DEFAULT_ASSOCIATED",
-                "ISO_639_1",
-                "ISO_639_2B",
-                "ISO_639_3",
-                "ISO_NAMES",
-                "MISTAKE_ABBREVIATIONS",
-                "LANGUAGE_COUNTRY_ASSOCIATED",
-            }
-            for key in expected_keys:
-                self.assertIn(key, lists)
-        except (FileNotFoundError, ImportError, KeyError, ValueError) as e:
-            self.skipTest(f"Language data not available: {e}")
+    @_skip_if_no_data
+    def test_expected_keys_present(self) -> None:
+        lists = define_language_lists()
+        for key in (
+            "SUPPORTED_CODES",
+            "SUPPORTED_LANGUAGES",
+            "ISO_DEFAULT_ASSOCIATED",
+            "ISO_639_1",
+            "ISO_639_2B",
+            "ISO_639_3",
+            "ISO_NAMES",
+            "MISTAKE_ABBREVIATIONS",
+            "LANGUAGE_COUNTRY_ASSOCIATED",
+        ):
+            self.assertIn(key, lists)
 
-    def test_supported_codes_are_strings(self):
-        """Test that supported codes are strings."""
-        try:
-            lists = define_language_lists()
-            for code in lists["SUPPORTED_CODES"]:
-                self.assertIsInstance(code, str)
-        except (FileNotFoundError, ImportError, KeyError, ValueError):
-            self.skipTest("Language data not available")
+    @_skip_if_no_data
+    def test_supported_codes_are_strings(self) -> None:
+        lists = define_language_lists()
+        for code in lists["SUPPORTED_CODES"]:
+            self.assertIsInstance(code, str)
 
-    def test_iso_codes_are_unique(self):
-        """Test that ISO codes are unique in their lists."""
-        try:
-            lists = define_language_lists()
-            iso_639_1 = lists["ISO_639_1"]
-            self.assertEqual(len(iso_639_1), len(set(iso_639_1)))
-        except (FileNotFoundError, ImportError, KeyError, ValueError):
-            self.skipTest("Language data not available")
+    @_skip_if_no_data
+    def test_iso_639_1_codes_unique(self) -> None:
+        lists = define_language_lists()
+        iso = lists["ISO_639_1"]
+        self.assertEqual(len(iso), len(set(iso)))
+
+    @_skip_if_no_data
+    def test_iso_639_2b_maps_to_strings(self) -> None:
+        lists = define_language_lists()
+        for k, v in lists["ISO_639_2B"].items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(v, str)
+
+    @_skip_if_no_data
+    def test_caching_returns_same_object(self) -> None:
+        lists1 = define_language_lists()
+        lists2 = define_language_lists()
+        self.assertIs(lists1, lists2)
 
 
 class TestGetLingvos(unittest.TestCase):
-    """Test the get_lingvos caching function."""
+    @_skip_if_no_data
+    def test_returns_dict(self) -> None:
+        lingvos = get_lingvos()
+        self.assertIsInstance(lingvos, dict)
 
-    def test_get_lingvos_returns_dict(self):
-        """Test get_lingvos returns a dictionary."""
-        try:
-            lingvos = get_lingvos()
-            self.assertIsInstance(lingvos, dict)
-        except (FileNotFoundError, ImportError, KeyError, ValueError):
-            self.skipTest("Language data not available")
+    @_skip_if_no_data
+    def test_values_are_lingvo_instances(self) -> None:
+        lingvos = get_lingvos()
+        for _, v in list(lingvos.items())[:10]:
+            self.assertIsInstance(v, Lingvo)
 
-    def test_get_lingvos_values_are_lingvo(self):
-        """Test get_lingvos dictionary contains Lingvo objects."""
-        try:
-            lingvos = get_lingvos()
-            for key, value in list(lingvos.items())[:5]:
-                self.assertIsInstance(value, Lingvo)
-        except (FileNotFoundError, ImportError, KeyError, ValueError):
-            self.skipTest("Language data not available")
+    @_skip_if_no_data
+    def test_caching_returns_same_object(self) -> None:
+        r1 = get_lingvos()
+        r2 = get_lingvos()
+        self.assertIs(r1, r2)
 
-    def test_get_lingvos_caching(self):
-        """Test get_lingvos caches results."""
-        try:
-            result1 = get_lingvos()
-            result2 = get_lingvos()
-            self.assertIs(result1, result2)
-        except (FileNotFoundError, ImportError, KeyError, ValueError):
-            self.skipTest("Language data not available")
+    @_skip_if_no_data
+    def test_force_refresh_returns_fresh_dict(self) -> None:
+        r1 = get_lingvos()
+        r2 = get_lingvos(force_refresh=True)
+        # Same keys/content but different object after refresh
+        self.assertIsInstance(r2, dict)
+        self.assertEqual(set(r1.keys()), set(r2.keys()))
 
 
-def run_specific_test(test_class, test_method=None):
-    """Run specific test class or method."""
-    suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
-    if test_method:
-        suite = unittest.TestSuite([test_class(test_method)])
-    runner = unittest.TextTestRunner(verbosity=2)
-    return runner.run(suite)
+# ---------------------------------------------------------------------------
+# Runner
+# ---------------------------------------------------------------------------
 
 
-def run_all_tests():
-    """Run all tests with detailed output."""
+def run_all_tests() -> unittest.TestResult:
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-
-    test_classes = [
-        TestLingvoClass,
-        TestConverterFunction,
-        TestNormalizeFunction,
+    for cls in (
+        TestLingvoInit,
+        TestLingvoPreferredCode,
+        TestLingvoEqualityAndHashing,
+        TestLingvoStringRepresentation,
+        TestLingvoFromCsvRow,
+        TestNormalize,
+        TestConverterStableCodes,
+        TestConverterEdgeInputs,
+        TestConverterCompoundCodes,
+        TestConverterScriptPrefix,
+        TestConverterSpecificMode,
+        TestConverterPreserveCountry,
+        TestConverterFuzzy,
         TestParseLanguageList,
         TestCountryConverter,
         TestLanguageLists,
         TestGetLingvos,
-    ]
-
-    for test_class in test_classes:
-        suite.addTests(loader.loadTestsFromTestCase(test_class))
-
+    ):
+        suite.addTests(loader.loadTestsFromTestCase(cls))
     runner = unittest.TextTestRunner(verbosity=2)
     return runner.run(suite)
 

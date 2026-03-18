@@ -131,8 +131,8 @@ def check_hermes_statistics():
 
 def check_hermes_parser():
     """Fetch live posts and print title_parser output for each."""
-    limit = input("Number of posts to fetch (default 100): ").strip()
-    limit = int(limit) if limit.isdigit() else 100
+    limit_raw = input("Number of posts to fetch (default 100): ").strip()
+    limit = int(limit_raw) if limit_raw.isdigit() else 100
     with msg.loading(f"Fetching {limit} posts..."):
         test_parser(REDDIT_HELPER, limit=limit)
 
@@ -232,6 +232,9 @@ def check_models_ajo_url():
         return
     with msg.loading("Loading submission and building Ajo..."):
         test_post = submission_from_input(test_url)
+        if not test_post:
+            msg.fail("Invalid submission.")
+            return
         test_titolo = process_title(test_post.title)
         post_ajo = Ajo.from_titolo(test_titolo, test_post)
     msg.divider("titolo")
@@ -629,6 +632,7 @@ def _section_menu(label, checks):
 
 def _main_menu():
     """Main entry point for using dev tools."""
+    enable_debug_logging()
     while True:
         msg.divider("dev_tools")
         for key, (label, checks) in SECTIONS.items():
