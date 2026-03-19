@@ -228,37 +228,37 @@ class Ajo:
 
     def __init__(self) -> None:
         """Initialize an Ajo with all fields set to their default values."""
-        self._id = None
-        self._created_utc = None
-        self._author = None
-        self.title_original = None
-        self.title = None
-        self.direction = None
+        self._id: str | None = None
+        self._created_utc: int | None = None
+        self._author: str | None = None
+        self.title_original: str | None = None
+        self.title: str | None = None
+        self.direction: str | None = None
 
-        self.preferred_code = None  # store this in the DB
-        self.language_history = []
+        self.preferred_code: str | None = None  # store this in the DB
+        self.language_history: list[str | list[str]] = []
 
         self.status: str | dict[str, str] = "untranslated"
-        self.output_post_flair_css = None
-        self.output_post_flair_text = None
-        self.original_source_language_name = None
-        self.original_target_language_name = None
+        self.output_post_flair_css: str | None = None
+        self.output_post_flair_text: str | None = None
+        self.original_source_language_name: list[Lingvo] | None = None
+        self.original_target_language_name: list[Lingvo] | None = None
 
         self.is_identified = False
         self.is_long = False
 
         # New additions
-        self.recorded_translators = []
-        self.notified = []
-        self.time_delta = {}
+        self.recorded_translators: list[str] = []
+        self.notified: list[str] = []
+        self.time_delta: dict[str, int] = {}
         self.author_messaged = False
         self.type = "single"
-        self.image_hash = None
+        self.image_hash: str | None = None
         self.is_defined_multiple = False
         self.closed_out = False
 
-        self._lingvo = None  # initialized lazily from preferred_code
-        self._submission = None  # cached PRAW submission
+        self._lingvo: Lingvo | None = None  # initialized lazily from preferred_code
+        self._submission: Any = None  # cached PRAW submission
 
     def initialize_lingvo(self) -> None:
         """
@@ -451,13 +451,13 @@ class Ajo:
                 titolo.final_code == "multiple"
                 or titolo.final_text == "Multiple Languages"
             ):
-                ajo.language_history = [titolo.final_code]
+                ajo.language_history = [titolo.final_code] if titolo.final_code else []
                 ajo.status = "untranslated"
                 ajo.is_defined_multiple = False
                 ajo.type = "multiple"
             else:
                 # Single language, keep as flat list
-                ajo.language_history = [titolo.final_code]
+                ajo.language_history = [titolo.final_code] if titolo.final_code else []
                 ajo.status = "untranslated"  # Default
         else:
             ajo.language_history = []
@@ -514,10 +514,7 @@ class Ajo:
                 self.type = "single"
                 self.is_defined_multiple = False
                 self.status = "untranslated"
-                self.language_history = [titolo.final_code]
-        else:
-            # Single language or no target
-            self.type = "single"
+                self.language_history = [titolo.final_code] if titolo.final_code else []
             self.is_defined_multiple = False
             self.status = "untranslated"
             self.language_history = [titolo.final_code] if titolo.final_code else []
@@ -746,7 +743,7 @@ class Ajo:
                     self.status = "untranslated"
 
             # Update tracking fields - only append if the last entry is different
-            if (
+            if self.preferred_code and (
                 not self.language_history
                 or self.language_history[-1] != self.preferred_code
             ):
