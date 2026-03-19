@@ -184,12 +184,21 @@ def ziwen_commands() -> None:
             continue
 
         # Load the ajo for the post from the database.
+        is_verified_post = original_post.id == VERIFIED_POST_ID
         original_ajo = ajo_loader(original_post.id)
         if not original_ajo:
-            # On the off-chance that there is no Ajo associated...
-            logger.warning(f"Ajo for `{original_post.id}` does not exist. Creating...")
-            original_ajo = Ajo.from_titolo(process_title(original_post), original_post)
-        logger.debug(f"> Ajo lingvo is {original_ajo.lingvo}")  # loaded lazily
+            if is_verified_post:
+                logger.debug("Verified post has no Ajo — skipping Ajo creation.")
+            else:
+                logger.warning(
+                    f"Ajo for `{original_post.id}` does not exist. Creating..."
+                )
+                original_ajo = Ajo.from_titolo(
+                    process_title(original_post), original_post
+                )
+        logger.debug(
+            f"> Ajo lingvo is {original_ajo.lingvo if original_ajo else None}"
+        )  # loaded lazily
 
         # Derive an Instruo, and act on it if there are commands.
         # It's basically a class that represents a comment which has
@@ -256,7 +265,7 @@ def ziwen_commands() -> None:
 
             # Calculate points for the comment and write them to database.
             # This is obviously skipped if the post is an internal post.
-            if not diskuto_exists(original_post.id):
+            if not diskuto_exists(original_post.id) and original_ajo:
                 points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             # If this is the verified thread and there are no commands, skip
@@ -273,7 +282,7 @@ def ziwen_commands() -> None:
             )
 
         # Process THANKS keywords from original posters.
-        if any(keyword in comment_body for keyword in thanks_keywords):
+        if original_ajo and any(keyword in comment_body for keyword in thanks_keywords):
             # Assess whether a thank-you comment can mark the post as translated.
             _mark_short_thanks_as_translated(comment, original_ajo)
 
@@ -294,5 +303,5 @@ def ziwen_commands() -> None:
         # Update the ajo if NOT in testing mode. This updates both the
         # flair on the site as well as the local database.
         # Also skip if the only command was 'verify'.
-        if not SETTINGS["testing_mode"] and not skip_update:
+        if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
             original_ajo.update_reddit(moderator_set=moderator_set)

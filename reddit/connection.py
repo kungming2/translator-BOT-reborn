@@ -186,11 +186,14 @@ def is_internal_post(submission: "praw.models.Submission") -> bool:
     :return: True if submission is an internal post, False otherwise.
     """
     title = submission.title
+    internal_types = SETTINGS.get("internal_post_types") or []
 
-    # Check for internal post types
-    diskuto_pattern = r"^\s*\[(" + "|".join(SETTINGS["internal_post_types"]) + r")\]"
-    if re.match(diskuto_pattern, title, flags=re.I):
-        return True
+    if not internal_types:
+        logger.warning("internal_post_types is empty or missing — skipping tag check.")
+    else:
+        diskuto_pattern = r"^\s*\[(" + "|".join(internal_types) + r")\]"
+        if re.match(diskuto_pattern, title, flags=re.I):
+            return True
 
     # Alternate condition: 'translation challenge' + mod author
     if "translation challenge" in title.lower():
