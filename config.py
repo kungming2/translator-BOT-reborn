@@ -99,6 +99,9 @@ class Paths:
         "TITLE_MODULE_SETTINGS": os.path.join(
             DATA_DIR, "Settings", "title_settings.yaml"
         ),
+        "SCHEDULER_SETTINGS": os.path.join(
+            DATA_DIR, "Settings", "scheduler_settings.yaml"
+        ),
     }
 
     # Wenyuan output files
@@ -257,3 +260,4 @@ TRANSIENT_ERRORS = (
 
 # To use, SETTINGS['variable_name']
 SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])
+SCHEDULER_SETTINGS: dict = load_settings(Paths.SETTINGS["SCHEDULER_SETTINGS"])
