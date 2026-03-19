@@ -23,7 +23,11 @@ from database import initialize_all_databases, search_database
 # ── hermes ────────────────────────────────────────────────────────────────────
 from hermes.tools import get_statistics, test_parser
 
+# ── error ─────────────────────────────────────────────────────────────────────
+from error import display_event_errors
+
 # ── integrations ──────────────────────────────────────────────────────────────
+from integrations.ai import fetch_image_description
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 
 # ── lang ──────────────────────────────────────────────────────────────────────
@@ -57,7 +61,7 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 
 # ── utility ───────────────────────────────────────────────────────────────────
-from utility import fetch_youtube_length
+from utility import fetch_youtube_length, is_valid_image_url
 
 # ── wenju ─────────────────────────────────────────────────────────────────────
 from wenju.iso_updates import fetch_iso_reports
@@ -107,6 +111,23 @@ def check_lang_parse():
     pprint(parse_result)
 
 
+# ── Section: error ────────────────────────────────────────────────────────────
+
+
+def check_error_display_event_errors():
+    """Display ERROR-level entries from the events log within the last N days."""
+    days_raw = input("Number of days to look back (default 7): ").strip()
+    days = int(days_raw) if days_raw.isdigit() else 7
+    with msg.loading(f"Scanning events log for errors in the last {days} day(s)..."):
+        results = display_event_errors(days)
+    if results:
+        msg.warn(f"{len(results)} error(s) found:")
+        for line in results:
+            print(line)
+    else:
+        msg.good(f"No errors found in the last {days} day(s).")
+
+
 # ── Section: integrations ─────────────────────────────────────────────────────
 
 
@@ -119,6 +140,19 @@ def check_integrations_search():
         with msg.loading(f"Searching Reddit for '{my_search}'..."):
             searched_posts = fetch_search_reddit_posts(my_search)
         msg.info(build_search_results(searched_posts, my_search))
+
+
+def check_integrations_ai_image_description():
+    """ai: Fetch and display an AI-generated description for an image URL."""
+    image_url = input("Enter a public image URL (x to back out): ").strip()
+    if image_url.lower() == "x":
+        return
+    with msg.loading("Fetching image description..."):
+        description = fetch_image_description(image_url)
+    if description:
+        msg.good(f"Description: {description}")
+    else:
+        msg.fail("Failed to fetch image description.")
 
 
 # ── Section: hermes ───────────────────────────────────────────────────────────
@@ -220,6 +254,17 @@ def check_utility_youtube():
         msg.good(f"Video length: {length_seconds} seconds")
     else:
         msg.fail("Failed to fetch video length.")
+
+
+def check_utility_is_valid_image_url():
+    """Validate whether a URL is recognised as a valid image URL."""
+    test_url = input("Enter a URL to validate as an image URL: ").strip()
+    with msg.loading("Checking URL..."):
+        result = is_valid_image_url(test_url)
+    if result:
+        msg.good(f"'{test_url}' is a valid image URL.")
+    else:
+        msg.warn(f"'{test_url}' is NOT a valid image URL.")
 
 
 # ── Section: models ───────────────────────────────────────────────────────────
@@ -520,26 +565,33 @@ SECTIONS = {
         },
     ),
     "2": (
+        "error",
+        {
+            "1": ("display event errors", check_error_display_event_errors),
+        },
+    ),
+    "3": (
         "hermes",
         {
             "1": ("db statistics", check_hermes_statistics),
             "2": ("parser diagnostics", check_hermes_parser),
         },
     ),
-    "3": (
+    "4": (
         "integrations",
         {
-            "1": ("search", check_integrations_search),
+            "1": ("ai: image description", check_integrations_ai_image_description),
+            "2": ("search", check_integrations_search),
         },
     ),
-    "4": (
+    "5": (
         "lang",
         {
             "1": ("converter", check_lang_converter),
             "2": ("parse language list", check_lang_parse),
         },
     ),
-    "5": (
+    "6": (
         "models",
         {
             "1": ("ajo: from URL", check_models_ajo_url),
@@ -551,14 +603,14 @@ SECTIONS = {
             "7": ("kunulo: from URL", check_models_kunulo),
         },
     ),
-    "6": (
+    "7": (
         "monitoring",
         {
             "1": ("user points", check_monitoring_user),
             "2": ("post points", check_monitoring_post),
         },
     ),
-    "7": (
+    "8": (
         "reddit",
         {
             "1": ("connection: status check", check_reddit_status),
@@ -570,26 +622,27 @@ SECTIONS = {
             "7": ("wiki: most requested langs", check_reddit_wiki_most_requested),
         },
     ),
-    "8": (
+    "9": (
         "title",
         {
             "1": ("manual test", check_title_manual),
             "2": ("live Reddit posts", check_title_reddit),
         },
     ),
-    "9": (
+    "10": (
         "utility",
         {
-            "1": ("youtube length", check_utility_youtube),
+            "1": ("is valid image URL", check_utility_is_valid_image_url),
+            "2": ("youtube length", check_utility_youtube),
         },
     ),
-    "10": (
+    "11": (
         "wenju",
         {
             "1": ("iso_updates: fetch reports", check_wenju_fetch_iso_reports),
         },
     ),
-    "11": (
+    "12": (
         "ziwen_lookup",
         {
             "1": ("ja: character", check_ziwen_lookup_ja_character),
