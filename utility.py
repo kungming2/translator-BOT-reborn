@@ -180,26 +180,6 @@ def generate_image_hash(image_url: str) -> str | None:
 """OTHER FUNCTIONS"""
 
 
-def extract_text_within_curly_braces(text: str) -> list[str]:
-    """
-    Extracts all content inside {{...}} blocks, with whitespace stripped.
-
-    :param text: Text to search for curly brace patterns.
-    :return: List of extracted strings.
-    """
-    if not text:
-        logger.debug("Received empty or None text.")
-        return []
-
-    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
-    matches = [match.strip() for match in re.findall(pattern, text)]
-
-    if matches:
-        logger.debug(f"Found {len(matches)} match(es).")
-
-    return matches
-
-
 def fetch_youtube_length(youtube_url: str) -> int | None:
     """
     Returns the length of a YouTube video in seconds using the

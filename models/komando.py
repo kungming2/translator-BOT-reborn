@@ -17,7 +17,6 @@ from typing import Any
 from config import SETTINGS
 from config import logger as _base_logger
 from lang.languages import converter
-from utility import extract_text_within_curly_braces
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
@@ -159,6 +158,26 @@ def _deduplicate_args(args: list) -> list:
                 result.append(arg)
 
     return result
+
+
+def _extract_text_within_curly_braces(text: str) -> list[str]:
+    """
+    Extracts all content inside {{...}} blocks, with whitespace stripped.
+
+    :param text: Text to search for curly brace patterns.
+    :return: List of extracted strings.
+    """
+    if not text:
+        logger.debug("Received empty or None text.")
+        return []
+
+    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
+    matches = [match.strip() for match in re.findall(pattern, text)]
+
+    if matches:
+        logger.debug(f"Found {len(matches)} match(es).")
+
+    return matches
 
 
 def extract_commands_from_text(
@@ -354,7 +373,7 @@ def extract_commands_from_text(
 
     # Special: Wikipedia lookup using {{braces}}
     if text.count("{{") > 0 and text.count("}}") > 0:
-        wiki_terms = extract_text_within_curly_braces(original_text)
+        wiki_terms = _extract_text_within_curly_braces(original_text)
         if wiki_terms:
             commands_dict["lookup_wp"].extend(wiki_terms)
 
