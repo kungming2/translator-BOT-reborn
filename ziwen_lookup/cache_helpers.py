@@ -135,7 +135,6 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
         "meanings": None,  # English translation
         "buddhist_meanings": None,
         "cantonese_meanings": None,
-        "tea_meanings": None,
         "chengyu_meaning": None,  # for chengyu
         "chengyu_source": None,  # for chengyu
         "chinese_meaning": None,  # for chengyu
@@ -242,11 +241,6 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
     )
     if cantonese_match:
         result["cantonese_meanings"] = cantonese_match.group(1).strip()
-
-    # Extract Tea meanings
-    tea_match = re.search(r'\*\*Tea Meanings\*\*:\s*"([^"]+)"', markdown_output)
-    if tea_match:
-        result["tea_meanings"] = tea_match.group(1).strip()
 
     # Extract Chinese meaning (for chengyu)
     chinese_meaning_match = re.search(
@@ -554,9 +548,6 @@ def format_zh_character_from_cache(cached_data: Dict) -> str:
             f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
         )
 
-    if cached_data.get("tea_meanings"):
-        meanings_section += f'\n\n**Tea Meanings**: "{cached_data["tea_meanings"]}"'
-
     # Footer
     footer = (
         f"\n\n\n^Information ^from "
@@ -642,9 +633,6 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
         meanings_section += (
             f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
         )
-
-    if cached_data.get("tea_meanings"):
-        meanings_section += f'\n\n**Tea Meanings**: "{cached_data["tea_meanings"]}"'
 
     # Footer
     word = trad if trad else simp

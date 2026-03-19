@@ -978,60 +978,6 @@ async def _zh_word_dictionary_search(
         return {"meaning": formatted_meaning, "pinyin": pinyin, "jyutping": jyutping}
 
 
-async def _zh_word_tea_dictionary_search(chinese_word: str) -> dict | None:
-    """Searches the Babelcarp dictionary for tea definitions."""
-    general_dictionary = {}
-    web_search = (
-        f"https://babelcarp.org/babelcarp/babelcarp.cgi?phrase={chinese_word}&define=1"
-    )
-
-    try:
-        async with httpx.AsyncClient() as client:
-            eth_page = await client.get(web_search, headers=useragent)
-        tree = html.fromstring(eth_page.content)
-        text_nodes = tree.xpath('//*[@id="translation"]//text()')
-    except httpx.RequestError:
-        return None
-
-    text_nodes = [t.strip() for t in text_nodes if t.strip()]
-    logger.debug(f"Text nodes: {text_nodes}")
-    if not text_nodes:
-        return None
-
-    # Check for "Don't know" early and return None if found
-    for node in text_nodes:
-        if "Don't know" in node or "Don't know" in node:
-            return None
-
-    pinyin_line_index = None
-    pinyin = None
-    for i, line in enumerate(text_nodes):
-        match = re.search(r"\(([\w\s]+)\)", line)
-        if match:
-            pinyin = match.group(1).lower()
-            pinyin_line_index = i
-            break
-
-    if pinyin_line_index is None or pinyin is None:
-        return None
-
-    meaning_parts = text_nodes[pinyin_line_index + 1 :]
-    logger.debug(f"Meaning parts: {meaning_parts}")
-    if not meaning_parts:
-        return None
-
-    meaning = " ".join(meaning_parts).replace(" )", " ").replace("  ", " ").strip()
-    if "Don't know" in meaning:
-        return None
-
-    formatted_line = f'\n\n**Tea Meanings**: "{meaning}." ([Babelcarp]({web_search}))"'
-
-    general_dictionary["meaning"] = formatted_line
-    general_dictionary["pinyin"] = _convert_numbered_pinyin(pinyin)
-
-    return general_dictionary
-
-
 async def zh_word_chengyu_supplement(chengyu: str) -> str | None:
     """Searches the dictionaries for chengyu definitions to supplement
     zh_word."""
@@ -1047,6 +993,7 @@ async def zh_word_chengyu_supplement(chengyu: str) -> str | None:
     chengyu_gb_hex = "".join(f"%{b:02X}" for b in chengyu_gb_bytes)
 
     # noinspection HttpUrlsUsage
+    # Note that 'serach' is intentional - there is a typo on their site
     search_url = f"http://cy.5156edu.com/serach.php?f_type=chengyu&f_type2=&f_key={chengyu_gb_hex}"
     logger.debug(f"ZH-Chengyu search URL: {search_url}")
 
@@ -1132,18 +1079,17 @@ async def _zh_word_fetch(word: str) -> str:
         )
 
         if "No results found" in word_exists:
-            trad_word, simp_word = tradify(word), simplify(word)
+            trad_word = tradify(word)
             search_buddhist = await _zh_word_dictionary_search(trad_word, "buddhist")
-            search_tea = await _zh_word_tea_dictionary_search(simp_word)
             search_cccanto = await _zh_word_dictionary_search(trad_word, "cantonese")
 
-            if not any([search_buddhist, search_tea, search_cccanto]):
+            if not any([search_buddhist, search_cccanto]):
                 logger.info("No results found. Getting individual characters instead.")
                 if len(word) < 2:
                     return await zh_character(word)
                 return "\n\n" + "\n\n".join([await zh_character(char) for char in word])
 
-            for result in [search_buddhist, search_tea, search_cccanto]:
+            for result in [search_buddhist, search_cccanto]:
                 if result:
                     alternate_meanings.append(result["meaning"])
                     alternate_pinyin = result["pinyin"]

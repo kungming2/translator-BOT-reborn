@@ -28,7 +28,7 @@ The following sources are used by CJK lookup functions:
 | Key | Language | Sources |
 |-----|----------|---------|
 | `zh_character` | Chinese (characters) | [MDBG](https://www.mdbg.net/chinese/dictionary) · [Chinese Character Web API](http://ccdb.hemiola.com/) · [Dictionary of Chinese Character Variants](https://dict.variants.moe.edu.tw/) · [书法字典](https://www.shufazidian.com/) |
-| `zh_word` | Chinese (words) | [MDBG](https://www.mdbg.net/chinese/dictionary) · [Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms) · [CC-Canto](https://cantonese.org/) · [Babelcarp](https://babelcarp.org/babelcarp/) |
+| `zh_word` | Chinese (words) | [MDBG](https://www.mdbg.net/chinese/dictionary) · [Soothill-Hodous](https://mahajana.net/en/library/texts/a-dictionary-of-chinese-buddhist-terms) · [CC-Canto](https://cantonese.org/) |
 | `ja_character` | Japanese (characters) | [Jisho](https://jisho.org/) |
 | `ja_word` | Japanese (words) | [Jisho](https://jisho.org/) · [Japanese Onomatopoeia Search](https://nsk.sh/tools/jp-onomatopoeia/) · [人名漢字辞典](https://kanji.reader.bz/) · [四字熟語辞典](https://yoji.jitenon.jp/) |
 | `ko_word` | Korean (words) | [National Institute of Korean Language](https://krdict.korean.go.kr/eng/mainAction) |
