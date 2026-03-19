@@ -348,10 +348,8 @@ def points_tabulator(
 
         if name in {"translated", "doublecheck"}:
             if instruo.author_comment != op_author:
-                if (
-                    len(body) < 60
-                    and name == "translated"
-                    and any(k in body for k in SETTINGS["verifying_keywords"])
+                if name == "translated" and any(
+                    k in body for k in SETTINGS["verifying_keywords"]
                 ):
                     # Verification case: crediting parent comment author
                     parent_author, parent_comment = get_parent_author(comment)
