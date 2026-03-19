@@ -57,11 +57,11 @@ def on_scheduler_event(event):
 scheduler = BlockingScheduler(timezone="UTC")
 scheduler.add_listener(on_scheduler_event, EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
-# --- Ziwen: every 5 minutes ---
+# --- Ziwen: every 3 minutes ---
 scheduler.add_job(
     run_script,
     "interval",
-    minutes=5,
+    minutes=3,
     id="ziwen",
     kwargs={"script": "main_ziwen.py", "lock_name": "ziwen"},
     max_instances=1,  # belt-and-suspenders alongside flock
@@ -93,11 +93,11 @@ scheduler.add_job(
     misfire_grace_time=120,
 )
 
-# --- Wenju: hourly at :03 UTC ---
+# --- Wenju: hourly at :01 UTC ---
 scheduler.add_job(
     run_script,
     "cron",
-    minute=3,
+    minute=1,
     id="wenju_hourly",
     kwargs={
         "script": "main_wenju.py",
@@ -109,12 +109,12 @@ scheduler.add_job(
     misfire_grace_time=300,
 )
 
-# --- Wenju: daily at 23:53 UTC ---
+# --- Wenju: daily at 23:57 UTC ---
 scheduler.add_job(
     run_script,
     "cron",
     hour=23,
-    minute=53,
+    minute=57,
     id="wenju_daily",
     kwargs={"script": "main_wenju.py", "args": ["daily"], "lock_name": "wenju_daily"},
     max_instances=1,
@@ -122,13 +122,13 @@ scheduler.add_job(
     misfire_grace_time=600,
 )
 
-# --- Wenju: weekly Wednesday 00:13 UTC ---
+# --- Wenju: weekly Wednesday 00:01 UTC ---
 scheduler.add_job(
     run_script,
     "cron",
     day_of_week="wed",
     hour=0,
-    minute=13,
+    minute=1,
     id="wenju_weekly",
     kwargs={
         "script": "main_wenju.py",
@@ -140,13 +140,13 @@ scheduler.add_job(
     misfire_grace_time=3600,
 )
 
-# --- Wenju: monthly on the 10th at 00:13 UTC ---
+# --- Wenju: monthly on the 10th at 00:01 UTC ---
 scheduler.add_job(
     run_script,
     "cron",
     day=10,
     hour=0,
-    minute=13,
+    minute=1,
     id="wenju_monthly",
     kwargs={
         "script": "main_wenju.py",
