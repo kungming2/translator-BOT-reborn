@@ -21,6 +21,67 @@ from lang.languages import converter
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
 
+# ---------------------------------------------------------------------------
+# Regex pattern builders
+# ---------------------------------------------------------------------------
+
+# Shared quoted-argument group: captures content inside straight double-quotes.
+# Used by both required- and optional-argument patterns.
+_QUOTED_GROUP: str = r"\"([^\"]+)\""
+
+
+def _build_required_arg_pattern(cmd: str) -> re.Pattern:
+    """
+    Build a compiled pattern for commands that require an argument.
+
+    Matches either:
+      - !cmd:"quoted arg"      → group 1 filled, group 2 empty
+      - !cmd: unquoted-arg     → group 1 empty,  group 2 filled
+        (optional leading space before unquoted arg; stops at whitespace or comma)
+
+    Note: the colon is already part of the command string as it appears in
+    ``commands_with_args`` (e.g. ``"!id:"``), so no extra colon is added here.
+    The ``[ ]?`` allows an optional space between the colon and the argument.
+    """
+    return re.compile(
+        r"(?i)" + re.escape(cmd) + r"(?:" + _QUOTED_GROUP + r"| ?([^\s,]+))"
+    )
+
+
+def _build_optional_arg_pattern(cmd: str) -> re.Pattern:
+    """
+    Build a compiled pattern for commands whose argument is optional.
+
+    Matches either:
+      - !cmd                   → both groups empty (command with no arg)
+      - !cmd:"quoted arg"      → group 1 filled, group 2 empty
+      - !cmd: unquoted-arg     → group 1 empty,  group 2 filled
+        (requires a literal colon before unquoted arg, then optional space;
+        stops at whitespace only — commas are valid inside optional args)
+
+    The entire argument portion is wrapped in ``(?:...)?`` so the command
+    matches even when no argument is supplied.
+    """
+    return re.compile(
+        r"(?i)" + re.escape(cmd) + r"(?:" + _QUOTED_GROUP + r"|: ?(\S+))?"
+    )
+
+
+# Pre-compile one pattern per command at import time.
+# Both dicts are keyed by the raw command string (e.g. "!id:", "!translated").
+_REQUIRED_ARG_PATTERNS: dict[str, re.Pattern] = {
+    cmd: _build_required_arg_pattern(cmd) for cmd in SETTINGS["commands_with_args"]
+}
+_OPTIONAL_ARG_PATTERNS: dict[str, re.Pattern] = {
+    cmd: _build_optional_arg_pattern(cmd) for cmd in SETTINGS["commands_optional_args"]
+}
+
+
+# ---------------------------------------------------------------------------
+# Komando class
+# ---------------------------------------------------------------------------
+
+
 class Komando:
     """Represents a single parsed bot command with its name, arguments,
     and mode flags."""
@@ -102,6 +163,11 @@ class Komando:
         )
 
 
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
+
+
 def _check_specific_mode(arg_str: str) -> tuple[str | None, bool]:
     """
     Check if argument ends with ! and has 2-4 chars before it.
@@ -180,6 +246,11 @@ def _extract_text_within_curly_braces(text: str) -> list[str]:
     return matches
 
 
+# ---------------------------------------------------------------------------
+# Main parsing function
+# ---------------------------------------------------------------------------
+
+
 def extract_commands_from_text(
     text: str, parent_languages: list | None = None
 ) -> list[Komando]:
@@ -253,8 +324,7 @@ def extract_commands_from_text(
     # Commands with required arguments
     for cmd in SETTINGS["commands_with_args"]:
         cmd_lower = cmd.lower()
-        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|[ ]?([^\s,]+))"
-        matches = re.findall(pattern, text)
+        matches = _REQUIRED_ARG_PATTERNS[cmd].findall(text)
         logger.debug(f"Regex matches for commands (required): {matches}")
 
         for match in matches:
@@ -290,8 +360,7 @@ def extract_commands_from_text(
     for cmd in SETTINGS["commands_optional_args"]:
         cmd_lower = cmd.lower()
         base = cmd_lower.lstrip("!")
-        pattern = r"(?i)" + re.escape(cmd) + r"(?:\"([^\"]+)\"|:[ ]?([^\s]+))?"
-        matches = re.findall(pattern, text)
+        matches = _OPTIONAL_ARG_PATTERNS[cmd].findall(text)
         logger.debug(f"Regex matches for commands (optional): {matches}")
 
         for match in matches:
