@@ -6,14 +6,16 @@ Allows commands to be defined in separate modules and registered via decorator.
 """
 
 import importlib
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from discord.ext import commands
 
-_commands = []
+_commands: list[dict[str, Any]] = []
 
 
-def command(name, help_text: str, roles: list | None = None):
+def command(name: str, help_text: str, roles: list | None = None) -> Callable:
     """
     Decorator to register a Discord bot command.
 
@@ -23,7 +25,7 @@ def command(name, help_text: str, roles: list | None = None):
         roles: List of required role names, or None for no restrictions
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         _commands.append(
             {"name": name, "help": help_text, "roles": roles or [], "func": func}
         )
@@ -32,7 +34,7 @@ def command(name, help_text: str, roles: list | None = None):
     return decorator
 
 
-def register_commands(bot):
+def register_commands(bot: commands.Bot) -> None:
     """Register all commands with the Discord bot"""
 
     # Dynamically import all command modules in the zhongsheng/ directory
@@ -60,12 +62,14 @@ def register_commands(bot):
         bot.command(name=cmd["name"], help=cmd["help"])(func)
 
 
-def get_commands():
+def get_commands() -> list:
     """Get all registered commands"""
     return _commands
 
 
-async def send_long_message(ctx, content: str, max_length: int = 2000):
+async def send_long_message(
+    ctx: commands.Context, content: str, max_length: int = 2000
+) -> None:
     """
     Splits long messages into chunks and sends them separately.
     Attempts to split on paragraph boundaries first for readability.

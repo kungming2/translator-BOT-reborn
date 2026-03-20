@@ -6,6 +6,8 @@ import asyncio
 import traceback
 from typing import Any
 
+from discord.ext import commands
+
 from title.title_ai import title_ai_parser
 from title.title_handling import process_title
 
@@ -17,7 +19,7 @@ from . import command
     help_text="Processes a title and returns detailed information. Use --ai flag for AI parsing.",
     roles=["Moderator"],
 )
-async def title_search(ctx, *, title: str):
+async def title_search(ctx: commands.Context, *, title: str) -> None:
     """Discord wrapper for Titolo creation."""
     # Check if --ai flag is present
     use_ai = title.endswith((" --ai", " –ai", " -ai"))

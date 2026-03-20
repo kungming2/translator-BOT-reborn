@@ -11,14 +11,19 @@ Logger tag: [ZW:LONG]
 
 import logging
 
+from praw.models import Comment
+
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.connection import is_mod
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
 
-def handle(comment, _instruo, _komando, ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Long handler initiated.")
 

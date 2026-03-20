@@ -11,7 +11,12 @@ Logger tag: [ZW:TRANSLATED]
 
 import logging
 
+from praw.models import Comment
+
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.messaging import notify_op_translated_post
 
@@ -20,7 +25,7 @@ from . import update_status
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:TRANSLATED"})
 
 
-def handle(comment, _instruo, komando, ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Translated handler initiated.")
     status_type: str = "translated"
@@ -42,4 +47,5 @@ def handle(comment, _instruo, komando, ajo) -> None:
     if not kunulo_object.op_thanks:
         # Message the OP, letting them know that their request has been
         # fulfilled.
-        notify_op_translated_post(ajo.author, ajo.submission.permalink)
+        if ajo.author is not None:
+            notify_op_translated_post(ajo.author, ajo.submission.permalink)

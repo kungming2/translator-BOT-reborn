@@ -11,8 +11,13 @@ Logger tag: [ZW:SEARCH]
 
 import logging
 
+from praw.models import Comment
+
 from config import logger as _base_logger
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from reddit.reddit_sender import reddit_reply
 from reddit.wiki import search_integration
 from responses import RESPONSE
@@ -20,13 +25,16 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SEARCH"})
 
 
-def handle(comment, _instruo, komando, _ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
     Example data:
         [Komando(name='search', data=['allergy'])]"""
 
     logger.info("Search handler initiated.")
+    if not komando.data:
+        logger.info("> No search terms provided. Ignoring.")
+        return
     search_terms: list[str] = komando.data  # This is a list of strings
 
     # Join search terms into a single query string

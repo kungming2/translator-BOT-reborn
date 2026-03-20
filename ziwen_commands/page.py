@@ -12,8 +12,13 @@ Logger tag: [ZW:PAGE]
 import logging
 import time
 
+from praw.models import Comment
+
 from config import SETTINGS
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from reddit.connection import REDDIT_HELPER
 from reddit.notifications import notifier
 from reddit.reddit_sender import reddit_reply
@@ -22,7 +27,7 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:PAGE"})
 
 
-def handle(comment, _instruo, komando, ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Page handler initiated.")
     replying_text: list[str] = []
@@ -48,6 +53,8 @@ def handle(comment, _instruo, komando, ajo) -> None:
 
     # Go through the paging languages
     paging_languages = komando.data
+    if not paging_languages:
+        return
     for language in paging_languages:  # This will be a Lingvo.
         # Send messages out.
         original_post = REDDIT_HELPER.submission(ajo.id)

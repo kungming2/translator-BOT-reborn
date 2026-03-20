@@ -4,6 +4,8 @@
 
 import traceback
 
+from discord.ext import commands
+
 from database import search_logs
 from monitoring.points import points_post_retriever
 
@@ -15,7 +17,7 @@ from . import command
     help_text="Searches for a Reddit post ID in log files and returns matching lines",
     roles=["Moderator"],
 )
-async def post_search(ctx, post_input: str):
+async def post_search(ctx: commands.Context, post_input: str) -> None:
     """Searches through the database and log files for a matching Reddit
     post ID for debugging or analysis."""
 

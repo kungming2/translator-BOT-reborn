@@ -10,6 +10,8 @@ Logger tag: [ZW:TRANSFORM]
 import logging
 import re
 
+from praw.models import Comment, Submission
+
 from config import SETTINGS
 from config import logger as _base_logger
 from integrations.image_handling import (
@@ -17,6 +19,9 @@ from integrations.image_handling import (
     rotate_or_flip_image,
     upload_to_imgbb,
 )
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from utility import check_url_extension, clean_reddit_image_url, is_valid_image_url
@@ -40,7 +45,7 @@ VALID_TRANSFORMS = {
 }
 
 
-def _extract_gallery_images(submission):
+def _extract_gallery_images(submission: Submission) -> list[str]:
     """
     Extract image URLs from a Reddit gallery post.
 
@@ -87,7 +92,7 @@ def _extract_gallery_images(submission):
     return image_urls
 
 
-def _extract_images_from_submission(submission):
+def _extract_images_from_submission(submission: Submission) -> list[str]:
     """
     Extract all image URLs from a Reddit submission.
 
@@ -140,7 +145,7 @@ def _extract_images_from_submission(submission):
     return image_urls
 
 
-def handle(comment, _instruo, komando, _ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
     Example data:

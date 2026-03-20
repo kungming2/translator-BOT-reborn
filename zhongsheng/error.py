@@ -19,7 +19,7 @@ from . import command
     help_text="Displays the 3 most recent error log entries",
     roles=["Moderator"],
 )
-async def error_logs(ctx: Context):
+async def error_logs(ctx: Context) -> None:
     """Returns the last few error log entries for analysis."""
     try:
         # Read the YAML file

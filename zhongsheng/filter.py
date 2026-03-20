@@ -4,6 +4,8 @@
 
 import asyncio
 
+from discord.ext import commands
+
 from title.title_handling import main_posts_filter
 
 from . import command
@@ -22,7 +24,7 @@ FILTER_REASONS = {
     help_text="Validates a post title against community formatting guidelines",
     roles=["Moderator", "Helper"],
 )
-async def filter_post(ctx, *, title: str):
+async def filter_post(ctx: commands.Context, *, title: str) -> None:
     """
     Filter a post title based on r/translator formatting guidelines.
     Tests whether it would pass or fail.

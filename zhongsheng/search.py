@@ -2,6 +2,8 @@
 # -*- coding: UTF-8 -*-
 """Search command wrapper, searches DDG or Reddit for a term."""
 
+from discord.ext import commands
+
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 
 from . import command, send_long_message
@@ -12,7 +14,7 @@ from . import command, send_long_message
     help_text="Searches for Reddit translation posts related to a term.",
     roles=["Moderator", "Helper"],
 )
-async def search_posts(ctx, *, search_term: str):
+async def search_posts(ctx: commands.Context, *, search_term: str) -> None:
     """Discord wrapper for the search command."""
     try:
         await ctx.send(f"🔍 **Searching for:** `{search_term}` …")

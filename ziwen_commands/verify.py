@@ -9,13 +9,18 @@ Logger tag: [ZW:VERIFY]
 
 import logging
 
+from praw.models import Comment
+
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from reddit.verification import process_verification
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:VERIFY"})
 
 
-def handle(comment, _instruo, _komando, _ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
 
     logger.info(f"!verify, from u/{comment.author}.")

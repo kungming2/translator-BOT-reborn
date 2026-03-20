@@ -10,7 +10,12 @@ Logger tag: [ZW:IDENTIFY]
 
 import logging
 
+from praw.models import Comment
+
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.notifications import notifier
 from reddit.reddit_sender import reddit_reply
@@ -23,7 +28,7 @@ from . import update_language
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
 
-def _send_notifications_okay(instruo, ajo) -> bool:
+def _send_notifications_okay(instruo: Instruo, ajo: Ajo) -> bool:
     """Simple function that checks to see if the comment also
     includes another Komando that sets the setting to translated
     or needs review.
@@ -39,7 +44,7 @@ def _send_notifications_okay(instruo, ajo) -> bool:
     return True
 
 
-def handle(comment, instruo, komando, ajo) -> None:
+def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Identify handler initiated.")
     original_post = comment.submission
@@ -89,9 +94,10 @@ def handle(comment, instruo, komando, ajo) -> None:
                 update_wiki_page(
                     action="identify",
                     formatted_date=get_current_utc_date(),
-                    title=ajo.title_original,
-                    post_id=ajo.id,
-                    flair_text=original_language.name
+                    title=ajo.title_original or "",
+                    post_id=ajo.id or "",
+                    flair_text=(original_language.name if original_language else None)
+                    or "Generic"
                     if original_language
                     else "Generic",
                     new_flair=komando.data[0].name,

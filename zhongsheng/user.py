@@ -2,6 +2,8 @@
 # -*- coding: UTF-8 -*-
 """User search command"""
 
+from discord.ext import commands
+
 from database import search_logs
 from monitoring.usage_statistics import user_statistics_loader
 from utility import format_markdown_table_with_padding
@@ -14,7 +16,7 @@ from . import command
     help_text="Searches for a username in log files and returns matching lines",
     roles=["Moderator"],
 )
-async def user_search(ctx, *, user_input: str):
+async def user_search(ctx: commands.Context, *, user_input: str) -> None:
     """Searches through the database and log files for a matching user
     ID for debugging or analysis."""
 

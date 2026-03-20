@@ -4,6 +4,8 @@
 
 import logging
 
+from discord.ext import commands
+
 from models.instruo import Instruo
 from reddit.connection import REDDIT_HELPER
 
@@ -13,13 +15,13 @@ from . import command
 logging.getLogger("praw").setLevel(logging.CRITICAL)
 
 
-def _format_commands(commands):
+def _format_commands(list_commands: list) -> str:
     """Format commands section for the response."""
-    if not commands:
+    if not list_commands:
         return ""
 
     response = "\n**Commands:**\n"
-    for cmd in commands:
+    for cmd in list_commands:
         data_str = f": {cmd.data}" if cmd.data else ""
         response += f"- {cmd.name}{data_str}\n"
     return response
@@ -31,7 +33,7 @@ def _format_commands(commands):
     "Use --text flag to parse raw text instead.",
     roles=["Moderator"],
 )
-async def comment_search(ctx, *, comment_input: str):
+async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
     """Discord wrapper for the Instruo parsing."""
     # Check if --text flag is present
     if comment_input.strip().endswith("--text"):

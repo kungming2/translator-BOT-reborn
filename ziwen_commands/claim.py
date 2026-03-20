@@ -18,6 +18,9 @@ from praw.models import Comment
 
 from config import logger as _base_logger
 from lang.languages import converter
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.connection import REDDIT
 from reddit.reddit_sender import reddit_reply
@@ -29,7 +32,7 @@ from . import update_status
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CLAIM"})
 
 
-def handle(comment, _instruo, komando, ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Claim handler initiated.")
     status_type = "inprogress"

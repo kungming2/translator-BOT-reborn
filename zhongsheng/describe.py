@@ -4,6 +4,8 @@
 
 import asyncio
 
+from discord.ext import commands
+
 from integrations.ai import fetch_image_description
 
 from . import command
@@ -15,7 +17,7 @@ from . import command
     help_text="Generates an AI description of an image from a URL",
     roles=["Moderator", "Helper"],
 )
-async def describe_image(ctx, image_url: str):
+async def describe_image(ctx: commands.Context, image_url: str) -> None:
     """
     Describe an image using AI for accessibility purposes. Shows the
     caller how the bot would describe an image in a notification.

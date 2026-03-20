@@ -10,11 +10,13 @@ Logger tag: [ZW:CMD]
 import importlib
 import logging
 import time
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Callable, Union
 
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.komando import Komando
+from models.lingvo import Lingvo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CMD"})
 
@@ -35,8 +37,8 @@ def discover_handlers() -> None:
 
 
 def update_status(
-    ajo,
-    komando,
+    ajo: "Ajo",
+    komando: "Komando",
     status_type: str,
     specific_languages: list | None = None,
 ) -> None:
@@ -52,7 +54,7 @@ def update_status(
         specific_languages: Optional list of language objects to update.
                           If provided, these will be used instead of komando.data
     """
-    current_time = time.time()
+    current_time = int(time.time())
 
     if ajo.type == "single":
         # Skip if status is already set to the requested value
@@ -69,6 +71,10 @@ def update_status(
                 specific_languages if specific_languages is not None else komando.data
             )
 
+            if not defined_languages:
+                logger.debug("No languages to update status for. Skipping.")
+                return
+
             for language in defined_languages:
                 ajo.set_defined_multiple_status(language.preferred_code, status_type)
                 logger.info(
@@ -81,7 +87,7 @@ def update_status(
             pass
 
 
-def update_language(ajo, komando) -> None:
+def update_language(ajo: "Ajo", komando: "Komando") -> None:
     """
     Shared function used to set a language. This will automatically
     handle single and defined multiple posts. The data package will
@@ -102,6 +108,8 @@ def update_language(ajo, komando) -> None:
         If it contains multiple Lingvos, the entire sequence will be set.
     """
     # Check for None values in the data
+    if komando.data is None:
+        raise ValueError("Cannot set language: komando.data is None")
     if None in komando.data:
         raise ValueError(
             "Cannot set language: komando.data contains "
@@ -109,7 +117,7 @@ def update_language(ajo, komando) -> None:
         )
 
     # Convert a list of single language items to a single object.
-    languages_to_set: Union[object, Sequence[object]]
+    languages_to_set: Union[Lingvo, list[Lingvo]]
     if len(komando.data) == 1:
         languages_to_set = komando.data[0]
     else:

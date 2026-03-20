@@ -2,6 +2,8 @@
 # -*- coding: UTF-8 -*-
 """CJK lookup command"""
 
+from discord.ext import commands
+
 from lang.languages import converter
 from ziwen_commands.lookup_cjk import perform_cjk_lookups
 
@@ -13,7 +15,9 @@ from . import command, send_long_message
     help_text="Performs CJK lookups for a given language and search terms",
     roles=["Moderator", "Helper"],
 )
-async def cjk_lookup(ctx, language: str, *, search_terms: str):
+async def cjk_lookup(
+    ctx: commands.Context, language: str, *, search_terms: str
+) -> None:
     """Discord wrapper for the CJK lookup command."""
     try:
         # Map initials to full language names

@@ -10,6 +10,8 @@ Logger tag: [ZS:NOTIF]
 import logging
 from typing import Optional
 
+from discord.ext import commands
+
 from config import logger as _base_logger
 from reddit.messaging import parse_language_list, user_statistics_loader
 from reddit.notifications import (
@@ -28,7 +30,9 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
     help_text="Manage user notification subscriptions for r/translator.",
     roles=["Moderator"],
 )
-async def notif(ctx, action: str, username: str, language: Optional[str] = None):
+async def notif(
+    ctx: commands.Context, action: str, username: str, language: Optional[str] = None
+) -> None:
     """
     Discord wrapper for notification management.
 
@@ -62,7 +66,9 @@ async def notif(ctx, action: str, username: str, language: Optional[str] = None)
         await ctx.send(f"⚠️ An error occurred: `{type(e).__name__}: {e}`")
 
 
-async def handle_notif_add(ctx, username: str, language: Optional[str]):
+async def handle_notif_add(
+    ctx: commands.Context, username: str, language: Optional[str]
+) -> None:
     """Handle adding notification subscriptions using the database editor directly."""
     if not language:
         await ctx.send("⚠️ Language codes are required for the `add` action.")
@@ -97,7 +103,7 @@ async def handle_notif_add(ctx, username: str, language: Optional[str]):
         await ctx.send(f"⚠️ Failed to add notifications: `{e}`")
 
 
-async def handle_notif_remove(ctx, username: str):
+async def handle_notif_remove(ctx: commands.Context, username: str) -> None:
     """Handle removing ALL notification subscriptions using the database editor directly."""
     logger.info(f"Notification remove request for u/{username} from {ctx.author.name}")
 
@@ -125,7 +131,7 @@ async def handle_notif_remove(ctx, username: str):
         await ctx.send(f"⚠️ Failed to remove notifications: `{e}`")
 
 
-async def handle_notif_status(ctx, username: str):
+async def handle_notif_status(ctx: commands.Context, username: str) -> None:
     """Handle status request for user subscriptions."""
     logger.info(f"Notification status request for u/{username} from {ctx.author.name}")
 

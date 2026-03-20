@@ -9,18 +9,22 @@ Logger tag: [ZW:NUKE]
 """
 
 import logging
+from typing import Generator
 
 from praw.models import Comment, Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from reddit.connection import REDDIT, create_mod_note, is_mod, remove_content
 from reddit.reddit_sender import message_send
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:NUKE"})
 
 
-def handle(comment, _instruo, _komando, _ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
 
@@ -59,7 +63,7 @@ def handle(comment, _instruo, _komando, _ajo) -> None:
     logger.info(f">> Banned u/{nuked_person}.")
 
     # Helper function to remove all items in a generator (posts/comments).
-    def remove_items(generator, item_type: str) -> None:
+    def remove_items(generator: Generator, item_type: str) -> None:
         for item in generator:
             if item.subreddit.display_name.lower() == SETTINGS["subreddit"]:
                 remove_content(item, "spam", nuke_reason)

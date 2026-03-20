@@ -3,6 +3,8 @@
 """Command that shows the information about Zhongsheng.
 This should be updated after addition of new features or commands."""
 
+from discord.ext import commands
+
 from . import command
 
 # Custom command descriptions. Add one for each command.
@@ -48,7 +50,7 @@ COMMAND_ROLES = {
     help_text="Display this informative message",
     roles=["Moderator", "Helper"],
 )
-async def guide_command(ctx, command_name: str | None = None):
+async def guide_command(ctx: commands.Context, command_name: str | None = None) -> None:
     """
     Display help information for all commands or a specific command.
 

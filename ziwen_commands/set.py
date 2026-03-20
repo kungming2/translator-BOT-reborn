@@ -18,10 +18,14 @@ Logger tag: [ZW:SET]
 
 import logging
 
+from praw.models import Comment
+
 from config import SETTINGS
 from config import logger as _base_logger
-from models.ajo import ajo_delete
+from models.ajo import Ajo, ajo_delete
 from models.diskuto import Diskuto, diskuto_writer
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.connection import is_mod
 from reddit.reddit_sender import message_send
@@ -32,7 +36,9 @@ from . import update_language
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SET"})
 
 
-def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto | None":
+def _handle_diskuto_reclassification(
+    comment: Comment, ajo: Ajo, post_type: str
+) -> "Diskuto | None":
     """
     Reclassify an Ajo-tracked post as a Diskuto internal post.
 
@@ -87,7 +93,8 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
         return None
 
     # Diskuto is safely stored — now remove the Ajo record.
-    ajo_delete(post_id)
+    if post_id is not None:
+        ajo_delete(post_id)
 
     logger.info(
         f"Post `{post_id}` reclassified from Ajo to Diskuto "
@@ -110,7 +117,7 @@ def _handle_diskuto_reclassification(comment, ajo, post_type: str) -> "Diskuto |
     return diskuto_obj
 
 
-def handle(comment, _instruo, komando, ajo) -> None:
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Set handler initiated.")
 

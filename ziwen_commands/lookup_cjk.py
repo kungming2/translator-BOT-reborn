@@ -11,8 +11,13 @@ import asyncio
 import logging
 import random
 
+from praw.models import Comment
+
 from config import Paths, load_settings
 from config import logger as _base_logger
+from models.ajo import Ajo
+from models.instruo import Instruo
+from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
@@ -95,7 +100,7 @@ async def perform_cjk_lookups(cjk_language: str, search_terms: list[str]) -> lis
     return results
 
 
-def _format_reply(lookup_results: list[str], ajo=None) -> str:
+def _format_reply(lookup_results: list[str], ajo: Ajo | None = None) -> str:
     """Format the reply body with lookup results."""
     anchor_tag = RESPONSE.ANCHOR_CJK
     formatted_results: str = "\n\n".join(lookup_results)
@@ -120,7 +125,7 @@ def _format_reply(lookup_results: list[str], ajo=None) -> str:
 
 
 def _check_for_duplicate_lookups(
-    comment, search_terms: list[str], cjk_language: str
+    comment: Comment, search_terms: list[str], cjk_language: str
 ) -> dict | None:
     """
     Check if the requested CJK terms have already been looked up in this thread.
@@ -158,7 +163,7 @@ def _check_for_duplicate_lookups(
     return None
 
 
-def handle(comment, instruo, komando, ajo) -> None:
+def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """
     Handle for CJK lookup commands.
 
@@ -194,6 +199,10 @@ def handle(comment, instruo, komando, ajo) -> None:
     # Group terms by their CJK language category
     # This allows handling mixed-language lookups like Chinese + Korean in one command
     terms_by_language: dict[str, list[str]] = {}
+
+    if not komando.data:
+        logger.warning("No data in komando; nothing to look up.")
+        return
 
     for entry in komando.data:
         # Handle both old format (lang, term) and new format (lang, term, explicit)

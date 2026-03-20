@@ -11,7 +11,7 @@ import logging
 import traceback
 
 import aiohttp
-from discord.ext.commands import Context
+from discord.ext import commands
 
 from config import logger as _base_logger
 from database import get_recent_event_log_lines
@@ -27,7 +27,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
     help_text="Shows a random Office quote and the last 5 events from the log for Ziwen",
     roles=["Moderator", "Helper"],
 )
-async def status(ctx: Context):
+async def status(ctx: commands.Context) -> None:
     """Combination command to test the connection of the bot to the internet,
     and also to see when the last action in the events log was taken."""
     # First, get the Office quote
