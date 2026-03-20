@@ -12,7 +12,7 @@ import logging
 
 import praw
 from praw.exceptions import APIException
-from praw.models import Message
+from praw.models import Message, Redditor
 
 from config import Paths, load_settings
 from config import logger as _base_logger
@@ -35,7 +35,7 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MESSAGING"})
 
 
-def notify_op_translated_post(author, permalink):
+def notify_op_translated_post(author: str, permalink: str) -> None:
     """
     Send a notification message to the OP that their post has been translated.
 
@@ -64,7 +64,7 @@ def notify_op_translated_post(author, permalink):
 """ZIWEN MESSAGES"""
 
 
-def handle_subscribe(message, message_author):
+def handle_subscribe(message: Message, message_author: Redditor) -> None:
     """Handle subscription requests."""
     body_text = message.body
     logger.debug(f"[SUB] Body text: {repr(body_text[:100])}...")  # First 100 chars
@@ -145,7 +145,7 @@ def handle_subscribe(message, message_author):
     action_counter(len(language_matches), "Subscriptions")
 
 
-def handle_unsubscribe(message, message_author):
+def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
     """Handle unsubscription requests."""
     logger.info(f"New unsubscription request from u/{message_author}.")
 
@@ -201,7 +201,7 @@ def handle_unsubscribe(message, message_author):
     action_counter(len(language_matches), "Unsubscriptions")
 
 
-def handle_status(message, message_author):
+def handle_status(message: Message, message_author: Redditor) -> None:
     """Handle status requests."""
     logger.info(f"New status request from u/{message_author}.")
 
@@ -259,7 +259,7 @@ def handle_status(message, message_author):
     return
 
 
-def handle_add(message, message_author):
+def handle_add(message: Message, message_author: Redditor) -> None:
     """Handle add requests for notifications from moderators."""
     logger.info(f"New username addition message from moderator u/{message_author}.")
 
@@ -293,7 +293,7 @@ def handle_add(message, message_author):
         )
 
 
-def handle_remove(message, message_author):
+def handle_remove(message: Message, message_author: Redditor) -> None:
     """Handle remove requests for notifications from moderators."""
     logger.info(f"New username removal message from moderator u/{message_author}.")
 
@@ -325,7 +325,7 @@ def handle_remove(message, message_author):
     logger.debug(f"handle_remove: extracted username={remove_username!r}")
 
 
-def handle_points(message, message_author):
+def handle_points(message: Message, message_author: Redditor) -> None:
     """Handle points requests."""
     logger.info(f"New points status request from u/{message_author}.")
 

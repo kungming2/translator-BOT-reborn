@@ -12,10 +12,10 @@ import logging
 import random
 import sqlite3
 import time
-from typing import List
 
 import orjson
 from praw import exceptions
+from praw.models import Redditor, Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -133,7 +133,7 @@ def _prune_deleted_user_notifications(
 
 
 def notifier_language_list_editor(
-    language_list: list, user_object, mode: str = "insert"
+    language_list: list, user_object: "str | Redditor", mode: str = "insert"
 ) -> None:
     """
     Modify the notification database by inserting or deleting entries for a username.
@@ -201,7 +201,9 @@ def notifier_language_list_editor(
     return
 
 
-def notifier_language_list_retriever(user_object, internal: bool = False) -> List:
+def notifier_language_list_retriever(
+    user_object: "str | Redditor", internal: bool = False
+) -> list:
     """
     Retrieve the list of Lingvos a user is subscribed to for notifications.
 
@@ -228,7 +230,7 @@ def notifier_language_list_retriever(user_object, internal: bool = False) -> Lis
         ]  # Convert results to Lingvos
 
 
-def fetch_usernames_for_lingvo(lingvo, max_num=None) -> List[str]:
+def fetch_usernames_for_lingvo(lingvo: Lingvo, max_num: int | None = None) -> list[str]:
     """
     Fetch a list of usernames subscribed to the Lingvo object's
     language code, optionally including country variant (e.g., 'pt-BR').
@@ -271,7 +273,7 @@ def fetch_usernames_for_lingvo(lingvo, max_num=None) -> List[str]:
     return usernames_list
 
 
-def _notifier_specific_language_filter(lingvo_object) -> list[str]:
+def _notifier_specific_language_filter(lingvo_object: Lingvo) -> list[str]:
     """
     Given a regional Lingvo object (e.g., 'ar-LB' or 'apc'),
     returns a list of usernames who are subscribed to the *specific*
@@ -333,7 +335,7 @@ def _notifier_specific_language_filter(lingvo_object) -> list[str]:
 
 
 def _update_user_notification_count(
-    username: str, lingvo_object, num_notifications: int = 1
+    username: str, lingvo_object: Lingvo, num_notifications: int = 1
 ) -> None:
     """
     Updates the count of notifications a user has received for a specific language.
@@ -387,7 +389,7 @@ def _update_user_notification_count(
 
 def _notification_rate_limiter(
     subscribed_users: list,
-    lingvo_object,
+    lingvo_object: Lingvo,
     monthly_limit: int,
     already_contacted: list | None = None,
 ) -> list:
@@ -445,7 +447,9 @@ def _notification_rate_limiter(
     return sorted(subscribed_users, key=lambda u: str(u).lower())
 
 
-def _should_send_language_notification(lingvo, messaging_ajo_history):
+def _should_send_language_notification(
+    lingvo: Lingvo, messaging_ajo_history: list
+) -> bool:
     """
     Checks if notifications for the language represented by the Lingvo object
     have already been sent in the post's language history to avoid duplicate messaging.
@@ -528,7 +532,9 @@ def _notifier_title_cleaner(title: str) -> str:
 """MAIN FUNCTION"""
 
 
-def notifier(lingvo, submission, mode="new_post"):
+def notifier(
+    lingvo: Lingvo, submission: Submission, mode: str = "new_post"
+) -> list[str]:
     """
     Notify users about posts in a language they’ve subscribed to.
     This function also handles curating the list of users who will be
@@ -539,9 +545,9 @@ def notifier(lingvo, submission, mode="new_post"):
     :param mode: Notification context: "identify", "new_post", or "page".
     :return: List of usernames that were notified.
     """
-    notify_users_list = []
+    notify_users_list: list[str] = []
     page_users_count = SETTINGS["num_users_page"]
-    contacted = []  # Track users already contacted for this post
+    contacted: list[str] = []  # Track users already contacted for this post
     post_type = "translation request"
 
     # Extract submission metadata
@@ -559,6 +565,8 @@ def notifier(lingvo, submission, mode="new_post"):
     # Load post tracking data from AJO (includes contact history)
     ajo_data = ajo_loader(post_id)
     try:
+        if ajo_data is None:
+            raise AttributeError
         language_history = ajo_data.language_history
         contacted = ajo_data.notified
         logger.debug(f"Notifier: Already contacted u/{contacted}")
@@ -709,7 +717,7 @@ def notifier(lingvo, submission, mode="new_post"):
     return notify_users_list
 
 
-def notifier_internal(post_type, submission):
+def notifier_internal(post_type: str, submission: Submission) -> list:
     """A stripped down version of notifier solely intended to send
     notifications regarding internal non-request posts, such as
     meta or community posts."""
@@ -773,5 +781,4 @@ def notifier_internal(post_type, submission):
             )
             logger.error(f"API Exception for u/{username}: {e}")
             _prune_deleted_user_notifications(username, True)
-
     return notify_targets

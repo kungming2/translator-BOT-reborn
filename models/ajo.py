@@ -42,7 +42,7 @@ from utility import check_url_extension, generate_image_hash
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:AJO"})
 
 
-def ajo_writer(new_ajo):
+def ajo_writer(new_ajo: "Ajo") -> None:
     """
     Takes an Ajo object and saves it to the local Ajo database.
     Note that if a PRAW submission is attached, it will discard it
@@ -102,7 +102,7 @@ def ajo_writer(new_ajo):
         new_ajo.restore_submission_cache(cached_submission)
 
 
-def parse_ajo_data(data_str):
+def parse_ajo_data(data_str: str) -> dict:
     """For backwards compatibility, since older Ajos are saved as
     dictionary literals. This allows Ajo data to be passed in as a
     regular dictionary string (old behavior) or JSON (new)."""
@@ -117,7 +117,7 @@ def parse_ajo_data(data_str):
             raise ValueError(f"Failed to parse data string: {e}")
 
 
-def ajo_loader(ajo_id):
+def ajo_loader(ajo_id: str) -> "Ajo | None":
     """Loads Ajos from the local database."""
     result = db.fetch_ajo("SELECT * FROM ajo_database WHERE id = ?", (ajo_id,))
     if result is None:
@@ -182,7 +182,7 @@ def ajo_delete(ajo_id: str) -> bool:
     return deleted
 
 
-def _normalize_lang_field(value):
+def _normalize_lang_field(value: "list | str | None") -> list[Lingvo]:
     """
     Normalize the original_[source|target]_language_name field to
     always be a list of Lingvo objects.
@@ -210,7 +210,11 @@ def _normalize_lang_field(value):
 
     elif isinstance(value, str) and value.strip():
         lingvo_obj = converter(value.strip())
-        logger.debug(f"Single string converted to Lingvo: {lingvo_obj}")
+        if lingvo_obj is None:
+            logger.debug(
+                "String could not be converted to Lingvo, returning empty list."
+            )
+            return []
         return [lingvo_obj]
 
     else:
@@ -267,7 +271,7 @@ class Ajo:
         if self.preferred_code:
             self._lingvo = converter(self.preferred_code)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         main_fields = {
             "id": self.id,  # Include the ID
             "direction": self.direction,  # Already included
@@ -276,7 +280,7 @@ class Ajo:
         }
         return f"<Ajo: ({main_fields})>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """
         Two Ajos are defined as the same if the dictionary
         representation of their contents match.
@@ -289,34 +293,34 @@ class Ajo:
         return self.__dict__ == other.__dict__
 
     @property
-    def id(self):
-        """The post ID; immutable once set."""
+    def id(self) -> "str | None":
+        """The Reddit post ID; immutable once set."""
         return self._id
 
     @id.setter
-    def id(self, value):
+    def id(self, value: str) -> None:
         if self._id is not None:
             raise AttributeError("Ajo.id is immutable once set.")
         self._id = value
 
     @property
-    def created_utc(self):
-        """The post creation timestamp; immutable once set."""
+    def created_utc(self) -> "int | None":
+        """The Unix timestamp of post creation; immutable once set."""
         return self._created_utc
 
     @created_utc.setter
-    def created_utc(self, value):
+    def created_utc(self, value: int) -> None:
         if self._created_utc is not None:
             raise AttributeError("Ajo.created_utc is immutable once set.")
         self._created_utc = value
 
     @property
-    def author(self):
-        """The post author username; immutable once set."""
+    def author(self) -> "str | None":
+        """The Reddit username of the post author; immutable once set."""
         return self._author
 
     @author.setter
-    def author(self, value):
+    def author(self, value: str) -> None:
         if self._author is not None:
             raise AttributeError("Ajo.author is immutable once set.")
         self._author = value
@@ -393,7 +397,7 @@ class Ajo:
         return self.script_code is not None
 
     @classmethod
-    def from_titolo(cls, titolo: "Titolo", submission=None):
+    def from_titolo(cls, titolo: "Titolo", submission: Any = None) -> "Ajo":
         """
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
         This is the primary way to construct an Ajo, as simple as:
@@ -467,7 +471,7 @@ class Ajo:
         if submission:
             ajo.id = submission.id
             ajo.created_utc = int(submission.created_utc)
-            ajo.author = str(submission.author) if submission.author else None
+            ajo.author = str(submission.author) if submission.author else "[deleted]"
 
             # If the submission is a link to an image, set the image hash
             ajo.set_image_hash(submission)
@@ -530,10 +534,13 @@ class Ajo:
         and computed properties like `language_name`, `is_supported`, etc.
         """
 
-        def lingvo_list_to_names(lingvo_list):
+        def lingvo_list_to_names(lingvo_list: "list[Lingvo] | None") -> list[str]:
             if not lingvo_list:
                 return []
-            return [lv.name if hasattr(lv, "name") else str(lv) for lv in lingvo_list]
+            return [
+                lv.name if hasattr(lv, "name") and lv.name is not None else str(lv)
+                for lv in lingvo_list
+            ]
 
         return {
             # Immutable core fields
@@ -752,13 +759,13 @@ class Ajo:
         # Set is_identified for both cases
         self.is_identified = is_identified
 
-    def set_is_long(self, value: bool):
+    def set_is_long(self, value: bool) -> None:
         """
         Set whether the post is marked as long.
         """
         self.is_long = bool(value)
 
-    def set_type(self, value: str):
+    def set_type(self, value: str) -> None:
         """
         Set the type of the post.
         Must be either 'single' or 'multiple'.
@@ -773,7 +780,7 @@ class Ajo:
         if value == "single":
             self.is_defined_multiple = False
 
-    def set_status(self, value: str):
+    def set_status(self, value: str) -> None:
         """
         Set the status of the post.
         Allowed values: 'translated', 'doublecheck', 'inprogress', 'missing', 'untranslated'
@@ -825,7 +832,9 @@ class Ajo:
         if value in {"translated", "doublecheck"}:
             self.closed_out = True
 
-    def set_defined_multiple_status(self, language_code: str, status_value: str):
+    def set_defined_multiple_status(
+        self, language_code: str, status_value: str
+    ) -> None:
         """
         Set the status for a specific language in a defined multiple post.
         Allowed status values: 'translated', 'doublecheck', 'inprogress', 'missing', 'untranslated'
@@ -853,7 +862,7 @@ class Ajo:
         # Set the status for the specific language
         self.status[language_code] = status_value
 
-    def set_is_defined_multiple(self, value: bool):
+    def set_is_defined_multiple(self, value: bool) -> None:
         """
         Set whether the post is marked as a defined multiple post.
         This should only be meaningful when type is 'multiple'.

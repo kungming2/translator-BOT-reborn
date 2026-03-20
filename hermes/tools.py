@@ -12,6 +12,8 @@ intended for offline inspection and debugging.
 Logger tag: [HM:TOOLS]
 """
 
+import praw
+
 from config import get_hermes_logger
 
 logger = get_hermes_logger("HM:TOOLS")
@@ -71,7 +73,7 @@ def get_statistics() -> None:
 # ─── Parser diagnostics ───────────────────────────────────────────────────────
 
 
-def test_parser(reddit, limit: int = 100) -> None:
+def test_parser(reddit: praw.Reddit, limit: int = 100) -> None:
     """
     Fetch the most recent *limit* posts from r/Language_Exchange, run each
     title through ``title_parser``, and print a compact summary so parser

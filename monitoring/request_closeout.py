@@ -120,6 +120,12 @@ def closeout_posts() -> None:
     )
     for row in rows:
         ajo = ajo_loader(row["id"])
+        if ajo is None:
+            logger.warning(f"Could not load Ajo for post `{row['id']}`. Skipping.")
+            continue
+        if ajo.id is None:
+            logger.warning(f"Skipping Ajo with no ID (row: `{row['id']}`).")
+            continue
         ajos_to_close.append(ajo)
         ajos_map[ajo.id] = ajo
 
@@ -127,7 +133,11 @@ def closeout_posts() -> None:
     posts_to_process = [
         post
         for post in ajos_to_close
-        if post.status not in ["translated", "doublecheck"] and not post.closed_out
+        if (
+            not isinstance(post.status, str)
+            or post.status not in ["translated", "doublecheck"]
+        )
+        and not post.closed_out
     ]
 
     if posts_to_process:

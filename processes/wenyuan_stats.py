@@ -294,7 +294,11 @@ class Lumo:
 
         # Apply end_time filter if provided
         if end_time:
-            self.ajos = [ajo for ajo in self.ajos if ajo.created_utc <= end_time]
+            self.ajos = [
+                ajo
+                for ajo in self.ajos
+                if ajo.created_utc is not None and ajo.created_utc <= end_time
+            ]
 
         # Expand multiple language posts
         self.ajos = self._expand_multiple_language_posts(self.ajos)
@@ -320,7 +324,11 @@ class Lumo:
 
     def filter_by_time_range(self, start_time: int, end_time: int) -> list[Ajo]:
         """Filter currently loaded Ajos by a different time range."""
-        return [ajo for ajo in self.ajos if start_time <= ajo.created_utc <= end_time]
+        return [
+            ajo
+            for ajo in self.ajos
+            if ajo.created_utc is not None and start_time <= ajo.created_utc <= end_time
+        ]
 
     def filter_by_language(self, language: str | Lingvo) -> list[Ajo]:
         """
@@ -635,6 +643,8 @@ class Lumo:
 
             time_delta = ajo.time_delta
             created = ajo.created_utc
+            if created is None:
+                continue
             ajo_id = ajo.id
 
             # Check translated

@@ -18,13 +18,14 @@ import orjson
 from config import Paths
 from config import logger as _base_logger
 from database import db
+from models.instruo import Instruo
 from time_handling import get_current_utc_date
 from wenju import WENJU_SETTINGS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:USAGE"})
 
 
-def action_counter(messages_number, action_type):
+def action_counter(messages_number: int, action_type: str) -> None:
     """
     Records the number of actions performed by type and date in a JSON file.
 
@@ -67,7 +68,7 @@ def action_counter(messages_number, action_type):
         f.write(orjson.dumps(current_actions))
 
 
-def load_statistics_data(language_code):
+def load_statistics_data(language_code: str) -> dict | None:
     """
     Loads language statistics from a saved JSON file. This will primarily
     be used by Wenyuan, but is currently unused.
@@ -83,7 +84,7 @@ def load_statistics_data(language_code):
         return None
 
 
-def months_since_redesign(start_year=2016, start_month=5) -> int:
+def months_since_redesign(start_year: int = 2016, start_month: int = 5) -> int:
     """
     Calculate the number of months elapsed since the redesign start date.
     The redesign started in May 2016, and no archive data exists before that.
@@ -107,7 +108,7 @@ def months_since_redesign(start_year=2016, start_month=5) -> int:
     return elapsed_months
 
 
-def generate_language_frequency_markdown(language_list):
+def generate_language_frequency_markdown(language_list: list) -> str:
     """
     Generate a Markdown table of relative frequency statistics for
     given Lingvos. Uses data embedded in Lingvo objects if available,
@@ -154,7 +155,7 @@ def generate_language_frequency_markdown(language_list):
     return header + "\n".join(lines)
 
 
-def generate_command_usage_report(start_time, end_time, days):
+def generate_command_usage_report(start_time: int, end_time: int, days: int) -> str:
     """
     Generate a Markdown report summarizing average command usage within a time range.
 
@@ -202,7 +203,7 @@ def generate_command_usage_report(start_time, end_time, days):
 """NOTIFICATIONS/POINTS STATISTICS"""
 
 
-def count_notifications(start_time, end_time):
+def count_notifications(start_time: int, end_time: int) -> str:
     """
     Gather notification count within a given time period.
 
@@ -238,7 +239,7 @@ def count_notifications(start_time, end_time):
     )
 
 
-def get_month_points_summary(year_month):
+def get_month_points_summary(year_month: str) -> str:
     """
     Generate a formatted table of user points for a given month.
     Settings for this function are in wenju_settings, as this is a
@@ -308,7 +309,7 @@ def get_month_points_summary(year_month):
     return header + "".join(rows)
 
 
-def _get_month_stats(username, year_month):
+def _get_month_stats(username: str, year_month: str) -> tuple[int, int]:
     """Calculate points and unique posts for a user in a specific month."""
     query = """
             SELECT points, post_id
@@ -324,7 +325,7 @@ def _get_month_stats(username, year_month):
     return total_points, unique_posts
 
 
-def _get_total_stats(username):
+def _get_total_stats(username: str) -> tuple[int, int]:
     """Calculate cumulative points for a user across all time."""
     query = """
             SELECT points, post_id
@@ -417,7 +418,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
     return header + "\n".join(command_lines + notification_lines)
 
 
-def user_statistics_writer(instruo):
+def user_statistics_writer(instruo: Instruo) -> None:
     """
     Records which commands were used by a Reddit user and stores
     them in the main database.

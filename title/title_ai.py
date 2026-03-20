@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 from praw.models import Submission
 
@@ -40,7 +40,7 @@ from lang.languages import converter
 from responses import RESPONSE
 
 if TYPE_CHECKING:
-    from title.title_handling import Titolo
+    from models.titolo import Direction, Titolo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "T:AI"})
 
@@ -163,9 +163,9 @@ def update_titolo_from_ai_result(
     ai_result: dict[str, Any],
     post: Optional[Submission],
     discord_notify: bool,
-    determine_flair_fn,
-    determine_direction_fn,
-    get_notification_languages_fn,
+    determine_flair_fn: Callable[[Titolo], None],
+    determine_direction_fn: Callable[[list, list], Direction],
+    get_notification_languages_fn: Callable[[Titolo], Optional[list]],
 ) -> None:
     """
     Apply an AI parser result to a Titolo object, then send a Discord alert.

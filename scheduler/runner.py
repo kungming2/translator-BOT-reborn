@@ -1,10 +1,12 @@
 # scheduler/runner.py
+"""APScheduler-based runner that launches bot scripts as subprocesses on a fixed schedule."""
+
 import logging
 import subprocess
 import sys
 from pathlib import Path
 
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_MISSED
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_MISSED, JobExecutionEvent
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from config import SCHEDULER_SETTINGS
@@ -26,7 +28,7 @@ log = logging.getLogger("scheduler")
 
 def run_script(
     script: str, args: list[str] | None = None, lock_name: str | None = None
-):
+) -> None:
     """Run a bot script as a subprocess, with optional exclusive lock."""
     args = args or []
     name = lock_name or Path(script).stem
@@ -49,7 +51,8 @@ def run_script(
         log.warning(f"Skipping {name} — previous instance still running")
 
 
-def on_scheduler_event(event):
+def on_scheduler_event(event: JobExecutionEvent) -> None:
+    """Log an error if a scheduled job raised an exception or was missed."""
     if event.exception:
         log.error(f"Job {event.job_id} raised an exception: {event.exception}")
 

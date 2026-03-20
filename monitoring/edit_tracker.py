@@ -328,7 +328,9 @@ def progress_tracker() -> None:
             if ajo.status != "inprogress":
                 continue  # Skip posts without the correct flair
         else:  # Defined multiple
-            has_inprogress = "inprogress" in ajo.status.values()
+            has_inprogress = (
+                isinstance(ajo.status, dict) and "inprogress" in ajo.status.values()
+            )
             if not has_inprogress:
                 continue  # No inprogress marking in any of the dictionary's items.
 
@@ -364,15 +366,17 @@ def progress_tracker() -> None:
             kunulo_object.delete("comment_claim")
             ajo.set_status("untranslated")
         elif ajo.is_defined_multiple:
-            inprogress_keys = [
-                key for key, value in ajo.status.items() if value == "inprogress"
-            ]
+            inprogress_keys = (
+                [key for key, value in ajo.status.items() if value == "inprogress"]
+                if isinstance(ajo.status, dict)
+                else []
+            )
             # Iterate over only the languages which are still marked
             # in progress.
             for key in inprogress_keys:
                 if claim_comment_data["language"].preferred_code == key:
                     kunulo_object.delete("comment_claim")
-                    ajo.set_defined_multiple_status("untranslated")
+                    ajo.set_defined_multiple_status(key, "untranslated")
 
         ajo.update_reddit()
 

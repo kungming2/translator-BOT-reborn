@@ -10,6 +10,7 @@ Logger tag: [ZW:C]
 import logging
 import time
 
+from praw.models import Comment
 from prawcore import exceptions
 
 from config import SETTINGS
@@ -30,7 +31,7 @@ from ziwen_commands import HANDLERS
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
 
 
-def _mark_short_thanks_as_translated(comment, ajo):
+def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
     """Looks at the content of a comment and determines if the
     submission author's thank you is sufficient to mark it as
     translated, according to specific criteria.
@@ -208,9 +209,8 @@ def ziwen_commands() -> None:
         instruo = None
         if comment_has_command(comment_body):
             # Initialize the variables the command handlers will require.
-            instruo = Instruo.from_comment(
-                comment, parent_languages=[original_ajo.lingvo]
-            )
+            parent_languages = [original_ajo.lingvo] if original_ajo else []
+            instruo = Instruo.from_comment(comment, parent_languages=parent_languages)
 
             logger.info(
                 f"> Derived instruo and ajo for `{comment.id}` on "
@@ -265,7 +265,11 @@ def ziwen_commands() -> None:
 
             # Calculate points for the comment and write them to database.
             # This is obviously skipped if the post is an internal post.
-            if not diskuto_exists(original_post.id) and original_ajo:
+            if (
+                not diskuto_exists(original_post.id)
+                and original_ajo
+                and original_ajo.lingvo
+            ):
                 points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
             # If this is the verified thread and there are no commands, skip

@@ -1,6 +1,9 @@
 # scheduler.lock.py
+"""File-based exclusive locking for bot scripts using fcntl."""
+
 import fcntl
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -10,12 +13,13 @@ LOCK_DIR = Path(SCHEDULER_SETTINGS["locks_directory"])
 
 
 class AlreadyRunningError(Exception):
-    pass
+    """Raised when a script lock cannot be acquired because the script is already running."""
 
 
 @contextmanager
-def script_lock(name: str):
-    """Acquire an exclusive lock for the named script. Raises AlreadyRunningError if already running."""
+def script_lock(name: str) -> Iterator[None]:
+    """Acquire an exclusive lock for the named script.
+    Raises AlreadyRunningError if already running."""
     LOCK_DIR.mkdir(parents=True, exist_ok=True)
     lock_path = LOCK_DIR / f"{name}.lock"
 
