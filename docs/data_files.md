@@ -81,15 +81,15 @@ These are all [SQLite databases](https://sqlite.org/).
 
 For logs, _running_ refers to a fixed-size buffer that retains the most recent data, which can span days or weeks. _Cumulative_ refers to logs that retain all data recorded since the feature was implemented.
 
-| Filename                | Function                                                                                                                          |
-|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `_log_activity.csv`     | Running log that records cron runs with the number of used API calls and memory. Also records runtimes for sending notifications. | 
-| `_log_counter.json`     | Cumulative JSON log for all commands and actions, sorted by day. Written to by `action_counter()`.                                | 
-| `_log_error.yaml`       | General error log to record errors and contextual information.                                                                    | 
-| `_log_events.md`        | Main running log for [logger](https://docs.python.org/3/library/logging.html) events (`INFO` and higher).                         | 
-| `_log_filter.md`        | Cumulative log for posts that were filtered out and rejected by [title processing](./title_processing.md).                        | 
+| Filename                | Function                                                                                                                         |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `_log_activity.csv`     | Running log that records runs with the number of used API calls and memory. Also records runtimes for sending notifications. | 
+| `_log_counter.json`     | Cumulative JSON log for all commands and actions, sorted by day. Written to by `action_counter()`.                               | 
+| `_log_error.yaml`       | General error log to record errors and contextual information.                                                                   | 
+| `_log_events.md`        | Main running log for [logger](https://docs.python.org/3/library/logging.html) events (`INFO` and higher).                        | 
+| `_log_filter.md`        | Cumulative log for posts that were filtered out and rejected by [title processing](./title_processing.md).                       | 
 | `_log_testing.md`       | If `testing_mode` in `settings.yaml` is `True`, output that would normally be sent as a comment or message will be directed here. | 
-| `_log_events_hermes.md` | Main running log for Hermes's events (`INFO` and higher).                                                                         | 
+| `_log_events_hermes.md` | Main running log for Hermes's events (`INFO` and higher).                                                                        | 
 
 ## Reports
 
