@@ -385,62 +385,62 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
     """
 
     try:
-        search_url: str = f"https://yoji.jitenon.jp/cat/search.php?getdata={yojijukugo}&search=part&page=1"
-        logger.debug(f"Searching Yojijukugo at: {search_url}")
+        # Use the per-kanji "contains" index for the first character to find an
+        # exact match by link text. This avoids the flaky search results page,
+        # whose first link is often a ranking/navigation entry rather than the
+        # actual search result.
+        first_char: str = yojijukugo[0]
+        contain_url: str = f"https://yoji.jitenon.jp/kanji/{first_char}/contain/"
+        logger.debug(f"Looking up {yojijukugo} via contain page: {contain_url}")
 
-        search_resp = requests.get(search_url, headers=useragent, allow_redirects=True)
-        search_resp.encoding = search_resp.apparent_encoding
+        contain_resp = requests.get(contain_url, headers=useragent)
+        contain_resp.encoding = contain_resp.apparent_encoding
+        contain_tree = html.fromstring(contain_resp.text)
 
-        entry_url: str = search_resp.url
-        logger.debug(f"Redirected to entry page: {entry_url}")
-
-        tree = html.fromstring(search_resp.text)
-
-        # Extract reading.
-        reading_xpath: str = (
-            "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[2]/td"
+        # Link text is formatted as "四字熟語（よみ）"; match on the kanji prefix.
+        entry_links: list[str] = contain_tree.xpath(
+            f"//a[starts-with(normalize-space(text()), '{yojijukugo}')]/@href"
         )
-        reading_nodes = tree.xpath(reading_xpath)
-        reading: str | None = None
-        if reading_nodes:
-            reading_raw: str = reading_nodes[0].text_content()
-            reading = reading_raw.replace("\r", "\n").strip()
-            reading = "\n".join(
-                line.strip() for line in reading.splitlines() if line.strip()
-            )
-
-        # Extract Japanese Explanation
-        explanation_xpath: str = (
-            "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[3]/td"
-        )
-        explanation_nodes = tree.xpath(explanation_xpath)
-        if not explanation_nodes:
-            logger.warning(f"No explanation found for {yojijukugo} at {entry_url}")
+        if not entry_links:
+            logger.warning(f"No entry link found for {yojijukugo} on contain page.")
             return None
 
-        explanation_raw: str = explanation_nodes[0].text_content()
-        # Normalize line breaks and clean empty lines
-        explanation: str = explanation_raw.replace("\r", "\n").strip()
-        explanation = " ".join(
-            line.strip() for line in explanation.splitlines() if line.strip()
-        )
+        entry_url: str = entry_links[0]
+        if not entry_url.startswith("http"):
+            entry_url = "https://yoji.jitenon.jp" + entry_url
+        logger.debug(f"Following entry link: {entry_url}")
 
-        # Check if the 4th row's <th> is 出典, then get literary source
-        th_xpath: str = (
-            "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/th"
-        )
-        th_nodes = tree.xpath(th_xpath)
-        source: str | None = None
-        if th_nodes and th_nodes[0].text_content().strip() == "出典":
-            source_xpath: str = (
-                "/html/body/div/div[1]/div[1]/div[1]/div[2]/table/tbody/tr[4]/td"
+        entry_resp = requests.get(entry_url, headers=useragent)
+        entry_resp.encoding = entry_resp.apparent_encoding
+        tree = html.fromstring(entry_resp.text)
+
+        # Verify the entry page actually matches our input via the 四字熟語 row.
+        # The site uses consistent shinjitai, so this catches wrong-entry redirects.
+        def _get_row_by_label(label: str) -> str | None:
+            """Return the <td> text of the first table row whose <th> matches label."""
+            nodes = tree.xpath(f"//table//tr[th[normalize-space(text())='{label}']]/td")
+            if not nodes:
+                return None
+            raw = nodes[0].text_content().replace("\r", "\n").strip()
+            text = " ".join(line.strip() for line in raw.splitlines() if line.strip())
+            # Strip ※ footnotes (alternate reading annotations)
+            return text.split("※")[0].strip()
+
+        reading: str | None = _get_row_by_label("読み方")
+        explanation: str | None = _get_row_by_label("意味")
+        source: str | None = _get_row_by_label("出典")
+
+        # Verify the entry matches our input (guards against partial-match wrong entries)
+        entry_word: str | None = _get_row_by_label("四字熟語")
+        if entry_word and entry_word != yojijukugo:
+            logger.warning(
+                f"Entry mismatch: searched for {yojijukugo}, got {entry_word} at {entry_url}"
             )
-            source_nodes = tree.xpath(source_xpath)
-            if source_nodes:
-                source_raw: str = source_nodes[0].text_content()
-                source = "\n".join(
-                    line.strip() for line in source_raw.splitlines() if line.strip()
-                )
+            return None
+
+        if not explanation:
+            logger.warning(f"No explanation found for {yojijukugo} at {entry_url}")
+            return None
 
         logger.debug(f"Retrieved explanation and literary source for {yojijukugo}")
 
@@ -496,13 +496,13 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
         word_reading = main_data.get("japanese", [{}])[0].get("reading", "")
 
     # If Jisho returned nothing useful
+    yojijukugo_data: str | None = None
     if not word_reading:
         logger.info(f"No results for '{japanese_word}' on Jisho.")
 
         katakana_test: re.Match | None = re.search(r"[\u30a0-\u30ff]", japanese_word)
         # Execute some searches asynchronously.
         name_data: str | None = None
-        yojijukugo_data: str | None = None
         if len(japanese_word) == 2:
             name_data = await call_sync_async(_ja_name_search, japanese_word)
         elif len(japanese_word) == 4:
@@ -543,6 +543,15 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             f"**Reading:** {word_reading_chunk}\n\n"
             f"**Meanings**: {word_meaning}"
         )
+
+        # For 4-char words, attempt to append yojijukugo explanation as a supplement
+        if len(japanese_word) == 4:
+            yojijukugo_data = await call_sync_async(_ja_word_yojijukugo, japanese_word)
+            if yojijukugo_data:
+                logger.info("> Appending yojijukugo supplement to Jisho result.")
+                # Strip the standalone footer since the main Jisho footer follows
+                yoji_body: str = yojijukugo_data.rsplit("\n\n^(Information from)", 1)[0]
+                return_comment += f"\n\n---\n\n{yoji_body}"
 
         # Add sources
         footer: str = (
