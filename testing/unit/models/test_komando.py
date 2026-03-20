@@ -17,7 +17,6 @@ from typing import Any
 # noinspection PyProtectedMember
 from models.komando import Komando, _check_specific_mode, _deduplicate_args
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

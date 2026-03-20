@@ -20,11 +20,11 @@ from config import SETTINGS, enable_debug_logging
 # ── database ──────────────────────────────────────────────────────────────────
 from database import initialize_all_databases, search_database
 
-# ── hermes ────────────────────────────────────────────────────────────────────
-from hermes.tools import get_statistics, test_parser
-
 # ── error ─────────────────────────────────────────────────────────────────────
 from error import display_event_errors
+
+# ── hermes ────────────────────────────────────────────────────────────────────
+from hermes.tools import get_statistics, test_parser
 
 # ── integrations ──────────────────────────────────────────────────────────────
 from integrations.ai import fetch_image_description
@@ -83,7 +83,7 @@ from ziwen_lookup.zh import (
 # ── Section: lang ─────────────────────────────────────────────────────────────
 
 
-def check_lang_converter():
+def check_lang_converter() -> None:
     """Interactive test for the language converter."""
     enable_debug_logging()
     my_test = input("Enter the string you wish to test with the converter: ")
@@ -100,7 +100,7 @@ def check_lang_converter():
         msg.warn("Did not match anything.")
 
 
-def check_lang_parse():
+def check_lang_parse() -> None:
     """Interactive test for the language list parser."""
     lang_logger.setLevel(logging.DEBUG)
     language_list_input = input(
@@ -114,7 +114,7 @@ def check_lang_parse():
 # ── Section: error ────────────────────────────────────────────────────────────
 
 
-def check_error_display_event_errors():
+def check_error_display_event_errors() -> None:
     """Display ERROR-level entries from the events log within the last N days."""
     days_raw = input("Number of days to look back (default 7): ").strip()
     days = int(days_raw) if days_raw.isdigit() else 7
@@ -131,7 +131,7 @@ def check_error_display_event_errors():
 # ── Section: integrations ─────────────────────────────────────────────────────
 
 
-def check_integrations_search():
+def check_integrations_search() -> None:
     """Interactive test for Reddit search and result formatting."""
     while True:
         my_search = input("Please enter your search term (x to back out): ").strip()
@@ -142,7 +142,7 @@ def check_integrations_search():
         msg.info(build_search_results(searched_posts, my_search))
 
 
-def check_integrations_ai_image_description():
+def check_integrations_ai_image_description() -> None:
     """ai: Fetch and display an AI-generated description for an image URL."""
     image_url = input("Enter a public image URL (x to back out): ").strip()
     if image_url.lower() == "x":
@@ -158,12 +158,12 @@ def check_integrations_ai_image_description():
 # ── Section: hermes ───────────────────────────────────────────────────────────
 
 
-def check_hermes_statistics():
+def check_hermes_statistics() -> None:
     """Print aggregated language statistics from the Hermes database."""
     get_statistics()
 
 
-def check_hermes_parser():
+def check_hermes_parser() -> None:
     """Fetch live posts and print title_parser output for each."""
     limit_raw = input("Number of posts to fetch (default 100): ").strip()
     limit = int(limit_raw) if limit_raw.isdigit() else 100
@@ -174,7 +174,7 @@ def check_hermes_parser():
 # ── Section: monitoring ───────────────────────────────────────────────────────
 
 
-def check_monitoring_user():
+def check_monitoring_user() -> None:
     """Look up point totals for a given Reddit username."""
     my_username = input("Enter a Reddit username: ")
     with msg.loading(f"Retrieving points for u/{my_username}..."):
@@ -182,7 +182,7 @@ def check_monitoring_user():
     msg.info(str(result))
 
 
-def check_monitoring_post():
+def check_monitoring_post() -> None:
     """Look up all point records for a given Reddit post ID."""
     my_post_id = input("Enter a Reddit post ID: ")
     with msg.loading(f"Retrieving point records for {my_post_id}..."):
@@ -200,7 +200,7 @@ def check_monitoring_post():
 # ── Section: title ────────────────────────────────────────────────────────────
 
 
-def check_title_manual():
+def check_title_manual() -> None:
     """Test the title parser against a manually entered title string."""
     logger_title = logging.getLogger("title_handling")
     logger_title.setLevel(logging.DEBUG)
@@ -209,7 +209,7 @@ def check_title_manual():
     pprint(vars(titolo_output))
 
 
-def check_title_reddit():
+def check_title_reddit() -> None:
     """Fetch the last 50 live Reddit posts and run each through the title parser."""
     logger_title = logging.getLogger("title_handling")
     logger_title.setLevel(logging.INFO)
@@ -224,7 +224,7 @@ def check_title_reddit():
 # ── Section: database ─────────────────────────────────────────────────────────
 
 
-def check_database_search():
+def check_database_search() -> None:
     """Search the Ajo database by username or post ID."""
     term_to_search = input("Enter the search term (username or post_id): ")
     type_to_search = input("Enter the search type (user/post): ")
@@ -235,7 +235,7 @@ def check_database_search():
         pprint(vars(item))
 
 
-def check_database_initialize():
+def check_database_initialize() -> None:
     """Initialize all databases if they do not already exist."""
     with msg.loading("Initializing databases..."):
         initialize_all_databases()
@@ -245,7 +245,7 @@ def check_database_initialize():
 # ── Section: utility ──────────────────────────────────────────────────────────
 
 
-def check_utility_youtube():
+def check_utility_youtube() -> None:
     """Fetch and display the duration of a YouTube video by URL."""
     test_url = input("Enter a YouTube URL: ").strip()
     with msg.loading("Fetching video length..."):
@@ -256,7 +256,7 @@ def check_utility_youtube():
         msg.fail("Failed to fetch video length.")
 
 
-def check_utility_is_valid_image_url():
+def check_utility_is_valid_image_url() -> None:
     """Validate whether a URL is recognised as a valid image URL."""
     test_url = input("Enter a URL to validate as an image URL: ").strip()
     with msg.loading("Checking URL..."):
@@ -270,7 +270,7 @@ def check_utility_is_valid_image_url():
 # ── Section: models ───────────────────────────────────────────────────────────
 
 
-def check_models_ajo_url():
+def check_models_ajo_url() -> None:
     """ajo: Load a Reddit post by URL or ID, parse its title and build an Ajo."""
     test_url = input("Enter a Reddit post URL or ID (x to back out): ")
     if test_url.strip().lower() == "x":
@@ -288,7 +288,7 @@ def check_models_ajo_url():
     pprint(vars(post_ajo))
 
 
-def check_models_ajo_live():
+def check_models_ajo_live() -> None:
     """ajo: Fetch the last 3 live Reddit posts and build an Ajo for each."""
     with msg.loading("Fetching 3 live posts..."):
         submissions = list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=3))
@@ -298,7 +298,7 @@ def check_models_ajo_live():
         pprint(vars(ajo_new))
 
 
-def check_models_ajo_load():
+def check_models_ajo_load() -> None:
     """ajo: Load an Ajo from the database by ID and determine its flair."""
     test_ajo_input = input("Enter the ID of the Ajo: ")
     with msg.loading(f"Loading Ajo {test_ajo_input}..."):
@@ -316,7 +316,7 @@ def check_models_ajo_load():
         msg.good(f"Flair text: {test_ajo.output_post_flair_text}")
 
 
-def check_models_kunulo():
+def check_models_kunulo() -> None:
     """kunulo: Load a Reddit submission by URL or ID and build a Kunulo from its comments."""
     test_url = input("Enter a Reddit post URL or ID (x to back out): ")
     if test_url.strip().lower() == "x":
@@ -327,7 +327,7 @@ def check_models_kunulo():
     pprint(test_kunulo)
 
 
-def check_models_instruo_url():
+def check_models_instruo_url() -> None:
     """instruo: Load a Reddit comment by URL and build an Instruo from it."""
     comment_url = input("Enter Reddit comment URL (x to back out): ").strip()
     if comment_url.lower() == "x":
@@ -346,14 +346,14 @@ def check_models_instruo_url():
         msg.fail(f"Error: {ex}")
 
 
-def check_models_instruo_text():
+def check_models_instruo_text() -> None:
     """instruo: Enter raw text and check whether it contains a command."""
     testing_text = input("Enter text to parse for commands: ")
     test_instruo = Instruo.from_text(testing_text)
     msg.info(str(test_instruo))
 
 
-def check_models_komando():
+def check_models_komando() -> None:
     """komando: Enter raw comment text and extract all Komando commands from it."""
     my_input = input("Enter the comment text with commands you'd like to test here: ")
     commands_new = extract_commands_from_text(my_input)
@@ -367,7 +367,7 @@ def check_models_komando():
 # ── Section: ziwen_lookup ─────────────────────────────────────────────────────
 
 
-def check_ziwen_lookup_zh_character():
+def check_ziwen_lookup_zh_character() -> None:
     """zh: Look up a single Chinese character."""
     my_test = input("Enter a Chinese character to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
@@ -375,7 +375,7 @@ def check_ziwen_lookup_zh_character():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_zh_word():
+def check_ziwen_lookup_zh_word() -> None:
     """zh: Look up a Chinese word."""
     my_test = input("Enter a Chinese word to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
@@ -383,7 +383,7 @@ def check_ziwen_lookup_zh_word():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_zh_chengyu():
+def check_ziwen_lookup_zh_chengyu() -> None:
     """zh: Look up chengyu supplement data for a 4-character Chinese word."""
     my_test = input("Enter a chengyu to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
@@ -391,7 +391,7 @@ def check_ziwen_lookup_zh_chengyu():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_zh_variant():
+def check_ziwen_lookup_zh_variant() -> None:
     """zh: Search for variant characters."""
     my_test = input("Enter a Chinese character to search for variants: ")
     with msg.loading("Searching for variants..."):
@@ -399,7 +399,7 @@ def check_ziwen_lookup_zh_variant():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_zh_other():
+def check_ziwen_lookup_zh_other() -> None:
     """zh: Run the other/old Chinese readings search."""
     my_test = input("Enter a Chinese character for other readings: ")
     with msg.loading("Fetching other readings..."):
@@ -407,7 +407,7 @@ def check_ziwen_lookup_zh_other():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_ja_character():
+def check_ziwen_lookup_ja_character() -> None:
     """ja: Look up a single Japanese character."""
     my_test = input("Enter a Japanese character to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
@@ -415,7 +415,7 @@ def check_ziwen_lookup_ja_character():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_ja_word():
+def check_ziwen_lookup_ja_word() -> None:
     """ja: Look up a Japanese word."""
     my_test = input("Enter a Japanese word to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
@@ -423,7 +423,7 @@ def check_ziwen_lookup_ja_word():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_ko_word():
+def check_ziwen_lookup_ko_word() -> None:
     """ko: Look up a Korean word."""
     my_input = input("Enter a Korean word to search for: ")
     with msg.loading(f"Looking up '{my_input}'..."):
@@ -434,7 +434,7 @@ def check_ziwen_lookup_ko_word():
         msg.warn(f"No results found for '{my_input}'")
 
 
-def check_ziwen_lookup_wikipedia():
+def check_ziwen_lookup_wikipedia() -> None:
     """wp: Search Wikipedia for a term."""
     my_search = input("What would you like to search Wikipedia for? ")
     with msg.loading(f"Searching Wikipedia for '{my_search}'..."):
@@ -442,7 +442,7 @@ def check_ziwen_lookup_wikipedia():
     msg.info(str(result))
 
 
-def check_ziwen_lookup_match_helpers():
+def check_ziwen_lookup_match_helpers() -> None:
     """match: Run the lookup matcher on a phrase and language code."""
     msg.info("Note: Backticks will be automatically added around your phrase.")
     test_phrase = input("Enter phrase: ")
@@ -453,7 +453,7 @@ def check_ziwen_lookup_match_helpers():
     msg.good(f"Result: {test_result}")
 
 
-def check_ziwen_lookup_wiktionary():
+def check_ziwen_lookup_wiktionary() -> None:
     """wiktionary: Look up a word and language on Wiktionary."""
     test_input = input("Enter a word to look up in Wiktionary: ")
     test_language = input("Enter the language to look up the word for: ")
@@ -465,7 +465,7 @@ def check_ziwen_lookup_wiktionary():
 # ── Section: reddit ───────────────────────────────────────────────────────────
 
 
-def check_reddit_status():
+def check_reddit_status() -> None:
     """connection: Fetch unresolved Reddit incidents."""
     with msg.loading("Checking Reddit status..."):
         result = reddit_status_check()
@@ -483,7 +483,7 @@ def check_reddit_status():
             )
 
 
-def check_reddit_removal_reasons():
+def check_reddit_removal_reasons() -> None:
     """connection: Search subreddit removal reasons by keyword."""
     test_prompt = input(
         "Enter search prompt for removal reasons (x to back out): "
@@ -498,35 +498,35 @@ def check_reddit_removal_reasons():
         msg.warn(f"No removal reason found matching '{test_prompt}'.")
 
 
-def check_reddit_useragent():
+def check_reddit_useragent() -> None:
     """connection: Generate and display a random user agent."""
     ua = get_random_useragent()
     msg.info(f"User-Agent : {ua['User-Agent']}")
     msg.info(f"Accept     : {ua['Accept']}")
 
 
-def check_reddit_wiki_most_requested():
+def check_reddit_wiki_most_requested() -> None:
     """wiki: Fetch the most requested languages from the wiki statistics page."""
     with msg.loading("Fetching wiki data..."):
         result = fetch_most_requested_languages()
     msg.info(str(result))
 
 
-def check_reddit_startup_templates():
+def check_reddit_startup_templates() -> None:
     """startup: Retrieve and display current link flair templates."""
     with msg.loading("Retrieving flair templates..."):
         result = template_retriever()
     msg.info(str(result))
 
 
-def check_reddit_verified_thread():
+def check_reddit_verified_thread() -> None:
     """verification: Fetch the ID of the current verified thread."""
     with msg.loading("Fetching verified thread ID..."):
         result = get_verified_thread()
     msg.good(str(result))
 
 
-def check_reddit_notifications():
+def check_reddit_notifications() -> None:
     """notifications: Fetch usernames subscribed to a given language."""
     notifications_test = input(
         "Enter a language to retrieve notifications for (x to back out): "
@@ -534,15 +534,19 @@ def check_reddit_notifications():
     if notifications_test.strip().lower() == "x":
         return
     with msg.loading(f"Fetching subscribers for '{notifications_test}'..."):
-        notifications_data = fetch_usernames_for_lingvo(converter(notifications_test))
-    msg.good(f"Signups for `{notifications_test}`: {len(notifications_data)}")
-    msg.info(str(notifications_data))
+        notifications_lingvo = converter(notifications_test)
+        if notifications_lingvo:
+            notifications_data = fetch_usernames_for_lingvo(notifications_lingvo)
+            msg.good(f"Signups for `{notifications_test}`: {len(notifications_data)}")
+            msg.info(str(notifications_data))
+        else:
+            msg.fail(f"Invalid language: {notifications_test}")
 
 
 # ── Section: wenju ────────────────────────────────────────────────────────────
 
 
-def check_wenju_fetch_iso_reports():
+def check_wenju_fetch_iso_reports() -> None:
     """iso_updates: Fetch and save the latest ISO 639-3 change reports."""
     with msg.loading("Fetching ISO 639-3 reports..."):
         fetch_iso_reports()
@@ -664,7 +668,7 @@ SECTIONS = {
 }
 
 
-def _section_menu(label, checks):
+def _section_menu(label: str, checks: dict) -> None:
     """Display and run the sub-menu for a single section."""
     while True:
         msg.divider(label)
@@ -683,7 +687,7 @@ def _section_menu(label, checks):
             msg.warn("Invalid choice, please try again.")
 
 
-def _main_menu():
+def _main_menu() -> None:
     """Main entry point for using dev tools."""
     enable_debug_logging()
     while True:

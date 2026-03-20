@@ -22,7 +22,6 @@ from unittest.mock import MagicMock
 from models.instruo import Instruo, _strip_commands, comment_has_command
 from models.komando import Komando
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

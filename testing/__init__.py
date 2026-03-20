@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-from typing import Optional, Mapping, Any
+from typing import Any, Mapping, Optional
 
 from config import Paths
 from time_handling import get_current_utc_time
