@@ -18,7 +18,7 @@ from reddit.connection import REDDIT
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:POSTER"})
 
 
-def translation_challenge_poster():
+def translation_challenge_poster() -> None:
     """
     Post the weekly translation challenge as a stickied post.
 

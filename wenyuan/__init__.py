@@ -2,7 +2,7 @@
 from config import Paths, load_settings
 
 
-def _fetch_wenyuan_settings():
+def _fetch_wenyuan_settings() -> dict:
     """Fetches Wenju-specific settings."""
     return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
 

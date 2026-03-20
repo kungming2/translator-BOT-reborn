@@ -45,7 +45,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
 
 
 @task(schedule="daily")
-def log_trimmer():
+def log_trimmer() -> None:
     """
     Trims the events log to keep only the last X entries,
     preventing the file from growing indefinitely.
@@ -94,7 +94,7 @@ def log_trimmer():
 
 
 @task(schedule="daily")
-def error_log_trimmer():
+def error_log_trimmer() -> None:
     """Remove resolved errors older than one week from the error log."""
     error_log_path = Paths.LOGS["ERROR"]
 
@@ -126,12 +126,12 @@ def error_log_trimmer():
 
 
 @task(schedule="daily")
-def validate_data_files():
+def validate_data_files() -> bool:
     """
     Scans the given Paths class for all attributes containing YAML and JSON file paths
     and validates them.
 
-    :return: Tuple of (all_valid: bool, failed_files: list of str)
+    :return: all_valid: bool
     """
     config_files = []
     paths_class = Paths
@@ -148,7 +148,7 @@ def validate_data_files():
 
     if not config_files:
         logger.warning("[Config Validation] No YAML or JSON files found in Paths.")
-        return True, []
+        return True
 
     logger.info(f"[Config Validation] Found {len(config_files)} config files to check.")
 
@@ -353,7 +353,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
         return language_data
 
     # Helper to get max/min statistics
-    def get_extremes(key_name, field):
+    def get_extremes(key_name: str, field: str) -> None:
         max_val = max_val_month = min_val = min_val_month = None
         for k, v in language_data.items():
             if "20" not in k:  # Skip metadata
@@ -382,7 +382,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     return language_data
 
 
-def _statistics_list_updater(input_data: Dict[str, list]):
+def _statistics_list_updater(input_data: Dict[str, list]) -> None:
     """
     Generate a Markdown list for wiki/statistics, grouped by language family,
     and update the wiki page.
@@ -595,7 +595,7 @@ def archive_identified_saved() -> None:
     splitter = "|-------"
 
     # Helper function to process a single wiki page
-    def archive_page(wiki_page, file_path, page_name):
+    def archive_page(wiki_page: WikiPage, file_path: str, page_name: str) -> None:
         content = wiki_page.content_md
         top, lines = content.rsplit(splitter, 1)
         top += splitter
@@ -620,7 +620,7 @@ def archive_identified_saved() -> None:
 
 
 @task(schedule="monthly")
-def monthly_statistics_unpinner():
+def monthly_statistics_unpinner() -> None:
     """Unpins the statistics posts if it is still pinned when
     the monthly routine runs."""
 

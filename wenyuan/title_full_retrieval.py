@@ -15,7 +15,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
@@ -23,6 +23,11 @@ from models.ajo import ajo_loader, determine_flair_and_update
 from reddit.connection import REDDIT_HELPER
 from title.title_handling import process_title
 from utility import format_markdown_table_with_padding
+
+if TYPE_CHECKING:
+    from praw.models import Submission
+
+    from models.titolo import Titolo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
 
@@ -102,7 +107,7 @@ def examine_flair_for_ajo(
 """FULL TITLE RETRIEVER"""
 
 
-def should_skip_post(post) -> bool:
+def should_skip_post(post: "Submission") -> bool:
     """
     Determine if a post should be skipped based on title and flair.
 
@@ -128,7 +133,7 @@ def escape_markdown(text: str) -> str:
     return text
 
 
-def get_author_link(post) -> str:
+def get_author_link(post: "Submission") -> str:
     """
     Extract author name and create a formatted link.
 
@@ -141,12 +146,12 @@ def get_author_link(post) -> str:
         return "[unknown]/[deleted]"
 
 
-def format_language_list(language_objects) -> str:
+def format_language_list(language_objects: list) -> str:
     """Convert list of language objects to comma-separated string."""
     return ", ".join(str(lang) for lang in language_objects)
 
 
-def create_post_entry(post, titolo_data) -> str:
+def create_post_entry(post: "Submission", titolo_data: "Titolo") -> str:
     """
     Create a formatted Markdown table row for a post.
 
@@ -170,7 +175,7 @@ def create_post_entry(post, titolo_data) -> str:
     )
 
 
-def _generate_error_entry_line(post) -> str:
+def _generate_error_entry_line(post: "Submission") -> str:
     """
     Create a formatted error entry for problematic posts.
 
@@ -182,7 +187,9 @@ def _generate_error_entry_line(post) -> str:
     return f"| !!! | ---  | ---  | ---  | **{post.title}** | --- | --- | --- |"
 
 
-def categorize_post(entry: str, titolo_data, categories: PostCategories) -> None:
+def categorize_post(
+    entry: str, titolo_data: "Titolo", categories: PostCategories
+) -> None:
     """
     Categorize a post based on its properties.
 
@@ -209,7 +216,7 @@ def categorize_post(entry: str, titolo_data, categories: PostCategories) -> None
         categories.ai_assessed.append(entry)
 
 
-def process_single_post(post, categories: PostCategories) -> float:
+def process_single_post(post: "Submission", categories: PostCategories) -> float:
     """
     Process a single post and categorize it.
 
@@ -285,8 +292,8 @@ def calculate_statistics(
     )
 
     return f"""
-    
-    
+
+
 ## Statistics
 
 - **Total Posts Processed:** {total_posts}

@@ -30,7 +30,7 @@ from wenju import task
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:ISO"})
 
 
-def _parse_iso639_newsletter(pdf_source):
+def _parse_iso639_newsletter(pdf_source: str) -> str:
     """
     Parse an ISO 639 MA Newsletter PDF and extract adopted change requests.
 

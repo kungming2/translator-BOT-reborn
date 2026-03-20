@@ -56,7 +56,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
 
 
 @task(schedule="hourly")
-def reddit_status_report():
+def reddit_status_report() -> None:
     """
     Wrapper that calls reddit_status_check() and returns a
     Markdown-formatted summary. This is an API that indicates whether
@@ -119,7 +119,7 @@ def reddit_status_report():
 
 
 @task(schedule="hourly")
-def monitor_controversial_comments():
+def monitor_controversial_comments() -> None:
     """
     Checks r/translator hourly for heavily downvoted comments
     and flags them for review via a Discord alert.
@@ -184,7 +184,7 @@ def monitor_controversial_comments():
     return
 
 
-def _generate_24h_statistics_snippet():
+def _generate_24h_statistics_snippet() -> str | None:
     """
     Retrieves and summarizes post statistics from the last 24 hours.
 
@@ -244,7 +244,7 @@ def _generate_24h_statistics_snippet():
 
 
 @task(schedule="hourly")
-def update_sidebar_statistics():
+def update_sidebar_statistics() -> None:
     """
     Updates the r/translator sidebar with the latest statistics
     from the past 24 hours.
@@ -315,7 +315,7 @@ def update_sidebar_statistics():
 
 
 @task(schedule="daily")
-def language_of_the_day(selected_language=None) -> str | None:
+def language_of_the_day(selected_language: str | None = None) -> str | None:
     """
     Formats text for a randomly selected language of the day (ISO 639-3
     by default) in Markdown for inclusion in the sidebar of the
@@ -347,6 +347,9 @@ def language_of_the_day(selected_language=None) -> str | None:
         today_language = select_random_language(True)
         logger.info("Selecting an ISO 639-1 language today.")
     else:
+        assert (
+            selected_language is not None
+        )  # guaranteed: both prior branches require not selected_language
         today_language = converter(selected_language, preserve_country=True)
 
     if not today_language:
@@ -478,7 +481,7 @@ def language_of_the_day(selected_language=None) -> str | None:
 
 
 @task(schedule="daily")
-def modqueue_assessor():
+def modqueue_assessor() -> None:
     """
     Checks how many items are in the modqueue and alerts Discord
     if the count exceeds a certain threshold.
@@ -516,7 +519,7 @@ def modqueue_assessor():
 
 
 @task(schedule="weekly")
-def update_verified_list():
+def update_verified_list() -> None:
     """
     Updates the subreddit wiki page 'verified' with a sorted list of verified
     users organized by language. Also flags users with problematic flairs

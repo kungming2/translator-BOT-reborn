@@ -14,6 +14,7 @@ import logging
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
 
@@ -473,7 +474,13 @@ def collate_moderator_digest() -> None:
     # --- Parse actions from command report ---
     # generate_command_usage_report returns a markdown table; parse the rows
     # directly from command_data_raw before padding is applied.
-    actions = []
+    class _ActionEntry(TypedDict):
+        """A single parsed action row from the command usage report."""
+
+        name: str
+        count: float
+
+    actions: list[_ActionEntry] = []
     for line in command_data_raw.splitlines():
         line = line.strip()
         if (

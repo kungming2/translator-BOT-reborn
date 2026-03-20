@@ -28,7 +28,9 @@ Logger tag: [WJ:I]
 import importlib
 import logging
 import traceback
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from config import Paths, load_settings
 from config import logger as _base_logger
@@ -45,10 +47,10 @@ def _fetch_wenju_settings() -> dict:
     return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
 
 
-def task(schedule):
+def task(schedule: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to register a task with a schedule"""
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         if schedule not in _tasks:
             _tasks[schedule] = []
         _tasks[schedule].append(func)
@@ -57,7 +59,7 @@ def task(schedule):
     return decorator
 
 
-def run_schedule(schedule_name) -> None:
+def run_schedule(schedule_name: str) -> None:
     """Run all tasks for a given schedule"""
 
     # Dynamically import all task modules in the wenju/ directory
