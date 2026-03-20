@@ -119,8 +119,8 @@ internal_post_types:
   - community
   - meta
 
-# Regular cron job cycle run time (in minutes)
-cycle_time: 5.0
+# Regular job cycle run time (in minutes)
+cycle_time: 3.0
 
 # Mod exemption emoji - if a post ends with this emoji and was created
 # by a moderator, it will be treated as a test post and will not trigger
