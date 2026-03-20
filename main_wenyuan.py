@@ -71,7 +71,9 @@ class CommandRegistry:
             "system": "System",
         }
 
-    def register(self, key: str, description: str, category: str = "general"):
+    def register(
+        self, key: str, description: str, category: str = "general"
+    ) -> Callable[[Callable], Callable]:
         """Decorator to register a menu option."""
 
         def decorator(func: Callable) -> Callable:
@@ -136,7 +138,7 @@ def post_challenge() -> None:
 
 
 @registry.register("title_retrieval", "Test bulk title testing data", "test")
-def title_full_retrieval():
+def title_full_retrieval() -> None:
     """Test full retrieval."""
     num_retrieve = input("\n  Enter the number of posts you wish to test: ").strip()
     try:
@@ -579,7 +581,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     "Retrieve abbreviated language statistics from a time period as a list",
     "data",
 )
-def retrieve_post_stats():
+def retrieve_post_stats() -> None:
     """Retrieve post statistics using the Lumo analyzer."""
     month = input("\n  Enter month (YYYY-MM) or press Enter for last 30 days: ").strip()
 
@@ -642,7 +644,7 @@ def retrieve_post_stats():
                 )
 
     msg.good("Statistics retrieval complete")
-    return lumo  # Return the Lumo instance for further use
+    return None
 
 
 @registry.register(
@@ -664,7 +666,7 @@ def post_monthly_statistics_menu() -> None:
     post_monthly_statistics(month_year)
 
 
-def post_monthly_statistics(month_year: str):
+def post_monthly_statistics(month_year: str) -> None:
     """
     Post monthly statistics to Reddit and update wiki pages using Lumo analyzer.
 

@@ -13,6 +13,10 @@ authors = [
 [project.optional-dependencies]
 dev = ["types-PyYAML", "types-psutil", "types-requests"]
 
+[tool.pytest.ini_options]
+testpaths = ["testing/unit", "testing/integrations"]
+python_files = "test_*.py"
+
 [tool.mypy]
 disallow_untyped_defs = false  # off globally for now
 ignore_missing_imports = true
@@ -20,7 +24,7 @@ warn_unused_ignores = true
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = "testing.unit.*"
+module = ["testing.unit.*", "testing.integrations.*"]
 ignore_errors = true
 
 [tool.interrogate]

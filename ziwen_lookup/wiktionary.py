@@ -16,7 +16,7 @@ from lang.languages import converter
 from reddit.connection import get_random_useragent
 
 
-def parse_wiktionary(text, search_language=None) -> dict | None:
+def parse_wiktionary(text: str, search_language: str | None = None) -> dict | None:
     """
     Parse Wiktionary MediaWiki content and extract key information.
 
@@ -175,13 +175,13 @@ def parse_wiktionary(text, search_language=None) -> dict | None:
     return result
 
 
-def wiktionary_search(search_term, language_name):
+def wiktionary_search(search_term: str, language_name: str) -> dict | None:
     """
     Look up a word in Wiktionary using the MediaWiki API.
     Works for all non-CJK languages.
 
     :param search_term: The word to look up.
-    :param language_name: The language name for the lookup (for display/logging).
+    :param language_name: The language name for the lookup for the term.
     :return: A dict containing the page title and extract, or None if not found.
     """
     _lingvo = converter(language_name)
@@ -189,15 +189,15 @@ def wiktionary_search(search_term, language_name):
         print(f"{language_name.title()} does not appear to be a valid language.")
         raise ValueError
     else:
-        language_name = language_name.name
+        language_name = _lingvo.name or language_name
 
     api_url = "https://en.wiktionary.org/w/api.php"
 
-    params = {
+    params: dict[str, str | int] = {
         "action": "query",
         "format": "json",
         "prop": "extracts",
-        "explaintext": True,
+        "explaintext": 1,
         "titles": search_term,
     }
 

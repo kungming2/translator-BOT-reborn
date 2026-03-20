@@ -55,7 +55,7 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
     def is_valid_token(token: str) -> bool:
         """Returns True if the token is not a punctuation character."""
         return not re.match(
-            r"[.!/_,$%^*+\"\'\[\]—！，。？、~@#￥…&（）：" "《》»「」『』％]+〔〕",
+            r"""[.!/_,$%^*+\"\'\[\]—！，。？、~@#￥…&（）：「」『』《》»％〔〕；]+""",
             token,
         )
 
