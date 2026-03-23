@@ -130,6 +130,18 @@ def _convert_to_dict(input_string: str) -> dict:
     raise ValueError("Input could not be parsed as a Python dictionary or JSON")
 
 
+def _preferred_code_from_titolo(titolo: "Titolo") -> "str | None":
+    """
+    Derive the preferred language code from a Titolo instance.
+    Prefers final_text (resolved through the converter) over the raw
+    final_code, mirroring the logic used in Ajo.from_titolo.
+    """
+    if titolo.final_text:
+        lingvo = converter(titolo.final_text)
+        return lingvo.preferred_code if lingvo is not None else titolo.final_code
+    return titolo.final_code
+
+
 # ─── Main Ajo class ───────────────────────────────────────────────────────────
 
 
@@ -215,13 +227,7 @@ class Ajo:
 
         # Set the language via preferred code
         # Use final_text to get the actual language, not final_code which is for CSS
-        if titolo.final_text:
-            _lingvo = converter(titolo.final_text)
-            ajo.preferred_code = (
-                _lingvo.preferred_code if _lingvo is not None else titolo.final_code
-            )
-        else:
-            ajo.preferred_code = titolo.final_code  # fallback
+        ajo.preferred_code = _preferred_code_from_titolo(titolo)
         ajo.initialize_lingvo()
 
         # Additional info
@@ -566,7 +572,7 @@ class Ajo:
         if self.preferred_code:
             self._lingvo = converter(self.preferred_code)
 
-    def update_from_titolo(self, titolo: Titolo) -> None:
+    def _reset_to_titolo(self, titolo: Titolo) -> None:
         """
         Update this Ajo instance in-place based on a Titolo instance.
         This is used by reset() to restore an Ajo to its original state.
@@ -575,11 +581,21 @@ class Ajo:
         self.title = titolo.title_actual
         self.direction = titolo.direction
 
-        self.preferred_code = titolo.final_code
+        # Mirror from_titolo: prefer final_text -> Lingvo -> preferred_code over raw final_code.
+        self.preferred_code = _preferred_code_from_titolo(titolo)
         self.initialize_lingvo()
 
         self.original_source_language_name = titolo.source
         self.original_target_language_name = titolo.target
+
+        # Reset all state fields unconditionally — a reset must wipe these
+        # regardless of post type.
+        self.status = "untranslated"
+        self.closed_out = False
+        self.time_delta = {}
+        self.recorded_translators = []
+        self.author_messaged = False
+        self.is_identified = False
 
         # Determine if this should be a multiple or single post based on targets
         if titolo.target and len(titolo.target) > 1:
@@ -603,6 +619,9 @@ class Ajo:
                 self.is_defined_multiple = False
                 self.status = "untranslated"
                 self.language_history = [titolo.final_code] if titolo.final_code else []
+        else:
+            # Single language or no target
+            self.type = "single"
             self.is_defined_multiple = False
             self.status = "untranslated"
             self.language_history = [titolo.final_code] if titolo.final_code else []
@@ -721,7 +740,10 @@ class Ajo:
             )
             return
 
-        # Check if current status is 'translated' - cannot change from this state
+        # Check if current status is 'translated' - cannot change from this state.
+        # NOTE: This guard means set_status() must never be used to implement a reset.
+        # Resetting status must go through _reset_to_titolo(), which sets self.status
+        # directly and bypasses this lock.
         if hasattr(self, "status") and self.status == "translated":
             logger.warning(
                 "Attempted to change status after 'translated' (final). Ignoring."
@@ -904,7 +926,7 @@ class Ajo:
         """
         submission = REDDIT_HELPER.submission(id=self.id)
         titolo = process_title(submission)
-        self.update_from_titolo(titolo)
+        self._reset_to_titolo(titolo)
 
     def update_reddit(
         self, initial_update: bool = False, moderator_set: bool = False
@@ -961,7 +983,8 @@ def ajo_writer(new_ajo: "Ajo") -> None:
     cached_submission = new_ajo.clear_submission_cache()
 
     try:
-        representation = orjson.dumps(new_ajo.to_dict()).decode("utf-8")
+        current_dict = new_ajo.to_dict()
+        representation = orjson.dumps(current_dict).decode("utf-8")
 
         cursor = db.cursor_ajo
         conn = db.conn_ajo
@@ -984,7 +1007,7 @@ def ajo_writer(new_ajo: "Ajo") -> None:
                 except Exception as e:
                     logger.error("Failed to decode legacy Ajo format.")
                     raise e
-            if new_ajo.to_dict() != stored_ajo_dict:
+            if current_dict != stored_ajo_dict:
                 cursor.execute(
                     "UPDATE ajo_database SET ajo = ? WHERE id = ?",
                     (representation, ajo_id),
@@ -1014,17 +1037,6 @@ def ajo_loader(ajo_id: str) -> "Ajo | None":
 
     try:
         data = parse_ajo_data(result["ajo"])
-
-        # Normalize language name fields to lists of Lingvo objects
-        if "original_source_language_name" in data:
-            data["original_source_language_name"] = _normalize_lang_field(
-                data["original_source_language_name"]
-            )
-
-        if "original_target_language_name" in data:
-            data["original_target_language_name"] = _normalize_lang_field(
-                data["original_target_language_name"]
-            )
 
         # Legacy compatibility patch
         if "output_oflair_css" in data and "output_post_flair_css" not in data:
