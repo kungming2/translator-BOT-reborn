@@ -23,6 +23,8 @@ import logging
 import re
 from typing import Any
 
+from praw.models import Comment
+
 from config import SETTINGS
 from config import logger as _base_logger
 from models.komando import Komando, extract_commands_from_text
@@ -120,7 +122,7 @@ class Instruo:
 
     @classmethod
     def from_comment(
-        cls, comment: Any, parent_languages: list | None = None
+        cls, comment: Comment, parent_languages: list | None = None
     ) -> "Instruo":
         """Construct an Instruo from a live PRAW comment object."""
         text = comment.body
@@ -201,7 +203,7 @@ class Instruo:
 # ─── Module-level utilities ───────────────────────────────────────────────────
 
 
-def comment_has_command(comment: Any) -> bool:
+def comment_has_command(comment: Comment | str) -> bool:
     """
     Returns True if the comment contains any recognized command,
     False otherwise. This is used to skip comments which have no
