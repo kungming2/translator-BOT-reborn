@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 import orjson
+from praw.models import Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -67,7 +68,7 @@ class Diskuto:
         )
 
     @classmethod
-    def process_post(cls, praw_submission: Any) -> "Diskuto":
+    def process_post(cls, praw_submission: Submission) -> "Diskuto":
         """
         Build a Diskuto directly from a PRAW submission:
         - id: praw_submission.id
@@ -77,7 +78,7 @@ class Diskuto:
         - processed: defaults to False
         """
         if not hasattr(praw_submission, "title") or not hasattr(praw_submission, "id"):
-            raise TypeError("process_title requires a valid PRAW submission object.")
+            raise TypeError("process_post requires a valid PRAW submission object.")
 
         title = praw_submission.title
         m = re.match(r"^\s*\[([^]]+)]", title)
@@ -196,7 +197,7 @@ def diskuto_writer(diskuto_obj: Diskuto) -> None:
 
     post_id = str(diskuto_obj.id)
     created_time = diskuto_obj.created_utc
-    content_json = orjson.dumps(diskuto_obj.__dict__).decode("utf-8")
+    content_json = orjson.dumps(diskuto_obj.to_dict()).decode("utf-8")
 
     cursor = db.cursor_main
     conn = db.conn_main
