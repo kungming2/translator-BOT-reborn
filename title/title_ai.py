@@ -256,8 +256,8 @@ def update_titolo_from_ai_result(
 
     else:
         # AI parsing failed — assign generic flair
-        result.add_final_code("generic")
-        result.add_final_text("Generic")
+        result.final_code = "generic"
+        result.final_text = "Generic"
 
         if post:
             updating_subject = "AI Unable to Parse Title; No Language Assigned"

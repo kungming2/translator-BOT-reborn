@@ -71,13 +71,3 @@ class Titolo:
             f"  direction='{self.direction}',\n"
             f"  ai_assessed={self.ai_assessed}\n)"
         )
-
-    # ── Mutation helpers ───────────────────────────────────────────────────────
-
-    def add_final_code(self, code: str) -> None:
-        """Set the CSS flair code."""
-        self.final_code = code
-
-    def add_final_text(self, text: str) -> None:
-        """Set the CSS flair display text."""
-        self.final_text = text

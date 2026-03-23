@@ -151,14 +151,14 @@ def _determine_flair(titolo_object: Titolo) -> None:
             preferred_codes = [
                 lng.preferred_code.upper() for lng in candidates if lng.preferred_code
             ]
-            titolo_object.add_final_code("multiple")
-            titolo_object.add_final_text(_generate_multi_flair_text(preferred_codes))
+            titolo_object.final_code = "multiple"
+            titolo_object.final_text = _generate_multi_flair_text(preferred_codes)
             return
 
         if len(candidates) == 1:
             lang = candidates[0]
-            titolo_object.add_final_code(_resolve_flair_code(lang))
-            titolo_object.add_final_text(lang.name or "Unknown")
+            titolo_object.final_code = _resolve_flair_code(lang)
+            titolo_object.final_text = lang.name or "Unknown"
             return
 
         # candidates is empty — fall through to direction-based logic below
@@ -169,8 +169,8 @@ def _determine_flair(titolo_object: Titolo) -> None:
         if not source:
             return
         lang = source[0]
-        titolo_object.add_final_code(_resolve_flair_code(lang))
-        titolo_object.add_final_text(lang.name or "Unknown")
+        titolo_object.final_code = _resolve_flair_code(lang)
+        titolo_object.final_text = lang.name or "Unknown"
         return
 
     # Case 4: english_from / english_none
@@ -181,30 +181,30 @@ def _determine_flair(titolo_object: Titolo) -> None:
                 for lng in target
                 if hasattr(lng, "preferred_code") and lng.preferred_code
             ]
-            titolo_object.add_final_code("multiple")
-            titolo_object.add_final_text(_generate_multi_flair_text(preferred_codes))
+            titolo_object.final_code = "multiple"
+            titolo_object.final_text = _generate_multi_flair_text(preferred_codes)
             return
 
         if len(target) == 1:
             lang = target[0]
             if getattr(lang, "preferred_code", "") == "multiple":
-                titolo_object.add_final_code("multiple")
-                titolo_object.add_final_text("Multiple Languages")
+                titolo_object.final_code = "multiple"
+                titolo_object.final_text = "Multiple Languages"
             else:
-                titolo_object.add_final_code(_resolve_flair_code(lang))
-                titolo_object.add_final_text(lang.name or "Unknown")
+                titolo_object.final_code = _resolve_flair_code(lang)
+                titolo_object.final_text = lang.name or "Unknown"
             return
 
         # No targets — fall back to source
         if source:
             lang = source[0]
-            titolo_object.add_final_code(_resolve_flair_code(lang))
-            titolo_object.add_final_text(lang.name or "Unknown")
+            titolo_object.final_code = _resolve_flair_code(lang)
+            titolo_object.final_text = lang.name or "Unknown"
             return
 
     # Nothing resolved — assign generic
-    titolo_object.add_final_code("generic")
-    titolo_object.add_final_text("Generic")
+    titolo_object.final_code = "generic"
+    titolo_object.final_text = "Generic"
     logger.warning(f"_determine_flair: fell through to generic for {titolo_object}")
 
 

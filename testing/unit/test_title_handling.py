@@ -94,14 +94,14 @@ class TestTitoloDefaults(unittest.TestCase):
         titolo = Titolo()
         self.assertEqual(titolo.notify_languages, [])
 
-    def test_add_final_code(self) -> None:
+    def test_final_code_assignment(self) -> None:
         titolo = Titolo()
-        titolo.add_final_code("fr")
+        titolo.final_code = "fr"
         self.assertEqual(titolo.final_code, "fr")
 
-    def test_add_final_text(self) -> None:
+    def test_final_text_assignment(self) -> None:
         titolo = Titolo()
-        titolo.add_final_text("French")
+        titolo.final_text = "French"
         self.assertEqual(titolo.final_text, "French")
 
     def test_repr_contains_arrow(self) -> None:
