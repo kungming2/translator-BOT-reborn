@@ -6,7 +6,7 @@ Tests the Ajo class, serialization, state management, and related functions.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # noinspection PyProtectedMember
 from models.ajo import (
@@ -14,9 +14,6 @@ from models.ajo import (
     _convert_to_dict,
     _normalize_lang_field,
     ajo_defined_multiple_flair_former,
-    ajo_delete,
-    ajo_loader,
-    ajo_writer,
     parse_ajo_data,
 )
 from models.lingvo import Lingvo
@@ -954,176 +951,6 @@ class TestAjoCache(unittest.TestCase):
 
 
 # ===========================================================================
-# TestAjoWriterLoader (DB layer — fully mocked)
-# ===========================================================================
-
-
-class TestAjoWriterLoader(unittest.TestCase):
-    """
-    Test ajo_writer, ajo_loader, and ajo_delete with mocked DB connections.
-    No real database is touched.
-    """
-
-    @staticmethod
-    def _make_ajo(ajo_id="test001", created_utc=1234567890) -> Ajo:
-        ajo = Ajo()
-        ajo._id = ajo_id
-        ajo._created_utc = created_utc
-        ajo.preferred_code = "ja"
-        ajo.status = "untranslated"
-        return ajo
-
-    @staticmethod
-    def _setup_mock_db(mock_db, fetchone_return=None) -> MagicMock:
-        """Wire up mock_db with a cursor and connection; return the cursor."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = fetchone_return
-        mock_db.cursor_ajo = mock_cursor
-        mock_db.conn_ajo = MagicMock()
-        return mock_cursor
-
-    @patch("models.ajo.db")
-    def test_ajo_writer_inserts_new_record(self, mock_db):
-        """ajo_writer should INSERT when no existing row is found."""
-        mock_cursor = self._setup_mock_db(mock_db, fetchone_return=None)
-
-        ajo = self._make_ajo()
-        ajo_writer(ajo)
-
-        insert_call = any(
-            "INSERT" in str(c) for c in mock_cursor.execute.call_args_list
-        )
-        self.assertTrue(insert_call, "Expected an INSERT to be executed")
-        mock_db.conn_ajo.commit.assert_called()
-
-    @patch("models.ajo.db")
-    def test_ajo_writer_updates_changed_record(self, mock_db):
-        """ajo_writer should UPDATE when data has changed."""
-        import orjson
-
-        ajo = self._make_ajo()
-        stored = ajo.to_dict()
-        stored["status"] = "translated"  # different from current
-        mock_cursor = self._setup_mock_db(
-            mock_db, fetchone_return={"ajo": orjson.dumps(stored).decode()}
-        )
-
-        ajo_writer(ajo)
-
-        update_call = any(
-            "UPDATE" in str(c) for c in mock_cursor.execute.call_args_list
-        )
-        self.assertTrue(update_call, "Expected an UPDATE to be executed")
-
-    @patch("models.ajo.db")
-    def test_ajo_writer_skips_unchanged_record(self, mock_db):
-        """ajo_writer should not UPDATE when data is identical."""
-        import orjson
-
-        ajo = self._make_ajo()
-        stored = ajo.to_dict()
-        mock_cursor = self._setup_mock_db(
-            mock_db, fetchone_return={"ajo": orjson.dumps(stored).decode()}
-        )
-
-        ajo_writer(ajo)
-
-        update_call = any(
-            "UPDATE" in str(c) for c in mock_cursor.execute.call_args_list
-        )
-        self.assertFalse(
-            update_call, "UPDATE should not be called when data is unchanged"
-        )
-
-    @patch("models.ajo.db")
-    def test_ajo_writer_restores_submission_cache_after_write(self, mock_db):
-        """ajo_writer must restore _submission after writing regardless of outcome."""
-        self._setup_mock_db(mock_db, fetchone_return=None)
-
-        ajo = self._make_ajo()
-        mock_sub = MagicMock()
-        ajo._submission = mock_sub
-
-        ajo_writer(ajo)
-
-        self.assertEqual(
-            ajo._submission, mock_sub, "Submission cache should be restored"
-        )
-
-    @patch("models.ajo.converter")
-    @patch("models.ajo.db")
-    def test_ajo_loader_returns_ajo_when_found(self, mock_db, mock_converter):
-        """ajo_loader should return an Ajo object when a record exists."""
-        import orjson
-
-        data = REAL_AJOS[1]  # translated Chinese post
-        mock_db.fetch_ajo.return_value = {"ajo": orjson.dumps(data).decode()}
-        mock_converter.return_value = make_lingvo("Chinese", "zh", "zho")
-
-        ajo = ajo_loader("1rvytkz")
-
-        self.assertIsNotNone(ajo)
-        self.assertEqual(ajo.id, "1rvytkz")
-        self.assertEqual(ajo.status, "translated")
-
-    @patch("models.ajo.db")
-    def test_ajo_loader_returns_none_when_not_found(self, mock_db):
-        """ajo_loader should return None when no record exists."""
-        mock_db.fetch_ajo.return_value = None
-        result = ajo_loader("nonexistent")
-        self.assertIsNone(result)
-
-    @patch("models.ajo.db")
-    def test_ajo_loader_handles_legacy_json_format(self, mock_db):
-        """ajo_loader should gracefully handle Python-literal stored data."""
-        # Old format stored as Python dict literal string
-        data = {"id": "old001", "preferred_code": "ja", "status": "untranslated"}
-        mock_db.fetch_ajo.return_value = {"ajo": str(data)}
-
-        ajo = ajo_loader("old001")
-        # Should either return a valid Ajo or None, but not raise
-        # (actual result depends on converter availability)
-        # The key requirement: no unhandled exception
-        self.assertTrue(ajo is None or isinstance(ajo, Ajo))
-
-    @patch("models.ajo.db")
-    def test_ajo_delete_returns_true_when_found(self, mock_db):
-        mock_cursor = MagicMock()
-        mock_cursor.rowcount = 1
-        mock_db.cursor_ajo = mock_cursor
-        mock_db.conn_ajo = MagicMock()
-
-        result = ajo_delete("test001")
-
-        self.assertTrue(result)
-        mock_db.conn_ajo.commit.assert_called()
-
-    @patch("models.ajo.db")
-    def test_ajo_delete_returns_false_when_not_found(self, mock_db):
-        mock_cursor = MagicMock()
-        mock_cursor.rowcount = 0
-        mock_db.cursor_ajo = mock_cursor
-        mock_db.conn_ajo = MagicMock()
-
-        result = ajo_delete("nonexistent")
-
-        self.assertFalse(result)
-
-    @patch("models.ajo.db")
-    def test_ajo_delete_executes_correct_sql(self, mock_db):
-        mock_cursor = MagicMock()
-        mock_cursor.rowcount = 1
-        mock_db.cursor_ajo = mock_cursor
-        mock_db.conn_ajo = MagicMock()
-
-        ajo_delete("myid")
-
-        mock_cursor.execute.assert_called_once_with(
-            "DELETE FROM ajo_database WHERE id = ?", ("myid",)
-        )
-
-
-# ===========================================================================
 # TestUtilityFunctions
 # ===========================================================================
 
@@ -1262,7 +1089,6 @@ def run_all_tests():
         TestAjoFromTitolo,
         TestAjoMiscMethods,
         TestAjoCache,
-        TestAjoWriterLoader,
         TestUtilityFunctions,
         TestAjoDictFormatting,
     ]

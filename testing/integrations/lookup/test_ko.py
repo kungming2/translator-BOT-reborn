@@ -15,10 +15,6 @@ Test subjects
                 불   (– fire, flame)                       [noun, no origin]
                 힘차다 (– vigorous, powerful, full of energy) [adjective, no origin]
 
-Words drawn from 임을 위한 행진곡 (March for the Beloved):
-    정의는 분화구의 불길처럼 힘차게 타온다
-    대지의 저주받은 땅에 새 세계를 펼칠 때
-
 Run with:
     pytest test_ko.py -v
 or:
@@ -30,23 +26,18 @@ Requirements (beyond the project's own deps):
 
 import re
 
-import pytest
-
-# ── project imports ───────────────────────────────────────────────────────────
-from ziwen_lookup.match_helpers import lookup_matcher
-
-# noinspection PyProtectedMember
-from ziwen_lookup.ko import ko_word, _ko_word_fetch, _ko_search_raw
 from ziwen_lookup.cache_helpers import (
-    parse_ko_output_to_json,
     format_ko_word_from_cache,
     get_from_cache,
+    parse_ko_output_to_json,
     save_to_cache,
 )
 
-# ── pytest-asyncio mode ───────────────────────────────────────────────────────
-pytestmark = pytest.mark.asyncio
+# noinspection PyProtectedMember
+from ziwen_lookup.ko import _ko_search_raw, _ko_word_fetch, ko_word
 
+# ── project imports ───────────────────────────────────────────────────────────
+from ziwen_lookup.match_helpers import lookup_matcher
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -201,9 +192,7 @@ class TestKoSearchRaw:
         """불길 – native Korean word should have no origin field."""
         data = _ko_search_raw("불길")
         origins = [e.get("origin") for e in data if e.get("origin")]
-        assert not origins, (
-            f"Expected no origin for native Korean 불길; got: {origins}"
-        )
+        assert not origins, f"Expected no origin for native Korean 불길; got: {origins}"
 
     def test_daiji_is_noun(self):
         """대지 – part_of_speech should be '명사' (noun)."""
@@ -348,9 +337,7 @@ class TestKoWordFetch:
     def test_invalid_word_returns_none(self):
         """A nonsense Hangul string should return None gracefully."""
         result = _ko_word_fetch("ㅎㅎㅎㅎ")
-        assert result is None, (
-            f"Expected None for invalid input, got: {repr(result)}"
-        )
+        assert result is None, f"Expected None for invalid input, got: {repr(result)}"
 
     def test_output_not_short(self):
         """All target words must produce non-trivial output."""
@@ -509,7 +496,9 @@ class TestCacheRoundTrip:
                 "part_of_speech": "noun",
                 "meanings": [
                     {"definition": "A streak of fire burning furiously."},
-                    {"definition": "(figurative) A strong surge of feeling or passion."},
+                    {
+                        "definition": "(figurative) A strong surge of feeling or passion."
+                    },
                 ],
             }
         ],
@@ -522,7 +511,9 @@ class TestCacheRoundTrip:
             {
                 "part_of_speech": "noun",
                 "meanings": [
-                    {"definition": "Burning heat and light produced by combustion; fire; flame."},
+                    {
+                        "definition": "Burning heat and light produced by combustion; fire; flame."
+                    },
                 ],
             }
         ],
@@ -548,7 +539,9 @@ class TestCacheRoundTrip:
             {
                 "part_of_speech": "noun",
                 "meanings": [
-                    {"definition": "The earth or globe considered as a planet; the world."},
+                    {
+                        "definition": "The earth or globe considered as a planet; the world."
+                    },
                 ],
             }
         ],
@@ -584,8 +577,7 @@ class TestCacheRoundTrip:
         cached = get_from_cache("세계", "ko", "ko_word")
         assert cached is not None, "Cache miss immediately after save for 세계"
         assert any(
-            "world" in d["definition"].lower()
-            for d in cached["entries"][0]["meanings"]
+            "world" in d["definition"].lower() for d in cached["entries"][0]["meanings"]
         )
 
     def test_language_isolation_ko_vs_ja(self):
@@ -601,9 +593,7 @@ class TestCacheRoundTrip:
         save_to_cache(self.SEGYE_PAYLOAD.copy(), "ko", "ko_word")
         cached = get_from_cache("세계", "ko", "ko_word")
         assert cached is not None
-        assert cached["word"] == "세계", (
-            f"Unicode not preserved; got: {cached['word']}"
-        )
+        assert cached["word"] == "세계", f"Unicode not preserved; got: {cached['word']}"
 
     def test_format_word_from_cache_roundtrip(self):
         """format_ko_word_from_cache should produce valid markdown from cached data."""
@@ -633,7 +623,9 @@ class TestEndToEndPipeline:
     def test_bulgil_end_to_end(self):
         """불길: match → fetch (bypassing cache) → parse → cache → retrieve."""
         # 1. Match
-        matched = lookup_matcher("`불길`", language_code="ko", disable_tokenization=True)
+        matched = lookup_matcher(
+            "`불길`", language_code="ko", disable_tokenization=True
+        )
         assert "ko" in matched
 
         # 2. Fetch fresh from API (bypass cache)
@@ -665,7 +657,9 @@ class TestEndToEndPipeline:
 
         data = parse_ko_output_to_json(_strip_cache_marker(output))
         assert data.get("word") == "힘차다"
-        assert data.get("entries") and data["entries"][0]["part_of_speech"] == "adjective"
+        assert (
+            data.get("entries") and data["entries"][0]["part_of_speech"] == "adjective"
+        )
 
         save_to_cache(data, "ko", "ko_word")
         cached = get_from_cache("힘차다", "ko", "ko_word")

@@ -30,27 +30,19 @@ import re
 
 import pytest
 
-# ── project imports ───────────────────────────────────────────────────────────
-from ziwen_lookup.match_helpers import lookup_matcher
-
-# noinspection PyProtectedMember
-from ziwen_lookup.ja import (
-    ja_character,
-    ja_word,
-    _ja_character_fetch,
-    _ja_word_fetch,
-)
 from ziwen_lookup.cache_helpers import (
-    parse_ja_output_to_json,
     format_ja_character_from_cache,
     format_ja_word_from_cache,
     get_from_cache,
+    parse_ja_output_to_json,
     save_to_cache,
 )
 
-# ── pytest-asyncio mode ───────────────────────────────────────────────────────
-pytestmark = pytest.mark.asyncio
+# noinspection PyProtectedMember
+from ziwen_lookup.ja import _ja_character_fetch, _ja_word_fetch, ja_character, ja_word
 
+# ── project imports ───────────────────────────────────────────────────────────
+from ziwen_lookup.match_helpers import lookup_matcher
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -309,6 +301,7 @@ class TestJaCharacter:
 class TestJaWord:
     """Live network tests for ja_word (async function)."""
 
+    @pytest.mark.asyncio
     async def test_douhou_basic_structure(self):
         """同胞 – must return header, reading, meanings, and footer."""
         output = _strip_cache_marker(await ja_word("同胞"))
@@ -330,6 +323,7 @@ class TestJaWord:
             f"Expected reading どうほう/dōhō for 同胞:\n{output}"
         )
 
+    @pytest.mark.asyncio
     async def test_kurikaeshi_basic_structure(self):
         """繰り返し – must return reading, meanings, and footer."""
         output = await ja_word("繰り返し")
@@ -341,6 +335,7 @@ class TestJaWord:
         _assert_reading_line(output, "繰り返し")
         _assert_meanings(output, "繰り返し")
 
+    @pytest.mark.asyncio
     async def test_kurikaeshi_reading_kurikaeshi(self):
         """繰り返し – reading should be くりかえし (kurikaeshi)."""
         output = _strip_cache_marker(await ja_word("繰り返し"))
@@ -348,6 +343,7 @@ class TestJaWord:
             f"Expected reading くりかえし/kurikaeshi for 繰り返し:\n{output}"
         )
 
+    @pytest.mark.asyncio
     async def test_all_words_have_wiktionary_link(self):
         """Both words must link to Wiktionary."""
         for word in ("同胞", "繰り返し"):
@@ -356,6 +352,7 @@ class TestJaWord:
                 f"Wiktionary link missing for {word}"
             )
 
+    @pytest.mark.asyncio
     async def test_all_words_have_jisho_footer(self):
         """Both words must include a Jisho footer link."""
         for word in ("同胞", "繰り返し"):
@@ -364,6 +361,7 @@ class TestJaWord:
                 f"Jisho footer link missing for {word}"
             )
 
+    @pytest.mark.asyncio
     async def test_output_not_none_or_empty(self):
         """Both words must produce non-trivial output."""
         for word in ("同胞", "繰り返し"):
@@ -768,6 +766,7 @@ class TestEndToEndPipeline:
         assert cached is not None
         assert cached["word"] == "覚"
 
+    @pytest.mark.asyncio
     async def test_douhou_end_to_end(self):
         """同胞: match → fetch (bypassing cache) → parse → cache → retrieve."""
         matched = lookup_matcher(
@@ -788,6 +787,7 @@ class TestEndToEndPipeline:
         assert cached is not None
         assert cached["word"] == "同胞"
 
+    @pytest.mark.asyncio
     async def test_cache_hit_returns_cache_marker(self):
         """After a word is cached, subsequent calls via ja_word must return the ^⚡ marker."""
         # Prime the cache via internal fetch, then save explicitly

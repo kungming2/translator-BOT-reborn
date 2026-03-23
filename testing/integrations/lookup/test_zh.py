@@ -29,17 +29,17 @@ import re
 import pytest
 import pytest_asyncio  # noqa: F401 – needed for async fixture support
 
-# ── project imports ──────────────────────────────────────────────────────────
-from ziwen_lookup.match_helpers import lookup_matcher
-from ziwen_lookup.zh import zh_character, zh_word, zh_word_chengyu_supplement
 from ziwen_lookup.cache_helpers import (
-    parse_zh_output_to_json,
     get_from_cache,
+    parse_zh_output_to_json,
     save_to_cache,
 )
 
+# ── project imports ──────────────────────────────────────────────────────────
+from ziwen_lookup.match_helpers import lookup_matcher
+from ziwen_lookup.zh import zh_character, zh_word, zh_word_chengyu_supplement
+
 # ── pytest-asyncio mode ───────────────────────────────────────────────────────
-pytestmark = pytest.mark.asyncio
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,6 +179,7 @@ class TestLookupMatcherZh:
 class TestZhCharacter:
     """Live network tests for zh_character."""
 
+    @pytest.mark.asyncio
     async def test_ren_basic_structure(self):
         """人 – must return a header, pronunciation table, meanings, and footer."""
         output = _strip_cache_marker(await zh_character("人"))
@@ -187,6 +188,7 @@ class TestZhCharacter:
         _assert_meanings(output, "人")
         _assert_footer_links(output, "人")
 
+    @pytest.mark.asyncio
     async def test_ren_mandarin_pinyin_present(self):
         """人 – Mandarin Pinyin must be 'rén' (or 'ren2' style before conversion)."""
         output = _strip_cache_marker(await zh_character("人"))
@@ -195,6 +197,7 @@ class TestZhCharacter:
             f"Expected pinyin 'rén' in output for 人:\n{output}"
         )
 
+    @pytest.mark.asyncio
     async def test_lei_simplified_character(self):
         """类 – simplified character must return valid output."""
         output = _strip_cache_marker(await zh_character("类"))
@@ -203,6 +206,7 @@ class TestZhCharacter:
         )
         _assert_meanings(output, "类")
 
+    @pytest.mark.asyncio
     async def test_chuang_traditional_character(self):
         """創 – traditional character; simplified form 创 may also appear."""
         output = _strip_cache_marker(await zh_character("創"))
@@ -212,12 +216,14 @@ class TestZhCharacter:
         _assert_pronunciation_table(output, "創")
         _assert_meanings(output, "創")
 
+    @pytest.mark.asyncio
     async def test_output_contains_wiktionary_link(self):
         """Each character output should link to Wiktionary."""
         for char in ("人", "类", "創"):
             output = _strip_cache_marker(await zh_character(char))
             assert "wiktionary.org" in output, f"Wiktionary link missing for {char}"
 
+    @pytest.mark.asyncio
     async def test_output_not_empty(self):
         """None of the target characters should produce an empty result."""
         for char in ("人", "类", "創"):
@@ -235,6 +241,7 @@ class TestZhCharacter:
 class TestZhWord:
     """Live network tests for zh_word."""
 
+    @pytest.mark.asyncio
     async def test_laodong_basic_structure(self):
         """劳动 – must return header, pronunciation table, meanings, footer."""
         output = _strip_cache_marker(await zh_word("劳动"))
@@ -245,6 +252,7 @@ class TestZhWord:
         _assert_meanings(output, "劳动")
         _assert_footer_links(output, "劳动")
 
+    @pytest.mark.asyncio
     async def test_laodong_pinyin(self):
         """劳动 pinyin should be láodòng."""
         output = _strip_cache_marker(await zh_word("劳动"))
@@ -253,6 +261,7 @@ class TestZhWord:
             r"d[oò]ng", output, re.IGNORECASE
         ), f"Expected 'láodòng' pinyin in output:\n{output}"
 
+    @pytest.mark.asyncio
     async def test_guoshi_basic_structure(self):
         """果实 – must return valid structured output."""
         output = _strip_cache_marker(await zh_word("果实"))
@@ -260,6 +269,7 @@ class TestZhWord:
         _assert_meanings(output, "果实")
         _assert_footer_links(output, "果实")
 
+    @pytest.mark.asyncio
     async def test_guoshi_pinyin(self):
         """果实 pinyin should be guǒshí."""
         output = _strip_cache_marker(await zh_word("果实"))
@@ -267,6 +277,7 @@ class TestZhWord:
             f"Expected guǒ pinyin in output for 果实:\n{output}"
         )
 
+    @pytest.mark.asyncio
     async def test_traditional_form_in_header(self):
         """Words with differing trad/simp forms should show both in the header."""
         # 劳动 (simp) ↔ 勞動 (trad) – they differ, so both should appear
@@ -275,12 +286,14 @@ class TestZhWord:
             "Traditional or simplified form should appear in output"
         )
 
+    @pytest.mark.asyncio
     async def test_mdbg_footer_link(self):
         """MDBG link should appear in footer for standard words."""
         for word in ("劳动", "果实"):
             output = await zh_word(word)
             assert "mdbg.net" in output, f"MDBG link missing for {word}"
 
+    @pytest.mark.asyncio
     async def test_output_not_empty(self):
         """Both words must produce non-trivial output."""
         for word in ("劳动", "果实"):
@@ -298,11 +311,13 @@ class TestZhWord:
 class TestZhChengyu:
     """Live network tests for chengyu lookup."""
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_returns_result(self):
         """半途而废 – should return a non-None result with Chinese meaning."""
         result = await zh_word_chengyu_supplement("半途而废")
         assert result is not None, "Expected a non-None chengyu result for 半途而废"
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_contains_chinese_meaning(self):
         """半途而废 – result must contain **Chinese Meaning** section."""
         result = await zh_word_chengyu_supplement("半途而废")
@@ -310,6 +325,7 @@ class TestZhChengyu:
             f"Expected '**Chinese Meaning**' section in chengyu result:\n{result}"
         )
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_contains_literary_source(self):
         """半途而废 – result should contain **Literary Source** section."""
         result = await zh_word_chengyu_supplement("半途而废")
@@ -317,6 +333,7 @@ class TestZhChengyu:
             f"Expected '**Literary Source**' in chengyu result:\n{result}"
         )
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_via_zh_word(self):
         """Calling zh_word on 半途而废 (4-char) must embed chengyu supplement."""
         output = _strip_cache_marker(await zh_word("半途而废"))
@@ -329,6 +346,7 @@ class TestZhChengyu:
             "zh_word for a 4-char chengyu must include **Chinese Meaning** block"
         )
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_links_to_sources(self):
         """Chengyu supplement should include links to 5156edu and 18Dao."""
         result = await zh_word_chengyu_supplement("半途而废")
@@ -336,6 +354,7 @@ class TestZhChengyu:
             "Chengyu result should link to 5156edu or 18Dao"
         )
 
+    @pytest.mark.asyncio
     async def test_traditional_chengyu_input(self):
         """半途而廢 (traditional form) should also return a valid result."""
         result = await zh_word_chengyu_supplement("半途而廢")
@@ -581,6 +600,7 @@ class TestEndToEndPipeline:
     lookup_matcher → zh_character / zh_word → parse → cache → re-fetch from cache.
     """
 
+    @pytest.mark.asyncio
     async def test_ren_end_to_end(self):
         """人: match → fetch → parse → cache → retrieve."""
         # 1. Match
@@ -603,6 +623,7 @@ class TestEndToEndPipeline:
         assert cached is not None
         assert cached["traditional"] == "人"
 
+    @pytest.mark.asyncio
     async def test_laodong_end_to_end(self):
         """劳动: match → fetch → parse → cache → retrieve."""
         matched = lookup_matcher(
@@ -623,6 +644,7 @@ class TestEndToEndPipeline:
         cached = get_from_cache(data["traditional"], "zh", "zh_word")
         assert cached is not None
 
+    @pytest.mark.asyncio
     async def test_bantuerfe_end_to_end(self):
         """半途而废: match → zh_word (with chengyu supplement) → parse → cache."""
         matched = lookup_matcher(

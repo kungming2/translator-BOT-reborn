@@ -18,6 +18,9 @@ Modules covered:
     - status_report.py   : reddit_status_report (incident formatting)
 """
 
+# Load the real config module directly by file path, bypassing any stub that
+# another test file may have already registered under "config" in sys.modules.
+import importlib.util as _ilu
 import json
 import re
 import sys
@@ -31,6 +34,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
+
+_config_spec = _ilu.spec_from_file_location(
+    "_real_config",
+    Path(__file__).resolve().parents[2] / "config.py",
+)
+assert _config_spec is not None and _config_spec.loader is not None
+_real_config = _ilu.module_from_spec(_config_spec)
+_config_spec.loader.exec_module(_real_config)  # type: ignore[union-attr]
+_RealPaths = _real_config.Paths
+_real_get_reports_directory = _real_config.get_reports_directory
 
 # ---------------------------------------------------------------------------
 # Helpers to build a minimal stub environment so importing the task modules
@@ -48,15 +61,16 @@ def _make_stub_module(name: str, **attrs) -> types.ModuleType:
 # Patch heavy third-party / project imports before any task module is touched.
 # We register them in sys.modules so that "import X" inside the task files
 # resolves to our stubs rather than raising ImportError.
-def _register_stubs() -> None:
+def _register_stubs() -> dict[str, types.ModuleType | None]:
+    """Register stub modules and return the previous sys.modules state for restoration."""
     stubs = {
         "config": _make_stub_module(
             "config",
             SETTINGS={"subreddit": "translator", "internal_post_types": []},
-            Paths=MagicMock(),
+            Paths=_RealPaths,
             logger=MagicMock(),
             load_settings=MagicMock(return_value={}),
-            get_reports_directory=MagicMock(return_value=Path("/tmp")),
+            get_reports_directory=_real_get_reports_directory,
         ),
         "database": _make_stub_module("database", db=MagicMock()),
         "integrations": _make_stub_module("integrations"),
@@ -155,12 +169,27 @@ def _register_stubs() -> None:
             "ziwen_lookup.wp_utils", wikipedia_lookup=MagicMock()
         ),
     }
+    originals: dict[str, types.ModuleType | None] = {
+        name: sys.modules.get(name) for name in stubs
+    }
     for name, mod in stubs.items():
-        if name not in sys.modules:
-            sys.modules[name] = mod
+        sys.modules[name] = mod  # always override, don't check first
+    return originals
 
 
-_register_stubs()
+_STUB_ORIGINALS = _register_stubs()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _restore_stub_modules():
+    """Restore sys.modules to its pre-stub state after this session completes."""
+    yield
+    for name, original in _STUB_ORIGINALS.items():
+        if original is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = original
+
 
 # This file lives at testing/unit/test_wenju_tasks.py.
 # The project root (parent of both wenju/ and testing/) is two levels up.
@@ -380,7 +409,11 @@ class TestErrorLogCount:
         log_file = tmp_path / "errors.yaml"
         log_file.write_text("[]", encoding="utf-8")
 
-        with patch.dict(moderator_digest.Paths.LOGS, {"ERROR": str(log_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+        ):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["count"] == 0
@@ -394,7 +427,11 @@ class TestErrorLogCount:
         ]
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
-        with patch.dict(moderator_digest.Paths.LOGS, {"ERROR": str(log_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+        ):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["count"] == 3
@@ -407,7 +444,11 @@ class TestErrorLogCount:
         ]
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
-        with patch.dict(moderator_digest.Paths.LOGS, {"ERROR": str(log_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+        ):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["resolved"] is True
@@ -418,16 +459,22 @@ class TestErrorLogCount:
         entries = [self._make_entry(False, "2024-01-10T10:00:00+00:00")]
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
-        with patch.dict(moderator_digest.Paths.LOGS, {"ERROR": str(log_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+        ):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["resolved"] is False
         assert "(resolved)" not in result_data["lastEntry"]
 
     def test_missing_file_returns_zero_gracefully(self, tmp_path):
-        with patch.dict(
-            moderator_digest.Paths.LOGS, {"ERROR": str(tmp_path / "nonexistent.yaml")}
-        ):
+        patched_logs = {
+            **moderator_digest.Paths.LOGS,
+            "ERROR": str(tmp_path / "nonexistent.yaml"),
+        }
+        with patch.object(moderator_digest.Paths, "LOGS", patched_logs):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["count"] == 0
@@ -437,7 +484,11 @@ class TestErrorLogCount:
         log_file = tmp_path / "errors.yaml"
         log_file.write_text(": bad: [yaml: content", encoding="utf-8")
 
-        with patch.dict(moderator_digest.Paths.LOGS, {"ERROR": str(log_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+        ):
             result_md, result_data = moderator_digest._error_log_count()
 
         assert result_data["count"] == 0
@@ -456,8 +507,10 @@ class TestRenderHtmlDashboard:
         tpl = tmp_path / "template.html"
         tpl.write_text(self.TEMPLATE, encoding="utf-8")
 
-        with patch.dict(
-            moderator_digest.Paths.TEMPLATES, {"MODERATOR_DIGEST": str(tpl)}
+        with patch.object(
+            moderator_digest.Paths,
+            "TEMPLATES",
+            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
         ):
             result = moderator_digest._render_html_dashboard(
                 "2024-01-15", self.SAMPLE_DATA
@@ -470,8 +523,10 @@ class TestRenderHtmlDashboard:
         tpl = tmp_path / "template.html"
         tpl.write_text(self.TEMPLATE, encoding="utf-8")
 
-        with patch.dict(
-            moderator_digest.Paths.TEMPLATES, {"MODERATOR_DIGEST": str(tpl)}
+        with patch.object(
+            moderator_digest.Paths,
+            "TEMPLATES",
+            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
         ):
             result = moderator_digest._render_html_dashboard(
                 "2024-01-15", self.SAMPLE_DATA
@@ -488,8 +543,10 @@ class TestRenderHtmlDashboard:
         tpl = tmp_path / "template.html"
         tpl.write_text(self.TEMPLATE, encoding="utf-8")
 
-        with patch.dict(
-            moderator_digest.Paths.TEMPLATES, {"MODERATOR_DIGEST": str(tpl)}
+        with patch.object(
+            moderator_digest.Paths,
+            "TEMPLATES",
+            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
         ):
             result = moderator_digest._render_html_dashboard(
                 "2024-01-15", self.SAMPLE_DATA
@@ -725,7 +782,11 @@ class TestActivityCsvHandlerStatistics:
     def csv_result(self, tmp_path):
         csv_file = tmp_path / "activity.csv"
         csv_file.write_text(self.CSV_CONTENT, encoding="utf-8")
-        with patch.dict(moderator_digest.Paths.LOGS, {"ACTIVITY": str(csv_file)}):
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {**moderator_digest.Paths.LOGS, "ACTIVITY": str(csv_file)},
+        ):
             with patch.object(
                 moderator_digest, "WENJU_SETTINGS", {"lines_to_keep": 1000}
             ):
@@ -751,8 +812,13 @@ class TestActivityCsvHandlerStatistics:
         assert cycles[0] == pytest.approx(6.0)
 
     def test_missing_file_returns_fallback_string(self, tmp_path):
-        with patch.dict(
-            moderator_digest.Paths.LOGS, {"ACTIVITY": str(tmp_path / "nonexistent.csv")}
+        with patch.object(
+            moderator_digest.Paths,
+            "LOGS",
+            {
+                **moderator_digest.Paths.LOGS,
+                "ACTIVITY": str(tmp_path / "nonexistent.csv"),
+            },
         ):
             summary, data = moderator_digest._activity_csv_handler()
 
