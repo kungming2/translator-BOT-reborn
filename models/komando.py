@@ -207,8 +207,8 @@ def _deduplicate_args(args: list) -> list:
 
     for arg in args:
         # Handle Lingvo objects
-        if hasattr(arg, "language_name"):
-            key = arg.language_name
+        if hasattr(arg, "name"):
+            key = arg.name
             if key not in seen:
                 seen.add(key)
                 result.append(arg)
@@ -366,9 +366,7 @@ def extract_commands_from_text(
             if raw:
                 raw_args, specific_modes = process_args(raw, bool(match[0]))
 
-                should_convert = cmd_lower not in SETTINGS.get(
-                    "commands_skip_conversion", []
-                )
+                should_convert = cmd_lower not in SETTINGS["commands_skip_conversion"]
                 args = [
                     converter(arg, specific_mode=specific_modes[i])
                     if should_convert
