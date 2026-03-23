@@ -18,6 +18,8 @@ import logging
 import re
 from typing import Any
 
+from praw.models import Comment, Submission
+
 from config import SETTINGS
 from config import logger as _base_logger
 from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
@@ -59,7 +61,7 @@ class Kunulo:
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
     @classmethod
-    def from_submission(cls, submission: Any) -> "Kunulo":
+    def from_submission(cls, submission: Submission) -> "Kunulo":
         """
         Create a Kunulo instance from a PRAW submission object.
 
@@ -202,15 +204,14 @@ class Kunulo:
         Returns:
             dict: Dictionary with 'data' (tags and their entries) and 'op_thanks' flag
         """
+
+        def _entry_to_dict(entry: "KunuloEntry | str") -> dict[str, Any]:
+            comment_id, associated_data = self._normalize_entry(entry)
+            return {"comment_id": comment_id, "associated_data": associated_data}
+
         return {
             "data": {
-                tag: [
-                    {
-                        "comment_id": self._normalize_entry(entry)[0],
-                        "associated_data": self._normalize_entry(entry)[1],
-                    }
-                    for entry in entries
-                ]
+                tag: [_entry_to_dict(entry) for entry in entries]
                 for tag, entries in self._data.items()
             },
             "op_thanks": self._op_thanks,
@@ -223,6 +224,8 @@ class Kunulo:
         Allow attribute-style access to tags.
         Returns list of (comment_id, data) tuples for backward compatibility.
         """
+        if tag.startswith("__") and tag.endswith("__"):
+            raise AttributeError(tag)
         if tag == "op_thanks":
             return self._op_thanks
         if tag in self._data:
@@ -407,7 +410,7 @@ class Kunulo:
 # ─── Module-level utilities ───────────────────────────────────────────────────
 
 
-def get_submission_from_comment(comment_reference: Any) -> Any:
+def get_submission_from_comment(comment_reference: Comment | str) -> Submission:
     """
     Retrieves the parent submission of a Reddit comment.
     Accepts either a comment ID string or a PRAW Comment object.
