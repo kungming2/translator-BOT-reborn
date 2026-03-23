@@ -21,9 +21,7 @@ from lang.languages import converter
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
 
-# ---------------------------------------------------------------------------
-# Regex pattern builders
-# ---------------------------------------------------------------------------
+# ─── Regex pattern builders ───────────────────────────────────────────────────
 
 # Shared quoted-argument group: captures content inside straight double-quotes.
 # Used by both required- and optional-argument patterns.
@@ -77,14 +75,14 @@ _OPTIONAL_ARG_PATTERNS: dict[str, re.Pattern] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Komando class
-# ---------------------------------------------------------------------------
+# ─── Main Komando class ───────────────────────────────────────────────────────
 
 
 class Komando:
     """Represents a single parsed bot command with its name, arguments,
     and mode flags."""
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(
         self,
@@ -93,7 +91,7 @@ class Komando:
         specific_mode: bool = False,
         disable_tokenization: bool = False,
     ) -> None:
-        """Initialise a Komando with its name, argument data, and mode flags."""
+        """Initialize a Komando with its name, argument data, and mode flags."""
         self.name = name  # e.g., "identify", "translated"
         # For data, ["es"], ["la", "grc"] as Lingvos or None
         # lookup_cjk gets tuples: ('lang', 'term', explicit_bool)
@@ -108,6 +106,8 @@ class Komando:
             f"disable_tokenization={self.disable_tokenization!r})"
         )
 
+    # ── Serialization ─────────────────────────────────────────────────────────
+
     def to_dict(self) -> dict:
         """Serialize the Komando to a plain dictionary."""
         return {
@@ -116,6 +116,8 @@ class Komando:
             "specific_mode": self.specific_mode,
             "disable_tokenization": self.disable_tokenization,
         }
+
+    # ── Mutation ──────────────────────────────────────────────────────────────
 
     def remap_language(self, target_lang_code: str) -> "Komando":
         """
@@ -163,9 +165,7 @@ class Komando:
         )
 
 
-# ---------------------------------------------------------------------------
-# Private helpers
-# ---------------------------------------------------------------------------
+# ─── Internal parsing helpers ─────────────────────────────────────────────────
 
 
 def _check_specific_mode(arg_str: str) -> tuple[str | None, bool]:
@@ -246,9 +246,7 @@ def _extract_text_within_curly_braces(text: str) -> list[str]:
     return matches
 
 
-# ---------------------------------------------------------------------------
-# Main parsing function
-# ---------------------------------------------------------------------------
+# ─── Main parsing function ────────────────────────────────────────────────────
 
 
 def extract_commands_from_text(

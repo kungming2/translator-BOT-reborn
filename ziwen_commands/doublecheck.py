@@ -23,6 +23,9 @@ from . import update_status
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:DBLCHK"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
@@ -45,12 +48,8 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     status_type: str = "doublecheck"
     logger.info(f"!{status_type}, from u/{comment.author}.")
 
-    # Handler logic to update the post status.
     update_status(ajo, komando, status_type)
-
-    # Update the Ajo and post.
     logger.info(f"> Marked post `{ajo.id}` as 'Needs Review.' (`{status_type}`)")
 
-    # Delete any previously claimed comment.
     kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
     kunulo_object.delete("comment_claim")

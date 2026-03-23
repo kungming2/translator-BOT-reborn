@@ -25,6 +25,9 @@ from . import command
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
 
 
+# ─── Command dispatcher ───────────────────────────────────────────────────────
+
+
 @command(
     name="notif",
     help_text="Manage user notification subscriptions for r/translator.",
@@ -66,6 +69,9 @@ async def notif(
         await ctx.send(f"⚠️ An error occurred: `{type(e).__name__}: {e}`")
 
 
+# ─── Action handlers ──────────────────────────────────────────────────────────
+
+
 async def handle_notif_add(
     ctx: commands.Context, username: str, language: Optional[str]
 ) -> None:
@@ -76,7 +82,6 @@ async def handle_notif_add(
 
     logger.info(f"Notification add request for u/{username} from {ctx.author.name}")
 
-    # Parse the language codes
     language_matches = parse_language_list(language)
 
     if not language_matches:
@@ -86,7 +91,6 @@ async def handle_notif_add(
         )
         return
 
-    # Add subscriptions directly using the editor
     try:
         notifier_language_list_editor(language_matches, username, "insert")
 
@@ -107,18 +111,15 @@ async def handle_notif_remove(ctx: commands.Context, username: str) -> None:
     """Handle removing ALL notification subscriptions using the database editor directly."""
     logger.info(f"Notification remove request for u/{username} from {ctx.author.name}")
 
-    # Get subscriptions before removal for confirmation message
     subscribed_codes = notifier_language_list_retriever(username)
 
     if not subscribed_codes:
         await ctx.send(f"🈚 u/{username} has no active subscriptions.")
         return
 
-    # Purge all subscriptions directly using the editor
     try:
         notifier_language_list_editor([], username, "purge")
 
-        # Format response with removed subscriptions
         subscribed_codes_list = [x.preferred_code for x in subscribed_codes]
         final_match_codes_print = ", ".join(subscribed_codes_list)
 
@@ -135,20 +136,15 @@ async def handle_notif_status(ctx: commands.Context, username: str) -> None:
     """Handle status request for user subscriptions."""
     logger.info(f"Notification status request for u/{username} from {ctx.author.name}")
 
-    # Get language subscriptions
     final_match_entries = notifier_language_list_retriever(username)
-
-    # Get internal subscriptions (meta, community)
     internal_entries = notifier_language_list_retriever(username, internal=True)
 
     if not final_match_entries and not internal_entries:
         await ctx.send(f"🈚 **u/{username}** has no active notification subscriptions.")
         return
 
-    # Build subscription list
     subscriptions_list = []
 
-    # Process language subscriptions
     if final_match_entries:
         final_match_names_set = set()
         for entry in final_match_entries:
@@ -160,32 +156,27 @@ async def handle_notif_status(ctx: commands.Context, username: str) -> None:
             final_match_names_set.add(
                 f"{entry.name} (`{entry.preferred_code}`){script_label}"
             )
-
         subscriptions_list.extend(
             sorted(list(final_match_names_set), key=lambda x: x.lower())
         )
 
-    # Process internal subscriptions
     if internal_entries:
         internal_names = [
             f"{post_type.capitalize()} (Internal)" for post_type in internal_entries
         ]
         subscriptions_list.extend(internal_names)
 
-    # Sort combined list
     subscriptions_list.sort(key=lambda x: x.lower())
 
-    # Format output
     subscriptions_formatted = "\n• ".join(subscriptions_list)
     status_message = (
         f"📬 **Notification subscriptions for u/{username}:**\n\n"
         f"• {subscriptions_formatted}"
     )
 
-    # Add notification statistics if available
+    # Append notification statistics if available
     user_commands_statistics_data = user_statistics_loader(username)
     if user_commands_statistics_data:
-        # Filter to only notification-related rows
         lines = user_commands_statistics_data.strip().split("\n")
         notification_lines = [
             line

@@ -15,6 +15,8 @@ import requests
 from lang.languages import converter
 from reddit.connection import get_random_useragent
 
+# ─── Wiktionary parser ────────────────────────────────────────────────────────
+
 
 def parse_wiktionary(text: str, search_language: str | None = None) -> dict | None:
     """
@@ -41,7 +43,6 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
 
     lines = text.strip().split("\n")
 
-    # Find the language section
     in_target_language = False
     current_section = None
     etymology_lines = []
@@ -52,18 +53,15 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
     for i, line in enumerate(lines):
         line_stripped = line.strip()
 
-        # Check for language headers (== Language ==)
         if line_stripped.startswith("==") and line_stripped.endswith("=="):
             level = len(line_stripped) - len(line_stripped.lstrip("="))
 
             if level == 2:  # Top-level language section
-                # Extract language name
                 lang_name = line_stripped.strip("= ").strip()
 
                 if lang_name.lower() == search_language.lower():
                     in_target_language = True
                 elif in_target_language:
-                    # We've moved to a different language, stop parsing
                     break
                 else:
                     in_target_language = False
@@ -73,28 +71,23 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                 in_definition = False
 
             elif level == 4 and in_target_language:  # ==== Subsection ====
-                # Subsection like Derived terms, Translations - stop collecting definitions
                 if in_definition:
                     in_definition = False
 
         elif in_target_language:
-            # Stop collecting definitions if we hit a subsection header
             if line_stripped.startswith("====") and line_stripped.endswith("===="):
                 in_definition = False
 
-            # Extract etymology
             if current_section == "etymology" or (
                 current_section and current_section.startswith("etymology")
             ):
                 if line_stripped and not line_stripped.startswith("==="):
                     etymology_lines.append(line_stripped)
 
-            # Extract pronunciation
             elif current_section == "pronunciation":
                 if line_stripped and not line_stripped.startswith("==="):
                     pronunciation_lines.append(line_stripped)
 
-            # Extract definition (from Noun, Verb, Adjective, etc. sections)
             elif current_section in [
                 "noun",
                 "verb",
@@ -112,14 +105,11 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                     and line_stripped
                     and not line_stripped.startswith("====")
                 ):
-                    # Check if this looks like the word form line (e.g., "bandar (plural bandars)")
                     if "(" in line_stripped and ")" in line_stripped:
-                        # This is likely the word form, extract the word
                         word_match = re.match(r"^(\S+)", line_stripped)
                         if word_match and not result["word"]:
                             result["word"] = word_match.group(1)
                         in_definition = True
-                    # Also check for simple word form without parentheses
                     elif re.match(
                         r"^[a-zA-Z]+$",
                         line_stripped.split()[0] if line_stripped.split() else "",
@@ -133,7 +123,6 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                     and line_stripped
                     and not line_stripped.startswith("====")
                 ):
-                    # Stop if we hit synonym/antonym/descendant lines
                     if line_stripped.startswith(
                         (
                             "Synonym",
@@ -150,11 +139,9 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                     else:
                         definition_lines.append(line_stripped)
 
-    # If we never entered the target language section, return None
     if not in_target_language:
         return None
 
-    # If we didn't find the word yet, try to extract from any form line
     if not result["word"]:
         for line in lines:
             match = re.match(r"^([a-zA-Z]+)\s*\(", line.strip())
@@ -162,7 +149,6 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                 result["word"] = match.group(1)
                 break
 
-    # Clean up and assign results
     if etymology_lines:
         result["etymology"] = etymology_lines
 
@@ -202,14 +188,13 @@ def wiktionary_search(search_term: str, language_name: str) -> dict | None:
     }
 
     response = requests.get(api_url, headers=get_random_useragent(), params=params)
-    response.raise_for_status()  # Raise an exception if the request failed
+    response.raise_for_status()
 
     data = response.json()
     pages = data.get("query", {}).get("pages", {})
     if not pages:
         return None
 
-    # Wiktionary returns a dict with page IDs as keys
     page = next(iter(pages.values()))
     extract = page.get("extract", "")
 

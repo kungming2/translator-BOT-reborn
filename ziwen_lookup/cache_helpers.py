@@ -21,9 +21,32 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:CACHE"})
 
 
-"""CACHE INPUT"""
+# ─── Cache database access ────────────────────────────────────────────────────
 
 _cache_thread_local = threading.local()
+
+
+def _get_thread_local_cursor() -> tuple[sqlite3.Cursor, sqlite3.Connection]:
+    """
+    Return a (cursor, connection) pair bound to the calling thread.
+
+    SQLite connections cannot be shared across threads. When cache functions
+    are invoked from a thread-pool worker — via asyncio.to_thread or
+    run_in_executor — they run on a different thread from the one that owns
+    db.conn_cache, causing a ProgrammingError.
+
+    threading.local() gives each thread its own isolated namespace. The first
+    call from a given thread opens a fresh connection to the cache database and
+    stores it under _cache_thread_local.conn. All subsequent calls from that
+    same thread reuse the existing connection. Thread-pool workers are reused
+    by asyncio across coroutine invocations, so at most one connection is
+    opened per pooled thread.
+    """
+    if not hasattr(_cache_thread_local, "conn"):
+        conn = sqlite3.connect(Paths.DATABASE["CACHE"])
+        conn.row_factory = sqlite3.Row
+        _cache_thread_local.conn = conn
+    return _cache_thread_local.conn.cursor(), _cache_thread_local.conn
 
 
 def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
@@ -93,30 +116,7 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | No
     return None
 
 
-def _get_thread_local_cursor() -> tuple[sqlite3.Cursor, sqlite3.Connection]:
-    """
-    Return a (cursor, connection) pair bound to the calling thread.
-
-    SQLite connections cannot be shared across threads. When cache functions
-    are invoked from a thread-pool worker — via asyncio.to_thread or
-    run_in_executor — they run on a different thread from the one that owns
-    db.conn_cache, causing a ProgrammingError.
-
-    threading.local() gives each thread its own isolated namespace. The first
-    call from a given thread opens a fresh connection to the cache database and
-    stores it under _cache_thread_local.conn. All subsequent calls from that
-    same thread reuse the existing connection. Thread-pool workers are reused
-    by asyncio across coroutine invocations, so at most one connection is
-    opened per pooled thread.
-    """
-    if not hasattr(_cache_thread_local, "conn"):
-        conn = sqlite3.connect(Paths.DATABASE["CACHE"])
-        conn.row_factory = sqlite3.Row
-        _cache_thread_local.conn = conn
-    return _cache_thread_local.conn.cursor(), _cache_thread_local.conn
-
-
-"""CHINESE CACHING"""
+# ─── Chinese parse / format ───────────────────────────────────────────────────
 
 
 def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
@@ -156,11 +156,9 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
             result["traditional"] = parts[0].strip()
             result["simplified"] = parts[1].strip()
         else:
-            # Same for both
             result["traditional"] = header_text.strip()
             result["simplified"] = header_text.strip()
 
-    # Extract calligraphy image link
     calligraphy_match = re.search(
         r"\*\*Chinese Calligraphy Variants\*\*:\s*"
         r"\[[^]]+]\((https://[^\s)]+shufazidian\.com[^\s)]+)\)",
@@ -169,16 +167,13 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
     if calligraphy_match:
         result["calligraphy_links"]["sfzd_image"] = calligraphy_match.group(1).strip()
 
-    # Extract SFDS calligraphy link
     # Pattern: *[SFDS](https://www.sfds.cn/4F24/)*
     sfds_match = re.search(
         r"\[SFDS]\((https://www\.sfds\.cn/[^\s)]+)\)", markdown_output
     )
-
     if sfds_match:
         result["calligraphy_links"]["sfds"] = sfds_match.group(1).strip()
 
-    # Extract YTZZD variants link
     # Pattern: *[YTZZD](https://dict.variants.moe.edu.tw/dictView.jsp?ID=2007&q=1)*
     variants_match = re.search(
         r"\[YTZZD]\((https://dict\.variants\.moe\.edu\.tw/[^\s)]+)\)",
@@ -186,7 +181,6 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
     )
     if variants_match:
         variants_url = variants_match.group(1).strip()
-        # Only save if it's not the base URL (which means no variant was found)
         if "dictView.jsp" in variants_url:
             result["calligraphy_links"]["variants"] = variants_url
 
@@ -222,238 +216,45 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
         if match:
             result["pronunciations"][key] = match.group(1).strip()
 
-    # Extract main meanings
     # Pattern: **Meanings**: "text."
     meanings_match = re.search(r'\*\*Meanings\*\*:\s*"([^"]+)"', markdown_output)
     if meanings_match:
         result["meanings"] = meanings_match.group(1).strip()
 
-    # Extract Buddhist meanings
     buddhist_match = re.search(
         r'\*\*Buddhist Meanings\*\*:\s*"([^"]+)"', markdown_output
     )
     if buddhist_match:
         result["buddhist_meanings"] = buddhist_match.group(1).strip()
 
-    # Extract Cantonese meanings
     cantonese_match = re.search(
         r'\*\*Cantonese Meanings\*\*:\s*"([^"]+)"', markdown_output
     )
     if cantonese_match:
         result["cantonese_meanings"] = cantonese_match.group(1).strip()
 
-    # Extract Chinese meaning (for chengyu)
     chinese_meaning_match = re.search(
         r"\*\*Chinese Meaning\*\*:\s*([^\n]+)", markdown_output
     )
     if chinese_meaning_match:
         result["chinese_meaning"] = chinese_meaning_match.group(1).strip()
 
-    # Extract Literary Source (for chengyu)
     literary_source_match = re.search(
         r"\*\*Literary Source\*\*:\s*([^\n(]+)", markdown_output
     )
     if literary_source_match:
         result["literary_source"] = literary_source_match.group(1).strip()
 
-    # Clean up empty fields
     result["pronunciations"] = {k: v for k, v in result["pronunciations"].items() if v}
 
-    # Clean up calligraphy_links - remove if all values are None
     if not any(result["calligraphy_links"].values()):
         result["calligraphy_links"] = None
     else:
-        # Remove None values from calligraphy_links
         result["calligraphy_links"] = {
             k: v for k, v in result["calligraphy_links"].items() if v is not None
         }
 
     return result
-
-
-"""JAPANESE CACHING"""
-
-
-def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
-    """
-    Parse the markdown output from ja_word or ja_character into structured
-    JSON.
-
-    :param markdown_output: The markdown string returned by ja_word or
-                            ja_character
-    :return: Dictionary with structured data, or None if it's a
-             multi-character table
-    """
-    # Check if this is a multi-character table format (should be skipped)
-    # Pattern: has both "| Character |" and multiple character links in header
-    if "| Character |" in markdown_output and "| --- |" in markdown_output:
-        # Count how many character links are in the header row
-        header_match = re.search(r"\| Character \|([^\n]+)", markdown_output)
-        if header_match:
-            header_content = header_match.group(1)
-            # Count character links - if more than 1, it's a multi-character
-            # table
-            char_links = re.findall(
-                r"\[(.)]\(https://en\.wiktionary\.org", header_content
-            )
-            if len(char_links) > 1:
-                return {}
-
-    result: Dict[str, Any] = {
-        "word": None,
-        "type": None,  # "word" or "character"
-        "part_of_speech": None,
-        "reading": None,
-        "kun_readings": None,
-        "on_readings": None,
-        "meanings": None,
-        "calligraphy_links": None,  # Dict with sfzd_image, sfds, variants
-    }
-
-    # Extract the Japanese word/character from header
-    # Pattern: # [世代](https://...)
-    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
-    if header_match:
-        result["word"] = header_match.group(1).strip()
-
-    # Determine if it's a word or character lookup
-    if "**Kun-readings:**" in markdown_output or "**On-readings:**" in markdown_output:
-        result["type"] = "character"
-
-        # Extract kun readings
-        kun_match = re.search(r"\*\*Kun-readings:\*\*\s*([^\n]+)", markdown_output)
-        if kun_match:
-            kun_text = kun_match.group(1).strip()
-            # Parse readings like "か.わる (*ka . waru*), かわ.る (*kawa . ru*)"
-            kun_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", kun_text)
-            result["kun_readings"] = [
-                {"kana": kana.strip(), "romaji": romaji.strip()}
-                for kana, romaji in kun_pairs
-            ]
-
-        # Extract on readings
-        on_match = re.search(r"\*\*On-readings:\*\*\s*([^\n]+)", markdown_output)
-        if on_match:
-            on_text = on_match.group(1).strip()
-            on_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", on_text)
-            result["on_readings"] = [
-                {"kana": kana.strip(), "romaji": romaji.strip()}
-                for kana, romaji in on_pairs
-            ]
-
-        # Extract calligraphy links (Japanese characters can have Chinese
-        # calligraphy)
-        calligraphy_match = re.search(
-            r"\*\*Chinese Calligraphy Variants\*\*:\s*\[.]\(([^)]+)\)\s*"
-            r"\(\*\[SFZD]\([^)]+\)\*,\s*\*\[SFDS]\(([^)]+)\)\*,\s*"
-            r"\*\[YTZZD]\(([^)]+)\)\*\)",
-            markdown_output,
-        )
-        if calligraphy_match:
-            result["calligraphy_links"] = {
-                "sfzd_image": calligraphy_match.group(1).strip(),
-                "sfds": calligraphy_match.group(2).strip(),
-                "variants": calligraphy_match.group(3).strip(),
-            }
-
-    else:
-        result["type"] = "word"
-
-        # Extract part of speech
-        pos_match = re.search(r"#####\s*\*([^*]+)\*", markdown_output)
-        if pos_match:
-            result["part_of_speech"] = pos_match.group(1).strip().lower()
-
-        # Extract reading (for words)
-        reading_match = re.search(
-            r"\*\*Reading:\*\*\s*(\S+)\s*\(\*([^)]+)\*\)", markdown_output
-        )
-        if reading_match:
-            result["reading"] = {
-                "kana": reading_match.group(1).strip(),
-                "romaji": reading_match.group(2).strip(),
-            }
-
-    # Extract meanings (common to both word and character)
-    meanings_match = re.search(r'\*\*Meanings\*\*:\s*"([^"]+)"', markdown_output)
-    if meanings_match:
-        result["meanings"] = meanings_match.group(1).strip()
-
-    return result
-
-
-"""KOREAN CACHING"""
-
-
-def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
-    """
-    Parse the markdown output from ko_word into structured JSON.
-
-    :param markdown_output: The markdown string returned by ko_word
-    :return: Dictionary with structured data
-    """
-    result: Dict[str, Any] = {
-        "word": None,
-        "romanization": None,
-        "entries": [],  # List of {part_of_speech, meanings: [{origin, definition}]}
-    }
-
-    # Extract the Korean word from header
-    # Pattern: # [애교](https://...)
-    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
-    if header_match:
-        result["word"] = header_match.group(1).strip()
-
-    # Split by part of speech sections (##### *Noun*, etc.)
-    pos_sections = re.split(r"#####\s*\*([^*]+)\*", markdown_output)[
-        1:
-    ]  # Skip first empty part
-
-    # Process pairs of (part_of_speech, content)
-    for i in range(0, len(pos_sections), 2):
-        if i + 1 >= len(pos_sections):
-            break
-
-        pos = pos_sections[i].strip()
-        content = pos_sections[i + 1]
-
-        entry: Dict[str, Any] = {"part_of_speech": pos.lower(), "meanings": []}
-
-        # Extract romanization (only once, should be same for all entries)
-        if not result["romanization"]:
-            rom_match = re.search(r"\*\*Romanization:\*\*\s*\*([^*]+)\*", content)
-            if rom_match:
-                result["romanization"] = rom_match.group(1).strip()
-
-        # Extract meanings - each starts with * and may have origin link
-        # Pattern: * [水道](link): definition text
-        # or: * definition text (no origin)
-        meaning_matches = re.findall(
-            r"\*\s*(?:\[([^]]+)]\([^)]+\):\s*)?([^\n*]+)", content
-        )
-
-        for origin, definition in meaning_matches:
-            definition = definition.strip()
-            # Skip non-definition text like "Romanization:", "Meanings:",
-            # standalone ":", etc.
-            if (
-                definition
-                and definition not in ["Romanization:", "Meanings:", "Meanings", ":"]
-                and not definition.endswith(":")
-                and len(definition) > 3
-            ):  # Skip very short entries
-                meaning_entry = {"definition": definition}
-                if origin:
-                    meaning_entry["origin"] = origin.strip()
-                entry["meanings"].append(meaning_entry)
-
-        if entry["meanings"]:  # Only add if we found meanings
-            result["entries"].append(entry)
-
-    return result
-
-
-"""CHINESE CACHE OUTPUT"""
 
 
 def format_zh_character_from_cache(cached_data: Dict) -> str:
@@ -469,7 +270,6 @@ def format_zh_character_from_cache(cached_data: Dict) -> str:
     meanings = cached_data.get("meanings", "")
     calligraphy = cached_data.get("calligraphy_links")
 
-    # Header
     if trad == simp:
         header = f"# [{trad}](https://en.wiktionary.org/wiki/{trad}#Chinese)\n\n"
     else:
@@ -477,46 +277,29 @@ def format_zh_character_from_cache(cached_data: Dict) -> str:
             f"# [{trad} / {simp}](https://en.wiktionary.org/wiki/{trad}#Chinese)\n\n"
         )
 
-    # Pronunciation table
     table = "| Language | Pronunciation |\n|----------|---------------|\n"
 
-    # Mandarin
     if "mandarin" in pronunciations:
         table += f"| **Mandarin** | *{pronunciations['mandarin']}* |\n"
     elif "mandarin_pinyin" in pronunciations:
         table += f"| **Mandarin** | *{pronunciations['mandarin_pinyin']}* |\n"
-
-    # Cantonese
     if "cantonese" in pronunciations:
         table += f"| **Cantonese** | *{pronunciations['cantonese']}* |\n"
-
-    # Southern Min (Hokkien)
     if "southern_min" in pronunciations:
         table += f"| **Southern Min** | *{pronunciations['southern_min']}* |\n"
-
-    # Hakka
     if "hakka_sixian" in pronunciations:
         table += f"| **Hakka (Sixian)** | *{pronunciations['hakka_sixian']}* |\n"
-
-    # Old/Middle Chinese
     if "middle_chinese" in pronunciations:
         table += f"| **Middle Chinese** | \\**{pronunciations['middle_chinese']}* |\n"
     if "old_chinese" in pronunciations:
         table += f"| **Old Chinese** | \\*{pronunciations['old_chinese']}* |\n"
-
-    # Japanese
     if "japanese" in pronunciations:
         table += f"| **Japanese** | *{pronunciations['japanese']}* |\n"
-
-    # Korean
     if "korean_hangul" in pronunciations and "korean_romanized" in pronunciations:
         table += f"| **Korean** | {pronunciations['korean_hangul']} (*{pronunciations['korean_romanized']}*) |\n"
-
-    # Vietnamese
     if "vietnamese" in pronunciations:
         table += f"| **Vietnamese** | *{pronunciations['vietnamese']}* |\n"
 
-    # Calligraphy links
     calligraphy_section = ""
     if calligraphy:
         sfzd_image = calligraphy.get("sfzd_image")
@@ -534,21 +317,17 @@ def format_zh_character_from_cache(cached_data: Dict) -> str:
                 f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *{variant_link}*)"
             )
 
-    # Meanings
     meanings_section = f'\n\n**Meanings**: "{meanings}"'
 
-    # Additional meanings
     if cached_data.get("buddhist_meanings"):
         meanings_section += (
             f'\n\n**Buddhist Meanings**: "{cached_data["buddhist_meanings"]}"'
         )
-
     if cached_data.get("cantonese_meanings"):
         meanings_section += (
             f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
         )
 
-    # Footer
     footer = (
         f"\n\n\n^Information ^from "
         f"^[Unihan](https://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint={trad}) ^| "
@@ -578,20 +357,17 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
     pronunciations = cached_data.get("pronunciations", {})
     meanings = cached_data.get("meanings", "")
 
-    # Header
     if trad == simp:
         header = f"# [{trad}](https://en.wiktionary.org/wiki/{trad}#Chinese)"
     else:
         header = f"# [{trad} / {simp}](https://en.wiktionary.org/wiki/{trad}#Chinese)"
 
-    # Pronunciation table
     table = "\n\n| Language | Pronunciation |\n|---------|--------------|\n"
 
     def _fix_last_tone(s: str) -> str:
         """Ensure the final superscript tone number is wrapped in parentheses."""
         return re.sub(r"\^(\d)$", r"^(\1)", s)
 
-    # Mandarin variants
     if "mandarin_pinyin" in pronunciations:
         table += f"| **Mandarin** (Pinyin) | *{pronunciations['mandarin_pinyin']}* |\n"
     if "mandarin_wade_giles" in pronunciations:
@@ -600,41 +376,28 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
         table += f"| **Mandarin** (Yale) | *{_fix_last_tone(pronunciations['mandarin_yale'])}* |\n"
     if "mandarin_gr" in pronunciations:
         table += f"| **Mandarin** (GR) | *{pronunciations['mandarin_gr']}* |\n"
-
-    # Cantonese
     if "cantonese" in pronunciations:
         table += f"| **Cantonese** | *{pronunciations['cantonese']}* |\n"
-
-    # Southern Min
     if "southern_min" in pronunciations:
         table += f"| **Southern Min** | *{pronunciations['southern_min']}* |\n"
-
-    # Hakka
     if "hakka_sixian" in pronunciations:
         table += f"| **Hakka (Sixian)** | *{pronunciations['hakka_sixian']}* |\n"
 
-    # Meanings section
     meanings_section = f'\n\n**Meanings**: "{meanings}"'
 
-    # Chengyu specific fields
     if cached_data.get("chinese_meaning"):
         meanings_section += f"\n\n**Chinese Meaning**: {cached_data['chinese_meaning']}"
-
     if cached_data.get("literary_source"):
         meanings_section += f"\n\n**Literary Source**: {cached_data['literary_source']}"
-
-    # Additional meanings
     if cached_data.get("buddhist_meanings"):
         meanings_section += (
             f'\n\n**Buddhist Meanings**: "{cached_data["buddhist_meanings"]}"'
         )
-
     if cached_data.get("cantonese_meanings"):
         meanings_section += (
             f'\n\n**Cantonese Meanings**: "{cached_data["cantonese_meanings"]}"'
         )
 
-    # Footer
     word = trad if trad else simp
     footer = (
         "\n\n^Information ^from "
@@ -648,7 +411,103 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
     return header + table + meanings_section + "\n\n" + footer
 
 
-"""JAPANESE CACHE OUTPUT"""
+# ─── Japanese parse / format ──────────────────────────────────────────────────
+
+
+def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
+    """
+    Parse the markdown output from ja_word or ja_character into structured
+    JSON.
+
+    :param markdown_output: The markdown string returned by ja_word or
+                            ja_character
+    :return: Dictionary with structured data, or None if it's a
+             multi-character table
+    """
+    # Skip multi-character table format
+    if "| Character |" in markdown_output and "| --- |" in markdown_output:
+        header_match = re.search(r"\| Character \|([^\n]+)", markdown_output)
+        if header_match:
+            header_content = header_match.group(1)
+            char_links = re.findall(
+                r"\[(.)]\(https://en\.wiktionary\.org", header_content
+            )
+            if len(char_links) > 1:
+                return {}
+
+    result: Dict[str, Any] = {
+        "word": None,
+        "type": None,  # "word" or "character"
+        "part_of_speech": None,
+        "reading": None,
+        "kun_readings": None,
+        "on_readings": None,
+        "meanings": None,
+        "calligraphy_links": None,  # Dict with sfzd_image, sfds, variants
+    }
+
+    # Pattern: # [世代](https://...)
+    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
+    if header_match:
+        result["word"] = header_match.group(1).strip()
+
+    if "**Kun-readings:**" in markdown_output or "**On-readings:**" in markdown_output:
+        result["type"] = "character"
+
+        kun_match = re.search(r"\*\*Kun-readings:\*\*\s*([^\n]+)", markdown_output)
+        if kun_match:
+            kun_text = kun_match.group(1).strip()
+            # Parse readings like "か.わる (*ka . waru*), かわ.る (*kawa . ru*)"
+            kun_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", kun_text)
+            result["kun_readings"] = [
+                {"kana": kana.strip(), "romaji": romaji.strip()}
+                for kana, romaji in kun_pairs
+            ]
+
+        on_match = re.search(r"\*\*On-readings:\*\*\s*([^\n]+)", markdown_output)
+        if on_match:
+            on_text = on_match.group(1).strip()
+            on_pairs = re.findall(r"([^\s,]+)\s*\(\*([^)]+)\*\)", on_text)
+            result["on_readings"] = [
+                {"kana": kana.strip(), "romaji": romaji.strip()}
+                for kana, romaji in on_pairs
+            ]
+
+        # Japanese characters can have Chinese calligraphy links
+        calligraphy_match = re.search(
+            r"\*\*Chinese Calligraphy Variants\*\*:\s*\[.]\(([^)]+)\)\s*"
+            r"\(\*\[SFZD]\([^)]+\)\*,\s*\*\[SFDS]\(([^)]+)\)\*,\s*"
+            r"\*\[YTZZD]\(([^)]+)\)\*\)",
+            markdown_output,
+        )
+        if calligraphy_match:
+            result["calligraphy_links"] = {
+                "sfzd_image": calligraphy_match.group(1).strip(),
+                "sfds": calligraphy_match.group(2).strip(),
+                "variants": calligraphy_match.group(3).strip(),
+            }
+
+    else:
+        result["type"] = "word"
+
+        pos_match = re.search(r"#####\s*\*([^*]+)\*", markdown_output)
+        if pos_match:
+            result["part_of_speech"] = pos_match.group(1).strip().lower()
+
+        reading_match = re.search(
+            r"\*\*Reading:\*\*\s*(\S+)\s*\(\*([^)]+)\*\)", markdown_output
+        )
+        if reading_match:
+            result["reading"] = {
+                "kana": reading_match.group(1).strip(),
+                "romaji": reading_match.group(2).strip(),
+            }
+
+    meanings_match = re.search(r'\*\*Meanings\*\*:\s*"([^"]+)"', markdown_output)
+    if meanings_match:
+        result["meanings"] = meanings_match.group(1).strip()
+
+    return result
 
 
 def format_ja_character_from_cache(cached_data: Dict) -> str:
@@ -664,31 +523,25 @@ def format_ja_character_from_cache(cached_data: Dict) -> str:
     meanings = cached_data.get("meanings", "")
     calligraphy = cached_data.get("calligraphy_links")
 
-    # Header
     header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
 
-    # Format kun readings
     kun_formatted = (
         ", ".join([f"{r['kana']} (*{r['romaji']}*)" for r in kun_readings])
         if kun_readings
         else ""
     )
-
-    # Format on readings
     on_formatted = (
         ", ".join([f"{r['kana']} (*{r['romaji']}*)" for r in on_readings])
         if on_readings
         else ""
     )
 
-    # Readings section
     readings_section = ""
     if kun_formatted:
         readings_section += f"**Kun-readings:** {kun_formatted}\n\n"
     if on_formatted:
         readings_section += f"**On-readings:** {on_formatted}"
 
-    # Calligraphy
     calligraphy_section = ""
     if calligraphy:
         sfzd = calligraphy.get("sfzd_image")
@@ -700,10 +553,8 @@ def format_ja_character_from_cache(cached_data: Dict) -> str:
                 f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *[YTZZD]({variants})*)"
             )
 
-    # Meanings
     meanings_section = f'\n\n**Meanings**: "{meanings}"'
 
-    # Footer
     footer = (
         f"\n\n\n^Information ^from ^[Jisho](https://jisho.org/search/{word}%20%23kanji) ^| "
         f"^[Tangorin](https://tangorin.com/kanji/{word}) ^| "
@@ -725,13 +576,9 @@ def format_ja_word_from_cache(cached_data: Dict) -> str:
     reading = cached_data.get("reading", {})
     meanings = cached_data.get("meanings", "")
 
-    # Header
     header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
-
-    # Part of speech
     pos_section = f"##### *{pos.title()}*\n\n" if pos else ""
 
-    # Reading
     reading_section = ""
     if reading:
         kana = reading.get("kana", "")
@@ -739,10 +586,8 @@ def format_ja_word_from_cache(cached_data: Dict) -> str:
         if kana and romaji:
             reading_section = f"**Reading:** {kana} (*{romaji}*)\n\n"
 
-    # Meanings
     meanings_section = f'**Meanings**: "{meanings}"'
 
-    # Footer
     footer = (
         f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{word}%23words) ^| "
         f"^[Kotobank](https://kotobank.jp/word/{word}) ^| "
@@ -753,7 +598,66 @@ def format_ja_word_from_cache(cached_data: Dict) -> str:
     return header + pos_section + reading_section + meanings_section + footer
 
 
-"""KOREAN CACHE OUTPUT"""
+# ─── Korean parse / format ────────────────────────────────────────────────────
+
+
+def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
+    """
+    Parse the markdown output from ko_word into structured JSON.
+
+    :param markdown_output: The markdown string returned by ko_word
+    :return: Dictionary with structured data
+    """
+    result: Dict[str, Any] = {
+        "word": None,
+        "romanization": None,
+        "entries": [],  # List of {part_of_speech, meanings: [{origin, definition}]}
+    }
+
+    # Pattern: # [애교](https://...)
+    header_match = re.search(r"#\s*\[([^]]+)]", markdown_output)
+    if header_match:
+        result["word"] = header_match.group(1).strip()
+
+    # Split by part of speech sections (##### *Noun*, etc.)
+    pos_sections = re.split(r"#####\s*\*([^*]+)\*", markdown_output)[1:]
+
+    for i in range(0, len(pos_sections), 2):
+        if i + 1 >= len(pos_sections):
+            break
+
+        pos = pos_sections[i].strip()
+        content = pos_sections[i + 1]
+
+        entry: Dict[str, Any] = {"part_of_speech": pos.lower(), "meanings": []}
+
+        if not result["romanization"]:
+            rom_match = re.search(r"\*\*Romanization:\*\*\s*\*([^*]+)\*", content)
+            if rom_match:
+                result["romanization"] = rom_match.group(1).strip()
+
+        # Pattern: * [水道](link): definition text  or  * definition text (no origin)
+        meaning_matches = re.findall(
+            r"\*\s*(?:\[([^]]+)]\([^)]+\):\s*)?([^\n*]+)", content
+        )
+
+        for origin, definition in meaning_matches:
+            definition = definition.strip()
+            if (
+                definition
+                and definition not in ["Romanization:", "Meanings:", "Meanings", ":"]
+                and not definition.endswith(":")
+                and len(definition) > 3
+            ):
+                meaning_entry = {"definition": definition}
+                if origin:
+                    meaning_entry["origin"] = origin.strip()
+                entry["meanings"].append(meaning_entry)
+
+        if entry["meanings"]:
+            result["entries"].append(entry)
+
+    return result
 
 
 def format_ko_word_from_cache(cached_data: Dict) -> str:
@@ -767,10 +671,8 @@ def format_ko_word_from_cache(cached_data: Dict) -> str:
     romanization = cached_data.get("romanization", "")
     entries = cached_data.get("entries", [])
 
-    # Header
     header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Korean)"
 
-    # Build entries by part of speech
     entries_text = ""
     for entry in entries:
         pos = entry.get("part_of_speech", "").title()
@@ -789,7 +691,6 @@ def format_ko_word_from_cache(cached_data: Dict) -> str:
             else:
                 entries_text += f"* {definition}\n"
 
-    # Footer
     footer = (
         "\n\n^Information ^from "
         f"^[KRDict](https://krdict.korean.go.kr/eng/dicMarinerSearch/search"
@@ -801,7 +702,7 @@ def format_ko_word_from_cache(cached_data: Dict) -> str:
     return header + entries_text + footer
 
 
-"""CACHE RETRIEVAL WITH FALLBACK"""
+# ─── Cache retrieval with fallback ────────────────────────────────────────────
 
 
 async def get_cached_or_fetch_zh_character(
@@ -815,11 +716,9 @@ async def get_cached_or_fetch_zh_character(
     :param fetch_func: Async function to call if cache miss
     :return: Formatted markdown string
     """
-    # Try cache first
     cached = get_from_cache(character, "zh", "zh_character")
 
     if cached:
         return format_zh_character_from_cache(cached) + " ^⚡"
 
-    # Cache miss - fetch from web
     return await fetch_func(character)

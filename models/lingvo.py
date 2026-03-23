@@ -21,16 +21,18 @@ import to avoid a circular dependency at module load time.
 Logger tag: [M:LINGVO]
 """
 
-from __future__ import annotations
+from typing import Any, Self
 
-from typing import Any
+# ─── Main Lingvo class ────────────────────────────────────────────────────────
 
 
 class Lingvo:
     """Data model representing a single language or script entry."""
 
+    # ── Construction ──────────────────────────────────────────────────────────
+
     def __init__(self, **kwargs: Any) -> None:
-        """Initialise all Lingvo attributes from keyword arguments."""
+        """Initialize all Lingvo attributes from keyword arguments."""
         self.name: str | None = kwargs.get("name")
         self.name_alternates: list[str] = kwargs.get("name_alternates", [])
         self.language_code_1: str | None = kwargs.get("language_code_1")
@@ -59,18 +61,6 @@ class Lingvo:
             "permalink"
         )  # Maps permalink → statistics_page
 
-    @property
-    def preferred_code(self) -> str:
-        """Return the best available identifying code for this language."""
-        for code in (self.language_code_1, self.language_code_3):
-            if code:
-                lowered = code.lower()
-                if lowered in {"multiple", "generic"}:
-                    return lowered
-                if lowered != "unknown":
-                    return lowered
-        return (self.script_code or "unknown").lower()
-
     def __repr__(self) -> str:
         code = self.preferred_code
         is_script = self.script_code is not None or len(code) == 4
@@ -89,7 +79,7 @@ class Lingvo:
         return hash(self.preferred_code)
 
     @classmethod
-    def from_csv_row(cls, row: dict[str, str]) -> Lingvo:
+    def from_csv_row(cls, row: dict[str, str]) -> Self:
         """
         Create a Lingvo from a language CSV row in Datasets.
 
@@ -121,8 +111,38 @@ class Lingvo:
             link_statistics=None,
         )
 
+    # ── Properties ────────────────────────────────────────────────────────────
+
+    @property
+    def preferred_code(self) -> str:
+        """Return the best available identifying code for this language."""
+        for code in (self.language_code_1, self.language_code_3):
+            if code:
+                lowered = code.lower()
+                if lowered in {"multiple", "generic"}:
+                    return lowered
+                if lowered != "unknown":
+                    return lowered
+        return (self.script_code or "unknown").lower()
+
+    @property
+    def country_emoji(self) -> str | None:
+        """
+        Dynamically retrieves the country emoji for this language.
+
+        Lazily imports from lang.countries to avoid a circular dependency:
+        lang.languages imports Lingvo, and Lingvo.country_emoji calls into
+        lang.countries — a top-level import here would create a cycle.
+        """
+        from lang.countries import get_language_emoji  # lazy to avoid circular import
+
+        emoji = get_language_emoji(self.preferred_code)
+        return emoji if emoji else None
+
+    # ── Serialization ─────────────────────────────────────────────────────────
+
     def to_dict(self) -> dict[str, Any]:
-        """Serialise all Lingvo attributes to a plain dictionary."""
+        """Serialize all Lingvo attributes to a plain dictionary."""
         return {
             "name": self.name,
             "name_alternates": self.name_alternates,
@@ -149,17 +169,3 @@ class Lingvo:
             "rate_yearly": self.rate_yearly,
             "link_statistics": self.link_statistics,
         }
-
-    @property
-    def country_emoji(self) -> str | None:
-        """
-        Dynamically retrieves the country emoji for this language.
-
-        Lazily imports from lang.countries to avoid a circular dependency:
-        lang.languages imports Lingvo, and Lingvo.country_emoji calls into
-        lang.countries — a top-level import here would create a cycle.
-        """
-        from lang.countries import get_language_emoji  # lazy to avoid circular import
-
-        emoji = get_language_emoji(self.preferred_code)
-        return emoji if emoji else None

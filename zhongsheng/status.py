@@ -22,6 +22,9 @@ from . import command
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 @command(
     name="status",
     help_text="Shows a random Office quote and the last 5 events from the log for Ziwen",
@@ -30,7 +33,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 async def status(ctx: commands.Context) -> None:
     """Combination command to test the connection of the bot to the internet,
     and also to see when the last action in the events log was taken."""
-    # First, get the Office quote
+    # Fetch a random Office quote
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -52,7 +55,7 @@ async def status(ctx: commands.Context) -> None:
         logger.error(f"Encountered {err} when fetching quote.")
         office_response = f"⚠️ An error occurred fetching quote:\n```\n{tb}\n```\n\n"
 
-    # Now get the events log status
+    # Fetch recent events log entries
     try:
         log_content, time_ago = get_recent_event_log_lines(num_lines=5, tag="ZW")
         status_response = (
@@ -65,5 +68,4 @@ async def status(ctx: commands.Context) -> None:
     except Exception as e:
         status_response = f"⚠️ An error occurred reading logs: {str(e)}"
 
-    # Send combined response
     await ctx.send(office_response + status_response)

@@ -7,6 +7,8 @@ from discord.ext import commands
 
 from . import command
 
+# ─── Command metadata ─────────────────────────────────────────────────────────
+
 # Custom command descriptions. Add one for each command.
 COMMAND_DESCRIPTIONS = {
     "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
@@ -45,6 +47,9 @@ COMMAND_ROLES = {
 }
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 @command(
     name="guide",
     help_text="Display this informative message",
@@ -72,10 +77,9 @@ async def guide_command(ctx: commands.Context, command_name: str | None = None) 
         else:
             await ctx.send(f"Command `{command_name}` not found.")
     else:
-        # Show all commands
+        # Show all commands, grouped by role requirements
         response = "**Zhongsheng Bot Commands:**\n\n"
 
-        # Group by role requirements
         moderator_only = []
         helper_commands = []
 
@@ -98,7 +102,7 @@ async def guide_command(ctx: commands.Context, command_name: str | None = None) 
 
         response += "\n\nUse `/guide <command>` for detailed information about a specific command."
 
-        # Split if too long
+        # Split if too long for Discord's character limit
         if len(response) > 2000:
             chunks = [response[i : i + 1900] for i in range(0, len(response), 1900)]
             for chunk in chunks:

@@ -18,6 +18,8 @@ Usage:
 Logger tag: [RESPONSES]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -26,22 +28,21 @@ import yaml
 
 from config import Paths
 
+# ─── Response loader ──────────────────────────────────────────────────────────
+
 
 class ResponseLoader:
     """
-    Simple class to provide responses as an object attribute for use.
-    Responses are located in responses.yaml.
+    Load response templates from a YAML file and expose them as attributes.
 
-    Responses are generally formatted as:
-    RESPONSE.ANCHOR_WIKIPEDIA
+    Responses are located in responses.yaml and accessed via dot notation:
 
-    The class loads YAML data at initialization and exposes all top-level keys
-    as attributes through a SimpleNamespace, allowing for clean dot-notation access.
+        RESPONSE.ANCHOR_WIKIPEDIA
+        RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(...)
     """
 
     def __init__(self, yaml_path: Path | str) -> None:
-        """Load response templates from *yaml_path* and expose them as
-        attributes."""
+        """Load response templates from *yaml_path* and expose them as attributes."""
         self._data: dict[str, Any] = self._load_yaml(yaml_path)
         self.responses: SimpleNamespace = SimpleNamespace(**self._data)
 
@@ -56,5 +57,6 @@ class ResponseLoader:
         return getattr(self.responses, item)
 
 
-# To use in code: RESPONSE.VARIABLE_NAME
+# ─── Module-level singleton ───────────────────────────────────────────────────
+
 RESPONSE = ResponseLoader(Paths.TEMPLATES["RESPONSES"])

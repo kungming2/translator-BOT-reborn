@@ -28,6 +28,9 @@ EntryData = list[str] | None
 KunuloEntry = tuple[str, EntryData]
 
 
+# ─── Main Kunulo class ────────────────────────────────────────────────────────
+
+
 class Kunulo:
     """
     This class generally contains a dictionary keyed by the comment type
@@ -44,8 +47,10 @@ class Kunulo:
 
     anchor_pattern = re.compile(r"\[]\(#([a-zA-Z0-9_]+)\)")
 
+    # ── Construction ──────────────────────────────────────────────────────────
+
     def __init__(self, data: dict | None = None, op_thanks: bool = False) -> None:
-        """Initialise all Kunulo attributes from keyword arguments."""
+        """Initialize all Kunulo attributes from keyword arguments."""
         self._data: dict[str, list] = data or {}
         self._op_thanks = op_thanks
         self._submission: Any = None  # Store submission for delete functionality
@@ -53,26 +58,55 @@ class Kunulo:
     def __repr__(self) -> str:
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
-    def to_dict(self) -> dict[str, Any]:
+    @classmethod
+    def from_submission(cls, submission: Any) -> "Kunulo":
         """
-        Convert Kunulo instance to a dictionary representation.
+        Create a Kunulo instance from a PRAW submission object.
+
+        Args:
+            submission: PRAW submission object
 
         Returns:
-            dict: Dictionary with 'data' (tags and their entries) and 'op_thanks' flag
+            Kunulo: Instance populated with comment data from the submission
         """
-        return {
-            "data": {
-                tag: [
-                    {
-                        "comment_id": self._normalize_entry(entry)[0],
-                        "associated_data": self._normalize_entry(entry)[1],
-                    }
-                    for entry in entries
-                ]
-                for tag, entries in self._data.items()
-            },
-            "op_thanks": self._op_thanks,
-        }
+        thanks_keywords = SETTINGS["thanks_keywords"]
+        thanks_negation_keywords = SETTINGS["thanks_negation_keywords"]
+        instance = cls()
+        op_thanks = False
+
+        op_author = submission.author.name if submission.author else None
+        submission.comments.replace_more(limit=None)
+
+        for comment in submission.comments.list():
+            comment_author = comment.author.name if comment.author else None
+            comment_body = comment.body.lower()  # for easier matching
+
+            # Gather bot's anchor tags
+            if comment_author == USERNAME:
+                for tag in cls.anchor_pattern.findall(comment.body):
+                    # Extract associated data based on tag type
+                    associated_data = None
+                    if tag == "comment_cjk":
+                        associated_data = cls._extract_cjk_characters(comment.body)
+                    elif tag == "comment_wikipedia":
+                        associated_data = cls._extract_wikipedia_terms(comment.body)
+                    instance._add_entry(tag, comment.id, associated_data)
+
+            # Check for OP thanking (case-insensitive)
+            # Don't count as thanks if negation keywords are present
+            if not op_thanks and comment_author == op_author:
+                has_thanks = any(kw in comment_body for kw in thanks_keywords)
+                has_negation = any(
+                    kw in comment_body for kw in thanks_negation_keywords
+                )
+                if has_thanks and not has_negation:
+                    op_thanks = True
+
+        instance._op_thanks = op_thanks
+        instance._submission = submission  # Store submission reference
+        return instance
+
+    # ── Internal entry helpers ─────────────────────────────────────────────────
 
     @staticmethod
     def _normalize_entry(entry: "KunuloEntry | str") -> "KunuloEntry":
@@ -159,53 +193,30 @@ class Kunulo:
         """
         self._data.setdefault(tag, []).append((comment_id, data))
 
-    @classmethod
-    def from_submission(cls, submission: Any) -> "Kunulo":
-        """
-        Create a Kunulo instance from a PRAW submission object.
+    # ── Serialization ─────────────────────────────────────────────────────────
 
-        Args:
-            submission: PRAW submission object
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert Kunulo instance to a dictionary representation.
 
         Returns:
-            Kunulo: Instance populated with comment data from the submission
+            dict: Dictionary with 'data' (tags and their entries) and 'op_thanks' flag
         """
-        thanks_keywords = SETTINGS["thanks_keywords"]
-        thanks_negation_keywords = SETTINGS["thanks_negation_keywords"]
-        instance = cls()
-        op_thanks = False
+        return {
+            "data": {
+                tag: [
+                    {
+                        "comment_id": self._normalize_entry(entry)[0],
+                        "associated_data": self._normalize_entry(entry)[1],
+                    }
+                    for entry in entries
+                ]
+                for tag, entries in self._data.items()
+            },
+            "op_thanks": self._op_thanks,
+        }
 
-        op_author = submission.author.name if submission.author else None
-        submission.comments.replace_more(limit=None)
-
-        for comment in submission.comments.list():
-            comment_author = comment.author.name if comment.author else None
-            comment_body = comment.body.lower()  # for easier matching
-
-            # Gather bot's anchor tags
-            if comment_author == USERNAME:
-                for tag in cls.anchor_pattern.findall(comment.body):
-                    # Extract associated data based on tag type
-                    associated_data = None
-                    if tag == "comment_cjk":
-                        associated_data = cls._extract_cjk_characters(comment.body)
-                    elif tag == "comment_wikipedia":
-                        associated_data = cls._extract_wikipedia_terms(comment.body)
-                    instance._add_entry(tag, comment.id, associated_data)
-
-            # Check for OP thanking (case-insensitive)
-            # Don't count as thanks if negation keywords are present
-            if not op_thanks and comment_author == op_author:
-                has_thanks = any(kw in comment_body for kw in thanks_keywords)
-                has_negation = any(
-                    kw in comment_body for kw in thanks_negation_keywords
-                )
-                if has_thanks and not has_negation:
-                    op_thanks = True
-
-        instance._op_thanks = op_thanks
-        instance._submission = submission  # Store submission reference
-        return instance
+    # ── Tag lookup / access ────────────────────────────────────────────────────
 
     def __getattr__(self, tag: str) -> Any:
         """
@@ -328,6 +339,8 @@ class Kunulo:
 
         return None
 
+    # ── Reddit actions ────────────────────────────────────────────────────────
+
     def get_comment_permalink(self, comment_id: str) -> str:
         """
         Generate a Reddit permalink for a comment.
@@ -389,6 +402,9 @@ class Kunulo:
             del self._data[tag]
 
         return deleted_count
+
+
+# ─── Module-level utilities ───────────────────────────────────────────────────
 
 
 def get_submission_from_comment(comment_reference: Any) -> Any:

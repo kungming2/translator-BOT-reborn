@@ -17,6 +17,8 @@ from ziwen_lookup.reference import get_language_reference
 
 from . import command
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
 
 @command(
     name="lang",
@@ -46,7 +48,6 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
                 alt_value = " ".join(alt_tokens)
                 i = j - 1  # skip processed tokens
             else:
-                # Collect all non-flag tokens as part of language name
                 main_lang_tokens.append(token)
             i += 1
 
@@ -54,7 +55,6 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
             await ctx.send("⚠️ You must specify a language code or 'random'.")
             return
 
-        # Join all main language tokens back together
         language_input = " ".join(main_lang_tokens)
 
         # Handle 'random' argument
@@ -72,15 +72,14 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
                 await ctx.send("⚠️ An error occurred. No valid random results found.")
                 return
 
-        # Run conversion
         result = converter(language_input, preserve_country=True)
-        if not result:  # No results from converter
+        if not result:
             await ctx.send("🈚 No matching results found by converter.")
             return
         else:
             result_vars = vars(result)
 
-        # Handle --add_alt flag only for Moderators
+        # Handle --add_alt flag — Moderators only
         added_alt = False
         if add_alt_flag:
             if not isinstance(ctx.author, Member):
@@ -97,7 +96,6 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
                         force_refresh=True
                     )  # flush stale caches after YAML write
 
-        # Format output
         formatted_output = "**Language Conversion Results:**\n\n"
         for key, value in result_vars.items():
             formatted_output += f"**{key}:** {value}\n"

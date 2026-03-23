@@ -36,7 +36,7 @@ from utility import check_url_extension
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:NOTIF"})
 
 
-"""NOTIFICATIONS SUBSCRIPTIONS WITH DATABASE"""
+# ─── Subscription database helpers ───────────────────────────────────────────
 
 
 def _process_language_code(code: str) -> str:
@@ -104,7 +104,6 @@ def _prune_deleted_user_notifications(
     :param internal_posts: If True, use the notify_internal table instead of notify_users.
     :return: None if the user exists; list of unsubscribed language codes if pruned.
     """
-
     if is_valid_user(username):
         logger.debug(f"u/{username} exists. Skipping.")
         return None
@@ -331,7 +330,7 @@ def _notifier_specific_language_filter(lingvo_object: Lingvo) -> list[str]:
     return list(specific_usernames - broader_usernames)
 
 
-"""NOTIFICATION LIMITS ENFORCING"""
+# ─── Notification rate limiting ───────────────────────────────────────────────
 
 
 def _update_user_notification_count(
@@ -462,7 +461,6 @@ def _should_send_language_notification(
                                   representing previous classifications of the post.
     :return: True if notification should be sent for this language; False otherwise.
     """
-
     if not messaging_ajo_history:
         return True
 
@@ -505,7 +503,7 @@ def is_user_over_submission_limit(username: str) -> bool:
     return frequency > limit
 
 
-"""CLEAN FORMATTING ISSUES"""
+# ─── Formatting helpers ───────────────────────────────────────────────────────
 
 
 def _notifier_title_cleaner(title: str) -> str:
@@ -519,7 +517,6 @@ def _notifier_title_cleaner(title: str) -> str:
     :param title: The original Reddit post title.
     :return: A cleaned-up version of the title with problematic characters escaped.
     """
-
     # Common Markdown-sensitive characters that might need escaping
     markdown_sensitive = ["[", "]", "(", ")", "*", "_", "~", "`"]
 
@@ -529,14 +526,14 @@ def _notifier_title_cleaner(title: str) -> str:
     return title
 
 
-"""MAIN FUNCTION"""
+# ─── Main notification functions ──────────────────────────────────────────────
 
 
 def notifier(
     lingvo: Lingvo, submission: Submission, mode: str = "new_post"
 ) -> list[str]:
     """
-    Notify users about posts in a language they’ve subscribed to.
+    Notify users about posts in a language they've subscribed to.
     This function also handles curating the list of users who will be
     notified.
 

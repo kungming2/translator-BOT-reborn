@@ -25,6 +25,8 @@ Key components:
 Logger tag: [LANG:LANGUAGES]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import copy
 import csv
 import logging
@@ -41,23 +43,22 @@ from config import logger as _base_logger
 from lang.countries import country_converter
 from models.lingvo import Lingvo
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG:LANGUAGES"})
 
-# Load the language module's settings
 language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 
 _lingvos_cache = None  # cached {code: Lingvo} dict
 _language_lists_cache = None  # cached output of define_language_lists()
 
 
-# ---------------------------------------------------------------------------
-# Dataset loader
-# ---------------------------------------------------------------------------
+# ─── Dataset loader ───────────────────────────────────────────────────────────
 
 
 def _combine_language_data() -> dict[str, dict[str, Any]]:
     """
-    Helper function to combine raw language data, utility data, and statistics.
+    Combine raw language data, utility data, and statistics into a single dict.
 
     Merges three data sources in order of precedence:
     1. Raw language data (base layer from language_data.yaml)
@@ -105,8 +106,7 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
 
 def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
     """
-    Loads the language dataset by combining raw language data and utility data,
-    then returns a dictionary of Lingvo instances.
+    Load the language dataset and return a dictionary of Lingvo instances.
 
     Args:
         debug: If True, log detailed information about each language code.
@@ -133,7 +133,7 @@ def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
 
 def get_lingvos(force_refresh: bool = False) -> dict[str, Lingvo]:
     """
-    Get the lingvos dataset, optionally forcing a refresh.
+    Return the lingvos dataset, optionally forcing a refresh.
 
     Args:
         force_refresh: If True, reload the dataset even if cached. Used
@@ -229,15 +229,13 @@ def define_language_lists() -> dict[str, Any]:
     return _language_lists_cache
 
 
-# ---------------------------------------------------------------------------
-# Converter
-# ---------------------------------------------------------------------------
+# ─── Normalisation & fuzzy matching ──────────────────────────────────────────
 
 
 def normalize(text: str) -> str:
     """
-    Cleans the text for processing. Lowercases it, and then
-    substitutes and strips whitespace.
+    Clean text for processing: lowercase, remove punctuation, and normalise
+    whitespace.
 
     Args:
         text: The text to normalize.
@@ -254,8 +252,8 @@ def normalize(text: str) -> str:
 
 def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
     """
-    Attempts to fuzzy match the given word with language names,
-    and ignores common mistaken matches.
+    Attempt to fuzzy-match *word* against the list of known language names,
+    ignoring configured false-positive names.
 
     Args:
         word: The word to match against language names.
@@ -283,12 +281,14 @@ def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
     return best_match
 
 
+# ─── ISO deep search ──────────────────────────────────────────────────────────
+
+
 def _iso_codes_deep_search(
     search_term: str, script_search: bool = False
 ) -> Optional[Lingvo]:
     """
-    Searches for a language or script code from a CSV of ISO 639-3 or
-    ISO 15924 codes.
+    Search for a language or script code in the ISO 639-3 or ISO 15924 CSV.
 
     Args:
         search_term: The term to search for (code or name).
@@ -343,6 +343,9 @@ def _iso_codes_deep_search(
         return None
 
     return None
+
+
+# ─── Resolution engine ────────────────────────────────────────────────────────
 
 
 def _resolve_to_lingvo(
@@ -609,6 +612,9 @@ def _resolve_to_lingvo(
     return None
 
 
+# ─── Public converter interface ───────────────────────────────────────────────
+
+
 def converter(
     input_text: str,
     fuzzy: bool = True,
@@ -633,7 +639,7 @@ def converter(
 
 def parse_language_list(list_string: str) -> list[Lingvo]:
     """
-    Splits a string of language codes or names using flexible delimiters.
+    Split a string of language codes or names using flexible delimiters.
 
     Handles multiple delimiter formats including commas, plus signs, newlines,
     slashes, colons, and semicolons. Also handles space-delimited lists.
@@ -712,14 +718,12 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
     return result
 
 
-# ---------------------------------------------------------------------------
-# Editing / validation
-# ---------------------------------------------------------------------------
+# ─── Dataset editing & validation ────────────────────────────────────────────
 
 
 def add_alt_language_name(language_code: str, alt_name: str) -> bool:
     """
-    Adds an alternate name for a given language in the LANGUAGE_DATA YAML file.
+    Add an alternate name for a given language in the LANGUAGE_DATA YAML file.
     If the language doesn't have a 'name_alternates' field, it is created.
     If the alt_name already exists, nothing is changed.
     """
@@ -762,8 +766,7 @@ def add_alt_language_name(language_code: str, alt_name: str) -> bool:
 
 def validate_lingvo_dataset() -> list[str]:
     """
-    Validates the language dataset by checking for codes that are
-    missing required fields.
+    Validate the language dataset by checking for codes missing required fields.
 
     Returns:
         List of language codes missing required fields (name or language_code).
@@ -782,9 +785,12 @@ def validate_lingvo_dataset() -> list[str]:
     return problematic_codes
 
 
+# ─── Dataset utilities ────────────────────────────────────────────────────────
+
+
 def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
     """
-    Pick a random language code and name from our CSV file.
+    Pick a random language code and name from the ISO CSV file.
 
     Args:
         iso_639_1: If True, select ISO 639-1 codes (2-letter).

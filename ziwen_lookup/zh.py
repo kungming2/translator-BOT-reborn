@@ -45,7 +45,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
 useragent = get_random_useragent()
 
-"""TRADITIONAL/SIMPLIFIED CONVERSION"""
+# ─── Traditional/simplified conversion ─────────────────────────────────────────────
 
 
 def simplify(input_text: str) -> str:
@@ -62,7 +62,7 @@ def tradify(input_text: str) -> str:
     return used_converter.convert(input_text)
 
 
-"""PINYIN/ROMANIZATION HELPERS"""
+# ─── Pinyin and romanization helpers ─────────────────────────────────────
 
 
 def _sanitize_pinyin_input(pinyin_string: str) -> str:
@@ -140,28 +140,6 @@ def _convert_numbered_pinyin(s: str) -> str:
     result += t
 
     return result
-
-
-async def zh_word(word: str) -> str:
-    """
-    Defines a Chinese word (typically >1 character) with caching support.
-    Checks cache first, falls back to web fetch if not found.
-
-    :param word: Any Chinese word (usually more than one character).
-    :return: Formatted string containing pronunciation and meanings.
-    """
-    # Check cache directly with traditional form
-    word = word.strip()
-    trad_word = tradify(word)
-    cached = get_from_cache(trad_word, "zh", "zh_word")
-
-    if cached:
-        logger.info(f"Retrieved '{word}' from cache.")
-        return format_zh_word_from_cache(cached) + " ^⚡"
-
-    # Cache miss - fetch from web
-    logger.info(f"'{word}' not found in cache, fetching from web.")
-    return await _zh_word_fetch(word)
 
 
 def vowel_neighbor(letter: str, word: str) -> bool:
@@ -285,7 +263,7 @@ def _zh_word_alternate_romanization(
     return yale_post, wadegiles_post, gr_post
 
 
-"""CHARACTER FUNCTIONS"""
+# ─── Character lookup ────────────────────────────────────────────────────
 
 
 def old_chinese_search(character: str) -> str | None:
@@ -922,7 +900,7 @@ async def zh_character(character: str) -> str:
     return await get_cached_or_fetch_zh_character(character, _zh_character_fetch)
 
 
-"""WORD FUNCTIONS"""
+# ─── Word lookup ───────────────────────────────────────────────────────────
 
 
 async def _zh_word_dictionary_search(
@@ -1194,3 +1172,28 @@ async def _zh_word_fetch(word: str) -> str:
         logger.error(f"Failed to cache result for '{word}': {e}")
 
     return lookup_result
+
+
+# ─── Public API ─────────────────────────────────────────────────────────────────────
+
+
+async def zh_word(word: str) -> str:
+    """
+    Defines a Chinese word (typically >1 character) with caching support.
+    Checks cache first, falls back to web fetch if not found.
+
+    :param word: Any Chinese word (usually more than one character).
+    :return: Formatted string containing pronunciation and meanings.
+    """
+    # Check cache directly with traditional form
+    word = word.strip()
+    trad_word = tradify(word)
+    cached = get_from_cache(trad_word, "zh", "zh_word")
+
+    if cached:
+        logger.info(f"Retrieved '{word}' from cache.")
+        return format_zh_word_from_cache(cached) + " ^⚡"
+
+    # Cache miss - fetch from web
+    logger.info(f"'{word}' not found in cache, fetching from web.")
+    return await _zh_word_fetch(word)

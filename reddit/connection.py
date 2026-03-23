@@ -24,6 +24,9 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:CONN"})
 
 
+# ─── Reddit login helpers ─────────────────────────────────────────────────────
+
+
 def reddit_login(credentials: dict[str, str]) -> praw.Reddit:
     """
     Logs in to Reddit with the standard credentials.
@@ -72,6 +75,9 @@ def reddit_hermes_login(credentials: dict[str, str]) -> praw.Reddit:
     )
 
     return reddit
+
+
+# ─── Status and utility ───────────────────────────────────────────────────────
 
 
 def reddit_status_check() -> list[dict] | None:
@@ -130,6 +136,42 @@ def get_random_useragent() -> dict[str, str]:
     }
 
 
+def submission_from_input(user_input: str) -> Submission | None:
+    """
+    Resolve a Reddit post ID, full URL, or short redd.it URL to a PRAW
+    Submission object using REDDIT_HELPER.
+
+    Accepts any of:
+        - Bare post ID:   1rvpshb
+        - Full URL:       https://www.reddit.com/r/sub/comments/1rvpshb/title/
+        - Short URL:      https://redd.it/1rvpshb
+
+    :param user_input: A post ID or any Reddit URL format.
+    :return: A PRAW Submission object.
+    :raises ValueError: If the post ID cannot be extracted from the input.
+    """
+    user_input = user_input.strip()
+
+    # Short URL: https://redd.it/1rvpshb
+    short_match = re.search(r"redd\.it/([A-Za-z0-9]+)", user_input)
+    if short_match:
+        return REDDIT_HELPER.submission(id=short_match.group(1))
+
+    # Full URL: .../comments/1rvpshb/...
+    full_match = re.search(r"comments/([A-Za-z0-9]+)", user_input)
+    if full_match:
+        return REDDIT_HELPER.submission(id=full_match.group(1))
+
+    # Bare post ID: alphanumeric, typically 5-7 chars
+    if re.fullmatch(r"[A-Za-z0-9]+", user_input):
+        return REDDIT_HELPER.submission(id=user_input)
+
+    raise ValueError(f"Could not extract a post ID from: {user_input!r}")
+
+
+# ─── User validation ──────────────────────────────────────────────────────────
+
+
 def is_mod(user: str | Redditor) -> bool:
     """
     Checks whether the given user is a moderator of r/translator.
@@ -161,7 +203,6 @@ def is_valid_user(username: str) -> bool:
     :return exists: A boolean. False if non-existent or shadowbanned,
                     True if a regular user.
     """
-
     try:
         # Just try to access fullname; no need to assign it if unused
         _ = REDDIT_HELPER.redditor(username).fullname
@@ -201,6 +242,9 @@ def is_internal_post(submission: "praw.models.Submission") -> bool:
             return True
 
     return False
+
+
+# ─── Moderation actions ───────────────────────────────────────────────────────
 
 
 def create_mod_note(
@@ -285,7 +329,7 @@ def widget_update(widget_id: str, new_text: str) -> bool:
         return False
 
 
-"""REMOVAL REASONS"""
+# ─── Removal reasons ──────────────────────────────────────────────────────────
 
 
 def _fetch_removal_reasons() -> dict[int, tuple[str, str, str]] | None:
@@ -313,7 +357,6 @@ def search_removal_reasons(prompt: str) -> str | None:
     the subreddit, returning the specific removal reason ID if found.
     E.g. the prompt could be "spam".
     """
-
     reasons_dict = _fetch_removal_reasons()
     logger.debug(f"Removal reason IDs: {reasons_dict}")
 
@@ -352,41 +395,7 @@ def remove_content(
     item.mod.remove(**removal_kwargs)
 
 
-def submission_from_input(user_input: str) -> Submission | None:
-    """
-    Resolve a Reddit post ID, full URL, or short redd.it URL to a PRAW
-    Submission object using REDDIT_HELPER.
-
-    Accepts any of:
-        - Bare post ID:   1rvpshb
-        - Full URL:       https://www.reddit.com/r/sub/comments/1rvpshb/title/
-        - Short URL:      https://redd.it/1rvpshb
-
-    :param user_input: A post ID or any Reddit URL format.
-    :return: A PRAW Submission object.
-    :raises ValueError: If the post ID cannot be extracted from the input.
-    """
-    user_input = user_input.strip()
-
-    # Short URL: https://redd.it/1rvpshb
-    short_match = re.search(r"redd\.it/([A-Za-z0-9]+)", user_input)
-    if short_match:
-        return REDDIT_HELPER.submission(id=short_match.group(1))
-
-    # Full URL: .../comments/1rvpshb/...
-    full_match = re.search(r"comments/([A-Za-z0-9]+)", user_input)
-    if full_match:
-        return REDDIT_HELPER.submission(id=full_match.group(1))
-
-    # Bare post ID: alphanumeric, typically 5-7 chars
-    if re.fullmatch(r"[A-Za-z0-9]+", user_input):
-        return REDDIT_HELPER.submission(id=user_input)
-
-    raise ValueError(f"Could not extract a post ID from: {user_input!r}")
-
-
-"""DEFINED GLOBALS"""
-
+# ─── Module-level globals ─────────────────────────────────────────────────────
 
 credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
 REDDIT = reddit_login(credentials_source)

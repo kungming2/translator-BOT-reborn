@@ -20,9 +20,10 @@ from reddit.verification import process_verification
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:VERIFY"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
-
     logger.info(f"!verify, from u/{comment.author}.")
-
     process_verification(comment)

@@ -35,7 +35,8 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "L:JA"})
 
 useragent = get_random_useragent()
 
-"""ROMANIZATION HELPER"""
+
+# ─── Romanization helper ──────────────────────────────────────────────────────
 
 _kks = pykakasi.kakasi()
 
@@ -74,7 +75,7 @@ def _format_kun_on_readings(tree: Any) -> tuple[str, str]:
     return kun_chunk, on_chunk
 
 
-"""CHARACTER FUNCTIONS"""
+# ─── Character lookup ─────────────────────────────────────────────────────────
 
 
 def _ja_character_fetch(character: str) -> str:
@@ -136,7 +137,6 @@ def _ja_character_fetch(character: str) -> str:
         )
         lookup_line_1 += f"**Kun-readings:** {kun_chunk}\n\n**On-readings:** {on_chunk}"
 
-        # Attempt to include calligraphy image
         calligraphy_image: str | None = calligraphy_search(character)
         if calligraphy_image:
             lookup_line_1 += calligraphy_image
@@ -181,7 +181,6 @@ def _ja_character_fetch(character: str) -> str:
             ooi_on += f" | {data['on']}"
             ooi_meaning += f" | {data['meaning']}"
 
-        # Add closing pipes to all rows
         ooi_header += " |"
         ooi_separator += " |"
         ooi_kun += " |"
@@ -192,7 +191,6 @@ def _ja_character_fetch(character: str) -> str:
             ooi_key + ooi_header + ooi_separator + ooi_kun + ooi_on + ooi_meaning
         )
 
-    # Append resource links
     lookup_line_3: str
     if is_kana:
         lookup_line_3 = (
@@ -211,7 +209,6 @@ def _ja_character_fetch(character: str) -> str:
         f"Received lookup command for {character} in Japanese. Returned results."
     )
 
-    # Cache the result before returning
     try:
         parsed_data = parse_ja_output_to_json(total_data)
         save_to_cache(parsed_data, "ja", "ja_character")
@@ -231,19 +228,17 @@ def ja_character(character: str) -> str:
                       work with individual katakana.
     :return: A formatted string with readings, meanings, and resource links.
     """
-    # Check cache first
     cached = get_from_cache(character, "ja", "ja_character")
 
-    if cached and cached.get("word"):  # Check it's not empty dict
+    if cached and cached.get("word"):
         logger.info(f"Retrieved '{character}' from cache.")
         return format_ja_character_from_cache(cached) + " ^⚡"
 
-    # Cache miss - fetch from web
     logger.info(f"'{character}' not found in cache, fetching from web.")
     return _ja_character_fetch(character)
 
 
-"""WORD FUNCTIONS"""
+# ─── Word lookup ──────────────────────────────────────────────────────────────
 
 
 def _sfx_search(katakana_string: str) -> str | None:
@@ -269,10 +264,8 @@ def _sfx_search(katakana_string: str) -> str | None:
 
         tree = html.fromstring(driver.page_source)
 
-        # Scope only to the first result container
         container = tree.xpath("//main/div/div/div[1]/div")[0]
 
-        # Find the first <h3> and the following <ul> only within that container
         h3_elem = container.xpath(".//h3[1]")
         ul_elem = container.xpath(".//ul[1]")
 
@@ -295,10 +288,8 @@ def _sfx_search(katakana_string: str) -> str | None:
         if katakana_string not in (match_text_str or ""):
             logger.info("Match not found in entry header.")
 
-        # Format the Hepburn reading.
         katakana_reading: str = _to_hepburn(katakana_string)
 
-        # Format the output message
         meanings_formatted: str = "\n".join(f"* {m}" for m in meanings)
         formatted_line: str = (
             f"\n\n**Explanation**: \n{meanings_formatted}"
@@ -331,10 +322,8 @@ def _ja_name_search(ja_given_name: str) -> str | None:
     :return: A formatted Markdown section with readings and a placeholder
              meaning if valid. Otherwise, returns None.
     """
-
     names_with_readings: list[str] = []
 
-    # Conduct the web search
     url: str = f"https://kanji.reader.bz/{ja_given_name}"
     eth_page = requests.get(url, headers=useragent)
     tree = html.fromstring(eth_page.content)
@@ -347,13 +336,11 @@ def _ja_name_search(ja_given_name: str) -> str | None:
     logger.debug(name_content)
     logger.info(f"Name lookup: {hiragana_content=}")
     if not hiragana_content:
-        return None  # no readings found
+        return None
 
-    # Check for error message: "見つかりませんでした" = "Not found"
     if "見つかりませんでした" in str(name_content):
         return None
 
-    # Father and format readings.
     for hira in hiragana_content:
         hira_clean = hira.strip()
         romaji = _to_hepburn(hira_clean).title()
@@ -361,7 +348,6 @@ def _ja_name_search(ja_given_name: str) -> str | None:
 
     readings_str: str = ", ".join(names_with_readings)
 
-    # Build the final Markdown output
     formatted_section: str = (
         f"# [{ja_given_name}](https://en.wiktionary.org/wiki/{ja_given_name}#Japanese)\n\n"
         f"**Readings:** {readings_str}\n\n"
@@ -383,7 +369,6 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
     :return: Formatted string with explanation and source,
              or None if not found.
     """
-
     try:
         # Use the per-kanji "contains" index for the first character to find an
         # exact match by link text. This avoids the flaky search results page,
@@ -423,14 +408,12 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
                 return None
             raw = nodes[0].text_content().replace("\r", "\n").strip()
             text = " ".join(line.strip() for line in raw.splitlines() if line.strip())
-            # Strip ※ footnotes (alternate reading annotations)
             return text.split("※")[0].strip()
 
         reading: str | None = _get_row_by_label("読み方")
         explanation: str | None = _get_row_by_label("意味")
         source: str | None = _get_row_by_label("出典")
 
-        # Verify the entry matches our input (guards against partial-match wrong entries)
         entry_word: str | None = _get_row_by_label("四字熟語")
         if entry_word and entry_word != yojijukugo:
             logger.warning(
@@ -448,7 +431,6 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
             logger.warning(f"No reading found for {yojijukugo}, skipping.")
             return None
 
-        # Build the final Markdown output
         formatted_section: str = (
             f"# [{yojijukugo}](https://en.wiktionary.org/wiki/{yojijukugo}#Japanese)\n\n"
             f"**Reading:** {reading} (*{_to_hepburn(reading)}*)\n\n"
@@ -495,13 +477,11 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
         main_data = word_data["data"][0]
         word_reading = main_data.get("japanese", [{}])[0].get("reading", "")
 
-    # If Jisho returned nothing useful
     yojijukugo_data: str | None = None
     if not word_reading:
         logger.info(f"No results for '{japanese_word}' on Jisho.")
 
         katakana_test: re.Match | None = re.search(r"[\u30a0-\u30ff]", japanese_word)
-        # Execute some searches asynchronously.
         name_data: str | None = None
         if len(japanese_word) == 2:
             name_data = await call_sync_async(_ja_name_search, japanese_word)
@@ -530,7 +510,6 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             return sfx_data
 
     if main_data:
-        # Format valid Jisho result
         word_reading_chunk: str = f"{word_reading} (*{_to_hepburn(word_reading)}*)"
         word_meaning: str = (
             f'"{", ".join(main_data["senses"][0]["english_definitions"])}."'
@@ -544,16 +523,15 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             f"**Meanings**: {word_meaning}"
         )
 
-        # For 4-char words, attempt to append yojijukugo explanation as a supplement
+        # For 4-char words, append yojijukugo explanation as a supplement.
         if len(japanese_word) == 4:
             yojijukugo_data = await call_sync_async(_ja_word_yojijukugo, japanese_word)
             if yojijukugo_data:
                 logger.info("> Appending yojijukugo supplement to Jisho result.")
-                # Strip the standalone footer since the main Jisho footer follows
+                # Strip the standalone footer since the main Jisho footer follows.
                 yoji_body: str = yojijukugo_data.rsplit("\n\n^(Information from)", 1)[0]
                 return_comment += f"\n\n---\n\n{yoji_body}"
 
-        # Add sources
         footer: str = (
             f"\n\n^Information ^from ^[Jisho](https://jisho.org/search/{japanese_word}%23words) ^| "
             f"^[Kotobank](https://kotobank.jp/word/{japanese_word}) ^| "
@@ -563,7 +541,6 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
 
         logger.info(f"Final result for '{japanese_word}' returned.")
 
-        # Cache the result before returning
         try:
             parsed_data = parse_ja_output_to_json(return_comment)
             save_to_cache(parsed_data, "ja", "ja_word")
@@ -574,6 +551,9 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
         return return_comment + footer
     else:
         return None
+
+
+# ─── Public API ───────────────────────────────────────────────────────────────
 
 
 async def ja_word(japanese_word: str) -> str | None:
@@ -588,13 +568,11 @@ async def ja_word(japanese_word: str) -> str | None:
     """
     japanese_word = japanese_word.strip()
 
-    # Check cache first
     cached = get_from_cache(japanese_word, "ja", "ja_word")
 
-    if cached and cached.get("word"):  # Check it's not empty dict
+    if cached and cached.get("word"):
         logger.info(f"Retrieved '{japanese_word}' from cache.")
         return format_ja_word_from_cache(cached) + " ^⚡"
 
-    # Cache miss - fetch from web
     logger.info(f"'{japanese_word}' not found in cache, fetching from web.")
     return await _ja_word_fetch(japanese_word)

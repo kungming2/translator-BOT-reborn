@@ -31,6 +31,9 @@ from ziwen_commands import HANDLERS
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
 def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
     """Looks at the content of a comment and determines if the
     submission author's thank you is sufficient to mark it as
@@ -84,6 +87,9 @@ def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
     return
 
 
+# ─── Main comment processing loop ────────────────────────────────────────────
+
+
 def ziwen_commands() -> None:
     """
     Main runtime for r/translator that checks for keywords and commands.
@@ -122,18 +128,17 @@ def ziwen_commands() -> None:
     try:
         comments = list(r.comments(limit=SETTINGS["max_posts"]))
     except exceptions.ServerError as ex:
-        # Server issues.
         logger.error(f"Encountered a server error: {ex}")
         return
     else:
         logger.debug(f"Fetched {len(comments)} comments to process.")
 
-    # Start processing comments.
     for comment in comments:
         comment_id = comment.id
-        # Returns a submission object of the parent to work with
         original_post = comment.submission
         comment_body = comment.body.lower()  # lowercase for ease of command matching
+
+        # ── Pre-flight checks ──────────────────────────────────────────────────
 
         # Skip comments with deleted authors.
         try:
@@ -141,20 +146,19 @@ def ziwen_commands() -> None:
         except AttributeError:
             continue
 
-        # Skip internal posts (e.g. meta/community), but allow the verified thread
+        # Skip internal posts (e.g. meta/community), but allow the verified thread.
         if original_post.id != VERIFIED_POST_ID and (
             diskuto_exists(original_post.id) or is_internal_post(original_post)
         ):
             continue
 
-        # Check to see if the comment has already been acted upon.
+        # Skip already-processed comments; mark new ones immediately.
         if db.cursor_main.execute(
             "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
         ).fetchone():
-            # Comment already processed
             logger.debug(f"Comment `{comment_id}` has already been processed.")
             continue
-        else:  # Mark comment as processed in the database
+        else:
             db.cursor_main.execute(
                 "INSERT INTO old_comments (id, created_utc) VALUES (?, ?)",
                 (comment_id, int(comment.created_utc)),
@@ -172,7 +176,7 @@ def ziwen_commands() -> None:
             logger.debug(f"`{comment_id}` is from bot u/{author_name}. Skipping...")
             continue
 
-        # Skip comments on filtered posts
+        # Skip comments on filtered posts.
         filtered_result = db.cursor_main.execute(
             "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
         ).fetchone()
@@ -184,7 +188,8 @@ def ziwen_commands() -> None:
             )
             continue
 
-        # Load the ajo for the post from the database.
+        # ── Ajo loading ────────────────────────────────────────────────────────
+
         is_verified_post = original_post.id == VERIFIED_POST_ID
         original_ajo = ajo_loader(original_post.id)
         if not original_ajo:
@@ -201,14 +206,10 @@ def ziwen_commands() -> None:
             f"> Ajo lingvo is {original_ajo.lingvo if original_ajo else None}"
         )  # loaded lazily
 
-        # Derive an Instruo, and act on it if there are commands.
-        # It's basically a class that represents a comment which has
-        # subreddit-specific commands and instructions in it.
-        # Note that an Instruo can have multiple commands associated
-        # with it.
+        # ── Command dispatch ───────────────────────────────────────────────────
+
         instruo = None
         if comment_has_command(comment_body):
-            # Initialize the variables the command handlers will require.
             parent_languages = [original_ajo.lingvo] if original_ajo else []
             instruo = Instruo.from_comment(comment, parent_languages=parent_languages)
 
@@ -220,9 +221,8 @@ def ziwen_commands() -> None:
                 f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
             )
 
-            # If this is the verified thread, only allow !verify commands
+            # If this is the verified thread, only allow !verify commands.
             if original_post.id == VERIFIED_POST_ID:
-                # Filter to only allow 'verify' commands on the verified thread
                 allowed_commands = [
                     k for k in instruo.commands if k.name.lower() == "verify"
                 ]
@@ -232,39 +232,24 @@ def ziwen_commands() -> None:
                         f"Skipping comment `{comment_id}`."
                     )
                     continue
-                # Replace commands with only the allowed ones
                 instruo.commands = allowed_commands
 
-            # Pass off to handling functions depending on the command.
-            # e.g. an identify command will pass off to the handler
-            # function located in identify.py
-
-            # Iterate over the commands in the comment.
             for komando in instruo.commands:
                 handler = HANDLERS.get(komando.name.lower())
 
-                # A matching handler for the command is found.
-                # Pass off the information for it to handle.
                 if handler:
                     logger.info(
                         f"Command `{komando}` detected for `{comment_id}` on "
                         f"post `{original_post.id}`. Passing to handler."
                     )
                     handler(comment, instruo, komando, original_ajo)
-                    # Record this action to the counter log
                     action_counter(1, komando.name)
                 else:
-                    # This is unlikely to happen - basically happens when
-                    # there is a command listed to be acted upon, but
-                    # there is no code to actually process it.
                     logger.error(f"No handler for command: {komando.name}")
 
-            # Record data on user commands.
             user_statistics_writer(instruo)
             logger.debug("Recorded user commands in database.")
 
-            # Calculate points for the comment and write them to database.
-            # This is obviously skipped if the post is an internal post.
             if (
                 not diskuto_exists(original_post.id)
                 and original_ajo
@@ -272,7 +257,7 @@ def ziwen_commands() -> None:
             ):
                 points_tabulator(comment, original_post, original_ajo.lingvo)
         else:
-            # If this is the verified thread and there are no commands, skip
+            # Non-command comment on the verified thread — skip silently.
             if original_post.id == VERIFIED_POST_ID:
                 logger.debug(
                     "Non-command comment on verified thread "
@@ -285,27 +270,27 @@ def ziwen_commands() -> None:
                 "any operational keywords and commands."
             )
 
+        # ── Post-command processing ────────────────────────────────────────────
+
         # Process THANKS keywords from original posters.
         if original_ajo and any(keyword in comment_body for keyword in thanks_keywords):
-            # Assess whether a thank-you comment can mark the post as translated.
             _mark_short_thanks_as_translated(comment, original_ajo)
 
-        # Check if there was a 'set' command in this comment
+        # Check if there was a 'set' command in this comment.
         moderator_set = False
         skip_update = False
         if instruo:
             moderator_set = any(
                 komando.name.lower() == "set" for komando in instruo.commands
             )
-            # Skip update if the only command is 'verify'
+            # Skip update if the only command is 'verify'.
             if (
                 len(instruo.commands) == 1
                 and instruo.commands[0].name.lower() == "verify"
             ):
                 skip_update = True
 
-        # Update the ajo if NOT in testing mode. This updates both the
-        # flair on the site as well as the local database.
-        # Also skip if the only command was 'verify'.
+        # Update the Ajo flair and database — skip in testing mode
+        # and skip if the only command was 'verify'.
         if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
             original_ajo.update_reddit(moderator_set=moderator_set)

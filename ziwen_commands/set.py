@@ -36,6 +36,9 @@ from . import update_language
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SET"})
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
 def _handle_diskuto_reclassification(
     comment: Comment, ajo: Ajo, post_type: str
 ) -> "Diskuto | None":
@@ -56,8 +59,6 @@ def _handle_diskuto_reclassification(
     submission = ajo.submission
     post_id = ajo.id
 
-    # Build Diskuto from the submission, then override post_type with the
-    # mod-supplied value so it's always accurate regardless of title format.
     try:
         diskuto_obj = Diskuto.process_post(submission)
     except TypeError as e:
@@ -92,7 +93,6 @@ def _handle_diskuto_reclassification(
         )
         return None
 
-    # Diskuto is safely stored — now remove the Ajo record.
     if post_id is not None:
         ajo_delete(post_id)
 
@@ -117,22 +117,23 @@ def _handle_diskuto_reclassification(
     return diskuto_obj
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Set handler initiated.")
 
-    # Check to see if the person calling this command is a moderator
     if not is_mod(comment.author):
         logger.debug(f"u/{comment.author} is not a mod. Skipping...")
         return
 
     logger.info(f"!set, from moderator u/{comment.author} on `{ajo.id}`.")
 
-    # Check whether this is a diskuto reclassification command (e.g. !set:meta).
-    #
-    # Convention: when the upstream parser cannot resolve the keyword as a
-    # language it stores the raw lowercase string in komando.data as a plain
-    # string rather than a list of Lingvo objects. We detect that here.
+    # Detect a Diskuto reclassification command (e.g. !set:meta).
+    # When the upstream parser cannot resolve the keyword as a language
+    # it stores the raw lowercase string in komando.data as a plain string
+    # rather than a list of Lingvo objects.
     raw_keyword: str | None = None
     if isinstance(komando.data, str):
         raw_keyword = komando.data.strip().lower()
@@ -151,12 +152,10 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         )
         if diskuto_result:
             diskuto_result.update_reddit()
-
         return
 
-    # --- Standard language-setting path below ---
+    # Standard language-setting path.
 
-    # Invalid identification data.
     if not komando.data or None in komando.data:
         logger.error(f"Invalid or missing Komando data: {komando.data}")
         message_send(
@@ -167,7 +166,6 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         logger.info("Replied letting the mod know setting is invalid.")
         return
 
-    # Update the Ajo's language(s) post.
     try:
         update_language(ajo, komando)
     except ValueError as e:
@@ -180,14 +178,13 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         logger.info("Replied letting the mod know setting is invalid.")
         return
 
-    # Delete any pre-existing defined multiple or "Unknown" comment.
-    delete_tags: list[str] = ["comment_defined_multiple", "comment_unknown"]
+    # Delete any pre-existing defined-multiple or Unknown comment.
     kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
-    for tag in delete_tags:
+    for tag in ["comment_defined_multiple", "comment_unknown"]:
         kunulo_object.delete(tag)
 
-    # Message the mod who called this command.
-    languages = komando.data  # List of Lingvo objects
+    # Message the mod confirming the language change.
+    languages = komando.data
     logger.info(f"Building !set success message for {len(languages)} language(s).")
 
     set_msg: str
@@ -200,11 +197,9 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         )
         logger.info(f"Single-language message built for {new_language.preferred_code}.")
     else:
-        # Multiple languages - collate greetings (excluding "Hello")
         greetings = [lang.greetings for lang in languages if lang.greetings != "Hello"]
         greeting_string = " / ".join(greetings) if greetings else "Hello"
 
-        # Build the language list string
         lang_parts = [f"{lang.name} (`{lang.preferred_code}`)" for lang in languages]
         lang_string = ", ".join(lang_parts[:-1]) + f", and {lang_parts[-1]}"
 
@@ -215,7 +210,6 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         )
         logger.info("Multi-language message built.")
 
-    logger.info(f"Sending !set success message to u/{comment.author}.")
     try:
         message_send(
             comment.author,

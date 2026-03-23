@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
+
 """
 Handles search tasks for frequently requested translations.
 ...
 
 Logger tag: [I:SEARCH]
 """
+
+# ─── Imports ──────────────────────────────────────────────────────────────────
 
 import logging
 import re
@@ -20,6 +24,8 @@ from reddit.connection import REDDIT_HELPER, credentials_source
 
 if TYPE_CHECKING:
     from praw.models import Comment
+
+# ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "I:SEARCH"})
 
@@ -104,10 +110,10 @@ def fetch_search_reddit_posts(search_term: str) -> list[str]:
     return []
 
 
-# ─── Result formatting ────────────────────────────────────────────────────────
+# ─── Comment filtering ────────────────────────────────────────────────────────
 
 
-def _extract_relevant_comment(comment: "Comment", search_term: str) -> str | None:
+def _extract_relevant_comment(comment: Comment, search_term: str) -> str | None:
     """
     Return a formatted Markdown block for *comment* if it contains
     *search_term*, or None if it should be skipped.
@@ -131,6 +137,9 @@ def _extract_relevant_comment(comment: "Comment", search_term: str) -> str | Non
         return None
 
     return f"*Comment by u/{comment_author}* (+{comment.score}):\n\n>{quoted_body}"
+
+
+# ─── Result formatting ────────────────────────────────────────────────────────
 
 
 def build_search_results(post_ids: list[str], search_term: str) -> str:

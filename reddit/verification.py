@@ -31,6 +31,9 @@ if TYPE_CHECKING:
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:VERIF"})
 
 
+# ─── Thread resolution ────────────────────────────────────────────────────────
+
+
 def get_verified_thread() -> str | None:
     """
     Return the ID of the most recent 'Verified' meta thread in r/translator
@@ -49,6 +52,9 @@ def get_verified_thread() -> str | None:
             return post.id
 
     return None
+
+
+# ─── Flair helpers ────────────────────────────────────────────────────────────
 
 
 def _set_user_flair(user: "Redditor", verified_language: str) -> None:
@@ -94,6 +100,9 @@ def _set_user_flair(user: "Redditor", verified_language: str) -> None:
     return
 
 
+# ─── Verification processing ──────────────────────────────────────────────────
+
+
 def process_verification(confirming_comment: "Comment") -> None:
     """
     A function that checks for a !verify command to verify a user in a
@@ -103,7 +112,6 @@ def process_verification(confirming_comment: "Comment") -> None:
     :param confirming_comment: The comment by a mod verifying the user.
     :return: Nothing.
     """
-
     mod_caller = confirming_comment.author
     if not is_mod(mod_caller):
         logger.warning(f"u{mod_caller} is NOT a mod.")
@@ -312,6 +320,8 @@ def verification_parser() -> None:
 
     return
 
+
+# ─── Module-level globals ─────────────────────────────────────────────────────
 
 VERIFIED_POST_ID = get_verified_thread()
 

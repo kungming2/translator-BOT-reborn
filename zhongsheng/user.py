@@ -4,11 +4,12 @@
 
 from discord.ext import commands
 
-from database import search_logs
 from monitoring.usage_statistics import user_statistics_loader
 from utility import format_markdown_table_with_padding
 
-from . import command
+from . import command, search_logs
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 @command(
@@ -20,19 +21,15 @@ async def user_search(ctx: commands.Context, *, user_input: str) -> None:
     """Searches through the database and log files for a matching user
     ID for debugging or analysis."""
 
-    # Extract username from URL if provided, otherwise use as-is
+    # Extract username from URL if provided, otherwise use as-is.
     if "reddit.com/user/" in user_input or "reddit.com/u/" in user_input:
-        # Extract username from URL
         username = user_input.rstrip("/").split("/")[-1]
     else:
-        # Use the input directly as username
         username = user_input
 
-    # Search logs first
     await ctx.send(f"🔎 Searching logs and database for `{username}`...")
     await search_logs(ctx, username, "user")
 
-    # Get and append user statistics
     stats = user_statistics_loader(username)
     if stats:
         stats_table = format_markdown_table_with_padding(stats)

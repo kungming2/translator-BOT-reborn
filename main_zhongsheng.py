@@ -4,8 +4,8 @@
 A bot that can listen and respond to Discord server commands, primarily
 to look up data and reference information.
 
-Zhongsheng is a Discord bot for the r/Translator
-moderation team. It provides various utility commands for:
+Zhongsheng is a Discord bot for the r/Translator moderation team.
+It provides various utility commands for:
 - Looking up translation statistics and data
 - Querying database information
 - Accessing reference materials
@@ -38,11 +38,16 @@ from zhongsheng import register_commands
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS"})
 
-# Initialize the bot
+
+# ─── Bot setup ────────────────────────────────────────────────────────────────
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 DISCORD_TOKEN = load_settings(Paths.AUTH["CREDENTIALS"])["ZHONGSHENG_DISCORD_TOKEN"]
+
+
+# ─── Bot events ───────────────────────────────────────────────────────────────
 
 
 @bot.event
@@ -84,9 +89,12 @@ async def on_command_completion(ctx: Context) -> None:
     )
 
 
+# ─── Bot hooks ────────────────────────────────────────────────────────────────
+
+
 @bot.before_invoke
 async def before_command(ctx: Context) -> None:
-    """Log command invocation and clean arguments before it runs."""
+    """Strip and log command arguments before the command runs."""
     if ctx.kwargs:
         for key, value in ctx.kwargs.items():
             if isinstance(value, str):
@@ -99,7 +107,8 @@ async def before_command(ctx: Context) -> None:
     )
 
 
-# Register all commands from the zhongsheng module
+# ─── Command registration & entry point ───────────────────────────────────────
+
 register_commands(bot)
 
 if __name__ == "__main__":

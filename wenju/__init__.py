@@ -25,6 +25,8 @@ Usage
 Logger tag: [WJ:I]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import importlib
 import logging
 import traceback
@@ -37,18 +39,18 @@ from config import logger as _base_logger
 from error import error_log_basic
 from integrations.discord_utils import send_discord_alert
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 
 _tasks: dict[str, list] = {}
 
 
-def _fetch_wenju_settings() -> dict:
-    """Fetches Wenju-specific settings."""
-    return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
+# ─── Task registry ────────────────────────────────────────────────────────────
 
 
 def task(schedule: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Decorator to register a task with a schedule"""
+    """Decorator to register a task with a schedule."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         if schedule not in _tasks:
@@ -59,9 +61,16 @@ def task(schedule: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     return decorator
 
 
-def run_schedule(schedule_name: str) -> None:
-    """Run all tasks for a given schedule"""
+def get_tasks() -> dict:
+    """Return all registered tasks."""
+    return _tasks
 
+
+# ─── Schedule runner ──────────────────────────────────────────────────────────
+
+
+def run_schedule(schedule_name: str) -> None:
+    """Run all tasks for a given schedule."""
     # Dynamically import all task modules in the wenju/ directory
     # to register them. This automatically includes any .py files
     # without needing to manually list them.
@@ -69,7 +78,7 @@ def run_schedule(schedule_name: str) -> None:
 
     for file_path in current_dir.glob("*.py"):
         if file_path.name != "__init__.py":
-            module_name = file_path.stem  # filename without .py extension
+            module_name = file_path.stem
             importlib.import_module(f".{module_name}", package=__package__)
 
     tasks_to_run = _tasks.get(schedule_name, [])
@@ -84,7 +93,6 @@ def run_schedule(schedule_name: str) -> None:
             logger.exception(f"> Error in {task_func.__name__}: {e}")
             error_log_basic(f"{traceback.format_exc()}", f"Wenju ({schedule_name})")
 
-    # Send Discord alert for some schedules after all tasks have completed
     if executed_tasks:
         task_list = "\n".join(f"* `{task_run}`" for task_run in sorted(executed_tasks))
         notify_message = (
@@ -94,7 +102,7 @@ def run_schedule(schedule_name: str) -> None:
     else:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
 
-    # Don't send hourly alerts, though.
+    # Hourly and daily schedules do not send Discord alerts.
     if schedule_name not in ["hourly", "daily"]:
         send_discord_alert(
             f"{schedule_name.title()} Tasks Completed",
@@ -106,9 +114,12 @@ def run_schedule(schedule_name: str) -> None:
     return
 
 
-def get_tasks() -> dict:
-    """Get all registered tasks"""
-    return _tasks
+# ─── Package-level settings ───────────────────────────────────────────────────
+
+
+def _fetch_wenju_settings() -> dict:
+    """Fetch Wenju-specific settings."""
+    return load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
 
 
 WENJU_SETTINGS = _fetch_wenju_settings()

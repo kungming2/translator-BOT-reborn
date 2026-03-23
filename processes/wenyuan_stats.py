@@ -30,6 +30,8 @@ from lang.languages import converter, parse_language_list
 from models.ajo import Ajo, ajo_loader
 from models.lingvo import Lingvo
 
+# ─── Type aliases and typed dicts ────────────────────────────────────────────
+
 # Type aliases for clarity
 TimeRange = tuple[int, int]  # (start_timestamp, end_timestamp)
 LanguageStats = dict[str, Any]  # Statistics dictionary for a language
@@ -49,6 +51,9 @@ class FastestStats(TypedDict, total=False):
     to_review: FastestEntry
     to_claimed: FastestEntry
     average_translation_hours: float
+
+
+# ─── Module-level helpers ─────────────────────────────────────────────────────
 
 
 def get_effective_status(ajo: Ajo) -> str:
@@ -83,8 +88,13 @@ def get_effective_status(ajo: Ajo) -> str:
     return "untranslated"
 
 
+# ─── Main Lumo class ──────────────────────────────────────────────────────────
+
+
 class Lumo:
     """Analyzes translation request statistics from a database of Ajos (request objects)."""
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(
         self, start_time: int | None = None, end_time: int | None = None
@@ -120,7 +130,7 @@ class Lumo:
         """Return a string representation of the Lumo instance."""
         return f"<Lumo: {len(self.ajos)} Ajos loaded>"
 
-    # ==================== Time Helper Methods ====================
+    # ── Time helpers ──────────────────────────────────────────────────────────
 
     @staticmethod
     def date_to_unix(
@@ -189,7 +199,7 @@ class Lumo:
         end = int(time.time())
         return start, end
 
-    # ==================== Data Loading ====================
+    # ── Data loading ──────────────────────────────────────────────────────────
 
     def load_ajos(
         self,
@@ -211,7 +221,6 @@ class Lumo:
         Raises:
             ValueError: If time parameters are not provided and no defaults exist
         """
-        # Handle all_time flag
         start: int | None
         end: int | None
         if all_time:
@@ -288,7 +297,6 @@ class Lumo:
         Returns:
             List of user's Ajo objects
         """
-        # Use search_database function from database.py
         start_utc = start_time or self.start_time
         self.ajos = search_database(username, "user", start_utc=start_utc)
 
@@ -320,7 +328,7 @@ class Lumo:
             return results[0]
         return None
 
-    # ==================== Search & Filter ====================
+    # ── Search and filtering ──────────────────────────────────────────────────
 
     def filter_by_time_range(self, start_time: int, end_time: int) -> list[Ajo]:
         """Filter currently loaded Ajos by a different time range."""
@@ -341,7 +349,6 @@ class Lumo:
         Returns:
             Filtered list of Ajos
         """
-        # Convert to Lingvo if needed
         if isinstance(language, str):
             target_lingvo = converter(language)
             if not target_lingvo:
@@ -393,7 +400,6 @@ class Lumo:
 
         for key, value in kwargs.items():
             if key == "language":
-                # Use the optimized filter_by_language method
                 results = [
                     ajo for ajo in results if ajo in self.filter_by_language(value)
                 ]
@@ -408,7 +414,7 @@ class Lumo:
 
         return results
 
-    # ==================== Language Statistics ====================
+    # ── Language statistics ───────────────────────────────────────────────────
 
     @lru_cache(maxsize=128)
     def get_language_stats(self, language: str) -> LanguageStats | None:
@@ -422,7 +428,6 @@ class Lumo:
         Returns:
             Dictionary with language statistics or None if no data
         """
-        # Convert to ensure we have a valid language
         lingvo = converter(language)
         if not lingvo:
             return None
@@ -432,7 +437,6 @@ class Lumo:
         if not language_ajos:
             return None
 
-        # Collect statuses using the helper method
         statuses = [get_effective_status(ajo) for ajo in language_ajos]
 
         if not statuses:
@@ -448,15 +452,12 @@ class Lumo:
             + statuses.count("inprogress")
         )
 
-        # Calculate translation percentage
         translation_pct = (
             int(((translated + doublecheck) / total) * 100) if total > 0 else 0
         )
 
-        # Calculate percentage of all requests
         percent_of_all = round((total / len(self.ajos)) * 100, 2) if self.ajos else 0
 
-        # Calculate direction ratios using Counter
         directions = self._calculate_directions(language_ajos)
 
         return {
@@ -509,14 +510,12 @@ class Lumo:
             List of (language, count) tuples, sorted descending
         """
         if by == "total":
-            # Count all occurrences
             language_counts = Counter(
                 ajo.language_name
                 for ajo in self.ajos
                 if ajo.lingvo and ajo.language_name
             )
         elif by == "translated":
-            # Count only translated
             language_counts = Counter(
                 ajo.language_name
                 for ajo in self.ajos
@@ -525,7 +524,6 @@ class Lumo:
                 and get_effective_status(ajo) == "translated"
             )
         elif by == "untranslated":
-            # Count only untranslated
             language_counts = Counter(
                 ajo.language_name
                 for ajo in self.ajos
@@ -558,7 +556,6 @@ class Lumo:
         if not lingvo:
             return None
 
-        # Check if frequency data exists
         if not all([lingvo.rate_daily, lingvo.rate_monthly, lingvo.rate_yearly]):
             return None
 
@@ -571,11 +568,10 @@ class Lumo:
             "num_months": lingvo.num_months,
         }
 
-    # ==================== Overall Statistics ====================
+    # ── Overall statistics ────────────────────────────────────────────────────
 
     def get_overall_stats(self) -> dict[str, Any]:
         """Get overall statistics across all requests."""
-        # Collect all statuses using helper method
         statuses = [get_effective_status(ajo) for ajo in self.ajos]
 
         total = len(self.ajos)
@@ -625,7 +621,7 @@ class Lumo:
             },
         }
 
-    # ==================== Time-based Analysis ====================
+    # ── Time-based analysis ───────────────────────────────────────────────────
 
     def get_fastest_translations(self) -> FastestStats:
         """Find the fastest processed requests."""
@@ -647,33 +643,29 @@ class Lumo:
                 continue
             ajo_id = ajo.id
 
-            # Check translated
             if "translated" in time_delta:
                 diff = time_delta["translated"] - created
                 translation_times.append(diff)
                 if diff < fastest["to_translated"]["time"]:
                     fastest["to_translated"] = FastestEntry(time=int(diff), id=ajo_id)
 
-            # Check doublecheck
             if "doublecheck" in time_delta:
                 diff = time_delta["doublecheck"] - created
                 if diff < fastest["to_review"]["time"]:
                     fastest["to_review"] = FastestEntry(time=int(diff), id=ajo_id)
 
-            # Check in progress
             if "inprogress" in time_delta:
                 diff = time_delta["inprogress"] - created
                 if diff < fastest["to_claimed"]["time"]:
                     fastest["to_claimed"] = FastestEntry(time=int(diff), id=ajo_id)
 
-        # Calculate averages
         if translation_times:
             avg_hours = round(sum(translation_times) / len(translation_times) / 3600, 2)
             fastest["average_translation_hours"] = avg_hours
 
         return fastest
 
-    # ==================== Identification Analysis ====================
+    # ── Identification analysis ───────────────────────────────────────────────
 
     def get_identification_stats(self) -> dict[str, dict[str, int]]:
         """
@@ -693,9 +685,7 @@ class Lumo:
             cleaned_history = []
             for item in history:
                 if item:
-                    # Handle case where item might be a list
                     if isinstance(item, list):
-                        # Skip nested lists or use first item
                         if item and isinstance(item[0], str):
                             cleaned_history.append(item[0])
                     elif isinstance(item, str):
@@ -707,11 +697,9 @@ class Lumo:
             # Normalize language names in history using converter
             normalized_history = []
             for lang in cleaned_history:
-                # Skip if not a string (extra safety)
                 if not isinstance(lang, str):
                     continue
 
-                # Try to convert to standard name
                 lingvo = converter(lang)
                 if lingvo:
                     normalized_history.append(lingvo.name)
@@ -752,7 +740,7 @@ class Lumo:
             "misidentified_pairs": dict(misidentified),
         }
 
-    # ==================== Helper Methods ====================
+    # ── Internal helpers ──────────────────────────────────────────────────────
 
     @staticmethod
     def _expand_multiple_language_posts(ajos: list[Ajo]) -> list[Ajo]:
@@ -764,21 +752,16 @@ class Lumo:
 
         for ajo in ajos:
             if ajo.is_defined_multiple and isinstance(ajo.status, dict):
-                # Split into individual language entries
                 for lang_code, status_value in ajo.status.items():
-                    # Create a new Ajo instance with the same data
                     temp_ajo = Ajo.from_dict(ajo.to_dict())
 
-                    # Set the language for this specific entry
                     temp_ajo.preferred_code = lang_code
                     temp_ajo.initialize_lingvo()
 
-                    # Set the status for this language
                     temp_ajo.status = status_value
                     temp_ajo.type = "single"
                     temp_ajo.is_defined_multiple = False
 
-                    # Update the ID to make it unique
                     temp_ajo._id = f"{ajo.id}_{lang_code}"
 
                     expanded.append(temp_ajo)
@@ -797,7 +780,6 @@ class Lumo:
         """
         directions = Counter(ajo.direction for ajo in language_ajos)
 
-        # Calculate ratio
         to_count = directions.get("english_to", 0)
         from_count = directions.get("english_from", 0)
 
@@ -811,7 +793,7 @@ class Lumo:
         """Clear the LRU cache for get_language_stats when data changes."""
         self.get_language_stats.cache_clear()
 
-    # ==================== Export Methods ====================
+    # ── Export ────────────────────────────────────────────────────────────────
 
     def to_dict(self) -> dict[str, Any]:
         """Export all statistics as a dictionary."""

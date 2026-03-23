@@ -18,6 +18,9 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ASYNC"})
 
 
+# ─── Async utilities ──────────────────────────────────────────────────────────
+
+
 async def fetch_json(session: aiohttp.ClientSession, url: str) -> dict | list | None:
     """
     Fetch and parse a JSON response asynchronously.
@@ -59,7 +62,6 @@ async def call_sync_async(func: Callable, *args: Any, **kwargs: Any) -> Any:
     Returns:
         Any: The result of the function call, awaited or executed as appropriate.
     """
-
     if asyncio.iscoroutinefunction(func):
         return await func(*args, **kwargs)
     loop = asyncio.get_event_loop()

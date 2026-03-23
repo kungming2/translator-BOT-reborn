@@ -56,6 +56,9 @@ from wenju import get_tasks, run_schedule
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ"})
 
 
+# ─── Runner ───────────────────────────────────────────────────────────────────
+
+
 def wenju_runner() -> None:
     """
     Parse the command-line schedule argument and dispatch to the matching
@@ -78,22 +81,21 @@ def wenju_runner() -> None:
         sys.exit(1)
 
 
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     try:
         wenju_runner()
+
     except (KeyboardInterrupt, SystemExit):
-        # Don't treat intentional exits or Ctrl+C as "errors"
         logger.info("Manual user shutdown.")
         raise
 
     except TRANSIENT_ERRORS as e:
-        # Just log transient errors at WARNING level, don't save to error log
         logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
         logger.info("Will retry on next cycle.")
 
     except Exception as e:
-        # Log all other unexpected exceptions
         logger.critical(f"Encountered critical error: {e}.")
-
         error_text = f"{type(e).__name__}: {e}\n\n{traceback.format_exc()}"
         error_log_extended(error_text, "Wenju")

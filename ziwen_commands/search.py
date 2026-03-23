@@ -25,28 +25,29 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:SEARCH"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
     Example data:
-        [Komando(name='search', data=['allergy'])]"""
-
+        [Komando(name='search', data=['allergy'])]
+    """
     logger.info("Search handler initiated.")
     if not komando.data:
         logger.info("> No search terms provided. Ignoring.")
         return
-    search_terms: list[str] = komando.data  # This is a list of strings
 
-    # Join search terms into a single query string
+    search_terms: list[str] = komando.data
     search_query = " ".join(search_terms)
 
-    # Check for frequently-translated text and return advisories first
+    # Return FRT advisories immediately if one matches.
     frequently_translated_info: str | None = search_integration(search_query)
     if frequently_translated_info and "Advisory" in frequently_translated_info:
         reddit_reply(comment, frequently_translated_info + RESPONSE.BOT_DISCLAIMER)
         return
 
-    # Fetch Google search results for r/translator
     post_ids = fetch_search_reddit_posts(search_query)
     if not post_ids:
         logger.info(f"> No results found for '{search_query}'.")
@@ -54,10 +55,8 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
 
     logger.info(f"> Results found for '{search_query}'...")
 
-    # Build reply from Reddit submissions
     search_results_body: str = build_search_results(post_ids, search_query)
 
-    # Format final reply with optional frequently-translated information
     results_header: str = f'## Search results on r/translator for "{search_query}":\n\n'
     full_reply: str = (
         f"{frequently_translated_info}\n\n{results_header}{search_results_body}"

@@ -6,11 +6,18 @@ Allows commands to be defined in separate modules and registered via decorator.
 """
 
 import importlib
+import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from discord.ext import commands
+
+if TYPE_CHECKING:
+    from discord.ext.commands import Context
+
+
+# ─── Command registry ─────────────────────────────────────────────────────────
 
 _commands: list[dict[str, Any]] = []
 
@@ -34,8 +41,16 @@ def command(name: str, help_text: str, roles: list | None = None) -> Callable:
     return decorator
 
 
+def get_commands() -> list:
+    """Get all registered commands."""
+    return _commands
+
+
+# ─── Bot registration ─────────────────────────────────────────────────────────
+
+
 def register_commands(bot: commands.Bot) -> None:
-    """Register all commands with the Discord bot"""
+    """Register all commands with the Discord bot."""
 
     # Dynamically import all command modules in the zhongsheng/ directory
     # to trigger registration. This automatically includes any .py files
@@ -48,23 +63,19 @@ def register_commands(bot: commands.Bot) -> None:
             importlib.import_module(f".{module_name}", package=__package__)
 
     for cmd in _commands:
-        # Start with the function
         func = cmd["func"]
 
-        # Add role requirements if specified
+        # Apply role restrictions if specified
         if cmd["roles"]:
             if len(cmd["roles"]) == 1:
                 func = commands.has_role(cmd["roles"][0])(func)
             else:
                 func = commands.has_any_role(*cmd["roles"])(func)
 
-        # Register the command with the bot
         bot.command(name=cmd["name"], help=cmd["help"])(func)
 
 
-def get_commands() -> list:
-    """Get all registered commands"""
-    return _commands
+# ─── Shared utilities ─────────────────────────────────────────────────────────
 
 
 async def send_long_message(
@@ -87,7 +98,6 @@ async def send_long_message(
     for paragraph in paragraphs:
         # If a single paragraph exceeds max length, split it further
         if len(paragraph) > max_length:
-            # Add current chunk if it exists
             if current_chunk:
                 chunks.append(current_chunk)
                 current_chunk = ""
@@ -107,15 +117,100 @@ async def send_long_message(
             if len(test_chunk) <= max_length:
                 current_chunk = test_chunk
             else:
-                # Current chunk is full, start a new one
                 if current_chunk:
                     chunks.append(current_chunk)
                 current_chunk = paragraph
 
-    # Add remaining content
     if current_chunk:
         chunks.append(current_chunk)
 
-    # Send all chunks
     for chunk in chunks:
         await ctx.send(chunk)
+
+
+async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
+    """
+    Search through log files and the Ajo database for a given term,
+    which can be a username or a post ID.
+
+    Args:
+        ctx: Discord context
+        search_term: The term to search for (username or post_id)
+        term_type: Type of search ('user' or 'post') for display purposes
+    """
+    from config import SETTINGS, Paths
+    from database import search_database
+
+    days_back = SETTINGS["log_search_days"]
+    log_files = {
+        "FILTER": Paths.LOGS["FILTER"],
+        "EVENTS": Paths.LOGS["EVENTS"],
+        "ERROR": Paths.LOGS["ERROR"],
+    }
+
+    cutoff_utc = int(time.time()) - (days_back * 86400)
+
+    try:
+        log_lines = []
+
+        for log_name, log_path in log_files.items():
+            try:
+                with open(
+                    log_path, "r", encoding="utf-8", errors="replace"
+                ) as log_file:
+                    for line in log_file:
+                        if search_term in line:
+                            log_lines.append(f"[{log_name}] {line.strip()}")
+            except FileNotFoundError:
+                await ctx.send(
+                    f"Warning: {log_name} log file not found at `{log_path}`"
+                )
+                continue
+
+        db_results = search_database(search_term, term_type, start_utc=cutoff_utc)
+
+        if not log_lines and not db_results:
+            await ctx.send(
+                f"No entries found for {term_type} `{search_term}` in the last {days_back} days."
+            )
+            return
+
+        response = f"Search results for {term_type} `{search_term}` (last {days_back} days):\n```\n"
+
+        if log_lines:
+            response += f"=== LOG FILES ({len(log_lines)} matches) ===\n"
+            for line in log_lines:
+                if len(response) + len(line) + 10 > 1900:
+                    response += "```"
+                    await ctx.send(response)
+                    response = "```\n"
+                response += line + "\n"
+            response += "\n"
+
+        if db_results:
+            response += f"=== DATABASE ({len(db_results)} records) ===\n"
+            for ajo in db_results:
+                ajo_str = (
+                    f"Post ID: {ajo.id}\n"
+                    f"  Author: u/{ajo.author}\n"
+                    f"  Status: {ajo.status}\n"
+                    f"  Language: {ajo.language_name} ({ajo.preferred_code})\n"
+                    f"  Title: {ajo.title}\n"
+                    f"  Direction: {ajo.direction}\n"
+                    f"---"
+                )
+                if len(response) + len(ajo_str) + 10 > 1900:
+                    response += "```"
+                    await ctx.send(response)
+                    response = "```\n"
+                response += ajo_str + "\n"
+
+        response += "```"
+        print(response)
+        await ctx.send(response)
+
+    except Exception as e:
+        await ctx.send(f"An error occurred: {str(e)}")
+        import traceback
+
+        traceback.print_exc()

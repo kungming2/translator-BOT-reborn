@@ -13,6 +13,8 @@ from error import display_event_errors
 
 from . import command
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
 
 @command(
     name="error",
@@ -22,19 +24,15 @@ from . import command
 async def error_logs(ctx: Context) -> None:
     """Returns the last few error log entries for analysis."""
     try:
-        # Read the YAML file
         with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
             error_data = yaml.safe_load(f)
 
-        # Handle empty or None error log
         if not error_data:
             await ctx.send("✅ No error logs found.")
             return
 
-        # Get the last 3 entries
         recent_errors = error_data[-3:] if len(error_data) >= 3 else error_data
 
-        # Format the output
         response = "**Most Recent Error Logs:**\n\n"
 
         for i, entry in enumerate(reversed(recent_errors), 1):
@@ -51,7 +49,7 @@ async def error_logs(ctx: Context) -> None:
             response += f"\nError:\n{entry.get('error', 'N/A')}\n"
             response += "```\n\n"
 
-        # Get event log errors from last 3 days
+        # Append event log errors from the last 3 days
         event_errors = display_event_errors(days=3)
 
         if event_errors:
@@ -62,9 +60,8 @@ async def error_logs(ctx: Context) -> None:
         else:
             response += "✅ No event log errors in the last 3 days.\n"
 
-        # Discord has a 2000-character limit, so split if needed
+        # Send as a text file if the response exceeds Discord's character limit
         if len(response) > 2000:
-            # Send as a text file instead
             file_content = response.replace("**", "").replace("```", "")
             file = discord.File(
                 BytesIO(file_content.encode("utf-8")), filename="recent_errors.txt"

@@ -7,6 +7,8 @@ Image handling functions, primarily for the transform command.
 Logger tag: [I:IMAGE]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import base64
 import logging
 from io import BytesIO
@@ -17,10 +19,9 @@ from PIL import Image
 from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
-
-
 # ─── Module-level constants ───────────────────────────────────────────────────
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
 
 access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
 
@@ -81,7 +82,7 @@ def rotate_or_flip_image(image_url: str, transformation: str) -> Image.Image:
     return img
 
 
-# ─── Image upload ─────────────────────────────────────────────────────────────
+# ─── Image encoding ───────────────────────────────────────────────────────────
 
 
 def _to_jpeg(image: Image.Image) -> bytes:
@@ -105,6 +106,9 @@ def _to_jpeg(image: Image.Image) -> bytes:
     image.save(buffered, format="JPEG", quality=jpeg_quality)
     logger.debug(f"Image encoded to base64 (JPEG quality: {jpeg_quality}%)")
     return buffered.getvalue()
+
+
+# ─── Image upload ─────────────────────────────────────────────────────────────
 
 
 def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:

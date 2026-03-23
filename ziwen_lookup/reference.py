@@ -28,6 +28,9 @@ from reddit.connection import get_random_useragent
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})
 
 
+# ─── Internal fetch helpers ───────────────────────────────────────────────────
+
+
 def _fetch_sil_language_data(language_code: str) -> dict | None:
     """
     Fetch language reference data from SIL ISO 639-3 as a fallback.
@@ -49,7 +52,6 @@ def _fetch_sil_language_data(language_code: str) -> dict | None:
 
     tree = html.fromstring(response.content)
 
-    # Find the main <h2> element containing the language name and code dynamically
     header_elements = tree.xpath('//div[contains(@class,"region-content")]//h2/text()')
     logger.debug(f"Header elements found: {header_elements}")
 
@@ -61,7 +63,6 @@ def _fetch_sil_language_data(language_code: str) -> dict | None:
     logger.debug(f"Found header: {header_text}")
     name = header_text.split("[")[0].strip()
 
-    # Find the code sets table row dynamically
     code_sets_elements = tree.xpath("//table//tr/td[4]/text()")
     logger.debug(f"Code sets found: {code_sets_elements}")
 
@@ -145,7 +146,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     if not lookup_url:
         return None
 
-    # Extract ISO 639-3 language code from URL
     try:
         language_code = lookup_url.rsplit("/", 1)[-1].lower()
         if len(language_code) == 2:
@@ -163,7 +163,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
 
     ref_data: dict = {"language_code_3": language_code}
 
-    # Fetch the Ethnologue page
     try:
         response = requests.get(lookup_url, headers=useragent)
         response.raise_for_status()
@@ -171,8 +170,7 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     except requests.RequestException as e:
         logger.error(f"Could not fetch Ethnologue page for `{language_code}`: {e}")
 
-        # SIL backup here. This is primarily for historical/extinct
-        # languages, like Tangut.
+        # SIL backup for historical/extinct languages like Tangut.
         sil_data = _fetch_sil_language_data(language_code)
         if sil_data:
             logger.info(
@@ -183,7 +181,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
 
         return None
 
-    # Check if the language exists on the page
     try:
         language_exist = tree.xpath(
             '//div[contains(@class,"view-display-id-page")]/div/text()'
@@ -193,7 +190,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     except IndexError:
         return None
 
-    # Language names
     _lingvo = converter(language_code)
     ref_data["name"] = _lingvo.name if _lingvo is not None else language_code
     try:
@@ -203,14 +199,11 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         alt_names = [
             name.strip() for name in alt_names_raw.split(",") if "pej." not in name
         ]
-        alt_names = [
-            x for x in alt_names if len(x) > 4
-        ]  # We want to avoid names which might be codes
+        alt_names = [x for x in alt_names if len(x) > 4]
         ref_data["name_alternates"] = alt_names
     except IndexError:
         ref_data["name_alternates"] = []
 
-    # Population
     try:
         population_text = tree.xpath(
             '//div[contains(@class,"field-population")]/div[2]/div/p/text()'
@@ -226,9 +219,7 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         )
         ref_data["population"] = 0
 
-    # Country - multiple fallback strategies
     try:
-        # Try multiple XPath strategies
         country_list = (
             tree.xpath('//div[contains(@class,"a-language-of")]/div/div/h2/a/text()')
             or tree.xpath(
@@ -249,7 +240,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
         logger.warning(f"Error retrieving country for `{language_code}`: {e}")
         ref_data["country"] = ""
 
-    # Language family
     try:
         family_data = tree.xpath(
             '//div[contains(@class,"field-name-language-classification-link")]//a/text()'
@@ -260,7 +250,6 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     except IndexError:
         ref_data["family"] = "Unknown"
 
-    # Wikipedia link
     try:
         wk_page = wikipedia.page(
             title=f"ISO 639:{language_code}",
@@ -272,25 +261,25 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
         ref_data["link_wikipedia"] = ""
 
-    # Ethnologue link
     ref_data["link_ethnologue"] = f"https://www.ethnologue.com/language/{language_code}"
 
     logger.info(f"Final reference data for `{language_code}`: {ref_data}")
 
-    # Save new data if not already stored
+    # Save new data if not already stored.
     language_data_path = Paths.DATASETS["LANGUAGE_DATA"]
     with open(language_data_path, "r", encoding="utf-8") as f:
         existing_data = yaml.safe_load(f) or {}
-    # Check and update if key doesn't exist
     if language_code not in existing_data:
         existing_data[language_code] = ref_data
 
-        # Write updated YAML back to file
         with open(language_data_path, "w", encoding="utf-8") as f:
             yaml.dump(existing_data, f, allow_unicode=True, sort_keys=True)
             logger.info(f"Data for `{language_code}` has been added.")
 
     return ref_data
+
+
+# ─── Public API ───────────────────────────────────────────────────────────────
 
 
 def get_language_reference(language_code: str) -> dict | None:
@@ -301,13 +290,11 @@ def get_language_reference(language_code: str) -> dict | None:
     :param language_code: ISO 639-3 (or ISO 639-1) language code
     :return: Dictionary containing reference data, or None if unavailable
     """
-    # Step 1: Get archived Ethnologue page URL
     archived_url = _get_archived_ethnologue_page(language_code)
     if not archived_url:
         logger.error(f"Could not retrieve archived URL for `{language_code}`.")
         return None
 
-    # Step 2: Fetch and parse reference data from the archived page
     reference_data = _fetch_language_reference_data(archived_url, language_code)
     if not reference_data:
         logger.error(f"Could not retrieve reference data for `{language_code}`.")

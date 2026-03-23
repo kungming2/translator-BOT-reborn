@@ -28,6 +28,9 @@ from ziwen_lookup.zh import zh_character, zh_word
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CJK"})
 
 
+# ─── Language config helpers ──────────────────────────────────────────────────
+
+
 def _get_cjk_languages() -> dict:
     """
     Load and return CJK language configuration. This config is a
@@ -50,6 +53,9 @@ def _find_cjk_language(preferred_code: str) -> str | None:
             return language
 
     return None
+
+
+# ─── Per-language lookup functions ────────────────────────────────────────────
 
 
 async def _lookup_chinese_term(term: str) -> str | None:
@@ -100,6 +106,9 @@ async def perform_cjk_lookups(cjk_language: str, search_terms: list[str]) -> lis
     return results
 
 
+# ─── Reply formatting ─────────────────────────────────────────────────────────
+
+
 def _format_reply(lookup_results: list[str], ajo: Ajo | None = None) -> str:
     """Format the reply body with lookup results."""
     anchor_tag = RESPONSE.ANCHOR_CJK
@@ -107,21 +116,20 @@ def _format_reply(lookup_results: list[str], ajo: Ajo | None = None) -> str:
 
     if not ajo:
         return formatted_results
-    else:
-        # Tag the author if there is one.
-        if ajo.author:
-            author_mention_tag: str = (
-                f"*u/{ajo.author} (OP), the following lookup results "
-                "may be of interest to your request.*\n\n"
-            )
-        else:
-            author_mention_tag = ""
-        return (
-            author_mention_tag
-            + formatted_results
-            + RESPONSE.BOT_DISCLAIMER
-            + anchor_tag
+
+    author_mention_tag: str = (
+        (
+            f"*u/{ajo.author} (OP), the following lookup results "
+            "may be of interest to your request.*\n\n"
         )
+        if ajo.author
+        else ""
+    )
+
+    return author_mention_tag + formatted_results + RESPONSE.BOT_DISCLAIMER + anchor_tag
+
+
+# ─── Duplicate detection ──────────────────────────────────────────────────────
 
 
 def _check_for_duplicate_lookups(
@@ -143,15 +151,8 @@ def _check_for_duplicate_lookups(
     if not search_terms:
         return None
 
-    # Create Kunulo instance from the submission
-    submission = comment.submission
-    kunulo = Kunulo.from_submission(submission)
-
-    # Check for existing lookups (works for all CJK languages and all term types)
-    existing = kunulo.check_existing_cjk_lookups(
-        search_terms,
-        exact_match=True,  # Change to False if you want subset matching
-    )
+    kunulo = Kunulo.from_submission(comment.submission)
+    existing = kunulo.check_existing_cjk_lookups(search_terms, exact_match=True)
 
     if existing:
         logger.info(
@@ -161,6 +162,9 @@ def _check_for_duplicate_lookups(
         return existing
 
     return None
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
@@ -182,12 +186,15 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     logger.info("CJK Lookup handler initiated.")
     logger.info(f"CJK Lookup, from u/{comment.author}.")
 
-    # Check if there's an !identify command for auto-detected terms
+    if not komando.data:
+        logger.warning("No data in komando; nothing to look up.")
+        return
+
+    # Resolve default language from a co-occurring !identify command.
     identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
     default_language = None
 
     if identify_komando and identify_komando.data:
-        # Use the first language from !identify as default for auto-detected terms
         default_lingvo = identify_komando.data[0]
         default_language = _find_cjk_language(default_lingvo.preferred_code)
         if default_language:
@@ -196,13 +203,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
                 f"as default for auto-detected terms"
             )
 
-    # Group terms by their CJK language category
-    # This allows handling mixed-language lookups like Chinese + Korean in one command
+    # Group terms by their CJK language category, respecting explicit markings.
     terms_by_language: dict[str, list[str]] = {}
-
-    if not komando.data:
-        logger.warning("No data in komando; nothing to look up.")
-        return
 
     for entry in komando.data:
         # Handle both old format (lang, term) and new format (lang, term, explicit)
@@ -215,28 +217,22 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
             logger.warning(f"Invalid entry format: {entry}")
             continue
 
-        # Determine the language to use
         if is_explicit:
-            # Explicitly marked - use the specified language
             cjk_language = _find_cjk_language(lang_code)
             logger.debug(
                 f"Term '{term}' explicitly marked as {lang_code} → {cjk_language}"
             )
         elif default_language:
-            # Auto-detected and we have a default from !identify - use default
             cjk_language = default_language
             logger.debug(
                 f"Term '{term}' auto-detected, using !identify default → {cjk_language}"
             )
         else:
-            # Auto-detected and no default - use auto-detected language
             cjk_language = _find_cjk_language(lang_code)
             logger.debug(f"Term '{term}' auto-detected as {lang_code} → {cjk_language}")
 
         if cjk_language:
-            if cjk_language not in terms_by_language:
-                terms_by_language[cjk_language] = []
-            terms_by_language[cjk_language].append(term)
+            terms_by_language.setdefault(cjk_language, []).append(term)
         else:
             logger.warning(
                 f"Could not map language code '{lang_code}' to a CJK language. "
@@ -249,7 +245,7 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
 
     logger.info(f"Processing terms grouped by language: {terms_by_language}")
 
-    # Process each language group separately
+    # Perform lookups per language group, tracking duplicates separately.
     all_lookup_results = []
     duplicate_responses = []
 
@@ -258,57 +254,43 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
             f"Processing {len(search_terms)} term(s) for {cjk_language}: {search_terms}"
         )
 
-        # Check for duplicates for this language group
         duplicate_check = _check_for_duplicate_lookups(
             comment, search_terms, cjk_language
         )
 
         if duplicate_check:
-            # Duplicate found - prepare response but don't return yet
-            # (we might have other non-duplicate languages to process)
             comment_id = duplicate_check["comment_id"]
             matched_terms = duplicate_check["matched_terms"]
 
-            # Get permalink using Kunulo
             kunulo = Kunulo.from_submission(comment.submission)
             permalink = kunulo.get_comment_permalink(comment_id)
-
-            # Format the matched terms nicely
             chars_str = ", ".join(f"**{char}**" for char in matched_terms)
 
-            # Store duplicate response
-            duplicate_message = (
+            duplicate_responses.append(
                 f"The {cjk_language} term(s) {chars_str} have already been looked up. "
                 f"Please see [this comment]({permalink})."
             )
-            duplicate_responses.append(duplicate_message)
-
             logger.info(
                 f"Duplicate found for {cjk_language} terms {matched_terms} "
                 f"in comment {comment_id}."
             )
-            continue  # Skip to next language group
+            continue
 
-        # No duplicates - perform lookups for this language
         lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, search_terms))
         all_lookup_results.extend(lookup_results)
         logger.info(f"Completed lookups for {cjk_language}.")
 
-    # Prepare and send reply
+    # Assemble and send reply.
     reply_parts = []
 
-    # Add duplicate notifications if any
     if duplicate_responses:
         duplicate_section = "\n\n".join(duplicate_responses)
         duplicate_section += "\n\nIf this is in error, please let a moderator know."
         reply_parts.append(duplicate_section)
 
-    # Add new lookup results if any
     if all_lookup_results:
-        reply_body = _format_reply(all_lookup_results, ajo)
-        reply_parts.append(reply_body)
+        reply_parts.append(_format_reply(all_lookup_results, ajo))
 
-    # Send reply if we have anything to say
     if reply_parts:
         final_reply = "\n\n---\n\n".join(reply_parts)
         if len(final_reply) > 10000:

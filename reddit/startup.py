@@ -19,6 +19,9 @@ from reddit.connection import REDDIT, USERNAME
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:STARTUP"})
 
 
+# ─── State container ──────────────────────────────────────────────────────────
+
+
 @dataclass
 class State:
     """A simple state container for Ziwen constants that are called
@@ -26,6 +29,9 @@ class State:
 
     post_templates: dict[str, Any]
     recent_submitters: list[str]
+
+
+# ─── Startup helpers ──────────────────────────────────────────────────────────
 
 
 def template_retriever() -> dict[str, str]:
@@ -73,5 +79,7 @@ def ziwen_startup() -> State:
 
     return State(post_templates=post_templates, recent_submitters=recent_submitters)
 
+
+# ─── Module-level globals ─────────────────────────────────────────────────────
 
 STATE: State = ziwen_startup()

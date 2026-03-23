@@ -36,7 +36,8 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
 
 useragent = get_random_useragent()
 
-"""MATCHING TEXT"""
+
+# ─── Tokenizers ───────────────────────────────────────────────────────────────
 
 
 def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
@@ -64,16 +65,13 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
     if language_code == "zh":
         from ziwen_lookup.zh import simplify
 
-        # Simplify Traditional Chinese to Simplified for better tokenization
         simplified_phrase = simplify(phrase)
         simplified_tokens: list[str] = list(jieba.cut(simplified_phrase))
 
         # Map simplified tokens back to original Traditional Chinese characters
         original_idx = 0
-
         for simp_token in simplified_tokens:
             token_len = len(simp_token)
-            # Extract corresponding substring from original phrase
             original_token = phrase[original_idx : original_idx + token_len]
             tokens.append(original_token)
             original_idx += token_len
@@ -95,7 +93,6 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
     else:
         raise ValueError("Unsupported language code. Use 'zh' or 'ja'.")
 
-    # Filter out punctuation
     return [token for token in tokens if is_valid_token(token)]
 
 
@@ -111,18 +108,16 @@ def lookup_ko_tokenizer(phrase: str) -> list[str]:
     :return: List of content words
     """
     kiwi: Kiwi = Kiwi()
-    # Tokenize with normalization to handle coda endings properly
     tokens = kiwi.tokenize(phrase, normalize_coda=True)
 
     # Keep nouns (NN*), verbs (VV), adjectives (VA),
     # foreign words (SL), and exclamations (IC)
     content_tags: set[str] = {"NNG", "NNP", "NNB", "VV", "VA", "SL", "IC"}
 
-    content_words: list[str] = [
-        token.form for token in tokens if token.tag in content_tags
-    ]
+    return [token.form for token in tokens if token.tag in content_tags]
 
-    return content_words
+
+# ─── Main lookup matcher ──────────────────────────────────────────────────────
 
 
 def lookup_matcher(
@@ -165,7 +160,8 @@ def lookup_matcher(
 
     cjk_languages: dict = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
 
-    # --- Handle !identify or !id command ---
+    # ── Language code resolution ───────────────────────────────────────────────
+
     language_codes: list[str] = []
     match: re.Match | None = re.search(r"!(?:identify|id):\s*(\S+)", original_text)
     if match:
@@ -187,7 +183,8 @@ def lookup_matcher(
         if mentions and len(mentions) == 1:
             language_codes = [mentions[0].preferred_code]
 
-    # --- Extract all segments between backticks with optional inline language spec ---
+    # ── Backtick segment extraction ────────────────────────────────────────────
+
     backtick_pattern: str = r"`([^`]+?)`(?::([^!\s]+))?"
     backtick_matches: list[re.Match] = list(re.finditer(backtick_pattern, content_text))
 
@@ -223,14 +220,13 @@ def lookup_matcher(
 
     logger.debug(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
 
+    # ── Per-segment processing ────────────────────────────────────────────────
+
     result: dict[str, list[str | tuple[str, bool]]] = {}
 
-    # Process each backtick segment individually
     for match_text, inline_lang in zip(matches, inline_language_codes):
-        # Track whether language was explicitly specified
         is_explicit = inline_lang is not None
 
-        # Detect scripts for THIS segment only
         has_hanzi: bool = bool(
             re.search(r"[\u2E80-\u9FFF\U00020000-\U0002EBEF]", match_text)
         )
@@ -242,14 +238,13 @@ def lookup_matcher(
             f"Hangul: {has_hangul}, Explicit: {is_explicit}"
         )
 
-        # Determine which language codes apply to this segment
         seg_language_codes: list[str]
         if inline_lang:
             seg_language_codes = [inline_lang]
         else:
             seg_language_codes = language_codes
 
-        # If no language codes determined yet, infer from script detection FOR THIS SEGMENT
+        # Infer from script if no language codes determined yet
         if not seg_language_codes:
             if has_hangul:
                 seg_language_codes = ["ko"]
@@ -262,18 +257,14 @@ def lookup_matcher(
             f"Processing segment '{match_text}' with language codes: {seg_language_codes}"
         )
 
-        # --- If tokenization is disabled, return full segments ---
         if disable_tokenization:
             for code in seg_language_codes:
-                if code not in result:
-                    result[code] = []
-                result[code].append((match_text, is_explicit))
+                result.setdefault(code, []).append((match_text, is_explicit))
             logger.debug(
                 f"Added untokenized text '{match_text}' (explicit={is_explicit}) for codes: {seg_language_codes}"
             )
             continue
 
-        # --- Handle Chinese and Japanese ---
         if has_hanzi or has_kana:
             cjk_tokens: list[str] = []
             segments: list[str] = re.findall(
@@ -295,16 +286,12 @@ def lookup_matcher(
                 else:
                     tokenized.append(token)
 
-            # Assign tokenized text to all requested CJK languages
-            # Each token gets the same explicit flag as the original segment
             for code in seg_language_codes:
                 if code in ["zh", "ja"]:
-                    if code not in result:
-                        result[code] = []
+                    result.setdefault(code, [])
                     for token in tokenized:
                         result[code].append((token, is_explicit))
 
-        # --- Handle Korean ---
         if has_hangul:
             hangul_segments: list[str] = re.findall(r"[\uac00-\ud7af]+", match_text)
             hangul_tokens: list[str] = []
@@ -313,24 +300,20 @@ def lookup_matcher(
                 hangul_tokens.extend(tokens)
 
             if "ko" in seg_language_codes:
-                if "ko" not in result:
-                    result["ko"] = []
+                result.setdefault("ko", [])
                 for token in hangul_tokens:
                     result["ko"].append((token, is_explicit))
                 logger.debug(
                     f"Added Korean tokens (explicit={is_explicit}): {hangul_tokens}"
                 )
 
-        # --- Handle non-CJK languages ---
         all_cjk_codes: set[str] = {"zh", "ja", "ko"}
         non_cjk_codes: list[str] = [
             code for code in seg_language_codes if code not in all_cjk_codes
         ]
         if non_cjk_codes:
             for code in non_cjk_codes:
-                if code not in result:
-                    result[code] = []
-                result[code].append((match_text, is_explicit))
+                result.setdefault(code, []).append((match_text, is_explicit))
 
     logger.info(f"Lookup Matcher Result: {result}")
 

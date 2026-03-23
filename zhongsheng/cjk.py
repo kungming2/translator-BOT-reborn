@@ -9,6 +9,8 @@ from ziwen_commands.lookup_cjk import perform_cjk_lookups
 
 from . import command, send_long_message
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
 
 @command(
     name="cjk",
@@ -23,7 +25,6 @@ async def cjk_lookup(
         # Map initials to full language names
         initial_map = {"c": "Chinese", "j": "Japanese", "k": "Korean"}
 
-        # Check if input is an initial
         if language.lower() in initial_map:
             language_name = initial_map[language.lower()]
         else:
@@ -35,7 +36,6 @@ async def cjk_lookup(
                 else language
             )
 
-        # Validate language is CJK
         if language_name not in ["Chinese", "Japanese", "Korean"]:
             await ctx.send(
                 f"Error: '{language_name}' is not a supported CJK "
@@ -44,12 +44,10 @@ async def cjk_lookup(
             )
             return
 
-        # Show typing indicator while processing
         async with ctx.typing():
             result = await perform_cjk_lookups(language_name, [search_terms.strip()])
             formatted_result = "\n\n".join(result)
 
-        # Split and send if result exceeds Discord's 2000 char limit
         await send_long_message(ctx, formatted_result)
 
     except Exception as e:

@@ -23,6 +23,9 @@ from reddit.reddit_sender import message_send
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:RESET"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Reset handler initiated.")
@@ -32,7 +35,6 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> 
         logger.info(f"!reset, from user u/{comment.author} on `{ajo.id}`.")
         ajo.reset()
 
-        # Message the person who called it.
         reset_msg: str = (
             f"The [post](https://redd.it/{ajo.id})'s state has been reset to its original state. "
             f"This command was called by you [here](https://www.reddit.com{comment.permalink})."

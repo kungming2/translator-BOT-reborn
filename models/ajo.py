@@ -42,144 +42,7 @@ from utility import check_url_extension, generate_image_hash
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:AJO"})
 
 
-def ajo_writer(new_ajo: "Ajo") -> None:
-    """
-    Takes an Ajo object and saves it to the local Ajo database.
-    Note that if a PRAW submission is attached, it will discard it
-    before saving it.
-
-    :param new_ajo: An Ajo object that should be saved.
-    :return: Nothing.
-    """
-    ajo_id = str(new_ajo.id)
-    created_time = new_ajo.created_utc
-
-    # Temporarily clear the submission cache to avoid saving it
-    cached_submission = new_ajo.clear_submission_cache()
-
-    try:
-        representation = orjson.dumps(new_ajo.to_dict()).decode("utf-8")
-
-        cursor = db.cursor_ajo
-        conn = db.conn_ajo
-
-        cursor.execute("SELECT ajo FROM ajo_database WHERE id = ?", (ajo_id,))
-        row = cursor.fetchone()
-
-        if row:
-            try:
-                stored_ajo_dict = orjson.loads(row["ajo"])
-            except orjson.JSONDecodeError:  # Stored in an old format.
-                logger.warning(
-                    f"Old Ajo format detected for `{ajo_id}`; "
-                    f"trying literal_eval fallback."
-                )
-                try:
-                    stored_ajo_dict = ast.literal_eval(row["ajo"])
-                    if not isinstance(stored_ajo_dict, dict):
-                        raise ValueError("Fallback eval didn't yield a dict.")
-                except Exception as e:
-                    logger.error("Failed to decode legacy Ajo format.")
-                    raise e
-            if new_ajo.to_dict() != stored_ajo_dict:
-                cursor.execute(
-                    "UPDATE ajo_database SET ajo = ? WHERE id = ?",
-                    (representation, ajo_id),
-                )
-                conn.commit()
-                logger.info(f"Ajo `{ajo_id}` exists, data updated.")
-            else:
-                logger.debug(f"Ajo `{ajo_id}` exists, but no change in data.")
-        else:
-            cursor.execute(
-                "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
-                (ajo_id, created_time, representation),
-            )
-            conn.commit()
-            logger.info(f"Ajo `{ajo_id}` not found in database. Created new record.")
-    finally:
-        # Restore the cached submission after writing
-        new_ajo.restore_submission_cache(cached_submission)
-
-
-def parse_ajo_data(data_str: str) -> dict:
-    """For backwards compatibility, since older Ajos are saved as
-    dictionary literals. This allows Ajo data to be passed in as a
-    regular dictionary string (old behavior) or JSON (new)."""
-    try:
-        # Try JSON first (orjson or json)
-        return orjson.loads(data_str)
-    except orjson.JSONDecodeError:
-        # Fallback: try Python literal parsing
-        try:
-            return ast.literal_eval(data_str)
-        except Exception as e:
-            raise ValueError(f"Failed to parse data string: {e}")
-
-
-def ajo_loader(ajo_id: str) -> "Ajo | None":
-    """Loads Ajos from the local database."""
-    result = db.fetch_ajo("SELECT * FROM ajo_database WHERE id = ?", (ajo_id,))
-    if result is None:
-        logger.debug("No local Ajo stored.")
-        return None
-
-    try:
-        data = parse_ajo_data(result["ajo"])
-
-        # Normalize language name fields to lists of Lingvo objects
-        if "original_source_language_name" in data:
-            data["original_source_language_name"] = _normalize_lang_field(
-                data["original_source_language_name"]
-            )
-
-        if "original_target_language_name" in data:
-            data["original_target_language_name"] = _normalize_lang_field(
-                data["original_target_language_name"]
-            )
-
-        # Legacy compatibility patch
-        if "output_oflair_css" in data and "output_post_flair_css" not in data:
-            data["output_post_flair_css"] = data.pop("output_oflair_css")
-
-        if "output_oflair_text" in data and "output_post_flair_text" not in data:
-            data["output_post_flair_text"] = data.pop("output_oflair_text")
-
-        # Initialize the Ajo object
-        ajo = Ajo.from_dict(data)
-
-        # Re-serialize _lingvo from preferred_code if available
-        if hasattr(ajo, "preferred_code") and ajo.preferred_code:
-            ajo._lingvo = converter(ajo.preferred_code)
-
-        logger.debug(f"Loaded Ajo `{ajo_id}` from local database.")
-        return ajo
-    except Exception as e:
-        logger.error(f"Failed to load or initialize Ajo `{ajo_id}`: {e}")
-        return None
-
-
-def ajo_delete(ajo_id: str) -> bool:
-    """
-    Permanently removes an Ajo record from the ajo_database table.
-    This is intentionally irreversible and should only be called when
-    reclassifying a post as a Diskuto (internal/non-request post).
-
-    :param ajo_id: The Reddit submission ID of the Ajo to remove.
-    :return: True if a row was deleted, False if no matching record existed.
-    """
-    cursor = db.cursor_ajo
-    conn = db.conn_ajo
-
-    cursor.execute("DELETE FROM ajo_database WHERE id = ?", (str(ajo_id),))
-    conn.commit()
-
-    deleted = cursor.rowcount > 0
-    if deleted:
-        logger.info(f"Ajo `{ajo_id}` permanently removed from database.")
-    else:
-        logger.warning(f"No Ajo found with id `{ajo_id}` to delete.")
-    return deleted
+# ─── Internal helpers ─────────────────────────────────────────────────────────
 
 
 def _normalize_lang_field(value: "list | str | None") -> list[Lingvo]:
@@ -193,7 +56,6 @@ def _normalize_lang_field(value: "list | str | None") -> list[Lingvo]:
       - 'English' (single string)
       - None or other types -> empty list
     """
-
     if isinstance(value, list):
         normalized = []
         for i, x in enumerate(value):
@@ -222,13 +84,61 @@ def _normalize_lang_field(value: "list | str | None") -> list[Lingvo]:
         return []
 
 
-"""MAIN AJO CLASS"""
+def _fetch_submission(post_id: str) -> Any:
+    """
+    Fetch a PRAW submission by ID.
+
+    :param post_id: The Reddit submission ID
+    :return: PRAW submission object or None if fetch fails
+    """
+    try:
+        return REDDIT.submission(id=post_id)
+    except Exception as e:
+        logger.error(f"Failed to fetch submission {post_id}: {e}")
+        return None
+
+
+def _convert_to_dict(input_string: str) -> dict:
+    """
+    Converts a Python dictionary string or JSON string to a Python dictionary.
+
+    Args:
+        input_string (str): A string containing either a Python dict or JSON
+
+    Returns:
+        dict: The converted Python dictionary
+
+    Raises:
+        ValueError: If the input cannot be parsed as either a Python dict or JSON
+    """
+    input_string = input_string.strip()
+
+    try:
+        result = ast.literal_eval(input_string)
+        if isinstance(result, dict):
+            return result
+    except (ValueError, SyntaxError):
+        pass
+
+    try:
+        result = orjson.loads(input_string.encode("utf-8"))
+        if isinstance(result, dict):
+            return result
+    except orjson.JSONDecodeError:
+        pass
+
+    raise ValueError("Input could not be parsed as a Python dictionary or JSON")
+
+
+# ─── Main Ajo class ───────────────────────────────────────────────────────────
 
 
 class Ajo:
     """
     The primary class we work with that represents translation requests.
     """
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(self) -> None:
         """Initialize an Ajo with all fields set to their default values."""
@@ -251,7 +161,6 @@ class Ajo:
         self.is_identified = False
         self.is_long = False
 
-        # New additions
         self.recorded_translators: list[str] = []
         self.notified: list[str] = []
         self.time_delta: dict[str, int] = {}
@@ -264,17 +173,10 @@ class Ajo:
         self._lingvo: Lingvo | None = None  # initialized lazily from preferred_code
         self._submission: Any = None  # cached PRAW submission
 
-    def initialize_lingvo(self) -> None:
-        """
-        Initialize self._lingvo from the preferred_code.
-        """
-        if self.preferred_code:
-            self._lingvo = converter(self.preferred_code)
-
     def __repr__(self) -> str:
         main_fields = {
-            "id": self.id,  # Include the ID
-            "direction": self.direction,  # Already included
+            "id": self.id,
+            "direction": self.direction,
             "language_name": self.language_name,
             "status": self.status,
         }
@@ -289,115 +191,10 @@ class Ajo:
         :return: A boolean. True if their dictionary contents match,
                  False otherwise.
         """
-
         return self.__dict__ == other.__dict__
 
-    @property
-    def id(self) -> "str | None":
-        """The Reddit post ID; immutable once set."""
-        return self._id
-
-    @id.setter
-    def id(self, value: str) -> None:
-        if self._id is not None:
-            raise AttributeError("Ajo.id is immutable once set.")
-        self._id = value
-
-    @property
-    def created_utc(self) -> "int | None":
-        """The Unix timestamp of post creation; immutable once set."""
-        return self._created_utc
-
-    @created_utc.setter
-    def created_utc(self, value: int) -> None:
-        if self._created_utc is not None:
-            raise AttributeError("Ajo.created_utc is immutable once set.")
-        self._created_utc = value
-
-    @property
-    def author(self) -> "str | None":
-        """The Reddit username of the post author; immutable once set."""
-        return self._author
-
-    @author.setter
-    def author(self, value: str) -> None:
-        if self._author is not None:
-            raise AttributeError("Ajo.author is immutable once set.")
-        self._author = value
-
-    @property
-    def lingvo(self) -> "Lingvo | None":
-        """The Lingvo object for this post's language; initialized
-        lazily from preferred_code."""
-        if not self._lingvo:
-            self.initialize_lingvo()
-        return self._lingvo
-
-    @property
-    def _lingvo_safe(self) -> "Lingvo":
-        """Internal: returns lingvo, raising if None.
-        Used by delegating properties."""
-        if self._lingvo is None:
-            raise AttributeError(f"Ajo `{self._id}` has no lingvo initialized.")
-        return self._lingvo
-
-    @property
-    def submission(self) -> Any:
-        """
-        Lazily load and cache the PRAW submission object.
-        Returns None if no ID is set.
-        """
-        if self._submission is None and self._id is not None:
-            self._submission = _fetch_submission(self._id)
-        return self._submission
-
-    @property
-    def language_code_1(self) -> str | None:
-        """ISO 639-1 code delegated from the Lingvo object."""
-        return self._lingvo_safe.language_code_1
-
-    @property
-    def language_code_3(self) -> str | None:
-        """ISO 639-3 code delegated from the Lingvo object."""
-        return self._lingvo_safe.language_code_3
-
-    @property
-    def language_name(self) -> str | None:
-        """Language name delegated from the Lingvo object."""
-        return self._lingvo_safe.name
-
-    @property
-    def country_code(self) -> str | None:
-        """Country code delegated from the Lingvo object."""
-        return self._lingvo_safe.country
-
-    @property
-    def is_supported(self) -> bool:
-        """Whether the language is supported with the subreddit's flairs,
-        delegated from the Lingvo object."""
-        return self._lingvo_safe.supported
-
-    @property
-    def script_code(self) -> str | None:
-        """Script code delegated from the Lingvo object."""
-        return self._lingvo_safe.script_code
-
-    @property
-    def script_name(self) -> str | None:
-        """Human-readable script name (e.g. Han Characters) resolved
-        from script_code, or None."""
-        if not self.script_code:
-            return None
-        _sc = converter(self.script_code)
-        return _sc.name if _sc is not None else None
-
-    @property
-    def is_script(self) -> bool:
-        """True if this is a script Lingvo."""
-        return self.script_code is not None
-
     @classmethod
-    def from_titolo(cls, titolo: "Titolo", submission: Any = None) -> "Ajo":
+    def from_titolo(cls, titolo: Titolo, submission: Any = None) -> "Ajo":
         """
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
         This is the primary way to construct an Ajo, as simple as:
@@ -431,7 +228,6 @@ class Ajo:
         ajo.original_source_language_name = titolo.source
         ajo.original_target_language_name = titolo.target
 
-        # Ajo extras
         # Populate language_history with actual language codes from target languages
         if titolo.target:
             # Filter out English from targets for classification purposes
@@ -481,104 +277,6 @@ class Ajo:
             f"type={ajo.type}, preferred_code={ajo.preferred_code!r}, status={ajo.status!r}"
         )
         return ajo
-
-    def update_from_titolo(self, titolo: "Titolo") -> None:
-        """
-        Update this Ajo instance in-place based on a Titolo instance.
-        This is used by reset() to restore an Ajo to its original state.
-        """
-        self.title_original = titolo.title_original
-        self.title = titolo.title_actual
-        self.direction = titolo.direction
-
-        self.preferred_code = titolo.final_code
-        self.initialize_lingvo()
-
-        self.original_source_language_name = titolo.source
-        self.original_target_language_name = titolo.target
-
-        # Determine if this should be a multiple or single post based on targets
-        if titolo.target and len(titolo.target) > 1:
-            # Multiple languages detected
-            non_english_targets = [
-                lang for lang in titolo.target if lang.preferred_code != "en"
-            ]
-
-            if len(non_english_targets) > 1:
-                self.type = "multiple"
-                self.is_defined_multiple = True
-                self.status = {
-                    lang.preferred_code: "untranslated" for lang in non_english_targets
-                }
-                self.language_history = [
-                    [lang.preferred_code for lang in non_english_targets]
-                ]
-            else:
-                # Only one non-English language or all English
-                self.type = "single"
-                self.is_defined_multiple = False
-                self.status = "untranslated"
-                self.language_history = [titolo.final_code] if titolo.final_code else []
-            self.is_defined_multiple = False
-            self.status = "untranslated"
-            self.language_history = [titolo.final_code] if titolo.final_code else []
-
-        logger.info(
-            f"Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
-        )
-
-    def to_dict(self) -> dict:
-        """
-        Serialize only JSON-safe fields of this Ajo object.
-        Excludes internal and derived attributes like `_lingvo`, `_submission`,
-        and computed properties like `language_name`, `is_supported`, etc.
-        """
-
-        def lingvo_list_to_names(lingvo_list: "list[Lingvo] | None") -> list[str]:
-            if not lingvo_list:
-                return []
-            return [
-                lv.name if hasattr(lv, "name") and lv.name is not None else str(lv)
-                for lv in lingvo_list
-            ]
-
-        return {
-            # Immutable core fields
-            "id": self.id,
-            "created_utc": self.created_utc,
-            "author": self.author,
-            # Title and direction info
-            "title_original": self.title_original,
-            "title": self.title,
-            "direction": self.direction,
-            # Language identification
-            "preferred_code": self.preferred_code,
-            "language_history": self.language_history or [],
-            "original_source_language_name": lingvo_list_to_names(
-                self.original_source_language_name
-            ),
-            "original_target_language_name": lingvo_list_to_names(
-                self.original_target_language_name
-            ),
-            # Status tracking
-            "status": self.status or "untranslated",
-            "output_post_flair_css": self.output_post_flair_css,
-            "output_post_flair_text": self.output_post_flair_text,
-            # Boolean flags
-            "is_identified": bool(self.is_identified),
-            "is_long": bool(self.is_long),
-            "is_defined_multiple": bool(self.is_defined_multiple),
-            "closed_out": bool(self.closed_out),
-            # Type classification
-            "type": self.type or "single",
-            # Media
-            "image_hash": self.image_hash,
-            # Tracking lists and timestamps
-            "recorded_translators": self.recorded_translators or [],
-            "notified": self.notified or [],
-            "time_delta": self.time_delta or {},
-            "author_messaged": bool(self.author_messaged),
-        }
 
     @classmethod
     def from_dict(cls, data: dict) -> "Ajo":
@@ -675,7 +373,245 @@ class Ajo:
         )
         return ajo
 
-    """FUNCTIONS THAT CHANGE STATES"""
+    # ── Immutable core properties ──────────────────────────────────────────────
+
+    @property
+    def id(self) -> "str | None":
+        """The Reddit post ID; immutable once set."""
+        return self._id
+
+    @id.setter
+    def id(self, value: str) -> None:
+        if self._id is not None:
+            raise AttributeError("Ajo.id is immutable once set.")
+        self._id = value
+
+    @property
+    def created_utc(self) -> "int | None":
+        """The Unix timestamp of post creation; immutable once set."""
+        return self._created_utc
+
+    @created_utc.setter
+    def created_utc(self, value: int) -> None:
+        if self._created_utc is not None:
+            raise AttributeError("Ajo.created_utc is immutable once set.")
+        self._created_utc = value
+
+    @property
+    def author(self) -> "str | None":
+        """The Reddit username of the post author; immutable once set."""
+        return self._author
+
+    @author.setter
+    def author(self, value: str) -> None:
+        if self._author is not None:
+            raise AttributeError("Ajo.author is immutable once set.")
+        self._author = value
+
+    # ── Lingvo / language properties ──────────────────────────────────────────
+
+    @property
+    def lingvo(self) -> "Lingvo | None":
+        """The Lingvo object for this post's language; initialized
+        lazily from preferred_code."""
+        if not self._lingvo:
+            self.initialize_lingvo()
+        return self._lingvo
+
+    @property
+    def _lingvo_safe(self) -> "Lingvo":
+        """Internal: returns lingvo, raising if None.
+        Used by delegating properties."""
+        if self._lingvo is None:
+            raise AttributeError(f"Ajo `{self._id}` has no lingvo initialized.")
+        return self._lingvo
+
+    @property
+    def language_code_1(self) -> str | None:
+        """ISO 639-1 code delegated from the Lingvo object."""
+        return self._lingvo_safe.language_code_1
+
+    @property
+    def language_code_3(self) -> str | None:
+        """ISO 639-3 code delegated from the Lingvo object."""
+        return self._lingvo_safe.language_code_3
+
+    @property
+    def language_name(self) -> str | None:
+        """Language name delegated from the Lingvo object."""
+        return self._lingvo_safe.name
+
+    @property
+    def country_code(self) -> str | None:
+        """Country code delegated from the Lingvo object."""
+        return self._lingvo_safe.country
+
+    @property
+    def is_supported(self) -> bool:
+        """Whether the language is supported with the subreddit's flairs,
+        delegated from the Lingvo object."""
+        return self._lingvo_safe.supported
+
+    @property
+    def script_code(self) -> str | None:
+        """Script code delegated from the Lingvo object."""
+        return self._lingvo_safe.script_code
+
+    @property
+    def script_name(self) -> str | None:
+        """Human-readable script name (e.g. Han Characters) resolved
+        from script_code, or None."""
+        if not self.script_code:
+            return None
+        _sc = converter(self.script_code)
+        return _sc.name if _sc is not None else None
+
+    @property
+    def is_script(self) -> bool:
+        """True if this is a script Lingvo."""
+        return self.script_code is not None
+
+    # ── PRAW submission cache ──────────────────────────────────────────────────
+
+    @property
+    def submission(self) -> Any:
+        """
+        Lazily load and cache the PRAW submission object.
+        Returns None if no ID is set.
+        """
+        if self._submission is None and self._id is not None:
+            self._submission = _fetch_submission(self._id)
+        return self._submission
+
+    def clear_submission_cache(self) -> Any:
+        """
+        Clear the cached PRAW submission object.
+        Useful before serialization to avoid storing large objects.
+
+        :return: The cached submission object (if any) before clearing.
+        """
+        cached = self._submission
+        self._submission = None
+        return cached
+
+    def restore_submission_cache(self, submission: Any) -> None:
+        """
+        Restore a previously cached PRAW submission object.
+
+        :param submission: The PRAW submission object to cache.
+        """
+        self._submission = submission
+
+    # ── Serialization ─────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict:
+        """
+        Serialize only JSON-safe fields of this Ajo object.
+        Excludes internal and derived attributes like `_lingvo`, `_submission`,
+        and computed properties like `language_name`, `is_supported`, etc.
+        """
+
+        def lingvo_list_to_names(lingvo_list: "list[Lingvo] | None") -> list[str]:
+            if not lingvo_list:
+                return []
+            return [
+                lv.name if hasattr(lv, "name") and lv.name is not None else str(lv)
+                for lv in lingvo_list
+            ]
+
+        return {
+            # Immutable core fields
+            "id": self.id,
+            "created_utc": self.created_utc,
+            "author": self.author,
+            # Title and direction info
+            "title_original": self.title_original,
+            "title": self.title,
+            "direction": self.direction,
+            # Language identification
+            "preferred_code": self.preferred_code,
+            "language_history": self.language_history or [],
+            "original_source_language_name": lingvo_list_to_names(
+                self.original_source_language_name
+            ),
+            "original_target_language_name": lingvo_list_to_names(
+                self.original_target_language_name
+            ),
+            # Status tracking
+            "status": self.status or "untranslated",
+            "output_post_flair_css": self.output_post_flair_css,
+            "output_post_flair_text": self.output_post_flair_text,
+            # Boolean flags
+            "is_identified": bool(self.is_identified),
+            "is_long": bool(self.is_long),
+            "is_defined_multiple": bool(self.is_defined_multiple),
+            "closed_out": bool(self.closed_out),
+            # Type classification
+            "type": self.type or "single",
+            # Media
+            "image_hash": self.image_hash,
+            # Tracking lists and timestamps
+            "recorded_translators": self.recorded_translators or [],
+            "notified": self.notified or [],
+            "time_delta": self.time_delta or {},
+            "author_messaged": bool(self.author_messaged),
+        }
+
+    # ── Lingvo initialization ──────────────────────────────────────────────────
+
+    def initialize_lingvo(self) -> None:
+        """
+        Initialize self._lingvo from the preferred_code.
+        """
+        if self.preferred_code:
+            self._lingvo = converter(self.preferred_code)
+
+    def update_from_titolo(self, titolo: Titolo) -> None:
+        """
+        Update this Ajo instance in-place based on a Titolo instance.
+        This is used by reset() to restore an Ajo to its original state.
+        """
+        self.title_original = titolo.title_original
+        self.title = titolo.title_actual
+        self.direction = titolo.direction
+
+        self.preferred_code = titolo.final_code
+        self.initialize_lingvo()
+
+        self.original_source_language_name = titolo.source
+        self.original_target_language_name = titolo.target
+
+        # Determine if this should be a multiple or single post based on targets
+        if titolo.target and len(titolo.target) > 1:
+            # Multiple languages detected
+            non_english_targets = [
+                lang for lang in titolo.target if lang.preferred_code != "en"
+            ]
+
+            if len(non_english_targets) > 1:
+                self.type = "multiple"
+                self.is_defined_multiple = True
+                self.status = {
+                    lang.preferred_code: "untranslated" for lang in non_english_targets
+                }
+                self.language_history = [
+                    [lang.preferred_code for lang in non_english_targets]
+                ]
+            else:
+                # Only one non-English language or all English
+                self.type = "single"
+                self.is_defined_multiple = False
+                self.status = "untranslated"
+                self.language_history = [titolo.final_code] if titolo.final_code else []
+            self.is_defined_multiple = False
+            self.status = "untranslated"
+            self.language_history = [titolo.final_code] if titolo.final_code else []
+
+        logger.info(
+            f"Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"
+        )
+
+    # ── State mutation methods ─────────────────────────────────────────────────
 
     def set_language(
         self, code_or_lingvo: "str | Lingvo | list", is_identified: bool = True
@@ -759,27 +695,6 @@ class Ajo:
         # Set is_identified for both cases
         self.is_identified = is_identified
 
-    def set_is_long(self, value: bool) -> None:
-        """
-        Set whether the post is marked as long.
-        """
-        self.is_long = bool(value)
-
-    def set_type(self, value: str) -> None:
-        """
-        Set the type of the post.
-        Must be either 'single' or 'multiple'.
-        If changing from 'multiple' to 'single', reset
-        is_defined_multiple to False.
-        """
-        if value not in ["single", "multiple"]:
-            raise ValueError("Post type must be 'single' or 'multiple'.")
-        self.type = value
-
-        # Reset is_defined_multiple if type is changed to 'single'
-        if value == "single":
-            self.is_defined_multiple = False
-
     def set_status(self, value: str) -> None:
         """
         Set the status of the post.
@@ -862,6 +777,27 @@ class Ajo:
         # Set the status for the specific language
         self.status[language_code] = status_value
 
+    def set_type(self, value: str) -> None:
+        """
+        Set the type of the post.
+        Must be either 'single' or 'multiple'.
+        If changing from 'multiple' to 'single', reset
+        is_defined_multiple to False.
+        """
+        if value not in ["single", "multiple"]:
+            raise ValueError("Post type must be 'single' or 'multiple'.")
+        self.type = value
+
+        # Reset is_defined_multiple if type is changed to 'single'
+        if value == "single":
+            self.is_defined_multiple = False
+
+    def set_is_long(self, value: bool) -> None:
+        """
+        Set whether the post is marked as long.
+        """
+        self.is_long = bool(value)
+
     def set_is_defined_multiple(self, value: bool) -> None:
         """
         Set whether the post is marked as a defined multiple post.
@@ -900,7 +836,6 @@ class Ajo:
         :param status: The status that it was changed to. Example: 'translated'.
         :param moment: The Unix UTC time when the action was taken (integer).
         """
-
         if not hasattr(self, "time_delta") or self.time_delta is None:
             self.time_delta = {}
 
@@ -915,6 +850,8 @@ class Ajo:
         """
         self.author_messaged = is_messaged
 
+    # ── Tracking / accumulator methods ────────────────────────────────────────
+
     def add_translators(self, translator_name: str) -> None:
         """
         Add the username of who translated what to the Ajo of a post
@@ -922,7 +859,6 @@ class Ajo:
 
         :param translator_name: The name of the individual who made the translation.
         """
-
         if (
             not hasattr(self, "recorded_translators")
             or self.recorded_translators is None
@@ -942,7 +878,6 @@ class Ajo:
 
         :param notified_list: List of usernames who have been contacted regarding the post.
         """
-
         if not hasattr(self, "notified") or self.notified is None:
             self.notified = []
 
@@ -959,26 +894,7 @@ class Ajo:
             if check_url_extension(reddit_submission.url):
                 self.image_hash = generate_image_hash(reddit_submission.url)
 
-    def clear_submission_cache(self) -> Any:
-        """
-        Clear the cached PRAW submission object.
-        Useful before serialization to avoid storing large objects.
-
-        :return: The cached submission object (if any) before clearing.
-        """
-        cached = self._submission
-        self._submission = None
-        return cached
-
-    def restore_submission_cache(self, submission: Any) -> None:
-        """
-        Restore a previously cached PRAW submission object.
-
-        :param submission: The PRAW submission object to cache.
-        """
-        self._submission = submission
-
-    """ACTING FUNCTIONS"""
+    # ── Reddit actions ────────────────────────────────────────────────────────
 
     def reset(self) -> None:
         """
@@ -1011,21 +927,150 @@ class Ajo:
         )
 
 
-def _fetch_submission(post_id: str) -> Any:
-    """
-    Fetch a PRAW submission by ID.
+# ─── Database persistence ─────────────────────────────────────────────────────
 
-    :param post_id: The Reddit submission ID
-    :return: PRAW submission object or None if fetch fails
-    """
+
+def parse_ajo_data(data_str: str) -> dict:
+    """For backwards compatibility, since older Ajos are saved as
+    dictionary literals. This allows Ajo data to be passed in as a
+    regular dictionary string (old behavior) or JSON (new)."""
     try:
-        return REDDIT.submission(id=post_id)
+        # Try JSON first (orjson or json)
+        return orjson.loads(data_str)
+    except orjson.JSONDecodeError:
+        # Fallback: try Python literal parsing
+        try:
+            return ast.literal_eval(data_str)
+        except Exception as e:
+            raise ValueError(f"Failed to parse data string: {e}")
+
+
+def ajo_writer(new_ajo: "Ajo") -> None:
+    """
+    Takes an Ajo object and saves it to the local Ajo database.
+    Note that if a PRAW submission is attached, it will discard it
+    before saving it.
+
+    :param new_ajo: An Ajo object that should be saved.
+    :return: Nothing.
+    """
+    ajo_id = str(new_ajo.id)
+    created_time = new_ajo.created_utc
+
+    # Temporarily clear the submission cache to avoid saving it
+    cached_submission = new_ajo.clear_submission_cache()
+
+    try:
+        representation = orjson.dumps(new_ajo.to_dict()).decode("utf-8")
+
+        cursor = db.cursor_ajo
+        conn = db.conn_ajo
+
+        cursor.execute("SELECT ajo FROM ajo_database WHERE id = ?", (ajo_id,))
+        row = cursor.fetchone()
+
+        if row:
+            try:
+                stored_ajo_dict = orjson.loads(row["ajo"])
+            except orjson.JSONDecodeError:  # Stored in an old format.
+                logger.warning(
+                    f"Old Ajo format detected for `{ajo_id}`; "
+                    f"trying literal_eval fallback."
+                )
+                try:
+                    stored_ajo_dict = ast.literal_eval(row["ajo"])
+                    if not isinstance(stored_ajo_dict, dict):
+                        raise ValueError("Fallback eval didn't yield a dict.")
+                except Exception as e:
+                    logger.error("Failed to decode legacy Ajo format.")
+                    raise e
+            if new_ajo.to_dict() != stored_ajo_dict:
+                cursor.execute(
+                    "UPDATE ajo_database SET ajo = ? WHERE id = ?",
+                    (representation, ajo_id),
+                )
+                conn.commit()
+                logger.info(f"Ajo `{ajo_id}` exists, data updated.")
+            else:
+                logger.debug(f"Ajo `{ajo_id}` exists, but no change in data.")
+        else:
+            cursor.execute(
+                "INSERT OR REPLACE INTO ajo_database (id, created_utc, ajo) VALUES (?, ?, ?)",
+                (ajo_id, created_time, representation),
+            )
+            conn.commit()
+            logger.info(f"Ajo `{ajo_id}` not found in database. Created new record.")
+    finally:
+        # Restore the cached submission after writing
+        new_ajo.restore_submission_cache(cached_submission)
+
+
+def ajo_loader(ajo_id: str) -> "Ajo | None":
+    """Loads Ajos from the local database."""
+    result = db.fetch_ajo("SELECT * FROM ajo_database WHERE id = ?", (ajo_id,))
+    if result is None:
+        logger.debug("No local Ajo stored.")
+        return None
+
+    try:
+        data = parse_ajo_data(result["ajo"])
+
+        # Normalize language name fields to lists of Lingvo objects
+        if "original_source_language_name" in data:
+            data["original_source_language_name"] = _normalize_lang_field(
+                data["original_source_language_name"]
+            )
+
+        if "original_target_language_name" in data:
+            data["original_target_language_name"] = _normalize_lang_field(
+                data["original_target_language_name"]
+            )
+
+        # Legacy compatibility patch
+        if "output_oflair_css" in data and "output_post_flair_css" not in data:
+            data["output_post_flair_css"] = data.pop("output_oflair_css")
+
+        if "output_oflair_text" in data and "output_post_flair_text" not in data:
+            data["output_post_flair_text"] = data.pop("output_oflair_text")
+
+        # Initialize the Ajo object
+        ajo = Ajo.from_dict(data)
+
+        # Re-serialize _lingvo from preferred_code if available
+        if hasattr(ajo, "preferred_code") and ajo.preferred_code:
+            ajo._lingvo = converter(ajo.preferred_code)
+
+        logger.debug(f"Loaded Ajo `{ajo_id}` from local database.")
+        return ajo
     except Exception as e:
-        logger.error(f"Failed to fetch submission {post_id}: {e}")
+        logger.error(f"Failed to load or initialize Ajo `{ajo_id}`: {e}")
         return None
 
 
-"""EXTERNAL FUNCTIONS"""
+def ajo_delete(ajo_id: str) -> bool:
+    """
+    Permanently removes an Ajo record from the ajo_database table.
+    This is intentionally irreversible and should only be called when
+    reclassifying a post as a Diskuto (internal/non-request post).
+
+    :param ajo_id: The Reddit submission ID of the Ajo to remove.
+    :return: True if a row was deleted, False if no matching record existed.
+    """
+    cursor = db.cursor_ajo
+    conn = db.conn_ajo
+
+    cursor.execute("DELETE FROM ajo_database WHERE id = ?", (str(ajo_id),))
+    conn.commit()
+
+    deleted = cursor.rowcount > 0
+    if deleted:
+        logger.info(f"Ajo `{ajo_id}` permanently removed from database.")
+    else:
+        logger.warning(f"No Ajo found with id `{ajo_id}` to delete.")
+    return deleted
+
+
+# ─── Reddit flair helpers ─────────────────────────────────────────────────────
 
 
 def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
@@ -1037,7 +1082,6 @@ def ajo_defined_multiple_flair_former(flair_dict: dict) -> str:
     :param flair_dict: Dict keyed by language code (ISO 639-3) with their respective states.
     :return: Formatted flair string.
     """
-
     formatted_entries = []
 
     for lang_code, status in flair_dict.items():
@@ -1088,41 +1132,38 @@ def determine_flair_and_update(
     post_templates = STATE.post_templates
     submission = REDDIT.submission(id=ajo.id)
 
-    # Initialize flair defaults
-    code_tag: str | None = "[--]"
-    output_flair_css = "generic"
+    # Special language name values that bypass standard code-based flair
+    unq_types = {"Unknown", "Multiple Languages", "Generic", ""}
 
-    unq_types = {"Unknown", "Generic"}
+    output_flair_css: str = "generic"
+    output_flair_text: str = "Generic"
+    code_tag: str | None = None
 
-    if not ajo.lingvo:
-        logger.error(f"No lingvo associated with `{ajo.id}`. Will not update flair.")
-        # Set generic flair and return early
-        output_flair_css = "generic"
-        output_flair_text = "Unknown"
-
-        if output_flair_css in post_templates:
-            template_id = post_templates[output_flair_css]
-            if not testing_mode:
+    if ajo.lingvo is None:
+        # Fallback flair when no lingvo is available
+        if not testing_mode:
+            if output_flair_css in post_templates:
+                template_id = post_templates[output_flair_css]
                 submission.flair.select(
                     flair_template_id=template_id, text=output_flair_text
                 )
-            else:
-                log_testing_mode(
-                    output_text=output_flair_text,
-                    title=f"Flair Update Dry Run for Submission {ajo.id}",
-                    metadata={
-                        "Submission ID": ajo.id,
-                        "Flair CSS": output_flair_css,
-                        "Flair Template ID": template_id,
-                        "Submission Title": getattr(ajo, "title_original", "N/A"),
-                        "Post Type": ajo.type,
-                        "Note": "No lingvo object available",
-                    },
-                )
-            logger.warning(
-                f"Set post `{ajo.id}` to CSS `{output_flair_css}` "
-                f"and text `{output_flair_text}` (no lingvo)."
+        else:
+            log_testing_mode(
+                output_text=output_flair_text,
+                title=f"Flair Update Dry Run for Submission {ajo.id}",
+                metadata={
+                    "Submission ID": ajo.id,
+                    "Flair CSS": output_flair_css,
+                    "Flair Template ID": post_templates.get(output_flair_css, "N/A"),
+                    "Submission Title": getattr(ajo, "title_original", "N/A"),
+                    "Post Type": ajo.type,
+                    "Note": "No lingvo object available",
+                },
             )
+        logger.warning(
+            f"Set post `{ajo.id}` to CSS `{output_flair_css}` "
+            f"and text `{output_flair_text}` (no lingvo)."
+        )
 
         # Sync flair output back to Ajo instance
         ajo.output_post_flair_css = output_flair_css
@@ -1279,43 +1320,3 @@ def determine_flair_and_update(
     # Sync flair output back to Ajo instance
     ajo.output_post_flair_css = output_flair_css
     ajo.output_post_flair_text = output_flair_text
-
-
-"""INTERNAL USE"""
-
-
-def _convert_to_dict(input_string: str) -> dict:
-    """
-    Converts a Python dictionary string or JSON string to a Python dictionary.
-
-    Args:
-        input_string (str): A string containing either a Python dict or JSON
-
-    Returns:
-        dict: The converted Python dictionary
-
-    Raises:
-        ValueError: If the input cannot be parsed as either a Python dict or JSON
-    """
-    # Remove any leading/trailing whitespace
-    input_string = input_string.strip()
-
-    # Try parsing as Python dictionary first
-    try:
-        result = ast.literal_eval(input_string)
-        if isinstance(result, dict):
-            return result
-    except (ValueError, SyntaxError):
-        pass
-
-    # Try parsing as JSON using orjson
-    try:
-        # orjson.loads expects bytes, so encode the string
-        result = orjson.loads(input_string.encode("utf-8"))
-        if isinstance(result, dict):
-            return result
-    except orjson.JSONDecodeError:
-        pass
-
-    # If both methods fail, raise an error
-    raise ValueError("Input could not be parsed as a Python dictionary or JSON")

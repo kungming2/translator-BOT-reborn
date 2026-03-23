@@ -9,6 +9,8 @@ databases.
 Logger tag: [WJ:DATA]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import json
 import logging
 import re
@@ -38,22 +40,23 @@ from time_handling import (
 )
 from wenju import WENJU_SETTINGS, task
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
 
 
-"""DATA TRIMMING"""
+# ─── Log & data trimming ──────────────────────────────────────────────────────
 
 
 @task(schedule="daily")
 def log_trimmer() -> None:
     """
-    Trims the events log to keep only the last X entries,
+    Trim the events log to keep only the last X entries,
     preventing the file from growing indefinitely.
     Also trims the activity CSV to keep only the last X entries (plus header).
     """
     lines_to_keep = WENJU_SETTINGS["lines_to_keep"]
 
-    # Trim events log
     events_path = Path(Paths.LOGS["EVENTS"])
     with events_path.open("r", encoding="utf-8", errors="ignore") as f:
         lines_entries = f.read().splitlines()
@@ -68,7 +71,6 @@ def log_trimmer() -> None:
     else:
         logger.debug("Events log within limits; no trimming needed.")
 
-    # Trim activity CSVs
     csv_lines_to_keep = lines_to_keep // 5
     for activity_path in [Path(Paths.LOGS["ACTIVITY"]), Path(Paths.LOGS["MESSAGING"])]:
         if not activity_path.exists():
@@ -125,18 +127,20 @@ def error_log_trimmer() -> None:
         logger.info("No resolved errors to remove.")
 
 
+# ─── Data validation ──────────────────────────────────────────────────────────
+
+
 @task(schedule="daily")
 def validate_data_files() -> bool:
     """
-    Scans the given Paths class for all attributes containing YAML and JSON file paths
-    and validates them.
+    Scan the Paths class for all attributes containing YAML and JSON file
+    paths and validate them.
 
     :return: all_valid: bool
     """
     config_files = []
     paths_class = Paths
 
-    # Collect all paths ending with .yaml or .json from dictionaries in the Paths class
     for attr_name in dir(paths_class):
         attr_value = getattr(paths_class, attr_name)
         if isinstance(attr_value, dict):
@@ -190,7 +194,6 @@ def validate_data_files() -> bool:
             all_valid = False
             failed_files.append(path_obj.name)
 
-    # Test and validate the general Lingvo dataset.
     try:
         problematic_langs = validate_lingvo_dataset()
         if problematic_langs:
@@ -229,20 +232,21 @@ def validate_data_files() -> bool:
     return all_valid
 
 
+# ─── Database cleanup ─────────────────────────────────────────────────────────
+
+
 @task(schedule="weekly")
 def clean_processed_database() -> None:
     """
-    Cleans up old entries in old_comments and old_posts,
+    Clean up old entries in old_comments and old_posts,
     keeping only entries from the last 180 days based on the
     created_utc column in each table.
     """
     max_age_days = SETTINGS["max_old_age"]
     cursor = db.cursor_main
 
-    # Calculate the cutoff timestamp (current time - max_age_days)
     cutoff_timestamp = int(time.time()) - (max_age_days * 24 * 60 * 60)
 
-    # Clean old_comments
     logger.info(
         f"Starting cleanup of 'old_comments' table (removing "
         f"entries older than {max_age_days} days)..."
@@ -258,7 +262,6 @@ def clean_processed_database() -> None:
         f"Cleanup complete. Deleted {deleted_comments} entries from 'old_comments'."
     )
 
-    # Clean old_posts
     logger.info(
         f"Starting cleanup of 'old_posts' table (removing entries older than {max_age_days} days)..."
     )
@@ -274,7 +277,7 @@ def clean_processed_database() -> None:
     db.conn_main.commit()
 
 
-"""STATISTICS WIKIPAGE MAINTAINER"""
+# ─── Statistics wiki page maintenance ────────────────────────────────────────
 
 
 def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
@@ -290,18 +293,15 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     monthly_totals = []
     months_elapsed = messaging_months_elapsed()
 
-    # Resolve page_content to a WikiPage object
     if isinstance(page_content, str):
         page_content = r.wiki[page_content.lower()]
     page_body = page_content.content_md
 
-    # Extract the table content after the header separator
     try:
         table_content = page_body.split("---|---", 1)[1]
     except IndexError:
-        return {}  # Table not found, return empty dictionary
+        return {}
 
-    # Filter lines that start with a year
     entries = [
         line
         for line in table_content.split("\n")
@@ -338,7 +338,6 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
             "ri": ri,
         }
 
-        # Compute month-over-month changes
         if months_elapsed == language_data["num_months"] and key != "2016-06":
             prev_key = get_previous_month(key)
             prev_data = language_data.get(prev_key)
@@ -352,11 +351,10 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     if language_data["num_months"] == 0:
         return language_data
 
-    # Helper to get max/min statistics
     def get_extremes(key_name: str, field: str) -> None:
         max_val = max_val_month = min_val = min_val_month = None
         for k, v in language_data.items():
-            if "20" not in k:  # Skip metadata
+            if "20" not in k:  # Skip metadata keys
                 continue
             val = v[field]
             if max_val is None or val > max_val:
@@ -370,7 +368,6 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     get_extremes("percentage_total", "percentage_total")
     get_extremes("percentage_translated", "percentage_translated")
 
-    # Compute average post rates
     months_to_calc = (
         6 if months_elapsed == language_data["num_months"] else months_elapsed
     )
@@ -428,8 +425,7 @@ def refresh_language_statistics() -> None:
     """
     r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
 
-    # The following pages have different formatting and should not be
-    # assessed.
+    # Pages with different formatting that should not be assessed.
     ignore_pages = {"app", "conlang", "multiple", "nonlanguage", "unknown"}
     total_data: dict[str, Any] = {}
     language_family_dict: dict[str, list[tuple[str, str, str]]] = {}
@@ -469,13 +465,11 @@ def refresh_language_statistics() -> None:
             continue
         language_code = language_lingvo.preferred_code
 
-        # Update language family dictionary
         family_key: str = language_family if language_family is not None else "Unknown"
         language_family_dict.setdefault(family_key, []).append(
             (language_name, page.name, language_code)
         )
 
-        # Parse statistics
         stats = _wikipage_statistics_parser(page)
         stats.update(
             {
@@ -487,7 +481,6 @@ def refresh_language_statistics() -> None:
         )
         total_data[language_code] = stats
 
-    # Save JSON and update wiki
     with open(Paths.DATASETS["STATISTICS"], "w") as fp:
         json.dump(total_data, fp, sort_keys=True, indent=4)
 
@@ -497,23 +490,23 @@ def refresh_language_statistics() -> None:
     return
 
 
+# ─── Point value caching ──────────────────────────────────────────────────────
+
+
 # noinspection SqlWithoutWhere
 @task(schedule="daily")
 def points_worth_cacher() -> None:
     """
-    Caches the point values of frequently used languages into a local
-    database for fast access. This is run daily to populate the point
-    values initially.
-    If the current month does not have entries, it'll purge the entries
-    from the previous month and replace it.
+    Cache the point values of frequently used languages into a local
+    database for fast access. Run daily to populate point values initially.
+    If the current month does not have entries, purges the previous month's
+    entries and replaces them.
     """
-    # Get this month's representation.
     month_entry = get_current_month()
     logger.debug(f"Starting. Current month entry: '{month_entry}'")
 
-    # Check if cache already contains entries for the current month
     # Note: cursor_cache is a property that creates a new cursor each time,
-    # so we must save it to a variable before calling execute() + fetchall()
+    # so we must save it to a variable before calling execute() + fetchall().
     query = "SELECT * FROM multiplier_cache WHERE month_year = ?"
     cursor = db.cursor_cache
     cursor.execute(query, (month_entry,))
@@ -522,7 +515,6 @@ def points_worth_cacher() -> None:
     if cached_entries:
         logger.debug(f"Cached entries: {[tuple(r) for r in cached_entries]}")
 
-    # There is no cached points data.
     if not cached_entries:
         logger.info(
             "No up-to-date cache found. Clearing old entries and repopulating..."
@@ -540,9 +532,7 @@ def points_worth_cacher() -> None:
         succeeded = []
         failed = []
 
-        # Retrieve point values and update the cache
         for language_code in most_requested:
-            # This also handles inserting and committing to the DB
             try:
                 converted = converter(language_code)
                 logger.debug(
@@ -568,7 +558,6 @@ def points_worth_cacher() -> None:
         if failed:
             logger.warning(f"Failed languages: {failed}")
 
-        # Verify what was actually written to the cache
         verify_cursor = db.cursor_cache
         verify_cursor.execute(
             "SELECT * FROM multiplier_cache WHERE month_year = ?", (month_entry,)
@@ -584,6 +573,9 @@ def points_worth_cacher() -> None:
     return
 
 
+# ─── Subreddit organization & cleanup ────────────────────────────────────────
+
+
 @task(schedule="monthly")
 def archive_identified_saved() -> None:
     """
@@ -594,7 +586,6 @@ def archive_identified_saved() -> None:
     r = REDDIT.subreddit(SETTINGS["subreddit"])
     splitter = "|-------"
 
-    # Helper function to process a single wiki page
     def archive_page(wiki_page: WikiPage, file_path: str, page_name: str) -> None:
         content = wiki_page.content_md
         top, lines = content.rsplit(splitter, 1)
@@ -602,46 +593,37 @@ def archive_identified_saved() -> None:
 
         if lines.strip():
             with open(file_path, "a+", encoding="utf-8") as f:
-                f.write(lines.strip() + "\n")  # Add newline for separation
+                f.write(lines.strip() + "\n")
 
             wiki_page.edit(
                 content=top, reason=f"Archived tabular data for {get_current_month()}."
             )
             logger.info(f"{page_name} page archived.")
 
-    # Process both pages
     archive_page(r.wiki["identified"], Paths.ARCHIVAL["ALL_IDENTIFIED"], "Identified")
     archive_page(r.wiki["saved"], Paths.ARCHIVAL["ALL_SAVED"], "Saved")
 
     return
 
 
-"""SUBREDDIT ORGANIZATION/CLEANUP"""
-
-
 @task(schedule="monthly")
 def monthly_statistics_unpinner() -> None:
-    """Unpins the statistics posts if it is still pinned when
-    the monthly routine runs."""
-
+    """Unpin the statistics posts if still pinned when the monthly routine runs."""
     sub = REDDIT.subreddit(SETTINGS["subreddit"])
     stickies = []
 
-    # Iterate and check for the stickies.
     for i in range(1, 3):  # Try sticky 1 and sticky 2
         try:
             sticky = sub.sticky(number=i)
             stickies.append(sticky)
         except prawcore.exceptions.NotFound:
-            # Sticky number 'i' doesn't exist
             continue
 
-    # Print stickied post titles, then unsticky if any match.
     for sticky in stickies:
         print(sticky.title)
         if (
             "[META] r/translator Statistics" in sticky.title
-            and sticky.author  # In case the author is deleted or missing
+            and sticky.author
             and sticky.author.name == USERNAME
         ):
             sticky.mod.sticky(state=False)
@@ -659,7 +641,6 @@ def archive_modmail() -> None:
     logger.debug("Assessing modmail...")
     subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
 
-    # Get list of moderator names for checking
     mod_names = [mod.name.lower() for mod in subreddit.moderator()]
     logger.debug(f"Moderators: {mod_names}")
 
@@ -678,7 +659,6 @@ def archive_modmail() -> None:
         convo_age = (current_time - last_updated).total_seconds()
         readable_age = time_convert_to_string_seconds(int(convo_age))
 
-        # Check if any participant is a moderator
         participants = (
             [author.name for author in convo.authors] if convo.authors else []
         )

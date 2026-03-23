@@ -11,6 +11,8 @@ via Discord alerts and Markdown report files.
 Logger tag: [WJ:REPORT]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import json
 import logging
 import re
@@ -52,15 +54,19 @@ from wenju import WENJU_SETTINGS, task
 from ziwen_lookup.reference import get_language_reference
 from ziwen_lookup.wp_utils import wikipedia_lookup
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
+
+
+# ─── Hourly monitoring tasks ──────────────────────────────────────────────────
 
 
 @task(schedule="hourly")
 def reddit_status_report() -> None:
     """
-    Wrapper that calls reddit_status_check() and returns a
-    Markdown-formatted summary. This is an API that indicates whether
-    Reddit is having issues.
+    Call reddit_status_check() and alert Discord if any incidents are active.
+    This wraps an API that indicates whether Reddit is having issues.
 
     :returns:
         - Markdown text if incidents exist
@@ -85,10 +91,8 @@ def reddit_status_report() -> None:
         shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
 
         latest_update = None
-
         updates = incident.get("incident_updates") or []
         if updates:
-            # Take the most recent update by created_at timestamp
             latest_update = (
                 sorted(updates, key=lambda u: u.get("created_at", ""), reverse=True)[0]
                 .get("body", "")
@@ -121,15 +125,12 @@ def reddit_status_report() -> None:
 @task(schedule="hourly")
 def monitor_controversial_comments() -> None:
     """
-    Checks r/translator hourly for heavily downvoted comments
-    and flags them for review via a Discord alert.
+    Check r/translator hourly for heavily downvoted comments
+    and flag them for review via a Discord alert.
 
     :return: None
     """
-
-    # Iterate over the latest 100 comments in the subreddit
     for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(limit=100):
-        # Extract comment info
         score = comment.score
         removed = comment.removed
         mod_reports = comment.mod_reports
@@ -138,11 +139,9 @@ def monitor_controversial_comments() -> None:
         created_utc = int(comment.created_utc)
         author_name = comment.author.name if comment.author else "[deleted]"
 
-        # Check if this comment has already been acted upon
         query = "SELECT comment_id FROM acted_comments WHERE comment_id = ?"
         already_acted = db.fetch_main(query, (comment_id,))
 
-        # Criteria: score <= threshold, not removed, not reported, not already acted upon
         score_threshold = WENJU_SETTINGS["controversial_score_threshold"]
         if (
             score <= score_threshold
@@ -156,7 +155,6 @@ def monitor_controversial_comments() -> None:
                 f"Authored heavily downvoted comment at https://www.reddit.com/{permalink}",
             )
 
-            # Send alert to Discord
             send_discord_alert(
                 "Comment with Excessive Downvotes",
                 f"[This comment](https://www.reddit.com{permalink}) "
@@ -169,7 +167,6 @@ def monitor_controversial_comments() -> None:
                 f"u/{author_name} (score: {score}) — Discord alert sent."
             )
 
-            # Record this action in the database
             insert_query = """
                            INSERT INTO acted_comments (comment_id, created_utc, comment_author_username, action_type)
                            VALUES (?, ?, ?, ?) \
@@ -184,17 +181,18 @@ def monitor_controversial_comments() -> None:
     return
 
 
+# ─── Sidebar statistics ───────────────────────────────────────────────────────
+
+
 def _generate_24h_statistics_snippet() -> str | None:
     """
-    Retrieves and summarizes post statistics from the last 24 hours.
+    Retrieve and summarize post statistics from the last 24 hours.
 
     :return: A formatted Markdown snippet string if data is available,
              otherwise None.
     """
-    # Define time range (last 24 hours).
-    cutoff_timestamp = time.time() - 86400  # 24 hours ago
+    cutoff_timestamp = time.time() - 86400
 
-    # Fetch posts created within the last 24 hours.
     try:
         stored_ajos = db.fetchall_ajo(
             "SELECT * FROM ajo_database WHERE created_utc >= ?", (cutoff_timestamp,)
@@ -207,7 +205,6 @@ def _generate_24h_statistics_snippet() -> str | None:
         logger.info("No posts found in the last 24 hours.")
         return None
 
-    # Extract statuses safely.
     statuses = []
     for post_id, _, data, *rest in stored_ajos:
         try:
@@ -223,7 +220,6 @@ def _generate_24h_statistics_snippet() -> str | None:
         logger.info("No valid statuses found.")
         return None
 
-    # Count post categories.
     count_untranslated = statuses.count("untranslated")
     count_review = statuses.count("doublecheck")
     count_translated = statuses.count("translated")
@@ -246,7 +242,7 @@ def _generate_24h_statistics_snippet() -> str | None:
 @task(schedule="hourly")
 def update_sidebar_statistics() -> None:
     """
-    Updates the r/translator sidebar with the latest statistics
+    Update the r/translator sidebar with the latest statistics
     from the past 24 hours.
     Since June 2019, this function updates the Old Reddit sidebar
     by directly editing the wikipage that hosts it.
@@ -258,14 +254,12 @@ def update_sidebar_statistics() -> None:
     try:
         sidebar_bit = _generate_24h_statistics_snippet()
     except sqlite3.OperationalError:
-        # Database is locked — skip this update cycle.
         return
 
     if not sidebar_bit:
         logger.error("No posts found in the last 24 hours — sidebar not updated.")
         return
 
-    # --- Update Old Reddit sidebar ---
     try:
         sidebar_wikipage = REDDIT.subreddit(SETTINGS["subreddit"]).wiki[
             "config/sidebar"
@@ -286,7 +280,6 @@ def update_sidebar_statistics() -> None:
         logger.error(f"Failed to update Old Reddit sidebar: {e}")
         return
 
-    # --- Update New Reddit widget ---
     widgets = REDDIT.subreddit(SETTINGS["subreddit"]).widgets
     target_widget_id = "widget_13r63qu7r63we"
 
@@ -314,10 +307,13 @@ def update_sidebar_statistics() -> None:
     return
 
 
+# ─── Daily tasks ──────────────────────────────────────────────────────────────
+
+
 @task(schedule="daily")
 def language_of_the_day(selected_language: str | None = None) -> str | None:
     """
-    Formats text for a randomly selected language of the day (ISO 639-3
+    Format text for a randomly selected language of the day (ISO 639-3
     by default) in Markdown for inclusion in the sidebar of the
     subreddit as a widget (New Reddit). If the random language is
     invalid (e.g. a dead language) the function will return `None`
@@ -328,22 +324,14 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     :return: The text of the widget, or `None` if the information was
              unable to be obtained.
     """
-    # Get today's date
     today = date.today()
 
-    # Check if today is an even day. Post ISO 639-1 languages on even
-    # days in order to give some more familiar languages.
-    if today.day % 2 == 0:
-        iso_639_1_day = True
-    else:
-        iso_639_1_day = False
+    # Post ISO 639-1 languages on even days to surface more familiar languages.
+    iso_639_1_day = today.day % 2 == 0
 
-    # Language selection logic.
-    # Select a random language and get its data. (returns a Lingvo)
     if not selected_language and not iso_639_1_day:
         today_language = select_random_language()
     elif not selected_language and iso_639_1_day:
-        # Pick a random ISO 639-1 language.
         today_language = select_random_language(True)
         logger.info("Selecting an ISO 639-1 language today.")
     else:
@@ -356,7 +344,6 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
         logger.warning(
             f"Selection was {today_language}, which was invalid. No LOTD selected."
         )
-
         return None
 
     wikipedia_search_term = f"ISO_639:{today_language.language_code_3}"
@@ -366,7 +353,6 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
         f"(`{today_language.language_code_3}`)."
     )
 
-    # Try and fetch the relevant subreddit for that language.
     if iso_639_1_day:
         language_subreddit = today_language.subreddit
         if language_subreddit:
@@ -374,13 +360,10 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     else:
         language_subreddit = None
 
-    # Get data from Wikipedia using the wikipedia_lookup function.
     wikipedia_entry = wikipedia_lookup(wikipedia_search_term)
     if not wikipedia_entry:
         return None
 
-    # Extract just the summary text from the formatted entry.
-    # Remove markdown formatting to get clean text for the widget.
     language_entry_summary = wikipedia_entry
     if "\n\n> " in language_entry_summary:
         language_entry_summary = language_entry_summary.split("\n\n> ")[1]
@@ -388,15 +371,13 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
         language_entry_summary = language_entry_summary.split("\n\n")[0]
     language_entry_summary = language_entry_summary.strip()
 
-    # Fetch data from Ethnologue via the Wayback Machine if it's not an
-    # ISO 639-1 language, and then refresh the Lingvo.
+    # Fetch Ethnologue data via the Wayback Machine if not an ISO 639-1 language.
     if not today_language.language_code_1:
         if today_language.language_code_3 is None:
             logger.warning("No ISO 639-3 code available, skipping reference fetch.")
         else:
             reference_result = get_language_reference(today_language.language_code_3)
             if reference_result is not None:
-                # Only refresh if the reference fetch actually returned data
                 language_data = get_lingvos(force_refresh=True)
                 logger.debug("Variable refreshed.")
                 refreshed = language_data.get(today_language.language_code_3)
@@ -413,29 +394,24 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
                     f"`{today_language.language_code_3}` — proceeding without it."
                 )
 
-    # Get the language's country/region flag for better formatting.
     country_emoji = None
     country_for_emoji = getattr(today_language, "country", None)
     if country_for_emoji:
         country_emoji = get_country_emoji(country_for_emoji) or None
     if country_emoji is None:
-        # Fall back to the Lingvo's own property (derives emoji from language code)
         country_emoji = today_language.country_emoji or None
 
-    # Guard against a missing family (e.g. when Ethnologue fetch fails).
     language_family = today_language.family or "Unknown"
     language_family_link = (
         f"https://en.wikipedia.org/wiki/{language_family.replace('_', ' ')}_languages"
     )
 
-    # Format the text together.
     header = f"#### **{today_language.name}** "
     if today_language.language_code_1:
         header += f"`({today_language.language_code_1}`/`{today_language.language_code_3})`\n\n"
     else:
         header += f"`({today_language.preferred_code})`\n\n"
 
-    # Build the body with conditional country line
     country_line = ""
     if country_emoji is not None:
         country_line = f"* **Country**: {country_emoji} {today_language.country}\n"
@@ -451,31 +427,23 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     summary = f"\n\n{language_entry_summary}"
     full_text = header + body + summary
 
-    # Update the widget.
     update_success = widget_update("widget_1dn822a2cowgr", full_text)
     if update_success:
-        # Choose 'a' or 'an' based on the first letter of the language family
         article = "an" if language_family[0].lower() in "aeiou" else "a"
         code_string = f"`{today_language.preferred_code}`"
 
-        # Notify Discord.
         language_blurb = (
             f"The language of the day is **[{today_language.name}]"
             f"({wikipedia_redirect_link})** ({code_string}), "
             f"{article} {language_family} language. {language_entry_summary}"
         )
 
-        # Build the title with conditional emoji
         if country_emoji is not None:
             title = f"Language of the Day: {country_emoji} {today_language.name}"
         else:
             title = f"Language of the Day: {today_language.name}"
 
-        send_discord_alert(
-            title,
-            language_blurb,
-            "lotd",
-        )
+        send_discord_alert(title, language_blurb, "lotd")
 
     return full_text
 
@@ -483,7 +451,7 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
 @task(schedule="daily")
 def modqueue_assessor() -> None:
     """
-    Checks how many items are in the modqueue and alerts Discord
+    Check how many items are in the modqueue and alert Discord
     if the count exceeds a certain threshold.
     """
     modqueue_items = list(
@@ -491,7 +459,6 @@ def modqueue_assessor() -> None:
     )
     total_items = len(modqueue_items)
 
-    # Count comments and submissions by type prefix
     comment_count = sum(1 for item in modqueue_items if item.fullname.startswith("t1_"))
     submission_count = sum(
         1 for item in modqueue_items if item.fullname.startswith("t3_")
@@ -518,20 +485,21 @@ def modqueue_assessor() -> None:
     return
 
 
+# ─── Weekly tasks ─────────────────────────────────────────────────────────────
+
+
 @task(schedule="weekly")
 def update_verified_list() -> None:
     """
-    Updates the subreddit wiki page 'verified' with a sorted list of verified
+    Update the subreddit wiki page 'verified' with a sorted list of verified
     users organized by language. Also flags users with problematic flairs
     (e.g., missing brackets, incorrect flair class, or misuse of verified emoji).
     """
-
     formatted_text = []
     users_to_fix = []
     master_list = {}
     users_by_flair: dict[str, list[str]] = {}
 
-    # Retrieve all users with flair on the subreddit.
     for flair in REDDIT.subreddit(SETTINGS["subreddit"]).flair(limit=None):
         flair_text = flair.get("flair_text")
         if flair_text:
@@ -540,33 +508,27 @@ def update_verified_list() -> None:
                 flair.get("flair_css_class"),
             )
 
-    # Process users with 'verified' flair.
     for user, (flair_text, flair_css) in master_list.items():
         if flair_css == "verified":
-            # Attempt to extract the verified language(s) from brackets.
             match = re.findall(r"\[(.*?)]", flair_text)
             if not match:
                 users_to_fix.append(user)
                 continue
 
             verified_for = match[0]
-
-            # Sanitize and split the language text for conversion.
             clean_text = re.sub(r"[^\w\s]", " ", verified_for)
             for word in clean_text.split():
                 converter_result = converter(word, False)
-                if converter_result:  # Check if result is not None
+                if converter_result:
                     result = converter_result.preferred_code
                     if result:
                         users_by_flair.setdefault(result, []).append(user)
 
         elif flair_css not in {"verified", "moderator"} and ":verified:" in flair_text:
-            # User has a verified emoji but no verified flair class.
             users_to_fix.append(user)
 
-    # Construct the formatted wiki list.
     for language_code in sorted(users_by_flair):
-        if language_code == "en":  # Always exclude English.
+        if language_code == "en":
             continue
 
         _lingvo = converter(language_code)
@@ -576,27 +538,22 @@ def update_verified_list() -> None:
         formatted_text.append(header)
         formatted_text.extend(f"* u/{user}" for user in unique_users)
 
-    # Combine everything into final text.
     final_text = "\n".join(formatted_text)
 
     if users_to_fix:
-        # Create Markdown list with user links
         user_links = [
             f"* [u/{username}](https://www.reddit.com/user/{username})"
             for username in users_to_fix
         ]
         user_list = "\n".join(user_links)
-
         mod_fix_alert = (
             f"The following users have irregular verified flairs:\n{user_list}"
         )
         send_discord_alert("Irregular Verified User Flairs", mod_fix_alert, "alert")
 
-    # Prepare wiki page update.
     verified_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["verified"]
     anchor = "## List of Verified Translators on r/translator"
 
-    # Keep the upper portion of the page intact.
     upper_portion = verified_page.content_md.split(anchor, 1)[0]
     date_stamp = f"\n* *Last Updated {get_current_utc_date()}*\n"
     date_stamp += (
@@ -604,7 +561,6 @@ def update_verified_list() -> None:
     )
     final_update = "\n".join([upper_portion, anchor, date_stamp, final_text])
 
-    # Commit the edit.
     verified_page.edit(content=final_update, reason="Updating the verified list.")
     logger.info("> Verified list on the wiki updated.")
 
@@ -616,7 +572,7 @@ def deleted_posts_assessor(
     start_time: int | None = None, end_time: int | None = None
 ) -> None:
     """
-    Gathers data on individuals who deleted their posts from the subreddit,
+    Gather data on individuals who deleted their posts from the subreddit,
     focusing on those who deleted translated posts without thanking their translators.
 
     :param start_time: Starting boundary as a UNIX timestamp.
@@ -626,20 +582,16 @@ def deleted_posts_assessor(
     reports_directory = get_reports_directory()
     today = get_current_utc_date()
 
-    # Default to the last 7 days if no time range provided
     if start_time is None or end_time is None:
         end_time = int(time.time())
         start_time = end_time - 604800  # 7 days
 
-    # Fetch relevant Ajo entries from the database
     query = "SELECT * FROM ajo_database WHERE created_utc BETWEEN ? AND ?"
     stored_ajos = db.fetchall_ajo(query, (start_time, end_time))
     logger.debug(f"Fetched {len(stored_ajos)} entries from local_database.")
 
-    # Parse and store relevant Ajos keyed by post ID
     relevant_ajos = {row[0]: Ajo.from_dict(json.loads(row[2])) for row in stored_ajos}
 
-    # Retrieve submissions via Reddit API
     submission_fullnames = [f"t3_{pid}" for pid in relevant_ajos]
     submissions = list(REDDIT_HELPER.info(fullnames=submission_fullnames))
 
@@ -660,28 +612,21 @@ def deleted_posts_assessor(
     authors = []
     translated_deleted = []
 
-    # Compare deleted posts with cached Ajo data
     for post_id, submission in deleted_submissions.items():
         cached = relevant_ajos.get(post_id)
         if not cached:
-            # If no cached Ajo found, skip this post
             continue
 
-        # Access Ajo attributes directly (not dictionary-style)
         author = cached.author or "[unknown]"
         authors.append(author)
 
-        # Flag posts marked as translated or doublecheck
-        # Note: status can be either a string or dict (for defined_multiple posts)
         if isinstance(cached.status, str):
             if cached.status in {"translated", "doublecheck"}:
                 translated_deleted.append((submission, author))
         elif isinstance(cached.status, dict):
-            # For defined_multiple posts, check if any language is translated/doublecheck
             if any(s in {"translated", "doublecheck"} for s in cached.status.values()):
                 translated_deleted.append((submission, author))
 
-    # Identify deleted posts where OP never commented (impolite deletions)
     impolite_entries = []
     for submission, original_author in translated_deleted:
         comments = submission.comments.list()
@@ -691,7 +636,6 @@ def deleted_posts_assessor(
         ):
             impolite_entries.append((submission, original_author))
 
-    # Summarize frequent deleters
     active_authors = [a for a in authors if a not in ("[deleted]", "[unknown]")]
     offender_counts = Counter(active_authors)
     top_offenders = offender_counts.most_common(5)
@@ -700,7 +644,6 @@ def deleted_posts_assessor(
         f"* u/{name}: {count}" for name, count in top_offenders
     )
 
-    # Summarize impolite deletions
     if impolite_entries:
         impolite_table = "\n".join(
             f"| u/{author} | [{submission.title}]"
@@ -714,7 +657,6 @@ def deleted_posts_assessor(
     else:
         impolite_text = "\n\n#### Deleted Without Thanks (Impolite)\n\n_None_"
 
-    # Build the report
     report = (
         f"## Deleted Posts Data for {today}\n\n"
         f"**Deleted Posts Percentage:** {deleted_percentage:.2%} "
@@ -723,8 +665,6 @@ def deleted_posts_assessor(
         f"{impolite_text}"
     )
 
-    # Save the report to Markdown
-    # Ensure the directory exists (get_reports_directory returns a Path object)
     reports_directory.mkdir(parents=True, exist_ok=True)
     log_path = reports_directory / f"{today}_Deleted.md"
 
@@ -746,28 +686,22 @@ def notify_list_statistics_calculator() -> None:
     """
     reports_directory = get_reports_directory()
     today = get_current_utc_date()
-    # Fetch ISO 639-1 languages and ensure they are all strings
+
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
     iso_639_1_languages: list[str] = [
         str(code) for code in iso_639_1_languages_raw if code is not None
     ]
 
-    # Fetch all notification subscriptions from the main database
-    all_subscriptions = db.fetchall_main(
-        "SELECT * FROM notify_users",
-        (),  # not actually in AJO but uses fetch_ajo pattern
-    )
+    all_subscriptions = db.fetchall_main("SELECT * FROM notify_users", ())
 
     if not all_subscriptions:
         logger.warning("No subscriptions found in notify_users.")
         return
 
-    # Extract unique language codes and ensure they are strings
     all_lang_codes = sorted(
         {str(row[0]) for row in all_subscriptions if row[0] is not None}
     )
 
-    # Build Markdown table of languages and subscriber counts
     format_lines = []
     for code in all_lang_codes:
         if code in SETTINGS["internal_post_types"]:
@@ -784,18 +718,15 @@ def notify_list_statistics_calculator() -> None:
         name = _lingvo.name
         format_lines.append(f"| {name} | `{code}` | {code_count} |")
 
-    # Calculate statistics
     unique_langs = len(all_lang_codes)
     total_subs = len(all_subscriptions)
     average_per = total_subs / unique_langs if unique_langs else 0
 
-    # Identify duplicate subscriptions
     duplicates = [
         item for item, count in Counter(all_subscriptions).items() if count > 1
     ]
     dupe_subs = duplicates or ""
 
-    # Compose summary section
     summary = (
         f"## Notifications Database Data for {today}\n\n"
         f"* Unique entries in notifications database: {unique_langs:,} languages\n"
@@ -803,13 +734,11 @@ def notify_list_statistics_calculator() -> None:
         f"* Average notification subscriptions per entry: {average_per:.2f} subscribers\n"
     )
 
-    # Subscriber table section
     header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
     total_table = header + "\n".join(format_lines)
     total_table = format_markdown_table_with_padding(total_table)
     logger.debug(f"notify_list_statistics_calculator: Total = {total_subs:,}")
 
-    # Calculate missing ISO 639-1 languages (type-safe)
     ignore_codes = {"bh", "en", "nn", "nb"}
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
@@ -828,10 +757,8 @@ def notify_list_statistics_calculator() -> None:
     )
     missing_section = format_markdown_table_with_padding(missing_section)
 
-    # Combine into final Markdown
     final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"
 
-    # Write to file
     output_path = f"{reports_directory}/{today}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_text)

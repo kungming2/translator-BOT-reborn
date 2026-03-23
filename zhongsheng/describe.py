@@ -10,6 +10,8 @@ from integrations.ai import fetch_image_description
 
 from . import command
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
 
 # noinspection HttpUrlsUsage
 @command(
@@ -33,9 +35,7 @@ async def describe_image(ctx: commands.Context, image_url: str) -> None:
             )
             return
 
-        # Show typing indicator while processing
         async with ctx.typing():
-            # Run the blocking function in a thread pool
             description = await asyncio.get_event_loop().run_in_executor(
                 None,
                 fetch_image_description,
@@ -43,10 +43,8 @@ async def describe_image(ctx: commands.Context, image_url: str) -> None:
                 False,  # nsfw_flag always False
             )
 
-        # Format and send the response
         response = f"**Image Description:**\n{description}"
 
-        # Check Discord's character limit
         if len(response) > 2000:
             response = response[:1997] + "..."
 

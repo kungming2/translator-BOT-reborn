@@ -17,8 +17,6 @@ full pipeline.
 Logger tag: [M:TITOLO]
 """
 
-from __future__ import annotations
-
 from typing import Literal
 
 from models.lingvo import Lingvo
@@ -27,12 +25,17 @@ from models.lingvo import Lingvo
 Direction = Literal["english_from", "english_to", "english_both", "english_none"]
 
 
+# ─── Main Titolo class ────────────────────────────────────────────────────────
+
+
 class Titolo:
     """
     Data container for a parsed r/translator post title.
 
     All fields are populated by title.title_handling.process_title.
     """
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(self) -> None:
         """Initialize all Titolo fields to their empty/None defaults."""
@@ -68,6 +71,8 @@ class Titolo:
             f"  direction='{self.direction}',\n"
             f"  ai_assessed={self.ai_assessed}\n)"
         )
+
+    # ── Mutation helpers ───────────────────────────────────────────────────────
 
     def add_final_code(self, code: str) -> None:
         """Set the CSS flair code."""

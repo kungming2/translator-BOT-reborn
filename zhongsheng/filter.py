@@ -10,6 +10,8 @@ from title.title_handling import main_posts_filter
 
 from . import command
 
+# ─── Command metadata ─────────────────────────────────────────────────────────
+
 # Filter reason descriptions
 FILTER_REASONS = {
     "1": "Missing required keywords",
@@ -17,6 +19,9 @@ FILTER_REASONS = {
     "1B": "Too short and generic (no valid language detected)",
     "2": "'>' present but poorly placed or not formatted",
 }
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 @command(
@@ -33,12 +38,10 @@ async def filter_post(ctx: commands.Context, *, title: str) -> None:
     Example: /filter [English > French] Help translating this phrase
     """
     try:
-        # Validate that a title was provided
         if not title or not title.strip():
             await ctx.send("⚠️ Error: Please provide a post title to filter.")
             return
 
-        # Run the blocking function in a thread pool
         (
             post_okay,
             filtered_title,
@@ -49,7 +52,6 @@ async def filter_post(ctx: commands.Context, *, title: str) -> None:
             title,
         )
 
-        # Format and send the response
         if post_okay:
             response = "✅ **Post Title Valid**\n"
             if filtered_title != title:

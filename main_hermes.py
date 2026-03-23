@@ -47,7 +47,7 @@ CUT_OFF_REPLY: int = HERMES_SETTINGS["cut_off_reply"]
 CUT_OFF_COMMENTS_MIN: int = HERMES_SETTINGS["cut_off_comments_min"]
 # 90-day retention window
 CUT_OFF: int = HERMES_SETTINGS["cut_off"]
-# Post fetch amount
+# Post fetch limit
 FETCH_AMOUNT: int = HERMES_SETTINGS["fetch_limit"]
 
 
@@ -61,8 +61,6 @@ def get_submissions() -> None:
     """
     posts = list(REDDIT_HERMES.subreddit("language_exchange").new(limit=FETCH_AMOUNT))
     posts.reverse()  # Process oldest first for chronological ordering
-
-    import time
 
     current_time = time.time()
 
@@ -141,7 +139,7 @@ def database_maintenance() -> None:
     if pruned_ids:
         logger.info(f"Pruned {len(pruned_ids)} expired entries: {pruned_ids}")
 
-    # 2. Check remaining posts still exist on REDDIT_HERMES
+    # 2. Verify remaining posts still exist on Reddit
     entries = hermes_db.get_all_entries()
     if not entries:
         return
@@ -166,14 +164,12 @@ def database_maintenance() -> None:
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
-
 if __name__ == "__main__":
     start_time = time.time()
 
     logger.info("Hermes starting up. Logged in...")
     logger.debug(f"Settings: {HERMES_SETTINGS}")
 
-    # Ensure the database tables exist
     initialize_hermes_db()
 
     if "--test" in sys.argv:
@@ -185,10 +181,11 @@ if __name__ == "__main__":
             test_limit = 100
         logger.info(f"Running in parser test mode (limit={test_limit}).")
         test_parser(REDDIT_HERMES, test_limit)
+
     elif len(sys.argv) > 1:
-        # Any other CLI argument → statistics mode
         logger.info("Running in statistics mode.")
         get_statistics()
+
     else:
         try:
             database_maintenance()
@@ -200,7 +197,6 @@ if __name__ == "__main__":
             sys.exit(0)
 
         except TRANSIENT_ERRORS as e:
-            # Just log transient errors at WARNING level, don't save to error log
             logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
             logger.info("Will retry on next cycle.")
 

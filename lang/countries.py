@@ -18,6 +18,8 @@ Key components:
 Logger tag: [LANG:COUNTRIES]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import csv
 import logging
 
@@ -26,15 +28,15 @@ import pycountry
 from config import Paths, load_settings
 from config import logger as _base_logger
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG:COUNTRIES"})
 
 _country_list_cache = None  # cached country list from CSV
 _language_full_data_cache = None  # cached language YAML data for emoji lookups
 
 
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
+# ─── Dataset loader ───────────────────────────────────────────────────────────
 
 
 def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
@@ -68,22 +70,20 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
     return _country_list_cache
 
 
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
+# ─── Country resolution ───────────────────────────────────────────────────────
 
 
 def country_converter(
     text_input: str, abbreviations_okay: bool = True
 ) -> tuple[str, str]:
     """
-    Detects a country based on input. Supports full names, 2-letter
+    Detect a country based on input. Supports full names, 2-letter
     and 3-letter codes, or associated keywords.
 
     Args:
         text_input: The input text to match.
         abbreviations_okay: If True, allow matching by abbreviations,
-                           like 'CN' or 'MX'. Default is True.
+                            like 'CN' or 'MX'. Default is True.
 
     Returns:
         Tuple of (country_code, country_name). Returns ("", "") if no match found.
@@ -109,7 +109,7 @@ def country_converter(
             if text_upper == alpha3:
                 return alpha2, name
 
-    # Initialize fallback match variables
+    # Initialise fallback match variables
     possible_code: str = ""
     possible_name: str = ""
 
@@ -131,6 +131,9 @@ def country_converter(
         return possible_code, possible_name
 
     return "", ""
+
+
+# ─── Flag emoji utilities ─────────────────────────────────────────────────────
 
 
 def _alpha2_to_emoji(alpha2: str) -> str:
@@ -159,15 +162,15 @@ def get_country_emoji(country_name: str) -> str:
     if not country_name:
         return ""
 
-    # --- Strategy 1: CSV dataset via country_converter ---
-    # This is the most flexible path: it handles official names, alternate
-    # spellings (e.g. "Turkey" for Türkiye), keywords, and partial matches.
+    # Strategy 1: CSV dataset via country_converter — most flexible path:
+    # handles official names, alternate spellings (e.g. "Turkey" for Türkiye),
+    # keywords, and partial matches.
     alpha2, _ = country_converter(country_name, abbreviations_okay=True)
     if alpha2:
         return _alpha2_to_emoji(alpha2)
 
-    # --- Strategies 2-4: pycountry fallback ---
-    # Catches any entries present in pycountry but absent from the CSV.
+    # Strategies 2–4: pycountry fallback — catches entries present in pycountry
+    # but absent from the CSV.
     country = None
 
     try:

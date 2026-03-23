@@ -15,6 +15,9 @@ from . import command
 logging.getLogger("praw").setLevel(logging.CRITICAL)
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
 def _format_commands(list_commands: list) -> str:
     """Format commands section for the response."""
     if not list_commands:
@@ -25,6 +28,9 @@ def _format_commands(list_commands: list) -> str:
         data_str = f": {cmd.data}" if cmd.data else ""
         response += f"- {cmd.name}{data_str}\n"
     return response
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 @command(
@@ -47,10 +53,8 @@ async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
             return
 
         try:
-            # Create Instruo object from the text
             instruo = Instruo.from_text(text_content)
 
-            # Format the response (testing mode shows only commands found)
             response = f"**Commands Found:** {len(instruo.commands)}\n"
             response += _format_commands(instruo.commands)
 
@@ -60,40 +64,29 @@ async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
             await ctx.send(f"⚠️ Error processing text: {str(e)}")
             return
     else:
-        # Original behavior: extract comment ID from various formats
+        # Extract comment ID from various URL formats or bare ID
         if "reddit.com/" in comment_input:
-            # Extract from full Reddit URL
             # Format: https://www.reddit.com/r/subreddit/comments/POST_ID/_/COMMENT_ID/
             parts = comment_input.split("/")
-            # Find the index of the underscore and get the part after it
             try:
                 underscore_idx = parts.index("_")
                 comment_id = parts[underscore_idx + 1]
             except (ValueError, IndexError):
-                # Fallback: get the last non-empty part
                 comment_id = [p for p in parts if p][-1]
         elif "redd.it/" in comment_input:
-            # Extract from short URL
             # Format: redd.it/COMMENT_ID
             comment_id = comment_input.rstrip("/").split("/")[-1]
         else:
-            # Assume it's already a comment ID
             comment_id = comment_input
 
-        if (
-            not comment_id or len(comment_id) < 6
-        ):  # Reddit IDs are typically 6+ characters
+        if not comment_id or len(comment_id) < 6:  # Reddit IDs are typically 6+ chars
             await ctx.send("⚠️ Could not extract comment ID from the provided input.")
             return
 
         try:
-            # Fetch the comment using the existing REDDIT_HELPER instance
             comment = REDDIT_HELPER.comment(comment_id)
-
-            # Create Instruo object from the comment
             instruo = Instruo.from_comment(comment)
 
-            # Format the response
             response = f"**Comment ID:** {instruo.id_comment}\n"
             response += f"**Post ID:** {instruo.id_post}\n"
             response += (

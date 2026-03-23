@@ -30,29 +30,30 @@ and complex search operations across the databases.
 Logger tag: [DATA]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import csv
 import json
 import logging
 import os
 import sqlite3
-import time
 from ast import literal_eval
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-from config import SETTINGS, Paths
+from config import Paths
 from config import logger as _base_logger
 from time_handling import convert_to_day
 
 if TYPE_CHECKING:
-    from discord.ext.commands import Context
-
     from models.ajo import Ajo
+
+# ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "DATA"})
 
 
-"""SQLITE DATABASE ACCESS"""
+# ─── Database manager ─────────────────────────────────────────────────────────
 
 
 class DatabaseManager:
@@ -66,11 +67,13 @@ class DatabaseManager:
         self._conn_main: sqlite3.Connection | None = None
         self._conn_ajo: sqlite3.Connection | None = None
 
+    # ── Connection management ─────────────────────────────────────────────────
+
     @staticmethod
     def _connect(file_path: str) -> sqlite3.Connection:
         """Open a SQLite connection to *file_path* with row_factory set to sqlite3.Row."""
         conn = sqlite3.connect(file_path)
-        conn.row_factory = sqlite3.Row  # Optional: allows dictionary-like row access
+        conn.row_factory = sqlite3.Row
         return conn
 
     @property
@@ -115,6 +118,8 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    # ── Query helpers ─────────────────────────────────────────────────────────
+
     def fetch_ajo(self, query: str, params: tuple = ()) -> sqlite3.Row | None:
         """
         Execute a SELECT query and return a single row from the AJO database.
@@ -152,12 +157,29 @@ class DatabaseManager:
         return cursor.fetchall()
 
 
-"""CREATES DATABASES IF THEY DO NOT EXIST"""
+# ─── Schema setup ─────────────────────────────────────────────────────────────
+
+
+def _initialize_db(db_path: str, statements: list[str]) -> None:
+    """Run a list of DDL statements against a freshly created database file."""
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        for statement in statements:
+            cursor.execute(statement)
+        conn.commit()
+        logger.info(f"{os.path.basename(db_path)} initialized successfully.")
+    except sqlite3.Error as e:
+        logger.error(f"Error initializing {db_path}: {e}")
+    finally:
+        if conn:
+            conn.close()
 
 
 def _initialize_cache_db() -> None:
-    """Internal function to initialize the cache database if it
-    does not exist."""
+    """Initialize the cache database if it does not exist."""
     db_path = Paths.DATABASE["CACHE"]
 
     if os.path.exists(db_path):
@@ -198,8 +220,7 @@ def _initialize_cache_db() -> None:
 
 
 def _initialize_ajo_db() -> None:
-    """Internal function to initialize the Ajo database if it
-    does not exist."""
+    """Initialize the Ajo database if it does not exist."""
     db_path = Paths.DATABASE["AJO"]
 
     if os.path.exists(db_path):
@@ -223,8 +244,7 @@ def _initialize_ajo_db() -> None:
 
 
 def _initialize_main_db() -> None:
-    """Internal function to initialize the main database if it
-    does not exist."""
+    """Initialize the main database if it does not exist."""
     db_path = Paths.DATABASE["MAIN"]
 
     if os.path.exists(db_path):
@@ -361,27 +381,9 @@ def _initialize_main_db() -> None:
     _initialize_db(db_path, create_statements)
 
 
-def _initialize_db(db_path: str, statements: list[str]) -> None:
-    """Internal function to run the table creation commands."""
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = None
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        for statement in statements:
-            cursor.execute(statement)
-        conn.commit()
-        logger.info(f"{os.path.basename(db_path)} initialized successfully.")
-    except sqlite3.Error as e:
-        logger.error(f"Error initializing {db_path}: {e}")
-    finally:
-        if conn:
-            conn.close()
-
-
 def initialize_all_databases() -> None:
     """
-    Creates all three required databases if they do not exist.
+    Create all three required databases if they do not exist.
     This is unlikely to be often used as the databases should transfer over.
     """
     _initialize_cache_db()
@@ -389,7 +391,7 @@ def initialize_all_databases() -> None:
     _initialize_main_db()
 
 
-"""NON-SQLITE FILE WRITING"""
+# ─── File logging ─────────────────────────────────────────────────────────────
 
 
 def record_activity_csv(run_type: str, data_tuple: tuple) -> None:
@@ -466,7 +468,7 @@ def record_filter_log(
         f.write(line)
 
 
-"""SPECIFIC SEARCH/RETRIEVAL FUNCTIONS"""
+# ─── Ajo database search ──────────────────────────────────────────────────────
 
 
 def _parse_ajo_row(
@@ -482,22 +484,18 @@ def _parse_ajo_row(
     Returns:
         Tuple of (post_id, created_utc, data_dict) or None if parsing fails or filtered out
     """
-
     try:
         post_id = result["id"] if isinstance(result, sqlite3.Row) else result[0]
         created_utc = (
             result["created_utc"] if isinstance(result, sqlite3.Row) else result[1]
         )
 
-        # Filter by time if start_utc is provided
         if start_utc is not None and created_utc < start_utc:
             return None
 
         data_json = result["ajo"] if isinstance(result, sqlite3.Row) else result[2]
 
-        # Parse the JSON/dict data
         if isinstance(data_json, dict):
-            # Already a dict, use as-is
             data = data_json
         elif isinstance(data_json, str):
             # Try JSON first (proper JSON with double quotes)
@@ -521,7 +519,6 @@ def _parse_ajo_row(
         return post_id, created_utc, data
 
     except (TypeError, KeyError, IndexError) as e:
-        # Fixed: Handle both Row and tuple objects properly
         try:
             row_id = result["id"] if isinstance(result, sqlite3.Row) else result[0]
         except (KeyError, IndexError):
@@ -580,7 +577,6 @@ def search_database(
 
                 post_id, created_utc, data = parsed
 
-                # Check if this post matches the username
                 if (
                     data.get("author") == search_term
                     or data.get("username") == search_term
@@ -593,121 +589,24 @@ def search_database(
             return matching_ajos
 
         else:
-            # Unknown search type, return empty list
             return []
 
     except Exception as db_error:
         import traceback
 
         logger.error(f"Error querying database: {traceback.format_exc()} {db_error}")
-
         return []
 
 
-async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
-    """
-    Internal helper function to search through log files and the
-    Ajo database for a given term, which can be a username or a post ID.
-
-    Args:
-        ctx: Discord context
-        search_term: The term to search for (username or post_id)
-        term_type: Type of search ('user' or 'post') for display purposes
-    """
-    days_back = SETTINGS["log_search_days"]  # How many days back to search
-    log_files = {
-        "FILTER": Paths.LOGS["FILTER"],
-        "EVENTS": Paths.LOGS["EVENTS"],
-        "ERROR": Paths.LOGS["ERROR"],
-    }
-
-    # Calculate the cutoff time in UNIX seconds
-    cutoff_utc = int(time.time()) - (days_back * 86400)
-
-    try:
-        log_lines = []
-
-        # Search through log files
-        for log_name, log_path in log_files.items():
-            try:
-                with open(
-                    log_path, "r", encoding="utf-8", errors="replace"
-                ) as log_file:
-                    for line in log_file:
-                        if search_term in line:
-                            log_lines.append(f"[{log_name}] {line.strip()}")
-            except FileNotFoundError:
-                await ctx.send(
-                    f"Warning: {log_name} log file not found at `{log_path}`"
-                )
-                continue
-
-        # Search database for historical information (with time filter)
-        db_results = search_database(search_term, term_type, start_utc=cutoff_utc)
-
-        # Check if we have any results at all
-        if not log_lines and not db_results:
-            await ctx.send(
-                f"No entries found for {term_type} `{search_term}` in the last {days_back} days."
-            )
-            return
-
-        # Build response with sections
-        response = f"Search results for {term_type} `{search_term}` (last {days_back} days):\n```\n"
-
-        # Add log file results
-        if log_lines:
-            response += f"=== LOG FILES ({len(log_lines)} matches) ===\n"
-            for line in log_lines:
-                # Check if adding this line would exceed Discord's limit
-                if len(response) + len(line) + 10 > 1900:
-                    response += "```"
-                    await ctx.send(response)
-                    response = "```\n"
-
-                response += line + "\n"
-
-            response += "\n"  # Extra spacing between sections
-
-        # Add database results
-        if db_results:
-            response += f"=== DATABASE ({len(db_results)} records) ===\n"
-            for ajo in db_results:
-                # Format the Ajo object as a string
-                ajo_str = (
-                    f"Post ID: {ajo.id}\n"
-                    f"  Author: u/{ajo.author}\n"
-                    f"  Status: {ajo.status}\n"
-                    f"  Language: {ajo.language_name} ({ajo.preferred_code})\n"
-                    f"  Title: {ajo.title}\n"
-                    f"  Direction: {ajo.direction}\n"
-                    f"---"
-                )
-
-                # Check if adding this entry would exceed Discord's limit
-                if len(response) + len(ajo_str) + 10 > 1900:
-                    response += "```"
-                    await ctx.send(response)
-                    response = "```\n"
-
-                response += ajo_str + "\n"
-
-        response += "```"
-        print(response)
-        await ctx.send(response)
-
-    except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+# ─── Log search & event log utilities ────────────────────────────────────────
 
 
 def get_recent_event_log_lines(
     num_lines: int = 5, tag: Optional[str] = None
 ) -> Tuple[str, str]:
     """
-    Extract the last N lines from a log file and find the last event with a specific tag.
+    Extract the last N lines from the events log and find the last event
+    with a specific tag.
 
     Args:
         num_lines: Number of lines to extract from the end of the file (default: 5)
@@ -722,8 +621,6 @@ def get_recent_event_log_lines(
         FileNotFoundError: If the log file doesn't exist
         Exception: For other errors during file reading or parsing
     """
-
-    # Read the last N lines from the file
     with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
         lines = f.readlines()
         last_n = lines[-num_lines:] if len(lines) >= num_lines else lines
@@ -731,14 +628,11 @@ def get_recent_event_log_lines(
     if not last_n:
         raise ValueError("Log file is empty")
 
-    # Format the log content
     log_content = "```\n" + "".join(last_n) + "```"
 
-    # If no tag specified, return just the log content
     if tag is None:
         return log_content, "no tag specified"
 
-    # Find the last line with the specified tag
     tag_pattern = f"[{tag.upper()}]"
     tagged_lines = [line for line in last_n if tag_pattern in line]
 
@@ -754,23 +648,21 @@ def get_recent_event_log_lines(
             )
             current_time = datetime.now(timezone.utc)
 
-            # Calculate time delta
             delta = current_time - last_event_time
             delta_seconds = delta.total_seconds()
 
-            # Format the time difference
-            if delta_seconds < 60:  # Less than 1 minute
+            if delta_seconds < 60:
                 seconds = int(delta_seconds)
                 time_ago = f"{seconds} second{'s' if seconds != 1 else ''} ago"
-            elif delta_seconds < 3600:  # Less than 1 hour
+            elif delta_seconds < 3600:
                 minutes = int(delta_seconds / 60)
                 time_ago = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
-            else:  # 1 hour or more
+            else:
                 hours = delta_seconds / 3600
-                if hours < 48:  # Less than 2 days, show in hours
+                if hours < 48:
                     hours_int = int(hours)
                     time_ago = f"{hours_int} hour{'s' if hours_int != 1 else ''} ago"
-                else:  # 2 days or more
+                else:
                     days = int(hours / 24)
                     time_ago = f"{days} day{'s' if days != 1 else ''} ago"
         except (IndexError, ValueError):
@@ -779,5 +671,6 @@ def get_recent_event_log_lines(
     return log_content, time_ago
 
 
-# Instantiate a global shared database manager (singleton-like)
+# ─── Module-level singleton ───────────────────────────────────────────────────
+
 db = DatabaseManager()

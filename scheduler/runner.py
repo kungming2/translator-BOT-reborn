@@ -1,6 +1,8 @@
 # scheduler/runner.py
 """APScheduler-based runner that launches bot scripts as subprocesses on a fixed schedule."""
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 import subprocess
 import sys
@@ -12,8 +14,12 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from config import SCHEDULER_SETTINGS
 from scheduler.lock import AlreadyRunningError, script_lock
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 BOT_DIR = Path(SCHEDULER_SETTINGS["main_bot_directory"])
 LOG_DIR = Path(SCHEDULER_SETTINGS["main_log_directory"])
+
+# ─── Logging setup ────────────────────────────────────────────────────────────
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,6 +30,9 @@ logging.basicConfig(
     ],
 )
 log = logging.getLogger("scheduler")
+
+
+# ─── Script runner ────────────────────────────────────────────────────────────
 
 
 def run_script(
@@ -51,6 +60,9 @@ def run_script(
         log.warning(f"Skipping {name} — previous instance still running")
 
 
+# ─── Scheduler & event listener ──────────────────────────────────────────────
+
+
 def on_scheduler_event(event: JobExecutionEvent) -> None:
     """Log an error if a scheduled job raised an exception or was missed."""
     if event.exception:
@@ -60,7 +72,12 @@ def on_scheduler_event(event: JobExecutionEvent) -> None:
 scheduler = BlockingScheduler(timezone="UTC")
 scheduler.add_listener(on_scheduler_event, EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
-# --- Ziwen: every 3 minutes ---
+
+# ─── Job registration ─────────────────────────────────────────────────────────
+
+# ── High-frequency bots (interval) ───────────────────────────────────────────
+
+# Ziwen: every 3 minutes
 scheduler.add_job(
     run_script,
     "interval",
@@ -72,7 +89,7 @@ scheduler.add_job(
     misfire_grace_time=60,
 )
 
-# --- Chinese Reference: every 5 minutes ---
+# Chinese Reference: every 5 minutes
 scheduler.add_job(
     run_script,
     "interval",
@@ -84,7 +101,7 @@ scheduler.add_job(
     misfire_grace_time=60,
 )
 
-# --- Hermes: every 30 minutes ---
+# Hermes: every 30 minutes
 scheduler.add_job(
     run_script,
     "interval",
@@ -96,7 +113,9 @@ scheduler.add_job(
     misfire_grace_time=120,
 )
 
-# --- Wenju: hourly at :01 UTC ---
+# ── Wenju (cron) ──────────────────────────────────────────────────────────────
+
+# Hourly at :01 UTC
 scheduler.add_job(
     run_script,
     "cron",
@@ -112,7 +131,7 @@ scheduler.add_job(
     misfire_grace_time=300,
 )
 
-# --- Wenju: daily at 23:57 UTC ---
+# Daily at 23:57 UTC
 scheduler.add_job(
     run_script,
     "cron",
@@ -125,7 +144,7 @@ scheduler.add_job(
     misfire_grace_time=600,
 )
 
-# --- Wenju: weekly Wednesday 00:01 UTC ---
+# Weekly — Wednesday 00:01 UTC
 scheduler.add_job(
     run_script,
     "cron",
@@ -143,7 +162,7 @@ scheduler.add_job(
     misfire_grace_time=3600,
 )
 
-# --- Wenju: monthly on the 10th at 00:01 UTC ---
+# Monthly — 10th at 00:01 UTC
 scheduler.add_job(
     run_script,
     "cron",
@@ -160,6 +179,9 @@ scheduler.add_job(
     coalesce=True,
     misfire_grace_time=3600,
 )
+
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     log.info("Bot scheduler starting...")

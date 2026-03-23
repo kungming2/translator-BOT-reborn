@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
+
 """
 AI-assisted title parsing and correction for r/translator posts.
 
@@ -14,18 +16,18 @@ comment suggesting a reformatted title when a post fails the filter.
 
 This module is intentionally isolated from the rule-based parsing logic.
 Its only dependency on the title package is the Titolo type annotation used
-in _update_titolo_from_ai_result; it does not import process_title or any
+in update_titolo_from_ai_result; it does not import process_title or any
 parser internals.
 
 Key components:
-    title_ai_parser              -- Call AI service and return parsed language data.
+    title_ai_parser                 -- Call AI service and return parsed language data.
     format_title_correction_comment -- Build a correction comment for bad titles.
-    update_titolo_from_ai_result -- Write AI result back into a Titolo object.
+    update_titolo_from_ai_result    -- Write AI result back into a Titolo object.
 
 Logger tag: [T:AI]
 """
 
-from __future__ import annotations
+# ─── Imports ──────────────────────────────────────────────────────────────────
 
 import json
 import logging
@@ -42,14 +44,19 @@ from responses import RESPONSE
 if TYPE_CHECKING:
     from models.titolo import Direction, Titolo
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "T:AI"})
+
+
+# ─── AI title parsing ────────────────────────────────────────────────────────
 
 
 def title_ai_parser(
     title: str, post: Optional[Submission] = None
 ) -> Union[dict[str, Any], tuple[str, str]]:
     """
-    Passes a malformed title to an AI to assess, and returns the non-English
+    Pass a malformed title to an AI to assess, and return the non-English
     language (code and name) if confidence is sufficient.
 
     Optionally includes image data from the post (direct image or first gallery
@@ -118,9 +125,12 @@ def title_ai_parser(
     return query_dict
 
 
+# ─── Title correction comment ─────────────────────────────────────────────────
+
+
 def format_title_correction_comment(title_text: str, author: str) -> str:
     """
-    Constructs a comment suggesting a new, properly formatted post title,
+    Construct a comment suggesting a new, properly formatted post title,
     along with a resubmit link that includes the revised title. This helps
     streamline the process of resubmitting a post to r/translator.
 
@@ -156,6 +166,9 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
     )
 
     return reformat_comment
+
+
+# ─── Titolo update ────────────────────────────────────────────────────────────
 
 
 def update_titolo_from_ai_result(

@@ -24,6 +24,26 @@ from reddit.reddit_sender import message_send
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:NUKE"})
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
+def _remove_items(
+    generator: Generator,
+    item_type: str,
+    subreddit: str,
+    nuke_reason: str,
+    nuked_person: str,
+) -> None:
+    """Remove all subreddit items from a generator (submissions or comments)."""
+    for item in generator:
+        if item.subreddit.display_name.lower() == subreddit:
+            remove_content(item, "spam", nuke_reason)
+    logger.info(f">> Removed all {item_type} from u/{nuked_person}.")
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
@@ -37,47 +57,45 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) ->
 
     mod_caller = comment.author
 
-    # Check to see if the person calling this command is actually a mod.
     if not is_mod(mod_caller):
         logger.info(f"> u/{mod_caller} is not a mod. Ignoring.")
         return
 
     logger.info(f"> Nuke command called by u/{mod_caller}.")
 
-    # Fetch the person to be nuked by looking at the parent of the comment.
     parent: Comment | Submission = comment.parent()
     nuked_person = parent.author
     logger.info(f"> User to nuke: u/{nuked_person}.")
 
-    # Log the parent permalink for clarity.
     if isinstance(parent, Comment):
         logger.info(f">> Parent comment: {parent.permalink}")
     elif isinstance(parent, Submission):
         logger.info(f">> Parent submission: {parent.permalink}")
 
-    # Ban the user.
     nuke_reason = f"Mod u/{mod_caller} nuked this user."
-    REDDIT.subreddit(SETTINGS["subreddit"]).banned.add(
-        nuked_person, ban_reason=nuke_reason
-    )
+    subreddit = SETTINGS["subreddit"]
+
+    REDDIT.subreddit(subreddit).banned.add(nuked_person, ban_reason=nuke_reason)
     logger.info(f">> Banned u/{nuked_person}.")
 
-    # Helper function to remove all items in a generator (posts/comments).
-    def remove_items(generator: Generator, item_type: str) -> None:
-        for item in generator:
-            if item.subreddit.display_name.lower() == SETTINGS["subreddit"]:
-                remove_content(item, "spam", nuke_reason)
-        logger.info(f">> Removed all {item_type} from u/{nuked_person}.")
-
-    # Remove any and all posts or comments on the subreddit.
-    remove_items(nuked_person.submissions.new(limit=None), "submissions")
-    remove_items(nuked_person.comments.new(limit=None), "comments")
+    _remove_items(
+        nuked_person.submissions.new(limit=None),
+        "submissions",
+        subreddit,
+        nuke_reason,
+        nuked_person,
+    )
+    _remove_items(
+        nuked_person.comments.new(limit=None),
+        "comments",
+        subreddit,
+        nuke_reason,
+        nuked_person,
+    )
 
     logger.info(f">> Completely nuked u/{nuked_person}.")
 
-    # Message the moderator who issued the command.
-    # As this is a mod-only command, this does not require the testing
-    # wrapper.
+    # This is a mod-only command so no testing-mode wrapper is needed.
     message_send(
         mod_caller,
         subject=f"Nuked u/{nuked_person}",
@@ -88,6 +106,5 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) ->
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
 
-    # Create a mod note for the individual.
     command_note = f"Mod u/{mod_caller} nuked u/{nuked_person}."
     create_mod_note("PERMA_BAN", nuked_person.name, command_note)

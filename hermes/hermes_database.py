@@ -17,6 +17,8 @@ alongside the other bot databases under _data/Databases/.
 Logger tag: [HM:DB]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import os
 import sqlite3
 import time
@@ -27,6 +29,8 @@ import orjson
 
 from config import Paths, get_hermes_logger
 from database import DatabaseManager
+
+# ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = get_hermes_logger("HM:DB")
 HERMES_DB_PATH = Paths.HERMES["HERMES_DATABASE"]
@@ -80,7 +84,7 @@ def initialize_hermes_db() -> None:
             conn.close()
 
 
-# ─── Private helpers ──────────────────────────────────────────────────────────
+# ─── Serialisation helpers ────────────────────────────────────────────────────
 
 
 def _parse_user_data(raw: str) -> dict[str, Any] | None:
@@ -115,7 +119,7 @@ class HermesDatabaseManager(DatabaseManager):
         super().__init__()
         self._conn_hermes: sqlite3.Connection | None = None
 
-    # ── Connection properties ─────────────────────────────────────────────────
+    # ── Connection management ─────────────────────────────────────────────────
 
     @property
     def conn_hermes(self) -> sqlite3.Connection:

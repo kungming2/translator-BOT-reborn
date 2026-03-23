@@ -28,8 +28,10 @@ from responses import RESPONSE
 if TYPE_CHECKING:
     from models.lingvo import Lingvo
 
-
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:WIKI"})
+
+
+# ─── Statistics wiki helpers ──────────────────────────────────────────────────
 
 
 def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
@@ -40,7 +42,6 @@ def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
 
     :return: A wiki URL, or `None` if no wiki page exists.
     """
-
     # If the link is already part of the object, return it.
     if lingvo_object.link_statistics:
         return lingvo_object.link_statistics
@@ -74,8 +75,6 @@ def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
 
 def _extract_single_language_statistics_table(markdown_text: str) -> str | None:
     """Extract the 'Single-Language Requests' Markdown table from the wiki page."""
-
-    # Use regex to extract the table under "### Single-Language Requests"
     pattern = re.compile(
         r"### Single-Language Requests\s*\n"  # Match the header
         r"(?:.+\|.+\n)+"  # Match header and separator rows
@@ -154,6 +153,9 @@ def fetch_most_requested_languages() -> list[str]:
     return list(languages_frequency_sorted.keys())
 
 
+# ─── Wiki page writing ────────────────────────────────────────────────────────
+
+
 def update_wiki_page(
     action: str,
     formatted_date: str,
@@ -203,7 +205,6 @@ def update_wiki_page(
     except (prawcore.exceptions.Forbidden, prawcore.exceptions.TooLarge) as e:
         # This should not happen often, as Wenju automatically archives
         # entries every month, but is retained here just in case.
-
         logger.warning(f"The {action} wiki page is full.")
         send_discord_alert(
             f"'{action}' Wiki Page Full",
@@ -222,13 +223,7 @@ def update_wiki_page(
     return
 
 
-"""
-SEARCH FREQUENTLY-REQUESTED TRANSLATIONS
-
-These are functions associated with checking the YAML entries on the
-frequently-requested translations page. Currently, this is paired with
-the `!search` function.
-"""
+# ─── Frequently-requested translations search ─────────────────────────────────
 
 
 def _frequently_requested_wiki() -> list[dict[str, Any]] | None:

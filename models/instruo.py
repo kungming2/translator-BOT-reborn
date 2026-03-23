@@ -30,6 +30,9 @@ from models.komando import Komando, extract_commands_from_text
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
 def _strip_commands(text: str) -> str | None:
     """
     Return a copy of *text* with all recognized bot commands removed,
@@ -72,6 +75,9 @@ def _strip_commands(text: str) -> str | None:
     return result if result else None
 
 
+# ─── Main Instruo class ───────────────────────────────────────────────────────
+
+
 class Instruo:
     """
     Defines a class that is derived from a PRAW comment with commands.
@@ -82,6 +88,8 @@ class Instruo:
 
     instruo = Instruo.from_comment(comment)
     """
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(
         self,
@@ -110,20 +118,6 @@ class Instruo:
     def __repr__(self) -> str:
         return f"Instruo (id={self.id_comment!r}, commands={self.commands!r})"
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize the Instruo and its commands to a plain dictionary."""
-        return {
-            "id_comment": self.id_comment,
-            "id_post": self.id_post,
-            "created_utc": self.created_utc,
-            "author_comment": self.author_comment,
-            "author_post": self.author_post,
-            "commands": [cmd.to_dict() for cmd in self.commands],
-            "languages": [str(lang) for lang in self.languages],
-            "body": self.body,
-            "body_remainder": self.body_remainder,
-        }
-
     @classmethod
     def from_comment(
         cls, comment: Any, parent_languages: list | None = None
@@ -137,7 +131,7 @@ class Instruo:
         author_post = (
             str(comment.submission.author) if comment.submission.author else "[deleted]"
         )
-        # Normalise: accept either a bare Lingvo or a list of Lingvos
+        # Normalize: accept either a bare Lingvo or a list of Lingvos
         if parent_languages is not None and not isinstance(parent_languages, list):
             parent_languages = [parent_languages]
         commands = extract_commands_from_text(text, parent_languages=parent_languages)
@@ -186,6 +180,25 @@ class Instruo:
             body=text,
             body_remainder=_strip_commands(text),
         )
+
+    # ── Serialization ─────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the Instruo and its commands to a plain dictionary."""
+        return {
+            "id_comment": self.id_comment,
+            "id_post": self.id_post,
+            "created_utc": self.created_utc,
+            "author_comment": self.author_comment,
+            "author_post": self.author_post,
+            "commands": [cmd.to_dict() for cmd in self.commands],
+            "languages": [str(lang) for lang in self.languages],
+            "body": self.body,
+            "body_remainder": self.body_remainder,
+        }
+
+
+# ─── Module-level utilities ───────────────────────────────────────────────────
 
 
 def comment_has_command(comment: Any) -> bool:

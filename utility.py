@@ -3,7 +3,6 @@
 """
 A grab-bag of various simple utility functions.
 
-
 This module contains general-purpose utility functions for:
 - URL validation and extension checking
 - Text parsing and extraction
@@ -13,6 +12,8 @@ This module contains general-purpose utility functions for:
 
 Logger tag: [UTILITY]
 """
+
+# ─── Imports ──────────────────────────────────────────────────────────────────
 
 import io
 import logging
@@ -28,15 +29,17 @@ from yt_dlp import YoutubeDL
 
 from config import logger as _base_logger
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "UTILITY"})
 
 
-"""MEDIA FUNCTIONS"""
+# ─── URL validation ───────────────────────────────────────────────────────────
 
 
 def check_url_extension(submission_url: str) -> bool:
     """
-    Checks if a URL has an image file extension.
+    Check if a URL has an image file extension.
 
     :param submission_url: The URL to check.
     :return: True if URL has valid image extension, False otherwise.
@@ -45,7 +48,6 @@ def check_url_extension(submission_url: str) -> bool:
         logger.debug("Received empty or None URL.")
         return False
 
-    # Strip whitespace/newlines first
     submission_url = submission_url.strip()
 
     if not submission_url:
@@ -54,17 +56,15 @@ def check_url_extension(submission_url: str) -> bool:
 
     # Use \Z instead of $ to match absolute end of string
     pattern = r"\.(jpg|jpeg|webp|png)\Z"
-
-    # Check if the URL ends with one of the specified extensions
     has_image_extension = bool(re.search(pattern, submission_url, re.IGNORECASE))
 
     if not has_image_extension:
         logger.debug(f"URL does not have a valid image extension: {submission_url}")
         return False
-    else:
-        extension = submission_url.split(".")[-1].lower()
-        logger.debug(f"URL has valid .{extension} extension.")
-        return True
+
+    extension = submission_url.split(".")[-1].lower()
+    logger.debug(f"URL has valid .{extension} extension.")
+    return True
 
 
 def clean_reddit_image_url(url: str) -> str:
@@ -81,10 +81,8 @@ def clean_reddit_image_url(url: str) -> str:
     :return: Cleaned URL.
     """
     if "preview.redd.it" in url:
-        # Replace preview.redd.it with i.redd.it
         url = url.replace("preview.redd.it", "i.redd.it")
 
-    # Remove query parameters
     if "?" in url:
         url = url.split("?")[0]
 
@@ -95,7 +93,7 @@ def is_valid_image_url(url: str) -> bool:
     """
     Check if a URL is a valid image URL, including URLs with query parameters.
 
-    This is more lenient than check_url_extension() as it handles:
+    More lenient than check_url_extension() — handles:
     - Direct image URLs (e.g., image.jpg)
     - Reddit preview URLs with query params (e.g., preview.redd.it/...?format=pjpg)
     - Image URLs with tracking parameters
@@ -108,22 +106,16 @@ def is_valid_image_url(url: str) -> bool:
 
     url = url.strip()
 
-    # First try the standard check for direct image URLs
     if check_url_extension(url):
         return True
 
-    # Handle Reddit preview/image URLs with query parameters
     if "redd.it" in url:
-        # Check if format parameter indicates an image
         if "format=pjpg" in url or "format=png" in url or "format=jpg" in url:
             return True
-        # Check if the URL path (before query params) ends with an image extension
         url_without_params = url.split("?")[0]
         if check_url_extension(url_without_params):
             return True
 
-    # Check if URL path (before query params) has an image extension
-    # This handles cases like: example.com/image.jpg?param=value
     if "?" in url:
         url_without_params = url.split("?")[0]
         if check_url_extension(url_without_params):
@@ -132,9 +124,12 @@ def is_valid_image_url(url: str) -> bool:
     return False
 
 
+# ─── Image hashing ────────────────────────────────────────────────────────────
+
+
 def generate_image_hash(image_url: str) -> str | None:
     """
-    Generates an image hash from a linked URL for later comparison.
+    Generate an image hash from a linked URL for later comparison.
 
     :param image_url: A direct link to a URL containing an image.
     :return: The hash of the image, or None if unable to hash.
@@ -146,7 +141,6 @@ def generate_image_hash(image_url: str) -> str | None:
     logger.debug(f"Attempting to hash image from: {image_url}")
     start_time = time.time()
 
-    # Download the image from the URL
     try:
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
@@ -167,7 +161,6 @@ def generate_image_hash(image_url: str) -> str | None:
         logger.error(f"Unexpected error for {image_url}: {e}")
         return None
     else:
-        # Generate the hash using `dhash` algorithm.
         hash_value = str(imagehash.dhash(img))
         elapsed = time.time() - start_time
         logger.debug(
@@ -177,13 +170,13 @@ def generate_image_hash(image_url: str) -> str | None:
     return hash_value
 
 
-"""OTHER FUNCTIONS"""
+# ─── YouTube metadata ─────────────────────────────────────────────────────────
 
 
 def fetch_youtube_length(youtube_url: str) -> int | None:
     """
-    Returns the length of a YouTube video in seconds using the
-    yt-dlp library. Returns None if unable to fetch.
+    Return the length of a YouTube video in seconds using yt-dlp.
+    Returns None if unable to fetch.
 
     :param youtube_url: URL of the YouTube video.
     :return: Video duration in seconds, or None if fetch failed.
@@ -226,14 +219,14 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
         return None
 
 
-"""MARKDOWN FUNCTIONS"""
+# ─── Markdown formatting ──────────────────────────────────────────────────────
 
 
 def format_markdown_table_with_padding(table_text: str) -> str:
     """
-    Formats a Markdown table (with optional header above it)
-    into a neatly aligned triple-backtick code block for Discord.
-    Basically, this pads out the rows to look more even.
+    Format a Markdown table (with optional header above it) into a
+    neatly aligned triple-backtick code block for Discord.
+    Pads out rows so columns align visually.
 
     :param table_text: Raw Markdown table text to format.
     :return: Formatted table as Discord code block.
@@ -248,7 +241,7 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         logger.debug("No valid lines found in table.")
         return "```\n(No valid content)\n```"
 
-    # Split header and table parts
+    # Split into pre-table header lines and table lines
     header_lines = []
     table_lines = []
     found_table = False
@@ -265,7 +258,7 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         logger.debug("No table rows with '|' found.")
         return "```\n(No valid table found)\n```"
 
-    # Parse table rows
+    # Parse table rows into cells
     rows = []
     for line in table_lines:
         parts = [cell.strip() for cell in line.split("|")]
@@ -279,14 +272,14 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         logger.debug("No valid rows after parsing.")
         return "```\n(No valid table found)\n```"
 
-    # Compute column widths
+    # Compute per-column widths
     num_cols = max(len(row) for row in rows)
     col_widths = [0] * num_cols
     for row in rows:
         for i, cell in enumerate(row):
             col_widths[i] = max(col_widths[i], len(cell))
 
-    # Rebuild table with alignment
+    # Rebuild with padding
     formatted_table = []
     for row in rows:
         padded = [
@@ -295,7 +288,6 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         ]
         formatted_table.append("| " + " | ".join(padded) + " |")
 
-    # Header outside the code block
     header_block = "\n".join(header_lines)
     table_block = "```\n" + "\n".join(formatted_table) + "\n```"
 

@@ -6,45 +6,26 @@ Central dev/debugging entrypoint.
 Run individual check functions or execute this file directly to run all checks.
 """
 
-# ── Standard library ──────────────────────────────────────────────────────────
 import asyncio
 import logging
 from pprint import pprint
 
-# ── Third-party ───────────────────────────────────────────────────────────────
 from wasabi import msg
 
-# ── Config / connection ───────────────────────────────────────────────────────
 from config import SETTINGS, enable_debug_logging
-
-# ── database ──────────────────────────────────────────────────────────────────
 from database import initialize_all_databases, search_database
-
-# ── error ─────────────────────────────────────────────────────────────────────
 from error import display_event_errors
-
-# ── hermes ────────────────────────────────────────────────────────────────────
 from hermes.tools import get_statistics, test_parser
-
-# ── integrations ──────────────────────────────────────────────────────────────
 from integrations.ai import fetch_image_description
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
-
-# ── lang ──────────────────────────────────────────────────────────────────────
 from lang.languages import converter
 from lang.languages import logger as lang_logger
 from lang.languages import parse_language_list
-
-# ── models ────────────────────────────────────────────────────────────────────
 from models.ajo import Ajo, ajo_loader, determine_flair_and_update
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
 from models.kunulo import Kunulo
-
-# ── monitoring ────────────────────────────────────────────────────────────────
 from monitoring.points import points_post_retriever, points_user_retriever
-
-# ── reddit ────────────────────────────────────────────────────────────────────
 from reddit.connection import (
     REDDIT_HELPER,
     get_random_useragent,
@@ -56,17 +37,9 @@ from reddit.notifications import fetch_usernames_for_lingvo
 from reddit.startup import template_retriever
 from reddit.verification import get_verified_thread
 from reddit.wiki import fetch_most_requested_languages
-
-# ── title ─────────────────────────────────────────────────────────────────────
 from title.title_handling import process_title
-
-# ── utility ───────────────────────────────────────────────────────────────────
 from utility import fetch_youtube_length, is_valid_image_url
-
-# ── wenju ─────────────────────────────────────────────────────────────────────
 from wenju.iso_updates import fetch_iso_reports
-
-# ── ziwen_lookup ──────────────────────────────────────────────────────────────
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
 from ziwen_lookup.match_helpers import lookup_matcher
@@ -80,7 +53,7 @@ from ziwen_lookup.zh import (
     zh_word_chengyu_supplement,
 )
 
-# ── Section: lang ─────────────────────────────────────────────────────────────
+# ─── lang ─────────────────────────────────────────────────────────────────────
 
 
 def check_lang_converter() -> None:
@@ -111,7 +84,7 @@ def check_lang_parse() -> None:
     pprint(parse_result)
 
 
-# ── Section: error ────────────────────────────────────────────────────────────
+# ─── error ────────────────────────────────────────────────────────────────────
 
 
 def check_error_display_event_errors() -> None:
@@ -128,7 +101,7 @@ def check_error_display_event_errors() -> None:
         msg.good(f"No errors found in the last {days} day(s).")
 
 
-# ── Section: integrations ─────────────────────────────────────────────────────
+# ─── integrations ─────────────────────────────────────────────────────────────
 
 
 def check_integrations_search() -> None:
@@ -155,7 +128,7 @@ def check_integrations_ai_image_description() -> None:
         msg.fail("Failed to fetch image description.")
 
 
-# ── Section: hermes ───────────────────────────────────────────────────────────
+# ─── hermes ───────────────────────────────────────────────────────────────────
 
 
 def check_hermes_statistics() -> None:
@@ -171,7 +144,7 @@ def check_hermes_parser() -> None:
         test_parser(REDDIT_HELPER, limit=limit)
 
 
-# ── Section: monitoring ───────────────────────────────────────────────────────
+# ─── monitoring ───────────────────────────────────────────────────────────────
 
 
 def check_monitoring_user() -> None:
@@ -197,7 +170,7 @@ def check_monitoring_post() -> None:
         msg.warn(f"No point records found for post ID: {my_post_id}")
 
 
-# ── Section: title ────────────────────────────────────────────────────────────
+# ─── title ────────────────────────────────────────────────────────────────────
 
 
 def check_title_manual() -> None:
@@ -221,7 +194,7 @@ def check_title_reddit() -> None:
         pprint(vars(titolo_output))
 
 
-# ── Section: database ─────────────────────────────────────────────────────────
+# ─── database ─────────────────────────────────────────────────────────────────
 
 
 def check_database_search() -> None:
@@ -242,7 +215,7 @@ def check_database_initialize() -> None:
     msg.good("Database initialization complete.")
 
 
-# ── Section: utility ──────────────────────────────────────────────────────────
+# ─── utility ──────────────────────────────────────────────────────────────────
 
 
 def check_utility_youtube() -> None:
@@ -267,7 +240,7 @@ def check_utility_is_valid_image_url() -> None:
         msg.warn(f"'{test_url}' is NOT a valid image URL.")
 
 
-# ── Section: models ───────────────────────────────────────────────────────────
+# ─── models ───────────────────────────────────────────────────────────────────
 
 
 def check_models_ajo_url() -> None:
@@ -364,7 +337,7 @@ def check_models_komando() -> None:
             msg.good(f"* {command_new}")
 
 
-# ── Section: ziwen_lookup ─────────────────────────────────────────────────────
+# ─── ziwen_lookup ─────────────────────────────────────────────────────────────
 
 
 def check_ziwen_lookup_zh_character() -> None:
@@ -462,7 +435,7 @@ def check_ziwen_lookup_wiktionary() -> None:
     pprint(result)
 
 
-# ── Section: reddit ───────────────────────────────────────────────────────────
+# ─── reddit ───────────────────────────────────────────────────────────────────
 
 
 def check_reddit_status() -> None:
@@ -543,7 +516,7 @@ def check_reddit_notifications() -> None:
             msg.fail(f"Invalid language: {notifications_test}")
 
 
-# ── Section: wenju ────────────────────────────────────────────────────────────
+# ─── wenju ────────────────────────────────────────────────────────────────────
 
 
 def check_wenju_fetch_iso_reports() -> None:
@@ -553,7 +526,7 @@ def check_wenju_fetch_iso_reports() -> None:
     msg.good("ISO report fetch complete.")
 
 
-# ── Runner ────────────────────────────────────────────────────────────────────
+# ─── Menu runner ──────────────────────────────────────────────────────────────
 #
 # Two-level menu structure:
 #   SECTIONS maps a top-level key → (section label, {sub-key: (label, fn)})

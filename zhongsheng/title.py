@@ -13,6 +13,8 @@ from title.title_handling import process_title
 
 from . import command
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
 
 @command(
     name="title",
@@ -21,23 +23,18 @@ from . import command
 )
 async def title_search(ctx: commands.Context, *, title: str) -> None:
     """Discord wrapper for Titolo creation."""
-    # Check if --ai flag is present
     use_ai = title.endswith((" --ai", " –ai", " -ai"))
 
-    # Remove the flag from the title if present
     if use_ai:
         title = title[:-5].strip()  # Remove ' --ai' from the end
 
     try:
         result: Any
-        # Show typing indicator for AI processing
         if use_ai:
             async with ctx.typing():
-                # Run synchronous AI parser in thread pool
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(None, title_ai_parser, title, None)
         else:
-            # Process the title normally
             result = process_title(title)
 
         # Check if result is an error tuple
@@ -45,16 +42,13 @@ async def title_search(ctx: commands.Context, *, title: str) -> None:
             await ctx.send(f"**AI Parsing Error:** {result[1]}")
             return
 
-        # Pretty print the result
         if result:
             formatted_output = "**Title Processing Results:**\n\n"
 
-            # Handle dictionary results (from AI parser)
             if isinstance(result, dict):
                 for key, value in result.items():
                     formatted_output += f"**{key}:** {value}\n"
             else:
-                # Handle object results (from process_title)
                 for key, value in vars(result).items():
                     formatted_output += f"**{key}:** {value}\n"
         else:

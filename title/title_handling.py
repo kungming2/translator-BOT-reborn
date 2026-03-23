@@ -23,6 +23,8 @@ Note: The Titolo class lives in models/titolo.py.
 Logger tag: [T:TITLE]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 import re
 import string
@@ -39,15 +41,14 @@ from models.lingvo import Lingvo
 from models.titolo import Titolo
 from title.title_ai import title_ai_parser, update_titolo_from_ai_result
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "T:TITLE"})
 
-# Load the title module's settings.
 title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
 
 
-# ---------------------------------------------------------------------------
-# Flair helpers (module-level — do not nest inside _determine_flair)
-# ---------------------------------------------------------------------------
+# ─── Flair helpers ────────────────────────────────────────────────────────────
 
 
 def _resolve_flair_code(lang_obj: Lingvo) -> str:
@@ -115,9 +116,7 @@ def _first_non_english(language_list: list) -> Optional[Lingvo]:
     return None
 
 
-# ---------------------------------------------------------------------------
-# Flair determination
-# ---------------------------------------------------------------------------
+# ─── Flair determination ──────────────────────────────────────────────────────
 
 
 def _determine_flair(titolo_object: Titolo) -> None:
@@ -139,8 +138,8 @@ def _determine_flair(titolo_object: Titolo) -> None:
     source_has_english = any(lang.name == "English" for lang in source)
     target_has_english = any(lang.name == "English" for lang in target)
 
-    # --- Cases 1 and 2: one side has English ---
-    # Pick the non-English candidates from the opposite side and flair on them.
+    # Cases 1 and 2: one side has English — pick the non-English candidates
+    # from the opposite side and flair on them.
     if target_has_english or source_has_english:
         candidates = (
             [lng for lng in source if lng.name != "English"]
@@ -164,8 +163,8 @@ def _determine_flair(titolo_object: Titolo) -> None:
 
         # candidates is empty — fall through to direction-based logic below
 
-    # --- Case 3: english_to (English is source, non-English target already
-    #     handled above; this catches the edge case where candidates was empty)
+    # Case 3: english_to (English is source, non-English target already handled
+    # above; this catches the edge case where candidates was empty)
     if titolo_object.direction == "english_to":
         if not source:
             return
@@ -174,7 +173,7 @@ def _determine_flair(titolo_object: Titolo) -> None:
         titolo_object.add_final_text(lang.name or "Unknown")
         return
 
-    # --- Case 4: english_from / english_none ---
+    # Case 4: english_from / english_none
     if titolo_object.direction in ("english_from", "english_none"):
         if len(target) > 1:
             preferred_codes = [
@@ -209,9 +208,7 @@ def _determine_flair(titolo_object: Titolo) -> None:
     logger.warning(f"_determine_flair: fell through to generic for {titolo_object}")
 
 
-# ---------------------------------------------------------------------------
-# Direction and notification helpers
-# ---------------------------------------------------------------------------
+# ─── Direction & notification helpers ────────────────────────────────────────
 
 
 def _determine_title_direction(
@@ -280,16 +277,14 @@ def _get_notification_languages(assess_request: Titolo) -> Optional[list]:
     return result if result else None
 
 
-# ---------------------------------------------------------------------------
-# Text extraction helpers
-# ---------------------------------------------------------------------------
+# ─── Text extraction helpers ──────────────────────────────────────────────────
 
 
 def extract_lingvos_from_text(
     text: str, return_english: bool = False
 ) -> List[Lingvo] | None:
     """
-    Extract Lingvo objects from a paragraph based on capitalized language-like words.
+    Extract Lingvo objects from a paragraph based on capitalised language-like words.
     Includes supported languages, and optionally 'English' even if unsupported.
 
     :param text: The paragraph or sentence to search.
@@ -335,9 +330,7 @@ def _normalize_misspelled_english(title: str) -> str:
     return title
 
 
-# ---------------------------------------------------------------------------
-# Filtering (first round)
-# ---------------------------------------------------------------------------
+# ─── Title filtering ──────────────────────────────────────────────────────────
 
 
 def _build_required_title_keywords() -> dict[str, list[str]]:
@@ -462,9 +455,7 @@ def main_posts_filter(title: str) -> tuple[bool, str | None, str | None]:
     return True, title, None
 
 
-# ---------------------------------------------------------------------------
-# Preprocessing (second round)
-# ---------------------------------------------------------------------------
+# ─── Title preprocessing ──────────────────────────────────────────────────────
 
 
 def _move_bracketed_tag_to_front(title: str) -> str:
@@ -658,7 +649,7 @@ def _preprocess_title(post_title: str) -> str:
         if converted is not None and not converted.name:
             title = title.replace("-", " ")
 
-    # Normalise stray symbols
+    # Normalize stray symbols
     for ch in ["&", "+", "/", "\\", "|", "?"]:
         title = title.replace(ch, f" {ch} ")
     for compound in [">>>", ">>", "> >", "<"]:
@@ -679,7 +670,7 @@ def _preprocess_title(post_title: str) -> str:
     if "KR " in title.upper()[:10]:
         title = title.replace("KR ", "Korean ")
 
-    # Normalise unknown/unclear entries
+    # Normalize unknown/unclear entries
     if (
         "[Unknown]" in title.title()
         or title.lstrip().startswith("[?")
@@ -695,9 +686,7 @@ def _preprocess_title(post_title: str) -> str:
     return title
 
 
-# ---------------------------------------------------------------------------
-# Language chunk extraction and resolution
-# ---------------------------------------------------------------------------
+# ─── Language chunk extraction & resolution ──────────────────────────────────
 
 
 def _is_punctuation_only(s: str) -> bool:
@@ -762,12 +751,6 @@ def _extract_target_chunk(title: str) -> str:
                 chunk = chunk.split("]", 1)[0]
             return _clean_text(chunk, preserve_separators=True)
     return ""
-
-
-def _clean_chunk(chunk: str) -> str:
-    """Strip brackets, whitespace, and trailing punctuation from a language chunk."""
-    chunk = chunk.strip().lstrip("[").rstrip("]").strip()
-    return re.sub(r"\W+$", "", chunk.lower())
 
 
 def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
@@ -862,9 +845,13 @@ def _extract_actual_title(title: str) -> str:
     return actual.strip("].> ,:.") if actual else ""
 
 
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
+def _clean_chunk(chunk: str) -> str:
+    """Strip brackets, whitespace, and trailing punctuation from a language chunk."""
+    chunk = chunk.strip().lstrip("[").rstrip("]").strip()
+    return re.sub(r"\W+$", "", chunk.lower())
+
+
+# ─── Main entry point ─────────────────────────────────────────────────────────
 
 
 def process_title(
@@ -945,9 +932,7 @@ def process_title(
     return result
 
 
-# ---------------------------------------------------------------------------
-# Utility
-# ---------------------------------------------------------------------------
+# ─── Utility ──────────────────────────────────────────────────────────────────
 
 
 def is_english_only(titolo_content: Titolo) -> bool:

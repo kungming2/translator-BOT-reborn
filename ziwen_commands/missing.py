@@ -25,13 +25,15 @@ from . import update_status
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:MISSING"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     status_type: str = "missing"
     logger.info("Missing handler initiated.")
     logger.info(f"!{status_type}, from u/{comment.author} on `{ajo.id}`.")
 
-    # Possible deletion of original post.
     if ajo.author is None:
         logger.warning(
             f"Post `{ajo.id}` has no author (deleted/removed). Skipping missing handler."
@@ -40,10 +42,8 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
 
     original_poster = REDDIT.redditor(ajo.author)
 
-    # Handler logic to update the post status.
     update_status(ajo, komando, status_type)
 
-    # Format and send the message to the OP letting them know.
     total_message: str = RESPONSE.MSG_MISSING_ASSETS.format(
         author=original_poster, permalink=ajo.submission.permalink
     )

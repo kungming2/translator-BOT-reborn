@@ -8,6 +8,8 @@ webhooks.
 Logger tag: [I:DISCORD]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import json
 import logging
 from pathlib import Path
@@ -17,17 +19,23 @@ import requests
 from config import Paths, load_settings
 from config import logger as _base_logger
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "I:DISCORD"})
 
 webhook_settings: dict = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 
 
-"""WEBHOOK NOTIFICATIONS (ONE-WAY ALERTS)"""
+# ─── Webhook lookup ───────────────────────────────────────────────────────────
 
 
 def select_webhook(selection: str) -> tuple[str, str, str] | None:
-    """Returns the webhook URL, image URL, and color if found, otherwise None."""
+    """Return the webhook URL, thumbnail image URL, and hex color for
+    *selection*, or None if the key is not present in settings."""
     return webhook_settings.get(selection)
+
+
+# ─── Webhook notifications ────────────────────────────────────────────────────
 
 
 def send_discord_alert(
@@ -37,24 +45,32 @@ def send_discord_alert(
     roles: list[str] | None = None,
     image_path: str | Path | None = None,
 ) -> None:
-    """Sends an alert message to the specified Discord webhook
-    using an embed with an optional icon and color.
-    It can accept an optional roles payload, given as a list.
-    If image_path is provided and the file exists, it will be attached
-    to the message as a file upload."""
+    """
+    Send an alert message to the specified Discord webhook using an embed
+    with an optional thumbnail icon and color.
 
+    Roles are formatted as Discord mentions and prepended to the embed as
+    plain content (required for mentions to fire). If *image_path* is
+    provided and the file exists on disk, it is attached to the request as
+    a file upload alongside the embed.
+
+    :param subject:      Embed title.
+    :param message:      Embed body text.
+    :param webhook_name: Key used to look up the webhook in settings.
+    :param roles:        Optional list of Discord role IDs to mention.
+    :param image_path:   Optional path to a local image file to attach.
+    """
     webhook_data: tuple[str, str, str] | None = select_webhook(webhook_name)
     if not webhook_data:
         logger.error(f"Webhook not found: '{webhook_name}'. Alert not sent.")
-        return  # Exit function early if webhook is invalid
+        return
 
-    webhook_url, image_url, color_hex = webhook_data  # Extract URL, image, and color
+    webhook_url, image_url, color_hex = webhook_data
 
-    # Convert hex color to decimal (Discord API requires decimal)
+    # Discord API requires embed colors as decimal integers.
     color_decimal: int = int(color_hex.lstrip("#"), 16)
 
-    # Format the roles section. This must be included outside the
-    # embed in order to work properly. Roles are sent as a list.
+    # Role mentions must live outside the embed to actually ping members.
     roles_content: str | None
     if roles:
         roles_content = " ".join(f"<@&{role}>" for role in roles)
@@ -65,11 +81,10 @@ def send_discord_alert(
     embed: dict = {
         "title": subject,
         "description": message,
-        "color": color_decimal,  # Set the embed color
-        "thumbnail": {"url": image_url},  # Set the image as the thumbnail
+        "color": color_decimal,
+        "thumbnail": {"url": image_url},
     }
 
-    # Include a roles section before the embed, if present.
     payload: dict
     if roles_content:
         payload = {"content": roles_content, "embeds": [embed]}
@@ -79,7 +94,7 @@ def send_discord_alert(
     try:
         attach = Path(image_path) if image_path else None
         if attach and attach.exists():
-            # Multipart request: embed payload + file attachment
+            # Multipart request: embed payload + file attachment.
             with attach.open("rb") as img_file:
                 response = requests.post(
                     webhook_url,

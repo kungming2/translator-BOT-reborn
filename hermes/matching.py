@@ -14,6 +14,8 @@ which returns Lingvo objects.  Only the ``preferred_code`` (a compact
 Logger tag: [HM:MATCH]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import random
 import re
 import time
@@ -29,10 +31,9 @@ from responses import RESPONSE
 from time_handling import convert_to_day
 from title.title_handling import title_settings
 
-logger = get_hermes_logger("HM:MATCH")
-
-
 # ─── Module-level constants ───────────────────────────────────────────────────
+
+logger = get_hermes_logger("HM:MATCH")
 
 # English word filter lists sourced from title_settings YAML.
 # title_settings["ENGLISH_2_WORDS"] is a list of Title-cased strings.
@@ -56,7 +57,7 @@ HERMES_BOT_DISCLAIMER: str = RESPONSE.BOT_DISCLAIMER.replace(
 ).replace("Ziwen", "Hermes")
 
 
-# ─── Private helpers ──────────────────────────────────────────────────────────
+# ─── Title tokenisation & segmentation ───────────────────────────────────────
 
 
 def _tokenize(text: str) -> list[str]:
@@ -128,7 +129,7 @@ def _extract_segments(title: str) -> tuple[str | None, str | None]:
     return offering_raw, seeking_raw
 
 
-# ─── Language parsing ─────────────────────────────────────────────────────────
+# ─── Language & level parsing ─────────────────────────────────────────────────
 
 
 def language_parser(
@@ -277,43 +278,6 @@ def title_parser(
 # ─── Matching ─────────────────────────────────────────────────────────────────
 
 
-def get_language_greeting(offering: list[str], seeking: list[str]) -> str:
-    """
-    Pick a random non-English language from the combined offering/seeking
-    codes and return a greeting in that language.
-
-    Both lists contain preferred_code strings as returned by title_parser.
-    Falls back to an empty string if no suitable language is found.
-
-    Args:
-        offering: Language codes the querying user offers.
-        seeking:  Language codes the querying user seeks.
-
-    Returns:
-        A greeting string ending with a space (e.g. "Hola, "), or "".
-    """
-    eng_codes = frozenset({"en", "eng"})
-
-    candidates = [
-        code
-        for code in dict.fromkeys(offering + seeking)  # deduplicated, order-preserved
-        if code not in eng_codes
-    ]
-
-    if not candidates:
-        return ""
-
-    chosen_code = random.choice(candidates)
-    lingvo = converter(chosen_code)
-
-    if not lingvo:
-        return ""
-
-    logger.debug(f"Selected language: {lingvo.name} (`{lingvo.preferred_code}`).")
-    greeting = lingvo.greetings or "Hello"
-    return f"{greeting}, "
-
-
 def language_matcher(
     query_offering: list[str],
     query_seeking: list[str],
@@ -396,6 +360,46 @@ def language_matcher(
             ]
 
     return matches or None
+
+
+# ─── Match formatting ─────────────────────────────────────────────────────────
+
+
+def get_language_greeting(offering: list[str], seeking: list[str]) -> str:
+    """
+    Pick a random non-English language from the combined offering/seeking
+    codes and return a greeting in that language.
+
+    Both lists contain preferred_code strings as returned by title_parser.
+    Falls back to an empty string if no suitable language is found.
+
+    Args:
+        offering: Language codes the querying user offers.
+        seeking:  Language codes the querying user seeks.
+
+    Returns:
+        A greeting string ending with a space (e.g. "Hola, "), or "".
+    """
+    eng_codes = frozenset({"en", "eng"})
+
+    candidates = [
+        code
+        for code in dict.fromkeys(offering + seeking)  # deduplicated, order-preserved
+        if code not in eng_codes
+    ]
+
+    if not candidates:
+        return ""
+
+    chosen_code = random.choice(candidates)
+    lingvo = converter(chosen_code)
+
+    if not lingvo:
+        return ""
+
+    logger.debug(f"Selected language: {lingvo.name} (`{lingvo.preferred_code}`).")
+    greeting = lingvo.greetings or "Hello"
+    return f"{greeting}, "
 
 
 def format_matches(

@@ -31,6 +31,8 @@ might otherwise be missed in normal processing.
 Logger tag: [MN:EDIT]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -51,24 +53,23 @@ from ziwen_commands.claim import parse_claim_comment
 if TYPE_CHECKING:
     from praw.models import Comment
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:EDIT"})
 
 # Sentinel used when a comment has no commands at all.
 _NO_COMMANDS = ""
 
 
+# ─── Cache helpers ────────────────────────────────────────────────────────────
+
+
 def _is_comment_within_edit_window(comment: "Comment") -> bool:
-    """Skip comments that are too old and unedited.
-    The limit is defined in settings as hours."""
+    """Return True if the comment is young enough to still be monitored.
+    The age limit is defined in settings as hours."""
     time_diff = time.time() - comment.created_utc
     age_in_seconds = SETTINGS["comment_edit_age_max"] * 3600
-
     return not time_diff > age_in_seconds
-
-
-# ---------------------------------------------------------------------------
-# Cache helpers
-# ---------------------------------------------------------------------------
 
 
 def _serialize_komandos(text: str) -> str:
@@ -81,7 +82,6 @@ def _serialize_komandos(text: str) -> str:
     "not in cache at all" (the latter returns None from _get_cached_comment).
     """
     commands = extract_commands_from_text(text)
-    # Preserve order while deduplicating, matching _deduplicate_args behaviour.
     seen: set[str] = set()
     names: list[str] = []
     for cmd in commands:
@@ -109,13 +109,12 @@ class _CachedComment:
     def __init__(self, body: str, komandos: str):
         """Store the cached comment body and raw komandos string."""
         self.body = body
-        # Parsed lazily on first access via property below.
         self._komandos_str = komandos
         self._komando_set: set[str] | None = None
 
     @property
     def command_names(self) -> set[str]:
-        """Deserialised set of command names; parsed lazily on first access."""
+        """Deserialized set of command names; parsed lazily on first access."""
         if self._komando_set is None:
             self._komando_set = _deserialize_komandos(self._komandos_str)
         return self._komando_set
@@ -168,7 +167,7 @@ def _remove_from_processed(comment_id: str) -> None:
 
 
 def _cleanup_comment_cache(limit: int) -> None:
-    """Remove oldest entries beyond comment limit."""
+    """Remove oldest entries beyond the comment limit."""
     cursor = db.cursor_cache
     cleanup = """
         DELETE FROM comment_cache
@@ -181,14 +180,12 @@ def _cleanup_comment_cache(limit: int) -> None:
     logger.debug("Cleaned up the edited comments cache.")
 
 
-# ---------------------------------------------------------------------------
-# Main tracker
-# ---------------------------------------------------------------------------
+# ─── Edit tracker ─────────────────────────────────────────────────────────────
 
 
 def edit_tracker() -> None:
     """
-    Detects edited r/translator comments that introduce new commands.
+    Detect edited r/translator comments that introduce new commands.
     If a meaningful change is detected, the comment is removed from the
     processed database so ziwen_commands will reprocess it.
 
@@ -207,7 +204,6 @@ def edit_tracker() -> None:
     for comment in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).comments(
         limit=total_fetch_num
     ):
-        # Comment is beyond our time span for monitoring.
         if not _is_comment_within_edit_window(comment):
             continue
 
@@ -239,14 +235,12 @@ def edit_tracker() -> None:
     for item in REDDIT.subreddit(SETTINGS["subreddit"]).mod.edited(
         limit=SETTINGS["comment_edit_num_limit"]
     ):
-        # Skip submissions, keep only comments.
         if isinstance(item, models.Submission):
             continue
 
         comment_id = item.id
         comment_new_body = item.body.strip()
 
-        # Comment is beyond our monitoring window.
         if not _is_comment_within_edit_window(item):
             continue
 
@@ -256,7 +250,6 @@ def edit_tracker() -> None:
         if not comment_has_command(item):
             continue
 
-        # Read the cached (pre-edit) state.
         cached = _get_cached_comment(comment_id)
         comment_old_body = cached.body if cached else ""
 
@@ -264,7 +257,6 @@ def edit_tracker() -> None:
             logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
             continue
 
-        # Determine which command names are genuinely new.
         old_command_names: set[str] = cached.command_names if cached else set()
         new_commands = extract_commands_from_text(comment_new_body)
         new_command_names: set[str] = {cmd.name for cmd in new_commands}
@@ -284,7 +276,6 @@ def edit_tracker() -> None:
                 f"(had={sorted(old_command_names)}, now={sorted(new_command_names)})."
             )
 
-        # Persist the updated body and freshly-parsed komandos.
         new_komandos = ",".join(
             dict.fromkeys(cmd.name for cmd in new_commands)  # ordered dedup
         )
@@ -298,12 +289,14 @@ def edit_tracker() -> None:
     return
 
 
+# ─── Progress tracker ─────────────────────────────────────────────────────────
+
+
 def progress_tracker() -> None:
     """
-    Checks Reddit for posts marked as "In Progress" and determines
-    if their claim period has expired. If expired, resets them to the
-    'Untranslated' state. This supports both single and defined multiple
-    posts.
+    Check Reddit for posts marked as "In Progress" and determine
+    if their claim period has expired. If expired, reset them to the
+    'Untranslated' state. Supports both single and defined multiple posts.
     """
     current_time = int(time.time())
     search_query = 'flair:"in progress"'
@@ -317,27 +310,24 @@ def progress_tracker() -> None:
         permalink = post.permalink
         posts_checked += 1
 
-        # Load Ajo object from local cache or create from Reddit
         ajo = ajo_loader(post_id)
-        if ajo is None:  # Unlikely to happen, but just in case.
+        if ajo is None:
             logger.debug("Couldn't find Ajo in local database. Loading from Reddit.")
             ajo = Ajo.from_titolo(process_title(post.title))
 
-        # Skip if the data doesn't match an in progress post for some reason.
         if (ajo.type in ("single", "multiple")) and not ajo.is_defined_multiple:
             if ajo.status != "inprogress":
-                continue  # Skip posts without the correct flair
-        else:  # Defined multiple
+                continue
+        else:
             has_inprogress = (
                 isinstance(ajo.status, dict) and "inprogress" in ajo.status.values()
             )
             if not has_inprogress:
-                continue  # No inprogress marking in any of the dictionary's items.
+                continue
 
         kunulo_object = Kunulo.from_submission(post)
         comment_claim_id = kunulo_object.get_tag("comment_claim")
 
-        # Skip if there's no claim comment ID
         if not comment_claim_id:
             logger.warning(
                 f"No comment_claim found for post {post_id}. Skipping. {permalink}"
@@ -355,12 +345,9 @@ def progress_tracker() -> None:
             )
             continue
 
-        # Skip if there's no claim time data, or if the time difference
-        # is still within the allowable amount.
         if time_diff is None or time_diff <= SETTINGS["claim_period"]:
             continue
 
-        # Claim expired: remove claim comment and reset post
         logger.info(f"Post exceeded claim period. Resetting. {permalink}")
         if ajo.type == "single":
             kunulo_object.delete("comment_claim")
@@ -371,8 +358,6 @@ def progress_tracker() -> None:
                 if isinstance(ajo.status, dict)
                 else []
             )
-            # Iterate over only the languages which are still marked
-            # in progress.
             for key in inprogress_keys:
                 if claim_comment_data["language"].preferred_code == key:
                     kunulo_object.delete("comment_claim")
@@ -384,6 +369,8 @@ def progress_tracker() -> None:
 
     return
 
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     start_time = time.time()

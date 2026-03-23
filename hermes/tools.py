@@ -12,9 +12,13 @@ intended for offline inspection and debugging.
 Logger tag: [HM:TOOLS]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import praw
 
 from config import get_hermes_logger
+
+# ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = get_hermes_logger("HM:TOOLS")
 

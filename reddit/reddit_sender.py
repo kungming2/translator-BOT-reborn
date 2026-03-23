@@ -32,13 +32,21 @@ from testing import log_testing_mode
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:SENDER"})
 
 
+# ─── Exceptions ───────────────────────────────────────────────────────────────
+
+
 class UserNotFoundException(Exception):
     """Raised when Reddit reports that a target user no longer exists."""
 
     pass
 
 
+# ─── Module-level state ───────────────────────────────────────────────────────
+
 testing_mode = SETTINGS["testing_mode"]
+
+
+# ─── Sending functions ────────────────────────────────────────────────────────
 
 
 def reddit_reply(

@@ -10,6 +10,8 @@ the post as translated if their request has been properly fulfilled.
 Logger tag: [MN:CLOSEOUT]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -27,7 +29,12 @@ if TYPE_CHECKING:
 
     from models.ajo import Ajo
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:CLOSEOUT"})
+
+
+# ─── Closeout messaging ───────────────────────────────────────────────────────
 
 
 def _send_closeout_messages(
@@ -57,14 +64,12 @@ def _send_closeout_messages(
             )
             continue
 
-        # Validate the user before messaging them.
         if not is_valid_user(author.name):
             logger.warning(
                 f"Skipping message to u/{author.name} (invalid or suspended)."
             )
             continue
 
-        # Build subject and message
         subject_line = RESPONSE.MSG_CLOSING_OUT_SUBJECT.format(language=language)
         closeout_message = RESPONSE.MSG_CLOSING_OUT.format(
             author=author.name,
@@ -75,7 +80,6 @@ def _send_closeout_messages(
         )
         closeout_message += RESPONSE.BOT_DISCLAIMER
 
-        # Send the message
         message_send(
             redditor_obj=author,
             subject=subject_line,
@@ -89,15 +93,18 @@ def _send_closeout_messages(
     return
 
 
+# ─── Closeout main routine ────────────────────────────────────────────────────
+
+
 def closeout_posts() -> None:
-    """This functions looks back at posts, checks their age and their
-    processed status, and reaches out to their posters if there's a
-    minimum number of comments."""
+    """
+    Look back at posts, check their age and processed status, and reach
+    out to their posters if there's a minimum number of comments.
+    """
     ajos_to_close = []
     actionable_posts = []
-    ajos_map = {}  # Map post IDs to Ajo objects
+    ajos_map: dict[str, "Ajo"] = {}
 
-    # Configurable close-out age (in days)
     days = SETTINGS["close_out_age"]
 
     # Define the time window: between N days ago + 1 hour and N days ago
@@ -105,7 +112,6 @@ def closeout_posts() -> None:
     upper_dt = now - timedelta(days=days)
     lower_dt = upper_dt - timedelta(hours=1)
 
-    # Convert to UNIX timestamps for SQLite
     upper = upper_dt.timestamp()
     lower = lower_dt.timestamp()
 
@@ -118,6 +124,7 @@ def closeout_posts() -> None:
     logger.debug(
         f"Fetching posts between {lower_dt.isoformat()} and {upper_dt.isoformat()}"
     )
+
     for row in rows:
         ajo = ajo_loader(row["id"])
         if ajo is None:
@@ -129,7 +136,6 @@ def closeout_posts() -> None:
         ajos_to_close.append(ajo)
         ajos_map[ajo.id] = ajo
 
-    # Check to make sure the statuses match.
     posts_to_process = [
         post
         for post in ajos_to_close
@@ -142,11 +148,10 @@ def closeout_posts() -> None:
 
     if posts_to_process:
         logger.debug(f"Found {len(posts_to_process)} posts to examine...")
+
     for post in posts_to_process:
-        # Check number of comments. If there are more than our minimum required, take action.
         post_praw = REDDIT.submission(id=post.id)
 
-        # Check if the post is deleted or removed
         if (
             post_praw.author is None
             or post_praw.selftext in ("[deleted]", "[removed]")
@@ -163,14 +168,11 @@ def closeout_posts() -> None:
                 f"(minimum: {SETTINGS['close_out_comments_minimum']}). "
                 f"Adding to actionable posts."
             )
-
             actionable_posts.append(post_praw)
 
-        # Mark as done, regardless of actionable status.
         post.set_closed_out(True)
         post.update_reddit()
 
-    # Send close-out messages to authors
     time_delta = (datetime.now(UTC) - lower_dt).days
     _send_closeout_messages(actionable_posts, ajos_map, time_delta)
 

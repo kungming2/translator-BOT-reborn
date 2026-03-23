@@ -27,6 +27,9 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:PAGE"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Page handler initiated.")
@@ -37,8 +40,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     minimum_account_age_days: int = SETTINGS["user_age_page"]
     minimum_account_age_seconds: int = minimum_account_age_days * 86400
 
-    # Checks to see if the user account is old enough to use the
-    # paging system.
+    # Reject accounts that are too young to use the paging system.
     if current_time - int(original_poster.created_utc) < minimum_account_age_seconds:
         logger.debug(
             f"> u/{original_poster}'s account is "
@@ -51,18 +53,15 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         reddit_reply(comment, reply_text)
         return
 
-    # Go through the paging languages
     paging_languages = komando.data
     if not paging_languages:
         return
-    for language in paging_languages:  # This will be a Lingvo.
-        # Send messages out.
+
+    for language in paging_languages:
         original_post = REDDIT_HELPER.submission(ajo.id)
         people_messaged: list = notifier(language, original_post, mode="page")
         logger.info(f">> Messaged {len(people_messaged)} people for {language.name}.")
 
-        # Check if there are people subscribed to the language in the
-        # database. If there isn't, prep a reply.
         if not people_messaged:
             replying_text.append(
                 RESPONSE.COMMENT_NO_LANGUAGE.format(
@@ -71,10 +70,9 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
                 )
             )
         else:
-            # Add the notified users to the Ajo's list.
             ajo.add_notified(people_messaged)
 
-    # Collate the languages for which there is nobody on file.
+    # Reply for any languages with no subscribers on file.
     if replying_text:
         lacking_page_languages_text: str = "\n\n".join(replying_text)
         reddit_reply(comment, lacking_page_languages_text + RESPONSE.BOT_DISCLAIMER)

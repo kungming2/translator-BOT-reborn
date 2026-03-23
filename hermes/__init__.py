@@ -7,8 +7,12 @@ This package loads its own settings from hermes_settings.yaml at import
 time and exposes them as the module-level HERMES_SETTINGS dict.
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 from pathlib import Path
 
 from config import Paths, load_settings
+
+# ─── Package-level settings ───────────────────────────────────────────────────
 
 HERMES_SETTINGS: dict = load_settings(Path(Paths.HERMES["HERMES_SETTINGS"]))

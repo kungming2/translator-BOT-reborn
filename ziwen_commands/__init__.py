@@ -20,6 +20,9 @@ from models.lingvo import Lingvo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CMD"})
 
+
+# ─── Handler registry ─────────────────────────────────────────────────────────
+
 HANDLERS: dict[str, Callable] = {}
 
 
@@ -34,6 +37,9 @@ def discover_handlers() -> None:
         mod = importlib.import_module(f".{cmd_name}", package=__package__)
         if hasattr(mod, "handle"):
             HANDLERS[cmd_name] = mod.handle
+
+
+# ─── Shared status helpers ────────────────────────────────────────────────────
 
 
 def update_status(
@@ -57,7 +63,6 @@ def update_status(
     current_time = int(time.time())
 
     if ajo.type == "single":
-        # Skip if status is already set to the requested value
         if hasattr(ajo, "status") and ajo.status == status_type:
             logger.debug(f"Status is already '{status_type}'. Skipping update.")
             return
@@ -66,7 +71,6 @@ def update_status(
         ajo.set_time(status_type, current_time)
     else:
         if ajo.is_defined_multiple:
-            # Use specific_languages if provided, otherwise fall back to komando.data
             defined_languages = (
                 specific_languages if specific_languages is not None else komando.data
             )
@@ -84,7 +88,9 @@ def update_status(
             ajo.set_time(status_type, current_time)
         else:
             logger.debug("Regular multiple post. Skipping...")
-            pass
+
+
+# ─── Shared language helpers ──────────────────────────────────────────────────
 
 
 def update_language(ajo: "Ajo", komando: "Komando") -> None:
@@ -107,7 +113,6 @@ def update_language(ajo: "Ajo", komando: "Komando") -> None:
         If komando.data contains a single Lingvo, it will be set directly.
         If it contains multiple Lingvos, the entire sequence will be set.
     """
-    # Check for None values in the data
     if komando.data is None:
         raise ValueError("Cannot set language: komando.data is None")
     if None in komando.data:
@@ -116,15 +121,15 @@ def update_language(ajo: "Ajo", komando: "Komando") -> None:
             "None value(s) instead of Lingvo objects"
         )
 
-    # Convert a list of single language items to a single object.
     languages_to_set: Union[Lingvo, list[Lingvo]]
     if len(komando.data) == 1:
         languages_to_set = komando.data[0]
     else:
         languages_to_set = komando.data
 
-    # Update the Ajo's language.
     ajo.set_language(languages_to_set)
 
 
-discover_handlers()  # surface which commands are available
+# ─── Module-level initialization ─────────────────────────────────────────────
+
+discover_handlers()

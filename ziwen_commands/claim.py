@@ -32,96 +32,7 @@ from . import update_status
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CLAIM"})
 
 
-def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
-    """Command handler called by ziwen_commands()."""
-    logger.info("Claim handler initiated.")
-    status_type = "inprogress"
-
-    # Set time variables.
-    current_time = int(time.time())
-    time_formatted = get_current_utc_time()
-
-    logger.info(f"!claim ({status_type}), from u/{comment.author}.")
-
-    # This is in an unlikely scenario where someone edits their original
-    # claim comment with the translation, then marks it as !translated
-    # or !doublecheck. We just want to ignore it then.
-    if "!translated" in comment.body or "!doublecheck" in comment.body:
-        logger.info("Claim comment contains a translated or doublecheck status change.")
-        return
-
-    # Fetch the kunulo and determine the languages we'll process claims for.
-    parent_submission = ajo.submission
-    kunulo_object = Kunulo.from_submission(parent_submission)
-    included_languages = komando.data  # Lingvos attached with the command.
-    claimed_languages: list = []
-
-    # A generic !claim for posts is reduced to a single-item list.
-    languages_to_check = included_languages or [ajo.lingvo]
-
-    # Check for previously claimed status.
-    for language in languages_to_check:
-        claim_comment_id = kunulo_object.get_tag("comment_claim")
-
-        if claim_comment_id:
-            logger.info(f"Pre-existing claim comment `{claim_comment_id}` found.")
-            existing_claim_comment = REDDIT.comment(claim_comment_id)
-
-            # Pass current_time to the parser
-            claim_info = parse_claim_comment(existing_claim_comment.body, current_time)
-
-            # Check if this specific language is already claimed
-            if language == claim_info["language"]:
-                if claim_info["claimer"] == comment.author.name:
-                    # Same user trying to re-claim
-                    reddit_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
-                    logger.info(
-                        ">> But this post is already claimed by them. Replied to them."
-                    )
-                else:
-                    # Different user trying to claim
-                    remaining_minutes = claim_info["claim_time_diff"] // 60
-                    reply_text = RESPONSE.COMMENT_CURRENTLY_CLAIMED.format(
-                        language_name=claim_info["language"].name,
-                        language_code=claim_info["language"].preferred_code,
-                        claimer_name=claim_info["claimer"],
-                        remaining_time=remaining_minutes,
-                    )
-                    reddit_reply(comment, reply_text)
-
-                # Language is already claimed, skip adding it to claimed_languages
-                continue
-
-        # If we reach here, this language is NOT already claimed
-        # Add it to the list to be claimed
-        claimed_languages.append(language)
-
-    # If there isn't, we can claim it for the user and
-    # update the post status.
-    update_status(ajo, komando, status_type, claimed_languages)
-
-    # Leave and format a claim in progress comment
-    for language in claimed_languages:
-        claim_text = (
-            RESPONSE.COMMENT_CLAIM.format(
-                claimer=comment.author,
-                time=time_formatted,
-                language_name=language.name,
-                language_code=language.preferred_code,
-            )
-            + RESPONSE.BOT_DISCLAIMER
-        )
-        claim_comment = reddit_reply(parent_submission, claim_text)
-
-        # Sticky the comment if there is only one language, as there can
-        # only be one stickied comment at a time.
-        if isinstance(claim_comment, Comment):
-            claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
-            logger.info(f"> Left a claim comment for u/{comment.author}.")
-        else:
-            logger.error(f"> Unresolved claim comment by u/{comment.author}.")
-
-    return
+# ─── Internal helpers ─────────────────────────────────────────────────────────
 
 
 def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
@@ -139,7 +50,6 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
               claim_time_diff is in seconds (positive if claim time is
               in the future, negative if in the past)
     """
-
     result: dict[str, Any] = {
         "claimer": None,
         "time": None,
@@ -158,7 +68,6 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
         time_str = time_match.group(1)
         result["time"] = time_str
 
-        # Calculate time difference if current_time is provided
         if current_time is not None:
             try:
                 # Parse ISO 8601 format: "2025-10-09T14:30:00Z"
@@ -175,3 +84,84 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
         result["language"] = converter(lang_code_match.group(1))
 
     return result
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
+def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
+    """Command handler called by ziwen_commands()."""
+    logger.info("Claim handler initiated.")
+    status_type = "inprogress"
+
+    current_time = int(time.time())
+    time_formatted = get_current_utc_time()
+
+    logger.info(f"!claim ({status_type}), from u/{comment.author}.")
+
+    # If someone edits their original claim comment with the translation
+    # and then marks it as !translated or !doublecheck, just ignore it.
+    if "!translated" in comment.body or "!doublecheck" in comment.body:
+        logger.info("Claim comment contains a translated or doublecheck status change.")
+        return
+
+    parent_submission = ajo.submission
+    kunulo_object = Kunulo.from_submission(parent_submission)
+    included_languages = komando.data  # Lingvos attached with the command.
+    claimed_languages: list = []
+
+    # A generic !claim is reduced to a single-item list.
+    languages_to_check = included_languages or [ajo.lingvo]
+
+    # Check for previously claimed status per language.
+    for language in languages_to_check:
+        claim_comment_id = kunulo_object.get_tag("comment_claim")
+
+        if claim_comment_id:
+            logger.info(f"Pre-existing claim comment `{claim_comment_id}` found.")
+            existing_claim_comment = REDDIT.comment(claim_comment_id)
+            claim_info = parse_claim_comment(existing_claim_comment.body, current_time)
+
+            if language == claim_info["language"]:
+                if claim_info["claimer"] == comment.author.name:
+                    reddit_reply(comment, RESPONSE.COMMENT_SELF_ALREADY_CLAIMED)
+                    logger.info(
+                        ">> But this post is already claimed by them. Replied to them."
+                    )
+                else:
+                    remaining_minutes = claim_info["claim_time_diff"] // 60
+                    reply_text = RESPONSE.COMMENT_CURRENTLY_CLAIMED.format(
+                        language_name=claim_info["language"].name,
+                        language_code=claim_info["language"].preferred_code,
+                        claimer_name=claim_info["claimer"],
+                        remaining_time=remaining_minutes,
+                    )
+                    reddit_reply(comment, reply_text)
+
+                continue  # language is already claimed
+
+        claimed_languages.append(language)
+
+    update_status(ajo, komando, status_type, claimed_languages)
+
+    # Leave a claim-in-progress comment for each newly claimed language.
+    for language in claimed_languages:
+        claim_text = (
+            RESPONSE.COMMENT_CLAIM.format(
+                claimer=comment.author,
+                time=time_formatted,
+                language_name=language.name,
+                language_code=language.preferred_code,
+            )
+            + RESPONSE.BOT_DISCLAIMER
+        )
+        claim_comment = reddit_reply(parent_submission, claim_text)
+
+        # Sticky only when there is a single language (one sticky at a time).
+        if isinstance(claim_comment, Comment):
+            claim_comment.mod.distinguish(sticky=(len(claimed_languages) == 1))
+            logger.info(f"> Left a claim comment for u/{comment.author}.")
+        else:
+            logger.error(f"> Unresolved claim comment by u/{comment.author}.")
+
+    return

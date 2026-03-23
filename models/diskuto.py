@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 This Diskuto class covers internal posts that are *not* requests - e.g.
-Meta or Community posts. This is intended to make creating more granular
+Meta or Community posts. This is intended to make making creating more granular
 types easier in the future.
 ...
 
@@ -24,9 +24,14 @@ from testing import log_testing_mode
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:DISKUTO"})
 
 
+# ─── Main Diskuto class ───────────────────────────────────────────────────────
+
+
 class Diskuto:
     """Represents an internal (non-request) subreddit post such as a
     Meta or Community post."""
+
+    # ── Construction ──────────────────────────────────────────────────────────
 
     def __init__(
         self,
@@ -49,21 +54,6 @@ class Diskuto:
             f"<Diskuto: id={self.id}, type={self.post_type}, "
             f"processed={self.processed} | {self.title_original}>"
         )
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Convert Diskuto instance to a dictionary representation.
-
-        Returns:
-            dict: Dictionary with all Diskuto attributes
-        """
-        return {
-            "id": self.id,
-            "created_utc": self.created_utc,
-            "title_original": self.title_original,
-            "post_type": self.post_type,
-            "processed": self.processed,
-        }
 
     def __str__(self) -> str:
         return (
@@ -101,11 +91,32 @@ class Diskuto:
             processed=False,
         )
 
+    # ── Serialization ─────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert Diskuto instance to a dictionary representation.
+
+        Returns:
+            dict: Dictionary with all Diskuto attributes
+        """
+        return {
+            "id": self.id,
+            "created_utc": self.created_utc,
+            "title_original": self.title_original,
+            "post_type": self.post_type,
+            "processed": self.processed,
+        }
+
+    # ── State mutation methods ─────────────────────────────────────────────────
+
     def toggle_processed(self) -> None:
         """
         Flip the processed flag (True -> False or False -> True).
         """
         self.processed = not self.processed
+
+    # ── Reddit actions ────────────────────────────────────────────────────────
 
     def update_reddit(self) -> None:
         """
@@ -156,6 +167,9 @@ class Diskuto:
             )
 
         diskuto_writer(self)
+
+
+# ─── Database persistence ─────────────────────────────────────────────────────
 
 
 def diskuto_exists(post_id: str) -> bool:

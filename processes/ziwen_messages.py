@@ -27,6 +27,9 @@ from reddit.messaging import (
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:M"})
 
 
+# ─── Main message processing loop ────────────────────────────────────────────
+
+
 def ziwen_messages() -> None:
     """Main function to process commands via Reddit messaging system.
 
@@ -42,12 +45,10 @@ def ziwen_messages() -> None:
     - add: Add user (moderators only)
     - remove: Remove user (moderators only)
     """
-
     messages: list[Message] = list(REDDIT.inbox.unread(limit=10))
     if messages:
         logger.info(f"Processing {len(messages)} unread message(s)")
 
-    # Iterate over the messages in the inbox.
     for message in messages:
         message_subject: str = message.subject.lower()
         message.mark_read()  # Mark the message as read early on.
@@ -62,6 +63,8 @@ def ziwen_messages() -> None:
             continue
 
         message_author: Redditor = message.author  # Redditor object
+
+        # ── Subject routing ────────────────────────────────────────────────────
 
         if "subscribe" in message_subject and "un" not in message_subject:
             handle_subscribe(message, message_author)

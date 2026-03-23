@@ -28,12 +28,14 @@ from . import update_language
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
 
 
+# ─── Internal helpers ─────────────────────────────────────────────────────────
+
+
 def _send_notifications_okay(instruo: Instruo, ajo: Ajo) -> bool:
     """Simple function that checks to see if the comment also
     includes another Komando that sets the setting to translated
     or needs review.
     Returns True if it's okay to send messages, False otherwise."""
-
     if ajo.status in ["translated", "doublecheck"]:
         return False
 
@@ -44,17 +46,18 @@ def _send_notifications_okay(instruo: Instruo, ajo: Ajo) -> bool:
     return True
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> None:
     """Command handler called by ziwen_commands()."""
     logger.info("Identify handler initiated.")
     original_post = comment.submission
 
-    # Check against !translated or doublecheck also in the Instruo.
-    # We don't want to alert people if the comment already included
-    # a translation.
+    # Don't alert people if the comment also includes a translation.
     permission_to_send: bool = _send_notifications_okay(instruo, ajo)
 
-    # Invalid identification data.
+    # Reject invalid identification data.
     if not komando.data or None in komando.data:
         logger.warning(f"Invalid or missing Komando data: {komando.data}")
         invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
@@ -70,7 +73,6 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     # Capture the original language before update_language mutates ajo.lingvo.
     original_language = ajo.lingvo
 
-    # Update the Ajo's language(s) post.
     try:
         update_language(ajo, komando)
     except ValueError as e:
@@ -86,10 +88,7 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     if ajo.type == "single" or (ajo.type == "multiple" and not ajo.is_defined_multiple):
         new_language = komando.data[0]  # Lingvo
 
-        # Assuming the two languages are different, we can obtain a
-        # list of people to notify for.
         if original_language != new_language:
-            # Update the 'identified' wiki page for single languages.
             if ajo.type == "single":
                 update_wiki_page(
                     action="identify",
@@ -110,8 +109,6 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     else:  # Defined multiple post.
         if ajo.is_defined_multiple:
             logger.info("Handling defined multiple post...")
-            # For a defined multiple post, iterate over the new
-            # languages that are listed.
             new_languages = komando.data
             for language in new_languages:
                 if permission_to_send:

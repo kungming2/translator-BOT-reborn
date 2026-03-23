@@ -31,14 +31,16 @@ from time_handling import time_convert_to_string
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW"})
 
 
-def _maybe_alert_slow_run(
+# ─── Monitoring helpers ───────────────────────────────────────────────────────
+
+
+def _alert_slow_run(
     elapsed_minutes: float,
     run_start: str,
     api_calls: int,
     memory_usage: str,
 ) -> None:
-    """Alert moderators via a Discord message if the run time of the
-    routine exceeds that of the scheduled cycle time."""
+    """Send a Discord alert if the run exceeded the configured cycle time."""
     if elapsed_minutes <= SETTINGS["cycle_time"]:
         return
     send_discord_alert(
@@ -56,49 +58,38 @@ def _maybe_alert_slow_run(
     )
 
 
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     start_time = time.time()
 
     try:
         logger.info("Starting cycle run.")
 
-        # First it processes the titles of new posts.
-        ziwen_posts()
-
-        # Then it checks for any edits to comments.
-        edit_tracker()
+        ziwen_posts()  # Process titles of new posts
+        edit_tracker()  # Check for edits to existing comments
         progress_tracker()
+        ziwen_commands()  # Act on comment commands
+        ziwen_messages()  # Handle messages (e.g. notification subscriptions)
+        verification_parser()  # Process verification requests
 
-        # Process comments and acts on commands.
-        ziwen_commands()
-
-        # Then it checks its messages (generally for new
-        # subscriptions for language notifications).
-        ziwen_messages()
-
-        # Process verification requests.
-        verification_parser()
-
-        # Record API usage limit.
+        # Probe the API to record usage and collect memory stats
         probe = REDDIT.redditor(USERNAME).created_utc
         used_calls = REDDIT.auth.limits["used"]
 
-        # Record memory usage at the end of a run.
         mem_bytes = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = f"{mem_bytes / (1024**2):.2f} MB"
         logger.info(f"Run complete. Calls used: {used_calls}. {mem_usage} used.")
 
     except (KeyboardInterrupt, SystemExit):
-        # Don't treat intentional exits or Ctrl+C as "errors"
         logger.info("Manual user shutdown.")
         raise
 
     except TRANSIENT_ERRORS as e:
-        # Just log transient errors at WARNING level, don't save to error log
         logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
         logger.info("Will retry on next cycle.")
 
-    except Exception as e:  # The bot encountered a major error/exception.
+    except Exception as e:
         logger.critical(f"Encountered critical error: {e}.")
         error_log_extended(traceback.format_exc(), "Ziwen Main")
 
@@ -118,4 +109,4 @@ if __name__ == "__main__":
         record_activity_csv("cycle", run_information)
         logger.info(f"Run {elapsed_time:.2f} minutes.")
 
-        _maybe_alert_slow_run(elapsed_time, run_time, used_calls, mem_usage)
+        _alert_slow_run(elapsed_time, run_time, used_calls, mem_usage)

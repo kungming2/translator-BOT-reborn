@@ -20,7 +20,10 @@ from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.connection import is_mod
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:IDENTIFY"})
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:LONG"})
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> None:
@@ -32,13 +35,11 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> 
     if is_mod(comment.author) or original_poster == comment.author:
         logger.info(f"!long, from user u/{comment.author} on `{ajo.id}`.")
 
-        # This command works as a flip switch.
-        # It changes the state to the opposite.
+        # Toggle the long state.
         current_status: bool = ajo.is_long
         new_status: bool = not current_status
 
-        # Take a Kunulo and delete any long informational comment, if the
-        # toggle for long status is now False (it's not actually long).
+        # If toggled off, delete any existing long informational comment.
         if not new_status:
             kunulo_object: Kunulo = Kunulo.from_submission(ajo.submission)
             kunulo_object.delete("comment_long")

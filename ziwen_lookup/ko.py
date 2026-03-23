@@ -23,8 +23,10 @@ from ziwen_lookup.cache_helpers import (
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:KO"})
 
-# Set the API key to use.
 krdict.set_key(credentials_source["KRDICT_API_KEY"])
+
+
+# ─── Internal helpers ─────────────────────────────────────────────────────────
 
 
 def _translate_part_of_speech(korean_pos: str) -> str:
@@ -45,9 +47,6 @@ def _translate_part_of_speech(korean_pos: str) -> str:
         "의존 명사": "dependent noun",
     }
     return mapping.get(korean_pos, korean_pos)
-
-
-"""WORD LOOKUP"""
 
 
 def _ko_search_raw(target_word: str) -> list[dict]:
@@ -119,7 +118,6 @@ def _ko_word_fetch(korean_word: str) -> str | None:
     data: list[dict] = _ko_search_raw(korean_word)
     hangul_romanization: str = Romanizer(korean_word).romanize()
 
-    # No valid results.
     if not data:
         return None
 
@@ -127,7 +125,6 @@ def _ko_word_fetch(korean_word: str) -> str | None:
         f"# [{korean_word}](https://en.wiktionary.org/wiki/{korean_word}#Korean)"
     )
 
-    # Group entries by part of speech
     pos_groups: dict[str, list[dict]] = {}
     for entry in data:
         pos: str = _translate_part_of_speech(entry["part_of_speech"]).title()
@@ -135,7 +132,6 @@ def _ko_word_fetch(korean_word: str) -> str | None:
             pos_groups[pos] = []
         pos_groups[pos].append(entry)
 
-    # Build output for each POS group
     entries: list[str] = []
     for pos, group in pos_groups.items():
         pos_section: str = f"\n\n##### *{pos}*\n\n"
@@ -165,7 +161,6 @@ def _ko_word_fetch(korean_word: str) -> str | None:
 
     final_comment: str = lookup_header + "".join(entries) + footer
 
-    # Cache the result before returning
     try:
         parsed_data = parse_ko_output_to_json(final_comment)
         save_to_cache(parsed_data, "ko", "ko_word")
@@ -174,6 +169,9 @@ def _ko_word_fetch(korean_word: str) -> str | None:
         logger.error(f"Failed to cache result for '{korean_word}': {ex}")
 
     return final_comment
+
+
+# ─── Public API ───────────────────────────────────────────────────────────────
 
 
 def ko_word(korean_word: str) -> str | None:
@@ -186,13 +184,11 @@ def ko_word(korean_word: str) -> str | None:
     """
     korean_word = korean_word.strip()
 
-    # Check cache first
     cached = get_from_cache(korean_word, "ko", "ko_word")
 
-    if cached and cached.get("word"):  # Check it's not empty dict
+    if cached and cached.get("word"):
         logger.info(f"Retrieved '{korean_word}' from cache.")
         return format_ko_word_from_cache(cached) + " ^⚡"
 
-    # Cache miss - fetch from API
     logger.info(f"'{korean_word}' not found in cache, fetching from API.")
     return _ko_word_fetch(korean_word)

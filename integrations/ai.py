@@ -7,6 +7,8 @@ Handles interfacing for AI queries.
 Logger tag: [I:AI]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 
 from openai import APIError  # Used for both DeepSeek and OpenAI
@@ -16,10 +18,9 @@ from config import Paths, load_settings
 from config import logger as _base_logger
 from responses import RESPONSE
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "I:AI"})
-
-
 # ─── Module-level constants ───────────────────────────────────────────────────
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "I:AI"})
 
 access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
 

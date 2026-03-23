@@ -8,6 +8,8 @@ functions are used by Wenyuan, the statistics calculator routine.
 Logger tag: [MN:USAGE]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import ast
 import logging
 from datetime import datetime, timezone
@@ -22,12 +24,17 @@ from models.instruo import Instruo
 from time_handling import get_current_utc_date
 from wenju import WENJU_SETTINGS
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:USAGE"})
+
+
+# ─── Action counter ───────────────────────────────────────────────────────────
 
 
 def action_counter(messages_number: int, action_type: str) -> None:
     """
-    Records the number of actions performed by type and date in a JSON file.
+    Record the number of actions performed by type and date in a JSON file.
 
     :param messages_number: The number of actions to record (typically 1).
     :param action_type: A string representing the type of action
@@ -44,34 +51,33 @@ def action_counter(messages_number: int, action_type: str) -> None:
         )
         return
 
-    # Normalize the action type
     if action_type == "id":
         action_type = "identify"
 
     current_day = get_current_utc_date()
 
-    # Load existing data
     try:
         with open(Paths.LOGS["COUNTER"], "rb") as f:
             current_actions = orjson.loads(f.read())
     except (FileNotFoundError, orjson.JSONDecodeError):
         current_actions = {}
 
-    # Update the count
     current_actions.setdefault(current_day, {})
     current_actions[current_day][action_type] = (
         current_actions[current_day].get(action_type, 0) + count
     )
 
-    # Save the updated data
     with open(Paths.LOGS["COUNTER"], "wb") as f:
         f.write(orjson.dumps(current_actions))
 
 
+# ─── Language statistics ──────────────────────────────────────────────────────
+
+
 def load_statistics_data(language_code: str) -> dict | None:
     """
-    Loads language statistics from a saved JSON file. This will primarily
-    be used by Wenyuan, but is currently unused.
+    Load language statistics from a saved JSON file. Primarily used by
+    Wenyuan, but currently unused.
 
     :param language_code: Language code as a string.
     :return: The corresponding language dictionary if found, otherwise None.
@@ -88,24 +94,18 @@ def months_since_redesign(start_year: int = 2016, start_month: int = 5) -> int:
     """
     Calculate the number of months elapsed since the redesign start date.
     The redesign started in May 2016, and no archive data exists before that.
-    This is used to help calculate statistics more accurately.
-    This will primarily be used by Wenyuan, but is currently unused.
+    Primarily used by Wenyuan, but currently unused.
 
     :param start_year: The starting year of the redesign (default 2016)
     :param start_month: The starting month of the redesign (default May, 5)
     :return: Number of months elapsed since the redesign start date as an integer
     """
-    # Convert start date to a total month count
     start_total_months = (start_year * 12) + start_month
 
-    # Get current year and month
-    now = datetime.now(timezone.utc)  # datetime object
+    now = datetime.now(timezone.utc)
     current_total_months = (now.year * 12) + now.month
 
-    # Calculate elapsed months
-    elapsed_months = current_total_months - start_total_months
-
-    return elapsed_months
+    return current_total_months - start_total_months
 
 
 def generate_language_frequency_markdown(language_list: list) -> str:
@@ -114,7 +114,6 @@ def generate_language_frequency_markdown(language_list: list) -> str:
     given Lingvos. Uses data embedded in Lingvo objects if available,
     falling back on stored statistics otherwise.
     """
-
     header = (
         "| Language Name        | Average Number of Posts | Per   |\n"
         "|----------------------|--------------------------:|:------|\n"
@@ -128,15 +127,12 @@ def generate_language_frequency_markdown(language_list: list) -> str:
 
     for lingvo in language_list:
         language_name = lingvo.name
-
-        # Load values from the object itself
         daily = lingvo.rate_daily
         monthly = lingvo.rate_monthly
         yearly = lingvo.rate_yearly
         permalink = lingvo.link_statistics
 
         if all(v is not None for v in (daily, monthly, yearly, permalink)):
-            # Determine appropriate frequency bucket
             if daily >= 2:
                 freq, rate = "day", daily
             elif daily > 0.05:
@@ -155,11 +151,14 @@ def generate_language_frequency_markdown(language_list: list) -> str:
     return header + "\n".join(lines)
 
 
+# ─── Command usage reporting ──────────────────────────────────────────────────
+
+
 def generate_command_usage_report(start_time: int, end_time: int, days: int) -> str:
     """
     Generate a Markdown report summarizing average command usage within a time range.
 
-    This function reads data from the counter log file and aggregates command usage
+    Reads data from the counter log file and aggregates command usage
     between the given start and end times, then computes a daily average.
 
     :param start_time: Start time as a Unix timestamp.
@@ -174,10 +173,8 @@ def generate_command_usage_report(start_time: int, end_time: int, days: int) -> 
         with open(Paths.LOGS["COUNTER"], "rb") as file:
             counter_data = orjson.loads(file.read())
     except (FileNotFoundError, orjson.JSONDecodeError):
-        # If file is missing or malformed, return just the header.
         return formatted_content
 
-    # Aggregate command counts within the specified time range.
     command_totals: dict[str, int] = {}
     for date_text, command_counts in counter_data.items():
         try:
@@ -185,13 +182,12 @@ def generate_command_usage_report(start_time: int, end_time: int, days: int) -> 
             unix_timestamp = int(dt.timestamp())
         except ValueError:
             logger.debug(f"Skipping malformed date entry: {date_text!r}.")
-            continue  # Skip invalid date entries.
+            continue
 
         if start_time <= unix_timestamp <= end_time:
             for command, count in command_counts.items():
                 command_totals[command] = command_totals.get(command, 0) + int(count)
 
-    # Format the results into a Markdown table.
     rows = []
     for command, total in sorted(command_totals.items()):
         daily_average = round(total / days, 2)
@@ -200,7 +196,7 @@ def generate_command_usage_report(start_time: int, end_time: int, days: int) -> 
     return formatted_content + "\n".join(rows)
 
 
-"""NOTIFICATIONS/POINTS STATISTICS"""
+# ─── Notification & points statistics ────────────────────────────────────────
 
 
 def count_notifications(start_time: int, end_time: int) -> str:
@@ -211,16 +207,13 @@ def count_notifications(start_time: int, end_time: int) -> str:
     :param end_time: Period end time (Unix timestamp in UTC)
     :return: Formatted string with notification statistics
     """
-    # Load counter log
     with open(Paths.LOGS["COUNTER"], "rb") as f:
         counter_dict = orjson.loads(f.read())
 
     total_notifications = 0
     days_with_data = 0
 
-    # Aggregate notifications within the time range
     for date_str, actions in counter_dict.items():
-        # Convert date string to UTC Unix timestamp
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
         unix_timestamp = int(date_obj.replace(tzinfo=timezone.utc).timestamp())
 
@@ -228,7 +221,6 @@ def count_notifications(start_time: int, end_time: int) -> str:
             days_with_data += 1
             total_notifications += actions.get("Notifications", 0)
 
-    # Calculate average (avoid division by zero)
     avg_notifications = (
         total_notifications / days_with_data if days_with_data > 0 else 0
     )
@@ -237,76 +229,6 @@ def count_notifications(start_time: int, end_time: int) -> str:
         f"\n* Total notifications sent during this period:           {total_notifications:,} messages"
         f"\n* Average notifications sent per day during this period: {avg_notifications:,.2f} messages"
     )
-
-
-def get_month_points_summary(year_month: str) -> str:
-    """
-    Generate a formatted table of user points for a given month.
-    Settings for this function are in wenju_settings, as this is a
-    statistics retrieval function.
-
-    :param year_month: Month identifier in YYYY-MM format (e.g., '2018-09')
-    :return: Markdown-formatted table with points breakdown
-    """
-    # Minimum points required for inclusion in summary
-    point_threshold = WENJU_SETTINGS["minimum_points_display_threshold"]
-
-    # Build table header
-    header = (
-        f"\n| Username | Points in {year_month} | Total Cumulative Points | "
-        f"Participated Posts in {year_month} | Total Participated Posts |\n"
-        "|-----------|--------|-------|------|-----------|"
-    )
-
-    # Get all usernames for the month (sorted alphabetically)
-    query = """
-            SELECT DISTINCT username
-            FROM total_points
-            WHERE year_month = ?
-            ORDER BY LOWER(username) \
-            """
-    results = db.fetchall_main(query, (year_month,))
-    usernames = [row["username"] for row in results]
-
-    # Exclude translator-ModTeam and bot itself
-    usernames_excluded = WENJU_SETTINGS["points_exclude_usernames"]
-    usernames = [x for x in usernames if x not in usernames_excluded]
-
-    # Collect user statistics
-    user_stats = []
-    for username in usernames:
-        month_points, month_posts = _get_month_stats(username, year_month)
-
-        # Skip users below threshold
-        if month_points < point_threshold:
-            continue
-
-        total_points, total_posts = _get_total_stats(username)
-
-        # Escape underscores for markdown formatting
-        formatted_username = username.replace("_", r"\_")
-
-        user_stats.append(
-            {
-                "username": formatted_username,
-                "month_points": month_points,
-                "month_posts": month_posts,
-                "total_points": total_points,
-                "total_posts": total_posts,
-            }
-        )
-
-    # Sort by month points (descending)
-    user_stats.sort(key=lambda user: user["month_points"], reverse=True)
-
-    # Build table rows
-    rows = [
-        f"\n| u\\/{user['username']} | {user['month_points']} | {user['total_points']} | "
-        f"{user['month_posts']} posts | {user['total_posts']} posts |"
-        for user in user_stats
-    ]
-
-    return header + "".join(rows)
 
 
 def _get_month_stats(username: str, year_month: str) -> tuple[int, int]:
@@ -340,26 +262,80 @@ def _get_total_stats(username: str) -> tuple[int, int]:
     return total_points, unique_posts
 
 
-"""USER STATISTICS"""
+def get_month_points_summary(year_month: str) -> str:
+    """
+    Generate a formatted table of user points for a given month.
+    Settings for this function are in wenju_settings, as this is a
+    statistics retrieval function.
+
+    :param year_month: Month identifier in YYYY-MM format (e.g., '2018-09')
+    :return: Markdown-formatted table with points breakdown
+    """
+    point_threshold = WENJU_SETTINGS["minimum_points_display_threshold"]
+
+    header = (
+        f"\n| Username | Points in {year_month} | Total Cumulative Points | "
+        f"Participated Posts in {year_month} | Total Participated Posts |\n"
+        "|-----------|--------|-------|------|-----------|"
+    )
+
+    query = """
+            SELECT DISTINCT username
+            FROM total_points
+            WHERE year_month = ?
+            ORDER BY LOWER(username) \
+            """
+    results = db.fetchall_main(query, (year_month,))
+    usernames = [row["username"] for row in results]
+
+    usernames_excluded = WENJU_SETTINGS["points_exclude_usernames"]
+    usernames = [x for x in usernames if x not in usernames_excluded]
+
+    user_stats = []
+    for username in usernames:
+        month_points, month_posts = _get_month_stats(username, year_month)
+
+        if month_points < point_threshold:
+            continue
+
+        total_points, total_posts = _get_total_stats(username)
+        formatted_username = username.replace("_", r"\_")
+
+        user_stats.append(
+            {
+                "username": formatted_username,
+                "month_points": month_points,
+                "month_posts": month_posts,
+                "total_points": total_points,
+                "total_posts": total_posts,
+            }
+        )
+
+    user_stats.sort(key=lambda user: user["month_points"], reverse=True)
+
+    rows = [
+        f"\n| u\\/{user['username']} | {user['month_points']} | {user['total_points']} | "
+        f"{user['month_posts']} posts | {user['total_posts']} posts |"
+        for user in user_stats
+    ]
+
+    return header + "".join(rows)
+
+
+# ─── User statistics ──────────────────────────────────────────────────────────
 
 
 def user_statistics_loader(username: str) -> Optional[str]:
     """
-    Function that pairs with messaging_user_statistics_writer.
-    Takes a username and looks up what commands they have
-    been recorded as using.
-
-    If they have data, it will return a nicely formatted table. Since
-    the notifications data is also recorded in the
-    same database, this function will also format the data in that
-    dictionary and integrate it into the table.
+    Look up which commands a user has been recorded as using and return
+    a formatted table. Also integrates notification data from the same
+    database.
 
     :param username: The username of a Reddit user.
-    :return: None if the user has no data (no commands that they
-             called), a sorted Markdown table otherwise.
+    :return: None if the user has no data, a sorted Markdown table otherwise.
     """
     header = "| Commands/Notifications | Times |\n|--------|------|\n"
-    cursor = db.cursor_main  # Use the DatabaseManager cursor
+    cursor = db.cursor_main
 
     def fetch_data(query: str) -> Optional[dict]:
         cursor.execute(query, (username,))
@@ -368,19 +344,14 @@ def user_statistics_loader(username: str) -> Optional[str]:
 
     def normalize_command(cmd: str) -> str:
         """Normalize command names for display."""
-        # Remove leading ! and trailing colons
         cmd = cmd.lstrip("!").rstrip(":")
-
-        # Specific replacements
         if cmd == "`":
             return "lookup_cjk"
         elif cmd == "wikipedia_lookup":
             return "lookup_wp"
-
         return cmd
 
     def format_commands(commands: dict) -> list[str]:
-        # Aggregate commands by normalized name
         normalized_commands: dict[str, int] = {}
         for cmd, count in commands.items():
             if cmd == "Notifications":
@@ -389,7 +360,6 @@ def user_statistics_loader(username: str) -> Optional[str]:
             normalized_commands[normalized] = (
                 normalized_commands.get(normalized, 0) + count
             )
-
         return [
             f"| {cmd} | {count} |" for cmd, count in sorted(normalized_commands.items())
         ]
@@ -400,7 +370,6 @@ def user_statistics_loader(username: str) -> Optional[str]:
             for lang, count in sorted(notifications.items())
         ]
 
-    # Fetch and process both command and notification data
     commands_dict = fetch_data("SELECT * FROM total_commands WHERE username = ?")
     notifications_dict = fetch_data(
         "SELECT * FROM notify_cumulative WHERE username = ?"
@@ -420,7 +389,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
 
 def user_statistics_writer(instruo: Instruo) -> None:
     """
-    Records which commands were used by a Reddit user and stores
+    Record which commands were used by a Reddit user and store
     them in the main database.
 
     :param instruo: An Instruo object that contains the commands
@@ -428,12 +397,11 @@ def user_statistics_writer(instruo: Instruo) -> None:
     :return: Nothing.
     """
     username = instruo.author_comment
-    commands_list = instruo.commands  # List of Komando(name=..., data=[...])
+    commands_list = instruo.commands
 
     cursor = db.cursor_main
     conn = db.conn_main
 
-    # Load existing record for the user
     cursor.execute(
         "SELECT commands FROM total_commands WHERE username = ?", (username,)
     )
@@ -446,7 +414,6 @@ def user_statistics_writer(instruo: Instruo) -> None:
         commands_dictionary = ast.literal_eval(row["commands"])
         already_saved = True
 
-    # Count occurrences of each command name
     for komando in commands_list:
         command_name = komando.name
         if command_name in commands_dictionary:
@@ -454,12 +421,10 @@ def user_statistics_writer(instruo: Instruo) -> None:
         else:
             commands_dictionary[command_name] = 1
 
-    # Skip saving if nothing to store
     if not commands_dictionary:
         logger.debug("No commands to write.")
         return
 
-    # Store or update the command usage in the database
     if already_saved:
         cursor.execute(
             "UPDATE total_commands SET commands = ? WHERE username = ?",

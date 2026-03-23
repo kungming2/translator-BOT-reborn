@@ -30,6 +30,8 @@ Typical usage:
 Logger tag: [ERROR]
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 import os
 from datetime import datetime, timedelta
@@ -43,7 +45,12 @@ from database import get_recent_event_log_lines
 from reddit.connection import REDDIT
 from time_handling import get_current_utc_time, time_convert_to_string
 
+# ─── Module-level constants ───────────────────────────────────────────────────
+
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ERROR"})
+
+
+# ─── YAML serialization ───────────────────────────────────────────────────────
 
 
 class CustomDumper(yaml.SafeDumper):
@@ -67,49 +74,12 @@ def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
 CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
 
 
-def error_log_basic(entry: str, bot_routine: str) -> None:
-    """
-    Logs an error in YAML format by appending a new entry.
-
-    :param entry: The error text (e.g., a traceback).
-    :param bot_routine: The routine of the bot writing this error
-                        (e.g., 'Ziwen', 'Wenyuan').
-    """
-    log_entry = {
-        "timestamp": get_current_utc_time(),
-        "bot_version": bot_routine,
-        "error": entry.strip(),
-        "resolved": False,
-    }
-
-    # Load existing entries (if any)
-    if os.path.exists(Paths.LOGS["ERROR"]):
-        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
-            try:
-                existing_entries = yaml.safe_load(f) or []
-            except yaml.YAMLError:
-                existing_entries = []
-    else:
-        existing_entries = []
-
-    # Append the new error log unconditionally
-    existing_entries.append(log_entry)
-
-    # Save all entries back to the file
-    with open(Paths.LOGS["ERROR"], "w", encoding="utf-8") as f:
-        yaml.dump(
-            existing_entries,
-            f,
-            Dumper=CustomDumper,
-            allow_unicode=True,
-            sort_keys=False,
-            default_flow_style=False,
-        )
+# ─── Context capture ──────────────────────────────────────────────────────────
 
 
 def _record_last_post_and_comment() -> dict[str, str]:
     """
-    Retrieves the latest post and comment from r/translator for
+    Retrieve the latest post and comment from r/translator for
     reference in error logging.
 
     :return: A dictionary with keys:
@@ -129,14 +99,12 @@ def _record_last_post_and_comment() -> dict[str, str]:
         "body": "",
     }
 
-    # Get latest submission
     for submission in REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=1):
         post_time = time_convert_to_string(submission.created_utc)
         post_info["timestamp"] = post_time
         post_info["link"] = f"https://www.reddit.com{submission.permalink}"
         break
 
-    # Get latest comment
     for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(limit=1):
         comment_time = time_convert_to_string(comment.created_utc)
         replaced_body = comment.body.replace("\n", "\n> ")
@@ -161,9 +129,49 @@ def _record_last_post_and_comment() -> dict[str, str]:
     }
 
 
+# ─── Error log writers ────────────────────────────────────────────────────────
+
+
+def error_log_basic(entry: str, bot_routine: str) -> None:
+    """
+    Log an error in YAML format by appending a new entry.
+
+    :param entry: The error text (e.g., a traceback).
+    :param bot_routine: The routine of the bot writing this error
+                        (e.g., 'Ziwen', 'Wenyuan').
+    """
+    log_entry = {
+        "timestamp": get_current_utc_time(),
+        "bot_version": bot_routine,
+        "error": entry.strip(),
+        "resolved": False,
+    }
+
+    if os.path.exists(Paths.LOGS["ERROR"]):
+        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+            try:
+                existing_entries = yaml.safe_load(f) or []
+            except yaml.YAMLError:
+                existing_entries = []
+    else:
+        existing_entries = []
+
+    existing_entries.append(log_entry)
+
+    with open(Paths.LOGS["ERROR"], "w", encoding="utf-8") as f:
+        yaml.dump(
+            existing_entries,
+            f,
+            Dumper=CustomDumper,
+            allow_unicode=True,
+            sort_keys=False,
+            default_flow_style=False,
+        )
+
+
 def error_log_extended(error_save_entry: str, bot_version: str) -> None:
     """
-    Logs an error in YAML format. This will include the last post
+    Log an error in YAML format. This will include the last post
     and comment that happened when the error happened.
 
     :param error_save_entry: The traceback text to log.
@@ -173,16 +181,14 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
     error_log_path = Paths.LOGS["ERROR"]
 
     try:
-        # Load existing YAML log (if file exists and is non-empty)
         try:
             with open(error_log_path, "r", encoding="utf-8") as f:
                 existing_log = yaml.safe_load(f) or []
         except FileNotFoundError:
             existing_log = []
 
-        # Get contextual info
         last_post_text = _record_last_post_and_comment()
-        # This will match stuff like "Ziwen Main" to "ZW"
+        # Match bot name prefix to its shortform tag (e.g. "Ziwen Main" → "ZW")
         bot_tag = next(
             (
                 tag
@@ -191,10 +197,8 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
             ),
             None,
         )
-        # We just need the last few events from the time (no time delta)
         last_events = get_recent_event_log_lines(10, bot_tag)[0]
 
-        # Append new entry to the error log.
         new_entry = {
             "timestamp": get_current_utc_time(),
             "bot_version": bot_version,
@@ -206,7 +210,6 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
 
         existing_log.append(new_entry)
 
-        # Write back to file
         with open(error_log_path, "w", encoding="utf-8") as f:
             yaml.dump(
                 existing_log,
@@ -221,10 +224,13 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
         logger.error(f"[{bot_version}] Error_Log: Failed to write error log: {e}")
 
 
+# ─── Error log readers ────────────────────────────────────────────────────────
+
+
 def retrieve_error_log() -> str:
     """
-    Retrieves the error log from the error log file and formats it
-    in a human-readable format (Markdown).
+    Retrieve the error log and format it as a human-readable Markdown string.
+
     :return: Formatted Markdown string.
     """
     paragraphs = []
@@ -240,13 +246,10 @@ def retrieve_error_log() -> str:
         for key, value in entry.items():
             if isinstance(value, dict):
                 lines.append(f"**{key.capitalize()}:**")
-                # For nested dict, print each subkey with indent
                 for subkey, subvalue in value.items():
-                    # Replace newlines inside values with indented lines
                     formatted_value = str(subvalue).replace("\n", "\n    ")
                     lines.append(f"  - **{subkey}:** {formatted_value}")
             else:
-                # Replace newlines inside values with indented lines
                 formatted_value = str(value).replace("\n", "\n  ")
                 lines.append(f"**{key.capitalize()}:** {formatted_value}")
 
@@ -257,12 +260,13 @@ def retrieve_error_log() -> str:
     return final_text
 
 
-"""CHECKING FOR ERRORS IN EVENTS LOG"""
-
-
 def display_event_errors(days: int = 7) -> list[str]:
-    """Display errors recorded in the events log (as opposed to
-    the error log)."""
+    """
+    Display errors recorded in the events log (as opposed to the error log).
+
+    :param days: How many days back to search (default: 7).
+    :return: List of matching log line strings.
+    """
     cutoff_date = datetime.now() - timedelta(days=days)
     results = []
 

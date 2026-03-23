@@ -5,6 +5,8 @@ Handles directing of paths as well as the logger.
 No prefix for this as this is where the logger is defined.
 """
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
+
 import logging
 import os
 import time
@@ -15,6 +17,8 @@ from prawcore.exceptions import RequestException, ResponseException, ServerError
 
 from time_handling import get_current_month
 
+# ─── Path configuration ───────────────────────────────────────────────────────
+
 # Base directory configuration
 BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 # Note that since this is a storage folder and not a module,
@@ -22,10 +26,11 @@ BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR: str = os.path.join(BASE_DIR, "_data")
 
 
-# Group related paths into dictionaries for better organization
 class Paths:
-    """Centralized path configuration for all application files
-    Use like:
+    """
+    Centralized path configuration for all application files.
+
+    Usage:
         Paths.CAT_NAME["KEY_NAME"]
         Paths.SETTINGS["TITLE_MODULE_SETTINGS"]
     """
@@ -128,7 +133,7 @@ class Paths:
 def get_reports_directory(base_dir: str | None = None) -> Path:
     """
     Return the Path object for the current month's reports directory.
-    This used for digest reports by tasks in the tasks folder.
+    Used for digest reports by tasks in the tasks folder.
 
     :param base_dir: Optional base path for data storage.
                      Defaults to DATA_DIR.
@@ -142,6 +147,24 @@ def get_reports_directory(base_dir: str | None = None) -> Path:
     log_dir: Path = Path(base_dir) / "Reports" / current_month
 
     return log_dir
+
+
+# ─── Settings loader ──────────────────────────────────────────────────────────
+
+
+def load_settings(path: str | Path) -> dict:
+    """
+    Load settings from a YAML file.
+
+    :param path: Path to YAML file.
+    :return: Settings dictionary.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        settings: dict = yaml.safe_load(f)
+    return settings
+
+
+# ─── Logging setup ────────────────────────────────────────────────────────────
 
 
 class TagFormatter(logging.Formatter):
@@ -163,7 +186,6 @@ def set_up_logger() -> logging.Logger:
 
     :return: A logger object.
     """
-    # Logging code, defining the basic logger.
     logformatter: str = (
         "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
     )
@@ -183,13 +205,10 @@ def set_up_logger() -> logging.Logger:
 
     logger_object: logging.Logger = logging.getLogger(__name__)
 
-    # Define the logging handler (the file to write to with formatting.)
+    # File handler — writes to the shared events log.
     handler: logging.FileHandler = logging.FileHandler(Paths.LOGS["EVENTS"])
-    handler.setLevel(
-        logging.INFO
-    )  # Change this level for debugging or to display more information.
+    handler.setLevel(logging.INFO)
 
-    # Use UTC time in the formatter
     handler_format: TagFormatter = TagFormatter(
         logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ"
     )
@@ -237,19 +256,10 @@ def enable_debug_logging() -> None:
         handler.setLevel(logging.DEBUG)
 
 
-def load_settings(path: str | Path) -> dict:
-    """
-    General function for loading settings from a YAML file.
-    :param path: Path to YAML file.
-    :return: Settings dictionary.
-    """
-    with open(path, "r", encoding="utf-8") as f:
-        settings: dict = yaml.safe_load(f)  # Parse the file's content
-
-    return settings
-
+# ─── Module-level singletons ──────────────────────────────────────────────────
 
 logger: logging.Logger = set_up_logger()
+
 TRANSIENT_ERRORS = (
     ServerError,
     RequestException,
@@ -258,6 +268,5 @@ TRANSIENT_ERRORS = (
     TimeoutError,
 )
 
-# To use, SETTINGS['variable_name']
 SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])
 SCHEDULER_SETTINGS: dict = load_settings(Paths.SETTINGS["SCHEDULER_SETTINGS"])

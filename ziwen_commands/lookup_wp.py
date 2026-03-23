@@ -22,6 +22,9 @@ from ziwen_lookup.wp_utils import wikipedia_lookup
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:WP"})
 
 
+# ─── Command handler ──────────────────────────────────────────────────────────
+
+
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
     """
     Command handler called by ziwen_commands().
@@ -38,7 +41,6 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
     wikipedia_data: str | None = wikipedia_lookup(komando.data)
 
     if wikipedia_data:
-        # Add comment anchor.
         wikipedia_data += RESPONSE.ANCHOR_WIKIPEDIA
         reddit_reply(comment, wikipedia_data)
         logger.info(f"> Replied to comment `{comment.id}`.")

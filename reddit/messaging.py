@@ -35,6 +35,9 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MESSAGING"})
 
 
+# ─── OP notification ──────────────────────────────────────────────────────────
+
+
 def notify_op_translated_post(author: str, permalink: str) -> None:
     """
     Send a notification message to the OP that their post has been translated.
@@ -61,7 +64,7 @@ def notify_op_translated_post(author: str, permalink: str) -> None:
     logger.info(f"Messaged the OP u/{author} about their translated post.")
 
 
-"""ZIWEN MESSAGES"""
+# ─── Subscription message handlers ───────────────────────────────────────────
 
 
 def handle_subscribe(message: Message, message_author: Redditor) -> None:
@@ -259,6 +262,9 @@ def handle_status(message: Message, message_author: Redditor) -> None:
     return
 
 
+# ─── Moderator message handlers ───────────────────────────────────────────────
+
+
 def handle_add(message: Message, message_author: Redditor) -> None:
     """Handle add requests for notifications from moderators."""
     logger.info(f"New username addition message from moderator u/{message_author}.")
@@ -323,6 +329,9 @@ def handle_remove(message: Message, message_author: Redditor) -> None:
         reddit_reply(message, reply_text=removal_message)
 
     logger.debug(f"handle_remove: extracted username={remove_username!r}")
+
+
+# ─── Points handler ───────────────────────────────────────────────────────────
 
 
 def handle_points(message: Message, message_author: Redditor) -> None:

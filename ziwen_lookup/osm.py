@@ -18,6 +18,9 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:OSM"})
 
 
+# ─── Nominatim search ─────────────────────────────────────────────────────────
+
+
 def search_nominatim(
     query: str, accept_language: str = "en-US,en", coords: list[float] | None = None
 ) -> list[str]:
@@ -32,29 +35,23 @@ def search_nominatim(
     Returns:
         List of formatted result strings
     """
-    # URL encode the query (double encoding for the UI link)
     encoded_query: str = quote(query)
     logger.info(f"Initial query: {query!r}")
 
-    # Build API URL
     url: str = (
         f"https://nominatim.openstreetmap.org/search?q={encoded_query}"
         f"&accept-language={accept_language}&format=jsonv2"
     )
 
-    # Set a user agent (required by Nominatim usage policy)
     headers: dict[str, str] = {"User-Agent": "Python OSM Search Script"}
 
     try:
-        # Make the request
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         results: list[dict[str, Any]] = response.json()
 
-        # Nothing found.
         if not results:
             logger.info(f"> No results found for {query}")
-            # If coords provided, return map links with those coordinates
             if coords and len(coords) == 2:
                 lat: float = round(coords[0], 3)
                 lon: float = round(coords[1], 3)
@@ -67,7 +64,6 @@ def search_nominatim(
         else:
             logger.info(f"> Found {len(results)} results for {query}")
 
-        # Format results
         formatted_results: list[str] = []
         for result in results:
             display_name: str = result.get("display_name", "Unknown")
@@ -81,19 +77,16 @@ def search_nominatim(
             # Convert osm_type to single letter: node->N, way->W, relation->R
             osm_type_letter: str = osm_type[0].upper() if osm_type else ""
 
-            # Create Nominatim details permalink
             permalink: str = (
                 f"https://nominatim.openstreetmap.org/ui/details.html?osmtype="
                 f"{osm_type_letter}&osmid={osm_id}&class={category}"
             )
 
-            # Create map links
             osm_map_link = (
                 f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=15"
             )
             google_maps_link = f"https://www.google.com/maps?q={lat},{lon}"
 
-            # Format output
             formatted: str = (
                 f"[{display_name}]({permalink}) ({place_type}) [{lat}, {lon}] "
                 f"([OSM]({osm_map_link}), [Google]({google_maps_link}))"

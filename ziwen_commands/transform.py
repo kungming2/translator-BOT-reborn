@@ -45,6 +45,9 @@ VALID_TRANSFORMS = {
 }
 
 
+# ─── Image extraction helpers ─────────────────────────────────────────────────
+
+
 def _extract_gallery_images(submission: Submission) -> list[str]:
     """
     Extract image URLs from a Reddit gallery post.
@@ -53,39 +56,29 @@ def _extract_gallery_images(submission: Submission) -> list[str]:
         submission: A PRAW submission object
 
     Returns:
-        list: List of image URLs from the gallery (videos and non-images excluded)
-              Limited to first 5 images to avoid processing too many images.
+        list: List of image URLs from the gallery (videos and non-images excluded),
+              limited to the first 5 images.
     """
     image_urls: list[str] = []
 
-    # Check if the submission has a gallery
     if hasattr(submission, "is_gallery") and submission.is_gallery:
-        # Get the gallery data
         if hasattr(submission, "gallery_data"):
-            # Get media metadata
             media_metadata = submission.media_metadata
 
-            # Iterate through gallery items in order
             for item in submission.gallery_data["items"]:
-                # Stop after collecting 5 images
                 if len(image_urls) >= 5:
                     break
 
                 media_id = item["media_id"]
 
-                # Get the image info from media_metadata
                 if media_id in media_metadata:
                     media_info = media_metadata[media_id]
 
-                    # Get the largest resolution image URL
                     if "s" in media_info:
                         image_url = media_info["s"]["u"]
-                        # URLs are HTML encoded, decode them
                         image_url = image_url.replace("&amp;", "&")
-                        # Clean up the Reddit URL
                         image_url = clean_reddit_image_url(image_url)
 
-                        # Only add if it's a valid image URL
                         if check_url_extension(image_url):
                             image_urls.append(image_url)
 
@@ -97,9 +90,9 @@ def _extract_images_from_submission(submission: Submission) -> list[str]:
     Extract all image URLs from a Reddit submission.
 
     Handles three types of posts:
+    - Gallery posts: Extracts all images from the gallery
     - Self/text posts: Extracts image URLs from the body text
     - Single image posts: Returns the submission URL
-    - Gallery posts: Extracts all images from the gallery
 
     Args:
         submission: A PRAW submission object
@@ -107,42 +100,37 @@ def _extract_images_from_submission(submission: Submission) -> list[str]:
     Returns:
         list: List of image URLs found in the submission
     """
-    image_urls = []
-
-    # Case 1: Gallery post
+    # Gallery post
     if hasattr(submission, "is_gallery") and submission.is_gallery:
         logger.info(f"Detected gallery post for {submission.id}")
         image_urls = _extract_gallery_images(submission)
         logger.info(f"Found {len(image_urls)} images in gallery")
         return image_urls
 
-    # Case 2: Self/text post
+    # Self/text post — extract image URLs from body
     if submission.is_self:
         logger.info(f"Detected text post for {submission.id}")
-        # Extract URLs from the selftext using regex
-        # This pattern matches common image hosting URLs
         url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
-        test_found_urls = re.findall(url_pattern, submission.selftext)
+        found_urls = re.findall(url_pattern, submission.selftext)
 
-        for url in test_found_urls:
-            # Use the more lenient check for self-text URLs
+        image_urls = []
+        for url in found_urls:
             if is_valid_image_url(url):
-                # Clean up Reddit preview URLs
-                cleaned_url = clean_reddit_image_url(url)
-                image_urls.append(cleaned_url)
+                image_urls.append(clean_reddit_image_url(url))
 
         logger.info(f"Found {len(image_urls)} image URLs in text body")
         return image_urls
 
-    # Case 3: Single image post
+    # Single image post
     if submission.url and check_url_extension(submission.url):
         logger.info(f"Detected single image post for {submission.id}")
-        image_urls.append(submission.url)
-        return image_urls
+        return [submission.url]
 
-    # No images found
     logger.info(f"No images found in submission {submission.id}")
-    return image_urls
+    return []
+
+
+# ─── Command handler ──────────────────────────────────────────────────────────
 
 
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
@@ -152,24 +140,21 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         [Komando(name='transform', data=['90'])]
         [Komando(name='transform', data=['h'])]
     """
-
     logger.info(f"!transform, from u/{comment.author}.")
 
-    # Get the transformation from komando data
     if not komando.data or len(komando.data) == 0:
         reddit_reply(
             comment, RESPONSE.COMMENT_TRANSFORM_NO_DATA + RESPONSE.BOT_DISCLAIMER
         )
         return
-    transformation = komando.data[0]
 
     # Strip any trailing index suffix the command parser may have included
     # (e.g. "h:1" → "h"). The index is re-parsed from the raw comment body below.
-    transformation = transformation.split(":")[0]
+    transformation = komando.data[0].split(":")[0]
 
-    # Check for optional image index argument (only valid for !transform, e.g. !transform:90:2).
-    # Re-parsed from the raw comment body here rather than in komando.py to keep this
-    # transform-specific logic isolated — !translate:de:et should still only yield 'de'.
+    # Re-parse the optional image index from the raw comment body.
+    # Kept here rather than in komando.py so that this transform-specific
+    # logic doesn't bleed into the general argument parser.
     target_index = None
     index_match = re.search(
         r"!transform\s*:\s*\S+?\s*:\s*(\d+)", comment.body, re.IGNORECASE
@@ -178,7 +163,6 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         target_index = int(index_match.group(1))
         logger.info(f"Image index argument detected: target image {target_index}")
 
-    # Validate transformation
     if transformation not in VALID_TRANSFORMS:
         reddit_reply(
             comment,
@@ -187,23 +171,18 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         )
         return
 
-    # Get the submission
     submission = comment.submission
-
-    # Extract all image URLs from the submission
     image_urls = _extract_images_from_submission(submission)
 
-    # Check if we found any images
     if not image_urls:
         reddit_reply(
             comment, RESPONSE.COMMENT_TRANSFORM_NO_IMAGE + RESPONSE.BOT_DISCLAIMER
         )
         return
 
-    # If a specific image index was requested, validate and filter to just that image
+    # Validate and apply target_index if provided.
     if target_index is not None:
         if len(image_urls) <= 1:
-            # Index argument only makes sense for multi-image posts
             reddit_reply(
                 comment,
                 RESPONSE.COMMENT_TRANSFORM_INDEX_SINGLE + RESPONSE.BOT_DISCLAIMER,
@@ -225,7 +204,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         f"Processing {len(image_urls)} image(s) with transformation: {transformation}"
     )
 
-    # Determine transformation description for reply
+    # Resolve a human-readable description of the transformation.
     transform_desc = TRANSFORM_MAP.get(transformation, transformation)
     if transformation in {"90", "180", "270"}:
         transform_desc = f"{transformation}° clockwise rotation"
@@ -238,7 +217,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
 
     expiration_days = SETTINGS["image_retention_age"]
 
-    # Process each image
+    # Transform and upload each image.
     transformed_urls = []
     failed_images = []
 
@@ -246,17 +225,13 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         try:
             logger.info(f"Processing image {idx}/{len(image_urls)}: {image_url}")
 
-            # Transform the image
             transformed_image = rotate_or_flip_image(image_url, transformation)
             logger.info(f"Image {idx} transformed successfully")
 
-            # Upload to ImgBB with submission title as the name
             title_suffix = f" ({idx}/{len(image_urls)})" if len(image_urls) > 1 else ""
             uploaded_url = upload_to_imgbb(
                 transformed_image,
-                title=(submission.title[:190] + title_suffix)[
-                    :200
-                ],  # Limit to 200 chars for API
+                title=(submission.title[:190] + title_suffix)[:200],
             )
             logger.info(f"Image {idx} uploaded to {uploaded_url}")
             transformed_urls.append(uploaded_url)
@@ -265,9 +240,8 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
             logger.error(f"Error processing image {idx}: {e}")
             failed_images.append((idx, str(e)))
 
-    # Prepare response
+    # Build and send the reply.
     if not transformed_urls:
-        # All images failed
         error_msg = "Failed to process all images. Errors:\n"
         for idx, error in failed_images:
             error_msg += f"- Image {idx}: {error}\n"
@@ -278,24 +252,19 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
         )
         return
 
-    # Build success message
     if len(transformed_urls) == 1:
-        # Single image response
         image_link = f"**[Image]({transformed_urls[0]})**"
         reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
             transform_desc, image_link, expiration_days
         )
     else:
-        # Multiple images response - build the image links list
         image_links = ""
         for idx, url in enumerate(transformed_urls, 1):
             image_links += f"* **[Image {idx}]({url})**\n"
-
         reply_text = RESPONSE.COMMENT_TRANSFORM_SUCCESS_REPLY.format(
             transform_desc, image_links.strip(), expiration_days
         )
 
-    # Add failure notice if some images failed
     if failed_images:
         reply_text += (
             f"\n\n---\n\n**Note:** {len(failed_images)} image(s) failed to process:\n"

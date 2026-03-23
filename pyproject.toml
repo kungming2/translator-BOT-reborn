@@ -16,6 +16,10 @@ dev = ["types-PyYAML", "types-psutil", "types-requests"]
 [tool.pytest.ini_options]
 testpaths = ["testing/unit", "testing/integrations"]
 python_files = "test_*.py"
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::urllib3.exceptions.DependencyWarning",
+]
 
 [tool.mypy]
 disallow_untyped_defs = false  # off globally for now

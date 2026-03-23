@@ -18,14 +18,18 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:CODE"})
 
 
+# ─── Configuration ────────────────────────────────────────────────────────────
+
 # Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
+
+
+# ─── I/O helpers ──────────────────────────────────────────────────────────────
 
 
 def load_csv() -> pd.DataFrame | None:
     """Load the CSV file and return as DataFrame."""
     try:
-        # Try different encodings
         encodings = ["utf-8", "latin-1", "iso-8859-1", "cp1252"]
         for encoding in encodings:
             try:
@@ -51,6 +55,9 @@ def save_csv(df: pd.DataFrame) -> None:
         logger.error(f"Failed to save file: {e}")
 
 
+# ─── CRUD operations ──────────────────────────────────────────────────────────
+
+
 def create_entry() -> None:
     """Create a new ISO 639-3 entry."""
     df = load_csv()
@@ -59,7 +66,6 @@ def create_entry() -> None:
 
     iso_639_3 = input("Enter ISO 639-3 code: ").strip()
 
-    # Check if code already exists
     if iso_639_3 in df["ISO 639-3"].values:
         print(f"ISO 639-3 code '{iso_639_3}' already exists.")
         return
@@ -70,7 +76,6 @@ def create_entry() -> None:
         print("ISO 639-3 and Language Name cannot be empty.")
         return
 
-    # Create new row with empty ISO 639-1 and Alternate Names
     new_row = {
         "ISO 639-3": iso_639_3,
         "ISO 639-1": "",
@@ -137,6 +142,9 @@ def deprecate_entry() -> None:
     df = df[df["ISO 639-3"] != iso_639_3]
     save_csv(df)
     print(f"✓ Deprecated {iso_639_3} - {language_name}")
+
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
 
 
 def main() -> None:
