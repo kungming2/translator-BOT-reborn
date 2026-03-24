@@ -37,9 +37,9 @@ class Paths:
 
     # Core translator-BOT database files
     DATABASE: dict[str, str] = {
-        "AJO": os.path.join(DATA_DIR, "Databases", "ajo.db"),
-        "MAIN": os.path.join(DATA_DIR, "Databases", "main.db"),
-        "CACHE": os.path.join(DATA_DIR, "Databases", "cache.db"),
+        "AJO": os.path.join(DATA_DIR, "databases", "ajo.db"),
+        "MAIN": os.path.join(DATA_DIR, "databases", "main.db"),
+        "CACHE": os.path.join(DATA_DIR, "databases", "cache.db"),
     }
 
     # Authentication and configuration files
@@ -52,81 +52,81 @@ class Paths:
     # responses.py's RESPONSE object instead.
     # Also has a HTML template for the rendered moderator digest.
     TEMPLATES: dict[str, str] = {
-        "RESPONSES": os.path.join(DATA_DIR, "Templates", "responses.yaml"),
+        "RESPONSES": os.path.join(DATA_DIR, "templates", "responses.yaml"),
         "MODERATOR_DIGEST": os.path.join(
-            DATA_DIR, "Templates", "moderator_digest.html"
+            DATA_DIR, "templates", "moderator_digest.html"
         ),
         "TRANSLATION_CHALLENGE": os.path.join(
-            DATA_DIR, "Templates", "translation_challenge.md"
+            DATA_DIR, "templates", "translation_challenge.md"
         ),
     }
 
     # Language reference datasets (infrequently changed)
     DATASETS: dict[str, str] = {
-        "COUNTRIES": os.path.join(DATA_DIR, "Datasets", "countries.csv"),
-        "LANGUAGE_DATA": os.path.join(DATA_DIR, "Datasets", "language_data.yaml"),
+        "COUNTRIES": os.path.join(DATA_DIR, "datasets", "countries.csv"),
+        "LANGUAGE_DATA": os.path.join(DATA_DIR, "datasets", "language_data.yaml"),
         "UTILITY_LINGVO_DATA": os.path.join(
-            DATA_DIR, "Datasets", "utility_lingvo_data.yaml"
+            DATA_DIR, "datasets", "utility_lingvo_data.yaml"
         ),
-        "ISO_CODES": os.path.join(DATA_DIR, "Datasets", "iso_codes.csv"),
-        "ISO_SCRIPT_CODES": os.path.join(DATA_DIR, "Datasets", "iso_script_codes.csv"),
+        "ISO_CODES": os.path.join(DATA_DIR, "datasets", "iso_codes.csv"),
+        "ISO_SCRIPT_CODES": os.path.join(DATA_DIR, "datasets", "iso_script_codes.csv"),
         "ISO_CODES_UPDATES": os.path.join(
-            DATA_DIR, "Datasets", "iso_codes_updates.yaml"
+            DATA_DIR, "datasets", "iso_codes_updates.yaml"
         ),
-        "OLD_CHINESE": os.path.join(DATA_DIR, "Datasets", "old_chinese.csv"),
-        "STATISTICS": os.path.join(DATA_DIR, "Datasets", "statistics.json"),
+        "OLD_CHINESE": os.path.join(DATA_DIR, "datasets", "old_chinese.csv"),
+        "STATISTICS": os.path.join(DATA_DIR, "datasets", "statistics.json"),
         "ZH_ROMANIZATION": os.path.join(
-            DATA_DIR, "Datasets", "romanization_chinese.csv"
+            DATA_DIR, "datasets", "romanization_chinese.csv"
         ),
-        "ZH_BUDDHIST": os.path.join(DATA_DIR, "Datasets", "buddhist_chinese.md"),
-        "ZH_CCANTO": os.path.join(DATA_DIR, "Datasets", "ccanto.md"),
+        "ZH_BUDDHIST": os.path.join(DATA_DIR, "datasets", "buddhist_chinese.md"),
+        "ZH_CCANTO": os.path.join(DATA_DIR, "datasets", "ccanto.md"),
     }
 
     # Log files that are frequently written to
     LOGS: dict[str, str] = {
-        "ERROR": os.path.join(DATA_DIR, "Logs", "log_error.yaml"),
-        "COUNTER": os.path.join(DATA_DIR, "Logs", "log_counter.json"),
-        "FILTER": os.path.join(DATA_DIR, "Logs", "log_filter.md"),
-        "EVENTS": os.path.join(DATA_DIR, "Logs", "log_events.md"),
-        "ACTIVITY": os.path.join(DATA_DIR, "Logs", "log_activity.csv"),
-        "MESSAGING": os.path.join(DATA_DIR, "Logs", "log_messaging.csv"),
-        "TESTING": os.path.join(DATA_DIR, "Logs", "log_testing.md"),
+        "ERROR": os.path.join(DATA_DIR, "logs", "log_error.yaml"),
+        "COUNTER": os.path.join(DATA_DIR, "logs", "log_counter.json"),
+        "FILTER": os.path.join(DATA_DIR, "logs", "log_filter.md"),
+        "EVENTS": os.path.join(DATA_DIR, "logs", "log_events.md"),
+        "ACTIVITY": os.path.join(DATA_DIR, "logs", "log_activity.csv"),
+        "MESSAGING": os.path.join(DATA_DIR, "logs", "log_messaging.csv"),
+        "TESTING": os.path.join(DATA_DIR, "logs", "log_testing.md"),
     }
 
     # Settings files. No private information should be in these.
     SETTINGS: dict[str, str] = {
-        "SETTINGS": os.path.join(DATA_DIR, "Settings", "settings.yaml"),
-        "WENJU_SETTINGS": os.path.join(DATA_DIR, "Settings", "wenju_settings.yaml"),
-        "DISCORD_SETTINGS": os.path.join(DATA_DIR, "Settings", "discord_settings.yaml"),
+        "SETTINGS": os.path.join(DATA_DIR, "settings", "settings.yaml"),
+        "WENJU_SETTINGS": os.path.join(DATA_DIR, "settings", "wenju_settings.yaml"),
+        "DISCORD_SETTINGS": os.path.join(DATA_DIR, "settings", "discord_settings.yaml"),
         "LANGUAGES_MODULE_SETTINGS": os.path.join(
-            DATA_DIR, "Settings", "languages_settings.yaml"
+            DATA_DIR, "settings", "languages_settings.yaml"
         ),
         "TITLE_MODULE_SETTINGS": os.path.join(
-            DATA_DIR, "Settings", "title_settings.yaml"
+            DATA_DIR, "settings", "title_settings.yaml"
         ),
         "SCHEDULER_SETTINGS": os.path.join(
-            DATA_DIR, "Settings", "scheduler_settings.yaml"
+            DATA_DIR, "settings", "scheduler_settings.yaml"
         ),
     }
 
     # Wenyuan output files
     WENYUAN: dict[str, str] = {
         "MONTHLY_STATISTICS": os.path.join(
-            DATA_DIR, "Wenyuan", "monthly_statistics_output.md"
+            DATA_DIR, "wenyuan", "monthly_statistics_output.md"
         ),
     }
 
     # Archival output files
     ARCHIVAL: dict[str, str] = {
-        "ALL_IDENTIFIED": os.path.join(DATA_DIR, "Archival", "all_identified.md"),
-        "ALL_SAVED": os.path.join(DATA_DIR, "Archival", "all_saved.md"),
+        "ALL_IDENTIFIED": os.path.join(DATA_DIR, "archival", "all_identified.md"),
+        "ALL_SAVED": os.path.join(DATA_DIR, "archival", "all_saved.md"),
     }
 
     # Hermes-specific files
     HERMES: dict[str, str] = {
-        "HERMES_DATABASE": os.path.join(DATA_DIR, "Databases", "hermes.db"),
-        "HERMES_SETTINGS": os.path.join(DATA_DIR, "Settings", "hermes_settings.yaml"),
-        "HERMES_EVENTS": os.path.join(DATA_DIR, "Logs", "log_events_hermes.md"),
+        "HERMES_DATABASE": os.path.join(DATA_DIR, "databases", "hermes.db"),
+        "HERMES_SETTINGS": os.path.join(DATA_DIR, "settings", "hermes_settings.yaml"),
+        "HERMES_EVENTS": os.path.join(DATA_DIR, "logs", "log_events_hermes.md"),
     }
 
 
@@ -138,13 +138,13 @@ def get_reports_directory(base_dir: str | None = None) -> Path:
     :param base_dir: Optional base path for data storage.
                      Defaults to DATA_DIR.
     :return: A Path object for the monthly log directory, e.g.:
-             /path/to/_data/Reports/2025-10
+             /path/to/_data/reports/2025-10
     """
     if base_dir is None:
         base_dir = DATA_DIR
 
     current_month: str = get_current_month()
-    log_dir: Path = Path(base_dir) / "Reports" / current_month
+    log_dir: Path = Path(base_dir) / "reports" / current_month
 
     return log_dir
 
