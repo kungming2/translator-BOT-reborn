@@ -353,7 +353,7 @@ def _update_user_notification_count(
 
     # Attempt to fetch existing notification records
     cursor.execute(
-        "SELECT received FROM notify_cumulative WHERE username = ?", (username,)
+        "SELECT received FROM total_notifications WHERE username = ?", (username,)
     )
     row = cursor.fetchone()
 
@@ -369,17 +369,17 @@ def _update_user_notification_count(
     monthly_data[language_code] = monthly_data.get(language_code, 0) + num_notifications
 
     # Serialize data using orjson
-    orjson_data = orjson.dumps(monthly_data)
+    orjson_data = orjson.dumps(monthly_data).decode("utf-8")
 
     # Update or insert into the database
     if row:
         cursor.execute(
-            "UPDATE notify_cumulative SET received = ? WHERE username = ?",
+            "UPDATE total_notifications SET received = ? WHERE username = ?",
             (orjson_data, username),
         )
     else:
         cursor.execute(
-            "INSERT INTO notify_cumulative (username, received) VALUES (?, ?)",
+            "INSERT INTO total_notifications (username, received) VALUES (?, ?)",
             (username, orjson_data),
         )
 

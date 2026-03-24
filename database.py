@@ -271,7 +271,7 @@ def _initialize_main_db() -> None:
         )
         """,
         """
-        CREATE TABLE notify_cumulative (
+        CREATE TABLE total_notifications (
             username TEXT,
             received TEXT,
             PRIMARY KEY(username)
@@ -330,7 +330,7 @@ def _initialize_main_db() -> None:
         CREATE INDEX index_total_points_usernames ON total_points (username)
         """,
         """
-        CREATE INDEX idx_notify_cumulative_username ON notify_cumulative (
+        CREATE INDEX idx_total_notifications_username ON total_notifications (
             username
         )
         """,

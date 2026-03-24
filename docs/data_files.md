@@ -51,13 +51,13 @@ These are all [SQLite databases](https://sqlite.org/).
 #### main.db Tables
 
 * **acted_comments**: Contains a list of comments that have been acted on by non-Ziwen routines. 
-* **internal_posts**: Contains internal (meta and community) posts data. Roughly speaking, a stripped-down version of `ajo_database`. 
-* **notify_cumulative**: Contains dictionaries recording the total number of notifications a user has received, indexed by language code. 
+* **internal_posts**: Contains internal (meta and community) posts data. Roughly speaking, a stripped-down version of `ajo_database`.
 * **notify_internal**: A list of usernames and internal post types that those usernames are subscribed to. (one post type / user per row)
 * **notify_users**: A list of usernames and languages that those usernames are subscribed to. (one language_code / user per row)
 * **old_comments**: Internal list recording comment IDs that have already been seen and processed by the bot. 
 * **old_posts**: Internal list recording post IDs that have already been seen and processed by the bot. 
-* **total_commands**: Contains dictionaries recording the total number of commands and actions a user has taken.
+* **total_commands**: Contains a JSON dictionary recording the total number of commands and actions a user has taken.
+**total_notifications**: Contains a JSON dictionary recording the total number of notifications a user has received, indexed by language code. 
 * **total_points**: Large table containing points data per comment, username, and post.
 * **verification_database**: Contains verification requests, sorted by username and language.
 

@@ -340,7 +340,15 @@ def user_statistics_loader(username: str) -> Optional[str]:
     def fetch_data(query: str) -> Optional[dict]:
         cursor.execute(query, (username,))
         row = cursor.fetchone()
-        return ast.literal_eval(row[1]) if row else None
+        if not row:
+            return None
+        value = row[1]
+        if isinstance(value, (bytes, bytearray)):
+            value = value.decode("utf-8")
+        try:
+            return orjson.loads(value)
+        except orjson.JSONDecodeError:
+            return ast.literal_eval(value)
 
     def normalize_command(cmd: str) -> str:
         """Normalize command names for display."""
@@ -372,7 +380,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
 
     commands_dict = fetch_data("SELECT * FROM total_commands WHERE username = ?")
     notifications_dict = fetch_data(
-        "SELECT * FROM notify_cumulative WHERE username = ?"
+        "SELECT * FROM total_notifications WHERE username = ?"
     )
 
     if not commands_dict and not notifications_dict:
@@ -411,7 +419,7 @@ def user_statistics_writer(instruo: Instruo) -> None:
         commands_dictionary = {}
         already_saved = False
     else:
-        commands_dictionary = ast.literal_eval(row["commands"])
+        commands_dictionary = orjson.loads(row["commands"])
         already_saved = True
 
     for komando in commands_list:
@@ -428,12 +436,12 @@ def user_statistics_writer(instruo: Instruo) -> None:
     if already_saved:
         cursor.execute(
             "UPDATE total_commands SET commands = ? WHERE username = ?",
-            (str(commands_dictionary), username),
+            (orjson.dumps(commands_dictionary).decode("utf-8"), username),
         )
     else:
         cursor.execute(
             "INSERT INTO total_commands (username, commands) VALUES (?, ?)",
-            (username, str(commands_dictionary)),
+            (username, orjson.dumps(commands_dictionary).decode("utf-8")),
         )
 
     conn.commit()
