@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
 """
 Uses the title_handling process to test a large amount of titles and
 then writes it to a local Markdown file, and flags titles of interest
