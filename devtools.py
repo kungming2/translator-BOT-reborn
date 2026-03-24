@@ -15,7 +15,7 @@ from wasabi import msg
 from config import SETTINGS, enable_debug_logging
 from database import initialize_all_databases, search_database
 from error import display_event_errors
-from hermes.tools import get_statistics, test_parser
+from hermes.tools import get_statistics, test_parser, test_title
 from integrations.ai import fetch_image_description
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 from lang.languages import converter
@@ -142,6 +142,11 @@ def check_hermes_parser() -> None:
     limit = int(limit_raw) if limit_raw.isdigit() else 100
     with msg.loading(f"Fetching {limit} posts..."):
         test_parser(REDDIT_HELPER, limit=limit)
+
+
+def check_hermes_title() -> None:
+    """Interactively parse a manually entered post title via title_parser."""
+    test_title()
 
 
 # ─── monitoring ───────────────────────────────────────────────────────────────
@@ -552,6 +557,7 @@ SECTIONS = {
         {
             "1": ("db statistics", check_hermes_statistics),
             "2": ("parser diagnostics", check_hermes_parser),
+            "3": ("manually parse title for matching", check_hermes_title),
         },
     ),
     "4": (

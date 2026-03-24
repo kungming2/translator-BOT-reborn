@@ -8,6 +8,7 @@ intended for offline inspection and debugging.
 
   get_statistics()  — Summarise offered/sought language counts from the DB.
   test_parser()     — Fetch live posts and print title_parser output for each.
+  test_title()      — Interactively parse a manually entered post title.
 
 Logger tag: [HM:TOOLS]
 """
@@ -138,3 +139,62 @@ def test_parser(reddit: praw.Reddit, limit: int = 100) -> None:
         print("-" * (col_w + 70))
 
     print(f"{len(posts)} posts fetched.  {unparsed} unparsed.")
+
+
+# ─── Interactive title test ───────────────────────────────────────────────────
+
+
+def test_title(title: str | None = None, include_iso_639_3: bool = True) -> None:
+    """
+    Interactively parse a manually entered post title and print the result.
+
+    Prompts for a title if one is not supplied, then runs it through
+    ``title_parser`` and prints offered languages, sought languages, and
+    proficiency levels in the same format used by ``test_parser``.
+
+    Args:
+        title:             Title string to parse; prompts stdin if None.
+        include_iso_639_3: If True, also accept ISO 639-3 codes (default True).
+    """
+    from hermes.matching import title_parser
+    from lang.languages import converter
+
+    if title is None:
+        try:
+            title = input("Enter a post title to parse: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nAborted.")
+            return
+
+    if not title:
+        logger.info("No title supplied.")
+        return
+
+    offering, seeking, levels = title_parser(title, include_iso_639_3=include_iso_639_3)
+
+    def _fmt_codes(codes: list[str]) -> str:
+        """Format a list of ISO codes as 'Language Name [code]' strings."""
+        if not codes:
+            return "—"
+        parts = []
+        for code in codes:
+            lingvo = converter(code)
+            name = lingvo.name if lingvo else code
+            parts.append(f"{name} [{code}]")
+        return ", ".join(parts)
+
+    def _fmt_levels(lvls: dict[str, str]) -> str:
+        """Format a levels dict as a space-separated 'code=level' string."""
+        if not lvls:
+            return "—"
+        return "  ".join(f"{k}={v}" for k, v in lvls.items())
+
+    sep = "-" * 80
+    print(sep)
+    print(f"TITLE    : {title}")
+    print(f"OFFERING : {_fmt_codes(offering)}")
+    print(f"SEEKING  : {_fmt_codes(seeking)}")
+    print(f"LEVELS   : {_fmt_levels(levels)}")
+    if not offering and not seeking:
+        print("⚠  UNPARSED — no languages detected.")
+    print(sep)
