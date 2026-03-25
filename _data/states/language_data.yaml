@@ -201,6 +201,36 @@ acy:
   - Cypriot Maronite Arabic
   - Kormakiti
   population: 9760
+adt:
+  country: Australia
+  family: Australian
+  language_code_3: adt
+  link_ethnologue: https://www.ethnologue.com/language/adt
+  link_wikipedia: https://en.wikipedia.org/wiki/Adnyamathanha_language
+  name: Adnyamathanha
+  name_alternates:
+  - Ad’n’amadana
+  - Adynyamathanha
+  - Anjimatana
+  - Anjiwatana
+  - Archualda
+  - Atynyamatana
+  - Benbakanjamata
+  - Binbarnja
+  - Gadjnjamada
+  - Jandali
+  - Kanjimata
+  - Keydnjmarda
+  - Mardala
+  - Nimalda
+  - Nuralda
+  - Umbertana
+  - Unyamootha
+  - Wailbi
+  - Wailpi
+  - Waljbi
+  - Wipie
+  population: 201
 ady:
   country: Russia
   family: North Caucasian
@@ -10984,6 +11014,14 @@ xrg:
   - Noongar
   - Nyungar
   population: 0
+xsa:
+  family: Afro-Asiatic
+  language_code_3: xsa
+  link_wikipedia: https://en.wikipedia.org/wiki/Sabaic
+  name: Sabaean
+  name_alternates:
+  - Sabaic
+  population: 0
 xsp:
   country: Papua New Guinea
   family: Trans-New Guinea
@@ -11540,11 +11578,3 @@ zza:
   name: Zaza
   name_alternates: []
   population: 1344000
-xsa:
-  family: Afro-Asiatic
-  link_wikipedia: https://en.wikipedia.org/wiki/Sabaic
-  name: Sabaean
-  name_alternates:
-  - Sabaic
-  language_code_3: xsa
-  population: 0
