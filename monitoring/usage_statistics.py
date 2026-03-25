@@ -74,22 +74,6 @@ def action_counter(messages_number: int, action_type: str) -> None:
 # ─── Language statistics ──────────────────────────────────────────────────────
 
 
-def load_statistics_data(language_code: str) -> dict | None:
-    """
-    Load language statistics from a saved JSON file. Primarily used by
-    Wenyuan, but currently unused.
-
-    :param language_code: Language code as a string.
-    :return: The corresponding language dictionary if found, otherwise None.
-    """
-    try:
-        with open(Paths.DATASETS["STATISTICS"], "rb") as f:
-            stats_data = orjson.loads(f.read())
-        return stats_data.get(language_code)
-    except (FileNotFoundError, orjson.JSONDecodeError):
-        return None
-
-
 def months_since_redesign(start_year: int = 2016, start_month: int = 5) -> int:
     """
     Calculate the number of months elapsed since the redesign start date.

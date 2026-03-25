@@ -22,7 +22,7 @@ from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "I:AI"})
 
-access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
+access_credentials = load_settings(Paths.AUTH["API"])
 
 
 # ─── Authentication ───────────────────────────────────────────────────────────

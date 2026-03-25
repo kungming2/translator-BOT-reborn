@@ -276,7 +276,7 @@ def old_chinese_search(character: str) -> str | None:
     """
     mc_oc_readings = {}
 
-    with open(Paths.DATASETS["OLD_CHINESE"], "r", encoding="utf-8") as f:
+    with open(Paths.DATASETS["ZH_OCMC"], "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         for row in reader:
             ch = row[0]
@@ -911,7 +911,7 @@ async def _zh_word_dictionary_search(
     if dictionary_type == "buddhist":
         file_address = Paths.DATASETS["ZH_BUDDHIST"]
     elif dictionary_type == "cantonese":
-        file_address = Paths.DATASETS["ZH_CCANTO"]
+        file_address = Paths.DATASETS["ZH_CANTONESE"]
     else:
         raise ValueError("dictionary_type must be either 'buddhist' or 'cantonese'")
 

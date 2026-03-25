@@ -45,7 +45,7 @@ from title.title_ai import title_ai_parser, update_titolo_from_ai_result
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "T:TITLE"})
 
-title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
+title_settings = load_settings(Paths.SETTINGS["TITLE_SETTINGS"])
 
 
 # ─── Flair helpers ────────────────────────────────────────────────────────────

@@ -25,6 +25,8 @@ BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 # it has a leading underscore to place it towards the top.
 DATA_DIR: str = os.path.join(BASE_DIR, "_data")
 
+_data = Path(DATA_DIR)
+
 
 class Paths:
     """
@@ -32,101 +34,99 @@ class Paths:
 
     Usage:
         Paths.CAT_NAME["KEY_NAME"]
-        Paths.SETTINGS["TITLE_MODULE_SETTINGS"]
+        Paths.SETTINGS["TITLE_SETTINGS"]
     """
 
     # Core translator-BOT database files
+    _db = _data / "databases"
     DATABASE: dict[str, str] = {
-        "AJO": os.path.join(DATA_DIR, "databases", "ajo.db"),
-        "MAIN": os.path.join(DATA_DIR, "databases", "main.db"),
-        "CACHE": os.path.join(DATA_DIR, "databases", "cache.db"),
+        "AJO": str(_db / "ajo.db"),
+        "CACHE": str(_db / "cache.db"),
+        "MAIN": str(_db / "main.db"),
     }
 
     # Authentication and configuration files
+    _au = _data / "auth"
     AUTH: dict[str, str] = {
-        "CREDENTIALS": os.path.join(DATA_DIR, "_auth.yaml"),
+        "API": str(_au / "api.yaml"),
+        "CREDENTIALS": str(_au / "reddit.yaml"),
     }
 
     # Written responses and templates by the bot.
     # Included here for completion; for regular use, utilize
     # responses.py's RESPONSE object instead.
     # Also has a HTML template for the rendered moderator digest.
+    _tmpl = _data / "templates"
     TEMPLATES: dict[str, str] = {
-        "RESPONSES": os.path.join(DATA_DIR, "templates", "responses.yaml"),
-        "MODERATOR_DIGEST": os.path.join(
-            DATA_DIR, "templates", "moderator_digest.html"
-        ),
-        "TRANSLATION_CHALLENGE": os.path.join(
-            DATA_DIR, "templates", "translation_challenge.md"
-        ),
+        "RESPONSES": str(_tmpl / "responses.yaml"),
+        "MODERATOR_DIGEST": str(_tmpl / "moderator_digest.html"),
+        "TRANSLATION_CHALLENGE": str(_tmpl / "translation_challenge.md"),
     }
 
-    # Language reference datasets (infrequently changed)
+    # Language reference datasets (almost never changed)
+    _ds = _data / "datasets"
     DATASETS: dict[str, str] = {
-        "COUNTRIES": os.path.join(DATA_DIR, "datasets", "countries.csv"),
-        "LANGUAGE_DATA": os.path.join(DATA_DIR, "datasets", "language_data.yaml"),
-        "UTILITY_LINGVO_DATA": os.path.join(
-            DATA_DIR, "datasets", "utility_lingvo_data.yaml"
-        ),
-        "ISO_CODES": os.path.join(DATA_DIR, "datasets", "iso_codes.csv"),
-        "ISO_SCRIPT_CODES": os.path.join(DATA_DIR, "datasets", "iso_script_codes.csv"),
-        "ISO_CODES_UPDATES": os.path.join(
-            DATA_DIR, "datasets", "iso_codes_updates.yaml"
-        ),
-        "OLD_CHINESE": os.path.join(DATA_DIR, "datasets", "old_chinese.csv"),
-        "STATISTICS": os.path.join(DATA_DIR, "datasets", "statistics.json"),
-        "ZH_ROMANIZATION": os.path.join(
-            DATA_DIR, "datasets", "romanization_chinese.csv"
-        ),
-        "ZH_BUDDHIST": os.path.join(DATA_DIR, "datasets", "buddhist_chinese.md"),
-        "ZH_CCANTO": os.path.join(DATA_DIR, "datasets", "ccanto.md"),
+        "COUNTRIES": str(_ds / "dataset_countries.csv"),
+        "ISO_CODES": str(_ds / "dataset_iso_codes.csv"),
+        "ISO_SCRIPT_CODES": str(_ds / "dataset_iso_script_codes.csv"),
+        "ZH_BUDDHIST": str(_ds / "zh_buddhist_dict.md"),
+        "ZH_CANTONESE": str(_ds / "zh_cantonese_dict.md"),
+        "ZH_OCMC": str(_ds / "zh_ocmc.csv"),
+        "ZH_ROMANIZATION": str(_ds / "zh_romanization.csv"),
     }
 
-    # Log files that are frequently written to
+    # State files are like datasets, but are occasionally changed
+    _st = _data / "states"
+    STATES: dict[str, str] = {
+        "LANGUAGE_DATA": str(_st / "language_data.yaml"),
+        "ISO_CODES_UPDATES": str(_st / "iso_codes_updates.yaml"),
+        "STATISTICS": str(_st / "statistics.json"),
+        "UTILITY_LINGVO_DATA": str(_st / "utility_lingvo_data.yaml"),
+    }
+
+    # Log files that are frequently written to and changed
+    _lg = _data / "logs"
     LOGS: dict[str, str] = {
-        "ERROR": os.path.join(DATA_DIR, "logs", "log_error.yaml"),
-        "COUNTER": os.path.join(DATA_DIR, "logs", "log_counter.json"),
-        "FILTER": os.path.join(DATA_DIR, "logs", "log_filter.md"),
-        "EVENTS": os.path.join(DATA_DIR, "logs", "log_events.md"),
-        "ACTIVITY": os.path.join(DATA_DIR, "logs", "log_activity.csv"),
-        "MESSAGING": os.path.join(DATA_DIR, "logs", "log_messaging.csv"),
-        "TESTING": os.path.join(DATA_DIR, "logs", "log_testing.md"),
+        "ACTIVITY": str(_lg / "log_activity.csv"),
+        "COUNTER": str(_lg / "log_counter.json"),
+        "ERROR": str(_lg / "log_error.yaml"),
+        "EVENTS": str(_lg / "log_events.md"),
+        "FILTER": str(_lg / "log_filter.md"),
+        "MESSAGING": str(_lg / "log_messaging.csv"),
+        "TESTING": str(_lg / "log_testing.md"),
     }
 
     # Settings files. No private information should be in these.
+    _cfg = _data / "settings"
     SETTINGS: dict[str, str] = {
-        "SETTINGS": os.path.join(DATA_DIR, "settings", "settings.yaml"),
-        "WENJU_SETTINGS": os.path.join(DATA_DIR, "settings", "wenju_settings.yaml"),
-        "DISCORD_SETTINGS": os.path.join(DATA_DIR, "settings", "discord_settings.yaml"),
-        "LANGUAGES_MODULE_SETTINGS": os.path.join(
-            DATA_DIR, "settings", "languages_settings.yaml"
-        ),
-        "TITLE_MODULE_SETTINGS": os.path.join(
-            DATA_DIR, "settings", "title_settings.yaml"
-        ),
-        "SCHEDULER_SETTINGS": os.path.join(
-            DATA_DIR, "settings", "scheduler_settings.yaml"
-        ),
+        "SETTINGS": str(_cfg / "settings.yaml"),  # Main settings
+        "DISCORD_SETTINGS": str(_cfg / "discord_settings.yaml"),
+        "LANGUAGES_SETTINGS": str(_cfg / "languages_settings.yaml"),
+        "SCHEDULER_SETTINGS": str(_cfg / "scheduler_settings.yaml"),
+        "TITLE_SETTINGS": str(_cfg / "title_settings.yaml"),
+        "WENJU_SETTINGS": str(_cfg / "wenju_settings.yaml"),
     }
 
     # Wenyuan output files
+    _wy = _data / "wenyuan"
     WENYUAN: dict[str, str] = {
-        "MONTHLY_STATISTICS": os.path.join(
-            DATA_DIR, "wenyuan", "monthly_statistics_output.md"
-        ),
-    }
+        "MONTHLY_STATISTICS": str(_wy / "monthly_statistics_output.md"),
+    }  # currently unused
 
     # Archival output files
+    _ar = _data / "archival"
     ARCHIVAL: dict[str, str] = {
-        "ALL_IDENTIFIED": os.path.join(DATA_DIR, "archival", "all_identified.md"),
-        "ALL_SAVED": os.path.join(DATA_DIR, "archival", "all_saved.md"),
+        "ALL_IDENTIFIED": str(_ar / "all_identified.md"),
+        "ALL_SAVED": str(_ar / "all_saved.md"),
     }
 
-    # Hermes-specific files
+    # Hermes-specific files (spread across databases/, settings/, and
+    # logs/) - Hermes is not specifically part of translator-BOT and
+    # is thus grouped separately.
     HERMES: dict[str, str] = {
-        "HERMES_DATABASE": os.path.join(DATA_DIR, "databases", "hermes.db"),
-        "HERMES_SETTINGS": os.path.join(DATA_DIR, "settings", "hermes_settings.yaml"),
-        "HERMES_EVENTS": os.path.join(DATA_DIR, "logs", "log_events_hermes.md"),
+        "HERMES_DATABASE": str(_db / "hermes.db"),
+        "HERMES_EVENTS": str(_lg / "log_events_hermes.md"),
+        "HERMES_SETTINGS": str(_cfg / "hermes_settings.yaml"),
     }
 
 
@@ -250,7 +250,7 @@ def get_hermes_logger(tag: str = "HM") -> logging.LoggerAdapter:
 
 
 def enable_debug_logging() -> None:
-    """Enable DEBUG level on all handlers for local test runs."""
+    """Enables DEBUG level on all handlers for local test runs."""
     logger.setLevel(logging.DEBUG)
     for handler in logger.handlers:
         handler.setLevel(logging.DEBUG)

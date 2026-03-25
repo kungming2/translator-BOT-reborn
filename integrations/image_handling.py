@@ -23,7 +23,7 @@ from config import logger as _base_logger
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
 
-access_credentials = load_settings(Paths.AUTH["CREDENTIALS"])
+access_credentials = load_settings(Paths.AUTH["API"])
 
 # Normalisation map for shorthand codes and counterclockwise degree values.
 TRANSFORM_MAP: dict[str, str] = {

@@ -481,7 +481,7 @@ def refresh_language_statistics() -> None:
         )
         total_data[language_code] = stats
 
-    with open(Paths.DATASETS["STATISTICS"], "w") as fp:
+    with open(Paths.STATES["STATISTICS"], "w") as fp:
         json.dump(total_data, fp, sort_keys=True, indent=4)
 
     logger.info("Statistics JSON file generated.")

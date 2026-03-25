@@ -12,8 +12,8 @@ import logging
 import krdict
 from korean_romanizer.romanizer import Romanizer
 
+from config import Paths, load_settings
 from config import logger as _base_logger
-from reddit.connection import credentials_source
 from ziwen_lookup.cache_helpers import (
     format_ko_word_from_cache,
     get_from_cache,
@@ -23,7 +23,8 @@ from ziwen_lookup.cache_helpers import (
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:KO"})
 
-krdict.set_key(credentials_source["KRDICT_API_KEY"])
+api_settings = load_settings(Paths.AUTH["API"])
+krdict.set_key(api_settings["KRDICT_API_KEY"])
 
 
 # ─── Internal helpers ─────────────────────────────────────────────────────────

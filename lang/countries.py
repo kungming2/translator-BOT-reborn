@@ -217,7 +217,7 @@ def get_language_emoji(language_code: str) -> str:
         return ""
 
     if _language_full_data_cache is None:
-        _language_full_data_cache = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
+        _language_full_data_cache = load_settings(Paths.STATES["LANGUAGE_DATA"])
 
     if language_code not in _language_full_data_cache:
         return ""

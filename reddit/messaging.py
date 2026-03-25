@@ -73,7 +73,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     logger.debug(f"[SUB] Body text: {repr(body_text[:100])}...")  # First 100 chars
 
     # We want to omit common 3-letter words (like 'and')
-    title_settings = load_settings(Paths.SETTINGS["TITLE_MODULE_SETTINGS"])
+    title_settings = load_settings(Paths.SETTINGS["TITLE_SETTINGS"])
     commonly_excluded_str = title_settings["ENGLISH_3_WORDS"]
     commonly_excluded = (
         commonly_excluded_str.split()

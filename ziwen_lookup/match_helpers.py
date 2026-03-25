@@ -158,7 +158,7 @@ def lookup_matcher(
     # Remove all triple-backtick blocks (```...```)
     content_text = re.sub(r"```.*?```", "", content_text, flags=re.DOTALL)
 
-    cjk_languages: dict = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
+    cjk_languages: dict = load_settings(Paths.SETTINGS["LANGUAGES_SETTINGS"])
 
     # ── Language code resolution ───────────────────────────────────────────────
 

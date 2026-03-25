@@ -128,7 +128,7 @@ def fetch_iso_reports() -> None:
 
         existing_data: list[dict] = []
         try:
-            with open(Paths.DATASETS["ISO_CODES_UPDATES"], "r") as f:
+            with open(Paths.STATES["ISO_CODES_UPDATES"], "r") as f:
                 existing_data = yaml.safe_load(f) or []
         except FileNotFoundError:
             pass
@@ -147,7 +147,7 @@ def fetch_iso_reports() -> None:
             logger.info("No changes detected. ISO Codes Updates dataset not updated.")
             return
 
-        with open(Paths.DATASETS["ISO_CODES_UPDATES"], "w") as f:
+        with open(Paths.STATES["ISO_CODES_UPDATES"], "w") as f:
             yaml.dump(reports, f, default_flow_style=False, sort_keys=False)
 
         logger.info(f"Successfully fetched and saved {len(reports)} reports.")
@@ -174,7 +174,7 @@ def post_iso_reports_to_reddit() -> None:
     current_year_utc = datetime.now(timezone.utc).year
 
     try:
-        with open(Paths.DATASETS["ISO_CODES_UPDATES"], "r") as f:
+        with open(Paths.STATES["ISO_CODES_UPDATES"], "r") as f:
             reports = yaml.safe_load(f) or []
 
         previous_year = current_year_utc - 1
@@ -237,7 +237,7 @@ def post_iso_reports_to_reddit() -> None:
                 logger.info("Sent an alert to Discord.")
 
         if updated:
-            with open(Paths.DATASETS["ISO_CODES_UPDATES"], "w") as f:
+            with open(Paths.STATES["ISO_CODES_UPDATES"], "w") as f:
                 yaml.dump(reports, f, default_flow_style=False, sort_keys=False)
             logger.info("Updated YAML file with posted status.")
 

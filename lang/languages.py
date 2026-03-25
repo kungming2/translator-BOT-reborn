@@ -47,7 +47,7 @@ from models.lingvo import Lingvo
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "LANG:LANGUAGES"})
 
-language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
+language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_SETTINGS"])
 
 _lingvos_cache = None  # cached {code: Lingvo} dict
 _language_lists_cache = None  # cached output of define_language_lists()
@@ -76,9 +76,9 @@ def _combine_language_data() -> dict[str, dict[str, Any]]:
         "rate_yearly",
     }
 
-    raw_data = load_settings(Paths.DATASETS["LANGUAGE_DATA"])
-    utility_data = load_settings(Paths.DATASETS["UTILITY_LINGVO_DATA"])
-    with open(Paths.DATASETS["STATISTICS"], "rb") as f:
+    raw_data = load_settings(Paths.STATES["LANGUAGE_DATA"])
+    utility_data = load_settings(Paths.STATES["UTILITY_LINGVO_DATA"])
+    with open(Paths.STATES["STATISTICS"], "rb") as f:
         statistics_data = orjson.loads(f.read())
 
     combined_data: dict[str, dict[str, Any]] = {}
@@ -728,7 +728,7 @@ def add_alt_language_name(language_code: str, alt_name: str) -> bool:
     If the alt_name already exists, nothing is changed.
     """
     try:
-        language_data_path = Paths.DATASETS["LANGUAGE_DATA"]
+        language_data_path = Paths.STATES["LANGUAGE_DATA"]
 
         with open(language_data_path, "r", encoding="utf-8") as f:
             existing_data = yaml.safe_load(f) or {}

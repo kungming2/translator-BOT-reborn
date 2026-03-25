@@ -38,7 +38,7 @@ def _get_cjk_languages() -> dict:
     and contains language codes associated with each name. This allows
     topolects and dialects to be considered.
     """
-    language_settings = load_settings(Paths.SETTINGS["LANGUAGES_MODULE_SETTINGS"])
+    language_settings = load_settings(Paths.SETTINGS["LANGUAGES_SETTINGS"])
     return language_settings["CJK_LANGUAGES"]
 
 

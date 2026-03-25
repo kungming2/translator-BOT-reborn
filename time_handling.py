@@ -25,11 +25,6 @@ def get_current_utc_date() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-def get_current_local_date() -> str:
-    """Return the current local date in YYYY-MM-DD format. Unused."""
-    return datetime.now().strftime("%Y-%m-%d")
-
-
 def get_current_month() -> str:
     """Return the current UTC month in YYYY-MM format."""
     return datetime.now(timezone.utc).strftime("%Y-%m")
