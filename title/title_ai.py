@@ -31,7 +31,8 @@ Logger tag: [T:AI]
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from praw.models import Submission
 
@@ -53,8 +54,8 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "T:AI"})
 
 
 def title_ai_parser(
-    title: str, post: Optional[Submission] = None
-) -> Union[dict[str, Any], tuple[str, str]]:
+    title: str, post: Submission | None = None
+) -> dict[str, Any] | tuple[str, str]:
     """
     Pass a malformed title to an AI to assess, and return the non-English
     language (code and name) if confidence is sufficient.
@@ -77,7 +78,7 @@ def title_ai_parser(
         Returns an error tuple if AI confidence is below 0.7 threshold.
     """
     logger.info(f"AI Parser: AI service is now assessing title: {title}")
-    image_url: Optional[str] = None
+    image_url: str | None = None
 
     if post:
         # Check if post has an image (gallery or direct image)
@@ -173,12 +174,12 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
 
 def update_titolo_from_ai_result(
     result: Titolo,
-    ai_result: dict[str, Any],
-    post: Optional[Submission],
+    ai_result: dict[str, Any] | tuple[str, str],
+    post: Submission | None,
     discord_notify: bool,
     determine_flair_fn: Callable[[Titolo], None],
     determine_direction_fn: Callable[[list, list], Direction],
-    get_notification_languages_fn: Callable[[Titolo], Optional[list]],
+    get_notification_languages_fn: Callable[[Titolo], list | None],
 ) -> None:
     """
     Apply an AI parser result to a Titolo object, then send a Discord alert.
@@ -204,8 +205,8 @@ def update_titolo_from_ai_result(
     """
     if isinstance(ai_result, dict):
         try:
-            src: Optional[dict[str, Any]] = ai_result.get("source_language")
-            tgt: Optional[dict[str, Any]] = ai_result.get("target_language")
+            src: dict[str, Any] | None = ai_result.get("source_language")
+            tgt: dict[str, Any] | None = ai_result.get("target_language")
 
             if src and "code" in src:
                 _src_lingvo = converter(src["code"])

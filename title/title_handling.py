@@ -28,7 +28,7 @@ Logger tag: [T:TITLE]
 import logging
 import re
 import string
-from typing import List, Literal, Optional
+from typing import Literal
 
 from praw.models import Submission
 from rapidfuzz import fuzz
@@ -106,7 +106,7 @@ def _generate_multi_flair_text(language_codes: list[str], max_length: int = 64) 
     return f"{prefix}{', '.join(included_codes)}{suffix}"
 
 
-def _first_non_english(language_list: list) -> Optional[Lingvo]:
+def _first_non_english(language_list: list) -> Lingvo | None:
     """
     Return the first Lingvo in the list whose name is not 'English', or None.
     """
@@ -237,14 +237,13 @@ def _determine_title_direction(
 
     # If English appears on both sides and the combined list is long enough,
     # remove it from the longer side to reduce bias.
-    if "English" in src_names and "English" in tgt_names:
-        if len(src) + len(tgt) >= 3:
-            if len(src) >= 2:
-                src = [lang for lang in src if lang.name != "English"]
-                src_names = [lang.name for lang in src]
-            elif len(tgt) >= 2:
-                tgt = [lang for lang in tgt if lang.name != "English"]
-                tgt_names = [lang.name for lang in tgt]
+    if "English" in src_names and "English" in tgt_names and len(src) + len(tgt) >= 3:
+        if len(src) >= 2:
+            src = [lang for lang in src if lang.name != "English"]
+            src_names = [lang.name for lang in src]
+        elif len(tgt) >= 2:
+            tgt = [lang for lang in tgt if lang.name != "English"]
+            tgt_names = [lang.name for lang in tgt]
 
     if "English" in src_names and "English" not in tgt_names:
         return "english_from"
@@ -255,7 +254,7 @@ def _determine_title_direction(
     return "english_none"
 
 
-def _get_notification_languages(assess_request: Titolo) -> Optional[list]:
+def _get_notification_languages(assess_request: Titolo) -> list | None:
     """
     Return the unique non-English languages to notify subscribers for.
 
@@ -282,7 +281,7 @@ def _get_notification_languages(assess_request: Titolo) -> Optional[list]:
 
 def extract_lingvos_from_text(
     text: str, return_english: bool = False
-) -> List[Lingvo] | None:
+) -> list[Lingvo] | None:
     """
     Extract Lingvo objects from a paragraph based on capitalised language-like words.
     Includes supported languages, and optionally 'English' even if unsupported.
@@ -298,12 +297,16 @@ def extract_lingvos_from_text(
         if len(word) <= 3:
             continue
         lingvo = converter(word)
-        if lingvo and lingvo.name:
-            if lingvo.supported or (
-                return_english and lingvo.name.lower() == "english"
-            ):
-                if lingvo not in found:
-                    found.append(lingvo)
+        if (
+            lingvo
+            and lingvo.name
+            and (
+                lingvo.supported
+                or (return_english and lingvo.name.lower() == "english")
+            )
+            and lingvo not in found
+        ):
+            found.append(lingvo)
 
     return sorted(found, key=lambda ling: ling.name or "") if found else None
 
@@ -840,9 +843,9 @@ def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
 
 
 def _extract_actual_title(title: str) -> str:
-    """Return the post body text after the language tag is stripped."""
+    """Return the title text after the language tag is stripped."""
     actual = title.split("]", 1)[1] if "]" in title else ""
-    return actual.strip("].> ,:.") if actual else ""
+    return actual.strip(" ,:.>]") if actual else ""
 
 
 def _clean_chunk(chunk: str) -> str:
@@ -914,18 +917,17 @@ def process_title(
     if not combined_languages:
         logger.info(f"> Could not make sense of title ({title!r}). Asking AI...")
         ai_result = title_ai_parser(title, post)
-        if isinstance(ai_result, dict):
-            update_titolo_from_ai_result(
-                result,
-                ai_result,
-                post,
-                discord_notify,
-                determine_flair_fn=_determine_flair,
-                determine_direction_fn=_determine_title_direction,
-                get_notification_languages_fn=_get_notification_languages,
-            )
-        else:
+        if not isinstance(ai_result, dict):
             logger.error(f"AI parser failed for title ({title!r}): {ai_result[1]}")
+        update_titolo_from_ai_result(
+            result,
+            ai_result,
+            post,
+            discord_notify,
+            determine_flair_fn=_determine_flair,
+            determine_direction_fn=_determine_title_direction,
+            get_notification_languages_fn=_get_notification_languages,
+        )
     else:
         _determine_flair(result)
 
