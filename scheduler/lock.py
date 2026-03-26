@@ -38,8 +38,8 @@ def script_lock(name: str) -> Iterator[None]:
     with open(lock_path, "w") as f:
         try:
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)  # type: ignore[attr-defined]
-        except BlockingIOError:
-            raise AlreadyRunningError(f"{name} is already running")
+        except BlockingIOError as e:
+            raise AlreadyRunningError(f"{name} is already running") from e
         try:
             f.write(str(os.getpid()))
             yield

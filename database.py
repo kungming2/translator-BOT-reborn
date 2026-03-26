@@ -38,8 +38,8 @@ import logging
 import os
 import sqlite3
 from ast import literal_eval
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from config import Paths
 from config import logger as _base_logger
@@ -602,8 +602,8 @@ def search_database(
 
 
 def get_recent_event_log_lines(
-    num_lines: int = 5, tag: Optional[str] = None
-) -> Tuple[str, str]:
+    num_lines: int = 5, tag: str | None = None
+) -> tuple[str, str]:
     """
     Extract the last N lines from the events log and find the last event
     with a specific tag.
@@ -621,7 +621,7 @@ def get_recent_event_log_lines(
         FileNotFoundError: If the log file doesn't exist
         Exception: For other errors during file reading or parsing
     """
-    with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
+    with open(Paths.LOGS["EVENTS"], encoding="utf-8") as f:
         lines = f.readlines()
         last_n = lines[-num_lines:] if len(lines) >= num_lines else lines
 
@@ -646,7 +646,7 @@ def get_recent_event_log_lines(
             last_event_time = datetime.fromisoformat(
                 timestamp_str.replace("Z", "+00:00")
             )
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(UTC)
 
             delta = current_time - last_event_time
             delta_seconds = delta.total_seconds()

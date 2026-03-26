@@ -196,7 +196,7 @@ def _zh_word_alternate_romanization(
 
     # Load romanization mappings
     corresponding_dict = {}
-    with open(Paths.DATASETS["ZH_ROMANIZATION"], "rt", encoding="utf-8-sig") as f:
+    with open(Paths.DATASETS["ZH_ROMANIZATION"], encoding="utf-8-sig") as f:
         csv_file = csv.reader(f, delimiter=",")
         for row in csv_file:
             pinyin_p, yale_p, wadegiles_p, gr_p = row
@@ -230,8 +230,8 @@ def _zh_word_alternate_romanization(
             )
             continue
 
-        def add_tone(roman: str) -> str:
-            return f"{roman}^{tone}" if tone != "5" else roman
+        def add_tone(roman: str, _tone: str = tone) -> str:
+            return f"{roman}^{_tone}" if _tone != "5" else roman
 
         yale_list.append(add_tone(corresponding_dict[base][0]))
         wadegiles_list.append(add_tone(corresponding_dict[base][1]))
@@ -276,7 +276,7 @@ def old_chinese_search(character: str) -> str | None:
     """
     mc_oc_readings = {}
 
-    with open(Paths.DATASETS["ZH_OCMC"], "r", encoding="utf-8") as f:
+    with open(Paths.DATASETS["ZH_OCMC"], encoding="utf-8") as f:
         reader = csv.reader(f)
         for row in reader:
             ch = row[0]
@@ -915,7 +915,7 @@ async def _zh_word_dictionary_search(
     else:
         raise ValueError("dictionary_type must be either 'buddhist' or 'cantonese'")
 
-    async with aiofiles.open(file_address, "r", encoding="utf-8") as f:
+    async with aiofiles.open(file_address, encoding="utf-8") as f:
         file_content = await f.read()
     lines = file_content.splitlines()
 

@@ -14,7 +14,7 @@ import csv
 import json
 import logging
 import time
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import TypedDict
 
@@ -52,7 +52,7 @@ def _activity_csv_handler() -> tuple[str, dict[str, object]]:
     csv_address = Paths.LOGS["ACTIVITY"]
 
     try:
-        with open(csv_address, "r", newline="") as f_input:
+        with open(csv_address, newline="") as f_input:
             reader = csv.reader(f_input)
             header = next(reader, None)
             main_lines = list(reader)
@@ -144,7 +144,7 @@ def _error_log_count() -> tuple[str, dict[str, object]]:
     header: str = "\n# General Information\n"
 
     try:
-        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
             error_logs: list[dict] | None = yaml.safe_load(f) or []
     except FileNotFoundError:
         logger.warning("Error log file not found.")
@@ -216,9 +216,9 @@ def _filter_entries_by_date_range(
         tuple: (filtered_entries, start_date_obj, end_date_obj)
     """
     if isinstance(start_date, (int, float)):
-        start_date = datetime.fromtimestamp(start_date, tz=timezone.utc).date()
+        start_date = datetime.fromtimestamp(start_date, tz=UTC).date()
     if isinstance(end_date, (int, float)):
-        end_date = datetime.fromtimestamp(end_date, tz=timezone.utc).date()
+        end_date = datetime.fromtimestamp(end_date, tz=UTC).date()
 
     filtered = []
     for line_num, entry in enumerate(entries, start=1):
@@ -262,10 +262,10 @@ def _filter_log_tabulator(
     Returns:
         str: Markdown formatted filter statistics
     """
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
 
     try:
-        with open(Paths.LOGS["FILTER"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["FILTER"], encoding="utf-8") as f:
             filter_logs = f.read().strip()
     except FileNotFoundError:
         logger.warning("Filter log file not found.")
@@ -426,7 +426,7 @@ def _render_html_dashboard(date_str: str, data: dict) -> str:
     :param data: A dict matching the dashboard DATA schema.
     :return: A complete HTML string.
     """
-    with open(Paths.TEMPLATES["MODERATOR_DIGEST"], "r", encoding="utf-8") as f:
+    with open(Paths.TEMPLATES["MODERATOR_DIGEST"], encoding="utf-8") as f:
         template = f.read()
 
     return template.replace("__DATE_STR__", date_str).replace(

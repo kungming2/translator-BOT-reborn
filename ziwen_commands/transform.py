@@ -61,26 +61,29 @@ def _extract_gallery_images(submission: Submission) -> list[str]:
     """
     image_urls: list[str] = []
 
-    if hasattr(submission, "is_gallery") and submission.is_gallery:
-        if hasattr(submission, "gallery_data"):
-            media_metadata = submission.media_metadata
+    if (
+        hasattr(submission, "is_gallery")
+        and submission.is_gallery
+        and hasattr(submission, "gallery_data")
+    ):
+        media_metadata = submission.media_metadata
 
-            for item in submission.gallery_data["items"]:
-                if len(image_urls) >= 5:
-                    break
+        for item in submission.gallery_data["items"]:
+            if len(image_urls) >= 5:
+                break
 
-                media_id = item["media_id"]
+            media_id = item["media_id"]
 
-                if media_id in media_metadata:
-                    media_info = media_metadata[media_id]
+            if media_id in media_metadata:
+                media_info = media_metadata[media_id]
 
-                    if "s" in media_info:
-                        image_url = media_info["s"]["u"]
-                        image_url = image_url.replace("&amp;", "&")
-                        image_url = clean_reddit_image_url(image_url)
+                if "s" in media_info:
+                    image_url = media_info["s"]["u"]
+                    image_url = image_url.replace("&amp;", "&")
+                    image_url = clean_reddit_image_url(image_url)
 
-                        if check_url_extension(image_url):
-                            image_urls.append(image_url)
+                    if check_url_extension(image_url):
+                        image_urls.append(image_url)
 
     return image_urls
 

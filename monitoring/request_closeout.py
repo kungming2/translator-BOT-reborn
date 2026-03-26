@@ -103,7 +103,7 @@ def closeout_posts() -> None:
     """
     ajos_to_close = []
     actionable_posts = []
-    ajos_map: dict[str, "Ajo"] = {}
+    ajos_map: dict[str, Ajo] = {}
 
     days = SETTINGS["close_out_age"]
 

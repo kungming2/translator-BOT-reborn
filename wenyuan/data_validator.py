@@ -14,7 +14,6 @@ import logging
 import os
 import re
 import time
-from typing import Optional
 
 from wasabi import msg
 
@@ -45,7 +44,7 @@ def _is_valid_date(date_str: str) -> bool:
         return False
 
 
-def _extract_date_from_text(text: str) -> Optional[str]:
+def _extract_date_from_text(text: str) -> str | None:
     """
     Extract a date in YYYY-MM-DD format from text.
 
@@ -64,7 +63,7 @@ def _extract_date_from_text(text: str) -> Optional[str]:
     return None
 
 
-def _extract_date_from_line(line: str) -> Optional[str]:
+def _extract_date_from_line(line: str) -> str | None:
     """Extract a date in YYYY-MM-DD format from a line of text."""
     return _extract_date_from_text(line)
 
@@ -92,7 +91,7 @@ def _calculate_days_old(date_str: str, current_timestamp: float) -> int:
 # ─── Log parsing ──────────────────────────────────────────────────────────────
 
 
-def _get_last_date_from_log(log_path: str, log_type: str) -> Optional[str]:
+def _get_last_date_from_log(log_path: str, log_type: str) -> str | None:
     """
     Extract the most recent date from a log file.
 
@@ -110,15 +109,15 @@ def _get_last_date_from_log(log_path: str, log_type: str) -> Optional[str]:
     try:
         if log_type == "COUNTER":
             # JSON file with date keys
-            with open(log_path, "r", encoding="utf-8") as f:
+            with open(log_path, encoding="utf-8") as f:
                 data = json.load(f)
                 if data:
-                    dates = [k for k in data.keys() if _is_valid_date(k)]
+                    dates = [k for k in data if _is_valid_date(k)]
                     return max(dates) if dates else None
 
         elif log_type in ["FILTER", "EVENTS"]:
             # Markdown files with dates in lines; scan from end for most recent
-            with open(log_path, "r", encoding="utf-8") as f:
+            with open(log_path, encoding="utf-8") as f:
                 lines = f.readlines()
                 for line in reversed(lines):
                     date = _extract_date_from_line(line)
@@ -127,7 +126,7 @@ def _get_last_date_from_log(log_path: str, log_type: str) -> Optional[str]:
 
         elif log_type == "ACTIVITY":
             # CSV file with dates in first column
-            with open(log_path, "r", encoding="utf-8") as f:
+            with open(log_path, encoding="utf-8") as f:
                 lines = f.readlines()
                 if len(lines) > 1:  # Skip header if present
                     last_line = lines[-1].strip()

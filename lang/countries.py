@@ -20,6 +20,7 @@ Logger tag: [LANG:COUNTRIES]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
+import contextlib
 import csv
 import logging
 
@@ -173,24 +174,18 @@ def get_country_emoji(country_name: str) -> str:
     # but absent from the CSV.
     country = None
 
-    try:
+    with contextlib.suppress(LookupError):
         country = pycountry.countries.get(name=country_name)
-    except LookupError:
-        pass
 
     if not country:
-        try:
+        with contextlib.suppress(LookupError):
             country = pycountry.countries.get(common_name=country_name)
-        except LookupError:
-            pass
 
     if not country:
-        try:
+        with contextlib.suppress(LookupError):
             matches = pycountry.countries.search_fuzzy(country_name)
             if matches:
                 country = matches[0]
-        except LookupError:
-            pass
 
     if country:
         return _alpha2_to_emoji(country.alpha_2)

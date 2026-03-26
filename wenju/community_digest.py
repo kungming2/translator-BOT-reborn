@@ -17,7 +17,7 @@ import logging
 import re
 import time
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from config import SETTINGS
@@ -127,7 +127,7 @@ def weekly_unknown_thread() -> None:
     r = REDDIT.subreddit(SETTINGS["subreddit"])
     today_str = get_current_utc_date()
 
-    current_week_utc = datetime.now(timezone.utc).strftime("%U")
+    current_week_utc = datetime.now(UTC).strftime("%U")
 
     unknown_entries: list[str] = []
 

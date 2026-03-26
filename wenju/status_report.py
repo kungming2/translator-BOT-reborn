@@ -206,7 +206,7 @@ def _generate_24h_statistics_snippet() -> str | None:
         return None
 
     statuses = []
-    for post_id, _, data, *rest in stored_ajos:
+    for post_id, _, data, *_rest in stored_ajos:
         try:
             ajo_data = ajo_loader(post_id)
             if ajo_data is not None:
@@ -623,9 +623,10 @@ def deleted_posts_assessor(
         if isinstance(cached.status, str):
             if cached.status in {"translated", "doublecheck"}:
                 translated_deleted.append((submission, author))
-        elif isinstance(cached.status, dict):
-            if any(s in {"translated", "doublecheck"} for s in cached.status.values()):
-                translated_deleted.append((submission, author))
+        elif isinstance(cached.status, dict) and any(
+            s in {"translated", "doublecheck"} for s in cached.status.values()
+        ):
+            translated_deleted.append((submission, author))
 
     impolite_entries = []
     for submission, original_author in translated_deleted:

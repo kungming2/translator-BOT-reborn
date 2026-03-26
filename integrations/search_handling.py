@@ -13,7 +13,7 @@ Logger tag: [I:SEARCH]
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import ddgs
@@ -159,7 +159,7 @@ def build_search_results(post_ids: list[str], search_term: str) -> str:
     for post_id in post_ids[:6]:  # Cap at 6 posts to avoid excessive length.
         submission = REDDIT_HELPER.submission(id=post_id)
         submission_date = datetime.fromtimestamp(
-            submission.created_utc, tz=timezone.utc
+            submission.created_utc, tz=UTC
         ).strftime("%Y-%m-%d")
 
         result_sections.append(

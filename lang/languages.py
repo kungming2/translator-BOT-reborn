@@ -32,7 +32,7 @@ import csv
 import logging
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 
 import orjson
 import yaml
@@ -250,7 +250,7 @@ def normalize(text: str) -> str:
     return text
 
 
-def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
+def _fuzzy_text(word: str, supported_languages: list[str]) -> str | None:
     """
     Attempt to fuzzy-match *word* against the list of known language names,
     ignoring configured false-positive names.
@@ -266,7 +266,7 @@ def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
     threshold = language_module_settings["FUZZY_THRESHOLD"]
     word_norm = normalize(word)
 
-    best_match: Optional[str] = None
+    best_match: str | None = None
     best_score = threshold
 
     for language in supported_languages:
@@ -286,7 +286,7 @@ def _fuzzy_text(word: str, supported_languages: list[str]) -> Optional[str]:
 
 def _iso_codes_deep_search(
     search_term: str, script_search: bool = False
-) -> Optional[Lingvo]:
+) -> Lingvo | None:
     """
     Search for a language or script code in the ISO 639-3 or ISO 15924 CSV.
 
@@ -312,7 +312,7 @@ def _iso_codes_deep_search(
         alt_key = "Alternate Names"
 
     try:
-        with open(dataset_path, "rt", encoding="utf-8-sig") as file:
+        with open(dataset_path, encoding="utf-8-sig") as file:
             reader = csv.DictReader(file)
             for row in reader:
                 if not row.get(name_key):
@@ -474,7 +474,7 @@ def _resolve_to_lingvo(
 
     # Search by name or alternate name
     input_title = input_text.title()
-    for code, lingvo in lingvos.items():
+    for _code, lingvo in lingvos.items():
         if input_title == lingvo.name:
             lingvo_copy = copy.deepcopy(lingvo)
             if not preserve_country:
@@ -549,7 +549,7 @@ def _resolve_to_lingvo(
 
     # If input is 3 letters, find the entry whose language_code_3 matches
     if len(input_lower) == 3:
-        for code_1, lingvo in lingvos.items():
+        for _code_1, lingvo in lingvos.items():
             if lingvo.language_code_3 == input_lower:
                 lingvo_copy = copy.deepcopy(lingvo)
                 if not preserve_country:
@@ -730,7 +730,7 @@ def add_alt_language_name(language_code: str, alt_name: str) -> bool:
     try:
         language_data_path = Paths.STATES["LANGUAGE_DATA"]
 
-        with open(language_data_path, "r", encoding="utf-8") as f:
+        with open(language_data_path, encoding="utf-8") as f:
             existing_data = yaml.safe_load(f) or {}
 
         if language_code not in existing_data:
@@ -788,7 +788,7 @@ def validate_lingvo_dataset() -> list[str]:
 # ─── Dataset utilities ────────────────────────────────────────────────────────
 
 
-def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
+def select_random_language(iso_639_1: bool = False) -> Lingvo | None:
     """
     Pick a random language code and name from the ISO CSV file.
 
@@ -801,9 +801,7 @@ def select_random_language(iso_639_1: bool = False) -> Optional[Lingvo]:
     """
     pattern: str = r"^[a-z]{2}$" if iso_639_1 else r"^[a-z]{3}$"
 
-    with open(
-        Paths.DATASETS["ISO_CODES"], "r", newline="", encoding="utf-8"
-    ) as csvfile:
+    with open(Paths.DATASETS["ISO_CODES"], newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None)  # Skip header
 

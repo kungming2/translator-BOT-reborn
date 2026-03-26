@@ -10,24 +10,24 @@ Logger tag: [TIME]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 # ─── Current time & date ──────────────────────────────────────────────────────
 
 
 def get_current_utc_time() -> str:
     """Return the current UTC time as an ISO 8601 string."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def get_current_utc_date() -> str:
     """Return the current UTC date in YYYY-MM-DD format."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
 def get_current_month() -> str:
     """Return the current UTC month in YYYY-MM format."""
-    return datetime.now(timezone.utc).strftime("%Y-%m")
+    return datetime.now(UTC).strftime("%Y-%m")
 
 
 # ─── Timestamp conversion ─────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ def time_convert_to_string(unix_integer: int | float) -> str:
     :return: ISO 8601 formatted UTC time string
              (e.g., '2025-07-11T03:21:00Z').
     """
-    return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime(
+    return datetime.fromtimestamp(int(unix_integer), tz=UTC).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
 
@@ -53,7 +53,7 @@ def time_convert_to_utc(iso_str: str) -> str:
     """
     try:
         dt = datetime.fromisoformat(iso_str)
-        return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     except (TypeError, ValueError, AttributeError):
         return iso_str
 
@@ -65,9 +65,7 @@ def convert_to_day(unix_integer: int | float) -> str:
     :param unix_integer: UNIX time as an int or float.
     :return: UTC date string, e.g., '2025-07-11'.
     """
-    return datetime.fromtimestamp(int(unix_integer), tz=timezone.utc).strftime(
-        "%Y-%m-%d"
-    )
+    return datetime.fromtimestamp(int(unix_integer), tz=UTC).strftime("%Y-%m-%d")
 
 
 def time_convert_to_string_seconds(seconds: int) -> str:

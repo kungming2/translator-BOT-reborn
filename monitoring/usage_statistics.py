@@ -12,8 +12,7 @@ Logger tag: [MN:USAGE]
 
 import ast
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import orjson
 
@@ -86,7 +85,7 @@ def months_since_redesign(start_year: int = 2016, start_month: int = 5) -> int:
     """
     start_total_months = (start_year * 12) + start_month
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     current_total_months = (now.year * 12) + now.month
 
     return current_total_months - start_total_months
@@ -162,7 +161,7 @@ def generate_command_usage_report(start_time: int, end_time: int, days: int) -> 
     command_totals: dict[str, int] = {}
     for date_text, command_counts in counter_data.items():
         try:
-            dt = datetime.strptime(date_text, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(date_text, "%Y-%m-%d").replace(tzinfo=UTC)
             unix_timestamp = int(dt.timestamp())
         except ValueError:
             logger.debug(f"Skipping malformed date entry: {date_text!r}.")
@@ -199,7 +198,7 @@ def count_notifications(start_time: int, end_time: int) -> str:
 
     for date_str, actions in counter_dict.items():
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-        unix_timestamp = int(date_obj.replace(tzinfo=timezone.utc).timestamp())
+        unix_timestamp = int(date_obj.replace(tzinfo=UTC).timestamp())
 
         if start_time <= unix_timestamp <= end_time:
             days_with_data += 1
@@ -309,7 +308,7 @@ def get_month_points_summary(year_month: str) -> str:
 # ─── User statistics ──────────────────────────────────────────────────────────
 
 
-def user_statistics_loader(username: str) -> Optional[str]:
+def user_statistics_loader(username: str) -> str | None:
     """
     Look up which commands a user has been recorded as using and return
     a formatted table. Also integrates notification data from the same
@@ -321,7 +320,7 @@ def user_statistics_loader(username: str) -> Optional[str]:
     header = "| Commands/Notifications | Times |\n|--------|------|\n"
     cursor = db.cursor_main
 
-    def fetch_data(query: str) -> Optional[dict]:
+    def fetch_data(query: str) -> dict | None:
         cursor.execute(query, (username,))
         row = cursor.fetchone()
         if not row:

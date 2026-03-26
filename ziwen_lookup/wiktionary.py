@@ -50,7 +50,7 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
     definition_lines = []
     in_definition = False
 
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         line_stripped = line.strip()
 
         if line_stripped.startswith("==") and line_stripped.endswith("=="):
@@ -105,14 +105,13 @@ def parse_wiktionary(text: str, search_language: str | None = None) -> dict | No
                     and line_stripped
                     and not line_stripped.startswith("====")
                 ):
-                    if "(" in line_stripped and ")" in line_stripped:
-                        word_match = re.match(r"^(\S+)", line_stripped)
-                        if word_match and not result["word"]:
-                            result["word"] = word_match.group(1)
-                        in_definition = True
-                    elif re.match(
-                        r"^[a-zA-Z]+$",
-                        line_stripped.split()[0] if line_stripped.split() else "",
+                    if (
+                        "(" in line_stripped
+                        and ")" in line_stripped
+                        or re.match(
+                            r"^[a-zA-Z]+$",
+                            line_stripped.split()[0] if line_stripped.split() else "",
+                        )
                     ):
                         word_match = re.match(r"^(\S+)", line_stripped)
                         if word_match and not result["word"]:
@@ -200,7 +199,7 @@ def wiktionary_search(search_term: str, language_name: str) -> dict | None:
 
     if not extract:
         return None
-    print((extract.strip()))
+    print(extract.strip())
     parsed_information = parse_wiktionary(extract.strip(), language_name)
 
     return parsed_information

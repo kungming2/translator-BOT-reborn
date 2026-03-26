@@ -84,10 +84,11 @@ def lookup_zh_ja_tokenizer(phrase: str, language_code: str) -> list[str]:
         node: Any = tagger.parseToNode(phrase.strip())
         while node:
             surface: str = node.surface
-            if surface:
-                # Exclude single-character kana
-                if not (len(surface) == 1 and re.match(r"[\u3040-\u309f]", surface)):
-                    tokens.append(surface)
+            # Exclude single-character kana
+            if surface and not (
+                len(surface) == 1 and re.match(r"[\u3040-\u309f]", surface)
+            ):
+                tokens.append(surface)
             node = node.next
 
     else:
@@ -218,13 +219,15 @@ def lookup_matcher(
         logger.debug("No matches found after backtick extraction")
         return {}
 
-    logger.debug(f"Segment language codes: {list(zip(matches, inline_language_codes))}")
+    logger.debug(
+        f"Segment language codes: {list(zip(matches, inline_language_codes, strict=True))}"
+    )
 
     # ── Per-segment processing ────────────────────────────────────────────────
 
     result: dict[str, list[str | tuple[str, bool]]] = {}
 
-    for match_text, inline_lang in zip(matches, inline_language_codes):
+    for match_text, inline_lang in zip(matches, inline_language_codes, strict=True):
         is_explicit = inline_lang is not None
 
         has_hanzi: bool = bool(
@@ -238,11 +241,7 @@ def lookup_matcher(
             f"Hangul: {has_hangul}, Explicit: {is_explicit}"
         )
 
-        seg_language_codes: list[str]
-        if inline_lang:
-            seg_language_codes = [inline_lang]
-        else:
-            seg_language_codes = language_codes
+        seg_language_codes = [inline_lang] if inline_lang else language_codes
 
         # Infer from script if no language codes determined yet
         if not seg_language_codes:

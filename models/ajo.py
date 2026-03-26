@@ -24,7 +24,7 @@ Logger tag: [M:AJO]
 
 import ast
 import logging
-from typing import Any, List, cast
+from typing import Any, cast
 
 import orjson
 
@@ -893,7 +893,7 @@ class Ajo:
                 f"Added translator to recorded translators: u/{translator_name}."
             )
 
-    def add_notified(self, notified_list: List[str]) -> None:
+    def add_notified(self, notified_list: list[str]) -> None:
         """
         Add usernames who have been notified by the bot for this post.
         Ensures the same user is not contacted multiple times.
@@ -912,9 +912,8 @@ class Ajo:
         """
         If the submission is a link post and links to an image, generate an image hash.
         """
-        if not reddit_submission.is_self:
-            if check_url_extension(reddit_submission.url):
-                self.image_hash = generate_image_hash(reddit_submission.url)
+        if not reddit_submission.is_self and check_url_extension(reddit_submission.url):
+            self.image_hash = generate_image_hash(reddit_submission.url)
 
     # ── Reddit actions ────────────────────────────────────────────────────────
 
@@ -964,7 +963,7 @@ def parse_ajo_data(data_str: str) -> dict:
         try:
             return ast.literal_eval(data_str)
         except Exception as e:
-            raise ValueError(f"Failed to parse data string: {e}")
+            raise ValueError(f"Failed to parse data string: {e}") from e
 
 
 def ajo_writer(new_ajo: "Ajo") -> None:

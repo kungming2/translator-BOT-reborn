@@ -237,11 +237,7 @@ def is_internal_post(submission: "praw.models.Submission") -> bool:
             return True
 
     # Alternate condition: 'translation challenge' + mod author
-    if "translation challenge" in title.lower():
-        if is_mod(submission.author):
-            return True
-
-    return False
+    return "translation challenge" in title.lower() and is_mod(submission.author)
 
 
 # ─── Moderation actions ───────────────────────────────────────────────────────
@@ -305,11 +301,10 @@ def widget_update(widget_id: str, new_text: str) -> bool:
         # Search for the widget in the sidebar
         active_widget = None
         for widget in widgets.sidebar:
-            if isinstance(widget, praw.models.TextArea):
-                if widget.id == widget_id:
-                    logger.debug(f"Found widget with ID: `{widget_id}`")
-                    active_widget = widget
-                    break
+            if isinstance(widget, praw.models.TextArea) and widget.id == widget_id:
+                logger.debug(f"Found widget with ID: `{widget_id}`")
+                active_widget = widget
+                break
 
         if active_widget is None:
             logger.warning(f"Widget with ID `{widget_id}` not found.")

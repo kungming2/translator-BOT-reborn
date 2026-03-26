@@ -13,9 +13,8 @@ Logger tag: [WJ:ISO]
 import logging
 import re
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
-from typing import Dict, List
 
 import requests
 import yaml
@@ -110,7 +109,7 @@ def fetch_iso_reports() -> None:
         xpath = "/html/body/div[4]/div/section/div[2]/section/div/div/ul[2]//a"
         links = tree.xpath(xpath)
 
-        reports: List[Dict[str, str | bool]] = []
+        reports: list[dict[str, str | bool]] = []
 
         for link in links:
             pdf_link = link.get("href", "")
@@ -128,12 +127,12 @@ def fetch_iso_reports() -> None:
 
         existing_data: list[dict] = []
         try:
-            with open(Paths.STATES["ISO_CODES_UPDATES"], "r") as f:
+            with open(Paths.STATES["ISO_CODES_UPDATES"]) as f:
                 existing_data = yaml.safe_load(f) or []
         except FileNotFoundError:
             pass
 
-        existing_map: Dict[str, bool] = {
+        existing_map: dict[str, bool] = {
             link: r.get("posted", False)
             for r in existing_data
             if (link := r.get("link")) is not None
@@ -171,10 +170,10 @@ def post_iso_reports_to_reddit() -> None:
     in the YAML file after successful posting.
     """
     subreddit_name = "translatorBOT"
-    current_year_utc = datetime.now(timezone.utc).year
+    current_year_utc = datetime.now(UTC).year
 
     try:
-        with open(Paths.STATES["ISO_CODES_UPDATES"], "r") as f:
+        with open(Paths.STATES["ISO_CODES_UPDATES"]) as f:
             reports = yaml.safe_load(f) or []
 
         previous_year = current_year_utc - 1

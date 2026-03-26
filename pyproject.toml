@@ -13,6 +13,27 @@ authors = [
 [project.optional-dependencies]
 dev = ["types-PyYAML", "types-psutil", "types-requests"]
 
+[tool.ruff]
+target-version = "py311"
+exclude = ["testing"]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = ["E402", "E501"]
+
 [tool.pytest.ini_options]
 testpaths = ["testing/unit", "testing/integrations"]
 python_files = "test_*.py"

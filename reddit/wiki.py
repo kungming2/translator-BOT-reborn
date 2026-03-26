@@ -11,7 +11,7 @@ Logger tag: [R:WIKI]
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import prawcore
@@ -128,9 +128,7 @@ def fetch_most_requested_languages() -> list[str]:
     """
     months_difference = SETTINGS["points_months_delta"]
 
-    three_months_ago = datetime.now(timezone.utc) - relativedelta(
-        months=months_difference
-    )
+    three_months_ago = datetime.now(UTC) - relativedelta(months=months_difference)
     three_months_ago_str: str = three_months_ago.strftime(
         "%Y_%m"
     )  # Underscore is intentional
@@ -213,10 +211,12 @@ def update_wiki_page(
         )
         # For permission issues
         if isinstance(e, prawcore.exceptions.Forbidden):
-            raise PermissionError("Insufficient permissions to edit the wiki page")
+            raise PermissionError(
+                "Insufficient permissions to edit the wiki page"
+            ) from e
         # For size issues
         else:
-            raise ValueError("Content too large for the wiki page")
+            raise ValueError("Content too large for the wiki page") from e
     else:
         logger.info(f"Updated the {action} wiki page.")
 

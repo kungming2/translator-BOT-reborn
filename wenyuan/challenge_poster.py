@@ -8,7 +8,7 @@ Logger tag: [WY:POSTER]
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
@@ -28,10 +28,10 @@ def translation_challenge_poster() -> None:
     Reads the challenge content from file, creates a Reddit post with
     the current date, stickies it, and sends a Discord notification.
     """
-    with open(Paths.TEMPLATES["TRANSLATION_CHALLENGE"], "r", encoding="utf-8") as f:
+    with open(Paths.TEMPLATES["TRANSLATION_CHALLENGE"], encoding="utf-8") as f:
         weekly_challenge_md = f.read()
 
-    timestamp_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    timestamp_utc = datetime.now(UTC).strftime("%Y-%m-%d")
     weekly_title = f"[Community] Translation Challenge — {timestamp_utc}"
 
     submission = REDDIT.subreddit(SETTINGS["subreddit"]).submit(

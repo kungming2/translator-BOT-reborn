@@ -8,7 +8,6 @@ Logger tag: [ZS:NOTIF]
 """
 
 import logging
-from typing import Optional
 
 from discord.ext import commands
 
@@ -34,7 +33,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
     roles=["Moderator"],
 )
 async def notif(
-    ctx: commands.Context, action: str, username: str, language: Optional[str] = None
+    ctx: commands.Context, action: str, username: str, language: str | None = None
 ) -> None:
     """
     Discord wrapper for notification management.
@@ -49,7 +48,7 @@ async def notif(
         /notif remove JohnDoe
         /notif status JohnDoe
     """
-    username = username.strip().lstrip("u/").lstrip("/u/")
+    username = username.strip().removeprefix("/u/").removeprefix("u/")
     action = action.lower()
 
     try:
@@ -73,7 +72,7 @@ async def notif(
 
 
 async def handle_notif_add(
-    ctx: commands.Context, username: str, language: Optional[str]
+    ctx: commands.Context, username: str, language: str | None
 ) -> None:
     """Handle adding notification subscriptions using the database editor directly."""
     if not language:

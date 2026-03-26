@@ -50,7 +50,7 @@ class ResponseLoader:
     def _load_yaml(path: Path | str) -> dict[str, Any]:
         """Read and parse a YAML file containing the bot's responses,
         returning its contents as a dictionary."""
-        with open(path, "r", encoding="utf-8") as file:
+        with open(path, encoding="utf-8") as file:
             return yaml.safe_load(file)
 
     def __getattr__(self, item: str) -> Any:

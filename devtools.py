@@ -18,9 +18,8 @@ from error import display_event_errors
 from hermes.tools import get_statistics, test_parser, test_title
 from integrations.ai import fetch_image_description
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
-from lang.languages import converter
+from lang.languages import converter, parse_language_list
 from lang.languages import logger as lang_logger
-from lang.languages import parse_language_list
 from models.ajo import Ajo, ajo_loader, determine_flair_and_update
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text

@@ -8,6 +8,7 @@ This is Reddit-native, rather than Discord.
 Logger tag: [MESSAGING]
 """
 
+import contextlib
 import logging
 
 import praw
@@ -55,11 +56,9 @@ def notify_op_translated_post(author: str, permalink: str) -> None:
         + RESPONSE.BOT_DISCLAIMER
     )
 
-    try:
+    # User doesn't allow messages or other API exceptions - fail silently
+    with contextlib.suppress(APIException):
         message_send(redditor_obj=REDDIT.redditor(author), subject=subject, body=body)
-    except APIException:
-        # User doesn't allow messages or other API exceptions - fail silently
-        pass
 
     logger.info(f"Messaged the OP u/{author} about their translated post.")
 

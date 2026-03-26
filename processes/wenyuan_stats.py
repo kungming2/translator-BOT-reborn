@@ -22,7 +22,6 @@ import time
 from collections import Counter, defaultdict
 from collections.abc import Iterator
 from datetime import datetime
-from functools import lru_cache
 from typing import Any, TypedDict
 
 from database import db, search_database
@@ -416,7 +415,6 @@ class Lumo:
 
     # ── Language statistics ───────────────────────────────────────────────────
 
-    @lru_cache(maxsize=128)
     def get_language_stats(self, language: str) -> LanguageStats | None:
         """
         Get comprehensive statistics for a specific language.
@@ -428,6 +426,9 @@ class Lumo:
         Returns:
             Dictionary with language statistics or None if no data
         """
+        if language in self._cache:
+            return self._cache[language]
+
         lingvo = converter(language)
         if not lingvo:
             return None
@@ -460,7 +461,7 @@ class Lumo:
 
         directions = self._calculate_directions(language_ajos)
 
-        return {
+        result: LanguageStats = {
             "language": lingvo.name,
             "total_requests": total,
             "translated": translated,
@@ -470,6 +471,8 @@ class Lumo:
             "percent_of_all_requests": percent_of_all,
             "directions": directions,
         }
+        self._cache[language] = result
+        return result
 
     def get_stats_for_languages(
         self, language_string: str
@@ -548,10 +551,7 @@ class Lumo:
         Returns:
             Dictionary with frequency data or None if not available
         """
-        if isinstance(language, str):
-            lingvo = converter(language)
-        else:
-            lingvo = language
+        lingvo = converter(language) if isinstance(language, str) else language
 
         if not lingvo:
             return None
@@ -726,14 +726,17 @@ class Lumo:
                 identified[last] += 1
 
             # Posts misidentified (wrong initial language)
-            elif normalized_history[0] not in [
-                "Unknown",
-                "Generic",
-                "Multiple Languages",
-            ]:
-                if normalized_history[0] != normalized_history[-1]:
-                    pair = f"{normalized_history[0]} → {normalized_history[-1]}"
-                    misidentified[pair] += 1
+            elif (
+                normalized_history[0]
+                not in [
+                    "Unknown",
+                    "Generic",
+                    "Multiple Languages",
+                ]
+                and normalized_history[0] != normalized_history[-1]
+            ):
+                pair = f"{normalized_history[0]} → {normalized_history[-1]}"
+                misidentified[pair] += 1
 
         return {
             "identified_from_unknown": dict(identified),
@@ -790,8 +793,8 @@ class Lumo:
             return f"{to_count}:{from_count}"
 
     def _clear_cache(self) -> None:
-        """Clear the LRU cache for get_language_stats when data changes."""
-        self.get_language_stats.cache_clear()
+        """Clear the language stats cache when data changes."""
+        self._cache.clear()
 
     # ── Export ────────────────────────────────────────────────────────────────
 

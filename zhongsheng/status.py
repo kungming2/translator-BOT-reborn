@@ -35,21 +35,23 @@ async def status(ctx: commands.Context) -> None:
     and also to see when the last action in the events log was taken."""
     # Fetch a random Office quote
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(
                 "https://officeapi.akashrajpurohit.com/quote/random",
                 headers={
                     **get_random_useragent(),
                     "Accept-Encoding": "gzip, deflate",
                 },  # Explicitly avoid br
-            ) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    character = data.get("character", "Unknown")
-                    quote = data.get("quote", "No quote available")
-                    office_response = f'**{character}**: "{quote}"\n\n'
-                else:
-                    office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
+            ) as resp,
+        ):
+            if resp.status == 200:
+                data = await resp.json()
+                character = data.get("character", "Unknown")
+                quote = data.get("quote", "No quote available")
+                office_response = f'**{character}**: "{quote}"\n\n'
+            else:
+                office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
     except Exception as err:
         tb = traceback.format_exc()
         logger.error(f"Encountered {err} when fetching quote.")

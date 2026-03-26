@@ -148,7 +148,7 @@ def error_log_basic(entry: str, bot_routine: str) -> None:
     }
 
     if os.path.exists(Paths.LOGS["ERROR"]):
-        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
             try:
                 existing_entries = yaml.safe_load(f) or []
             except yaml.YAMLError:
@@ -182,7 +182,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
 
     try:
         try:
-            with open(error_log_path, "r", encoding="utf-8") as f:
+            with open(error_log_path, encoding="utf-8") as f:
                 existing_log = yaml.safe_load(f) or []
         except FileNotFoundError:
             existing_log = []
@@ -236,7 +236,7 @@ def retrieve_error_log() -> str:
     paragraphs = []
 
     try:
-        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
             data: list[dict[str, Any]] = yaml.safe_load(f) or []
     except FileNotFoundError:
         return "No error log found."
@@ -271,7 +271,7 @@ def display_event_errors(days: int = 7) -> list[str]:
     results = []
 
     try:
-        with open(Paths.LOGS["EVENTS"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["EVENTS"], encoding="utf-8") as f:
             for line in f:
                 if "ERROR:" in line:
                     try:

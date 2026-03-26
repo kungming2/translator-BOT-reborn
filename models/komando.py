@@ -401,7 +401,7 @@ def extract_commands_from_text(
         backtick_pattern = r"`([^`]+)`(?::(\w+))?(!)?"
         backtick_matches = re.findall(backtick_pattern, original_text)
 
-        for term, lang, exclamation in backtick_matches:
+        for _term, _lang, exclamation in backtick_matches:
             if exclamation:
                 has_disable_tokenization = True
                 break

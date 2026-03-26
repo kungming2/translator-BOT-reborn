@@ -11,13 +11,14 @@ Logger tag: [WJ:DATA]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
+import contextlib
 import json
 import logging
 import re
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import orjson
 import prawcore
@@ -100,11 +101,11 @@ def error_log_trimmer() -> None:
     """Remove resolved errors older than one week from the error log."""
     error_log_path = Paths.LOGS["ERROR"]
 
-    with open(error_log_path, "r", encoding="utf-8") as f:
+    with open(error_log_path, encoding="utf-8") as f:
         entries = yaml.safe_load(f) or []
 
     retention_weeks = WENJU_SETTINGS["resolved_error_log_retention_weeks"]
-    cutoff = datetime.now(timezone.utc) - timedelta(weeks=retention_weeks)
+    cutoff = datetime.now(UTC) - timedelta(weeks=retention_weeks)
 
     trimmed = [
         entry
@@ -144,7 +145,7 @@ def validate_data_files() -> bool:
     for attr_name in dir(paths_class):
         attr_value = getattr(paths_class, attr_name)
         if isinstance(attr_value, dict):
-            for key, path in attr_value.items():
+            for _key, path in attr_value.items():
                 if isinstance(path, str) and (
                     path.lower().endswith(".yaml") or path.lower().endswith(".json")
                 ):
@@ -169,7 +170,7 @@ def validate_data_files() -> bool:
             continue
 
         try:
-            with open(path_obj, "r", encoding="utf-8") as f:
+            with open(path_obj, encoding="utf-8") as f:
                 if file_path.lower().endswith(".yaml"):
                     yaml.safe_load(f)
                     logger.debug(f"[Config Validation] Valid YAML: {file_path}")
@@ -280,7 +281,7 @@ def clean_processed_database() -> None:
 # ─── Statistics wiki page maintenance ────────────────────────────────────────
 
 
-def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
+def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> dict:
     """
     Parse a language wiki page or language name to extract statistics
     for a single language. Returns a JSON-compatible dictionary.
@@ -323,10 +324,8 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
         )
         percentage_translated = round(float(cols[5].rstrip("%")) * 0.01, 4)
         ri = None
-        try:
+        with contextlib.suppress(ValueError, IndexError):
             ri = float(cols[6])
-        except (ValueError, IndexError):
-            pass
 
         key = f"{year}-{month}"
         language_data[key] = {
@@ -379,7 +378,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> Dict:
     return language_data
 
 
-def _statistics_list_updater(input_data: Dict[str, list]) -> None:
+def _statistics_list_updater(input_data: dict[str, list]) -> None:
     """
     Generate a Markdown list for wiki/statistics, grouped by language family,
     and update the wiki page.
@@ -649,7 +648,7 @@ def archive_modmail() -> None:
         if count > 0:
             logger.debug(f"Current '{key}' in modmail: {count}")
 
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(UTC)
     max_age_seconds = days_max * 86400
 
     for convo in subreddit.modmail.conversations():

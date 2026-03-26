@@ -13,7 +13,8 @@ import re
 import sqlite3
 import threading
 import time
-from typing import Any, Awaitable, Callable, Dict
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
@@ -49,7 +50,7 @@ def _get_thread_local_cursor() -> tuple[sqlite3.Cursor, sqlite3.Connection]:
     return _cache_thread_local.conn.cursor(), _cache_thread_local.conn
 
 
-def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
+def save_to_cache(data: dict, language_code: str, lookup_type: str) -> None:
     """
     Save parsed CJK lookup data to the lookup_cjk_cache table.
     """
@@ -86,7 +87,7 @@ def save_to_cache(data: Dict, language_code: str, lookup_type: str) -> None:
     conn.commit()
 
 
-def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | None:
+def get_from_cache(term: str, language_code: str, lookup_type: str) -> dict | None:
     """
     Retrieve cached CJK lookup data from the database.
     """
@@ -119,7 +120,7 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> Dict | No
 # ─── Chinese parse / format ───────────────────────────────────────────────────
 
 
-def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
+def parse_zh_output_to_json(markdown_output: str) -> dict[str, Any]:
     """
     Parse the markdown output from zh_word or zh_character into structured
     JSON.
@@ -128,7 +129,7 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
                             zh_character
     :return: Dictionary with structured data
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "traditional": None,
         "simplified": None,
         "pronunciations": {},
@@ -257,7 +258,7 @@ def parse_zh_output_to_json(markdown_output: str) -> Dict[str, Any]:
     return result
 
 
-def format_zh_character_from_cache(cached_data: Dict) -> str:
+def format_zh_character_from_cache(cached_data: dict) -> str:
     """
     Reconstruct the zh_character markdown output from cached data.
 
@@ -345,7 +346,7 @@ def format_zh_character_from_cache(cached_data: Dict) -> str:
     return header + table + calligraphy_section + meanings_section + footer
 
 
-def format_zh_word_from_cache(cached_data: Dict) -> str:
+def format_zh_word_from_cache(cached_data: dict) -> str:
     """
     Reconstruct the zh_word markdown output from cached data.
 
@@ -414,7 +415,7 @@ def format_zh_word_from_cache(cached_data: Dict) -> str:
 # ─── Japanese parse / format ──────────────────────────────────────────────────
 
 
-def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
+def parse_ja_output_to_json(markdown_output: str) -> dict[str, Any]:
     """
     Parse the markdown output from ja_word or ja_character into structured
     JSON.
@@ -435,7 +436,7 @@ def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
             if len(char_links) > 1:
                 return {}
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "word": None,
         "type": None,  # "word" or "character"
         "part_of_speech": None,
@@ -510,7 +511,7 @@ def parse_ja_output_to_json(markdown_output: str) -> Dict[str, Any]:
     return result
 
 
-def format_ja_character_from_cache(cached_data: Dict) -> str:
+def format_ja_character_from_cache(cached_data: dict) -> str:
     """
     Reconstruct the ja_character markdown output from cached data.
 
@@ -564,7 +565,7 @@ def format_ja_character_from_cache(cached_data: Dict) -> str:
     return header + readings_section + calligraphy_section + meanings_section + footer
 
 
-def format_ja_word_from_cache(cached_data: Dict) -> str:
+def format_ja_word_from_cache(cached_data: dict) -> str:
     """
     Reconstruct the ja_word markdown output from cached data.
 
@@ -601,14 +602,14 @@ def format_ja_word_from_cache(cached_data: Dict) -> str:
 # ─── Korean parse / format ────────────────────────────────────────────────────
 
 
-def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
+def parse_ko_output_to_json(markdown_output: str) -> dict[str, Any]:
     """
     Parse the markdown output from ko_word into structured JSON.
 
     :param markdown_output: The markdown string returned by ko_word
     :return: Dictionary with structured data
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "word": None,
         "romanization": None,
         "entries": [],  # List of {part_of_speech, meanings: [{origin, definition}]}
@@ -629,7 +630,7 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
         pos = pos_sections[i].strip()
         content = pos_sections[i + 1]
 
-        entry: Dict[str, Any] = {"part_of_speech": pos.lower(), "meanings": []}
+        entry: dict[str, Any] = {"part_of_speech": pos.lower(), "meanings": []}
 
         if not result["romanization"]:
             rom_match = re.search(r"\*\*Romanization:\*\*\s*\*([^*]+)\*", content)
@@ -660,7 +661,7 @@ def parse_ko_output_to_json(markdown_output: str) -> Dict[str, Any]:
     return result
 
 
-def format_ko_word_from_cache(cached_data: Dict) -> str:
+def format_ko_word_from_cache(cached_data: dict) -> str:
     """
     Reconstruct the ko_word markdown output from cached data.
 

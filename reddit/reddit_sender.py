@@ -152,7 +152,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 logger.info(
                     f"User does not exist: Unable to send message to u/{username}."
                 )
-                raise UserNotFoundException(f"u/{username} no longer exists.")
+                raise UserNotFoundException(f"u/{username} no longer exists.") from ex
             else:
                 logger.warning(
                     f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"

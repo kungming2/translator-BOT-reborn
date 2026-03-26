@@ -155,9 +155,7 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
 
         for log_name, log_path in log_files.items():
             try:
-                with open(
-                    log_path, "r", encoding="utf-8", errors="replace"
-                ) as log_file:
+                with open(log_path, encoding="utf-8", errors="replace") as log_file:
                     for line in log_file:
                         if search_term in line:
                             log_lines.append(f"[{log_name}] {line.strip()}")

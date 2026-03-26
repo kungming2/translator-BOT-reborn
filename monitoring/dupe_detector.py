@@ -157,7 +157,9 @@ class DuplicateDetector:
         logger.debug(f"Numbers found in titles: {number_sets}")
 
         last_numbers = [nums[-1] for nums in number_sets]
-        differences = [b - a for a, b in zip(last_numbers, last_numbers[1:])]
+        differences = [
+            b - a for a, b in zip(last_numbers, last_numbers[1:], strict=False)
+        ]
 
         if not differences:
             return False
@@ -167,10 +169,7 @@ class DuplicateDetector:
 
         if 0 < avg_diff <= 3:
             return True
-        if len(set(differences)) == 1 and differences[0] != 0:
-            return True
-
-        return False
+        return len(set(differences)) == 1 and differences[0] != 0
 
     def create_title_hash(self, title: str) -> str:
         """
@@ -571,7 +570,7 @@ def search_image_hash(
 
 def check_image_duplicate(
     post: Submission,
-    ajo: "Ajo",
+    ajo: Ajo,
     days_lookback: int = 30,
     max_distance: int = 5,
     testing_mode: bool = False,

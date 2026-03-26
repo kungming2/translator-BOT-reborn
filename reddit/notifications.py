@@ -143,10 +143,7 @@ def notifier_language_list_editor(
         mode: 'insert' adds, 'delete' removes, 'purge' removes all (languages only)
     """
     # Handle both string usernames and user objects with .name attribute
-    if isinstance(user_object, str):
-        username = user_object
-    else:
-        username = user_object.name
+    username = user_object if isinstance(user_object, str) else user_object.name
     logger.debug(
         f"Notifier List Editor: mode={mode!r}, user={username!r}, {len(language_list)} item(s)"
     )

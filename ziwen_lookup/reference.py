@@ -267,7 +267,7 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
 
     # Save new data if not already stored.
     language_data_path = Paths.STATES["LANGUAGE_DATA"]
-    with open(language_data_path, "r", encoding="utf-8") as f:
+    with open(language_data_path, encoding="utf-8") as f:
         existing_data = yaml.safe_load(f) or {}
     if language_code not in existing_data:
         existing_data[language_code] = ref_data

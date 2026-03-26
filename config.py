@@ -159,7 +159,7 @@ def load_settings(path: str | Path) -> dict:
     :param path: Path to YAML file.
     :return: Settings dictionary.
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         settings: dict = yaml.safe_load(f)
     return settings
 

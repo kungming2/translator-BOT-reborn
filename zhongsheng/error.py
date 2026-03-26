@@ -24,7 +24,7 @@ from . import command
 async def error_logs(ctx: Context) -> None:
     """Returns the last few error log entries for analysis."""
     try:
-        with open(Paths.LOGS["ERROR"], "r", encoding="utf-8") as f:
+        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
             error_data = yaml.safe_load(f)
 
         if not error_data:

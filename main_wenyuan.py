@@ -11,9 +11,9 @@ Compatible with refactored Lumo analyzer (wenyuan_stats.py).
 
 import calendar
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable
 
 from wasabi import Printer
 
@@ -370,12 +370,13 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
             content += formatted
             has_any_data = True
 
-    if (avg_hours := fastest.get("average_translation_hours")) is not None:
-        if isinstance(avg_hours, (int, float)) and avg_hours > 0:
-            content += (
-                f"* The average request was translated in {avg_hours:.1f} hours.\n"
-            )
-            has_any_data = True
+    if (
+        (avg_hours := fastest.get("average_translation_hours")) is not None
+        and isinstance(avg_hours, (int, float))
+        and avg_hours > 0
+    ):
+        content += f"* The average request was translated in {avg_hours:.1f} hours.\n"
+        has_any_data = True
 
     if not has_any_data:
         content += "* No data available for this period.\n"

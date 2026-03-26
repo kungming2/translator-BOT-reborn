@@ -436,5 +436,5 @@ def get_submission_from_comment(comment_reference: Comment | str) -> Submission:
     # Extract submission ID (removes 't3_' prefix)
     try:
         return REDDIT_HELPER.submission(id=comment.link_id[3:])
-    except AttributeError:
-        raise ValueError("Invalid comment reference - missing link_id")
+    except AttributeError as err:
+        raise ValueError("Invalid comment reference - missing link_id") from err

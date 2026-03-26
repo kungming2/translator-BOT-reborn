@@ -10,8 +10,8 @@ Logger tag: [ZW:CMD]
 import importlib
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Union
 
 from config import logger as _base_logger
 from models.ajo import Ajo
@@ -121,11 +121,9 @@ def update_language(ajo: "Ajo", komando: "Komando") -> None:
             "None value(s) instead of Lingvo objects"
         )
 
-    languages_to_set: Union[Lingvo, list[Lingvo]]
-    if len(komando.data) == 1:
-        languages_to_set = komando.data[0]
-    else:
-        languages_to_set = komando.data
+    languages_to_set: Lingvo | list[Lingvo] = (
+        komando.data[0] if len(komando.data) == 1 else komando.data
+    )
 
     ajo.set_language(languages_to_set)
 

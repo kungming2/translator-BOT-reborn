@@ -17,7 +17,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
@@ -41,12 +41,12 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:TITLE"})
 class PostCategories:
     """Container for categorized posts to avoid managing multiple lists."""
 
-    display: List[str]
-    problematic: List[str]
-    non_css: List[str]
-    multiple: List[str]
-    regional: List[str]
-    ai_assessed: List[str]
+    display: list[str]
+    problematic: list[str]
+    non_css: list[str]
+    multiple: list[str]
+    regional: list[str]
+    ai_assessed: list[str]
 
     def __init__(self) -> None:
         """Initialise all category lists to empty."""
@@ -70,11 +70,10 @@ def should_skip_post(post: Submission) -> bool:
     if ">" not in post.title and "english" not in post.title.lower()[:25]:
         return True
 
-    if flair := post.link_flair_css_class:
-        if "meta" in flair or "community" in flair:
-            return True
-
-    return False
+    return bool(
+        (flair := post.link_flair_css_class)
+        and ("meta" in flair or "community" in flair)
+    )
 
 
 def escape_markdown(text: str) -> str:
@@ -186,7 +185,7 @@ def process_single_post(post: Submission, categories: PostCategories) -> float:
 # ─── Output building ──────────────────────────────────────────────────────────
 
 
-def build_markdown_section(title: str, header: str, entries: List[str]) -> str:
+def build_markdown_section(title: str, header: str, entries: list[str]) -> str:
     """Build a Markdown section with title, header, and entries."""
     if not entries:
         return ""
@@ -220,7 +219,7 @@ def build_output_document(categories: PostCategories, header: str) -> str:
 def calculate_statistics(
     total_posts: int,
     categories: PostCategories,
-    processed_times: List[float],
+    processed_times: list[float],
     elapsed_duration: float,
 ) -> str:
     """
@@ -279,7 +278,7 @@ def _save_to_file(content: str) -> Path:
 # ─── Entry points ─────────────────────────────────────────────────────────────
 
 
-def fetch_posts(fetch_amount: int) -> List:
+def fetch_posts(fetch_amount: int) -> list:
     """Fetch posts from the configured subreddit."""
     return list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=fetch_amount))
 
