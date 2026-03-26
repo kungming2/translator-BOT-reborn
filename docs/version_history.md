@@ -43,6 +43,8 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Dealt with typing according to [Mypy](https://mypy-lang.org/).
 * 🔄 CHANGE: Added more testing scripts, including integrations. 
 * 🔄 CHANGE: Removed the 60-character maximum limit for confirmatory replies awarding points.
+* 🔄 CHANGE: Renamed and reorganized files in the `_data` folder (through `config.py`) for more consistency.
+* 🔄 CHANGE: Migrated `main.db` dictionaries to use JSON instead of Python dictionary literals.
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was giving too many false positives.
 
 ##### translator-BOT 2.1 "The Transformation Update" (2026-02-01)

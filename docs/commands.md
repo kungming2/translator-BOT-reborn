@@ -12,7 +12,7 @@ Several commands detailed below may either require or accept a language, added o
 
 #### Specific !identify Functions
 
-Adding a second exclamation mark `!` after a command indicates to the bot that the user is requesting a *specific* ISO 639-3 or ISO 15924 codes. Note that Advanced `!identify` will *not* work with language names, but is meant to be used specifically with these *codes*. Trying to use an Advanced `!identify` command with a language name will result in an error.
+Adding a second exclamation mark `!` after a command indicates to the bot that the user is requesting a *specific* [ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3) or [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924) codes. Note that Advanced `!identify` will *not* work with language names, but is meant to be used specifically with these *codes*. Trying to use an Advanced `!identify` command with a language name will result in an error.
 
 Specific identifcation is only meant for single-language posts.
 
@@ -32,7 +32,7 @@ Specific identifcation is only meant for single-language posts.
 
 **ISO 639-1/3 Codes or Language Names with Country**
 
-Either a country/region name or country code will work.
+Either a country/region name or country/region code will work.
 
 ```
 !identify:de-AO                                             # German {Austria}
@@ -62,6 +62,17 @@ The default state of a single-language post on r/translator is *untranslated*. T
 Posts with different states will have a "tag" in their flair with the language code in brackets (e.g. `[MS]` for a Malay post). A couple of rare tags are `[?]` for translated "Unknown" posts, and `[--]` for translated posts without any flair text. This implementation was first suggested by u/nomfood.
 
 *State Commands Note*: A language (or languages) can be included in a state command, but only in a defined multiple post where there are multiple specifically requested languages. In those cases, a command like `!translated:fi` would mark the Finnish component of the request as translated. However, the vast majority of requests do not require or need this syntax.
+
+#### List of States
+
+| State            | Description                                                   |
+|------------------|---------------------------------------------------------------|
+| `(untranslated)` | The post has not been translated (default).                   |
+| `Translated`     | The post has been translated (ideal ending).                  |
+| `Needs Review`   | The post has been marked as needing review.                   |
+| `In Progress`    | The post has been claimed and is currently being worked on.   |
+| `Missing`        | The post is missing content to be translated (e.g. an image). |
+
 
 ### Command: *!translated*
 
@@ -115,7 +126,6 @@ A **!missing** command from a user will mark a post as missing assets that need 
 These commands are used to help organize the subreddit and to provide supplementary information to translators and the OP. All reference commands *must* accept language codes or names as command arguments. 
 
 ### Command: *!id/!identify:[language]*
-
 
 OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name is comprised of more than one word, double quotation marks `"` should be used to mark the language name.
 
@@ -190,6 +200,8 @@ This function also serves as a simple way to find thematically similar posts tha
 * This function is also integrated with the [frequently-requested translations page](www.reddit.com/r/translator/wiki/frequently-requested) and can return information saved on that page. 
 * If there are no results for the search term, Ziwen will leave a comment letting the user know.
 * Ziwen will *not* automatically mark a thread as translated even if the quoted comment contains `!translated`. It'll be up to the person who called the `!search` function to check if the displayed results contain accurate translations.
+
+## Other Commands
 
 ### Command: *!transform:[value]*
 
