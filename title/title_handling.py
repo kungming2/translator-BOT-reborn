@@ -919,15 +919,16 @@ def process_title(
         ai_result = title_ai_parser(title, post)
         if not isinstance(ai_result, dict):
             logger.error(f"AI parser failed for title ({title!r}): {ai_result[1]}")
-        update_titolo_from_ai_result(
-            result,
-            ai_result,
-            post,
-            discord_notify,
-            determine_flair_fn=_determine_flair,
-            determine_direction_fn=_determine_title_direction,
-            get_notification_languages_fn=_get_notification_languages,
-        )
+        else:
+            update_titolo_from_ai_result(
+                result,
+                ai_result,
+                post,
+                discord_notify,
+                determine_flair_fn=_determine_flair,
+                determine_direction_fn=_determine_title_direction,
+                get_notification_languages_fn=_get_notification_languages,
+            )
     else:
         _determine_flair(result)
 

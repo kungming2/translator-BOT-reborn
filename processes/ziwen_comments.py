@@ -53,16 +53,27 @@ def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
     if author_name != ajo.author:
         return  # If not, we don't care about this.
 
+    if ajo.type == "multiple":
+        logger.info(f"Short thanks on `{ajo.id}` ignored: multiple language post.")
+        return
+
     if ajo.status != "untranslated":
+        logger.info(
+            f"Short thanks on `{ajo.id}` ignored: status is already '{ajo.status}'."
+        )
         return
 
     # This should only be marked if it's not in an identified state,
     # in case people respond to that command.
     if ajo.is_identified:
+        logger.info(f"Short thanks on `{ajo.id}` ignored: post is in identified state.")
         return
 
     # Did the OP have reservations?
     if any(exception in comment_body for exception in exceptions_list):
+        logger.info(
+            f"Short thanks on `{ajo.id}` ignored: comment contains reservation keyword."
+        )
         return
 
     # Here, this means that the criteria has been met to mark the Ajo

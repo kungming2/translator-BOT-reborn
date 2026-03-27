@@ -432,6 +432,7 @@ class TestAjoStatusManagement(unittest.TestCase):
 
     def test_set_status_on_defined_multiple_silently_ignored(self):
         """set_status() on a defined multiple should do nothing (not raise)."""
+        self.ajo.type = "multiple"
         self.ajo.is_defined_multiple = True
         self.ajo.status = {"zh": "untranslated"}
         self.ajo.set_status("translated")

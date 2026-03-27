@@ -723,13 +723,15 @@ class Ajo:
         - Once marked as 'doublecheck', can only transition to 'translated'
         - Once marked as 'translated', status is final and cannot be changed
 
-        This method is for single language posts or non-defined multiple posts only.
-        For defined multiple posts, use set_defined_multiple_status() instead.
+        This method is for single language posts only.
+        Multiple language posts (both defined and non-defined) are not supported,
+        as they can never be fully completed. For defined multiples, use
+        set_defined_multiple_status() instead.
         """
-        if self.is_defined_multiple:
+        if self.type == "multiple":
             logger.warning(
-                "Cannot use set_status() on a defined multiple post. "
-                "Use set_defined_multiple_status() instead."
+                "Cannot use set_status() on a multiple language post. "
+                "Use set_defined_multiple_status() for defined multiples."
             )
             return
 
