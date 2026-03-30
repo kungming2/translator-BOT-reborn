@@ -412,10 +412,23 @@ def check_ziwen_lookup_ko_word() -> None:
 
 
 def check_ziwen_lookup_wikipedia() -> None:
-    """wp: Search Wikipedia for a term."""
+    """wp: Search Wikipedia for a term, with an optional language code."""
     my_search = input("What would you like to search Wikipedia for? ")
-    with msg.loading(f"Searching Wikipedia for '{my_search}'..."):
-        result = wikipedia_lookup([my_search], "en")
+    lang_input = input("Language code (leave blank for 'en'): ").strip()
+    if lang_input:
+        lingvo = converter(lang_input)
+        if lingvo:
+            lang_code = lingvo.preferred_code
+            msg.good(f"Language resolved: {lingvo.name} → `{lang_code}`")
+        else:
+            msg.warn(
+                f"Unrecognized language code '{lang_input}', falling back to 'en'."
+            )
+            lang_code = "en"
+    else:
+        lang_code = "en"
+    with msg.loading(f"Searching '{lang_code}' Wikipedia for '{my_search}'..."):
+        result = wikipedia_lookup([my_search], lang_code)
     msg.info(str(result))
 
 

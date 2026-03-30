@@ -92,52 +92,59 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
         lingvo = converter(language_code)
         lang_code: str = lingvo.preferred_code if lingvo is not None else language_code
         wikipedia.set_lang(lang_code)
+    else:
+        lang_code = "en"
     logger.info(f"Looking up term {terms} on the `{language_code}` Wikipedia.")
 
-    for term in terms[:5]:  # Limit to five terms.
-        term_entry: str | None = None
-        term = re.sub(r"[^\w\s:]", "", term)  # Strip punctuation but allow colons
-        logger.info(f"> Now searching for '{term}'...")
+    try:
+        for term in terms[:5]:  # Limit to five terms.
+            term_entry: str | None = None
+            term = re.sub(r"[^\w\s:]", "", term)  # Strip punctuation but allow colons
+            logger.info(f"> Now searching for '{term}'...")
 
-        try:
-            term_summary: str = wikipedia.summary(
-                term, auto_suggest=False, redirect=True, sentences=3
-            )
-            wikipage_obj = wikipedia.page(term, auto_suggest=False, redirect=True)
-        except (
-            wikipedia.exceptions.DisambiguationError,
-            wikipedia.exceptions.PageError,
-        ):
             try:
-                term_summary = wikipedia.summary(term.strip(), sentences=3)
-                wikipage_obj = wikipedia.page(term.strip())
-                term_entry = wikipage_obj.url
+                term_summary: str = wikipedia.summary(
+                    term, auto_suggest=False, redirect=True, sentences=3
+                )
+                wikipage_obj = wikipedia.page(term, auto_suggest=False, redirect=True)
             except (
                 wikipedia.exceptions.DisambiguationError,
                 wikipedia.exceptions.PageError,
             ):
-                logger.error(f">> Unable to resolve '{term}' on Wikipedia. Skipping.")
-                continue
+                try:
+                    term_summary = wikipedia.summary(term.strip(), sentences=3)
+                    wikipage_obj = wikipedia.page(term.strip())
+                    term_entry = wikipage_obj.url
+                except (
+                    wikipedia.exceptions.DisambiguationError,
+                    wikipedia.exceptions.PageError,
+                ):
+                    logger.error(
+                        f">> Unable to resolve '{term}' on Wikipedia. Skipping."
+                    )
+                    continue
 
-        term_format: str = term.replace(" ", "_")
-        if "\n" in term_summary:
-            term_summary = term_summary.split("\n")[0].strip()
-        if "==" in term_summary:
-            term_summary = term_summary.split("==")[0].strip()
-        if not term_entry:
-            term_entry = f"https://en.wikipedia.org/wiki/{term_format}"
-        term_entry = term_entry.replace(")", r"\)")
-        logger.info(f">> Text for {term} to be obtained from `{term_entry}`.")
+            term_format: str = term.replace(" ", "_")
+            if "\n" in term_summary:
+                term_summary = term_summary.split("\n")[0].strip()
+            if "==" in term_summary:
+                term_summary = term_summary.split("==")[0].strip()
+            if not term_entry:
+                term_entry = f"https://{lang_code}.wikipedia.org/wiki/{term_format}"
+            term_entry = term_entry.replace(")", r"\)")
+            logger.info(f">> Text for {term} to be obtained from `{term_entry}`.")
 
-        entry_text = f"\n**[{term.title()}]({term_entry})**\n\n> {term_summary}\n\n"
+            entry_text = f"\n**[{term.title()}]({term_entry})**\n\n> {term_summary}\n\n"
 
-        if wikipage_obj:
-            location_data = get_page_location_data(wikipage_obj)
-            if location_data:
-                entry_text += location_data + "\n"
+            if wikipage_obj:
+                location_data = get_page_location_data(wikipage_obj)
+                if location_data:
+                    entry_text += location_data + "\n"
 
-        entries.append(entry_text)
-        logger.info(f">> Information for '{term}' retrieved.")
+            entries.append(entry_text)
+            logger.info(f">> Information for '{term}' retrieved.")
+    finally:
+        wikipedia.set_lang("en")  # Always reset to English after lookup
 
     if entries:
         body_text: str = "\n".join(entries)
