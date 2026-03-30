@@ -15,10 +15,12 @@ from monitoring.edit_tracker import (
     _CachedComment,
     _cleanup_comment_cache,
     _deserialize_komandos,
+    _deserialize_lookup_content,
     _get_cached_comment,
     _is_comment_within_edit_window,
     _remove_from_processed,
     _serialize_komandos,
+    _serialize_lookup_content,
     _update_comment_cache,
 )
 
@@ -44,6 +46,14 @@ def make_comment(
     comment.edited = edited
     comment.permalink = permalink
     return comment
+
+
+def make_komando(name: str, data: list | None = None) -> MagicMock:
+    """Return a minimal Komando-like mock with name and data attributes."""
+    cmd = MagicMock()
+    cmd.name = name
+    cmd.data = data or []
+    return cmd
 
 
 # ===========================================================================
@@ -102,6 +112,106 @@ class TestDeserializeKomandos:
 
 
 # ===========================================================================
+# _serialize_lookup_content / _deserialize_lookup_content
+# ===========================================================================
+
+
+class TestSerializeLookupContent:
+    def test_empty_command_list_gives_section_separator_only(self):
+        result = _serialize_lookup_content([])
+        assert result == "§"
+
+    def test_cjk_terms_encoded_as_lang_colon_term(self):
+        cmd = make_komando("lookup_cjk", [("zh", "粽子", False), ("zh", "英雄", False)])
+        result = _serialize_lookup_content([cmd])
+        cjk, wp = _deserialize_lookup_content(result)
+        assert cjk == {"zh:粽子", "zh:英雄"}
+        assert wp == set()
+
+    def test_explicit_flag_excluded_from_serialization(self):
+        # explicit=True vs explicit=False should produce identical serialization
+        cmd_explicit = make_komando("lookup_cjk", [("ja", "目的", True)])
+        cmd_implicit = make_komando("lookup_cjk", [("ja", "目的", False)])
+        assert _serialize_lookup_content([cmd_explicit]) == _serialize_lookup_content(
+            [cmd_implicit]
+        )
+
+    def test_wp_english_default_encoded_with_empty_lang_suffix(self):
+        cmd = make_komando("lookup_wp", [("Daruma doll", None)])
+        result = _serialize_lookup_content([cmd])
+        _, wp = _deserialize_lookup_content(result)
+        assert wp == {"Daruma doll@"}
+
+    def test_wp_with_language_code_encoded_correctly(self):
+        cmd = make_komando("lookup_wp", [("Mesa", "es")])
+        result = _serialize_lookup_content([cmd])
+        _, wp = _deserialize_lookup_content(result)
+        assert wp == {"Mesa@es"}
+
+    def test_wp_english_and_spanish_are_distinct(self):
+        cmd_en = make_komando("lookup_wp", [("Mesa", None)])
+        cmd_es = make_komando("lookup_wp", [("Mesa", "es")])
+        en_result = _serialize_lookup_content([cmd_en])
+        es_result = _serialize_lookup_content([cmd_es])
+        assert en_result != es_result
+
+    def test_mixed_cjk_and_wp(self):
+        cjk_cmd = make_komando("lookup_cjk", [("zh", "粽子", False)])
+        wp_cmd = make_komando("lookup_wp", [("Daruma doll", None)])
+        result = _serialize_lookup_content([cjk_cmd, wp_cmd])
+        cjk, wp = _deserialize_lookup_content(result)
+        assert cjk == {"zh:粽子"}
+        assert wp == {"Daruma doll@"}
+
+    def test_non_lookup_commands_ignored(self):
+        cmd = make_komando("translated", [])
+        result = _serialize_lookup_content([cmd])
+        assert result == "§"
+
+    def test_disable_tokenization_changes_resolved_terms(self):
+        # Tokenized version produces multiple tokens; disabling produces the full term.
+        # This is the core bug scenario: edit tracker must detect this as a change.
+        cmd_tokenized = make_komando(
+            "lookup_cjk", [("ja", "七転", False), ("ja", "八", False)]
+        )
+        cmd_full = make_komando("lookup_cjk", [("ja", "七転八起", False)])
+        assert _serialize_lookup_content([cmd_tokenized]) != _serialize_lookup_content(
+            [cmd_full]
+        )
+
+
+class TestDeserializeLookupContent:
+    def test_empty_string_returns_empty_sets(self):
+        cjk, wp = _deserialize_lookup_content("")
+        assert cjk == set()
+        assert wp == set()
+
+    def test_section_separator_only_returns_empty_sets(self):
+        cjk, wp = _deserialize_lookup_content("§")
+        assert cjk == set()
+        assert wp == set()
+
+    def test_cjk_only_returns_empty_wp(self):
+        cjk, wp = _deserialize_lookup_content("zh:粽子§")
+        assert cjk == {"zh:粽子"}
+        assert wp == set()
+
+    def test_wp_only_returns_empty_cjk(self):
+        cjk, wp = _deserialize_lookup_content("§Mesa@es")
+        assert cjk == set()
+        assert wp == {"Mesa@es"}
+
+    def test_round_trip_multiple_terms(self):
+        cmd = make_komando(
+            "lookup_cjk",
+            [("zh", "天下", False), ("zh", "属于", False), ("zh", "壮士", False)],
+        )
+        serialized = _serialize_lookup_content([cmd])
+        cjk, _ = _deserialize_lookup_content(serialized)
+        assert cjk == {"zh:天下", "zh:属于", "zh:壮士"}
+
+
+# ===========================================================================
 # _CachedComment
 # ===========================================================================
 
@@ -126,6 +236,29 @@ class TestCachedComment:
         first = c.command_names
         second = c.command_names
         assert first is second
+
+    def test_lookup_content_defaults_to_empty_string(self):
+        c = _CachedComment(body="!translated", komandos="translated")
+        assert c.lookup_content == ""
+
+    def test_cjk_terms_parsed_from_lookup_content(self):
+        c = _CachedComment(
+            body="`粽子`", komandos="lookup_cjk", lookup_content="zh:粽子§"
+        )
+        assert c.cjk_terms == {"zh:粽子"}
+
+    def test_wp_terms_parsed_from_lookup_content(self):
+        c = _CachedComment(
+            body="{{Mesa}}:es",
+            komandos="lookup_wp",
+            lookup_content="§Mesa@es",
+        )
+        assert c.wp_terms == {"Mesa@es"}
+
+    def test_empty_lookup_content_gives_empty_term_sets(self):
+        c = _CachedComment(body="!translated", komandos="translated", lookup_content="")
+        assert c.cjk_terms == set()
+        assert c.wp_terms == set()
 
 
 # ===========================================================================
@@ -160,7 +293,7 @@ class TestGetCachedComment:
 
     def test_returns_cached_comment_object(self):
         cursor = MagicMock()
-        cursor.fetchone.return_value = ("Some body text", "translated")
+        cursor.fetchone.return_value = ("Some body text", "translated", "")
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
             result = _get_cached_comment("abc123")
@@ -170,11 +303,28 @@ class TestGetCachedComment:
 
     def test_none_komandos_stored_as_empty_sentinel(self):
         cursor = MagicMock()
-        cursor.fetchone.return_value = ("Body text", None)
+        cursor.fetchone.return_value = ("Body text", None, "")
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
             result = _get_cached_comment("abc123")
         assert result.command_names == set()
+
+    def test_lookup_content_populated_from_row(self):
+        cursor = MagicMock()
+        cursor.fetchone.return_value = ("`粽子`", "lookup_cjk", "zh:粽子§")
+        with patch("monitoring.edit_tracker.db") as mock_db:
+            mock_db.cursor_cache = cursor
+            result = _get_cached_comment("abc123")
+        assert result.lookup_content == "zh:粽子§"
+        assert result.cjk_terms == {"zh:粽子"}
+
+    def test_none_lookup_content_normalised_to_empty_string(self):
+        cursor = MagicMock()
+        cursor.fetchone.return_value = ("Body text", "translated", None)
+        with patch("monitoring.edit_tracker.db") as mock_db:
+            mock_db.cursor_cache = cursor
+            result = _get_cached_comment("abc123")
+        assert result.lookup_content == ""
 
 
 # ===========================================================================
@@ -183,12 +333,21 @@ class TestGetCachedComment:
 
 
 class TestUpdateCommentCache:
+    @staticmethod
+    def _make_mock_command(name: str = "translated") -> MagicMock:
+        cmd = MagicMock()
+        cmd.name = name
+        cmd.data = []
+        return cmd
+
     def test_deletes_then_inserts(self):
         cursor = MagicMock()
+        mock_cmd = self._make_mock_command()
         with (
             patch("monitoring.edit_tracker.db") as mock_db,
             patch(
-                "monitoring.edit_tracker._serialize_komandos", return_value="translated"
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
             ),
         ):
             mock_db.cursor_cache = cursor
@@ -201,40 +360,109 @@ class TestUpdateCommentCache:
     def test_commit_called(self):
         cursor = MagicMock()
         conn = MagicMock()
+        mock_cmd = self._make_mock_command()
         with (
             patch("monitoring.edit_tracker.db") as mock_db,
-            patch("monitoring.edit_tracker._serialize_komandos", return_value=""),
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
+            ),
         ):
             mock_db.cursor_cache = cursor
             mock_db.conn_cache = conn
             _update_comment_cache("abc123", "no commands", 1772409600)
         conn.commit.assert_called_once()
 
-    def test_provided_komandos_not_reparsed(self):
+    def test_both_provided_skips_parse(self):
+        """Passing both komandos and lookup_content must not call extract_commands_from_text."""
         cursor = MagicMock()
         with (
             patch("monitoring.edit_tracker.db") as mock_db,
-            patch("monitoring.edit_tracker._serialize_komandos") as mock_ser,
+            patch("monitoring.edit_tracker.extract_commands_from_text") as mock_parse,
+        ):
+            mock_db.cursor_cache = cursor
+            mock_db.conn_cache = MagicMock()
+            _update_comment_cache(
+                "abc123",
+                "!translated",
+                1772409600,
+                komandos="translated",
+                lookup_content="§",
+            )
+        mock_parse.assert_not_called()
+
+    def test_neither_provided_triggers_single_parse(self):
+        """Omitting both komandos and lookup_content calls extract_commands_from_text once."""
+        cursor = MagicMock()
+        mock_cmd = self._make_mock_command()
+        with (
+            patch("monitoring.edit_tracker.db") as mock_db,
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
+            ) as mock_parse,
+        ):
+            mock_db.cursor_cache = cursor
+            mock_db.conn_cache = MagicMock()
+            _update_comment_cache("abc123", "!translated", 1772409600)
+        mock_parse.assert_called_once_with("!translated")
+
+    def test_only_komandos_provided_still_triggers_parse(self):
+        """Passing komandos but not lookup_content must still parse to derive lookup_content."""
+        cursor = MagicMock()
+        mock_cmd = self._make_mock_command()
+        with (
+            patch("monitoring.edit_tracker.db") as mock_db,
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
+            ) as mock_parse,
         ):
             mock_db.cursor_cache = cursor
             mock_db.conn_cache = MagicMock()
             _update_comment_cache(
                 "abc123", "!translated", 1772409600, komandos="translated"
             )
-        mock_ser.assert_not_called()
+        mock_parse.assert_called_once_with("!translated")
 
-    def test_komandos_derived_from_body_when_not_provided(self):
+    def test_only_lookup_content_provided_still_triggers_parse(self):
+        """Passing lookup_content but not komandos must still parse to derive komandos."""
         cursor = MagicMock()
+        mock_cmd = self._make_mock_command()
         with (
             patch("monitoring.edit_tracker.db") as mock_db,
             patch(
-                "monitoring.edit_tracker._serialize_komandos", return_value="translated"
-            ) as mock_ser,
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
+            ) as mock_parse,
+        ):
+            mock_db.cursor_cache = cursor
+            mock_db.conn_cache = MagicMock()
+            _update_comment_cache(
+                "abc123", "!translated", 1772409600, lookup_content="§"
+            )
+        mock_parse.assert_called_once_with("!translated")
+
+    def test_insert_receives_five_values(self):
+        """The INSERT statement must bind five values matching the updated schema."""
+        cursor = MagicMock()
+        mock_cmd = self._make_mock_command()
+        with (
+            patch("monitoring.edit_tracker.db") as mock_db,
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[mock_cmd],
+            ),
         ):
             mock_db.cursor_cache = cursor
             mock_db.conn_cache = MagicMock()
             _update_comment_cache("abc123", "!translated", 1772409600)
-        mock_ser.assert_called_once_with("!translated")
+
+        insert_call = next(
+            c for c in cursor.execute.call_args_list if "INSERT" in c[0][0]
+        )
+        bound_values = insert_call[0][1]
+        assert len(bound_values) == 5
 
 
 # ===========================================================================

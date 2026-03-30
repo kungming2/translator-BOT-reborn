@@ -274,7 +274,13 @@ class TestInstruoFromText(unittest.TestCase):
         names = [cmd.name for cmd in instruo.commands]
         self.assertIn("lookup_wp", names)
         wp_cmd = next(cmd for cmd in instruo.commands if cmd.name == "lookup_wp")
-        self.assertIn("Esperanto", wp_cmd.data)
+        self.assertIn(("Esperanto", None), wp_cmd.data)
+
+    @_skip_if_no_data
+    def test_wikipedia_lookup_with_language_extracted(self) -> None:
+        instruo = Instruo.from_text("{{紫禁城}}:zh")
+        wp_cmd = next(cmd for cmd in instruo.commands if cmd.name == "lookup_wp")
+        self.assertIn(("紫禁城", "zh"), wp_cmd.data)
 
     @_skip_if_no_data
     def test_cjk_lookup_extracted(self) -> None:

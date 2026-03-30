@@ -19,7 +19,7 @@ from models.ajo import Ajo
 from models.instruo import Instruo
 from models.komando import Komando
 from models.kunulo import Kunulo
-from reddit.reddit_sender import reddit_reply
+from reddit.reddit_sender import reddit_edit, reddit_reply
 from responses import RESPONSE
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
@@ -109,9 +109,27 @@ async def perform_cjk_lookups(cjk_language: str, search_terms: list[str]) -> lis
 # ─── Reply formatting ─────────────────────────────────────────────────────────
 
 
-def _format_reply(lookup_results: list[str], ajo: Ajo | None = None) -> str:
-    """Format the reply body with lookup results."""
+def _format_reply(
+    lookup_results: list[str],
+    ajo: Ajo | None = None,
+    parent_comment_id: str | None = None,
+) -> str:
+    """
+    Format the reply body with lookup results.
+
+    Args:
+        lookup_results: List of formatted lookup result strings.
+        ajo: The Ajo object for the post, used for OP mention. May be None.
+        parent_comment_id: The Reddit comment ID of the user comment that
+            triggered this reply. When provided, an invisible anchor
+            ``[](#cjk_parent_XXXX)`` is embedded so Kunulo can later
+            identify which bot reply belongs to which user comment,
+            enabling edit-on-reprocess rather than a duplicate reply.
+    """
     anchor_tag = RESPONSE.ANCHOR_CJK
+    if parent_comment_id:
+        anchor_tag += f"[](#cjk_parent_{parent_comment_id})"
+
     formatted_results: str = "\n\n".join(lookup_results)
 
     if not ajo:
@@ -164,6 +182,27 @@ def _check_for_duplicate_lookups(
     return None
 
 
+# ─── Edit-on-reprocess helper ─────────────────────────────────────────────────
+
+
+def _find_existing_cjk_reply(kunulo: Kunulo, comment_id: str) -> str | None:
+    """
+    Return the bot comment ID of an existing CJK reply that was triggered
+    by *comment_id*, or None if no such reply exists.
+
+    This is used during edit-tracker reprocessing to locate the bot's
+    previous reply so it can be updated in place rather than posted anew.
+
+    Args:
+        kunulo: A Kunulo instance already built from the submission.
+        comment_id: The Reddit ID of the user comment being reprocessed.
+
+    Returns:
+        str or None: Bot comment ID to edit, or None.
+    """
+    return kunulo.find_cjk_reply_for_comment(comment_id)
+
+
 # ─── Command handler ──────────────────────────────────────────────────────────
 
 
@@ -174,6 +213,11 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     Supports multi-language lookups where different terms can have different languages.
     If an !identify command is present, it provides a default language for auto-detected terms,
     but explicitly marked terms (e.g., `term`:ko) keep their specified language.
+
+    On reprocessing triggered by the edit tracker (e.g. the user changed
+    backtick content to fix tokenization), the handler detects an existing
+    bot reply for this comment and edits it in place rather than posting a
+    new reply or emitting a spurious duplicate warning.
 
     Examples:
         - `可能` `시계`:ko with !identify:ja
@@ -190,7 +234,21 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
         logger.warning("No data in komando; nothing to look up.")
         return
 
-    # Resolve default language from a co-occurring !identify command.
+    # ── Check for an existing bot reply to this comment ───────────────────────
+
+    # Build Kunulo once here so both the edit-detection path and the
+    # duplicate-check path share the same instance.
+    kunulo = Kunulo.from_submission(comment.submission)
+    existing_bot_reply_id = _find_existing_cjk_reply(kunulo, comment.id)
+
+    if existing_bot_reply_id:
+        logger.info(
+            f"Found existing CJK reply `{existing_bot_reply_id}` for comment "
+            f"`{comment.id}` — will edit in place rather than post a new reply."
+        )
+
+    # ── Resolve default language from a co-occurring !identify command ────────
+
     identify_komando = next((k for k in instruo.commands if k.name == "identify"), None)
     default_language = None
 
@@ -203,7 +261,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
                 f"as default for auto-detected terms"
             )
 
-    # Group terms by their CJK language category, respecting explicit markings.
+    # ── Group terms by their CJK language category ────────────────────────────
+
     terms_by_language: dict[str, list[str]] = {}
 
     for entry in komando.data:
@@ -245,7 +304,10 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
 
     logger.info(f"Processing terms grouped by language: {terms_by_language}")
 
-    # Perform lookups per language group, tracking duplicates separately.
+    # ── Perform lookups ───────────────────────────────────────────────────────
+
+    # When editing an existing reply we skip the duplicate check entirely:
+    # the "duplicate" IS the reply we're about to update.
     all_lookup_results = []
     duplicate_responses = []
 
@@ -254,33 +316,35 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
             f"Processing {len(search_terms)} term(s) for {cjk_language}: {search_terms}"
         )
 
-        duplicate_check = _check_for_duplicate_lookups(
-            comment, search_terms, cjk_language
-        )
-
-        if duplicate_check:
-            comment_id = duplicate_check["comment_id"]
-            matched_terms = duplicate_check["matched_terms"]
-
-            kunulo = Kunulo.from_submission(comment.submission)
-            permalink = kunulo.get_comment_permalink(comment_id)
-            chars_str = ", ".join(f"**{char}**" for char in matched_terms)
-
-            duplicate_responses.append(
-                f"The {cjk_language} term(s) {chars_str} have already been looked up. "
-                f"Please see [this comment]({permalink})."
+        if not existing_bot_reply_id:
+            # Only run the duplicate check when this is a fresh (non-edit) post.
+            duplicate_check = _check_for_duplicate_lookups(
+                comment, search_terms, cjk_language
             )
-            logger.info(
-                f"Duplicate found for {cjk_language} terms {matched_terms} "
-                f"in comment {comment_id}."
-            )
-            continue
+
+            if duplicate_check:
+                comment_id = duplicate_check["comment_id"]
+                matched_terms = duplicate_check["matched_terms"]
+
+                permalink = kunulo.get_comment_permalink(comment_id)
+                chars_str = ", ".join(f"**{char}**" for char in matched_terms)
+
+                duplicate_responses.append(
+                    f"The {cjk_language} term(s) {chars_str} have already been looked up. "
+                    f"Please see [this comment]({permalink})."
+                )
+                logger.info(
+                    f"Duplicate found for {cjk_language} terms {matched_terms} "
+                    f"in comment {comment_id}."
+                )
+                continue
 
         lookup_results = asyncio.run(perform_cjk_lookups(cjk_language, search_terms))
         all_lookup_results.extend(lookup_results)
         logger.info(f"Completed lookups for {cjk_language}.")
 
-    # Assemble and send reply.
+    # ── Assemble and send / edit reply ────────────────────────────────────────
+
     reply_parts = []
 
     if duplicate_responses:
@@ -289,19 +353,39 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
         reply_parts.append(duplicate_section)
 
     if all_lookup_results:
-        reply_parts.append(_format_reply(all_lookup_results, ajo))
+        reply_parts.append(
+            _format_reply(all_lookup_results, ajo, parent_comment_id=comment.id)
+        )
 
-    if reply_parts:
-        final_reply = "\n\n---\n\n".join(reply_parts)
-        if len(final_reply) > 10000:
-            final_reply = (
-                final_reply[:9000]
+    if not reply_parts:
+        logger.warning("No results to reply with (all duplicates or no matches).")
+        return
+
+    final_reply = "\n\n---\n\n".join(reply_parts)
+    if len(final_reply) > 10000:
+        final_reply = (
+            final_reply[:9000]
+            + "\n\n*Lookup information has been truncated due to excessive length.*"
+        )
+
+    if existing_bot_reply_id and all_lookup_results:
+        # Edit the existing reply in place.  Duplicate-response sections are
+        # not included in edits: if the user fixed their comment, it's no
+        # longer a duplicate situation.
+        edit_body = _format_reply(all_lookup_results, ajo, parent_comment_id=comment.id)
+        if len(edit_body) > 10000:
+            edit_body = (
+                edit_body[:9000]
                 + "\n\n*Lookup information has been truncated due to excessive length.*"
             )
+        reddit_edit(existing_bot_reply_id, edit_body)
+        logger.info(
+            f"Edited existing CJK reply `{existing_bot_reply_id}` with "
+            f"{len(all_lookup_results)} updated lookup result(s)."
+        )
+    else:
         reddit_reply(comment, final_reply)
         logger.info(
             f"Replied with {len(all_lookup_results)} new lookup(s) "
             f"and {len(duplicate_responses)} duplicate notification(s)."
         )
-    else:
-        logger.warning("No results to reply with (all duplicates or no matches).")

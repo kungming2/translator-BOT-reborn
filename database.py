@@ -194,7 +194,8 @@ def _initialize_cache_db() -> None:
             id TEXT PRIMARY KEY,
             content TEXT,
             created_utc INTEGER,
-            komandos TEXT
+            komandos TEXT,
+            lookup_content TEXT NOT NULL DEFAULT ''
         )
         """,
         """
@@ -383,8 +384,12 @@ def _initialize_main_db() -> None:
 
 def initialize_all_databases() -> None:
     """
-    Create all three required databases if they do not exist.
-    This is unlikely to be often used as the databases should transfer over.
+    Create all three required databases if they do not exist, then apply
+    any pending schema migrations.
+
+    This is unlikely to be often used as the databases should transfer over,
+    but the migration step runs unconditionally so existing deployments pick
+    up new columns on first startup.
     """
     _initialize_cache_db()
     _initialize_ajo_db()

@@ -12,6 +12,7 @@ This module provides a safe abstraction layer for Reddit interactions:
 
 Functions:
     reddit_reply: Reply to a Comment, Message, or Submission
+    reddit_edit: Edit an existing Comment in place
     message_send: Send a private message to a Redditor
 ...
 
@@ -105,6 +106,43 @@ def reddit_reply(
             f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."
         )
         return None
+
+
+def reddit_edit(comment_id: str, new_body: str) -> Comment | None:
+    """
+    Edit an existing bot comment in place.
+    In testing mode, logs the new body instead of submitting the edit.
+
+    Args:
+        comment_id: The Reddit comment ID to edit (without ``t1_`` prefix).
+        new_body: The replacement body text.
+
+    Returns:
+        The updated PRAW Comment object on success, or None on failure.
+    """
+    if testing_mode:
+        logger.info(f"[TESTING MODE] Would edit comment `{comment_id}`:")
+        logger.info(new_body)
+
+        log_testing_mode(
+            output_text=new_body,
+            title="Edit",
+            metadata={"Comment ID": comment_id},
+        )
+        return None
+
+    from reddit.connection import REDDIT
+
+    try:
+        comment = REDDIT.comment(id=comment_id)
+        updated = comment.edit(new_body)
+        logger.info(f"Edited comment `{comment_id}` successfully.")
+        return updated
+    except NotFound:
+        logger.info(f"Comment `{comment_id}` no longer exists; edit not sent.")
+    except APIException:
+        logger.exception(f"Unexpected error editing comment `{comment_id}`.")
+    return None
 
 
 def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:

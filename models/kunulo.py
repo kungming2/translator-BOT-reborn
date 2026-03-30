@@ -42,12 +42,30 @@ class Kunulo:
     Internal storage format: Each tag maps to a list of (comment_id, data) tuples.
     Legacy format (just comment IDs) is automatically converted for compatibility.
 
+    For ``comment_cjk`` and ``comment_wikipedia`` entries, ``data`` is a dict
+    with two keys:
+
+    - ``"terms"``: list of looked-up strings extracted from the reply body
+    - ``"parent_id"``: Reddit comment ID of the user comment that triggered this
+      bot reply (extracted from the ``[](#cjk_parent_XXXX)`` or
+      ``[](#wp_parent_XXXX)`` anchor embedded in the reply body by
+      ``lookup_cjk._format_reply`` / ``lookup_wp._format_wp_reply``).
+      May be ``None`` for replies posted before this feature was introduced.
+
+    For all other tags, ``data`` remains a plain ``list[str] | None``.
+
     To use: kunulo = Kunulo.from_submission(reddit_submission)
     Example output:
     <Kunulo: ({'comment_unknown': [('nijg7y3', None)]}) | OP Thanks: False>
     """
 
     anchor_pattern = re.compile(r"\[]\(#([a-zA-Z0-9_]+)\)")
+    # Matches the parent-comment anchor embedded by lookup_cjk._format_reply,
+    # e.g. [](#cjk_parent_abc123) → group 1 = "abc123"
+    cjk_parent_pattern = re.compile(r"\[]\(#cjk_parent_([a-zA-Z0-9]+)\)")
+    # Matches the parent-comment anchor embedded by lookup_wp._format_wp_reply,
+    # e.g. [](#wp_parent_abc123) → group 1 = "abc123"
+    wp_parent_pattern = re.compile(r"\[]\(#wp_parent_([a-zA-Z0-9]+)\)")
 
     # ── Construction ──────────────────────────────────────────────────────────
 
@@ -86,12 +104,34 @@ class Kunulo:
             # Gather bot's anchor tags
             if comment_author == USERNAME:
                 for tag in cls.anchor_pattern.findall(comment.body):
-                    # Extract associated data based on tag type
-                    associated_data = None
                     if tag == "comment_cjk":
-                        associated_data = cls._extract_cjk_characters(comment.body)
+                        # For CJK replies, store a dict with terms and the ID
+                        # of the user comment that triggered this bot reply.
+                        # The parent ID is embedded in the reply body as
+                        # [](#cjk_parent_XXXX) by lookup_cjk._format_reply.
+                        terms = cls._extract_cjk_characters(comment.body)
+                        parent_match = cls.cjk_parent_pattern.search(comment.body)
+                        parent_id = parent_match.group(1) if parent_match else None
+                        associated_data: Any = {
+                            "terms": terms,
+                            "parent_id": parent_id,
+                        }
                     elif tag == "comment_wikipedia":
-                        associated_data = cls._extract_wikipedia_terms(comment.body)
+                        # Same structure as comment_cjk: store terms and the
+                        # triggering comment's ID so lookup_wp can edit in place.
+                        # The parent ID is embedded as [](#wp_parent_XXXX) by
+                        # lookup_wp._format_wp_reply.
+                        wp_terms = cls._extract_wikipedia_terms(comment.body)
+                        wp_parent_match = cls.wp_parent_pattern.search(comment.body)
+                        wp_parent_id = (
+                            wp_parent_match.group(1) if wp_parent_match else None
+                        )
+                        associated_data = {
+                            "terms": wp_terms,
+                            "parent_id": wp_parent_id,
+                        }
+                    else:
+                        associated_data = None
                     instance._add_entry(tag, comment.id, associated_data)
 
             # Check for OP thanking (case-insensitive)
@@ -293,6 +333,50 @@ class Kunulo:
         entries = self._data.get(tag, [])
         return [self._normalize_entry(e)[0] for e in entries]
 
+    def find_cjk_reply_for_comment(self, triggering_comment_id: str) -> str | None:
+        """
+        Find the bot's existing CJK reply that was triggered by a specific
+        user comment.
+
+        Searches all ``comment_cjk`` entries for one whose ``parent_id``
+        matches *triggering_comment_id*.  Returns ``None`` if no match is
+        found, or if the entry predates the parent-tracking feature (i.e.
+        ``parent_id`` is ``None``).
+
+        Args:
+            triggering_comment_id: The Reddit comment ID of the user comment
+                whose edit is being reprocessed.
+
+        Returns:
+            str or None: The bot's comment ID to edit, or None if not found.
+        """
+        for bot_comment_id, data in self.get_all_entries("comment_cjk"):
+            if isinstance(data, dict) and data.get("parent_id") == triggering_comment_id:
+                return bot_comment_id
+        return None
+
+    def find_wp_reply_for_comment(self, triggering_comment_id: str) -> str | None:
+        """
+        Find the bot's existing Wikipedia reply that was triggered by a specific
+        user comment.
+
+        Searches all ``comment_wikipedia`` entries for one whose ``parent_id``
+        matches *triggering_comment_id*.  Returns ``None`` if no match is
+        found, or if the entry predates the parent-tracking feature (i.e.
+        ``parent_id`` is ``None``).
+
+        Args:
+            triggering_comment_id: The Reddit comment ID of the user comment
+                whose edit is being reprocessed.
+
+        Returns:
+            str or None: The bot's comment ID to edit, or None if not found.
+        """
+        for bot_comment_id, data in self.get_all_entries("comment_wikipedia"):
+            if isinstance(data, dict) and data.get("parent_id") == triggering_comment_id:
+                return bot_comment_id
+        return None
+
     def check_existing_cjk_lookups(
         self, requested_characters: list[str], exact_match: bool = True
     ) -> dict[str, Any] | None:
@@ -320,25 +404,35 @@ class Kunulo:
         # Convert requested characters to a set for comparison
         requested_set = set(requested_characters)
 
-        # Check each existing comment for matches
-        for comment_id, existing_chars in cjk_entries:
-            if existing_chars:
-                existing_set = set(existing_chars)
+        # Check each existing comment for matches.
+        # associated_data is now a dict {"terms": [...], "parent_id": "..."}
+        # for replies posted after the parent-tracking feature was introduced,
+        # and a plain list for older replies.
+        for comment_id, associated_data in cjk_entries:
+            if associated_data is None:
+                continue
 
-                if exact_match:
-                    # Check for exact match (same characters, order doesn't matter)
-                    if requested_set == existing_set:
-                        return {
-                            "comment_id": comment_id,
-                            "matched_terms": list(requested_set),
-                        }
-                else:
-                    # Check if requested is subset of existing
-                    if requested_set.issubset(existing_set):
-                        return {
-                            "comment_id": comment_id,
-                            "matched_terms": list(requested_set),
-                        }
+            existing_chars: list[str]
+            if isinstance(associated_data, dict):
+                existing_chars = associated_data.get("terms") or []
+            else:
+                # Legacy format: plain list
+                existing_chars = associated_data
+
+            existing_set = set(existing_chars)
+
+            if exact_match:
+                if requested_set == existing_set:
+                    return {
+                        "comment_id": comment_id,
+                        "matched_terms": list(requested_set),
+                    }
+            else:
+                if requested_set.issubset(existing_set):
+                    return {
+                        "comment_id": comment_id,
+                        "matched_terms": list(requested_set),
+                    }
 
         return None
 

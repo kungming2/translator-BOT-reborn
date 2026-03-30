@@ -11,10 +11,15 @@ This module provides two main tracking functions:
    - Detects both "ninja edits" (within 3 minutes, no edit flag) and
      regular edits (with edit flag)
    - Caches comment content and compares against new versions
-   - Triggers reprocessing when new commands are added via edits
+   - Triggers reprocessing when new commands are added via edits, or
+     when lookup_cjk / lookup_wp backtick/brace content changes even
+     if the set of command names stays the same (e.g. switching from
+     `七転八起` to `七転八起`! to disable tokenization)
    - Uses a three-phase approach:
-     * Phase 1: Cache all recent comments (with their parsed command names)
-     * Phase 2: Check edited comments for genuinely new commands
+     * Phase 1: Cache all recent comments (with their parsed command names
+       and resolved lookup content)
+     * Phase 2: Check edited comments for genuinely new commands or
+       changed lookup content
      * Phase 3: Clean up old cache entries
 
 2. progress_tracker():
@@ -60,6 +65,13 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:EDIT"})
 # Sentinel used when a comment has no commands at all.
 _NO_COMMANDS = ""
 
+# Separators used when serializing lookup_content to a single DB column.
+# _LOOKUP_CONTENT_SEP divides individual terms within a block.
+# _LOOKUP_SECTION_SEP divides the cjk block from the wp block.
+# Neither character appears in CJK text, Wikipedia titles, or language codes.
+_LOOKUP_CONTENT_SEP = "|"
+_LOOKUP_SECTION_SEP = "§"
+
 
 # ─── Cache helpers ────────────────────────────────────────────────────────────
 
@@ -101,16 +113,81 @@ def _deserialize_komandos(komandos_str: str) -> set[str]:
     return set(komandos_str.split(","))
 
 
+# ─── Lookup content serialization ─────────────────────────────────────────────
+
+
+def _serialize_lookup_content(commands: list) -> str:
+    """
+    Serialize lookup_cjk and lookup_wp data from a parsed command list into
+    a compact string for storage in the lookup_content column.
+
+    Format: ``<cjk_block>§<wp_block>``
+
+    cjk_block: ``lang:term|lang:term|...``
+        - lang is the 2/3-char code; term is the post-tokenization token.
+        - The explicit flag and disable_tokenization flag are excluded;
+          only the resolved terms matter for change detection.
+
+    wp_block: ``term@lang|term@lang|...``
+        - lang is the 2/3-char Wikipedia language code, or empty string
+          for the default English Wikipedia (``{{Mesa}}`` → ``Mesa@``,
+          ``{{Mesa}}:es`` → ``Mesa@es``).
+        - ``@`` is used as the intra-entry separator because Wikipedia
+          article titles can contain colons but not ``@``.
+    """
+    cjk_parts: list[str] = []
+    wp_parts: list[str] = []
+
+    for cmd in commands:
+        if cmd.name == "lookup_cjk" and cmd.data:
+            for entry in cmd.data:
+                if isinstance(entry, tuple) and len(entry) >= 2:
+                    lang, term = entry[0], entry[1]
+                    cjk_parts.append(f"{lang}:{term}")
+        elif cmd.name == "lookup_wp" and cmd.data:
+            for entry in cmd.data:
+                if isinstance(entry, tuple):
+                    term, lang = entry  # (str, str | None)
+                    wp_parts.append(f"{term}@{lang or ''}")
+
+    cjk_block = _LOOKUP_CONTENT_SEP.join(cjk_parts)
+    wp_block = _LOOKUP_CONTENT_SEP.join(wp_parts)
+    return f"{cjk_block}{_LOOKUP_SECTION_SEP}{wp_block}"
+
+
+def _deserialize_lookup_content(s: str) -> tuple[set[str], set[str]]:
+    """
+    Inverse of ``_serialize_lookup_content``.
+
+    Returns ``(cjk_terms, wp_terms)`` as sets of opaque strings suitable
+    for equality comparison. The internal encoding (``lang:term`` and
+    ``term@lang``) is treated as opaque; callers should not parse the
+    individual fields.
+    """
+    if _LOOKUP_SECTION_SEP in s:
+        cjk_block, wp_block = s.split(_LOOKUP_SECTION_SEP, 1)
+    else:
+        cjk_block, wp_block = s, ""
+
+    cjk_terms = {t for t in cjk_block.split(_LOOKUP_CONTENT_SEP) if t}
+    wp_terms = {t for t in wp_block.split(_LOOKUP_CONTENT_SEP) if t}
+    return cjk_terms, wp_terms
+
+
+# ─── Cached comment container ─────────────────────────────────────────────────
+
+
 class _CachedComment:
     """Thin container for what we read back from comment_cache."""
 
-    __slots__ = ("body", "_komandos_str", "_komando_set")
+    __slots__ = ("body", "_komandos_str", "_komando_set", "lookup_content")
 
-    def __init__(self, body: str, komandos: str):
-        """Store the cached comment body and raw komandos string."""
+    def __init__(self, body: str, komandos: str, lookup_content: str = ""):
+        """Store the cached comment body, raw komandos string, and lookup content."""
         self.body = body
         self._komandos_str = komandos
         self._komando_set: set[str] | None = None
+        self.lookup_content = lookup_content
 
     @property
     def command_names(self) -> set[str]:
@@ -119,19 +196,34 @@ class _CachedComment:
             self._komando_set = _deserialize_komandos(self._komandos_str)
         return self._komando_set
 
+    @property
+    def cjk_terms(self) -> set[str]:
+        """Deserialized CJK term set from lookup_content."""
+        return _deserialize_lookup_content(self.lookup_content)[0]
+
+    @property
+    def wp_terms(self) -> set[str]:
+        """Deserialized Wikipedia term set from lookup_content."""
+        return _deserialize_lookup_content(self.lookup_content)[1]
+
 
 def _get_cached_comment(comment_id: str) -> "_CachedComment | None":
-    """Retrieve cached body and komandos for *comment_id*.
+    """Retrieve cached body, komandos, and lookup_content for *comment_id*.
     Returns None if the comment is not in the cache."""
     cursor = db.cursor_cache
     cursor.execute(
-        "SELECT content, komandos FROM comment_cache WHERE id = ?", (comment_id,)
+        "SELECT content, komandos, lookup_content FROM comment_cache WHERE id = ?",
+        (comment_id,),
     )
     result = cursor.fetchone()
     if result is None:
         return None
-    body, komandos = result
-    return _CachedComment(body=body, komandos=komandos or _NO_COMMANDS)
+    body, komandos, lookup_content = result
+    return _CachedComment(
+        body=body,
+        komandos=komandos or _NO_COMMANDS,
+        lookup_content=lookup_content or "",
+    )
 
 
 def _update_comment_cache(
@@ -139,21 +231,26 @@ def _update_comment_cache(
     comment_body: str,
     created_utc: int,
     komandos: str | None = None,
+    lookup_content: str | None = None,
 ) -> None:
-    """Replace old cache entry with the new body and komandos string.
+    """Replace old cache entry with the new body, komandos, and lookup_content.
 
-    If *komandos* is None the column is derived from *comment_body* here,
-    so callers that have already parsed the commands can pass them in to
-    avoid double-parsing.
+    If *komandos* or *lookup_content* are None they are derived from a single
+    parse of *comment_body*, so callers that have already parsed the commands
+    can pass both in to avoid double-parsing.
     """
-    if komandos is None:
-        komandos = _serialize_komandos(comment_body)
+    if komandos is None or lookup_content is None:
+        parsed_commands = extract_commands_from_text(comment_body)
+        if komandos is None:
+            komandos = ",".join(dict.fromkeys(cmd.name for cmd in parsed_commands))
+        if lookup_content is None:
+            lookup_content = _serialize_lookup_content(parsed_commands)
 
     cursor = db.cursor_cache
     cursor.execute("DELETE FROM comment_cache WHERE id = ?", (comment_id,))
     cursor.execute(
-        "INSERT INTO comment_cache VALUES (?, ?, ?, ?)",
-        (comment_id, comment_body, created_utc, komandos),
+        "INSERT INTO comment_cache VALUES (?, ?, ?, ?, ?)",
+        (comment_id, comment_body, created_utc, komandos, lookup_content),
     )
     db.conn_cache.commit()
 
@@ -185,16 +282,21 @@ def _cleanup_comment_cache(limit: int) -> None:
 
 def edit_tracker() -> None:
     """
-    Detect edited r/translator comments that introduce new commands.
-    If a meaningful change is detected, the comment is removed from the
-    processed database so ziwen_commands will reprocess it.
+    Detect edited r/translator comments that introduce new commands or
+    change the content of lookup_cjk / lookup_wp queries.
 
-    The comparison is command-set aware: reprocessing is only triggered
-    when the edited version contains command names that were not present
-    in the cached (pre-edit) version.  This correctly handles the case
-    where a comment already had one command (e.g. !identify) and the
-    user edits in a second one (e.g. !translated) — something the old
-    boolean comment_has_command() check would have missed.
+    Reprocessing is triggered when either of the following is true:
+
+    - The edited version contains command names not present in the cached
+      (pre-edit) version (e.g. a new !translated is added).
+    - The resolved lookup_cjk or lookup_wp content has changed even though
+      the command names are identical (e.g. switching `七転八起` to
+      `七転八起`! to disable tokenization, which changes the
+      post-tokenization tokens that would actually be looked up).
+
+    The comparison is command-set and lookup-content aware, so purely
+    cosmetic edits (rewording surrounding prose without changing commands
+    or backtick/brace content) do not trigger unnecessary reprocessing.
     """
     # Phase 1: Iterate over recent comments to seed / refresh the cache.
     # This catches "ninja edits" made within Reddit's 3-minute no-flag
@@ -214,20 +316,26 @@ def edit_tracker() -> None:
         # body to stay cached so Phase 2 can diff against it later).
         cached = _get_cached_comment(comment_id)
         if not cached:
-            # Don't record komandos for the bot's own comments — they would
-            # produce false positives when the edit diff runs in Phase 2.
+            # Don't record komandos or lookup_content for the bot's own
+            # comments — they would produce false positives in Phase 2.
             author = str(comment.author) if comment.author else ""
-            komandos = (
-                _NO_COMMANDS
-                if author.lower() == USERNAME.lower()
-                else _serialize_komandos(comment_body)
-            )
+            if author.lower() == USERNAME.lower():
+                komandos = _NO_COMMANDS
+                lookup_content = ""
+            else:
+                parsed = extract_commands_from_text(comment_body)
+                komandos = ",".join(dict.fromkeys(cmd.name for cmd in parsed))
+                lookup_content = _serialize_lookup_content(parsed)
             logger.debug(
                 f"Cached new comment `{comment_id}` "
                 f"(komandos: {komandos if komandos else 'none'})"
             )
             _update_comment_cache(
-                comment_id, comment_body, int(comment.created_utc), komandos
+                comment_id,
+                comment_body,
+                int(comment.created_utc),
+                komandos,
+                lookup_content,
             )
 
     # Phase 2: Fetch only the edited comments from the subreddit.
@@ -263,16 +371,37 @@ def edit_tracker() -> None:
 
         added_commands = new_command_names - old_command_names
 
-        if added_commands:
+        # Also check whether lookup content changed even if command names
+        # did not. This catches the case where the user edits the backtick
+        # content (e.g. toggling the tokenization-disable ``!`` suffix, or
+        # changing the looked-up term or Wikipedia language code) without
+        # adding a new command keyword.
+        new_lookup_content = _serialize_lookup_content(new_commands)
+        old_cjk, old_wp = _deserialize_lookup_content(
+            cached.lookup_content if cached else ""
+        )
+        new_cjk, new_wp = _deserialize_lookup_content(new_lookup_content)
+        lookup_content_changed = (old_cjk != new_cjk) or (old_wp != new_wp)
+
+        if added_commands or lookup_content_changed:
+            if added_commands:
+                reason = f"new command(s) {sorted(added_commands)} detected"
+            else:
+                reason = (
+                    f"lookup content changed "
+                    f"(cjk: {old_cjk!r} → {new_cjk!r}, "
+                    f"wp: {old_wp!r} → {new_wp!r})"
+                )
             logger.info(
-                f"[Edit_Tracker] Reprocessing triggered for `{comment_id}`: "
-                f"new command(s) {sorted(added_commands)} detected. "
+                f"Reprocessing triggered for `{comment_id}`: "
+                f"{reason}. "
                 f"https://www.reddit.com{item.permalink}"
             )
             _remove_from_processed(comment_id)
         else:
             logger.debug(
-                f"Comment `{comment_id}` edited but no new commands added "
+                f"Comment `{comment_id}` edited but no new commands or lookup "
+                f"content changes detected "
                 f"(had={sorted(old_command_names)}, now={sorted(new_command_names)})."
             )
 
@@ -280,7 +409,11 @@ def edit_tracker() -> None:
             dict.fromkeys(cmd.name for cmd in new_commands)  # ordered dedup
         )
         _update_comment_cache(
-            comment_id, comment_new_body, int(item.created_utc), new_komandos
+            comment_id,
+            comment_new_body,
+            int(item.created_utc),
+            new_komandos,
+            new_lookup_content,
         )
 
     # Phase 3: Cache cleanup.

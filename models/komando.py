@@ -226,22 +226,32 @@ def _deduplicate_args(args: list) -> list:
     return result
 
 
-def _extract_text_within_curly_braces(text: str) -> list[str]:
+def _extract_text_within_curly_braces(text: str) -> list[tuple[str, str | None]]:
     """
-    Extracts all content inside {{...}} blocks, with whitespace stripped.
+    Extracts all content inside {{...}} blocks, with an optional :lang suffix.
+
+    Supports:
+      - {{Forbidden City}}     → ("Forbidden City", None)
+      - {{紫禁城}}:zh          → ("紫禁城", "zh")
+      - {{Taj Mahal}}:hi       → ("Taj Mahal", "hi")
 
     :param text: Text to search for curly brace patterns.
-    :return: List of extracted strings.
+    :return: List of (term, language_code_or_None) tuples.
     """
     if not text:
         logger.debug("Received empty or None text.")
         return []
 
-    pattern = r"\{\{(.*?)\}\}"  # Non-greedy match inside double curly braces
-    matches = [match.strip() for match in re.findall(pattern, text)]
+    # Capture term inside {{...}} and an optional :lang code immediately after }}
+    pattern = r"\{\{(.*?)\}\}(?::([A-Za-z]{2,3}))?"
+    matches = [
+        (term.strip(), lang if lang else None)
+        for term, lang in re.findall(pattern, text)
+        if term.strip()
+    ]
 
     if matches:
-        logger.debug(f"Found {len(matches)} match(es).")
+        logger.debug(f"Found {len(matches)} Wikipedia match(es).")
 
     return matches
 
@@ -260,7 +270,7 @@ def extract_commands_from_text(
     - Commands with optional arguments: !command or !command:"arg" or !command:arg
     - Commands with no arguments: !command
     - CJK lookups using backticks: `term`, `term`:lang
-    - Wikipedia lookups using double braces: {{term}}
+    - Wikipedia lookups using double braces: {{term}} or {{term}}:lang
 
     Supports specific_mode via trailing exclamation: !command:la! activates specific_mode
     for strict code lookups (2-4 character codes only).
@@ -436,7 +446,7 @@ def extract_commands_from_text(
                         term, is_explicit = item
                         commands_dict["lookup_cjk"].append((lang, term, is_explicit))
 
-    # Special: Wikipedia lookup using {{braces}}
+    # Special: Wikipedia lookup using {{braces}} with optional :lang suffix
     if text.count("{{") > 0 and text.count("}}") > 0:
         wiki_terms = _extract_text_within_curly_braces(original_text)
         if wiki_terms:

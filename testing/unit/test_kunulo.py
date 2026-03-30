@@ -429,7 +429,8 @@ class TestKunuloFromSubmission:
             ),
         ):
             k = Kunulo.from_submission(sub)
-        _, chars = k.get_tag_with_data("comment_cjk")
+        _, data = k.get_tag_with_data("comment_cjk")
+        chars = data["terms"]
         assert "实" in chars
         assert "现" in chars
 
