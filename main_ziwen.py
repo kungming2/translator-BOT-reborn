@@ -39,6 +39,7 @@ def _alert_slow_run(
     run_start: str,
     api_calls: int,
     memory_usage: str,
+    pid: int,
 ) -> None:
     """Send a Discord alert if the run exceeded the configured cycle time."""
     if elapsed_minutes <= SETTINGS["cycle_time"]:
@@ -46,7 +47,7 @@ def _alert_slow_run(
     send_discord_alert(
         subject="Excessive Run Time Alert",
         message=(
-            f"Run took {elapsed_minutes:.2f} minutes (> {SETTINGS['cycle_time']} minutes)\n\n"
+            f"Run `#{pid}` took {elapsed_minutes:.2f} minutes (> {SETTINGS['cycle_time']} minutes)\n\n"
             f"* **Run start time**: {run_start}\n"
             f"* **API calls used**: {api_calls}\n"
             f"* **Memory usage**: {memory_usage}"
@@ -96,6 +97,7 @@ if __name__ == "__main__":
     else:
         elapsed_time = (time.time() - start_time) / 60
         run_time = time_convert_to_string(start_time)
+        run_pid = os.getpid()
 
         # run_information fields: run_time, label, used_calls, mem_usage, elapsed_time, pid
         run_information = (
@@ -104,9 +106,9 @@ if __name__ == "__main__":
             used_calls,
             mem_usage,
             elapsed_time,
-            os.getpid(),
+            run_pid,
         )
         record_activity_csv("cycle", run_information)
         logger.info(f"Run {elapsed_time:.2f} minutes.")
 
-        _alert_slow_run(elapsed_time, run_time, used_calls, mem_usage)
+        _alert_slow_run(elapsed_time, run_time, used_calls, mem_usage, run_pid)

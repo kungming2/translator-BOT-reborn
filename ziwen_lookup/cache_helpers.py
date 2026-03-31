@@ -78,8 +78,8 @@ def save_to_cache(data: dict, language_code: str, lookup_type: str) -> None:
 
     query = """
         INSERT OR REPLACE INTO lookup_cjk_cache 
-        (term, language_code, retrieved_utc, type, data) 
-        VALUES (?, ?, ?, ?, ?)
+        (term, language_code, retrieved_utc, type, data, fetch_count) 
+        VALUES (?, ?, ?, ?, ?, 0)
     """
 
     cursor, conn = _get_thread_local_cursor()
@@ -90,6 +90,9 @@ def save_to_cache(data: dict, language_code: str, lookup_type: str) -> None:
 def get_from_cache(term: str, language_code: str, lookup_type: str) -> dict | None:
     """
     Retrieve cached CJK lookup data from the database.
+
+    Increments ``fetch_count`` on every cache hit so that hot entries can be
+    identified via the ``lookup_cjk_cache`` table.
     """
     max_age_days = SETTINGS["lookup_cjk_cache_age"]
     cutoff_time = int(time.time()) - (max_age_days * 86400)
@@ -103,11 +106,21 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> dict | No
               AND retrieved_utc >= ?
             """
 
-    cursor, _ = _get_thread_local_cursor()
+    cursor, conn = _get_thread_local_cursor()
     cursor.execute(query, (term, language_code, lookup_type, cutoff_time))
     result = cursor.fetchone()
 
     if result:
+        increment_query = """
+            UPDATE lookup_cjk_cache
+            SET fetch_count = fetch_count + 1
+            WHERE term = ?
+              AND language_code = ?
+              AND type = ?
+        """
+        cursor.execute(increment_query, (term, language_code, lookup_type))
+        conn.commit()
+
         data_json = result[0]
         try:
             return json.loads(data_json)

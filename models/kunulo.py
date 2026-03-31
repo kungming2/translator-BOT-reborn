@@ -351,7 +351,10 @@ class Kunulo:
             str or None: The bot's comment ID to edit, or None if not found.
         """
         for bot_comment_id, data in self.get_all_entries("comment_cjk"):
-            if isinstance(data, dict) and data.get("parent_id") == triggering_comment_id:
+            if (
+                isinstance(data, dict)
+                and data.get("parent_id") == triggering_comment_id
+            ):
                 return bot_comment_id
         return None
 
@@ -373,7 +376,10 @@ class Kunulo:
             str or None: The bot's comment ID to edit, or None if not found.
         """
         for bot_comment_id, data in self.get_all_entries("comment_wikipedia"):
-            if isinstance(data, dict) and data.get("parent_id") == triggering_comment_id:
+            if (
+                isinstance(data, dict)
+                and data.get("parent_id") == triggering_comment_id
+            ):
                 return bot_comment_id
         return None
 

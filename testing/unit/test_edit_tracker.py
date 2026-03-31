@@ -119,7 +119,7 @@ class TestDeserializeKomandos:
 class TestSerializeLookupContent:
     def test_empty_command_list_gives_section_separator_only(self):
         result = _serialize_lookup_content([])
-        assert result == "§"
+        assert result == ""
 
     def test_cjk_terms_encoded_as_lang_colon_term(self):
         cmd = make_komando("lookup_cjk", [("zh", "粽子", False), ("zh", "英雄", False)])
@@ -166,7 +166,7 @@ class TestSerializeLookupContent:
     def test_non_lookup_commands_ignored(self):
         cmd = make_komando("translated", [])
         result = _serialize_lookup_content([cmd])
-        assert result == "§"
+        assert result == ""
 
     def test_disable_tokenization_changes_resolved_terms(self):
         # Tokenized version produces multiple tokens; disabling produces the full term.

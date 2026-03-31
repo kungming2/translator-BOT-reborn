@@ -134,6 +134,10 @@ def _serialize_lookup_content(commands: list) -> str:
           ``{{Mesa}}:es`` → ``Mesa@es``).
         - ``@`` is used as the intra-entry separator because Wikipedia
           article titles can contain colons but not ``@``.
+
+    Returns an empty string when no lookup commands are present, so that
+    comments with no backtick or brace content do not get a stray ``§``
+    stored in the database.
     """
     cjk_parts: list[str] = []
     wp_parts: list[str] = []
@@ -149,6 +153,9 @@ def _serialize_lookup_content(commands: list) -> str:
                 if isinstance(entry, tuple):
                     term, lang = entry  # (str, str | None)
                     wp_parts.append(f"{term}@{lang or ''}")
+
+    if not cjk_parts and not wp_parts:
+        return ""
 
     cjk_block = _LOOKUP_CONTENT_SEP.join(cjk_parts)
     wp_block = _LOOKUP_CONTENT_SEP.join(wp_parts)
@@ -393,7 +400,7 @@ def edit_tracker() -> None:
                     f"wp: {old_wp!r} → {new_wp!r})"
                 )
             logger.info(
-                f"Reprocessing triggered for `{comment_id}`: "
+                f"[Edit_Tracker] Reprocessing triggered for `{comment_id}`: "
                 f"{reason}. "
                 f"https://www.reddit.com{item.permalink}"
             )
