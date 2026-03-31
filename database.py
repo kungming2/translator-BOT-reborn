@@ -212,6 +212,7 @@ def _initialize_cache_db() -> None:
             retrieved_utc INTEGER NOT NULL,
             type TEXT NOT NULL,
             data TEXT NOT NULL,
+            fetch_count INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(term, language_code, type)
         )
         """,
