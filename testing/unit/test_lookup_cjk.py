@@ -751,6 +751,7 @@ class TestCacheReadWrite(unittest.TestCase):
                 retrieved_utc INTEGER,
                 type TEXT,
                 data TEXT,
+                fetch_count INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (term, language_code, type)
             )
             """
