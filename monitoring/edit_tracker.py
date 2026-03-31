@@ -297,7 +297,7 @@ def edit_tracker() -> None:
     - The edited version contains command names not present in the cached
       (pre-edit) version (e.g. a new !translated is added).
     - The resolved lookup_cjk or lookup_wp content has changed even though
-      the command names are identical (e.g. switching `七転八起` to
+      the command names are identical (e.g. switching ``七転八起` to
       `七転八起`! to disable tokenization, which changes the
       post-tokenization tokens that would actually be looked up).
 
@@ -366,13 +366,35 @@ def edit_tracker() -> None:
             continue
 
         cached = _get_cached_comment(comment_id)
-        comment_old_body = cached.body if cached else ""
+
+        # If there's no cache entry, this comment never appeared in the recent
+        # comments feed (it's too old for ziwen_commands to pick up). Triggering
+        # reprocessing would be pointless. Cache the current state as a baseline
+        # so future edits have something to diff against, then skip.
+        if not cached:
+            logger.debug(
+                f"Comment `{comment_id}` in edited queue but not in cache "
+                f"(too old for recent feed); caching current state, skipping reprocess."
+            )
+            new_commands = extract_commands_from_text(comment_new_body)
+            new_komandos = ",".join(dict.fromkeys(cmd.name for cmd in new_commands))
+            new_lookup_content = _serialize_lookup_content(new_commands)
+            _update_comment_cache(
+                comment_id,
+                comment_new_body,
+                int(item.created_utc),
+                new_komandos,
+                new_lookup_content,
+            )
+            continue
+
+        comment_old_body = cached.body
 
         if comment_old_body == comment_new_body:
             logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
             continue
 
-        old_command_names: set[str] = cached.command_names if cached else set()
+        old_command_names: set[str] = cached.command_names
         new_commands = extract_commands_from_text(comment_new_body)
         new_command_names: set[str] = {cmd.name for cmd in new_commands}
 
@@ -384,9 +406,7 @@ def edit_tracker() -> None:
         # changing the looked-up term or Wikipedia language code) without
         # adding a new command keyword.
         new_lookup_content = _serialize_lookup_content(new_commands)
-        old_cjk, old_wp = _deserialize_lookup_content(
-            cached.lookup_content if cached else ""
-        )
+        old_cjk, old_wp = _deserialize_lookup_content(cached.lookup_content)
         new_cjk, new_wp = _deserialize_lookup_content(new_lookup_content)
         lookup_content_changed = (old_cjk != new_cjk) or (old_wp != new_wp)
 
@@ -400,8 +420,7 @@ def edit_tracker() -> None:
                     f"wp: {old_wp!r} → {new_wp!r})"
                 )
             logger.info(
-                f"[Edit_Tracker] Reprocessing triggered for `{comment_id}`: "
-                f"{reason}. "
+                f"Reprocessing triggered for `{comment_id}`: {reason}. "
                 f"https://www.reddit.com{item.permalink}"
             )
             _remove_from_processed(comment_id)
