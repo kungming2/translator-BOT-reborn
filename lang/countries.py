@@ -217,5 +217,7 @@ def get_language_emoji(language_code: str) -> str:
     if language_code not in _language_full_data_cache:
         return ""
 
-    country_listed = _language_full_data_cache[language_code]["country"]
+    country_listed = _language_full_data_cache[language_code].get("country")
+    if not country_listed:
+        return ""
     return get_country_emoji(country_listed)
