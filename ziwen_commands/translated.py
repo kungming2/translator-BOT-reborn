@@ -43,5 +43,10 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         kunulo_object.delete(tag)
 
     # Message the OP if they haven't already thanked people.
-    if not kunulo_object.op_thanks and ajo.author is not None:
+    if (
+        not kunulo_object.op_thanks
+        and ajo.author is not None
+        and comment.author.name != ajo.author
+    ):
+        logger.debug(f"Notifying OP u/{ajo.author} of translation.")
         notify_op_translated_post(ajo.author, ajo.submission.permalink)
