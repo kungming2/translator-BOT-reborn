@@ -160,7 +160,7 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 # Command with argument
 {'name': 'identify', 
  'data': [<Lingvo: Uzbek (uz)>], 
-  'specific_mode': False}  
+ 'specific_mode': False}  
 
 # CJK lookup
 {'name': 'lookup_cjk',
@@ -170,18 +170,22 @@ For [lookups](./lookup.md), the data will instead be the terms searched, and the
 
 # Wikipedia lookup
 {'name': 'lookup_wp', 
- 'data': ['Volapuk'], 
+ 'data': [('Volapuk', None)],  # The Wikipedia page 
  'specific_mode': False}
 ```
 
 ### Attributes
 
-| Attribute | Type | Description                                                                                                                                                                                                                |
-|------------|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name` | `str` | The command keyword or identifier being executed (e.g. `"translated"`, `"identify"`, `"lookup_cjk"`, `"lookup_wp"`).                                                                                                |
-| `data` | `list` | Argument(s) passed to the command. Can contain `Lingvo` objects, strings, or lists of values depending on the command type.                                                                                                |
-| `specific_mode` | `bool` | Indicates that a specific string or value within `data` was explicitly requested by the user, rather than inferred automatically. (e.g. `Latn` to specifically request the script identification rather than the language. |
+| Attribute | Type | Description |
+|---|---|---|
+| `name` | `str` | The command keyword or identifier being executed (e.g. `"translated"`, `"identify"`, `"lookup_cjk"`, `"lookup_wp"`). |
+| `data` | `list` | Argument(s) passed to the command. The contents vary by command type: `Lingvo` objects for language commands (e.g. `identify`); `(lang, term, explicit)` 3-tuples for `lookup_cjk`; `(term, lang_or_None)` 2-tuples for `lookup_wp`; an empty list for no-argument commands (e.g. `translated`). |
+| `specific_mode` | `bool` | `True` if the argument was explicitly flagged by the user with a trailing `!` (e.g. `!identify:Latn!`), requesting a strict code match rather than fuzzy language lookup. Only meaningful for 2–4 character arguments. |
 | `disable_tokenization` | `bool` | If `True`, disables tokenization for `lookup_cjk` commands, treating the entire term as a single unit rather than splitting it into individual characters. Activated by a trailing `!` on a backtick lookup (e.g. `` `中文`! ``). |
+
+### Constructor
+
+Komandos are not constructed directly. They are produced by `extract_commands_from_text()` in `komando.py`, which is called internally by `Instruo.from_comment()` and `Instruo.from_text()`.
 
 ## Instruo
 
@@ -200,7 +204,7 @@ This class represents a Reddit comment *containing* commands as Komandos. For ex
     "author_post": "Geo_Joy",
     "commands": [
         Komando(name="translated", data=[], specific_mode=False),
-        Komando(name="lookup_wp", data=["Guangxu era"], specific_mode=False),
+        Komando(name="lookup_wp", data=[("Guangxu era", None)], specific_mode=False),
     ],
     "languages": [],
     "body": "Confirm !translated and to give OP dates: {{Guangxu era}}",
@@ -210,17 +214,42 @@ This class represents a Reddit comment *containing* commands as Komandos. For ex
 
 ### Attributes
 
-| Attribute        | Type | Description                                                                                                   |
-|------------------|------|---------------------------------------------------------------------------------------------------------------|
-| `id_comment`     | `str` | The unique Reddit comment ID.                                                                                 |
-| `id_post`        | `str` | Reddit post ID of the submission this comment belongs to.                                                     |
-| `created_utc`    | `int` | UTC timestamp representing when the comment was created.                                                      |
-| `author_comment` | `str` | Username of the comment's author (no `u/`). `"[deleted]"` if unavailable.                                     |
-| `author_post`    | `str \| None` | Username of the parent post's author (no `u/`). `"[deleted]"` if unavailable, `None` if not populated.        |
-| `commands`       | `list[Komando]` | List of `Komando` objects extracted from the comment body.                                                    |
-| `languages`      | `list[Lingvo]` | List of `Lingvo` objects representing the language(s) of the parent post, if available.                       |
-| `body`           | `str \| None` | Raw comment text. Optional if the Instruo was not created from a PRAW comment object.                         |
-| `body_remainder` | `str \| None` | The remainder of the comment text after the removal of the commands. Returns `None` if there is no remainder. |
+| Attribute | Type | Description |
+|---|---|---|
+| `id_comment` | `str` | The unique Reddit comment ID. |
+| `id_post` | `str` | Reddit post ID of the submission this comment belongs to. |
+| `created_utc` | `int` | UTC timestamp representing when the comment was created. |
+| `author_comment` | `str` | Username of the comment's author (no `u/`). `"[deleted]"` if unavailable. |
+| `author_post` | `str \| None` | Username of the parent post's author (no `u/`). `"[deleted]"` if unavailable, `None` if not populated. |
+| `commands` | `list[Komando]` | List of `Komando` objects extracted from the comment body. |
+| `languages` | `list[Lingvo]` | List of `Lingvo` objects representing the language(s) of the parent post, if available. |
+| `body` | `str \| None` | Raw comment text. `None` if the Instruo was not created from a PRAW comment object. |
+| `body_remainder` | `str \| None` | The comment body with all recognized bot commands stripped out. `None` if nothing remains after stripping. |
+
+### Constructors
+
+#### `Instruo.from_comment(comment, parent_languages=None)`
+
+The primary constructor. Builds an Instruo from a live PRAW `Comment` object, extracting metadata (`id`, `author`, timestamps) and running `extract_commands_from_text()` on the comment body. `parent_languages` is an optional list of `Lingvo` objects from the parent post, used as a fallback language hint for ambiguous CJK backtick lookups.
+
+```python
+if comment_has_command(comment):
+    instruo = Instruo.from_comment(comment, parent_languages=ajo.original_target_language_name)
+```
+
+#### `Instruo.from_text(text, parent_languages=None)`
+
+Testing-only constructor. Builds an Instruo from a plain string with placeholder values for all PRAW-derived fields (`id_comment`, `id_post`, `author_comment`, etc.). Do not use in production.
+
+```python
+instruo = Instruo.from_text("!translated and `改善`")
+```
+
+### Module-level utility
+
+#### `comment_has_command(comment)`
+
+A fast pre-check that returns `True` if the comment contains any recognized bot command, `False` otherwise. Accepts either a PRAW `Comment` object or a plain string. This should always be called before constructing an Instruo to avoid processing comments with no actionable content.
 
 ## Ajo
 
@@ -291,14 +320,16 @@ This was formerly (and confusingly) called Komento in the 1.x versions of the bo
 ### Examples
 
 ```python
+# Standard comment (no associated data)
 {
     "_data": {"comment_unknown": [("njpal88", None)]},
     "_op_thanks": True,
     "_submission": Submission(id="1o7pjsn"),
 }
 
+# CJK lookup comment (data is a dict with terms and triggering comment ID)
 {
-    "_data": {"comment_cjk": [("nk398my", ["改善", "心", "美", "念", "道"])]},
+    "_data": {"comment_cjk": [("nk398my", {"terms": ["改善", "心", "美", "念", "道"], "parent_id": "nk2ab1c"})]},
     "_op_thanks": False,
     "_submission": Submission(id="1o9lu1n"),
 }
@@ -306,11 +337,31 @@ This was formerly (and confusingly) called Komento in the 1.x versions of the bo
 
 ### Attributes
 
-| Attribute | Type | Description                                                                                                                                                                                                                                                       |
-|------------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `_data` | `dict` | Stores categorized comment data, mapping comment tags (e.g. `"comment_unknown"`, `"comment_cjk"`) to lists of tuples. Each tuple contains a Reddit comment ID and its associated parsed data (e.g. recognized characters for lookup or `None` for most comments). |
-| `_op_thanks` | `bool` | Indicates whether the original poster (OP) had already expressed thanks or acknowledgment in response to the comment thread.                                                                                                                                      |
-| `_submission` | `Submission` | Reference to the PRAW Reddit submission object associated with the comment (e.g. `Submission(id='1o7pjsn')`).                                                                                                                                                     |
+| Attribute | Type | Description |
+|---|---|---|
+| `_data` | `dict[str, list[KunuloEntry]]` | Maps comment tag strings (e.g. `"comment_unknown"`, `"comment_cjk"`) to lists of `(comment_id, data)` tuples. For `comment_cjk` and `comment_wikipedia` entries, `data` is a dict with two keys: `"terms"` (list of looked-up strings) and `"parent_id"` (comment ID of the user comment that triggered this bot reply, or `None` for older entries). For all other tags, `data` is `None`. |
+| `_op_thanks` | `bool` | `True` if the original poster has posted a comment on the thread containing a thanks keyword (and no negation keyword). |
+| `_submission` | `Submission` | The PRAW submission object for the post. Required for `delete()` and `get_comment_permalink()`; `None` until set by `from_submission()`. |
+
+### Constructor
+
+#### `Kunulo.from_submission(submission)`
+
+The only constructor for production use. Scans all comments on the given PRAW submission, recording the bot's own comments by their anchor tags and checking whether the OP has expressed thanks.
+
+```python
+kunulo = Kunulo.from_submission(reddit_submission)
+```
+
+### Module-level utility
+
+#### `get_submission_from_comment(comment_reference)`
+
+Retrieves the parent PRAW `Submission` for a comment, accepting either a comment ID string or a live PRAW `Comment` object. Used when only a comment reference is available and the parent post is needed.
+
+```python
+submission = get_submission_from_comment(comment.id)
+```
 
 
 ## Diskuto
@@ -332,10 +383,20 @@ This is a much less complicated equivalent to Ajo. This class represents an *int
 
 ### Attributes
 
-| Attribute | Type | Description                                                                                                                  |
-|------------|------|------------------------------------------------------------------------------------------------------------------------------|
-| `created_utc` | `int` | UTC timestamp representing when the post was created.                                                                        |
-| `id` | `str` | Unique Reddit post ID (e.g. `"1l1s1sx"`).                                                                                    |
-| `post_type` | `str` | Type of post (e.g. `"meta"`, `community`).                                                                                   |
-| `processed` | `bool` | Indicates whether the post has been processed by the bot and notifications sent out to people subscribed to that `post_type`. |
-| `title_original` | `str` | Original Reddit post title as submitted.                                                                                     |
+| Attribute | Type | Description |
+|---|---|---|
+| `id` | `str \| None` | Unique Reddit post ID (e.g. `"1l1s1sx"`). |
+| `created_utc` | `int \| None` | UTC timestamp representing when the post was created. |
+| `title_original` | `str \| None` | Original Reddit post title as submitted. |
+| `post_type` | `str \| None` | Lowercase post type extracted from the title's leading `[TAG]` (e.g. `"meta"`, `"community"`). `None` if no tag is present. |
+| `processed` | `bool` | `True` once the bot has processed this post and sent out any relevant notifications. Defaults to `False`. |
+
+### Constructor
+
+#### `Diskuto.process_post(praw_submission)`
+
+The primary constructor. Builds a Diskuto from a PRAW submission, extracting `id`, `created_utc`, `title_original`, and `post_type` (parsed from the first `[TAG]` in the title). `processed` is always initialized to `False`.
+
+```python
+diskuto = Diskuto.process_post(submission)
+```

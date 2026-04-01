@@ -38,7 +38,8 @@ The following sources are used by CJK lookup functions:
 * The information that Ziwen returns generally depends on the language of the post. Chinese posts will return Chinese information, and so on. 
   * But, **if there's a language identification command in the comment, Ziwen will return information for that language.** For example, a comment "This is Chinese: ``吹牛`` !identify:zh" on a Japanese post will result in a Chinese lookup.
 * If no words are found for a multi-character compound, it will collate individual character data together in a table. For example, the nonsensical search `強彥` will return separate entries for 強 and 彥 in a table.
-* If a single Chinese or Japanese character is looked up, Ziwen will retrieve [calligraphy and seal script](https://www.reddit.com/r/translator/comments/6wsaks/japanese_english_shirt_post/dmahdae/) images for it and include those images in its findings. 
+* If a single Chinese or Japanese character is looked up, Ziwen will retrieve [calligraphy and seal script](https://www.reddit.com/r/translator/comments/6wsaks/japanese_english_shirt_post/dmahdae/) images for it and include those images in its findings.
+* The edit tracking system tracks lookup terms, so if comments are edited and the lookup term (or tokenization) changes, Ziwen will edit its lookup comment to return the new information.
 * The ability to call specific language and Japanese surnames was first suggested by u/nomfood.
 
 
@@ -52,6 +53,16 @@ This is from the {{Qianlong Era}}, and it's {{Jingdezhen porcelain}} from China.
 
 This example would return Wikipedia links and short summaries for "[Qianlong Emperor](https://en.wikipedia.org/wiki/Qianlong_Emperor)" and "[Jingdezhen porcelain](https://en.wikipedia.org/wiki/Jingdezhen_porcelain)".
 
+#### Optional Syntax
+
+A language tag added to a lookup will search the Wikipedia for that language instead of the English Wikipedia. For example:
+
+```text
+{{琵琶行}}:chinese       # Searches zh.wikipedia.org
+{{España}}:es           # Searches es.wikipedia.org
+{{L. L. Zamenhof}}:eo   # Searches eo.wikipedia.org
+```
+
 #### Notes
 
-* If Wikipedia has location coordinates that are associated with the page, Ziwen will try and include a relevant [OpenStreetMap](https://www.openstreetmap.org/) link to that location (e.g. `{{Forbidden City}}`). 
+* If Wikipedia has location coordinates that are associated with the page, Ziwen will try and include a relevant [OpenStreetMap](https://www.openstreetmap.org/) link to that location (e.g. `{{Forbidden City}}`).

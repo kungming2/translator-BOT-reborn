@@ -26,5 +26,5 @@ This document outlines some of the routines and functions that were formerly par
 
 #### Former Functionality
 
-* **App posts** - "multiple" posts could have this special categorization if they were for a software program or application. The community's rules have since been made stricter about for-profit requests, and this became almost never used. Sunsetting it also freed up the code `app` to represent its [correct language](https://en.wikipedia.org/wiki/Apma_language) under ISO 639-3.
+* **"App" posts** - "multiple" posts could have this special categorization if they were for a software program or application. The community's rules have since been made stricter about for-profit requests, and this became almost never used. Sunsetting it also freed up the code `app` to represent its [correct language](https://en.wikipedia.org/wiki/Apma_language) under ISO 639-3.
 * **r/translate corrector** - run under Ziwen Streamer, it corrected mentions of [r/translate](https://www.reddit.com/r/translate/) (a defunct/ghost subreddit) by directing people to r/translator. The subreddit r/translate is now set up as a redirect to r/translator and this was no longer needed.

@@ -66,7 +66,7 @@ These are all [SQLite databases](https://sqlite.org/).
 #### hermes.db Tables
 
 * **entries**: Contains all posts processed by Hermes from r/language_exchange. 
-* **processed**: Internal list recording post IDs that have already been seen and processed by the bot.  
+* **processed**: Internal list recording post IDs that have already been seen and processed by the Hermes routine.  
 
 ## Datasets
 

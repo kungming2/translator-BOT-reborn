@@ -25,6 +25,8 @@ This page records the version history of the various routines of translator-BOT.
     * Hermes now will prefix its comments with a language-specific greeting.
 * ✨ ADDITION: Specific images in galleries can be selected for transformation. For example, `!transform:h:3` will flip the third image in a gallery horizontally. (suggestion for feature and syntax made by u/Stunning_Pen_8332)
 * ✨ ADDITION: Module `__main__` environment runtimes have all been moved and centralized in `devtools.py`.
+* ✨ ADDITION: Added syntax to return lookup searches for non-English Wikipedia articles. Example: `{{黄河}}:zh`
+* ✨ ADDITION: The lookup function for CJK will now consistently be able to update the bot's comment when the terms looked up are changed in the original comment.
 * 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
 * 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
 * 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
@@ -36,7 +38,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Added PID counters to the logger and activity CSV for better disambiguation.
 * 🔄 CHANGE: Added a `created_utc` column to the `comment_cache` table to allow for future improvements. 
 * 🔄 CHANGE: Hermes now awards an additional point to matches where the offered language is spoken at a native level. 
-* 🔄 CHANGE: The edit tracker now is integrated with instruos and komandos.
+* 🔄 CHANGE: The edit tracker is now integrated with instruos and komandos.
 * 🔄 CHANGE: The project now uses [APScheduler](https://pypi.org/project/APScheduler/) instead of cron.
   * 🔄 CHANGE: Ziwen now runs on a three-minute cycle. 
 * 🔄 CHANGE: Aligned [yojijukugo](https://en.wikipedia.org/wiki/Yojijukugo) search's behavior to that of chengyu as an addition to the main `ja_word` function.   
@@ -45,16 +47,19 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Removed the 60-character maximum limit for confirmatory replies awarding points.
 * 🔄 CHANGE: Renamed and reorganized files in the `_data` folder (through `config.py`) for more consistency.
 * 🔄 CHANGE: Migrated `main.db` dictionaries to use JSON instead of Python dictionary literals.
-* 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was giving too many false positives.
+* 🔄 CHANGE: Added a `fetch_count` counter to the CJK cache to record which terms are being retrieved most often.
+* 🔄 CHANGE: Fixed the `!translated` handler so that an OP will not be notified of a translated post if they are the ones calling the command.
+* 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
+* 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
 ##### translator-BOT 2.1 "The Transformation Update" (2026-02-01)
 
-* 🚀 FEATURE: People can use `!transform:[value]` to change the post's image to the right direction for ease of translating.
-    * `[value]` can be positive or negative values of `90` (e.g. `90` rotates the image clockwise, while `-90` rotates it counterclockwise). 
+* 🚀 FEATURE: People can use `!transform:[value]` to change the post's image to the right orientation for ease of translating.
+    * `[value]` can be positive or negative values of `90` increments (e.g. `90` rotates the image clockwise, while `-90` rotates it counterclockwise). 
     * `[value]` can also be `horizontal`, `h` or `vertical`, `v` to flip the image horizontally or vertically respectively.
 * 🚀 FEATURE: The post duplicates detector has been turned on. Duplicates may be detected in one of two ways:
-    * Their titles are identical or near-identical and posted by the same author within a short period of time. 
-    * Their image hashes (if applicable for image-only posts) are identical or very similar.
+    * Their titles are identical or near-identical and posted by the same author within a short period of time. Recorded in statistics as `Removed duplicates`.
+    * Their image hashes (if applicable for image-only posts) are identical or very similar. Recorded in statistics as `Removed image duplicates`.
     * If a suspected duplicate is found, the bot will remove the post and notify the OP.
 * ✨ ADDITION: CJK lookups now have some new (optional) syntax.
     * A language tag added to a lookup will force a lookup in that language, even on a post that's of a different language. E.g. `文化`:ja will return a Japanese lookup, even on a Chinese post. 
@@ -67,8 +72,8 @@ This page records the version history of the various routines of translator-BOT.
 * ✨ ADDITION: Modmail conversations that are over 2 days old, where a mod was the last respondent, will now be archived automatically.
 * ✨ ADDITION: Reddit's native removal reasons are attached after post or comment removal.
 * ✨ ADDITION: Mods can now use `!set` to classify regular posts as internal posts. 
-* 🔄 CHANGE: Kunulo object's data for Chinese CJK lookups now properly include only the traditional characters as a base.  
-* 🔄 CHANGE: Mod posts ending with the emoji 🧪 in the title will not trigger notifications in case of testing. 
+* 🔄 CHANGE: Kunulo object's data for Chinese CJK lookups now properly include only the traditional characters as a base.
+* 🔄 CHANGE: Mod posts ending with the emoji 🧪 in the title will not trigger notifications in case of testing.
 * 🔄 CHANGE: Over-long cycle runtimes will trigger an alert to Discord.
 * 🔄 CHANGE: The `Data` folder has been renamed to `_data` for consistency.
 * 🔄 CHANGE: The prefix `[Notification]` has been removed from subjects of messages. This was a legacy of the first time when Reddit tried to merge chats and messages. 
@@ -79,7 +84,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Fixed the [verified](https://www.reddit.com/r/translator/wiki/verified) page not updating.
 * 🛠️ BUG FIX: Fixed the [identified](https://www.reddit.com/r/translator/wiki/identified) page not updating.
 * 🛠️ BUG FIX: The points multiplier for languages has been fixed.
-* 🛠️ BUG FIX: Slight fix for superscript numbered-tones in Wade-Giles and Yale Cantonese romanization looking strange on New Reddit.  
+* 🛠️ BUG FIX: Slight fix for superscript numbered-tones in Wade-Giles and Yale Cantonese romanization looking strange on New Reddit.
 * 🛠️ BUG FIX: Made sure that confirmatory replies to translating comments credit people appropriately with points.
 
 ##### translator-BOT 2.0 "The Reborn Update" (2025-10-20)
@@ -202,7 +207,7 @@ Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
 * 🔄 CHANGE: Ziwen can now process languages in submitted posts whose names are multiple words. (e.g. `[American Sign Language > English]`)
 * 🔄 CHANGE: Ziwen supports a limited number of conlangs on a local basis (using unallocated space in the ISO 639-3 code list) - including Dothraki, Valyrian, etc. 
 * 🔄 CHANGE: The `!page` function is now fully integrated with the notifications database and no longer relies on its own database. It also fully supports all languages now.
-* 🔄 CHANGE: Ziwen will send a message to the mods of this subreddit when a title fails the post categorizing routine.
+* 🔄 CHANGE: Ziwen will send a notification to the mods of this subreddit when a title fails the post categorizing routine.
 * 🔄 CHANGE: Ziwen will filter out posts that AutoModerator let through but should have been removed.
 * 🔄 CHANGE: Ziwen will automatically remove users from its database that have deleted their accounts.
 * 🔄 CHANGE: ~~The sidebar update routine and weekly unknown thread posting routine has been moved back to Wenyuan, which now has an active component that runs every hour.~~
