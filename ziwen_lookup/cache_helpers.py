@@ -18,6 +18,7 @@ from typing import Any
 
 from config import SETTINGS, Paths
 from config import logger as _base_logger
+from lang.languages import converter
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:CACHE"})
 
@@ -128,6 +129,45 @@ def get_from_cache(term: str, language_code: str, lookup_type: str) -> dict | No
             return None
 
     return None
+
+
+def get_cjk_cache_top_entries(limit: int = 20) -> str:
+    """
+    Query the lookup_cjk_cache table and return a Markdown table of the
+    most-fetched entries, ordered by fetch_count descending.
+
+    :param limit: Maximum number of rows to include (default 20).
+    :return: Markdown-formatted table string with columns:
+             term, language, type, fetch_count.
+    """
+    query = """
+        SELECT term, language_code, type, fetch_count
+        FROM lookup_cjk_cache
+        ORDER BY fetch_count DESC
+        LIMIT ?
+    """
+    cursor, _ = _get_thread_local_cursor()
+    cursor.execute(query, (limit,))
+    rows = cursor.fetchall()
+
+    if not rows:
+        logger.error("CJK cache table is empty.")
+        return "*No entries found in lookup_cjk_cache.*"
+
+    lines = [
+        "| Term | Language | Lookup Type | Cache Fetch Count |",
+        "|------|----------|-------------|-------------------|",
+    ]
+    for row in rows:
+        language_lingvo = converter(row["language_code"])
+        num_fetches = row["fetch_count"]
+        if language_lingvo and num_fetches > 0:
+            language_name = language_lingvo.name
+            lines.append(
+                f"| {row['term']} | {language_name} | {row['type']} | {num_fetches} |"
+            )
+
+    return "\n".join(lines)
 
 
 # ─── Chinese parse / format ───────────────────────────────────────────────────

@@ -39,6 +39,7 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
+from ziwen_lookup.cache_helpers import get_cjk_cache_top_entries
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
 from ziwen_lookup.match_helpers import lookup_matcher
@@ -452,6 +453,15 @@ def check_ziwen_lookup_wiktionary() -> None:
     pprint(result)
 
 
+def check_ziwen_lookup_cache_top_entries() -> None:
+    """cache: Display the top lookup_cjk_cache entries by fetch_count."""
+    limit_raw = input("Max entries to show (default 20): ").strip()
+    limit = int(limit_raw) if limit_raw.isdigit() else 20
+    with msg.loading("Querying lookup_cjk_cache..."):
+        result = get_cjk_cache_top_entries(limit)
+    print(result)
+
+
 # ─── reddit ───────────────────────────────────────────────────────────────────
 
 
@@ -654,6 +664,10 @@ SECTIONS = {
             "9": ("zh: other readings", check_ziwen_lookup_zh_other),
             "10": ("zh: variant", check_ziwen_lookup_zh_variant),
             "11": ("zh: word", check_ziwen_lookup_zh_word),
+            "12": (
+                "cache: top entries by fetch_count",
+                check_ziwen_lookup_cache_top_entries,
+            ),
         },
     ),
 }
