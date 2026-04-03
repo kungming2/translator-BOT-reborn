@@ -192,6 +192,7 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
         "quiet": True,
         "skip_download": True,
         "no_warnings": True,
+        "socket_timeout": 60,
     }
 
     try:
