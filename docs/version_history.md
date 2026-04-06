@@ -49,6 +49,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Migrated `main.db` dictionaries to use JSON instead of Python dictionary literals.
 * 🔄 CHANGE: Added a `fetch_count` counter to the CJK cache to record which terms are being retrieved most often.
 * 🔄 CHANGE: Fixed the `!translated` handler so that an OP will not be notified of a translated post if they are the ones calling the command.
+* 🔄 CHANGE: Wenju's language of the day update will also update [r/languagelearning](https://www.reddit.com/r/languagelearning)'s sidebar at the same time.
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 

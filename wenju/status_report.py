@@ -406,7 +406,7 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
         f"https://en.wikipedia.org/wiki/{language_family.replace('_', ' ')}_languages"
     )
 
-    header = f"#### **{today_language.name}** "
+    header = f"#### **[{today_language.name}]({wikipedia_redirect_link})** "
     if today_language.language_code_1:
         header += f"`({today_language.language_code_1}`/`{today_language.language_code_3})`\n\n"
     else:
@@ -427,7 +427,7 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     summary = f"\n\n{language_entry_summary}"
     full_text = header + body + summary
 
-    update_success = widget_update("widget_1dn822a2cowgr", full_text)
+    update_success = widget_update(WENJU_SETTINGS["lotd_widget_ids"], full_text)
     if update_success:
         article = "an" if language_family[0].lower() in "aeiou" else "a"
         code_string = f"`{today_language.preferred_code}`"

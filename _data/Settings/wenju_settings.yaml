@@ -7,6 +7,11 @@ modmail_archival_age: 4  # How old a modmail conversation should be when archive
 
 resolved_error_log_retention_weeks: 1  # How long to keep logs of resolved errors, in weeks
 
+# LOTD widget updating settings
+lotd_widget_ids:
+  translator: widget_1dn822a2cowgr
+  languagelearning: widget_1gth0ozs9w17s
+
 # Wenyuan Settings
 world_population: 7770  # in millions as of 2019
 minimum_points_display_threshold: 75

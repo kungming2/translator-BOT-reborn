@@ -283,45 +283,54 @@ def create_mod_note(
         return False
 
 
-def widget_update(widget_id: str, new_text: str) -> bool:
+def widget_update(widget_targets: dict[str, str], new_text: str) -> bool:
     """
-    Update a text widget on the subreddit with new content.
+    Update one or more TextArea widgets across one or more subreddits.
 
-    Args:
-        widget_id: ID of the widget to update
-        new_text: New text content for the widget
-
-    Returns:
-        bool: True if update was successful, False otherwise
+    :param widget_targets: Mapping of subreddit name to widget ID,
+                           e.g. ``{"translator": "widget_1dn822a2cowgr"}``.
+    :param new_text: Markdown text to write to each widget.
+    :return: True if all targeted widgets were updated successfully,
+             False if any failed.
     """
-    try:
-        widgets = REDDIT.subreddit(SETTINGS["subreddit"]).widgets
-        widgets.progressive_images = True
+    all_success = True
 
-        # Search for the widget in the sidebar
-        active_widget = None
-        for widget in widgets.sidebar:
-            if isinstance(widget, praw.models.TextArea) and widget.id == widget_id:
-                logger.debug(f"Found widget with ID: `{widget_id}`")
-                active_widget = widget
-                break
-
-        if active_widget is None:
-            logger.warning(f"Widget with ID `{widget_id}` not found.")
-            return False
-
-        # Update the widget
+    for subreddit_name, widget_id in widget_targets.items():
         try:
-            active_widget.mod.update(text=new_text)
-            logger.info(f"Successfully updated widget `{widget_id}`.")
-            return True
-        except RedditAPIException as e:
-            logger.error(f"Error updating widget `{widget_id}`: {e}")
-            return False
+            widgets = REDDIT.subreddit(subreddit_name).widgets
+            widgets.progressive_images = True
 
-    except Exception as e:
-        logger.error(f"Unexpected error in widget_update: {e}")
-        return False
+            active_widget = next(
+                (
+                    w
+                    for w in widgets.sidebar
+                    if isinstance(w, praw.models.TextArea) and w.id == widget_id
+                ),
+                None,
+            )
+
+            if active_widget is None:
+                logger.warning(f"Widget `{widget_id}` not found in r/{subreddit_name}.")
+                all_success = False
+                continue
+
+            active_widget.mod.update(text=new_text)
+            logger.info(
+                f"Successfully updated widget `{widget_id}` in r/{subreddit_name}."
+            )
+
+        except RedditAPIException as e:
+            logger.error(
+                f"Reddit API error updating widget `{widget_id}` in r/{subreddit_name}: {e}"
+            )
+            all_success = False
+        except Exception as e:
+            logger.error(
+                f"Unexpected error updating widget `{widget_id}` in r/{subreddit_name}: {e}"
+            )
+            all_success = False
+
+    return all_success
 
 
 # ─── Removal reasons ──────────────────────────────────────────────────────────
