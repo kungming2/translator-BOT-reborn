@@ -222,6 +222,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     content += "-----|-----|--|----|-----|---|-----|---|---|-----\n"
 
     identified_from_unknown = identification.get("identified_from_unknown", {})
+    missing_family: list[str] = []
 
     for lang in all_languages:
         if lang in UTILITY_CODES:
@@ -245,7 +246,11 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         ratio = stats["directions"]
 
         identified_count = identified_from_unknown.get(lang, 0)
-        family = lingvo.family if lingvo.family else "N/A"
+        if lingvo.family:
+            family = lingvo.family
+        else:
+            family = "N/A"
+            missing_family.append(lang)
 
         ri_value = "---"
         if lingvo.population and lingvo.population > 0:
@@ -271,6 +276,12 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
             f"{ri_value} | {wp_link} |"
         )
         content += row + "\n"
+
+    if missing_family:
+        msg.warn(
+            f"{len(missing_family)} lingvo(s) missing family data: "
+            + ", ".join(missing_family)
+        )
 
     content += "\n"
 
@@ -503,7 +514,7 @@ def fetch_language_reference() -> None:
         return
 
     msg.info(f"Fetching reference data for '{language_input}'...")
-    msg.text("(This may take a moment as it accesses archived web pages)\n")
+    msg.info("(This may take a moment as it accesses archived web pages)\n")
 
     reference_data = get_language_reference(language_input)
 
@@ -736,7 +747,7 @@ def post_monthly_statistics(month_year: str) -> None:
     new_page_content = format_lumo_stats_for_reddit(lumo, month_year)
 
     msg.divider("GENERATED STATISTICS CONTENT")
-    msg.text(new_page_content)
+    print(new_page_content)
     msg.divider()
 
     approval = (
@@ -847,7 +858,7 @@ def post_monthly_statistics(month_year: str) -> None:
         msg.good(
             f"Successfully posted statistics for {month_english_name} {year_number}",
             f"Post URL: https://redd.it/{monthly_post.id}"
-            + (f"\nWiki URL: {wiki_url}" if wiki_url else ""),
+            + (f"\n\nWiki URL: {wiki_url}" if wiki_url else ""),
         )
     else:
         msg.info("[5/5] Skipping points comment (no new post)")
