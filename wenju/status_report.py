@@ -423,7 +423,7 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     )
 
     if language_subreddit:
-        body += f"\n* **Subreddit**: {language_subreddit}"
+        body += f"\n* **Subreddit**: r/{language_subreddit}"
     summary = f"\n\n{language_entry_summary}"
     full_text = header + body + summary
 
