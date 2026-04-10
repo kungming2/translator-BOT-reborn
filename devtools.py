@@ -43,7 +43,7 @@ from ziwen_lookup.cache_helpers import get_cjk_cache_top_entries
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
 from ziwen_lookup.match_helpers import lookup_matcher
-from ziwen_lookup.wiktionary import wiktionary_search
+from ziwen_lookup.wiktionary import format_wiktionary_markdown, wiktionary_search
 from ziwen_lookup.wp_utils import wikipedia_lookup
 from ziwen_lookup.zh import (
     old_chinese_search,
@@ -449,8 +449,14 @@ def check_ziwen_lookup_wiktionary() -> None:
     test_input = input("Enter a word to look up in Wiktionary: ")
     test_language = input("Enter the language to look up the word for: ")
     with msg.loading(f"Looking up '{test_input}' ({test_language}) on Wiktionary..."):
-        result = wiktionary_search(test_input, test_language)
-    pprint(result)
+        wt_result = wiktionary_search(test_input, test_language)
+        if wt_result:
+            formatted_wt_result = format_wiktionary_markdown(
+                wt_result, test_input, test_language
+            )
+            print(formatted_wt_result)
+        else:
+            msg.fail(f"Invalid search results for '{test_input}' ({test_language}).")
 
 
 def check_ziwen_lookup_cache_top_entries() -> None:
@@ -657,7 +663,7 @@ SECTIONS = {
                 "match: matcher/sentence tokenizer",
                 check_ziwen_lookup_match_helpers,
             ),
-            "5": ("wiktionary", check_ziwen_lookup_wiktionary),
+            "5": ("wt: wiktionary", check_ziwen_lookup_wiktionary),
             "6": ("wp: wikipedia", check_ziwen_lookup_wikipedia),
             "7": ("zh: character", check_ziwen_lookup_zh_character),
             "8": ("zh: chengyu", check_ziwen_lookup_zh_chengyu),

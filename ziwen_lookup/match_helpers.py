@@ -314,6 +314,14 @@ def lookup_matcher(
             for code in non_cjk_codes:
                 result.setdefault(code, []).append((match_text, is_explicit))
 
+        elif not has_hanzi and not has_kana and not has_hangul:
+            fallback_codes = seg_language_codes if seg_language_codes else ["unknown"]
+            for code in fallback_codes:
+                result.setdefault(code, []).append((match_text, is_explicit))
+            logger.debug(
+                f"Non-CJK fallback: '{match_text}' stored under {fallback_codes}"
+            )
+
     logger.info(f"Lookup Matcher Result: {result}")
 
     return result

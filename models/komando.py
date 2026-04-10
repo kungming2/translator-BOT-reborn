@@ -446,6 +446,16 @@ def extract_commands_from_text(
                         term, is_explicit = item
                         commands_dict["lookup_cjk"].append((lang, term, is_explicit))
 
+        # Wiktionary (non-CJK) lookup from same matcher result
+        _WT_SKIP: frozenset[str] = frozenset({"zh", "ja", "ko"})
+        for lang, terms_with_flags in lookup_cjk.items():
+            if lang in _WT_SKIP:
+                continue
+            for item in terms_with_flags:
+                if isinstance(item, tuple):
+                    term, is_explicit = item
+                    commands_dict["lookup_wt"].append((lang, term, is_explicit))
+
     # Special: Wikipedia lookup using {{braces}} with optional :lang suffix
     if text.count("{{") > 0 and text.count("}}") > 0:
         wiki_terms = _extract_text_within_curly_braces(original_text)

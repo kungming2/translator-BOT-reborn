@@ -65,7 +65,8 @@ class Kunulo:
     cjk_parent_pattern = re.compile(r"\[]\(#cjk_parent_([a-zA-Z0-9]+)\)")
     # Matches the parent-comment anchor embedded by lookup_wp._format_wp_reply,
     # e.g. [](#wp_parent_abc123) → group 1 = "abc123"
-    wp_parent_pattern = re.compile(r"\[]\(#wp_parent_([a-zA-Z0-9]+)\)")
+    wp_parent_pattern = re.compile(r"\[]\(#wp_parent_([a-zA-Z0-9]+)\)")  # Wikipedia
+    wt_parent_pattern = re.compile(r"\[]\(#wt_parent_([a-zA-Z0-9]+)\)")  # Wiktionary
 
     # ── Construction ──────────────────────────────────────────────────────────
 
@@ -129,6 +130,15 @@ class Kunulo:
                         associated_data = {
                             "terms": wp_terms,
                             "parent_id": wp_parent_id,
+                        }
+                    elif tag == "comment_wiktionary":
+                        wt_parent_match = cls.wt_parent_pattern.search(comment.body)
+                        wt_parent_id = (
+                            wt_parent_match.group(1) if wt_parent_match else None
+                        )
+                        associated_data = {
+                            "terms": [],  # could extract terms later if needed
+                            "parent_id": wt_parent_id,
                         }
                     else:
                         associated_data = None
@@ -376,6 +386,18 @@ class Kunulo:
             str or None: The bot's comment ID to edit, or None if not found.
         """
         for bot_comment_id, data in self.get_all_entries("comment_wikipedia"):
+            if (
+                isinstance(data, dict)
+                and data.get("parent_id") == triggering_comment_id
+            ):
+                return bot_comment_id
+        return None
+
+    def find_wt_reply_for_comment(self, triggering_comment_id: str) -> str | None:
+        """
+        Find the bot's existing Wiktionary reply triggered by a specific user comment.
+        """
+        for bot_comment_id, data in self.get_all_entries("comment_wiktionary"):
             if (
                 isinstance(data, dict)
                 and data.get("parent_id") == triggering_comment_id
