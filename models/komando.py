@@ -153,7 +153,7 @@ class Komando:
             elif len(entry) == 2:
                 # Old format: (lang, term)
                 _, term = entry
-                remapped_data.append((target_lang_code, term, None))
+                remapped_data.append((target_lang_code, term, False))
             else:
                 remapped_data.append(entry)
 

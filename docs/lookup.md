@@ -8,11 +8,11 @@ Ziwen has two lookup functions that are called by wrapping lookup terms with cha
 
 ## CJK Lookup
 
-When a user submits a comment with two \` ([grave accents](https://en.wikipedia.org/wiki/Grave_accent), also known as back ticks) around a text string, Ziwen will look up the string to see if it's a Chinese, Japanese, or Korean character, word, or *[chengyu](https://en.wikipedia.org/wiki/Chengyu)/[yojijukugo](https://en.wikipedia.org/wiki/Yojijukugo)* (idioms) or a word for the post's language. Ziwen will then return its findings, including pronunciations, meaning, and links to online dictionaries for that search. Unlike other commands, there is no explicit word trigger for this function - the presence of two \` around the lookup term is sufficient. (This is usually used to indicate code text on Reddit)
+When a user submits a comment with two \` ([grave accents](https://en.wikipedia.org/wiki/Grave_accent), also known as back ticks) around a text string, Ziwen will look up the string to see if it's a Chinese, Japanese, or Korean character, word, or *[chengyu](https://en.wikipedia.org/wiki/Chengyu)/[yojijukugo](https://en.wikipedia.org/wiki/Yojijukugo)* (idioms) or a word for the post's language. Ziwen will then return its findings, including pronunciations, meaning, and links to online dictionaries for that search. Unlike other commands, there is no explicit word trigger for this function - the presence of two \` around the lookup term is sufficient. (This syntax is often used to indicate programming code text on Reddit)
 
 Chinese or Japanese explanations are included in *chengyu* and *yojijukugo* lookups if Ziwen can find them.
 
-On average, [55% of posts](https://www.reddit.com/r/translator/wiki/overall_statistics) on r/translator are for one of the Chinese, Japanese, or Korean (CJK) languages. 
+On average, [55% of posts](https://www.reddit.com/r/translator/wiki/overall_statistics) on r/translator are for one of the Chinese, Japanese, or Korean (CJK) languages, thus necessitating a robust function for returning dictionary results in that language. 
 
 #### Optional Syntax
 
@@ -20,6 +20,16 @@ A language tag added to a lookup will force a lookup in that language, even on a
 
 An exclamation mark ! appended to the lookup (`年年有余`!, `井底之蛙`:zh!) will disable tokenization of the lookup. If you're adding a language tag to the lookup, the exclamation mark should go on the very end.
 
+
+```text
+`大`          # Returns character data for 大 ("big, great"), depending on the post's language category 
+`立`:ja       # Returns character data for 立 ("establish, stand") in Japanese regardless of post language
+`芒果`        # Returns word data for 芒果 ("mango") in Chinese
+`睡觉`:zh     # Returns word data for 睡觉 ("sleep") in Chinese
+`場合`:ja     # Returns word data for 場合 ("situation") in Japanese
+`守株待兔`    # Returns word and chengyu data for 守株待兔 ("to sit around and wait") in Chinese
+`천하`        # Returns word data for 천하 ("all-under-Heaven") in Korean
+```
 
 #### Dictionaries
 
@@ -43,6 +53,22 @@ The following sources are used by CJK lookup functions:
 * The ability to call specific language and Japanese surnames was first suggested by u/nomfood.
 
 
+## Wiktionary Lookup
+
+Separate from the CJK lookup function detailed above is a catch-all [Wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) lookup that can search for words in any other (non-CJK) language.
+
+Due to the not-fully-standardized nature of English Wiktionary content, lookup results may vary in how clean their formatting is, and words with clear entries (e.g. nouns, dictionary forms of verbs, etc.) will have the best results. For the most part, the lookup function will return etymology, pronunciation, and definitions for a word. Note that tokenization *will not be active* for Wiktionary lookups. 
+
+The Wiktionary lookup will generally be conducted in the language of the post. That is, a lookup for `Sprache` on a German post will be automatically conducted for German. Appending a language tag like the CJK lookup text above will also work. 
+
+```text
+`Wasser`               # Returns word data for Wasser ("water") on a German post
+`вода`:ru              # Returns word data for вода ("water") in Russian
+`vand`:danish          # Returns word data for vand ("water") in Danish
+`ᎠᎹ`:chr              # Returns word data for ᎠᎹ ("water") in Cherokee
+```
+
+
 ## Wikipedia Lookup
 
 Wrapping dual curly braces around a search term tags something for Ziwen to look up on [Wikipedia](https://en.wikipedia.org/wiki/Main_Page) and returns the results in a comment reply. This is usually to give the requester more cultural context and information.
@@ -58,9 +84,10 @@ This example would return Wikipedia links and short summaries for "[Qianlong Emp
 A language tag added to a lookup will search the Wikipedia for that language instead of the English Wikipedia. For example:
 
 ```text
-{{琵琶行}}:chinese       # Searches zh.wikipedia.org
-{{España}}:es           # Searches es.wikipedia.org
-{{L. L. Zamenhof}}:eo   # Searches eo.wikipedia.org
+{{Cyrus the Great}}     # Searches en.wikipedia.org (default)
+{{琵琶行}}:chinese       # Searches zh.wikipedia.org (Chinese Wikipedia)
+{{Don Quijote}}:es      # Searches es.wikipedia.org (Spanish Wikipedia)
+{{L. L. Zamenhof}}:eo   # Searches eo.wikipedia.org (Esperanto Wikipedia)
 ```
 
 #### Notes

@@ -224,6 +224,7 @@ The **!transform:[value]** command is used to transform a misaligned image, eith
 * This function uploads transformed images to [ImgBB](https://imgbb.com/). Images uploaded by this bot through this function are automatically deleted after 7 days.
   * The bot downsamples the image quality in order to reduce the load on ImgBB's servers and speed up operations.
 * This function supports any post with an image attached, including text posts with an embedded image, link posts, and gallery posts.
+* Gallery posts are truncated to the first 10 images (Reddit's maximum allowed image count is 20).
 
 ## Moderator/OP Commands
 

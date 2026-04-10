@@ -27,6 +27,8 @@ This page records the version history of the various routines of translator-BOT.
 * ✨ ADDITION: Module `__main__` environment runtimes have all been moved and centralized in `devtools.py`.
 * ✨ ADDITION: Added syntax to return lookup searches for non-English Wikipedia articles. Example: `{{黄河}}:zh`
 * ✨ ADDITION: The lookup function for CJK will now consistently be able to update the bot's comment when the terms looked up are changed in the original comment.
+* ✨ ADDITION: [Wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) lookup has been re-implemented for non-CJK languages.
+* ✨ ADDITION: Non-English Wikipedia results can be fetched by appending a language tag to the regular Wikipedia lookup syntax.  
 * 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
 * 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
 * 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
@@ -50,6 +52,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Added a `fetch_count` counter to the CJK cache to record which terms are being retrieved most often.
 * 🔄 CHANGE: Fixed the `!translated` handler so that an OP will not be notified of a translated post if they are the ones calling the command.
 * 🔄 CHANGE: Wenju's language of the day update will also update [r/languagelearning](https://www.reddit.com/r/languagelearning)'s sidebar at the same time.
+* 🔄 CHANGE: `devtools.py` and `main_wenyuan.py` now also use [Rich](https://github.com/textualize/rich) for better formatting of lookup results.
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
@@ -130,7 +133,6 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 
 ###### Deprecated Features
 
-* 🕯️ REMOVED: (for now) Wiktionary search for non-CJK languages. Most Wiktionary parser modules have stopped working and Wiktionary data is so unstructured that it may take some time to build a proper parser that works across a wide range of languages.
 * 🕯️ REMOVED: The `App` classification for non-defined `Multiple Languages` posts. This was almost never used even after it was introduced, and with the modern interpretation of Rule #R2, there's no need for it. Its three-letter "special" code also clashed with the language-based categories we use. 
 * 🕯️ REMOVED: [Goo](https://help.goo.ne.jp/help/article/2889/) shut down their monolingual Japanese dictionary, so links to their site have been removed from Japanese-lookup results.
 * 🕯️ REMOVED: We formerly had a brigading warner routine set up in Wenju to provide moderators with advance warning if a subreddit known for brigading had linked to r/translator. All such subreddits have since been shutdown and this is no longer needed.
