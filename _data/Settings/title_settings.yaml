@@ -1,5 +1,13 @@
+# This settings file stores the title settings for the bot for its
+# parser and processing Ajos.
 
-# Title formatting words.
+# Forms of dashed English strings that can appear in titles instead of
+# ones with proper directions.
+# Used in two places:
+#   1. _preprocess_title: if a dash appears in the first 20 characters and
+#      any of these strings match (title-cased), the dash is replaced with " > ".
+#   2. _build_required_title_keywords: all entries (lowercased) are appended
+#      to the "total" keyword list so dash-style titles pass the post filter.
 ENGLISH_DASHES:
   - English -
   - English-
@@ -19,6 +27,10 @@ ENGLISH_DASHES:
   - '-ENGLISH'
   - '- ENGLISH'
 
+# The standard directional arrow is ">", but people may mistakenly
+# use other symbols that we can account for here.
+# Used in _preprocess_title: each entry is replaced with " > " to
+# normalize the title before language extraction begins.
 WRONG_DIRECTIONS:
   - '<'
   - '〉'
@@ -32,6 +44,10 @@ WRONG_DIRECTIONS:
   - '←'
   - '~'
 
+# The standard brackets are "[]", but people may mistakenly use other
+# form of brackets. Left and right ones are listed separately.
+# Used in _preprocess_title: each left entry is replaced with " [" and
+# each right entry with "] " to normalize bracket style before parsing.
 WRONG_BRACKETS_LEFT:
   - ［
   - 〚
@@ -52,8 +68,12 @@ WRONG_BRACKETS_RIGHT:
   - ｠
   - 》
 
-# These are two-letter and three-letter English words that can be confused for ISO language codes.
-# We exclude them when processing the title. When adding new ones, add them in title case.
+# These are two-letter and three-letter English words that can be
+# confused for ISO language codes. We exclude them when processing the title.
+# Used in _resolve_languages: after splitting a title chunk into words, any
+# 2-letter word whose title-case form is in this set is dropped before
+# language lookup, preventing false ISO 639-1 code matches (e.g. "it" → Italian).
+# Add in title case (Title).
 ENGLISH_2_WORDS:
   - Am
   - An
@@ -84,37 +104,50 @@ ENGLISH_2_WORDS:
 
 # Note that this is actually formatted as a really long string. This
 # has to be split into a list for scripts to parse it correctly.
+# Used in _resolve_languages alongside ENGLISH_2_WORDS: any 3-letter word
+# whose title-case form appears in this set (after splitting on whitespace)
+# is dropped before language lookup, preventing false ISO 639-2/3 code
+# matches and common English abbreviations (e.g. "est" → Estonian, "can" → ...),
+# including internet slang and acronyms.
+# Add in title case (Title).
 ENGLISH_3_WORDS: >-
-  Abs Abu Aby Ace Act Add Ado Ads Aft Age Ago Aid Ail Aim Air Ait Aka Ale Amp
-  And Ant Ape App Apt Arc Are Ark Arm Art Ash Ask Asp Ass Ate Auk Awe Awn Axe
-  Azo Baa Bag Bah Bam Ban Bar Bay Bed Bee Beg Bet Bey Bib Bid Big Bin Bio Bit
-  Boa Bob Bod Bog Boo Bop Bot Bow Box Boy Bra Bro Bub Bud Bug Bum Bun Bus But
-  Buy Bye Cab Cad Cam Can Cap Car Cat Caw Cha Chi Cob Cod Cog Com Con Coo Cop
-  Cot Cow Cox Cry Cub Cup Cur Cut Dad Dag Dam Dee Den Dib Did Dig Dim Din Dip
-  Doc Doe Don Doo Dop Dot Dry Dub Due Dug Duh Dun Duo Dux Ego Eke Elk Elm Emu
-  End Era Erg Err Ese Etc Eve Ewe Fab Fad Fag Fan Far Far Fat Fax Fay Fie Fin
-  Fir Fit Fly Fon For Fry Fue Fun Fur Gab Gag Gak Gal Gap Gas Gaw Gay Gel Geo
-  Gig Gil Gin Git Gnu Gob God Goo Got Gum Gun Gut Gym Had Hag Hal Han Ham Has
-  Hat Hay Hem Her Hid Hit Hoe Hop Hot How Hoy Hub Hue Hug Hug Huh Hum Hut Ice
-  Ich Ilk Inn Ire Irk Ism Its Jab Jah Jak Jam Jav Jay Jet Jib Jig Job Jog Jus
-  Jut Keg Key Kid Kin Kit Koa Koi Lab Lad Lag Lap Law Lax Lay Lea Led Lee Lei
-  Let Lew Lid Lie Lip Lit Lob Log Lol Loo Lop Los Lot Low Lug Mac Mad Mag Man
-  Mao Mar Mat Maw Max May Men Met Mic Mid Min Mit Mix Mod Mog Mom Mon Moo Mop
-  Mow Mud Mug Mum Nab Nag Nap Nay Nee Neo Net New Nib Nil Nit Nix Nob Nod Nog
-  Non Nor Not Now Nub Nun Nut Oar Old Ole Oma One Opt Ore Owl Pac Pad Pal Pan
-  Pap Par Pas Paw Pax Pay Pea Pee Peg Pep Per Pls Plz Pic Pie Pig Pin Pip Pit
-  Pix Ply Poe Pog Poi Poo Pop Pot Pow Pox Pre Pro Pub Pud Pug Pup Pus Put Pyx
-  Qat Qua Rad Rag Ram Ran Rap Rat Raw Ray Rib Rim Rob Roc Rod Roe Row Rub Rue
-  Rug Rum Run Rut Sac Sad Sag Sat Saw Sax Say Sea Sec See Set Sew She Shh Shy
-  Sim Sin Sip Sir Sis Six Ski Sky Sly Sob Sod Som Sop Sot Sow Soy Spa Spy Sty
-  Sub Sue Sun Sun Tab Tad Tag Tam Tan Tae Tap Tar Tat Tax Tea Tee Ten The Tic
-  Til Tin Tip Tit Tom Ton Too Top Tow Toy Try Tub Tug Tui Two Txt Ugh Ump Urn
-  Usa Van Vie Vig Wad Wag Wan War Was Wax Way Wed Wel Wet Wig Win Woe Wog Wok
-  Won Woo Wow Wry Yak Yam Yap Yaw Yay Yea Yes Yet Yip Yum Yup Zag Zap Zen Zoo
-  Msa Gcc Nyc Mba Mtf Ftm Ftr Eid Omg Brb Idk Tbh Ftw Ngl Irl Ama Nvm Afk Sfw
-  Psa Faq Url Pdf Vpn Dns Cpu Fyi Wfh Day Gmt Ish Via Who Est Pst Esl Utc Cjk
-  Uni 
+  Abs Abu Aby Ace Act Add Ado Ads Afk Aft Age Ago Aid Ail Aim Air Ait Aka
+  Ale Ama Amp And Ant Ape App Apt Arc Are Ark Arm Art Ash Ask Asp Ass Ate
+  Auk Awe Awn Axe Azo Baa Bag Bah Bam Ban Bar Bay Bed Bee Beg Bet Bey Bib
+  Bid Big Bin Bio Bit Boa Bob Bod Bog Boo Bop Bot Bow Box Boy Bra Brb Bro
+  Bub Bud Bug Bum Bun Bus But Buy Bye Cab Cad Cam Can Cap Car Cat Caw Cha
+  Chi Cjk Cob Cod Cog Com Con Coo Cop Cot Cow Cox Cpu Cry Cub Cup Cur Cut
+  Dad Dag Dam Day Dee Den Dib Did Dig Dim Din Dip Dns Doc Doe Don Doo Dop
+  Dot Dry Dub Due Dug Duh Dun Duo Dux Ego Eid Eke Elk Elm Emu End Era Erg
+  Err Ese Esl Est Etc Eve Ewe Fab Fad Fag Fan Faq Far Fat Fax Fay Fie Fin
+  Fir Fit Fly Fon For Fry Ftm Ftr Ftw Fue Fun Fur Fyi Gab Gag Gak Gal Gap
+  Gas Gaw Gay Gcc Gel Geo Gig Gil Gin Git Gmt Gnu Gob God Goo Got Gum Gun
+  Gut Gym Had Hag Hal Ham Han Has Hat Hay Hem Her Hid Hit Hoe Hop Hot How
+  Hoy Hub Hue Hug Huh Hum Hut Ice Ich Idk Ilk Inn Ire Irk Irl Ish Ism Its
+  Jab Jah Jak Jam Jav Jay Jet Jib Jig Job Jog Jus Jut Keg Key Kid Kin Kit
+  Koa Koi Lab Lad Lag Lap Law Lax Lay Lea Led Lee Lei Let Lew Lid Lie Lip
+  Lit Lob Log Lol Loo Lop Los Lot Low Lug Mac Mad Mag Man Mao Mar Mat Maw
+  Max May Mba Men Met Mic Mid Min Mit Mix Mod Mog Mom Mon Moo Mop Mow Msa
+  Mtf Mud Mug Mum Nab Nag Nap Nay Nee Neo Net New Ngl Nib Nil Nit Nix Nob
+  Nod Nog Non Nor Not Now Nub Nun Nut Nvm Nyc Oar Old Ole Oma Omg One Opt
+  Ore Owl Pac Pad Pal Pan Pap Par Pas Paw Pax Pay Pdf Pea Pee Peg Pep Per
+  Pic Pie Pig Pin Pip Pit Pix Pls Ply Plz Poe Pog Poi Poo Pop Pot Pow Pox
+  Pre Pro Psa Pst Pub Pud Pug Pup Pus Put Pyx Qat Qua Rad Rag Ram Ran Rap
+  Rat Raw Ray Rib Rim Rob Roc Rod Roe Row Rub Rue Rug Rum Run Rut Sac Sad
+  Sag Sat Saw Sax Say Sea Sec See Set Sew Sfw She Shh Shy Sim Sin Sip Sir
+  Sis Six Ski Sky Sly Sob Sod Som Sop Sot Sow Soy Spa Spy Sty Sub Sue Sun
+  Tab Tad Tae Tag Tam Tan Tap Tar Tat Tax Tbh Tea Tee Ten The Tic Til Tin
+  Tip Tit Tom Ton Too Top Tow Toy Try Tub Tug Tui Two Txt Ugh Ump Uni Url
+  Urn Usa Utc Van Via Vie Vig Vpn Wad Wag Wan War Was Wax Way Wed Wel Wet
+  Wfh Who Wig Win Woe Wog Wok Won Woo Wow Wry Yak Yam Yap Yaw Yay Yea Yes
+  Yet Yip Yum Yup Zag Zap Zen Zoo
 
+# Known spellings and translations of "English" in various languages.
+# Used in _build_required_title_keywords: crossed with every CONNECTORS entry
+# to generate all valid "English [connector] LANGUAGE" and
+# "LANGUAGE [connector] English" keyword patterns for the post filter.
+# Both "total" and "to_phrases" keyword lists are populated from these pairs.
+# For cased alphabets, write in lowercase.
 ENGLISH_ALIASES:
   - en
   - eng
@@ -131,11 +164,20 @@ ENGLISH_ALIASES:
   - 英文
   - 영어
 
+# Symbols and words accepted as the directional separator between source
+# and target languages in a post title.
+# Used in _build_required_title_keywords: each connector is paired with
+# every ENGLISH_ALIASES entry and every supported language name to build
+# the full keyword lists used by main_posts_filter. The special value "to"
+# also populates the "to_phrases" sublist (used for Rule 1A placement checks),
+# while non-"to" connectors additionally generate no-space variants
+# (e.g. "en>fr" in addition to "en > fr").
 CONNECTORS:
   - '>'
   - 'to'
   - '<'  # shows up in mistakes
   - '〉'
+  - '〉'
   - '›'
   - '》'
   - '»'

@@ -1,6 +1,10 @@
-# These are English words that usually get erroneously recognized as a
-# language due to Fuzzywuzzy. Let's ignore them.
-FUZZY_THRESHOLD: 85
+# This settings file stores settings for the title matching routine,
+# under /title.
+
+# These are English words that may be erroneously recognized as a
+# language due to similarity, and should be ignored for fuzzy matching.
+# The comment next to the word indicates what it could be misidentified as.
+FUZZY_THRESHOLD: 85  # Minimum fuzz ratio (0–100) for a fuzzy match to be accepted
 FUZZ_IGNORE_WORDS:
   - Acehnese
   - Ancient
@@ -11,7 +15,7 @@ FUZZ_IGNORE_WORDS:
   - Canada
   - Cheese
   - Chopstick
-  - Classical Japanese
+  - Classical Japanese  # Classical Chinese
   - Creek
   - Dish
   - Green
@@ -22,13 +26,13 @@ FUZZ_IGNORE_WORDS:
   - Javanese
   - Kanada
   - Karen
-  - Latina
-  - Ladin
-  - Ladino
-  - Latino
-  - Lmao
+  - Latina  # Latin
+  - Ladin  # Latin
+  - Ladino  # Latin
+  - Latino  # Latin
+  - Lmao  # Lao
   - Logo
-  - Maay
+  - Maay  # Malay
   - Major
   - Malaysia
   - Mardi
@@ -36,12 +40,12 @@ FUZZ_IGNORE_WORDS:
   - Mario
   - Morse
   - Nosey
-  - Nurse
+  - Nurse  # Norse
   - Orkish
   - Past
   - Person
   - Peruvian
-  - Prussian
+  - Prussian  # Russian
   - Roman
   - Romani
   - Romanization
@@ -59,297 +63,308 @@ FUZZ_IGNORE_WORDS:
   - Trail
   - Trench
   - Turks
-
 # These are languages for which fuzzing usually doesn't play well.
+# As an example, Javanese is obviously very close to Japanese.
 FUZZ_IGNORE_LANGUAGE_NAMES:
   - Ancient Egyptian
   - American Sign Language
   - Javanese
 
 
+# Maps ISO 639-2/T macrolanguage codes to their default individual language
+# and the full list of constituent member codes (ISO 639-3).
+# Format per entry:
+#   <macro>:
+#     - <default member>       # the representative/most-used variety
+#     - [<member1>, ...]       # all individual language codes under this macro
 ISO_MACROLANGUAGES:
   aka:
-    - twi
-    - [fat, twi]
+    - twi  # Twi (default); Akan macrolanguage (Ghana)
+    - [fat, twi]  # Fante, Twi
   ara:
-    - arb
+    - arb  # Modern Standard Arabic (default); Arabic macrolanguage
     - [aao, abh, abv, acm, acq, acw, acx, acy, adf, aeb, aec, afb, apc, apd, arb, arq, ars, ary, arz, auz, avl, ayh, ayl, ayn, ayp, bbz, pga, shu, ssh]
   aym:
-    - ayr
-    - [ayr, ayc]
+    - ayr  # Central Aymara (default); Aymara macrolanguage (Bolivia/Peru)
+    - [ayr, ayc]  # Central Aymara, Southern Aymara
   aze:
-    - azj
-    - [azj, azb]
+    - azj  # North Azerbaijani (default); Azerbaijani macrolanguage
+    - [azj, azb]  # North Azerbaijani, South Azerbaijani
   bal:
-    - bgp
-    - [bcc, bgn, bgp]
+    - bgp  # Eastern Balochi (default); Balochi macrolanguage
+    - [bcc, bgn, bgp]  # Southern, Western, Eastern Balochi
   bik:
-    - bcl
+    - bcl  # Central Bikol (default); Bikol macrolanguage (Philippines)
     - [bcl, bhk, bln, bto, cts, fbl, lbl, rbl, ubl]
   bnc:
-    - lbk
-    - [ebk, lbk, obk, rbk, vbk]
+    - lbk  # Central Bontok (default); Bontok macrolanguage (Philippines)
+    - [ebk, lbk, obk, rbk, vbk]  # Eastern, Central, Odionganon, Northern, Southern Bontok
   bua:
-    - bxr
-    - [bxm, bxr, bxu]
+    - bxr  # Russia Buriat (default); Buriat macrolanguage
+    - [bxm, bxr, bxu]  # Mongolia, Russia, China Buriat
   chm:
-    - mhr
-    - [mhr, mrj]
+    - mhr  # Eastern Mari (default); Mari macrolanguage (Russia)
+    - [mhr, mrj]  # Eastern Mari, Western Mari
   cre:
-    - crk
-    - [crj, crk, crl, crm, csw, cwd]
+    - crk  # Plains Cree (default); Cree macrolanguage (Canada)
+    - [crj, crk, crl, crm, csw, cwd]  # Southern East, Plains, Northern East, Moose, Swampy, Woods Cree
   del:
-    - umu
-    - [umu, unm]
+    - umu  # Munsee (default); Delaware macrolanguage
+    - [umu, unm]  # Munsee, Unami
   den:
-    - xsl
-    - [scs, xsl]
+    - xsl  # South Slavey (default); Slave macrolanguage (Canada)
+    - [scs, xsl]  # North Slavey, South Slavey
   din:
-    - dik
-    - [dib, dik, dip, diw, dks]
+    - dik  # Southwestern Dinka (default); Dinka macrolanguage (South Sudan)
+    - [dib, dik, dip, diw, dks]  # Northeastern, Southwestern, Southeastern, Northwestern, Southeastern Dinka
   doi:
-    - dgo
-    - [dgo, xnr]
+    - dgo  # Dogri (default); Dogri macrolanguage (India)
+    - [dgo, xnr]  # Dogri, Kangri
   est:
-    - ekk
-    - [ekk, vro]
+    - ekk  # Standard Estonian (default); Estonian macrolanguage
+    - [ekk, vro]  # Standard Estonian, Võro
   fas:
-    - pes
-    - [prs, pes]
+    - pes  # Iranian Persian (default); Persian macrolanguage
+    - [prs, pes]  # Dari (Afghan Persian), Iranian Persian
   ful:
-    - fuf
+    - fuf  # Pular (default); Fulah macrolanguage (West/Central Africa)
     - [ffm, fub, fuc, fue, fuf, fuh, fui, fuq, fuv]
   gba:
-    - gbp
+    - gbp  # Gbaya-Bossangoa (default); Gbaya macrolanguage (Central Africa)
     - [bdt, gbp, gbq, gmm, gso, gya, mdo]
   gon:
-    - ggo
-    - [esg, ggo, gno, wsg]
+    - ggo  # Southern Gondi (default); Gondi macrolanguage (India)
+    - [esg, ggo, gno, wsg]  # Aheri, Southern, Northern Gondi, Adilabad Gondi
   grb:
-    - grj
-    - [gbo, gec, grj, grv, gry]
+    - grj  # Southern Grebo (default); Grebo macrolanguage (Liberia)
+    - [gbo, gec, grj, grv, gry]  # Northern, Ghtanks, Southern, Central, Barclayville Grebo
   grn:
-    - gug
-    - [gnw, gug, gui, gun, nhd]
+    - gug  # Paraguayan Guaraní (default); Guaraní macrolanguage
+    - [gnw, gug, gui, gun, nhd]  # Western Argentine, Paraguayan, Eastern Argentine, Mbya, Chiripá Guaraní
   hai:
-    - hdn
-    - [hax, hdn]
+    - hdn  # Northern Haida (default); Haida macrolanguage (Canada/Alaska)
+    - [hax, hdn]  # Southern Haida, Northern Haida
   hbs:
-    - hrv
-    - [bos, hrv, srp]
+    - hrv  # Croatian (default); Serbo-Croatian macrolanguage
+    - [bos, hrv, srp]  # Bosnian, Croatian, Serbian
   hmn:
-    - mww
+    - mww  # White Hmong (default); Hmong macrolanguage
     - [blu, cqd, hea, hma, hmc, hmd, hme, hmg, hmh, hmi, hmj, hml, hmm, hmp, hmq, hms, hmw, hmy, hmz, hnj, hrm, huj, mmr, muq, mww, sfm]
   iku:
-    - ike
-    - [ike, ikt]
+    - ike  # Eastern Canadian Inuktitut (default); Inuktitut macrolanguage
+    - [ike, ikt]  # Eastern Canadian Inuktitut, Western Canadian Inuktitut
   ipk:
-    - esi
-    - [esi, esk]
+    - esi  # North Alaskan Inupiatun (default); Inupiaq macrolanguage
+    - [esi, esk]  # North Alaskan Inupiatun, Northwest Alaska Inupiatun
   jrb:
-    - aju
-    - [ajt, aju, jye, yhd, yud]
+    - aju  # Moroccan Judeo-Arabic (default); Judeo-Arabic macrolanguage
+    - [ajt, aju, jye, yhd, yud]  # Judeo-Tunisian, Moroccan, Judeo-Yemeni, Judeo-Iraqi, Judeo-Tripolitanian Arabic
   kau:
-    - knc
-    - [kby, knc, krt]
+    - knc  # Central Kanuri (default); Kanuri macrolanguage (Lake Chad region)
+    - [kby, knc, krt]  # Manga, Central, Koro Kanuri
   kln:
-    - niq
+    - niq  # Nandi (default); Kalenjin macrolanguage (Kenya)
     - [enb, eyo, niq, oki, pko, sgc, spy, tec, tuy]
   kok:
-    - gom
-    - [gom, knn]
+    - gom  # Goan Konkani (default); Konkani macrolanguage (India)
+    - [gom, knn]  # Goan Konkani, Konkani
   kom:
-    - kpv
-    - [koi, kpv]
+    - kpv  # Komi-Zyrian (default); Komi macrolanguage (Russia)
+    - [koi, kpv]  # Komi-Permyak, Komi-Zyrian
   kon:
-    - kng
-    - [kng, kwy, ldi]
+    - kng  # Kongo (default); Kongo macrolanguage (Central Africa)
+    - [kng, kwy, ldi]  # Kongo, San Salvador Kongo, Laadi
   kpe:
-    - gkp
-    - [gkp, xpe]
+    - gkp  # Guinea Kpelle (default); Kpelle macrolanguage (West Africa)
+    - [gkp, xpe]  # Guinea Kpelle, Liberia Kpelle
   kur:
-    - kmr
-    - [ckb, kmr, sdh]
+    - kmr  # Northern Kurdish / Kurmanji (default); Kurdish macrolanguage
+    - [ckb, kmr, sdh]  # Central Kurdish (Sorani), Northern Kurdish, Southern Kurdish
   lah:
-    - skr
+    - skr  # Saraiki (default); Lahnda macrolanguage (Pakistan/India)
     - [hnd, hno, jat, phr, pmu, pnb, skr, xhe]
   lav:
-    - lvs
-    - [ltg, lvs]
+    - lvs  # Standard Latvian (default); Latvian macrolanguage
+    - [ltg, lvs]  # Latgalian, Standard Latvian
   luy:
-    - lwg
+    - lwg  # Wanga (default); Luyia macrolanguage (Kenya)
     - [bxk, ida, lkb, lko, lks, lri, lrm, lsm, lto, lts, lwg, nle, nyd, rag]
   man:
-    - mnk
+    - mnk  # Mandinka (default); Manding macrolanguage (West Africa)
     - [emk, mku, mlq, mnk, msc, mwk, myq]
   mlg:
-    - plt
+    - plt  # Plateau Malagasy (default); Malagasy macrolanguage (Madagascar)
     - [bhr, bjq, bmm, bzc, msh, plt, skg, tdx, tkg, txy, xmv, xmw]
   mon:
-    - khk
-    - [khk, mvf]
+    - khk  # Halh Mongolian (default); Mongolian macrolanguage
+    - [khk, mvf]  # Halh Mongolian, Peripheral Mongolian
   msa:
-    - zsm
+    - zsm  # Standard Malay (default); Malay macrolanguage
     - [bjn, btj, bve, bvu, coa, dup, hji, ind, jak, jax, kvb, kvr, kxd, lce, lcf, liw, max, meo, mfa, mfb, min, mly, mqg, msi, mui, orn, ors, pel, pse, tmw, urk, vkk, vkt, xmm, zlm, zmi, zsm]
   mwr:
-    - rwr
+    - rwr  # Marwari (default); Marwari macrolanguage (India)
     - [dhd, mtr, mve, rwr, swv, wry]
   nep:
-    - npi
-    - [npi, dty]
+    - npi  # Nepali (default); Nepali macrolanguage
+    - [npi, dty]  # Nepali, Dotyali
   nor:
-    - nob
-    - [nno, nob]
+    - nob  # Norwegian Bokmål (default); Norwegian macrolanguage
+    - [nno, nob]  # Norwegian Nynorsk, Norwegian Bokmål
   oji:
-    - ojb
+    - ojb  # Northwestern Ojibwa (default); Ojibwa macrolanguage (Canada)
     - [ciw, ojb, ojc, ojg, ojs, ojw, otw]
   ori:
-    - ory
-    - [ory, spv]
+    - ory  # Odia / Oriya (default); Oriya macrolanguage (India)
+    - [ory, spv]  # Odia, Sambalpuri
   orm:
-    - gaz
-    - [gaz, gax, hae, orc]
+    - gaz  # West Central Oromo (default); Oromo macrolanguage (Horn of Africa)
+    - [gaz, gax, hae, orc]  # West Central, Borana-Arsi-Guji, Harar, Orma Oromo
   pus:
-    - pst
-    - [pbt, pbu, pst]
+    - pst  # Central Pashto (default); Pashto macrolanguage
+    - [pbt, pbu, pst]  # Southern, Northern, Central Pashto
   que:
-    - quh
+    - quh  # South Bolivian Quechua (default); Quechua macrolanguage
     - [cqu, qub, qud, quf, qug, quh, quk, qul, qup, qur,qus, quw, qux, quy, quz, qva, qvc, qve, qvh, qvi, qvj, qvl, qvm, qvn, qvo, qvp, qvs, qvw, qvz, qwa, qwc, qwh, qws, qxa, qxc, qxh, qxl, qxn, qxo, qxp, qxr, qxt, qxu, qxw]
   raj:
-    - mup
+    - mup  # Malvi (default); Rajasthani macrolanguage (India)
     - [bgq, gda, gju, hoj, mup, wbr]
   rom:
-    - rmy
+    - rmy  # Vlax Romani (default); Romany macrolanguage
     - [rmc, rmf, rml, rmn, rmo, rmw, rmy]
   sqi:
-    - als
-    - [aae, aat, aln, als]
+    - als  # Tosk Albanian (default); Albanian macrolanguage
+    - [aae, aat, aln, als]  # Arbëreshë, Arvanitika, Gheg, Tosk Albanian
   srd:
-    - src
-    - [sdc, sdn, src, sro]
+    - src  # Logudorese Sardinian (default); Sardinian macrolanguage (Italy)
+    - [sdc, sdn, src, sro]  # Sassarese, Gallurese, Logudorese, Campidanese Sardinian
   swa:
-    - swh
-    - [swh, swc]
+    - swh  # Swahili (default); Swahili macrolanguage
+    - [swh, swc]  # Swahili, Congo Swahili
   syr:
-    - cld
-    - [aii, cld]
+    - cld  # Chaldean Neo-Aramaic (default); Syriac macrolanguage
+    - [aii, cld]  # Assyrian Neo-Aramaic, Chaldean Neo-Aramaic
   tmh:
-    - ttq
-    - [taq, thv, thz, ttq]
+    - ttq  # Tawallammat Tamajaq (default); Tamashek macrolanguage (Sahara)
+    - [taq, thv, thz, ttq]  # Tamasheq, Tahaggart, Tahoua, Tawallammat Tamajaq
   uzb:
-    - uzn
-    - [uzn, uzs]
+    - uzn  # Northern Uzbek (default); Uzbek macrolanguage
+    - [uzn, uzs]  # Northern Uzbek, Southern Uzbek
   yid:
-    - ydd
-    - [ydd, yih]
+    - ydd  # Eastern Yiddish (default); Yiddish macrolanguage
+    - [ydd, yih]  # Eastern Yiddish, Western Yiddish
   zap:
-    - zai
+    - zai  # Isthmus Zapotec (default); Zapotec macrolanguage (Mexico)
     - [zaa, zab, zac, zad, zae, zaf, zai, zam, zao, zaq, zar, zas, zat, zav, zaw, zax, zca, zoo, zpa, zpb, zpc, zpd, zpe, zpf, zpg, zph, zpi, zpj, zpk, zpl, zpm, zpn, zpo, zpp, zpq, zpr, zps, zpt, zpu, zpv, zpw, zpx, zpy, zpz, zsr, ztc, zte, ztg, ztl, ztm, ztn, ztp, ztq, zts, ztt, ztu, ztx, zty]
   zha:
-    - zyb
+    - zyb  # Yongbei Zhuang (default); Zhuang macrolanguage (China)
     - [ccx, ccy, zch, zeh, zgb, zgm, zgn, zhd, zhn, zlj, zln, zlq, zqe, zyb, zyg, zyj, zyn, zzj]
   zho:
-    - cmn
-    - [cdo, cjy, cmn, cpx, czh, czo, gan, hak, hsn, lzh, mnp, nan, wuu, yue]
+    - cmn  # Mandarin Chinese (default); Chinese macrolanguage
+    - [cdo, cjy, cmn, cpx, czh, czo, gan, hak, hsn, lzh, mnp, nan, wuu, yue]  # Min Dong, Jin, Mandarin, Pu-Xian, Huizhou, Min Zhong, Gan, Hakka, Xiang, Literary Chinese, Min Bei, Min Nan, Wu, Yue
   zza:
-    - kiu
-    - [diq, kiu]
+    - kiu  # Northern Zaza (default); Zaza macrolanguage (Turkey)
+    - [diq, kiu]  # Southern Zaza (Dimli), Northern Zaza (Kirmanjki)
 
+# Maps IETF/BCP 47 language-region tags to the most appropriate ISO 639-3 code
+# for that regional variety. Used to disambiguate macrolanguages by country.
+# Format: <ISO 639-1>-<ISO 3166-1 alpha-2>: <ISO 639-3>
 ISO_LANGUAGE_COUNTRY_ASSOCIATED:
-  ar-CY: acy
-  ar-DZ: arq
-  ar-BH: abv
-  ar-TD: shu
-  ar-EG: arz
-  ar-KW: afb
-  ar-IQ: acm
-  ar-AE: afb
-  ar-LB: apc
-  ar-SY: apc
-  ar-LY: ayl
-  ar-SA: acw
-  ar-OM: acx
-  ar-IL: apc
-  ar-PS: apc
-  ar-JO: apc
-  ar-SD: apd
-  ar-TN: aeb
-  ay-PE: ayc
-  de-CH: gsw
-  fa-AF: prs
-  ff-SN: fuc
-  ff-GM: fuc
-  ff-MR: fuc
-  ff-GH: ffm
-  ff-ML: ffm
-  ff-BJ: fue
-  ff-TG: fue
-  ff-BF: fuh
-  ff-NE: fuh
-  ff-NG: fuv
-  ff-CM: fub
-  ff-TD: fub
-  ff-SD: fub
-  ff-CF: fui
-  gn-BO: gui
-  hi-FJ: hif
-  om-KE: gax
-  ms-BN: kxd
-  sw-CD: swc
-  uz-AF: uzs
-  sq-XK: aln
+  ar-CY: acy  # Cypriot Arabic
+  ar-DZ: arq  # Algerian Arabic
+  ar-BH: abv  # Baharna Arabic (Bahrain)
+  ar-TD: shu  # Chadian Arabic
+  ar-EG: arz  # Egyptian Arabic
+  ar-KW: afb  # Gulf Arabic (Kuwait)
+  ar-IQ: acm  # Mesopotamian Arabic (Iraq)
+  ar-AE: afb  # Gulf Arabic (UAE)
+  ar-LB: apc  # North Levantine Arabic (Lebanon)
+  ar-SY: apc  # North Levantine Arabic (Syria)
+  ar-LY: ayl  # Libyan Arabic
+  ar-SA: acw  # Hijazi Arabic (Saudi Arabia)
+  ar-OM: acx  # Omani Arabic
+  ar-IL: apc  # North Levantine Arabic (Israel)
+  ar-PS: apc  # North Levantine Arabic (Palestinian Territories)
+  ar-JO: apc  # North Levantine Arabic (Jordan)
+  ar-SD: apd  # Sudanese Arabic
+  ar-TN: aeb  # Tunisian Arabic
+  ay-PE: ayc  # Southern Aymara (Peru)
+  de-CH: gsw  # Alemannic / Swiss German
+  fa-AF: prs  # Dari (Afghan Persian)
+  ff-SN: fuc  # Pulaar (Senegal)
+  ff-GM: fuc  # Pulaar (Gambia)
+  ff-MR: fuc  # Pulaar (Mauritania)
+  ff-GH: ffm  # Maasina Fulfulde (Ghana)
+  ff-ML: ffm  # Maasina Fulfulde (Mali)
+  ff-BJ: fue  # Pular (Benin)
+  ff-TG: fue  # Pular (Togo)
+  ff-BF: fuh  # Western Niger Fulfulde (Burkina Faso)
+  ff-NE: fuh  # Western Niger Fulfulde (Niger)
+  ff-NG: fuv  # Nigerian Fulfulde
+  ff-CM: fub  # Adamawa Fulfulde (Cameroon)
+  ff-TD: fub  # Adamawa Fulfulde (Chad)
+  ff-SD: fub  # Adamawa Fulfulde (Sudan)
+  ff-CF: fui  # Bagirmi Fulfulde (Central African Republic)
+  gn-BO: gui  # Eastern Argentine Guaraní (Bolivia)
+  hi-FJ: hif  # Fiji Hindi
+  om-KE: gax  # Borana-Arsi-Guji Oromo (Kenya)
+  ms-BN: kxd  # Brunei Malay
+  sw-CD: swc  # Congo Swahili
+  uz-AF: uzs  # Southern Uzbek (Afghanistan)
+  sq-XK: aln  # Gheg Albanian (Kosovo)
 
+# Lists of ISO 639-1/639-3 codes and ISO 15924 script codes that are
+# treated as belonging to each major CJK language group.
+# Used to route lookup and detection logic to the correct language handler.
 CJK_LANGUAGES:
   Chinese:
     - zh  # ISO 639-1 code
     - zho  # ISO 639-3 macrolanguage
-    - cdo
-    - lzh
-    - cjy
-    - cmn
-    - cpx
-    - czh
-    - czo
-    - gan
-    - hak
-    - hsn
-    - mnp
-    - nan
-    - wuu
-    - yue
-    - ltc
-    - och
-    - hnm
-    - sjc
-    - hnm
-    - luh
-    - Bopo  # ISO 15924 code
-    - Hani  # ISO 15924 code
-    - Hanb  # ISO 15924 code
-    - Hans  # ISO 15924 code
-    - Hant  # ISO 15924 code
-    - unknown  # Fallback value
+    - cdo  # Min Dong Chinese
+    - cjy  # Jinyu Chinese
+    - cmn  # Mandarin Chinese
+    - cpx  # Pu-Xian / Putian-Quanzhou Chinese
+    - czh  # Huizhou Chinese
+    - czo  # Min Zhong Chinese
+    - gan  # Gan Chinese
+    - hak  # Hakka Chinese
+    - hnm  # Hainanese
+    - hsn  # Xiang Chinese
+    - ltc  # Late Middle Chinese
+    - luh  # Leizhou Chinese
+    - lzh  # Literary Chinese (Classical)
+    - mnp  # Min Bei Chinese
+    - nan  # Min Nan Chinese (incl. Hokkien, Teochew)
+    - och  # Old Chinese
+    - sjc  # Shaojiang Chinese
+    - wuu  # Wu Chinese (incl. Shanghainese)
+    - yue  # Yue Chinese (incl. Cantonese)
+    - Bopo  # ISO 15924 code — Bopomofo script
+    - Hani  # ISO 15924 code — Han (CJK unified ideographs)
+    - Hanb  # ISO 15924 code — Han with Bopomofo
+    - Hans  # ISO 15924 code — Han Simplified
+    - Hant  # ISO 15924 code — Han Traditional
+    - unknown  # Fallback/default value
   Japanese:
     - ja  # ISO 639-1 code
-    - ojp
-    - ryn
-    - ams
-    - kzg
-    - tkn
-    - xug
-    - okn
-    - ryu
-    - yox
-    - mvi
-    - rys
-    - yoi
-    - Hira  # ISO 15924 code
-    - Jpan  # ISO 15924 code
-    - Kana  # ISO 15924 code
+    - ams  # Amami-Oshima (Southern)
+    - kzg  # Kikai
+    - mvi  # Miyako
+    - ojp  # Old Japanese
+    - okn  # Okinawan
+    - ryn  # Northern Amami-Oshima
+    - rys  # Yaeyama
+    - ryu  # Central Okinawan
+    - tkn  # Tokunoshima
+    - xug  # Kunigami
+    - yoi  # Yonaguni
+    - yox  # Yoron
+    - Hira  # ISO 15924 code — Hiragana script
+    - Jpan  # ISO 15924 code — Japanese (Han + Hiragana + Katakana)
+    - Kana  # ISO 15924 code — Katakana script
   Korean:
     - ko  # ISO 639-1 code
-    - okm
-    - oko
-    - jje
-    - Hang  # ISO 15924 code
-    - Kore  # ISO 15924 code
+    - jje  # Jeju language
+    - okm  # Middle Korean
+    - oko  # Old Korean
+    - Hang  # ISO 15924 code — Hangul (Jamo) script
+    - Kore  # ISO 15924 code — Korean (Hangul + Han)

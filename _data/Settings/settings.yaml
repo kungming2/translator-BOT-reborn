@@ -1,47 +1,65 @@
-bot_name: Ziwen
+# This settings file stores the primary settings for the bot, mostly
+# for Ziwen.
+
+# ─── General Settings ─────────────────────────────────────────────────
+
+# Main subreddit to monitor.
 subreddit: translator
-testing_mode: false  # Very important variable!
+
+# Testing mode. If true, the bot will not send any messages and will
+# instead output them to a local Markdown file.
+testing_mode: false
 
 # Regular job cycle run time (in minutes)
 cycle_time: 3.0
 
+# Shortform tags for the logger to identify which routine the log
+# came from.
 bot_shortform_tags:
+  Chinese Reference: CR
+  Hermes: HM
   Wenju: WJ
   Wenyuan: WY
   Zhongsheng: ZS
   Ziwen: ZW
-  Chinese Reference: CR
-  Hermes: HM
 
+# ─── Ziwen Comments Settings ──────────────────────────────────────────
+
+# These are commands that accept arguments (including language tags).
 commands_with_args:
   - "!id:"
   - "!identify:"
   - "!page:"
-  - "!search:"  # Does not accept language terms.
+  - "!search:"  # Does not accept language tags.
   - "!set:"
-  - "!transform:"  # Does not accept language terms.
+  - "!transform:"  # Does not accept language tags.
 
-# These commands accept arguments, but these arguments are not languages
+# These commands accept arguments, but these arguments are not
+# language tags. This is a subset of commands_with_args.
 commands_skip_conversion:
-  - "!search:"  # Does not accept language terms.
+  - "!search:"  # Does not accept language tags.
   - "!transform:"  # Does not accept language terms.
 
+# These commands accept arguments optionally as language tags.
 commands_optional_args:
   - "!translated"
   - "!doublecheck"
   - "!claim"
   - "!missing"
 
+# These commands take no further arguments.
 commands_no_args:
   - "!long"
   - "!nuke"
   - "!reset"
   - "!verify"
 
+# These lookup commands are formatted as wrap-around syntax.
 lookup_commands:
   - "`"     # CJK lookup
   - "{{"    # Wikipedia lookup
 
+# Aliases for commands (just identify in this case).
 command_aliases:
   '!id:': identify
   '!identify:': identify
@@ -53,6 +71,9 @@ command_points:
   identify: 3
   lookup_cjk: 2
 
+# These thanking keywords can trigger a post to be marked as translated
+# if sent by an OP, and if the comment lacks a word in
+# thanks_negation_keywords.
 thanks_keywords:  # Must be lowercase.
   - appreciate
   - arigato
@@ -80,6 +101,9 @@ thanks_keywords:  # Must be lowercase.
   - amazing
   - wonderful
 
+# These keywords prevent a post from being marked as translated if
+# an OP comments with another keyword from thanks_keywords.
+# E.g. "Thanks, **but** that doesn't solve my question."
 thanks_negation_keywords:  # Must be lowercase.
   - but
   - however
@@ -92,6 +116,9 @@ thanks_negation_keywords:  # Must be lowercase.
   - didn't
   - doesn't
 
+# The keywords are used for points determination. A reply to another
+# comment with one of these keywords will give credit to that comment's
+# author.
 verifying_keywords:
   - agree
   - approve
@@ -107,6 +134,20 @@ verifying_keywords:
   - verify
   - well done
   - well-done
+
+# How long do we allow people to `!claim` a post? This is defined in seconds.
+claim_period: 28800
+
+# How many days old must an account be before its user can utilize
+# the paging system.
+user_age_page: 14
+# How many users !page should contact.
+num_users_page: 3
+
+# Search function uses... (DDG or Reddit)
+search_engine: DDG
+
+# ─── Ziwen Posts Settings ────---──────────────────────────────────────
 
 # These are symbols used to indicate states in defined multiple posts.
 # The last two are currently used.
@@ -132,21 +173,6 @@ max_posts: 100
 # This is how many days' worth of processed post and comments IDs we
 # wish to keep.
 max_old_age: 180
-# Do not send notifications messages for posts processed that are older
-# than this age in ziwen_posts().
-notification_cutoff_age: 60 # in minutes
-# How long do we allow people to `!claim` a post? This is defined in seconds.
-claim_period: 28800
-
-# A boolean that notes whether the soft API limit of sending messages
-# (calculated right now as 10 messages / 5 minutes) is active.
-notifications_api_limiter_on: true
-# A number that defines the soft number of notifications an individual
-# will get in a month *per language*.
-notifications_monthly_limit: 30
-# A number that defines how many MAX number of people we message for
-# a single language post.
-notifications_user_limit: 30
 
 # How many posts (per 24 hours) can an OP make before they trigger
 # the notifications cut-off (that is, we stop sending language post
@@ -157,35 +183,12 @@ video_long_seconds: 300
 # How long a post is in characters to be considered a "long" request.
 post_long_characters: 1500
 
-# How many days old must an account be before it can utilize
-# the paging system.
-user_age_page: 14
-# How many users !page should contact.
-num_users_page: 3
 # Hardcoded how many posts are Unknown every month
-unknown_language_default_rate: 260
+unknown_language_default_rate: 160
 
 # Month delta for points calculation. How many months ago do we want to
 # use as a reference for points calculation?
 points_months_delta: 3
-
-# Edit tracking variables.This determines how old the cache for edited
-# comments is.
-comment_edit_age_max: 18  # in hours
-# This number determines how many comments back the edit tracker should
-# search for.
-comment_edit_num_limit: 30
-
-# Lookup age for the CJK cache (in days). Cache entries that are older
-# than this will be re-fetched.
-lookup_cjk_cache_age: 730  # 2 years
-
-# Search function uses... (DDG or Reddit)
-search_engine: DDG
-
-# Closeout settings
-close_out_age: 7  # age of posts (in days) that we inform people about.
-close_out_comments_minimum: 5
 
 # Duplicate detector settings
 duplicate_semantic_threshold: 0.85
@@ -198,7 +201,47 @@ log_search_days: 30  # How many days' worth of data we search for
 # Verification parser will not consider requests older than this age
 verification_request_age: 15  # in minutes
 
+# Maximum number of images to transform for a gallery
+max_gallery_images_transform: 10
 # Image retention age (in days)
 image_retention_age: 7
 # Image JPEG quality (percentage)
 image_jpeg_quality: 60
+
+# Maximum number of lines in a Wiktionary definition to keep
+max_num_definition_lines: 8
+
+# ─── Notification Settings ───---──────────────────────────────────────
+
+# Do not send notifications messages for posts processed that are older
+# than this age in ziwen_posts().
+notification_cutoff_age: 60 # in minutes
+
+# A boolean that notes whether the soft API limit of sending messages
+# (calculated right now as 10 messages / 5 minutes) is active.
+notifications_api_limiter_on: false
+# A number that defines the soft number of notifications an individual
+# will get in a month *per language*.
+notifications_monthly_limit: 30
+# A number that defines how many MAX number of people we message for
+# a single language post.
+notifications_user_limit: 30
+
+
+# ─── Cache Settings ───---─────────────────────────────────────────────
+
+# Edit tracking variables.This determines how old the cache for edited
+# comments is.
+comment_edit_age_max: 18  # in hours
+# This number determines how many comments back the edit tracker should
+# search for.
+comment_edit_num_limit: 30
+
+# Lookup age for the CJK cache (in days). Cache entries that are older
+# than this will be re-fetched.
+lookup_cjk_cache_age: 730  # 2 years
+
+# ─── Closeout Settings ────────────────────────────────────────────────
+
+close_out_age: 7  # age of posts (in days) that we inform people about.
+close_out_comments_minimum: 5  # minimum number of comments on a post to close it out.
