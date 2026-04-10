@@ -414,7 +414,7 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
 
     country_line = ""
     if country_emoji is not None:
-        country_line = f"* **Country**: {country_emoji} {today_language.country}\n"
+        country_line = f"* **Country**: {country_emoji}\n"
 
     body = (
         f"* **Family**: [{language_family}]({language_family_link})\n"
