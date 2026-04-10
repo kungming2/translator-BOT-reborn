@@ -8,8 +8,11 @@ Run individual check functions or execute this file directly to run all checks.
 
 import asyncio
 import logging
+import re
 from pprint import pprint
 
+from rich.console import Console
+from rich.markdown import Markdown
 from wasabi import msg
 
 from config import SETTINGS, enable_debug_logging
@@ -52,6 +55,22 @@ from ziwen_lookup.zh import (
     zh_word,
     zh_word_chengyu_supplement,
 )
+
+
+_console = Console()
+
+
+def _print_lookup(result: str | None, not_found_msg: str = "No results found.") -> None:
+    """Render a Markdown lookup result via Rich, or warn if empty."""
+    if result:
+        # Demote # headers to bold so Rich doesn't center them
+        normalized = re.sub(r"^#{1,6}\s+(.+)$", r"**\1**", result, flags=re.MULTILINE)
+        _console.print()
+        _console.print(Markdown(normalized), style="sandy_brown", justify="left")
+        _console.print()
+    else:
+        msg.warn(not_found_msg)
+
 
 # ─── lang ─────────────────────────────────────────────────────────────────────
 
@@ -350,7 +369,7 @@ def check_ziwen_lookup_zh_character() -> None:
     my_test = input("Enter a Chinese character to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
         result = asyncio.run(zh_character(my_test))
-    msg.info(str(result))
+    _print_lookup(result, f"No results found for '{my_test}'")
 
 
 def check_ziwen_lookup_zh_word() -> None:
@@ -358,7 +377,7 @@ def check_ziwen_lookup_zh_word() -> None:
     my_test = input("Enter a Chinese word to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
         result = asyncio.run(zh_word(my_test))
-    msg.info(str(result))
+    _print_lookup(result, f"No results found for '{my_test}'")
 
 
 def check_ziwen_lookup_zh_chengyu() -> None:
@@ -366,7 +385,7 @@ def check_ziwen_lookup_zh_chengyu() -> None:
     my_test = input("Enter a chengyu to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
         result = asyncio.run(zh_word_chengyu_supplement(my_test))
-    msg.info(str(result))
+    _print_lookup(result, f"No results found for '{my_test}'")
 
 
 def check_ziwen_lookup_zh_variant() -> None:
@@ -374,7 +393,7 @@ def check_ziwen_lookup_zh_variant() -> None:
     my_test = input("Enter a Chinese character to search for variants: ")
     with msg.loading("Searching for variants..."):
         result = variant_character_search(my_test)
-    msg.info(str(result))
+    _print_lookup(result, f"No variants found for '{my_test}'")
 
 
 def check_ziwen_lookup_zh_other() -> None:
@@ -382,7 +401,7 @@ def check_ziwen_lookup_zh_other() -> None:
     my_test = input("Enter a Chinese character for other readings: ")
     with msg.loading("Fetching other readings..."):
         result = old_chinese_search(my_test)
-    msg.info(str(result))
+    _print_lookup(result, f"No other readings found for '{my_test}'")
 
 
 def check_ziwen_lookup_ja_character() -> None:
@@ -390,7 +409,7 @@ def check_ziwen_lookup_ja_character() -> None:
     my_test = input("Enter a Japanese character to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
         result = ja_character(my_test)
-    msg.info(str(result))
+    _print_lookup(result, f"No results found for '{my_test}'")
 
 
 def check_ziwen_lookup_ja_word() -> None:
@@ -398,7 +417,7 @@ def check_ziwen_lookup_ja_word() -> None:
     my_test = input("Enter a Japanese word to look up: ")
     with msg.loading(f"Looking up '{my_test}'..."):
         result = asyncio.run(ja_word(my_test))
-    msg.info(str(result))
+    _print_lookup(result, f"No results found for '{my_test}'")
 
 
 def check_ziwen_lookup_ko_word() -> None:
@@ -407,7 +426,7 @@ def check_ziwen_lookup_ko_word() -> None:
     with msg.loading(f"Looking up '{my_input}'..."):
         result = ko_word(my_input)
     if result:
-        msg.info(str(result))
+        _print_lookup(result)
     else:
         msg.warn(f"No results found for '{my_input}'")
 
@@ -430,7 +449,7 @@ def check_ziwen_lookup_wikipedia() -> None:
         lang_code = "en"
     with msg.loading(f"Searching '{lang_code}' Wikipedia for '{my_search}'..."):
         result = wikipedia_lookup([my_search], lang_code)
-    msg.info(str(result))
+    _print_lookup(result, f"No Wikipedia results found for '{my_search}'")
 
 
 def check_ziwen_lookup_match_helpers() -> None:
@@ -454,7 +473,7 @@ def check_ziwen_lookup_wiktionary() -> None:
             formatted_wt_result = format_wiktionary_markdown(
                 wt_result, test_input, test_language
             )
-            print(formatted_wt_result)
+            _print_lookup(formatted_wt_result)
         else:
             msg.fail(f"Invalid search results for '{test_input}' ({test_language}).")
 
@@ -666,10 +685,10 @@ SECTIONS = {
             "5": ("wt: wiktionary", check_ziwen_lookup_wiktionary),
             "6": ("wp: wikipedia", check_ziwen_lookup_wikipedia),
             "7": ("zh: character", check_ziwen_lookup_zh_character),
-            "8": ("zh: chengyu", check_ziwen_lookup_zh_chengyu),
-            "9": ("zh: other readings", check_ziwen_lookup_zh_other),
-            "10": ("zh: variant", check_ziwen_lookup_zh_variant),
-            "11": ("zh: word", check_ziwen_lookup_zh_word),
+            "8": ("zh: character - variants", check_ziwen_lookup_zh_variant),
+            "9": ("zh: character - other readings", check_ziwen_lookup_zh_other),
+            "10": ("zh: word", check_ziwen_lookup_zh_word),
+            "11": ("zh: word - chengyu", check_ziwen_lookup_zh_chengyu),
             "12": (
                 "cache: top entries by fetch_count",
                 check_ziwen_lookup_cache_top_entries,
@@ -687,7 +706,7 @@ def _section_menu(label: str, checks: dict) -> None:
             print(f"  {key}. {sublabel}")
         print("  x. Back")
 
-        choice = input("Select a check: ").strip().lower()
+        choice = input("Select a choice: ").strip().lower()
 
         if choice == "x":
             break

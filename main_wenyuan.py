@@ -15,6 +15,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.table import Table
+from rich import box
 from wasabi import Printer
 
 from config import SETTINGS, logger
@@ -44,6 +48,7 @@ UTILITY_CODES = [
     "Multiple Languages",
 ]
 msg = Printer()
+_console = Console()
 
 
 # ─── Menu infrastructure ──────────────────────────────────────────────────────
@@ -85,25 +90,41 @@ class CommandRegistry:
 
         return decorator
 
-    def display_menu(self) -> str:
-        """Generate formatted menu display from registered commands."""
-        lines = ["\n" + "=" * 70, "WENYUAN COMMAND MENU", "=" * 70]
-
+    def display_menu(self) -> None:
+        """Render the command menu as a Rich table."""
         categorized: dict[str, list] = {}
         for cmd in self.commands.values():
             categorized.setdefault(cmd.category, []).append(cmd)
 
-        for category_key in ["posts", "test", "data", "admin", "system"]:
-            if category_key in categorized:
-                lines.append(
-                    f"\n{self.categories.get(category_key, category_key).upper()}"
-                )
-                lines.append("-" * 70)
-                for cmd in sorted(categorized[category_key], key=lambda x: x.key):
-                    lines.append(f"  {cmd.key:<20} {cmd.description}")
+        table = Table(
+            title="WENYUAN COMMAND MENU",
+            box=box.SIMPLE_HEAD,
+            show_header=True,
+            header_style="bold sandy_brown",
+            title_style="bold sandy_brown",
+            show_edge=True,
+            padding=(0, 1),
+        )
+        table.add_column("Command", style="cyan", no_wrap=True)
+        table.add_column("Description", style="white")
+        table.add_column("Category", style="dim")
 
-        lines.append("=" * 70)
-        return "\n".join(lines)
+        for category_key in ["posts", "test", "data", "admin", "system"]:
+            if category_key not in categorized:
+                continue
+            category_label = self.categories.get(category_key, category_key)
+            first = True
+            for cmd in sorted(categorized[category_key], key=lambda x: x.key):
+                table.add_row(
+                    cmd.key,
+                    cmd.description,
+                    category_label if first else "",
+                )
+                first = False
+
+        _console.print()
+        _console.print(table)
+        _console.print()
 
     def execute(self, key: str) -> bool:
         """Execute a command by key. Returns False if should exit."""
@@ -465,20 +486,34 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
 
 
 def _print_language_stats(stats: dict[str, object]) -> None:
-    """Pretty-print language statistics in a consistent format."""
+    """Pretty-print language statistics as a Rich table."""
     if not stats:
         msg.warn("No data available for this language.")
         return
 
-    msg.divider(str(stats.get("language", "Unknown Language")), char="-")
-    msg.text(f"Total requests: {stats.get('total_requests', 0)}")
-    msg.text(
-        f"Translated: {stats.get('translated', 0)} ({stats.get('translation_percentage', 0)}%)"
+    lang_name = str(stats.get("language", "Unknown Language"))
+    table = Table(
+        title=lang_name,
+        box=box.SIMPLE_HEAD,
+        show_header=False,
+        title_style="bold sandy_brown",
+        padding=(0, 1),
     )
-    msg.text(f"Needs review: {stats.get('needs_review', 0)}")
-    msg.text(f"Untranslated: {stats.get('untranslated', 0)}")
-    msg.text(f"% of all requests: {stats.get('percent_of_all_requests', 0)}%")
-    msg.text(f"Direction ratio: {stats.get('directions', 'N/A')}")
+    table.add_column("Field", style="dim", no_wrap=True)
+    table.add_column("Value", style="white")
+
+    table.add_row("Total requests", str(stats.get("total_requests", 0)))
+    table.add_row(
+        "Translated",
+        f"{stats.get('translated', 0)} ({stats.get('translation_percentage', 0)}%)",
+    )
+    table.add_row("Needs review", str(stats.get("needs_review", 0)))
+    table.add_row("Untranslated", str(stats.get("untranslated", 0)))
+    table.add_row("% of all requests", f"{stats.get('percent_of_all_requests', 0)}%")
+    table.add_row("Direction ratio", str(stats.get("directions", "N/A")))
+
+    _console.print()
+    _console.print(table)
 
 
 # ─── Command definitions ──────────────────────────────────────────────────────
@@ -525,32 +560,45 @@ def fetch_language_reference() -> None:
         )
         return
 
-    msg.divider(f"REFERENCE DATA FOR: {reference_data.get('name', 'Unknown')}")
-    msg.text(
-        f"Language Code (ISO 639-3): {reference_data.get('language_code_3', 'N/A')}"
+    ref_table = Table(
+        title=f"Reference Data — {reference_data.get('name', 'Unknown')}",
+        box=box.SIMPLE_HEAD,
+        show_header=False,
+        title_style="bold sandy_brown",
+        padding=(0, 1),
     )
-    msg.text(f"Primary Name: {reference_data.get('name', 'N/A')}")
+    ref_table.add_column("Field", style="dim", no_wrap=True)
+    ref_table.add_column("Value", style="white")
+
+    ref_table.add_row("ISO 639-3 Code", reference_data.get("language_code_3", "N/A"))
+    ref_table.add_row("Primary Name", reference_data.get("name", "N/A"))
 
     alt_names = reference_data.get("name_alternates", [])
     if alt_names:
-        msg.text(f"Alternate Names: {', '.join(alt_names)}")
+        ref_table.add_row("Alternate Names", ", ".join(alt_names))
 
-    msg.text(f"Country: {reference_data.get('country', 'N/A')}")
-    msg.text(f"Language Family: {reference_data.get('family', 'N/A')}")
+    ref_table.add_row("Country", reference_data.get("country", "N/A"))
+    ref_table.add_row("Language Family", reference_data.get("family", "N/A"))
 
     population = reference_data.get("population", 0)
-    if population > 0:
-        msg.text(f"Population: {population:,} speakers")
-    else:
-        msg.text("Population: Unknown")
+    ref_table.add_row(
+        "Population",
+        f"{population:,} speakers" if population and population > 0 else "Unknown",
+    )
 
-    msg.text("Links:")
+    links = []
     if reference_data.get("link_wikipedia"):
-        msg.text(f"  Wikipedia: {reference_data['link_wikipedia']}")
+        links.append(f"Wikipedia: {reference_data['link_wikipedia']}")
     if reference_data.get("link_ethnologue"):
-        msg.text(f"  Ethnologue: {reference_data['link_ethnologue']}")
+        links.append(f"Ethnologue: {reference_data['link_ethnologue']}")
     if reference_data.get("link_sil"):
-        msg.text(f"  SIL: {reference_data['link_sil']}")
+        links.append(f"SIL: {reference_data['link_sil']}")
+    if links:
+        ref_table.add_row("Links", "\n".join(links))
+
+    _console.print()
+    _console.print(ref_table)
+    _console.print()
 
     msg.good("Reference data retrieval complete")
 
@@ -579,41 +627,75 @@ def retrieve_post_stats() -> None:
         period_desc = "last 30 days"
 
     msg.divider(f"Statistics for {period_desc}")
-    msg.text(f"Total posts loaded: {len(lumo)}\n")
 
     overall = lumo.get_overall_stats()
-    msg.divider("Overall Statistics", char="-")
-    msg.text(f"Total requests: {overall['total_requests']}")
-    msg.text(
-        f"Translated: {overall['translated']} ({overall['translation_percentage']}%)"
+
+    overall_table = Table(
+        title=f"Overall Statistics — {period_desc} ({len(lumo)} posts)",
+        box=box.SIMPLE_HEAD,
+        show_header=False,
+        title_style="bold sandy_brown",
+        padding=(0, 1),
     )
-    msg.text(f"Needs review: {overall['needs_review']}")
-    msg.text(f"Untranslated: {overall['untranslated']}")
-    msg.text(f"In progress: {overall['in_progress']}")
-    msg.text(f"Missing assets: {overall['missing_assets']}")
-    msg.text(f"Unique languages: {overall['unique_languages']}\n")
+    overall_table.add_column("Field", style="dim", no_wrap=True)
+    overall_table.add_column("Value", style="white")
+    overall_table.add_row("Total requests", str(overall["total_requests"]))
+    overall_table.add_row(
+        "Translated", f"{overall['translated']} ({overall['translation_percentage']}%)"
+    )
+    overall_table.add_row("Needs review", str(overall["needs_review"]))
+    overall_table.add_row("Untranslated", str(overall["untranslated"]))
+    overall_table.add_row("In progress", str(overall["in_progress"]))
+    overall_table.add_row("Missing assets", str(overall["missing_assets"]))
+    overall_table.add_row("Unique languages", str(overall["unique_languages"]))
+    _console.print()
+    _console.print(overall_table)
 
     directions = lumo.get_direction_stats()
-    msg.divider("Translation Directions", char="-")
-    msg.text(
-        f"To English: {directions['to_english']['count']} ({directions['to_english']['percentage']}%)"
+    dir_table = Table(
+        title="Translation Directions",
+        box=box.SIMPLE_HEAD,
+        show_header=False,
+        title_style="bold sandy_brown",
+        padding=(0, 1),
     )
-    msg.text(
-        f"From English: {directions['from_english']['count']} ({directions['from_english']['percentage']}%)"
+    dir_table.add_column("Direction", style="dim", no_wrap=True)
+    dir_table.add_column("Value", style="white")
+    dir_table.add_row(
+        "To English",
+        f"{directions['to_english']['count']} ({directions['to_english']['percentage']}%)",
     )
-    msg.text(
-        f"Non-English: {directions['non_english']['count']} ({directions['non_english']['percentage']}%)\n"
+    dir_table.add_row(
+        "From English",
+        f"{directions['from_english']['count']} ({directions['from_english']['percentage']}%)",
     )
+    dir_table.add_row(
+        "Non-English",
+        f"{directions['non_english']['count']} ({directions['non_english']['percentage']}%)",
+    )
+    _console.print()
+    _console.print(dir_table)
 
     top_langs = lumo.get_language_rankings(by="total")[:10]
     if top_langs:
-        msg.divider("Top 10 Languages", char="-")
+        lang_table = Table(
+            title="Top 10 Languages",
+            box=box.SIMPLE_HEAD,
+            show_header=True,
+            header_style="bold",
+            title_style="bold sandy_brown",
+            padding=(0, 1),
+        )
+        lang_table.add_column("#", style="dim", no_wrap=True)
+        lang_table.add_column("Language", style="cyan")
+        lang_table.add_column("Requests", style="white", justify="right")
+        lang_table.add_column("% Translated", style="white", justify="right")
         for i, (lang, count) in enumerate(top_langs, 1):
             stats = lumo.get_language_stats(lang)
-            if stats:
-                msg.text(
-                    f"{i}. {lang}: {count} requests ({stats['translation_percentage']}% translated)"
-                )
+            pct = f"{stats['translation_percentage']}%" if stats else "—"
+            lang_table.add_row(str(i), lang, str(count), pct)
+        _console.print()
+        _console.print(lang_table)
 
     msg.good("Statistics retrieval complete")
     return None
@@ -747,7 +829,9 @@ def post_monthly_statistics(month_year: str) -> None:
     new_page_content = format_lumo_stats_for_reddit(lumo, month_year)
 
     msg.divider("GENERATED STATISTICS CONTENT")
-    print(new_page_content)
+    _console.print()
+    _console.print(Markdown(new_page_content), style="sandy_brown")
+    _console.print()
     msg.divider()
 
     approval = (
@@ -876,15 +960,14 @@ def post_monthly_statistics(month_year: str) -> None:
 def main() -> None:
     """Main application loop."""
     msg.divider("WENYUAN - Translation Statistics & Analytics System for r/translator")
+    msg.divider("Logged in as u/translator-BOT")
 
     msg.info("Validating data files...")
     data_validator()
     msg.good("Data validation complete")
 
     while True:
-        msg.divider("Logged in as u/translator-BOT")
-
-        print(registry.display_menu())
+        registry.display_menu()
 
         user_input = input("\n  Enter command (or 'x' to quit): ").strip().lower()
 
