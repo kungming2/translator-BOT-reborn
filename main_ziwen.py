@@ -41,8 +41,9 @@ def _alert_slow_run(
     memory_usage: str,
     pid: int,
 ) -> None:
-    """Send a Discord alert if the run exceeded the configured cycle time."""
-    if elapsed_minutes <= SETTINGS["cycle_time"]:
+    """Send a Discord alert if the run exceeded the configured cycle
+    time by a good amount."""
+    if elapsed_minutes <= SETTINGS["cycle_time"] * 2:
         return
     send_discord_alert(
         subject="Excessive Run Time Alert",
