@@ -60,6 +60,7 @@ def _extract_gallery_images(submission: Submission) -> list[str]:
               limited to the first 5 images.
     """
     image_urls: list[str] = []
+    maximum_gallery_images: int = SETTINGS["max_gallery_images_transform"]
 
     if (
         hasattr(submission, "is_gallery")
@@ -69,7 +70,7 @@ def _extract_gallery_images(submission: Submission) -> list[str]:
         media_metadata = submission.media_metadata
 
         for item in submission.gallery_data["items"]:
-            if len(image_urls) >= 5:
+            if len(image_urls) >= maximum_gallery_images:
                 break
 
             media_id = item["media_id"]
