@@ -321,7 +321,7 @@ def format_zh_character_from_cache(cached_data: dict) -> str:
     trad = cached_data.get("traditional")
     simp = cached_data.get("simplified")
     pronunciations = cached_data.get("pronunciations", {})
-    meanings = cached_data.get("meanings", "")
+    meanings = cached_data.get("meanings") or ""
     calligraphy = cached_data.get("calligraphy_links")
 
     if trad == simp:
@@ -409,7 +409,7 @@ def format_zh_word_from_cache(cached_data: dict) -> str:
     trad = cached_data.get("traditional")
     simp = cached_data.get("simplified")
     pronunciations = cached_data.get("pronunciations", {})
-    meanings = cached_data.get("meanings", "")
+    meanings = cached_data.get("meanings") or ""
 
     if trad == simp:
         header = f"# [{trad}](https://en.wiktionary.org/wiki/{trad}#Chinese)"
@@ -574,7 +574,7 @@ def format_ja_character_from_cache(cached_data: dict) -> str:
     word = cached_data.get("word")
     kun_readings = cached_data.get("kun_readings", [])
     on_readings = cached_data.get("on_readings", [])
-    meanings = cached_data.get("meanings", "")
+    meanings = cached_data.get("meanings") or ""
     calligraphy = cached_data.get("calligraphy_links")
 
     header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
@@ -628,7 +628,7 @@ def format_ja_word_from_cache(cached_data: dict) -> str:
     word = cached_data.get("word")
     pos = cached_data.get("part_of_speech", "")
     reading = cached_data.get("reading", {})
-    meanings = cached_data.get("meanings", "")
+    meanings = cached_data.get("meanings") or ""
 
     header = f"# [{word}](https://en.wiktionary.org/wiki/{word}#Japanese)\n\n"
     pos_section = f"##### *{pos.title()}*\n\n" if pos else ""
