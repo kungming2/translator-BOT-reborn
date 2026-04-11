@@ -41,7 +41,7 @@ Ziwen will filter out/reject titles that match the following criteria:
 3. **The title does not include a source language.** An example of this would be the title `Translate to English please`. 
 4. **The post is only for English.** An example of this would be the title `[English >English] "seak out" meaning`. We redirect such inquiries to r/englishlearning, r/transcription (for handwriting issues) or r/grammar.
 
-With each rejection, Ziwen also suggests a new title for the post that would adhere to the formatting guidelines. That new title is included in a comment that's posted to the post and Ziwen automatically generates a resubmit link for the OP that pre-fills that new title in, though this resubmit link usually only works on desktop and not on mobile.
+With each rejection, Ziwen also suggests a new title for the post that would adhere to the formatting guidelines. That new title is included in a comment that's added to the post and Ziwen automatically generates a resubmit link for the OP that pre-fills that new title in, though this resubmit link usually only works on desktop and not on mobile.
 
 ## Multiple-Language Posts
 
@@ -64,7 +64,7 @@ The state commands (`!doublecheck`, `!translated`, `!claim` and `!missing`) (see
 #### Notes
 
 * The `preferred_code` for multiple posts is `multiple` (not [standard ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3#Special_codes) `mul`)
-* Ziwen will *not* assign a post the "multiple" category if there are more than one *source* languages. (e.g. `[Chinese/Japanese >English]`) This is because the vast majority of such posts aren't actually for more than one language; the OP is usually just unsure which language it actually is.
+* Ziwen will *not* assign a post the "multiple" category if there are more than one *source* languages. (e.g. `[Chinese/Japanese >English]`) This is because the vast majority of such posts aren't actually for more than one language; the OP is usually just unsure which language it actually is. Moderators and users can always manually assign multiple languages to any such exceptions.
 * Reddit limits flair text to 64 characters. Consequently, if a *defined multiple* post contains so many target languages that their codes won't all fit in the flair, Ziwen will either truncate the number of language codes to fit in the flair or just set it as an *all multiple* post.
 
 ## Internal Posts
@@ -73,3 +73,6 @@ Internal posts are posts that are _not_ for a language; that is, they're not req
 
 * **Meta** posts, which are information or discussion posts about the operations of the subreddit or community (e.g. rules discussions, bot updates).
 * **Community** posts, which include the translation challenges, thank-you posts, or other posts related to r/translator, but are not *about* it.
+
+#### Examples
+
