@@ -45,16 +45,16 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
         current_time: Current Unix timestamp
 
     Returns:
-        dict: Dictionary with keys 'claimer', 'time', 'language_code', 'claim_time_diff'
-              Returns None for any value that couldn't be extracted
-              claim_time_diff is in seconds (positive if claim time is
-              in the future, negative if in the past)
+        dict: Dictionary with keys 'claimer', 'time', 'language', 'seconds_until_expiry'
+              Returns None for any value that couldn't be extracted.
+              seconds_until_expiry is positive if the claim is still active,
+              negative if it has expired, None if the time could not be parsed.
     """
     result: dict[str, Any] = {
         "claimer": None,
         "time": None,
         "language": None,
-        "claim_time_diff": 0,  # in seconds
+        "seconds_until_expiry": None,  # positive = active, negative = expired
     }
 
     # Extract claimer username (after u/)
@@ -63,7 +63,7 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
         result["claimer"] = claimer_match.group(1)
 
     # Extract time (before " UTC")
-    time_match = re.search(r"at (.+?) UTC", comment_text)
+    time_match = re.search(r"at \[?(.+?)Z?\]? UTC", comment_text)
     if time_match is not None:
         time_str = time_match.group(1)
         result["time"] = time_str
@@ -74,7 +74,7 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
                 # Replace 'Z' with '+00:00' for fromisoformat compatibility
                 claim_time = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
                 claim_timestamp = int(claim_time.timestamp())
-                result["claim_time_diff"] = int(claim_timestamp - current_time)
+                result["seconds_until_expiry"] = int(claim_timestamp - current_time)
             except (ValueError, AttributeError):
                 pass
 
@@ -129,7 +129,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
                         ">> But this post is already claimed by them. Replied to them."
                     )
                 else:
-                    remaining_minutes = claim_info["claim_time_diff"] // 60
+                    remaining_minutes = claim_info["seconds_until_expiry"] // 60
                     reply_text = RESPONSE.COMMENT_CURRENTLY_CLAIMED.format(
                         language_name=claim_info["language"].name,
                         language_code=claim_info["language"].preferred_code,

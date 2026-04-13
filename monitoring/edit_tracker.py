@@ -466,6 +466,9 @@ def progress_tracker() -> None:
 
     for post in search_results:
         post_id = post.id
+        logger.debug(
+            f"Found in-progress post. Checking post `{post_id}` for claim period expiration."
+        )
         permalink = post.permalink
         posts_checked += 1
 
@@ -476,12 +479,18 @@ def progress_tracker() -> None:
 
         if (ajo.type in ("single", "multiple")) and not ajo.is_defined_multiple:
             if ajo.status != "inprogress":
+                logger.debug(
+                    f"Post {post_id} does not have the in-progress state. Skipping. {permalink}"
+                )
                 continue
         else:
             has_inprogress = (
                 isinstance(ajo.status, dict) and "inprogress" in ajo.status.values()
             )
             if not has_inprogress:
+                logger.debug(
+                    f"Defined multiple post {post_id} does not have the in-progress state. Skipping. {permalink}"
+                )
                 continue
 
         kunulo_object = Kunulo.from_submission(post)
@@ -495,8 +504,9 @@ def progress_tracker() -> None:
 
         try:
             claim_comment = REDDIT_HELPER.comment(comment_claim_id)
+            logger.debug(f"Post {post_id}: claim comment body: {claim_comment.body!r}")
             claim_comment_data = parse_claim_comment(claim_comment.body, current_time)
-            time_diff = claim_comment_data.get("claim_time_diff")
+            time_diff = claim_comment_data.get("seconds_until_expiry")
         except Exception as e:
             logger.warning(
                 f"Failed to fetch/parse claim comment for post {post_id}. "
@@ -504,7 +514,15 @@ def progress_tracker() -> None:
             )
             continue
 
-        if time_diff is None or time_diff <= SETTINGS["claim_period"]:
+        if time_diff is None or time_diff > 0:
+            if time_diff is None:
+                logger.debug(
+                    f"Post {post_id}: seconds_until_expiry is None, skipping. {permalink}"
+                )
+            else:
+                logger.debug(
+                    f"Post {post_id}: claim still active ({time_diff}s remaining), skipping. {permalink}"
+                )
             continue
 
         logger.info(f"Post exceeded claim period. Resetting. {permalink}")
@@ -527,12 +545,3 @@ def progress_tracker() -> None:
     logger.debug(f"Checked {posts_checked} in-progress post(s)")
 
     return
-
-
-# ─── Entry point ──────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    start_time = time.time()
-    logger.info("Running Edit Tracker...")
-    edit_tracker()
-    logger.info(f"Finished. {round(time.time() - start_time, 2)} seconds elapsed.")

@@ -26,7 +26,7 @@ All routines use three international ISO standards for language codes and names,
 
 ISO 639-1/3 codes are universally supported by Ziwen, while for more specific use cases, ISO 3166 codes require a language to be prefixed with a `-` (e.g. `fr-CA`), and ISO 15924 is primarily used on 'Unknown' posts (e.g. `unknown-Hani`).
 
-For information on language processing can be found at the page of the same name below.
+More information on language processing can be found at the page of the same name below.
 
 ## Documentation Directory
 
@@ -36,11 +36,11 @@ For information on language processing can be found at the page of the same name
 * [Commands (Zhongsheng, Discord)](./commands_discord.md)
 * [Data Files](./data_files.md)
 * [Language Processing](./language_processing.md)
-* [Title Processing](./title_processing.md)
 * [Lookup Functions](./lookup.md)
 * [Models](./models.md)
 * [Points](./points.md)
 * [Technical Information](./technical.md)
+* [Title Processing](./title_processing.md)
 * [Verification](./verification.md)
 * [Wenju](./wenju.md)
 * [Wenyuan](./wenyuan.md)
