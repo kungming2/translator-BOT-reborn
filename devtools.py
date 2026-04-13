@@ -56,7 +56,6 @@ from ziwen_lookup.zh import (
     zh_word_chengyu_supplement,
 )
 
-
 _console = Console()
 
 
@@ -484,7 +483,7 @@ def check_ziwen_lookup_cache_top_entries() -> None:
     limit = int(limit_raw) if limit_raw.isdigit() else 20
     with msg.loading("Querying lookup_cjk_cache..."):
         result = get_cjk_cache_top_entries(limit)
-    print(result)
+    _console.print(result)
 
 
 # ─── reddit ───────────────────────────────────────────────────────────────────

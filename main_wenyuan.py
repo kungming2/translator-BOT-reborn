@@ -15,10 +15,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
+from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
-from rich import box
 from wasabi import Printer
 
 from config import SETTINGS, logger
