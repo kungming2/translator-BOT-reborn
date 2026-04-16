@@ -12,8 +12,9 @@ Covers:
     invalid language name.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from ziwen_lookup.wiktionary import (
     _is_clean_definition_line,
@@ -24,7 +25,6 @@ from ziwen_lookup.wiktionary import (
     parse_wiktionary,
     wiktionary_search,
 )
-
 
 # ─── Fixtures: raw Wiktionary extracts ───────────────────────────────────────
 
@@ -257,14 +257,17 @@ class TestIsCleanEtymologyLine:
         assert _is_clean_etymology_line("IPA(key): /ɡʊd/") is False
 
     def test_lemma_redirect(self):
-        assert _is_clean_etymology_line(
-            "See the etymology of the corresponding lemma form."
-        ) is False
+        assert (
+            _is_clean_etymology_line(
+                "See the etymology of the corresponding lemma form."
+            )
+            is False
+        )
 
     def test_headword_with_plural(self):
-        assert _is_clean_etymology_line(
-            "hand (plural hands, genitive of hand)"
-        ) is False
+        assert (
+            _is_clean_etymology_line("hand (plural hands, genitive of hand)") is False
+        )
 
 
 # ─── _is_clean_definition_line ───────────────────────────────────────────────
@@ -281,9 +284,12 @@ class TestIsCleanDefinitionLine:
         assert _is_clean_definition_line("Smith, John (2001), Some Book") is False
 
     def test_lemma_redirect(self):
-        assert _is_clean_definition_line(
-            "See the etymology of the corresponding lemma form."
-        ) is False
+        assert (
+            _is_clean_definition_line(
+                "See the etymology of the corresponding lemma form."
+            )
+            is False
+        )
 
     def test_descendant_arrow(self):
         assert _is_clean_definition_line("→ French: bon") is False
@@ -299,13 +305,17 @@ class TestIsCleanDefinitionLine:
 
 
 class TestParseWiktionary:
-
     # ── Basic extraction ──────────────────────────────────────────────────────
 
     def test_returns_dict_with_expected_keys(self):
         result = parse_wiktionary(ENGLISH_SIMPLE)
         assert result is not None
-        assert set(result.keys()) == {"word", "etymology", "pronunciation", "definition"}
+        assert set(result.keys()) == {
+            "word",
+            "etymology",
+            "pronunciation",
+            "definition",
+        }
 
     def test_etymology_extracted(self):
         result = parse_wiktionary(ENGLISH_SIMPLE)
@@ -449,7 +459,6 @@ class TestParseWiktionary:
 
 
 class TestFormatWiktionaryMarkdown:
-
     BASE_DATA = {
         "word": "good",
         "etymology": ["From Old English god."],
@@ -541,7 +550,6 @@ class TestFormatWiktionaryMarkdown:
 
 
 class TestWiktionarySearch:
-
     MOCK_RESPONSE_BODY = {
         "query": {
             "pages": {
@@ -634,7 +642,11 @@ class TestWiktionarySearch:
         mock_get.return_value = self._make_mock_response(self.MOCK_RESPONSE_BODY)
         wiktionary_search("schadenfreude", "German")
         call_kwargs = mock_get.call_args
-        params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
+        params = (
+            call_kwargs[1]["params"]
+            if "params" in call_kwargs[1]
+            else call_kwargs[0][1]
+        )
         assert params["titles"] == "schadenfreude"
 
     @patch("ziwen_lookup.wiktionary.requests.get")
