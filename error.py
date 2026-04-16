@@ -34,6 +34,7 @@ Logger tag: [ERROR]
 
 import logging
 import os
+import tempfile
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -72,6 +73,33 @@ def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
 # PyCharm incorrectly flags this - SafeDumper is compatible with CustomDumper
 # noinspection PyTypeChecker
 CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
+
+
+def _atomic_yaml_dump(path: str, data: list) -> None:
+    """
+    Write *data* as YAML to *path* atomically using a sibling temp file
+    and ``os.replace``, so a concurrent write or mid-write crash cannot
+    leave the log in a partially-written state.
+
+    :param path: Destination file path.
+    :param data: List of log-entry dicts to serialize.
+    """
+    dir_name = os.path.dirname(path) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            yaml.dump(
+                data,
+                f,
+                Dumper=CustomDumper,
+                allow_unicode=True,
+                sort_keys=False,
+                default_flow_style=False,
+            )
+        os.replace(tmp_path, path)
+    except Exception:
+        os.unlink(tmp_path)
+        raise
 
 
 # ─── Context capture ──────────────────────────────────────────────────────────
@@ -157,16 +185,7 @@ def error_log_basic(entry: str, bot_routine: str) -> None:
         existing_entries = []
 
     existing_entries.append(log_entry)
-
-    with open(Paths.LOGS["ERROR"], "w", encoding="utf-8") as f:
-        yaml.dump(
-            existing_entries,
-            f,
-            Dumper=CustomDumper,
-            allow_unicode=True,
-            sort_keys=False,
-            default_flow_style=False,
-        )
+    _atomic_yaml_dump(Paths.LOGS["ERROR"], existing_entries)
 
 
 def error_log_extended(error_save_entry: str, bot_version: str) -> None:
@@ -187,7 +206,17 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
         except FileNotFoundError:
             existing_log = []
 
-        last_post_text = _record_last_post_and_comment()
+        try:
+            last_post_text = _record_last_post_and_comment()
+        except Exception as reddit_err:
+            logger.warning(
+                f"[{bot_version}] Error_Log: Could not capture Reddit context: {reddit_err}"
+            )
+            last_post_text = {
+                "last_post": "unavailable (Reddit API error)",
+                "last_comment": "unavailable (Reddit API error)",
+            }
+
         # Match bot name prefix to its shortform tag (e.g. "Ziwen Main" → "ZW")
         bot_tag = next(
             (
@@ -209,16 +238,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
         }
 
         existing_log.append(new_entry)
-
-        with open(error_log_path, "w", encoding="utf-8") as f:
-            yaml.dump(
-                existing_log,
-                f,
-                Dumper=CustomDumper,
-                allow_unicode=True,
-                sort_keys=False,
-                default_flow_style=False,
-            )
+        _atomic_yaml_dump(error_log_path, existing_log)
 
     except Exception as e:
         logger.error(f"[{bot_version}] Error_Log: Failed to write error log: {e}")

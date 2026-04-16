@@ -293,7 +293,7 @@ def _initialize_main_db() -> None:
         """,
         """
         CREATE TABLE old_comments (
-            id TEXT,
+            id TEXT PRIMARY KEY,
             created_utc INTEGER
         )
         """,
@@ -520,7 +520,11 @@ def _parse_ajo_row(
             try:
                 data = json.loads(str(data_json))
             except json.JSONDecodeError:
-                data = literal_eval(str(data_json))
+                try:
+                    data = literal_eval(str(data_json))
+                except (ValueError, SyntaxError) as e:
+                    logger.debug(f"Failed to parse fallback data for ID {post_id}: {e}")
+                    return None
 
         return post_id, created_utc, data
 
@@ -620,19 +624,21 @@ def get_recent_event_log_lines(
 
     Returns:
         A tuple of (log_content, time_ago) where:
-        - log_content: String containing the last N lines formatted in a code block
-        - time_ago: String describing how long ago the last tagged event occurred
-
-    Raises:
-        FileNotFoundError: If the log file doesn't exist
-        Exception: For other errors during file reading or parsing
+        - log_content: String containing the last N lines formatted in a code block,
+          or a placeholder message if the file is missing or empty
+        - time_ago: String describing how long ago the last tagged event occurred,
+          or a diagnostic string if the file is missing, empty, or the tag is absent
     """
-    with open(Paths.LOGS["EVENTS"], encoding="utf-8") as f:
-        lines = f.readlines()
-        last_n = lines[-num_lines:] if len(lines) >= num_lines else lines
+    try:
+        with open(Paths.LOGS["EVENTS"], encoding="utf-8") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        return "```\n(log file not found)\n```", "log file not found"
+
+    last_n = lines[-num_lines:] if len(lines) >= num_lines else lines
 
     if not last_n:
-        raise ValueError("Log file is empty")
+        return "```\n(log file is empty)\n```", "log file is empty"
 
     log_content = "```\n" + "".join(last_n) + "```"
 
