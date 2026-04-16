@@ -151,10 +151,12 @@ def database_maintenance() -> None:
     }
 
     for i in range(0, len(full_names), 100):
-        for submission in REDDIT_HERMES.info(fullnames=full_names[i:i + 100]):
+        for submission in REDDIT_HERMES.info(fullnames=full_names[i : i + 100]):
             try:
                 author_name = submission.author.name  # raises AttributeError if deleted
-                logger.debug(f"Verified post by u/{author_name} at {submission.permalink}")
+                logger.debug(
+                    f"Verified post by u/{author_name} at {submission.permalink}"
+                )
             except AttributeError:
                 logger.info(
                     f"Post {submission.id} deleted/removed. Removing from database."

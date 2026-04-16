@@ -34,7 +34,7 @@ import asyncpraw
 from asyncpraw import exceptions
 from asyncprawcore import exceptions as asyncprawcore_exceptions
 
-from config import TRANSIENT_ERRORS, SETTINGS, Paths, get_specific_logger
+from config import SETTINGS, TRANSIENT_ERRORS, Paths, get_specific_logger
 from error import error_log_basic
 from reddit.connection import USERNAME, credentials_source
 from responses import RESPONSE
