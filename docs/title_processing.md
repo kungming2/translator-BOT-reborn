@@ -10,7 +10,7 @@ This document covers the logic Ziwen uses when it parses incoming posts to r/tra
 
 Ziwen independently determines the right source and target languages from post titles. r/translator encourages people to follow the [proper formatting guidelines](https://www.reddit.com/r/translator/wiki/request-guidelines#wiki_how_should_i_submit_requests_for_translations.3F), especially the inclusion of `>` in the title. However, it's okay for someone to submit a title like `[English to Dutch] Text Paragraph`, even if it doesn't have the `>`, as Ziwen is intentionally written to be tolerant of bad formatting in post titles and to account for as many variations as possible.
 
-Ziwen will filter out/reject titles that match the following criteria:
+Ziwen will filter out/reject titles that match the following conditions:
 
 1. **The title does not include a target language.** An example of this would be the title `Translate pls`. 
 2. The post's long title "buries the lede" and puts the target language towards the end without brackets. An example of this would be the title `Could somebody please translate these two words from Japanese to English.`
@@ -45,7 +45,11 @@ With each rejection, Ziwen also suggests a new title for the post that would adh
 
 ## Multiple-Language Posts
 
-The vast majority of posts on r/translator are for a single language, but Ziwen also has support for posts that request translations for multiple languages. If the title has certain keywords instead (e.g. `all`, `any`, `every`), the "multiple" category will be a broad one meant for any language.
+The vast majority of posts on r/translator are for a single language, but Ziwen also has support for posts that request translations for multiple languages. 
+
+#### Regular Multiple Posts
+
+If the title has certain keywords instead (e.g. `all`, `any`, `every`), the "multiple" category will be a broad one meant for any language. A post of this type cannot accept state commands (see [this page](./commands.md) for more).
 
 #### Defined Multiple Posts
 
@@ -69,10 +73,19 @@ The state commands (`!doublecheck`, `!translated`, `!claim` and `!missing`) (see
 
 ## Internal Posts
 
-Internal posts are posts that are _not_ for a language; that is, they're not requests. Currently, there are two types of supported internal posts on r/translator:
+Internal posts are posts that are _not_ for a language; that is, they are not translation requests. Currently, there are two types of supported internal posts on r/translator:
 
 * **Meta** posts, which are information or discussion posts about the operations of the subreddit or community (e.g. rules discussions, bot updates).
-* **Community** posts, which include the translation challenges, thank-you posts, or other posts related to r/translator, but are not *about* it.
+* **Community** posts, which include the translation challenges, thank-you posts, or other posts related to r/translator, but are not *about* the community itself.
 
 #### Examples
 
+* Announcement posts about the bot (`meta`)
+* Discussion posts about the community (`meta`)
+* Monthly statistics posts (`meta`)
+* Thank-you posts (`community`)
+* Translation challenges (`community`)
+
+#### Notes
+
+More internal post types can be added by editing the `internal_post_types` list in `settings.yaml`.

@@ -17,11 +17,11 @@ Logger tag: [HM:TOOLS]
 
 import praw
 
-from config import get_hermes_logger
+from config import Paths, get_specific_logger
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
-logger = get_hermes_logger("HM:TOOLS")
+logger = get_specific_logger("HM:TOOLS", log_path=Paths.HERMES["HERMES_EVENTS"])
 
 
 # ─── Database inspection ──────────────────────────────────────────────────────

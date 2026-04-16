@@ -241,6 +241,8 @@ def get_specific_logger(tag: str, log_path: str | None = None) -> logging.Logger
         logformatter = "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
 
         # File handler — bot-specific log
+        if log_path is None:
+            raise ValueError(f"log_path must be provided for bot logger '{tag}'")
         file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(logging.INFO)
         fmt = TagFormatter(logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ")

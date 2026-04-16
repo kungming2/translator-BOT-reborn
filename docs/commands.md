@@ -8,7 +8,15 @@ This document details the primary commands, run by the **Ziwen** routine, that w
 
 #### Command Arguments for Languages
 
-Several commands detailed below may either require or accept a language, added on to the command after a colon `:`. Language names with more than one word must be wrapped in double quotes (e.g. `"American Sign Language"`), and multiple languages can be chained with a plus sign `+`. Here are some examples of valid input:
+Several commands detailed below may either require or accept a language tag, added on to the command after a colon `:`. Language names with more than one word must be wrapped in double quotes (e.g. `"American Sign Language"`), and multiple languages can be chained with a plus sign `+`. Here are some examples of valid language tags:
+
+```text
+:hy
+:fr-CA
+:german
+:"Swiss German"
+:"old church slavonic"
+```
 
 #### Specific !identify Functions
 

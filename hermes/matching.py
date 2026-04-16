@@ -23,7 +23,7 @@ import time
 import praw
 from praw.exceptions import PRAWException
 
-from config import get_hermes_logger
+from config import Paths, get_specific_logger
 from hermes import HERMES_SETTINGS
 from hermes.hermes_database import hermes_db
 from lang.languages import converter
@@ -33,7 +33,7 @@ from title.title_handling import title_settings
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
-logger = get_hermes_logger("HM:MATCH")
+logger = get_specific_logger("HM:MATCH", log_path=Paths.HERMES["HERMES_EVENTS"])
 
 # English word filter lists sourced from title_settings YAML.
 # title_settings["ENGLISH_2_WORDS"] is a list of Title-cased strings.

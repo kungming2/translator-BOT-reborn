@@ -27,12 +27,12 @@ from typing import Any
 
 import orjson
 
-from config import Paths, get_hermes_logger
+from config import Paths, get_specific_logger
 from database import DatabaseManager
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
-logger = get_hermes_logger("HM:DB")
+logger = get_specific_logger("HM:DB", log_path=Paths.HERMES["HERMES_EVENTS"])
 HERMES_DB_PATH = Paths.HERMES["HERMES_DATABASE"]
 
 
