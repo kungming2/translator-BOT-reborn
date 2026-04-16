@@ -72,11 +72,8 @@ def time_convert_to_string_seconds(seconds: int) -> str:
     """
     Convert a duration in seconds to a human-readable time string.
 
-    Args:
-        seconds: Time in seconds.
-
-    Returns:
-        Formatted time string (e.g., '2 hours, 15 minutes').
+    :param seconds: Time in seconds.
+    :return: Formatted time string (e.g., '2 hours, 15 minutes').
     """
     if seconds < 60:
         return f"{seconds} seconds"

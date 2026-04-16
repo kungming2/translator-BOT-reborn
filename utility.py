@@ -131,6 +131,10 @@ def generate_image_hash(image_url: str) -> str | None:
     """
     Generate an image hash from a linked URL for later comparison.
 
+    Note: ``timeout=10`` governs the connection/read timeout for the initial
+    request but does not bound the total download time for large images served
+    by a slow host. This is acceptable for the expected image sizes on Reddit.
+
     :param image_url: A direct link to a URL containing an image.
     :return: The hash of the image, or None if unable to hash.
     """
@@ -178,8 +182,13 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
     Return the length of a YouTube video in seconds using yt-dlp.
     Returns None if unable to fetch.
 
+    Note: None is returned for both "duration metadata absent" and "fetch
+    error" cases. Callers that need to distinguish these should check the
+    log output; both paths emit a warning-level log entry.
+
     :param youtube_url: URL of the YouTube video.
-    :return: Video duration in seconds, or None if fetch failed.
+    :return: Video duration in seconds, or None if fetch failed or duration
+             is unavailable.
     """
     if not youtube_url:
         logger.warning("Received empty or None URL.")
@@ -208,7 +217,10 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
             if duration:
                 logger.debug(f"Video is {duration}s long (fetched in {elapsed:.2f}s)")
             else:
-                logger.warning(f"Duration not available for {youtube_url}")
+                logger.warning(
+                    f"Duration metadata absent for {youtube_url} "
+                    f"(fetched in {elapsed:.2f}s)"
+                )
 
             return duration
     except Exception as e:

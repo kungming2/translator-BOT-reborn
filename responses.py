@@ -35,7 +35,8 @@ class ResponseLoader:
     """
     Load response templates from a YAML file and expose them as attributes.
 
-    Responses are located in responses.yaml and accessed via dot notation:
+    Responses are located in templates/responses.yaml and accessed via
+    dot notation:
 
         RESPONSE.ANCHOR_WIKIPEDIA
         RESPONSE.COMMENT_VERIFICATION_RESPONSE.format(...)
@@ -43,6 +44,7 @@ class ResponseLoader:
 
     def __init__(self, yaml_path: Path | str) -> None:
         """Load response templates from *yaml_path* and expose them as attributes."""
+        self._yaml_path = yaml_path
         self._data: dict[str, Any] = self._load_yaml(yaml_path)
         self.responses: SimpleNamespace = SimpleNamespace(**self._data)
 
@@ -54,7 +56,13 @@ class ResponseLoader:
             return yaml.safe_load(file)
 
     def __getattr__(self, item: str) -> Any:
-        return getattr(self.responses, item)
+        try:
+            return getattr(self.responses, item)
+        except AttributeError:
+            raise AttributeError(
+                f"Response template '{item}' not found in {self._yaml_path}. "
+                f"Check that the key exists in the YAML file."
+            ) from None
 
 
 # ─── Module-level singleton ───────────────────────────────────────────────────
