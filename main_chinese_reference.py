@@ -25,8 +25,8 @@ Logger tag: [CR]
 """
 
 import asyncio
-import logging
 import re
+import sys
 import traceback
 from typing import TYPE_CHECKING
 
@@ -34,9 +34,8 @@ import asyncpraw
 from asyncpraw import exceptions
 from asyncprawcore import exceptions as asyncprawcore_exceptions
 
-from config import SETTINGS
-from config import logger as _base_logger
-from error import error_log_extended
+from config import TRANSIENT_ERRORS, SETTINGS, Paths, get_specific_logger
+from error import error_log_basic
 from reddit.connection import USERNAME, credentials_source
 from responses import RESPONSE
 from ziwen_lookup.match_helpers import lookup_zh_ja_tokenizer
@@ -45,7 +44,7 @@ from ziwen_lookup.zh import zh_character, zh_word
 if TYPE_CHECKING:
     from asyncpraw import Reddit
 
-logger = logging.LoggerAdapter(_base_logger, {"tag": "CR"})
+logger = get_specific_logger("CR", log_path=Paths.CR["CR_EVENTS"])
 
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -123,21 +122,23 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
         if not reply_parts:
             continue
 
-        reply_text = "\n\n".join(reply_parts) + f"  {RESPONSE.ANCHOR_CJK}"
+        reply_body = "\n\n".join(reply_parts)
+
+        if len(reply_body) > 10000:
+            reply_body = (
+                reply_body[:9000]
+                + "\n\n*Reference information has been truncated due to excessive length.*"
+            )
 
         # Adapt disclaimer to the subreddit the bot is posting on
         cc_bot_disclaimer = RESPONSE.BOT_DISCLAIMER.replace(
             "r/translator ", f"r/{comment.subreddit.display_name} "
         )
 
-        if len(reply_text) > 10000:
-            reply_text = (
-                reply_text[:9000]
-                + "\n\n*Reference information has been truncated due to excessive length.*"
-            )
+        reply_text = reply_body + f"  {RESPONSE.ANCHOR_CJK}" + cc_bot_disclaimer
 
         try:
-            reply = await comment.reply(reply_text + cc_bot_disclaimer)
+            reply = await comment.reply(reply_text)
             logger.info(
                 f"Replied to lookup request for {tokenized_matches} "
                 f"on r/{comment.subreddit.display_name}. Comment ID: {reply.id}"
@@ -161,11 +162,23 @@ async def chinese_reference_main() -> None:
 
 
 if __name__ == "__main__":
-    logger.info("Launching Chinese Reference...")
+    logger.info("Launching Chinese Reference routine.")
     # noinspection PyBroadException
     try:
         asyncio.run(chinese_reference_main())
-    except Exception:
-        error_entry = traceback.format_exc()
-        error_log_extended(error_entry, "Chinese Reference")
-    logger.info("Chinese Reference routine completed.")
+
+    except KeyboardInterrupt:
+        logger.info("Chinese Reference routine stopped by user (KeyboardInterrupt).")
+        sys.exit(0)
+
+    except TRANSIENT_ERRORS as exc:
+        logger.warning(f"Transient error encountered: {type(exc).__name__}: {exc}")
+        logger.info("Will retry on next cycle.")
+
+    except Exception as exc:
+        error_entry = f"### {exc}\n\n{traceback.format_exc()}"
+        logger.critical(error_entry)
+        error_log_basic(error_entry, "Chinese Reference")
+
+    else:
+        logger.debug("Chinese Reference routine completed.")

@@ -120,6 +120,11 @@ class Paths:
         "ALL_SAVED": str(_ar / "all_saved.md"),
     }
 
+    # Chinese Reference logger output
+    CR: dict[str, str] = {
+        "CR_EVENTS": str(_lg / "log_events_cr.md"),
+    }
+
     # Hermes-specific files (spread across databases/, settings/, and
     # logs/) - Hermes is not specifically part of translator-BOT and
     # is thus grouped separately.
@@ -219,34 +224,39 @@ def set_up_logger() -> logging.Logger:
     return logger_object
 
 
-def get_hermes_logger(tag: str = "HM") -> logging.LoggerAdapter:
+def get_specific_logger(tag: str, log_path: str | None = None) -> logging.LoggerAdapter:
     """
     Return a LoggerAdapter that writes to both the shared console handler
-    and a Hermes-specific log file, without touching the root logger.
-    """
-    hermes_logger = logging.getLogger("hermes")
-    hermes_logger.propagate = False  # don't bubble up to root/events log
+    and a bot-specific log file, without touching the root logger.
 
-    if not hermes_logger.handlers:
+    :param tag: Log tag shown in the formatter (e.g. "HM", "CR").
+    :param log_path: Path to the bot-specific log file.
+    """
+    # Use a logger name derived from the tag so each bot gets its own
+    # Logger instance with its own handlers, not a shared one.
+    bot_logger = logging.getLogger(f"bot.{tag.lower()}")
+    bot_logger.propagate = False  # don't bubble up to root/events log
+
+    if not bot_logger.handlers:
         logformatter = "%(levelname)s: %(asctime)s #%(process)d - [%(tag)s] %(message)s"
 
-        # File handler — Hermes-only log
-        file_handler = logging.FileHandler(Paths.HERMES["HERMES_EVENTS"])
+        # File handler — bot-specific log
+        file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(logging.INFO)
         fmt = TagFormatter(logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ")
         fmt.converter = time.gmtime
         file_handler.setFormatter(fmt)
-        hermes_logger.addHandler(file_handler)
+        bot_logger.addHandler(file_handler)
 
         # Console handler — mirrors what the root logger does
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(fmt)
-        hermes_logger.addHandler(console_handler)
+        bot_logger.addHandler(console_handler)
 
-        hermes_logger.setLevel(logging.INFO)
+        bot_logger.setLevel(logging.INFO)
 
-    return logging.LoggerAdapter(hermes_logger, {"tag": tag})
+    return logging.LoggerAdapter(bot_logger, {"tag": tag})
 
 
 def enable_debug_logging() -> None:
@@ -260,6 +270,7 @@ def enable_debug_logging() -> None:
 
 logger: logging.Logger = set_up_logger()
 
+# Transient/temporary API errors that may succeed on retry next cycle
 TRANSIENT_ERRORS = (
     ServerError,
     RequestException,

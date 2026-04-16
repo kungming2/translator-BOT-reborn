@@ -25,7 +25,7 @@ import sys
 import time
 import traceback
 
-from config import TRANSIENT_ERRORS, get_hermes_logger
+from config import TRANSIENT_ERRORS, Paths, get_specific_logger
 from error import error_log_basic
 from hermes import HERMES_SETTINGS
 from hermes.hermes_database import hermes_db, initialize_hermes_db
@@ -39,9 +39,10 @@ from hermes.matching import (
 from hermes.tools import get_statistics, test_parser
 from reddit.connection import REDDIT_HERMES
 
-logger = get_hermes_logger("HM")
+logger = get_specific_logger("HM", log_path=Paths.HERMES["HERMES_EVENTS"])
 
-# How old a post must be before Hermes will reply (avoids stealing organic replies)
+# How old a post must be before Hermes will reply
+# (avoids pre-empting organic replies by people)
 CUT_OFF_REPLY: int = HERMES_SETTINGS["cut_off_reply"]
 # Maximum comments already on a post before Hermes skips it
 CUT_OFF_COMMENTS_MIN: int = HERMES_SETTINGS["cut_off_comments_min"]
@@ -108,7 +109,7 @@ def get_submissions() -> None:
         hermes_db.upsert_entry(post_author, user_data, post_created)
 
         # Respect heavily-commented posts (they don't need the bot)
-        if len(post.comments) > CUT_OFF_COMMENTS_MIN:
+        if len(post.num_comments) > CUT_OFF_COMMENTS_MIN:
             logger.info(
                 f">{CUT_OFF_COMMENTS_MIN} comments on post. Skipping match reply."
             )
@@ -149,17 +150,18 @@ def database_maintenance() -> None:
         data["id"]: username for username, data, _ in entries if data.get("id")
     }
 
-    for submission in REDDIT_HERMES.info(fullnames=full_names):
-        try:
-            author_name = submission.author.name  # raises AttributeError if deleted
-            logger.debug(f"Verified post by u/{author_name} at {submission.permalink}")
-        except AttributeError:
-            logger.info(
-                f"Post {submission.id} deleted/removed. Removing from database."
-            )
-            user_to_delete = author_by_post.get(submission.id)
-            if user_to_delete:
-                hermes_db.delete_entry(user_to_delete)
+    for i in range(0, len(full_names), 100):
+        for submission in REDDIT_HERMES.info(fullnames=full_names[i:i + 100]):
+            try:
+                author_name = submission.author.name  # raises AttributeError if deleted
+                logger.debug(f"Verified post by u/{author_name} at {submission.permalink}")
+            except AttributeError:
+                logger.info(
+                    f"Post {submission.id} deleted/removed. Removing from database."
+                )
+                user_to_delete = author_by_post.get(submission.id)
+                if user_to_delete:
+                    hermes_db.delete_entry(user_to_delete)
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
@@ -193,7 +195,6 @@ if __name__ == "__main__":
 
         except KeyboardInterrupt:
             logger.info("Hermes stopped by user (KeyboardInterrupt).")
-            hermes_db.close_all()
             sys.exit(0)
 
         except TRANSIENT_ERRORS as e:
@@ -205,6 +206,7 @@ if __name__ == "__main__":
             logger.critical(entry)
             error_log_basic(entry, "Hermes")
 
-        else:
+        finally:
             elapsed_time = round((time.time() - start_time) / 60, 2)
             logger.info(f"Run {elapsed_time:.2f} minutes.")
+            hermes_db.close_all()
