@@ -65,10 +65,13 @@ FUZZ_IGNORE_WORDS:
   - Turks
 # These are languages for which fuzzing usually doesn't play well.
 # As an example, Javanese is obviously very close to Japanese.
+# Add a proper language name here if it frequently gets misclassified
+# by rapidfuzz similarity matching.
 FUZZ_IGNORE_LANGUAGE_NAMES:
   - Ancient Egyptian
   - American Sign Language
   - Javanese
+  - Old Church Slavonic
 
 
 # Maps ISO 639-2/T macrolanguage codes to their default individual language
