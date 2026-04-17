@@ -109,7 +109,7 @@ def get_submissions() -> None:
         hermes_db.upsert_entry(post_author, user_data, post_created)
 
         # Respect heavily-commented posts (they don't need the bot)
-        if len(post.num_comments) > CUT_OFF_COMMENTS_MIN:
+        if post.num_comments > CUT_OFF_COMMENTS_MIN:
             logger.info(
                 f">{CUT_OFF_COMMENTS_MIN} comments on post. Skipping match reply."
             )
