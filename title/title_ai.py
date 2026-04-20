@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from __future__ import annotations
-
 """
 AI-assisted title parsing and correction for r/translator posts.
 
@@ -27,8 +25,9 @@ Key components:
 Logger tag: [T:AI]
 """
 
-# ─── Imports ──────────────────────────────────────────────────────────────────
+from __future__ import annotations
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
 import json
 import logging
 from collections.abc import Callable

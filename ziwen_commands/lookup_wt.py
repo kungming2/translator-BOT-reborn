@@ -33,6 +33,14 @@ _AMBIGUOUS_CODES: frozenset[str] = frozenset({"multiple", "generic", "unknown"})
 def _format_wt_reply(
     reply_parts: list[str], parent_comment_id: str | None = None
 ) -> str:
+    """
+    Assemble the final Wiktionary reply body from formatted lookup sections.
+
+    Joins *reply_parts* with double newlines, then appends the standard
+    Wiktionary anchor.  If *parent_comment_id* is supplied, an invisible
+    edit-tracking anchor (``[](#wt_parent_<id>)``) is also appended so
+    that a future Kunulo can locate and edit this reply in place.
+    """
     anchor = RESPONSE.ANCHOR_WIKTIONARY
     if parent_comment_id:
         anchor += f"[](#wt_parent_{parent_comment_id})"

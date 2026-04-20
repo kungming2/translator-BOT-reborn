@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from __future__ import annotations
-
 """
 Handles search tasks for frequently requested translations.
 ...
@@ -9,8 +7,9 @@ Handles search tasks for frequently requested translations.
 Logger tag: [I:SEARCH]
 """
 
-# ─── Imports ──────────────────────────────────────────────────────────────────
+from __future__ import annotations
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
 import logging
 import re
 from datetime import UTC, datetime

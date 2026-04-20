@@ -402,6 +402,9 @@ def extract_commands_from_text(
     # Supports: `term`, `term`:lang, `term`!, `term`:lang! formats
     from ziwen_lookup.match_helpers import lookup_matcher
 
+    # Languages that route to lookup_cjk; all others route to lookup_wt.
+    _CJK_LANGS: frozenset[str] = frozenset({"zh", "ja", "ko"})
+
     if text.count("`") >= 1:
         # Check for disable_tokenization flag (trailing !)
         has_disable_tokenization = False
@@ -440,16 +443,15 @@ def extract_commands_from_text(
             if lang == "lookup":
                 # Old format without explicit flag - shouldn't happen with new lookup_matcher
                 commands_dict["lookup_cjk"].extend(terms_with_flags)
-            else:
+            elif lang in _CJK_LANGS:
                 for item in terms_with_flags:
                     if isinstance(item, tuple):
                         term, is_explicit = item
                         commands_dict["lookup_cjk"].append((lang, term, is_explicit))
 
         # Wiktionary (non-CJK) lookup from same matcher result
-        _WT_SKIP: frozenset[str] = frozenset({"zh", "ja", "ko"})
         for lang, terms_with_flags in lookup_cjk.items():
-            if lang in _WT_SKIP:
+            if lang in _CJK_LANGS:
                 continue
             for item in terms_with_flags:
                 if isinstance(item, tuple):

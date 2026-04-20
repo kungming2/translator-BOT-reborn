@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from __future__ import annotations
-
 """
 Interfaces with processes.ziwen_posts to help assess posts which might
 be duplicates from the same user.
@@ -10,8 +8,9 @@ be duplicates from the same user.
 Logger tag: [MN:DUPE]
 """
 
-# ─── Imports ──────────────────────────────────────────────────────────────────
+from __future__ import annotations
 
+# ─── Imports ──────────────────────────────────────────────────────────────────
 import hashlib
 import logging
 import re
