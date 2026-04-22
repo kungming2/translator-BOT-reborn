@@ -51,6 +51,7 @@ language_module_settings = load_settings(Paths.SETTINGS["LANGUAGES_SETTINGS"])
 
 _lingvos_cache = None  # cached {code: Lingvo} dict
 _language_lists_cache = None  # cached output of define_language_lists()
+_iso_csv_cache: list | None = None  # cached rows from ISO_CODES CSV
 
 
 # ─── Dataset loader ───────────────────────────────────────────────────────────
@@ -121,11 +122,14 @@ def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
         if debug:
             logger.debug(f"combined_data[{code}] = {attrs}")
 
-        name = attrs.pop("name", None)
-        lang_code = attrs.pop("language_code", code)
+        name = attrs.get("name", None)
+        lang_code = attrs.get("language_code", code)
+        extra_attrs = {
+            k: v for k, v in attrs.items() if k not in ("name", "language_code")
+        }
 
         lingvo_dict[code] = Lingvo(
-            language_code=lang_code, name=name or "unknown", **attrs
+            language_code=lang_code, name=name or "unknown", **extra_attrs
         )
 
     return lingvo_dict
@@ -176,7 +180,7 @@ def define_language_lists() -> dict[str, Any]:
     supported_codes: list[str] = []
     supported_languages: list[str] = []
     iso_default_associated: list[str] = []
-    iso_639_1: list[str] = []
+    iso_639_1: set[str] = set()
     iso_639_2b: dict[str, str] = {}
     iso_639_3: list[str] = []
     iso_names: list[str] = []
@@ -185,7 +189,7 @@ def define_language_lists() -> dict[str, Any]:
 
     for code_1, lingvo in lingvos.items():
         if len(code_1) == 2:
-            iso_639_1.append(code_1)
+            iso_639_1.add(code_1)
 
         if lingvo.language_code_3:
             iso_639_3.append(lingvo.language_code_3)
@@ -380,7 +384,7 @@ def _resolve_to_lingvo(
     # Specific mode: strict lookups only
     if specific_mode:
         if len(input_text) == 2:
-            if input_lower in reference_lists.get("ISO_639_1", {}):
+            if input_lower in reference_lists.get("ISO_639_1", set()):
                 lingvo = lingvos.get(input_lower)
                 if lingvo:
                     lingvo_copy = copy.deepcopy(lingvo)
@@ -799,19 +803,21 @@ def select_random_language(iso_639_1: bool = False) -> Lingvo | None:
     Returns:
         A randomly selected Lingvo object, or None if no match found.
     """
+    global _iso_csv_cache
     pattern: str = r"^[a-z]{2}$" if iso_639_1 else r"^[a-z]{3}$"
 
-    with open(Paths.DATASETS["ISO_CODES"], newline="", encoding="utf-8") as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader, None)  # Skip header
+    if _iso_csv_cache is None:
+        with open(Paths.DATASETS["ISO_CODES"], newline="", encoding="utf-8") as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader, None)  # Skip header
+            _iso_csv_cache = [row for row in reader if row]
 
-        filtered: list = [
-            row
-            for row in reader
-            if row
-            and re.match(pattern, row[1] if iso_639_1 else row[0])
-            and (iso_639_1 or not ("qaa" <= row[0].lower() <= "qtz"))
-        ]
+    filtered: list = [
+        row
+        for row in _iso_csv_cache
+        if re.match(pattern, row[1] if iso_639_1 else row[0])
+        and (iso_639_1 or not ("qaa" <= row[0].lower() <= "qtz"))
+    ]
 
     if not filtered:
         return None

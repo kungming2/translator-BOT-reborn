@@ -32,7 +32,13 @@ webhook_settings: dict = load_settings(Paths.SETTINGS["DISCORD_SETTINGS"])
 def select_webhook(selection: str) -> tuple[str, str, str] | None:
     """Return the webhook URL, thumbnail image URL, and hex color for
     *selection*, or None if the key is not present in settings."""
-    return webhook_settings.get(selection)
+    result = webhook_settings.get(selection)
+    if result is not None:
+        assert len(result) == 3, (
+            f"Webhook '{selection}' must have exactly 3 elements "
+            f"(url, image_url, color_hex), got {len(result)}"
+        )
+    return result
 
 
 # ─── Webhook notifications ────────────────────────────────────────────────────

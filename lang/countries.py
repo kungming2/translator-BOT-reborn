@@ -20,7 +20,7 @@ Logger tag: [LANG:COUNTRIES]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
-import contextlib
+import contextlib  # used for search_fuzzy fallback in get_country_emoji
 import csv
 import logging
 
@@ -44,8 +44,8 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
     """
     Load countries from a CSV file.
 
-    Expected CSV columns: CountryName, Alpha2, Alpha3, NumericCode,
-                          Keywords (semicolon-separated)
+    Expected CSV columns: Country Name, Alpha-2, Alpha-3, Numeric Code,
+                          Synonyms (semicolon-separated)
 
     Returns:
         List of tuples containing (name, alpha2, alpha3, numeric_code, keywords).
@@ -55,17 +55,31 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
         return _country_list_cache
 
     country_list: list[tuple[str, str, str, str, list[str]]] = []
-    with open(Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            name: str = row[0].strip()
-            alpha2: str = row[1].strip()
-            alpha3: str = row[2].strip()
-            numeric: str = row[3].strip()
-            keywords: list[str] = (
-                row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
-            )
-            country_list.append((name, alpha2, alpha3, numeric, keywords))
+    try:
+        with open(
+            Paths.DATASETS["COUNTRIES"], newline="", encoding="utf-8-sig"
+        ) as csvfile:
+            reader = csv.reader(csvfile)
+            next(
+                reader
+            )  # Skip header row: Country Name, Alpha-2, Alpha-3, Numeric Code, Synonyms
+            for row in reader:
+                name: str = row[0].strip()
+                alpha2: str = row[1].strip()
+                alpha3: str = row[2].strip()
+                numeric: str = row[3].strip()
+                keywords: list[str] = (
+                    row[4].strip().split(";") if len(row) > 4 and row[4].strip() else []
+                )
+                country_list.append((name, alpha2, alpha3, numeric, keywords))
+    except FileNotFoundError:
+        logger.error(f"Country dataset not found: {Paths.DATASETS['COUNTRIES']}")
+        raise
+    except (IndexError, ValueError) as e:
+        logger.error(
+            f"Malformed row in country dataset ({Paths.DATASETS['COUNTRIES']}): {e}"
+        )
+        raise
 
     _country_list_cache = country_list
     return _country_list_cache
@@ -119,6 +133,11 @@ def country_converter(
         if text_title == name:
             return alpha2, name
         elif text_title in name and len(text_title) >= 3:
+            if possible_name:
+                logger.debug(
+                    f"Ambiguous partial match for {text_title!r}: "
+                    f"{possible_name!r} overwritten by {name!r}"
+                )
             possible_code = alpha2
             possible_name = name
 
@@ -174,12 +193,10 @@ def get_country_emoji(country_name: str) -> str:
     # but absent from the CSV.
     country = None
 
-    with contextlib.suppress(LookupError):
-        country = pycountry.countries.get(name=country_name)
+    country = pycountry.countries.get(name=country_name)
 
     if not country:
-        with contextlib.suppress(LookupError):
-            country = pycountry.countries.get(common_name=country_name)
+        country = pycountry.countries.get(common_name=country_name)
 
     if not country:
         with contextlib.suppress(LookupError):
@@ -212,7 +229,7 @@ def get_language_emoji(language_code: str) -> str:
         return ""
 
     if _language_full_data_cache is None:
-        _language_full_data_cache = load_settings(Paths.STATES["LANGUAGE_DATA"])
+        _language_full_data_cache = load_settings(Paths.STATES["LANGUAGE_DATA"]) or {}
 
     if language_code not in _language_full_data_cache:
         return ""

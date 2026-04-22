@@ -54,10 +54,16 @@ def rotate_or_flip_image(image_url: str, transformation: str) -> Image.Image:
     transformation = TRANSFORM_MAP.get(transformation, transformation)
     logger.debug(f"Downloading image from {image_url}")
 
-    response = requests.get(image_url, timeout=45)
-    response.raise_for_status()
-
-    img: Image.Image = Image.open(BytesIO(response.content))
+    try:
+        response = requests.get(image_url, timeout=45)
+        response.raise_for_status()
+        img: Image.Image = Image.open(BytesIO(response.content))
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to download image from {image_url}: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Failed to open image from {image_url}: {e}")
+        raise
     logger.debug(
         f"Image downloaded: {img.size[0]}x{img.size[1]} pixels, mode: {img.mode}"
     )
@@ -92,10 +98,10 @@ def _to_jpeg(image: Image.Image) -> bytes:
     """
     if image.mode in ("RGBA", "LA", "P"):
         logger.debug(f"Converting image from {image.mode} to RGB for JPEG compression")
-        if image.mode == "P":
-            image = image.convert("RGBA")
+        # Normalise to RGBA so paste() always receives a consistent source mode.
+        image = image.convert("RGBA")
         rgb_image = Image.new("RGB", image.size, (255, 255, 255))
-        mask = image.split()[-1] if image.mode in ("RGBA", "LA") else None
+        mask = image.split()[-1]  # Alpha channel from RGBA
         rgb_image.paste(image, mask=mask)
         image = rgb_image
     elif image.mode != "RGB":

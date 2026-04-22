@@ -72,7 +72,7 @@ def _search_ddg(search_term: str) -> list[str]:
                 continue
 
             logger.debug(f"URL {i + 1} contains 'comments'")
-            match = re.search(r"comments/(.*?)/\w", url)
+            match = re.search(r"comments/([^/]+)", url)
             if match:
                 post_id = match.group(1)
                 logger.debug(f"Extracted post ID: {post_id}")
@@ -129,11 +129,11 @@ def _extract_relevant_comment(comment: Comment, search_term: str) -> str | None:
     ):
         return None
 
+    if search_term.lower() not in comment.body.lower():
+        return None
+
     non_empty_lines = [line for line in comment.body.split("\n") if line]
     quoted_body = "\n> ".join(non_empty_lines)
-
-    if search_term.lower() not in quoted_body.lower():
-        return None
 
     return f"*Comment by u/{comment_author}* (+{comment.score}):\n\n>{quoted_body}"
 
@@ -151,11 +151,13 @@ def build_search_results(post_ids: list[str], search_term: str) -> str:
     :return: Markdown-formatted results string.
     """
     result_sections: list[str] = []
+    capped_ids = post_ids[:6]
     logger.info(
-        f"Building search results for {len(post_ids)} post(s), term: {search_term!r}."
+        f"Building search results for {len(capped_ids)} post(s) "
+        f"(of {len(post_ids)} returned), term: {search_term!r}."
     )
 
-    for post_id in post_ids[:6]:  # Cap at 6 posts to avoid excessive length.
+    for post_id in capped_ids:
         submission = REDDIT_HELPER.submission(id=post_id)
         submission_date = datetime.fromtimestamp(
             submission.created_utc, tz=UTC

@@ -151,6 +151,7 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
     :return: AI-generated short description, or an empty string on failure.
     """
     if nsfw_flag:
+        logger.debug("Skipping image description due to NSFW flag.")
         return _NSFW_SKIP_MESSAGE
 
     logger.debug("Fetching image description...")
