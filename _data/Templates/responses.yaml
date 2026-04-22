@@ -260,7 +260,7 @@ COMMENT_CJK_LOOKUP_DUPLICATE: |
 COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
   Hey there u/{author}, 
   
-  It looks like the image in this post is {similarity} an image you posted [here]({previous_link}) {time_ago}. 
+  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {time_ago}. 
 
   If this is intentional (for example, requesting a different language pair), please disregard this message. 
   Otherwise, you may want to check if you've already received a translation for this image.

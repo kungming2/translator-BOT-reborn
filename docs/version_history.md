@@ -54,9 +54,11 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Wenju's language of the day update will also update [r/languagelearning](https://www.reddit.com/r/languagelearning)'s sidebar at the same time.
 * 🔄 CHANGE: `devtools.py` and `main_wenyuan.py` now also use [Rich](https://github.com/textualize/rich) for better formatting of lookup results.
 * 🔄 CHANGE: Split off the Chinese Reference routine's logger output into its own file.
+* 🔄 CHANGE: Events output is trimmed for all logs, not just translator-BOT's. 
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours. 
 * 🛠️ BUG FIX: Fix to prevent non-CJK backtick terms from being added to `lookup_cjk` in instruos.
+* 🛠️ BUG FIX: Fix for an incorrect field in the response for image duplicate removals for a similar image posted by different authors.
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
 ##### translator-BOT 2.1 "The Transformation Update" (2026-02-01)

@@ -650,14 +650,14 @@ def check_image_duplicate(
         if same_author:
             comment_text = RESPONSE.COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR.format(
                 author=post_author,
-                similarity=similarity_text,
+                similarity_text=similarity_text,
                 previous_link=previous_post_link,
                 time_ago=time_ago,
             )
         else:
             comment_text = RESPONSE.COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR.format(
                 author=post_author,
-                similarity=similarity_text,
+                similarity_text=similarity_text,
                 previous_link=previous_post_link,
                 previous_author=best_match["author"],
                 time_ago=time_ago,
