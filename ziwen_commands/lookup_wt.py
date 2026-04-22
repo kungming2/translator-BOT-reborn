@@ -44,7 +44,7 @@ def _format_wt_reply(
     anchor = RESPONSE.ANCHOR_WIKTIONARY
     if parent_comment_id:
         anchor += f"[](#wt_parent_{parent_comment_id})"
-    return "\n\n".join(reply_parts) + anchor
+    return "\n\n".join(reply_parts) + RESPONSE.BOT_DISCLAIMER + anchor
 
 
 # ─── Command handler ──────────────────────────────────────────────────────────

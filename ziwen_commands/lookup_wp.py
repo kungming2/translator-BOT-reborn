@@ -48,7 +48,7 @@ def _format_wp_reply(
     anchor = RESPONSE.ANCHOR_WIKIPEDIA
     if parent_comment_id:
         anchor += f"[](#wp_parent_{parent_comment_id})"
-    return "\n".join(reply_parts) + anchor
+    return "\n".join(reply_parts) + RESPONSE.BOT_DISCLAIMER + anchor
 
 
 # ─── Command handler ──────────────────────────────────────────────────────────
