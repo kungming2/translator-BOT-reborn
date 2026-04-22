@@ -52,25 +52,33 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
 @task(schedule="daily")
 def log_trimmer() -> None:
     """
-    Trim the events log to keep only the last X entries,
-    preventing the file from growing indefinitely.
-    Also trims the activity CSV to keep only the last X entries (plus header).
+    Trim the various events log to keep only the last X entries,
+    preventing the files from growing indefinitely.
+    Also trims the activity CSVs to keep only the last X entries (plus header).
     """
     lines_to_keep = WENJU_SETTINGS["lines_to_keep"]
 
-    events_path = Path(Paths.LOGS["EVENTS"])
-    with events_path.open("r", encoding="utf-8", errors="ignore") as f:
-        lines_entries = f.read().splitlines()
+    for events_path in [
+        Path(Paths.LOGS["EVENTS"]),
+        Path(Paths.CR["CR_EVENTS"]),
+        Path(Paths.HERMES["HERMES_EVENTS"]),
+    ]:
+        if not events_path.exists():
+            logger.debug(f"Events log not found, skipping: {events_path.name}")
+            continue
 
-    if len(lines_entries) > lines_to_keep:
-        trimmed = "\n".join(lines_entries[-lines_to_keep:]) + "\n"
-        with events_path.open("w", encoding="utf-8") as f:
-            f.write(trimmed)
-        logger.debug(
-            f"Trimmed the events log to keep the last {lines_to_keep} entries."
-        )
-    else:
-        logger.debug("Events log within limits; no trimming needed.")
+        with events_path.open("r", encoding="utf-8", errors="ignore") as f:
+            lines_entries = f.read().splitlines()
+
+        if len(lines_entries) > lines_to_keep:
+            trimmed = "\n".join(lines_entries[-lines_to_keep:]) + "\n"
+            with events_path.open("w", encoding="utf-8") as f:
+                f.write(trimmed)
+            logger.debug(
+                f"Trimmed {events_path.name} to keep the last {lines_to_keep} entries."
+            )
+        else:
+            logger.debug(f"{events_path.name} within limits; no trimming needed.")
 
     csv_lines_to_keep = lines_to_keep // 5
     for activity_path in [Path(Paths.LOGS["ACTIVITY"]), Path(Paths.LOGS["MESSAGING"])]:
@@ -88,7 +96,8 @@ def log_trimmer() -> None:
             with activity_path.open("w", encoding="utf-8") as f:
                 f.write(trimmed_csv)
             logger.debug(
-                f"Trimmed {activity_path.name} to keep the last {csv_lines_to_keep} entries (plus header)."
+                f"Trimmed {activity_path.name} to keep the last "
+                f"{csv_lines_to_keep} entries (plus header)."
             )
         else:
             logger.debug(f"{activity_path.name} within limits; no trimming needed.")
