@@ -15,16 +15,17 @@ MSG_NO_SUBSCRIPTIONS: >
   Sorry, you're not currently subscribed to notifications for any language requests
   on r/translator. Would you like to [sign up]({})?
 MSG_CANNOT_PROCESS: >
-  Sorry, but I couldn't process the language/language codes in your message. 
+  Sorry, but I couldn't process the language names/codes in your message. 
   Please double-check your message to make sure they're accurate and [try again]({}).
 MSG_MISSING_ASSETS: |
   Hey there u/{author},
 
   Another community member marked **[your post](https://www.reddit.com{permalink})** as missing assets (text, images, etc) to be translated. 
 
-  Please update your post with content, or delete it and resubmit it with the material you want translated.
+  Please update your post with content (text, images, etc.) with the material you want translated.
 
-  You can re-open your translation request by commenting `!reset` on your post.
+  If you keep this post, you can re-open your translation request by commenting `!reset` on your post.
+  If you delete this post, submit a new post instead.
 
 MSG_TRANSLATED: |
   Hey there u/{author},
@@ -93,7 +94,7 @@ MSG_SUBSCRIBE: '{}! You have been subscribed to r/translator notifications for:
   {}
 
 
-  To see all your subscribed notifications, please click the ''Status'' link below.'
+  To see all your subscribed notifications, please click the **Status** link below.'
 MSG_UNSUBSCRIBE_ALL: |
   You have been unsubscribed from r/translator notifications for:
 
@@ -113,8 +114,8 @@ MSG_CLOSING_OUT: |
 
   If any of those comments fulfilled your {language} translation request, **please reply to that comment
   with `!translated` to give credit to your translator and close out [your request](https://reddit.com{permalink}).**
-  If your request remains unfulfilled, you do not have to do anything and you are welcome to resubmit
-  it.
+  If your request remains unfulfilled, you do not have to do anything.
+  You may resubmit again with new details in the title/body, if you wish.
 
 
   Thank you for helping keep our community organized! We hope you found it a useful place.
@@ -128,7 +129,7 @@ MSG_CLOSING_OUT: |
 COMMENT_LONG: |
   **Your translation request appears to be very long.** It may take a while for a translator to respond. Consider narrowing the scope of your request or asking for a synopsis or summary instead.
 
-  If you believe your request is *not* long, you (the OP) may comment `!long` to remove the status.
+  If you believe your request is *not* long, you (the OP) may comment `!long` to remove this long-request tag.
 
   *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is required on your part.* [](#comment_long)
 COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
@@ -155,8 +156,8 @@ COMMENT_LANGUAGE_NO_RESULTS: |
 COMMENT_ENGLISH_ONLY: |
   Hey there u/{author},
 
-  * Your post above has been automatically removed because does not appear to be a request for a translation. 
-  There are more focused communities for English-only requests.
+  * Your post above was automatically removed because it appears to be an English-to-English request, not a translation between different languages.
+  * r/translator is for translation across languages, so requests like paraphrasing/rewording, proofreading, grammar help, or transcription in English are not considered translation requests here.
 
   ---
 
@@ -175,6 +176,7 @@ COMMENT_BAD_TITLE: |
   We're happy to help you translate your request, but this post has been automatically removed because:
 
   * It appears that the title is not properly formatted according to our subreddit's guidelines.
+  * Required format: `[Source > Target] Brief Description`
   * Proper title formatting helps keep our community organized and allows our translators to access requests relevant to them. 
 
   ---
