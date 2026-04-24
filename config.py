@@ -14,6 +14,7 @@ from pathlib import Path
 
 import yaml
 from prawcore.exceptions import RequestException, ResponseException, ServerError
+from yaml import YAMLError
 
 from time_handling import get_current_month
 
@@ -164,9 +165,22 @@ def load_settings(path: str | Path) -> dict:
     :param path: Path to YAML file.
     :return: Settings dictionary.
     """
-    with open(path, encoding="utf-8") as f:
-        settings: dict = yaml.safe_load(f)
-    return settings
+    path_obj = Path(path)
+    try:
+        with path_obj.open(encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
+    except FileNotFoundError as file_err:
+        raise FileNotFoundError(f"Settings file not found: {path_obj}") from file_err
+    except YAMLError as yaml_err:
+        raise ValueError(f"Invalid YAML in settings file: {path_obj}") from yaml_err
+
+    if loaded is None:
+        return {}
+    if not isinstance(loaded, dict):
+        raise TypeError(
+            f"Expected YAML mapping (dict) in settings file: {path_obj}; got {type(loaded).__name__}"
+        )
+    return loaded
 
 
 # ─── Logging setup ────────────────────────────────────────────────────────────
@@ -211,6 +225,7 @@ def set_up_logger() -> logging.Logger:
     logger_object: logging.Logger = logging.getLogger(__name__)
 
     # File handler — writes to the shared events log.
+    Path(Paths.LOGS["EVENTS"]).parent.mkdir(parents=True, exist_ok=True)
     handler: logging.FileHandler = logging.FileHandler(Paths.LOGS["EVENTS"])
     handler.setLevel(logging.INFO)
 
@@ -243,6 +258,7 @@ def get_specific_logger(tag: str, log_path: str | None = None) -> logging.Logger
         # File handler — bot-specific log
         if log_path is None:
             raise ValueError(f"log_path must be provided for bot logger '{tag}'")
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(logging.INFO)
         fmt = TagFormatter(logformatter, datefmt="%Y-%m-%dT%H:%M:%SZ")
@@ -281,5 +297,12 @@ TRANSIENT_ERRORS = (
     TimeoutError,
 )
 
-SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])
-SCHEDULER_SETTINGS: dict = load_settings(Paths.SETTINGS["SCHEDULER_SETTINGS"])
+try:
+    SETTINGS: dict = load_settings(Paths.SETTINGS["SETTINGS"])
+    SCHEDULER_SETTINGS: dict = load_settings(Paths.SETTINGS["SCHEDULER_SETTINGS"])
+except (FileNotFoundError, ValueError, TypeError) as exc:
+    raise RuntimeError(
+        "Failed to initialize application settings. "
+        f"SETTINGS='{Paths.SETTINGS['SETTINGS']}', "
+        f"SCHEDULER_SETTINGS='{Paths.SETTINGS['SCHEDULER_SETTINGS']}'"
+    ) from exc

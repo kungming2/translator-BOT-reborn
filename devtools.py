@@ -10,6 +10,7 @@ import asyncio
 import logging
 import re
 from pprint import pprint
+from time import perf_counter
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -71,6 +72,70 @@ def _print_lookup(result: str | None, not_found_msg: str = "No results found.") 
         msg.warn(not_found_msg)
 
 
+def _prompt_text(
+    prompt: str,
+    *,
+    allow_exit: bool = False,
+    allow_blank: bool = False,
+    default: str | None = None,
+) -> str | None:
+    """Prompt for text input with optional x-to-exit and blank/default handling."""
+    while True:
+        value = input(prompt).strip()
+        if allow_exit and value.lower() == "x":
+            return None
+        if not value:
+            if default is not None:
+                return default
+            if allow_blank:
+                return ""
+            msg.warn("Input cannot be blank. Please try again.")
+            continue
+        return value
+
+
+def _prompt_int(
+    prompt: str,
+    *,
+    default: int | None = None,
+    min_value: int | None = None,
+    max_value: int | None = None,
+    allow_exit: bool = False,
+) -> int | None:
+    """Prompt for integer input with validation, optional default, and x-to-exit."""
+    while True:
+        value = input(prompt).strip()
+        if allow_exit and value.lower() == "x":
+            return None
+        if not value and default is not None:
+            return default
+
+        try:
+            parsed = int(value)
+        except ValueError:
+            msg.warn("Please enter a valid integer.")
+            continue
+
+        if min_value is not None and parsed < min_value:
+            msg.warn(f"Please enter a value >= {min_value}.")
+            continue
+        if max_value is not None and parsed > max_value:
+            msg.warn(f"Please enter a value <= {max_value}.")
+            continue
+
+        return parsed
+
+
+def _print_elapsed(seconds: float) -> None:
+    """Print elapsed time with a consistent devtools timing style."""
+    if seconds < 1:
+        _console.print(
+            f"[timing] completed in {seconds * 1000:.0f} ms", style="#DAB060"
+        )
+    else:
+        _console.print(f"[timing] completed in {seconds:.2f} s", style="#DAB060")
+
+
 # ─── lang ─────────────────────────────────────────────────────────────────────
 
 
@@ -107,8 +172,11 @@ def check_lang_parse() -> None:
 
 def check_error_display_event_errors() -> None:
     """Display ERROR-level entries from the events log within the last N days."""
-    days_raw = input("Number of days to look back (default 7): ").strip()
-    days = int(days_raw) if days_raw.isdigit() else 7
+    days = _prompt_int(
+        "Number of days to look back (default 7): ", default=7, min_value=1
+    )
+    if days is None:
+        return
     with msg.loading(f"Scanning events log for errors in the last {days} day(s)..."):
         results = display_event_errors(days)
     if results:
@@ -135,8 +203,10 @@ def check_integrations_search() -> None:
 
 def check_integrations_ai_image_description() -> None:
     """ai: Fetch and display an AI-generated description for an image URL."""
-    image_url = input("Enter a public image URL (x to back out): ").strip()
-    if image_url.lower() == "x":
+    image_url = _prompt_text(
+        "Enter a public image URL (x to back out): ", allow_exit=True
+    )
+    if image_url is None:
         return
     with msg.loading("Fetching image description..."):
         description = fetch_image_description(image_url)
@@ -156,8 +226,11 @@ def check_hermes_statistics() -> None:
 
 def check_hermes_parser() -> None:
     """Fetch live posts and print title_parser output for each."""
-    limit_raw = input("Number of posts to fetch (default 100): ").strip()
-    limit = int(limit_raw) if limit_raw.isdigit() else 100
+    limit = _prompt_int(
+        "Number of posts to fetch (default 100): ", default=100, min_value=1
+    )
+    if limit is None:
+        return
     with msg.loading(f"Fetching {limit} posts..."):
         test_parser(REDDIT_HELPER, limit=limit)
 
@@ -222,10 +295,17 @@ def check_title_reddit() -> None:
 
 def check_database_search() -> None:
     """Search the Ajo database by username or post ID."""
-    term_to_search = input("Enter the search term (username or post_id): ")
-    type_to_search = input("Enter the search type (user/post): ")
+    term_to_search = _prompt_text("Enter the search term (username or post_id): ")
+    if term_to_search is None:
+        return
+    type_to_search = _prompt_text("Enter the search type (user/post): ")
+    if type_to_search is None:
+        return
     with msg.loading("Searching database..."):
         derived_ajos = search_database(term_to_search, type_to_search)
+    if not derived_ajos:
+        msg.warn("No results found.")
+        return
     for item in derived_ajos:
         msg.divider(str(getattr(item, "id", "result")))
         pprint(vars(item))
@@ -268,15 +348,17 @@ def check_utility_is_valid_image_url() -> None:
 
 def check_models_ajo_url() -> None:
     """ajo: Load a Reddit post by URL or ID, parse its title and build an Ajo."""
-    test_url = input("Enter a Reddit post URL or ID (x to back out): ")
-    if test_url.strip().lower() == "x":
+    test_url = _prompt_text(
+        "Enter a Reddit post URL or ID (x to back out): ", allow_exit=True
+    )
+    if test_url is None:
         return
     with msg.loading("Loading submission and building Ajo..."):
         test_post = submission_from_input(test_url)
         if not test_post:
             msg.fail("Invalid submission.")
             return
-        test_titolo = process_title(test_post.title)
+        test_titolo = process_title(test_post, discord_notify=False)
         post_ajo = Ajo.from_titolo(test_titolo, test_post)
     msg.divider("titolo")
     pprint(vars(test_titolo))
@@ -290,7 +372,9 @@ def check_models_ajo_live() -> None:
         submissions = list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=3))
     for submission_new in submissions:
         msg.divider(submission_new.title[:60])
-        ajo_new = Ajo.from_titolo(process_title(submission_new.title), submission_new)
+        ajo_new = Ajo.from_titolo(
+            process_title(submission_new, discord_notify=False), submission_new
+        )
         pprint(vars(ajo_new))
 
 
@@ -314,19 +398,26 @@ def check_models_ajo_load() -> None:
 
 def check_models_kunulo() -> None:
     """kunulo: Load a Reddit submission by URL or ID and build a Kunulo from its comments."""
-    test_url = input("Enter a Reddit post URL or ID (x to back out): ")
-    if test_url.strip().lower() == "x":
+    test_url = _prompt_text(
+        "Enter a Reddit post URL or ID (x to back out): ", allow_exit=True
+    )
+    if test_url is None:
         return
     with msg.loading("Building Kunulo from submission..."):
         test_post = submission_from_input(test_url)
+        if not test_post:
+            msg.fail("Invalid submission.")
+            return
         test_kunulo = Kunulo.from_submission(test_post)
     pprint(test_kunulo)
 
 
 def check_models_instruo_url() -> None:
     """instruo: Load a Reddit comment by URL and build an Instruo from it."""
-    comment_url = input("Enter Reddit comment URL (x to back out): ").strip()
-    if comment_url.lower() == "x":
+    comment_url = _prompt_text(
+        "Enter Reddit comment URL (x to back out): ", allow_exit=True
+    )
+    if comment_url is None:
         return
     try:
         with msg.loading("Loading comment and building Instruo..."):
@@ -479,8 +570,9 @@ def check_ziwen_lookup_wiktionary() -> None:
 
 def check_ziwen_lookup_cache_top_entries() -> None:
     """cache: Display the top lookup_cjk_cache entries by fetch_count."""
-    limit_raw = input("Max entries to show (default 20): ").strip()
-    limit = int(limit_raw) if limit_raw.isdigit() else 20
+    limit = _prompt_int("Max entries to show (default 20): ", default=20, min_value=1)
+    if limit is None:
+        return
     with msg.loading("Querying lookup_cjk_cache..."):
         result = get_cjk_cache_top_entries(limit)
     _console.print(result)
@@ -509,10 +601,11 @@ def check_reddit_status() -> None:
 
 def check_reddit_removal_reasons() -> None:
     """connection: Search subreddit removal reasons by keyword."""
-    test_prompt = input(
-        "Enter search prompt for removal reasons (x to back out): "
-    ).strip()
-    if test_prompt.lower() == "x":
+    test_prompt = _prompt_text(
+        "Enter search prompt for removal reasons (x to back out): ",
+        allow_exit=True,
+    )
+    if test_prompt is None:
         return
     with msg.loading("Searching removal reasons..."):
         reason_id = search_removal_reasons(test_prompt)
@@ -552,10 +645,11 @@ def check_reddit_verified_thread() -> None:
 
 def check_reddit_notifications() -> None:
     """notifications: Fetch usernames subscribed to a given language."""
-    notifications_test = input(
-        "Enter a language to retrieve notifications for (x to back out): "
+    notifications_test = _prompt_text(
+        "Enter a language to retrieve notifications for (x to back out): ",
+        allow_exit=True,
     )
-    if notifications_test.strip().lower() == "x":
+    if notifications_test is None:
         return
     with msg.loading(f"Fetching subscribers for '{notifications_test}'..."):
         notifications_lingvo = converter(notifications_test)
@@ -710,8 +804,16 @@ def _section_menu(label: str, checks: dict) -> None:
         if choice == "x":
             break
         elif choice in checks:
-            _, fn = checks[choice]
-            fn()
+            sublabel, fn = checks[choice]
+            msg.info(f"Running {label} / {sublabel}...")
+            started = perf_counter()
+            try:
+                fn()
+            except Exception as ex:
+                msg.fail(f"Check failed: {type(ex).__name__}: {ex}")
+            finally:
+                elapsed = perf_counter() - started
+                _print_elapsed(elapsed)
         else:
             msg.warn("Invalid choice, please try again.")
 

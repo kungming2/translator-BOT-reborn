@@ -52,7 +52,9 @@ def time_convert_to_utc(iso_str: str) -> str:
     Returns the original string unchanged if it is malformed or missing.
     """
     try:
-        normalized = iso_str.replace("Z", "+00:00") if isinstance(iso_str, str) else iso_str
+        normalized = (
+            iso_str.replace("Z", "+00:00") if isinstance(iso_str, str) else iso_str
+        )
         dt = datetime.fromisoformat(normalized)
         if dt.tzinfo is None:
             return iso_str
@@ -117,7 +119,9 @@ def get_previous_month(year_month: str) -> str:
         or not parts[0].isdigit()
         or not parts[1].isdigit()
     ):
-        raise ValueError(f"Invalid year_month format: {year_month!r}. Expected YYYY-MM.")
+        raise ValueError(
+            f"Invalid year_month format: {year_month!r}. Expected YYYY-MM."
+        )
 
     year, month = parts
     month_int = int(month)

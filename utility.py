@@ -20,6 +20,7 @@ import logging
 import re
 import time
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 import imagehash
 import PIL
@@ -80,6 +81,15 @@ def clean_reddit_image_url(url: str) -> str:
     :param url: The URL to clean.
     :return: Cleaned URL.
     """
+    if not url:
+        logger.debug("Received empty or None URL for cleaning.")
+        return ""
+
+    url = url.strip()
+    if not url:
+        logger.debug("URL is empty after stripping whitespace.")
+        return ""
+
     if "preview.redd.it" in url:
         url = url.replace("preview.redd.it", "i.redd.it")
 
@@ -105,20 +115,26 @@ def is_valid_image_url(url: str) -> bool:
         return False
 
     url = url.strip()
+    if not url:
+        return False
 
     if check_url_extension(url):
         return True
 
-    if "redd.it" in url:
-        if "format=pjpg" in url or "format=png" in url or "format=jpg" in url:
-            return True
-        url_without_params = url.split("?")[0]
-        if check_url_extension(url_without_params):
-            return True
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").lower()
+    path_url = parsed._replace(query="", fragment="").geturl()
 
-    if "?" in url:
-        url_without_params = url.split("?")[0]
-        if check_url_extension(url_without_params):
+    if check_url_extension(path_url):
+        return True
+
+    # Support Reddit preview links where image type is advertised in query args.
+    if hostname.endswith("redd.it"):
+        params = parse_qs(parsed.query)
+        format_values = [
+            v.lower() for value in params.get("format", []) for v in [value]
+        ]
+        if any(fmt in {"pjpg", "jpg", "jpeg", "png", "webp"} for fmt in format_values):
             return True
 
     return False
@@ -146,9 +162,38 @@ def generate_image_hash(image_url: str) -> str | None:
     start_time = time.time()
 
     try:
-        response = requests.get(image_url, timeout=10)
-        response.raise_for_status()
-        img = Image.open(io.BytesIO(response.content))
+        with requests.get(image_url, timeout=10, stream=True) as response:
+            response.raise_for_status()
+
+            content_length = response.headers.get("Content-Length")
+            if (
+                content_length
+                and content_length.isdigit()
+                and int(content_length) > 20 * 1024 * 1024
+            ):
+                logger.warning(
+                    f"Image at {image_url} exceeds max allowed size (20MB): "
+                    f"{content_length} bytes"
+                )
+                return None
+
+            img_bytes = io.BytesIO()
+            downloaded = 0
+            for chunk in response.iter_content(chunk_size=8192):
+                if not chunk:
+                    continue
+                downloaded += len(chunk)
+                if downloaded > 20 * 1024 * 1024:
+                    logger.warning(
+                        f"Image at {image_url} exceeded max allowed size during download "
+                        f"(20MB)."
+                    )
+                    return None
+                img_bytes.write(chunk)
+
+            img_bytes.seek(0)
+            img = Image.open(img_bytes)
+            img.load()
     except PIL.UnidentifiedImageError as e:
         logger.warning(f"Unable to identify image format for {image_url}: {e}")
         return None
@@ -214,15 +259,15 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
             duration = info.get("duration")
             elapsed = time.time() - start_time
 
-            if duration:
+            if duration is not None:
                 logger.debug(f"Video is {duration}s long (fetched in {elapsed:.2f}s)")
+                return int(duration)
             else:
                 logger.warning(
                     f"Duration metadata absent for {youtube_url} "
                     f"(fetched in {elapsed:.2f}s)"
                 )
-
-            return duration
+                return None
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(
@@ -271,6 +316,8 @@ def format_markdown_table_with_padding(table_text: str) -> str:
         logger.debug("No table rows with '|' found.")
         return "```\n(No valid table found)\n```"
 
+    separator_pattern = re.compile(r"^\s*:?-{3,}:?\s*$")
+
     # Parse table rows into cells
     rows = []
     for line in table_lines:
@@ -295,9 +342,12 @@ def format_markdown_table_with_padding(table_text: str) -> str:
     # Rebuild with padding
     formatted_table = []
     for row in rows:
+        normalized_row = [row[i] if i < len(row) else "" for i in range(num_cols)]
         padded = [
-            cell.ljust(col_widths[i]) if "---" not in cell else "-" * col_widths[i]
-            for i, cell in enumerate(row)
+            cell.ljust(col_widths[i])
+            if not separator_pattern.fullmatch(cell)
+            else "-" * col_widths[i]
+            for i, cell in enumerate(normalized_row)
         ]
         formatted_table.append("| " + " | ".join(padded) + " |")
 

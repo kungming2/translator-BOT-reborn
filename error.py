@@ -35,7 +35,7 @@ Logger tag: [ERROR]
 import logging
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import yaml
@@ -75,7 +75,7 @@ def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
 CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
 
 
-def _atomic_yaml_dump(path: str, data: list) -> None:
+def _atomic_yaml_dump(path: str, data: list[dict[str, Any]]) -> None:
     """
     Write *data* as YAML to *path* atomically using a sibling temp file
     and ``os.replace``, so a concurrent write or mid-write crash cannot
@@ -98,8 +98,41 @@ def _atomic_yaml_dump(path: str, data: list) -> None:
             )
         os.replace(tmp_path, path)
     except Exception:
-        os.unlink(tmp_path)
+        try:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+        except OSError:
+            pass
         raise
+
+
+def _load_error_entries(path: str) -> list[dict[str, Any]]:
+    """
+    Load error entries from YAML, returning an empty list if the file is missing
+    or unreadable due to invalid YAML.
+
+    :param path: YAML log file path.
+    :return: List of error entry dicts.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
+    except FileNotFoundError:
+        return []
+    except yaml.YAMLError as e:
+        logger.warning(f"Error_Log: Could not parse YAML at {path}: {e}")
+        return []
+
+    if isinstance(loaded, list):
+        return loaded
+
+    if loaded is None:
+        return []
+
+    logger.warning(
+        f"Error_Log: Expected list structure in YAML at {path}; got {type(loaded).__name__}."
+    )
+    return []
 
 
 # ─── Context capture ──────────────────────────────────────────────────────────
@@ -175,14 +208,7 @@ def error_log_basic(entry: str, bot_routine: str) -> None:
         "resolved": False,
     }
 
-    if os.path.exists(Paths.LOGS["ERROR"]):
-        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
-            try:
-                existing_entries = yaml.safe_load(f) or []
-            except yaml.YAMLError:
-                existing_entries = []
-    else:
-        existing_entries = []
+    existing_entries = _load_error_entries(Paths.LOGS["ERROR"])
 
     existing_entries.append(log_entry)
     _atomic_yaml_dump(Paths.LOGS["ERROR"], existing_entries)
@@ -200,11 +226,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
     error_log_path = Paths.LOGS["ERROR"]
 
     try:
-        try:
-            with open(error_log_path, encoding="utf-8") as f:
-                existing_log = yaml.safe_load(f) or []
-        except FileNotFoundError:
-            existing_log = []
+        existing_log = _load_error_entries(error_log_path)
 
         try:
             last_post_text = _record_last_post_and_comment()
@@ -233,7 +255,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
             "bot_version": bot_version,
             "context": last_post_text,
             "events": last_events,
-            "error": error_save_entry,
+            "error": error_save_entry.strip(),
             "resolved": False,
         }
 
@@ -255,10 +277,8 @@ def retrieve_error_log() -> str:
     """
     paragraphs = []
 
-    try:
-        with open(Paths.LOGS["ERROR"], encoding="utf-8") as f:
-            data: list[dict[str, Any]] = yaml.safe_load(f) or []
-    except FileNotFoundError:
+    data = _load_error_entries(Paths.LOGS["ERROR"])
+    if not os.path.exists(Paths.LOGS["ERROR"]):
         return "No error log found."
 
     for entry in data:
@@ -287,7 +307,7 @@ def display_event_errors(days: int = 7) -> list[str]:
     :param days: How many days back to search (default: 7).
     :return: List of matching log line strings.
     """
-    cutoff_date = datetime.now() - timedelta(days=days)
+    cutoff_date = datetime.now(UTC) - timedelta(days=days)
     results = []
 
     try:
@@ -296,8 +316,8 @@ def display_event_errors(days: int = 7) -> list[str]:
                 if "ERROR:" in line:
                     try:
                         timestamp_str = line.split(" - ")[0].split(": ")[1]
-                        log_date = datetime.strptime(
-                            timestamp_str, "%Y-%m-%dT%H:%M:%SZ"
+                        log_date = datetime.fromisoformat(
+                            timestamp_str.replace("Z", "+00:00")
                         )
                         if log_date >= cutoff_date:
                             results.append(line.rstrip())
