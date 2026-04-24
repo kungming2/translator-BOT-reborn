@@ -10,7 +10,7 @@ Logger tag: [TIME]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 
 # ─── Current time & date ──────────────────────────────────────────────────────
 
@@ -52,7 +52,10 @@ def time_convert_to_utc(iso_str: str) -> str:
     Returns the original string unchanged if it is malformed or missing.
     """
     try:
-        dt = datetime.fromisoformat(iso_str)
+        normalized = iso_str.replace("Z", "+00:00") if isinstance(iso_str, str) else iso_str
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is None:
+            return iso_str
         return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     except (TypeError, ValueError, AttributeError):
         return iso_str
@@ -75,19 +78,25 @@ def time_convert_to_string_seconds(seconds: int) -> str:
     :param seconds: Time in seconds.
     :return: Formatted time string (e.g., '2 hours, 15 minutes').
     """
+    seconds = max(0, int(seconds))
+
+    def _unit(value: int, label: str) -> str:
+        suffix = "" if value == 1 else "s"
+        return f"{value} {label}{suffix}"
+
     if seconds < 60:
-        return f"{seconds} seconds"
+        return _unit(seconds, "second")
     elif seconds < 3600:
         minutes = seconds // 60
-        return f"{minutes} minutes"
+        return _unit(minutes, "minute")
     elif seconds < 86400:
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
-        return f"{hours} hours, {minutes} minutes"
+        return f"{_unit(hours, 'hour')}, {_unit(minutes, 'minute')}"
     else:
         days = seconds // 86400
         hours = (seconds % 86400) // 3600
-        return f"{days} days, {hours} hours"
+        return f"{_unit(days, 'day')}, {_unit(hours, 'hour')}"
 
 
 # ─── Month arithmetic ─────────────────────────────────────────────────────────
@@ -100,13 +109,27 @@ def get_previous_month(year_month: str) -> str:
     :param year_month: A year-month string in YYYY-MM format.
     :return: The previous month in YYYY-MM format.
     """
-    year, month = year_month.split("-", 1)
+    parts = year_month.split("-", 1)
+    if (
+        len(parts) != 2
+        or len(parts[0]) != 4
+        or len(parts[1]) != 2
+        or not parts[0].isdigit()
+        or not parts[1].isdigit()
+    ):
+        raise ValueError(f"Invalid year_month format: {year_month!r}. Expected YYYY-MM.")
+
+    year, month = parts
+    month_int = int(month)
+    if not 1 <= month_int <= 12:
+        raise ValueError(f"Invalid month in year_month: {year_month!r}.")
+
     if month == "01":
         previous_year = int(year) - 1
         previous_month = 12
     else:
         previous_year = int(year)
-        previous_month = int(month) - 1
+        previous_month = month_int - 1
 
     return f"{previous_year}-{previous_month:02d}"
 
@@ -122,7 +145,7 @@ def messaging_months_elapsed() -> int:
     # May 2016 corresponds to 2016 * 12 + 5 = 24197 (January = 1)
     month_beginning = 2016 * 12 + 5
 
-    today = date.today()
+    today = datetime.now(UTC).date()
     total_current_months = today.year * 12 + today.month
 
     return total_current_months - month_beginning
