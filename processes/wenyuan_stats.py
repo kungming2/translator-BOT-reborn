@@ -60,10 +60,10 @@ def get_effective_status(ajo: Ajo) -> str:
     Get effective status string for any Ajo type.
     Handles both single posts and defined multiples consistently.
 
-    For defined multiples, returns the "dominant" status:
-    - "translated" if all languages are translated
-    - "partial" if some are translated
-    - "untranslated" otherwise
+    For defined multiples, this should generally not be used because
+    defined-multiple posts are expanded into per-language single entries.
+    If encountered anyway, mixed states are conservatively treated as
+    non-translated.
 
     Args:
         ajo: The Ajo object to get status from
@@ -77,12 +77,12 @@ def get_effective_status(ajo: Ajo) -> str:
         statuses = list(ajo.status.values())
         if all(s == "translated" for s in statuses):
             return "translated"
-        elif any(s == "translated" for s in statuses):
-            return "partial"
         elif all(s == "doublecheck" for s in statuses):
             return "doublecheck"
         elif any(s == "inprogress" for s in statuses):
             return "inprogress"
+        elif any(s == "missing" for s in statuses):
+            return "missing"
         return "untranslated"
     return "untranslated"
 
@@ -322,7 +322,9 @@ class Lumo:
         """
         results = search_database(post_id, "post")
         if results:
-            self.ajos = results
+            # Keep single-post behavior consistent with other loaders:
+            # expand defined-multiple requests into per-language entries.
+            self.ajos = self._expand_multiple_language_posts(results)
             self._clear_cache()
             return results[0]
         return None
