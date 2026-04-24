@@ -13,6 +13,7 @@ import logging
 
 from praw.models import Message, Redditor
 
+from config import TRANSIENT_ERRORS
 from config import logger as _base_logger
 from reddit.connection import REDDIT, is_mod, is_valid_user
 from reddit.messaging import (
@@ -45,42 +46,86 @@ def ziwen_messages() -> None:
     - add: Add user (moderators only)
     - remove: Remove user (moderators only)
     """
-    messages: list[Message] = list(REDDIT.inbox.unread(limit=10))
+    try:
+        messages = list(REDDIT.inbox.unread(limit=10))
+    except TRANSIENT_ERRORS as ex:
+        logger.warning(f"Encountered a transient error while fetching messages: {ex}")
+        return
+    except Exception:
+        logger.exception("Encountered an unexpected error while fetching messages.")
+        return
+
     if messages:
         logger.info(f"Processing {len(messages)} unread message(s)")
 
     for message in messages:
-        message_subject: str = message.subject.lower()
-        message.mark_read()  # Mark the message as read early on.
+        message_id = getattr(message, "id", "<unknown>")
 
-        # Now-deleted author.
-        if message.author is None:
-            continue
+        try:
+            if not isinstance(message, Message):
+                logger.info(
+                    "Skipping unread inbox item `%s` of unsupported type `%s`.",
+                    message_id,
+                    type(message).__name__,
+                )
+                continue
 
-        # Invalid user (e.g. shadow-banned)
-        if not is_valid_user(message.author):
-            logger.warning(f"Messages: Invalid author u/{message.author}.")
-            continue
+            message_subject = message.subject.strip().lower()
 
-        message_author: Redditor = message.author  # Redditor object
+            # Now-deleted author.
+            if message.author is None:
+                logger.info("Skipping message `%s` with deleted author.", message_id)
+                continue
 
-        # ── Subject routing ────────────────────────────────────────────────────
+            message_author: Redditor = message.author
 
-        if "subscribe" in message_subject and "un" not in message_subject:
-            handle_subscribe(message, message_author)
-        elif "unsubscribe" in message_subject:
-            handle_unsubscribe(message, message_author)
-        elif "status" in message_subject:
-            handle_status(message, message_author)
-        elif "points" in message_subject:
-            handle_points(message, message_author)
-        elif message_subject == "add" and is_mod(message_author):
-            handle_add(message, message_author)
-        elif message_subject == "remove" and is_mod(message_author):
-            handle_remove(message, message_author)
-        else:
-            logger.info(
-                f"Unrecognised message subject {message_subject!r} from u/{message.author}. Ignoring."
+            # Invalid user (e.g. shadow-banned)
+            if not is_valid_user(message_author.name):
+                logger.warning(f"Messages: Invalid author u/{message_author}.")
+                continue
+
+            # ── Subject routing ────────────────────────────────────────────────
+
+            if "unsubscribe" in message_subject:
+                handle_unsubscribe(message, message_author)
+            elif "subscribe" in message_subject:
+                handle_subscribe(message, message_author)
+            elif "status" in message_subject:
+                handle_status(message, message_author)
+            elif "points" in message_subject:
+                handle_points(message, message_author)
+            elif message_subject == "add":
+                if is_mod(message_author):
+                    handle_add(message, message_author)
+                else:
+                    logger.warning(
+                        "Ignoring unauthorized `add` message from u/%s.",
+                        message_author,
+                    )
+            elif message_subject == "remove":
+                if is_mod(message_author):
+                    handle_remove(message, message_author)
+                else:
+                    logger.warning(
+                        "Ignoring unauthorized `remove` message from u/%s.",
+                        message_author,
+                    )
+            else:
+                logger.info(
+                    f"Unrecognised message subject {message_subject!r} from u/{message_author}. Ignoring."
+                )
+        except TRANSIENT_ERRORS as ex:
+            logger.warning(
+                "Transient error while processing message `%s`: %s",
+                message_id,
+                ex,
             )
+        except Exception:
+            logger.exception("Failed while processing message `%s`.", message_id)
+        finally:
+            try:
+                message.mark_read()
+            except Exception:
+                logger.exception("Failed to mark message `%s` as read.", message_id)
 
     return

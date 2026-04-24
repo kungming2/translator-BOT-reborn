@@ -8,12 +8,12 @@ Logger tag: [ZW:C]
 """
 
 import logging
+import re
 import time
 
 from praw.models import Comment
-from prawcore import exceptions
 
-from config import SETTINGS
+from config import SETTINGS, TRANSIENT_ERRORS
 from config import logger as _base_logger
 from database import db
 from models.ajo import Ajo, ajo_loader
@@ -29,6 +29,16 @@ from title.title_handling import process_title
 from ziwen_commands import HANDLERS
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:C"})
+
+
+def _contains_phrase(text: str, phrase: str) -> bool:
+    """Return True when a phrase appears with word boundaries."""
+    return bool(re.search(rf"\b{re.escape(phrase.lower())}\b", text.lower()))
+
+
+def _contains_any_phrase(text: str, phrases: list[str]) -> bool:
+    """Return True when any phrase appears with word boundaries."""
+    return any(_contains_phrase(text, phrase) for phrase in phrases)
 
 
 # ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -70,7 +80,7 @@ def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
         return
 
     # Did the OP have reservations?
-    if any(exception in comment_body for exception in exceptions_list):
+    if _contains_any_phrase(comment_body, exceptions_list):
         logger.info(
             f"Short thanks on `{ajo.id}` ignored: comment contains reservation keyword."
         )
@@ -138,170 +148,179 @@ def ziwen_commands() -> None:
 
     try:
         comments = list(r.comments(limit=SETTINGS["max_posts"]))
-    except exceptions.ServerError as ex:
-        logger.error(f"Encountered a server error: {ex}")
+    except TRANSIENT_ERRORS as ex:
+        logger.warning(f"Encountered a transient error while fetching comments: {ex}")
         return
     else:
         logger.debug(f"Fetched {len(comments)} comments to process.")
 
     for comment in comments:
-        comment_id = comment.id
-        original_post = comment.submission
-        comment_body = comment.body.lower()  # lowercase for ease of command matching
-
-        # ── Pre-flight checks ──────────────────────────────────────────────────
-
-        # Skip comments with deleted authors.
         try:
-            author_name = comment.author.name
-        except AttributeError:
-            continue
+            comment_id = comment.id
+            original_post = comment.submission
+            comment_body = comment.body.lower()  # lowercase for ease of command matching
 
-        # Skip internal posts (e.g. meta/community), but allow the verified thread.
-        if original_post.id != VERIFIED_POST_ID and (
-            diskuto_exists(original_post.id) or is_internal_post(original_post)
-        ):
-            continue
+            # ── Pre-flight checks ──────────────────────────────────────────────
 
-        # Skip already-processed comments; mark new ones immediately.
-        if db.cursor_main.execute(
-            "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
-        ).fetchone():
-            logger.debug(f"Comment `{comment_id}` has already been processed.")
-            continue
-        else:
-            db.cursor_main.execute(
-                "INSERT INTO old_comments (id, created_utc) VALUES (?, ?)",
-                (comment_id, int(comment.created_utc)),
-            )
-            db.conn_main.commit()
-            logger.debug(f"Comment `{comment_id}` is now being processed.")
+            # Skip comments with deleted authors.
+            try:
+                author_name = comment.author.name
+            except AttributeError:
+                continue
 
-        # Skip the bot's own comments and AutoModerator comments.
-        logger.debug(f"Checking author: '{author_name}' against bot: '{username}'")
-        if author_name.lower() in [
-            username.lower(),
-            "automoderator",
-            "translator-modteam",
-        ]:
-            logger.debug(f"`{comment_id}` is from bot u/{author_name}. Skipping...")
-            continue
-
-        # Skip comments on filtered posts.
-        filtered_result = db.cursor_main.execute(
-            "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
-        ).fetchone()
-        # Note: filtered_result[0] accesses the filtered column directly since
-        # we're only SELECTing that one column (not SELECT *)
-        if filtered_result and filtered_result[0] == 1:
-            logger.info(
-                f"Comment `{comment_id}` is on already-filtered post `{original_post.id}`. Skipping."
-            )
-            continue
-
-        # ── Ajo loading ────────────────────────────────────────────────────────
-
-        is_verified_post = original_post.id == VERIFIED_POST_ID
-        original_ajo = ajo_loader(original_post.id)
-        if not original_ajo:
-            if is_verified_post:
-                logger.debug("Verified post has no Ajo — skipping Ajo creation.")
-            else:
-                logger.warning(
-                    f"Ajo for `{original_post.id}` does not exist. Creating..."
-                )
-                original_ajo = Ajo.from_titolo(
-                    process_title(original_post), original_post
-                )
-        logger.debug(
-            f"> Ajo lingvo is {original_ajo.lingvo if original_ajo else None}"
-        )  # loaded lazily
-
-        # ── Command dispatch ───────────────────────────────────────────────────
-
-        instruo = None
-        if comment_has_command(comment_body):
-            parent_languages = [original_ajo.lingvo] if original_ajo else []
-            instruo = Instruo.from_comment(comment, parent_languages=parent_languages)
-
-            logger.info(
-                f"> Derived instruo and ajo for `{comment.id}` on "
-                f"post `{original_post.id}` as: `{instruo}`."
-            )
-            logger.info(
-                f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
-            )
-
-            # If this is the verified thread, only allow !verify commands.
-            if original_post.id == VERIFIED_POST_ID:
-                allowed_commands = [
-                    k for k in instruo.commands if k.name.lower() == "verify"
-                ]
-                if not allowed_commands:
-                    logger.info(
-                        f"Non-verify command attempted on verified thread `{original_post.id}`. "
-                        f"Skipping comment `{comment_id}`."
-                    )
-                    continue
-                instruo.commands = allowed_commands
-
-            for komando in instruo.commands:
-                handler = HANDLERS.get(komando.name.lower())
-
-                if handler:
-                    logger.info(
-                        f"Command `{komando}` detected for `{comment_id}` on "
-                        f"post `{original_post.id}`. Passing to handler."
-                    )
-                    handler(comment, instruo, komando, original_ajo)
-                    action_counter(1, komando.name)
-                else:
-                    logger.error(f"No handler for command: {komando.name}")
-
-            user_statistics_writer(instruo)
-            logger.debug("Recorded user commands in database.")
-
-            if (
-                not diskuto_exists(original_post.id)
-                and original_ajo
-                and original_ajo.lingvo
+            # Skip internal posts (e.g. meta/community), but allow the verified thread.
+            if original_post.id != VERIFIED_POST_ID and (
+                diskuto_exists(original_post.id) or is_internal_post(original_post)
             ):
-                points_tabulator(comment, original_post, original_ajo.lingvo)
-        else:
-            # Non-command comment on the verified thread — skip silently.
-            if original_post.id == VERIFIED_POST_ID:
-                logger.debug(
-                    "Non-command comment on verified thread "
-                    f"`{original_post.id}`. Skipping."
+                continue
+
+            # Skip already-processed comments; mark new ones immediately.
+            if db.cursor_main.execute(
+                "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
+            ).fetchone():
+                logger.debug(f"Comment `{comment_id}` has already been processed.")
+                continue
+            else:
+                db.cursor_main.execute(
+                    "INSERT INTO old_comments (id, created_utc) VALUES (?, ?)",
+                    (comment_id, int(comment.created_utc)),
+                )
+                db.conn_main.commit()
+                logger.debug(f"Comment `{comment_id}` is now being processed.")
+
+            # Skip the bot's own comments and AutoModerator comments.
+            logger.debug(f"Checking author: '{author_name}' against bot: '{username}'")
+            if author_name.lower() in [
+                username.lower(),
+                "automoderator",
+                "translator-modteam",
+            ]:
+                logger.debug(f"`{comment_id}` is from bot u/{author_name}. Skipping...")
+                continue
+
+            # Skip comments on filtered posts.
+            filtered_result = db.cursor_main.execute(
+                "SELECT filtered FROM old_posts WHERE id = ?", (original_post.id,)
+            ).fetchone()
+            # Note: filtered_result[0] accesses the filtered column directly since
+            # we're only SELECTing that one column (not SELECT *)
+            if filtered_result and filtered_result[0] == 1:
+                logger.info(
+                    f"Comment `{comment_id}` is on already-filtered post `{original_post.id}`. Skipping."
                 )
                 continue
 
+            # ── Ajo loading ────────────────────────────────────────────────────
+
+            is_verified_post = original_post.id == VERIFIED_POST_ID
+            original_ajo = ajo_loader(original_post.id)
+            if not original_ajo:
+                if is_verified_post:
+                    logger.debug("Verified post has no Ajo — skipping Ajo creation.")
+                else:
+                    logger.warning(
+                        f"Ajo for `{original_post.id}` does not exist. Creating..."
+                    )
+                    original_ajo = Ajo.from_titolo(
+                        process_title(original_post), original_post
+                    )
             logger.debug(
-                f"Post `{original_post.id}` does not contain "
-                "any operational keywords and commands."
+                f"> Ajo lingvo is {original_ajo.lingvo if original_ajo else None}"
+            )  # loaded lazily
+
+            # ── Command dispatch ───────────────────────────────────────────────
+
+            instruo = None
+            if comment_has_command(comment_body):
+                parent_languages = [original_ajo.lingvo] if original_ajo else []
+                instruo = Instruo.from_comment(comment, parent_languages=parent_languages)
+
+                logger.info(
+                    f"> Derived instruo and ajo for `{comment.id}` on "
+                    f"post `{original_post.id}` as: `{instruo}`."
+                )
+                logger.info(
+                    f"> Comment can be viewed at https://www.reddit.com{comment.permalink}."
+                )
+
+                # If this is the verified thread, only allow !verify commands.
+                if original_post.id == VERIFIED_POST_ID:
+                    allowed_commands = [
+                        k for k in instruo.commands if k.name.lower() == "verify"
+                    ]
+                    if not allowed_commands:
+                        logger.info(
+                            f"Non-verify command attempted on verified thread `{original_post.id}`. "
+                            f"Skipping comment `{comment_id}`."
+                        )
+                        continue
+                    instruo.commands = allowed_commands
+
+                for komando in instruo.commands:
+                    handler = HANDLERS.get(komando.name.lower())
+
+                    if handler:
+                        logger.info(
+                            f"Command `{komando}` detected for `{comment_id}` on "
+                            f"post `{original_post.id}`. Passing to handler."
+                        )
+                        handler(comment, instruo, komando, original_ajo)
+                        action_counter(1, komando.name)
+                    else:
+                        logger.error(f"No handler for command: {komando.name}")
+
+                user_statistics_writer(instruo)
+                logger.debug("Recorded user commands in database.")
+
+                if (
+                    not diskuto_exists(original_post.id)
+                    and original_ajo
+                    and original_ajo.lingvo
+                ):
+                    points_tabulator(comment, original_post, original_ajo.lingvo)
+            else:
+                # Non-command comment on the verified thread — skip silently.
+                if original_post.id == VERIFIED_POST_ID:
+                    logger.debug(
+                        "Non-command comment on verified thread "
+                        f"`{original_post.id}`. Skipping."
+                    )
+                    continue
+
+                logger.debug(
+                    f"Post `{original_post.id}` does not contain "
+                    "any operational keywords and commands."
+                )
+
+            # ── Post-command processing ────────────────────────────────────────
+
+            # Process THANKS keywords from original posters.
+            if original_ajo and _contains_any_phrase(comment_body, thanks_keywords):
+                _mark_short_thanks_as_translated(comment, original_ajo)
+
+            # Check if there was a 'set' command in this comment.
+            moderator_set = False
+            skip_update = False
+            if instruo:
+                moderator_set = any(
+                    komando.name.lower() == "set" for komando in instruo.commands
+                )
+                # Skip update if the only command is 'verify'.
+                if (
+                    len(instruo.commands) == 1
+                    and instruo.commands[0].name.lower() == "verify"
+                ):
+                    skip_update = True
+
+            # Update the Ajo flair and database — skip in testing mode
+            # and skip if the only command was 'verify'.
+            if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
+                original_ajo.update_reddit(moderator_set=moderator_set)
+        except Exception:
+            logger.exception(
+                "Failed while processing comment `%s` on post `%s`. Comment URL: https://www.reddit.com%s",
+                getattr(comment, "id", "<unknown>"),
+                getattr(getattr(comment, "submission", None), "id", "<unknown>"),
+                getattr(comment, "permalink", ""),
             )
-
-        # ── Post-command processing ────────────────────────────────────────────
-
-        # Process THANKS keywords from original posters.
-        if original_ajo and any(keyword in comment_body for keyword in thanks_keywords):
-            _mark_short_thanks_as_translated(comment, original_ajo)
-
-        # Check if there was a 'set' command in this comment.
-        moderator_set = False
-        skip_update = False
-        if instruo:
-            moderator_set = any(
-                komando.name.lower() == "set" for komando in instruo.commands
-            )
-            # Skip update if the only command is 'verify'.
-            if (
-                len(instruo.commands) == 1
-                and instruo.commands[0].name.lower() == "verify"
-            ):
-                skip_update = True
-
-        # Update the Ajo flair and database — skip in testing mode
-        # and skip if the only command was 'verify'.
-        if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
-            original_ajo.update_reddit(moderator_set=moderator_set)
+            continue
