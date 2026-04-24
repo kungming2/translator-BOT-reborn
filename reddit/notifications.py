@@ -527,7 +527,10 @@ def _notifier_title_cleaner(title: str) -> str:
 
 
 def notifier(
-    lingvo: Lingvo, submission: Submission, mode: str = "new_post"
+    lingvo: Lingvo,
+    submission: Submission,
+    mode: str = "new_post",
+    already_contacted: list[str] | None = None,
 ) -> list[str]:
     """
     Notify users about posts in a language they've subscribed to.
@@ -537,6 +540,8 @@ def notifier(
     :param lingvo: Lingvo object containing language information (e.g. code, name).
     :param submission: PRAW Submission object representing the Reddit post.
     :param mode: Notification context: "identify", "new_post", or "page".
+    :param already_contacted: Optional in-memory list of users already notified
+                              for this post in the current processing pass.
     :return: List of usernames that were notified.
     """
     notify_users_list: list[str] = []
@@ -569,6 +574,9 @@ def notifier(
         )
     except AttributeError:  # In rare cases
         permission_to_proceed = True
+
+    if already_contacted:
+        contacted = list(set(contacted) | set(already_contacted))
 
     # Stop notification if the same users were already contacted recently
     if not permission_to_proceed:

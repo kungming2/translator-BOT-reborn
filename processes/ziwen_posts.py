@@ -108,7 +108,7 @@ def ziwen_posts(post_limit: int | None = None) -> None:
     dupes_removed = duplicate_detector(
         list_posts=posts[-detection_limit:],
         reddit_instance=REDDIT,
-        testing_mode=False,
+        testing_mode=SETTINGS["testing_mode"],
     )
     if dupes_removed:
         logger.info(f"Completed duplicate detection. Removed {dupes_removed} posts.")
@@ -309,11 +309,15 @@ def ziwen_posts(post_limit: int | None = None) -> None:
 
         if messages_send_okay and not user_posted_too_much:
             action_counter(1, "New posts")
+            already_contacted: set[str] = set()
 
             if titolo_content and hasattr(titolo_content, "notify_languages"):
                 for lingvo in titolo_content.notify_languages:
-                    notified = notifier(lingvo, post)
+                    notified = notifier(
+                        lingvo, post, already_contacted=list(already_contacted)
+                    )
                     post_ajo.add_notified(notified)
+                    already_contacted.update(notified)
             else:
                 logger.warning(
                     f"Cannot send notifications for post {post_id} -"
@@ -360,7 +364,6 @@ def ziwen_posts(post_limit: int | None = None) -> None:
         if not SETTINGS["testing_mode"]:
             post_ajo.update_reddit(initial_update=True)
 
-        # Run request closeout.
-        closeout_posts()
-
+    # Run request closeout once per polling cycle.
+    closeout_posts()
     return
