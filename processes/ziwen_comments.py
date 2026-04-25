@@ -158,7 +158,9 @@ def ziwen_commands() -> None:
         try:
             comment_id = comment.id
             original_post = comment.submission
-            comment_body = comment.body.lower()  # lowercase for ease of command matching
+            comment_body = (
+                comment.body.lower()
+            )  # lowercase for ease of command matching
 
             # ── Pre-flight checks ──────────────────────────────────────────────
 
@@ -233,7 +235,9 @@ def ziwen_commands() -> None:
             instruo = None
             if comment_has_command(comment_body):
                 parent_languages = [original_ajo.lingvo] if original_ajo else []
-                instruo = Instruo.from_comment(comment, parent_languages=parent_languages)
+                instruo = Instruo.from_comment(
+                    comment, parent_languages=parent_languages
+                )
 
                 logger.info(
                     f"> Derived instruo and ajo for `{comment.id}` on "
