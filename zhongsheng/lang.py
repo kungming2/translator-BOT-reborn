@@ -65,11 +65,7 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
 
             # select_random_language already returns a Lingvo, so prefer its
             # known codes directly instead of doing a separate reference lookup.
-            language_input = (
-                getattr(random_lang_obj, "preferred_code", None)
-                or getattr(random_lang_obj, "language_code_3", None)
-                or random_lang_obj.language_code
-            )
+            language_input = random_lang_obj.preferred_code
 
         result = converter(language_input, preserve_country=True)
         if not result:
