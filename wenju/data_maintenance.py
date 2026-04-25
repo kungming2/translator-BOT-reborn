@@ -126,7 +126,8 @@ def error_log_trimmer() -> None:
     ]
 
     with open(error_log_path, "w", encoding="utf-8") as f:
-        yaml.dump(trimmed, f, allow_unicode=True, sort_keys=False)
+        if trimmed:
+            yaml.dump(trimmed, f, allow_unicode=True, sort_keys=False)
 
     removed = len(entries) - len(trimmed)
     if removed:

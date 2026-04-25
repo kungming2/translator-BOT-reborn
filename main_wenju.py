@@ -51,7 +51,7 @@ import traceback
 from config import TRANSIENT_ERRORS
 from config import logger as _base_logger
 from error import error_log_extended
-from wenju import get_tasks, run_schedule
+from wenju import AVAILABLE_SCHEDULES, run_schedule, validate_schedule_name
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ"})
 
@@ -72,12 +72,12 @@ def wenju_runner() -> None:
     and critical failures is managed by the enclosing ``try/except`` block.
     """
     if len(sys.argv) > 1:
-        schedule_name: str = sys.argv[1]
+        schedule_name = validate_schedule_name(sys.argv[1])
         run_schedule(schedule_name)
     else:
         logger.warning("No time parameter specified as a system argument.")
         logger.info("Usage: python main_wenju.py <schedule_name>")
-        logger.info("Available schedules: %s", list(get_tasks().keys()))
+        logger.info("Available schedules: %s", list(AVAILABLE_SCHEDULES))
         sys.exit(1)
 
 
@@ -87,8 +87,12 @@ if __name__ == "__main__":
     try:
         wenju_runner()
 
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt:
         logger.info("Manual user shutdown.")
+        raise
+
+    except SystemExit:
+        logger.info("System shutdown.")
         raise
 
     except TRANSIENT_ERRORS as e:

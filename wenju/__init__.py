@@ -44,6 +44,7 @@ from integrations.discord_utils import send_discord_alert
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:I"})
 
 _tasks: dict[str, list] = {}
+AVAILABLE_SCHEDULES: tuple[str, ...] = ("hourly", "daily", "weekly", "monthly")
 
 
 # ─── Task registry ────────────────────────────────────────────────────────────
@@ -66,11 +67,29 @@ def get_tasks() -> dict:
     return _tasks
 
 
+def normalize_schedule_name(schedule_name: str) -> str:
+    """Normalize user-provided schedule names for validation and lookup."""
+    return schedule_name.strip().lower()
+
+
+def validate_schedule_name(schedule_name: str) -> str:
+    """Return a normalized schedule name or raise for unsupported schedules."""
+    normalized_name = normalize_schedule_name(schedule_name)
+    if normalized_name not in AVAILABLE_SCHEDULES:
+        raise ValueError(
+            f"Unsupported schedule: {schedule_name!r}. "
+            f"Expected one of: {', '.join(AVAILABLE_SCHEDULES)}"
+        )
+    return normalized_name
+
+
 # ─── Schedule runner ──────────────────────────────────────────────────────────
 
 
 def run_schedule(schedule_name: str) -> None:
     """Run all tasks for a given schedule."""
+    schedule_name = validate_schedule_name(schedule_name)
+
     # Dynamically import all task modules in the wenju/ directory
     # to register them. This automatically includes any .py files
     # without needing to manually list them.
@@ -103,7 +122,7 @@ def run_schedule(schedule_name: str) -> None:
         notify_message = f"No tasks were executed for the **{schedule_name}** schedule."
 
     # Hourly and daily schedules do not send Discord alerts.
-    if schedule_name not in ["hourly", "daily"]:
+    if schedule_name not in ["hourly", "daily"] and executed_tasks:
         send_discord_alert(
             f"{schedule_name.title()} Tasks Completed",
             notify_message,

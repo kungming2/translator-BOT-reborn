@@ -198,6 +198,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+import wenju  # noqa: E402
 import wenju.iso_updates as iso_updates  # noqa: E402
 import wenju.moderator_digest as moderator_digest  # noqa: E402
 
@@ -294,6 +295,23 @@ class TestTaskDecorator:
         tasks = self.registry.get_tasks()
         assert shared in tasks["daily"]
         assert shared in tasks["weekly"]
+
+
+class TestWenjuScheduleValidation:
+    def test_rejects_unknown_schedule_before_discovery(self):
+        with pytest.raises(ValueError, match="Unsupported schedule"):
+            wenju.run_schedule("every_minute")
+
+    def test_normalizes_supported_schedule_name(self):
+        assert wenju.validate_schedule_name(" Weekly ") == "weekly"
+
+    def test_valid_schedule_with_no_tasks_sends_alert_when_expected(self):
+        with patch.object(wenju, "_tasks", {"weekly": []}):
+            with patch("wenju.importlib.import_module"):
+                with patch("wenju.send_discord_alert") as alert_mock:
+                    wenju.run_schedule("weekly")
+
+        alert_mock.assert_called_once()
 
 
 # ===========================================================================
