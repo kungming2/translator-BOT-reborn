@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, Any
 from praw.models import Submission
 
 from config import logger as _base_logger
-from integrations.ai import ai_query, openai_access
+from integrations.ai import ai_query
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
 from responses import RESPONSE
@@ -95,10 +95,8 @@ def title_ai_parser(
 
     logger.info("Passing information to AI service...")
     query_kwargs: dict[str, Any] = {
-        "service": "openai",
         "behavior": "You are assessing a technical identification",
         "query": query_input,
-        "client_object": openai_access(),
     }
 
     if image_url:
@@ -141,10 +139,9 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
     query_input = RESPONSE.TITLE_REFORMATTING_QUERY + title_text
 
     query_kwargs = {
-        "service": "openai",
+        "service": "deepseek",  # we use Deepseek for this
         "behavior": "You are checking data entry",
         "query": query_input,
-        "client_object": openai_access(),
     }
 
     query_data = ai_query(**query_kwargs)

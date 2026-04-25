@@ -417,7 +417,8 @@ WY_FULL_RETRIEVAL_DATA: |
 TITLE_PARSING_QUERY: >
   Assess this Reddit post title which is for a translation request. 
   Output what you assess to be the source language and target language, 
-  and the percentage confidence for your assessment in valid JSON format:
+  and the percentage confidence for your assessment in the
+  following valid JSON format:
 
   {{
     "source_language": {{
@@ -430,6 +431,20 @@ TITLE_PARSING_QUERY: >
     }},
     "confidence": PERCENTAGE (out of 1.0)
   }}
+
+  EXAMPLE JSON OUTPUT:
+  
+  {
+    "source_language": {
+      "name": "Japanese",
+      "code": "ja"
+    },
+    "target_language": {
+      "name": "English",
+      "code": "en"
+    },
+    "confidence": 0.95
+  }
 
   If the title indicates that the user does not know the source language
    (e.g. the likely source is "I don't know"/"idk"/"no clue" return 
@@ -445,6 +460,11 @@ TITLE_PARSING_QUERY: >
 
   Both source and target languages must have a valid ISO 639-1 or ISO 639-3 
   code to be included in the response, unless the source is "Unknown".
+  
+  Any ISO 639-3 code MUST BE FULLY VALID. Double-check your determined codes and names
+  to ensure that they are valid and that they correspond with each other.
+  For example, Japanese is `ja` and Hawaiian is `haw`.
+  Lower your confidence score if there is no correspondence.
 
   If a source or target language cannot be assessed or does not have a valid
   ISO 639-1 or 639-3 code, return a blank dictionary ({{}}) for that language.

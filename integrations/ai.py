@@ -49,66 +49,65 @@ def openai_access() -> OpenAI:
 
 
 def ai_query(
-    service: str,
-    client_object: OpenAI,
-    behavior: str,
-    query: str,
+    service: str = "openai",  # can switch between default services here
+    behavior: str = "",
+    query: str = "",
     image_url: str | None = None,
 ) -> str | None:
     """
     Pass a query to an AI service, optionally with image support.
     Image support requires the service to be ``"openai"``.
 
-    :param service: ``'deepseek'`` or ``'openai'``
-    :param client_object: Authenticated client object.
+    :param service: `'deepseek'` or `'openai'` (latter is default)
     :param behavior: System-role instructions for the service.
     :param query: Text prompt to pass to the AI.
     :param image_url: Optional public image URL (OpenAI Vision only).
     :return: The AI-generated response content, or None if an error occurred.
     """
+
     ai_model: str
     user_content: list[dict] | str
     messages: list[dict]
 
     if service == "deepseek":
-        ai_model = access_credentials["DEEPSEEK_MODEL"]
-
-        # DeepSeek does not support image input, so ignore image_url.
-        messages = [
-            {"role": "system", "content": behavior},
-            {"role": "user", "content": query},
-        ]
+        client = deepseek_access()
+        model = access_credentials["DEEPSEEK_MODEL"]
+        supports_images = False
 
     elif service == "openai":
-        ai_model = access_credentials["OPENAI_MODEL"]
-
-        if image_url:
-            image_url = image_url.strip().rstrip(".")
-            user_content = [
-                {"type": "text", "text": query},
-                {"type": "image_url", "image_url": {"url": image_url}},
-            ]
-            logger.debug(f"Image attached to input: {image_url}")
-        else:
-            user_content = query
-
-        messages = [
-            {"role": "system", "content": behavior},
-            {"role": "user", "content": user_content},
-        ]
+        client = openai_access()
+        model = access_credentials["OPENAI_MODEL"]
+        supports_images = True
 
     else:
         raise ValueError("Service must be either 'deepseek' or 'openai'.")
 
+    # ─── Build message payload ────────────────────────────────────────
+    if image_url and supports_images:
+        image_url = image_url.strip().rstrip(".")
+        user_content = [
+            {"type": "text", "text": query},
+            {"type": "image_url", "image_url": {"url": image_url}},
+        ]
+        logger.debug(f"Image attached to input: {image_url}")
+    else:
+        user_content = query
+
+    messages = [
+        {"role": "system", "content": behavior},
+        {"role": "user", "content": user_content},
+    ]
+
+    # ─── Execute request ──────────────────────────────────────────────
     try:
         # noinspection PyTypeChecker
-        ai_response = client_object.chat.completions.create(
-            model=ai_model,
+        response = client.chat.completions.create(
+            model=model,
             messages=messages,  # type: ignore[arg-type]
             stream=False,
         )
-        assert not isinstance(ai_response, Stream)
-        return ai_response.choices[0].message.content
+        assert not isinstance(response, Stream)
+        return response.choices[0].message.content
 
     except BadRequestError as e:
         # Invalid requests: bad image URL, invalid parameters, etc.
@@ -156,8 +155,6 @@ def fetch_image_description(image_url: str, nsfw_flag: bool = False) -> str:
 
     logger.debug("Fetching image description...")
     description = ai_query(
-        service="openai",
-        client_object=openai_access(),
         behavior=_IMAGE_DESCRIPTION_BEHAVIOR,
         query=RESPONSE.IMAGE_DESCRIPTION_QUERY,
         image_url=image_url,
