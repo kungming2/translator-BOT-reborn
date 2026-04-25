@@ -26,7 +26,7 @@ FILTER_REASONS = {
 
 @command(
     name="filter",
-    help_text="Validates a post title against community formatting guidelines",
+    help_text="Validates a post title against r/translator's community formatting guidelines.",
     roles=["Moderator", "Helper"],
 )
 async def filter_post(ctx: commands.Context, *, title: str) -> None:

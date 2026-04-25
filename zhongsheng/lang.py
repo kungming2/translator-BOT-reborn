@@ -13,7 +13,6 @@ from lang.languages import (
     get_lingvos,
     select_random_language,
 )
-from ziwen_lookup.reference import get_language_reference
 
 from . import command
 
@@ -60,17 +59,17 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
         # Handle 'random' argument
         if language_input.lower() == "random":
             random_lang_obj = select_random_language()
-            if random_lang_obj and random_lang_obj.name is not None:
-                lang_ref = get_language_reference(random_lang_obj.name)
-                if not lang_ref:
-                    await ctx.send(
-                        "⚠️ An error occurred. No reference found for random language."
-                    )
-                    return
-                language_input = lang_ref["language_code_3"]
-            else:  # rare; no results in random selection, or name is None.
+            if random_lang_obj is None:
                 await ctx.send("⚠️ An error occurred. No valid random results found.")
                 return
+
+            # select_random_language already returns a Lingvo, so prefer its
+            # known codes directly instead of doing a separate reference lookup.
+            language_input = (
+                getattr(random_lang_obj, "preferred_code", None)
+                or getattr(random_lang_obj, "language_code_3", None)
+                or random_lang_obj.language_code
+            )
 
         result = converter(language_input, preserve_country=True)
         if not result:

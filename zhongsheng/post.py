@@ -15,7 +15,7 @@ from . import command, search_logs
 
 @command(
     name="post",
-    help_text="Searches for a Reddit post ID in log files and returns matching lines",
+    help_text="Searches for a Reddit post ID in log files and returns matching lines.",
     roles=["Moderator"],
 )
 async def post_search(ctx: commands.Context, post_input: str) -> None:

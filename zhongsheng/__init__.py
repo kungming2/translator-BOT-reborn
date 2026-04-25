@@ -50,7 +50,7 @@ def get_commands() -> list:
 
 
 def register_commands(bot: commands.Bot) -> None:
-    """Register all commands with the Discord bot."""
+    """Register all commands with the Discord bot as hybrid commands."""
 
     # Dynamically import all command modules in the zhongsheng/ directory
     # to trigger registration. This automatically includes any .py files
@@ -64,6 +64,7 @@ def register_commands(bot: commands.Bot) -> None:
 
     for cmd in _commands:
         func = cmd["func"]
+        description = cmd["help"][:100]
 
         # Apply role restrictions if specified
         if cmd["roles"]:
@@ -72,7 +73,11 @@ def register_commands(bot: commands.Bot) -> None:
             else:
                 func = commands.has_any_role(*cmd["roles"])(func)
 
-        bot.command(name=cmd["name"], help=cmd["help"])(func)
+        bot.hybrid_command(
+            name=cmd["name"],
+            description=description,
+            help=cmd["help"],
+        )(func)
 
 
 # ─── Shared utilities ─────────────────────────────────────────────────────────

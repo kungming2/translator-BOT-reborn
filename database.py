@@ -654,7 +654,7 @@ def get_recent_event_log_lines(
         last_tagged_line = tagged_lines[-1].strip()
         try:
             # Extract timestamp from format: INFO: 2026-01-07T19:45:59Z - ...
-            timestamp_str = last_tagged_line.split(" - ")[0].split(": ")[1]
+            timestamp_str = last_tagged_line.split(" - ")[0].split(": ")[1].split()[0]
             last_event_time = datetime.fromisoformat(
                 timestamp_str.replace("Z", "+00:00")
             )

@@ -27,7 +27,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 
 @command(
     name="status",
-    help_text="Shows a random Office quote and the last 5 events from the log for Ziwen",
+    help_text="Shows a random Office quote and the last 5 events from the log for Ziwen.",
     roles=["Moderator", "Helper"],
 )
 async def status(ctx: commands.Context) -> None:

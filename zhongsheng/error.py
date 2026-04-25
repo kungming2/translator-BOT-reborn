@@ -18,7 +18,7 @@ from . import command
 
 @command(
     name="error",
-    help_text="Displays the 3 most recent error log entries",
+    help_text="Displays the 3 most recent error log entries.",
     roles=["Moderator"],
 )
 async def error_logs(ctx: Context) -> None:

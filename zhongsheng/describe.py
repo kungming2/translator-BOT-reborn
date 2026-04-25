@@ -16,7 +16,7 @@ from . import command
 # noinspection HttpUrlsUsage
 @command(
     name="describe",
-    help_text="Generates an AI description of an image from a URL",
+    help_text="Generates an AI description of an image from a URL.",
     roles=["Moderator", "Helper"],
 )
 async def describe_image(ctx: commands.Context, image_url: str) -> None:

@@ -14,7 +14,7 @@ from . import command, search_logs
 
 @command(
     name="user",
-    help_text="Searches for a username in log files and returns matching lines",
+    help_text="Searches for a username in log files and returns matching lines.",
     roles=["Moderator"],
 )
 async def user_search(ctx: commands.Context, *, user_input: str) -> None:
