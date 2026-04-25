@@ -343,7 +343,7 @@ def ziwen_posts(post_limit: int | None = None) -> None:
         if post_ajo.lingvo is None or not post_ajo.lingvo.supported:
             language_name = (
                 post_ajo.lingvo.name if post_ajo.lingvo is not None else None
-            ) or "Unparsed"
+            ) or "*Unparsed*"
             update_wiki_page(
                 "save",
                 get_current_utc_date(),
