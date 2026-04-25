@@ -21,7 +21,7 @@ from . import command
 
 @command(
     name="lang",
-    help_text="Converts language input using the converter function",
+    help_text="Converts language input using the converter function.",
     roles=["Moderator", "Helper"],
 )
 async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:

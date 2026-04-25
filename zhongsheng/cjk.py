@@ -14,7 +14,7 @@ from . import command, send_long_message
 
 @command(
     name="cjk",
-    help_text="Performs CJK lookups for a given language and search terms. "
+    help_text="Performs CJK lookups for a language and search terms. "
     "Language name/code must be the first argument.",
     roles=["Moderator", "Helper"],
 )

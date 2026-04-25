@@ -36,7 +36,7 @@ def _format_commands(list_commands: list) -> str:
 @command(
     name="comment",
     help_text="Searches for a Reddit comment ID and returns the Instruo data. "
-    "Use --text flag to parse raw text instead.",
+    "Use --text flag to parse raw text.",
     roles=["Moderator"],
 )
 async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
