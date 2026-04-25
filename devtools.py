@@ -130,10 +130,10 @@ def _print_elapsed(seconds: float) -> None:
     """Print elapsed time with a consistent devtools timing style."""
     if seconds < 1:
         _console.print(
-            f"[timing] completed in {seconds * 1000:.0f} ms", style="#DAB060"
+            f"[timing] completed in {seconds * 1000:.0f} ms", style="#8A00C4"
         )
     else:
-        _console.print(f"[timing] completed in {seconds:.2f} s", style="#DAB060")
+        _console.print(f"[timing] completed in {seconds:.2f} s", style="#8A00C4")
 
 
 # ─── lang ─────────────────────────────────────────────────────────────────────
