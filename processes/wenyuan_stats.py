@@ -106,6 +106,7 @@ class Lumo:
             end_time: Unix timestamp for default end time
         """
         self.ajos: list[Ajo] = []
+        self._source_ajos: list[Ajo] = []
         self._cache: dict[str, Any] = {}
         self.start_time = start_time
         self.end_time = end_time
@@ -239,6 +240,7 @@ class Lumo:
         self.start_time = start
         self.end_time = end
         self.ajos = []
+        self._source_ajos = []
 
         # Query database for Ajo IDs in time range
         query = (
@@ -250,10 +252,10 @@ class Lumo:
         for row in results:
             ajo = ajo_loader(row["id"])
             if ajo:
-                self.ajos.append(ajo)
+                self._source_ajos.append(ajo)
 
         # Expand defined multiple language posts
-        self.ajos = self._expand_multiple_language_posts(self.ajos)
+        self.ajos = self._expand_multiple_language_posts(self._source_ajos)
 
         # Clear any cached results since data changed
         self._clear_cache()
@@ -276,7 +278,8 @@ class Lumo:
 
     def load_from_list(self, ajos: list[Ajo]) -> None:
         """Load Ajos directly from a list (useful for testing)."""
-        self.ajos = self._expand_multiple_language_posts(ajos)
+        self._source_ajos = list(ajos)
+        self.ajos = self._expand_multiple_language_posts(self._source_ajos)
         self._clear_cache()
 
     def load_for_user(
@@ -297,18 +300,18 @@ class Lumo:
             List of user's Ajo objects
         """
         start_utc = start_time or self.start_time
-        self.ajos = search_database(username, "user", start_utc=start_utc)
+        self._source_ajos = search_database(username, "user", start_utc=start_utc)
 
         # Apply end_time filter if provided
         if end_time:
-            self.ajos = [
+            self._source_ajos = [
                 ajo
-                for ajo in self.ajos
+                for ajo in self._source_ajos
                 if ajo.created_utc is not None and ajo.created_utc <= end_time
             ]
 
         # Expand multiple language posts
-        self.ajos = self._expand_multiple_language_posts(self.ajos)
+        self.ajos = self._expand_multiple_language_posts(self._source_ajos)
         self._clear_cache()
 
         return self.ajos
@@ -322,9 +325,10 @@ class Lumo:
         """
         results = search_database(post_id, "post")
         if results:
+            self._source_ajos = list(results)
             # Keep single-post behavior consistent with other loaders:
             # expand defined-multiple requests into per-language entries.
-            self.ajos = self._expand_multiple_language_posts(results)
+            self.ajos = self._expand_multiple_language_posts(self._source_ajos)
             self._clear_cache()
             return results[0]
         return None
@@ -534,7 +538,8 @@ class Lumo:
                 for ajo in self.ajos
                 if ajo.lingvo
                 and ajo.language_name
-                and get_effective_status(ajo) == "untranslated"
+                and get_effective_status(ajo)
+                in {"untranslated", "missing", "inprogress"}
             )
         else:
             return []
@@ -635,7 +640,7 @@ class Lumo:
 
         translation_times = []
 
-        for ajo in self.ajos:
+        for ajo in self._source_ajos:
             if not hasattr(ajo, "time_delta") or not ajo.time_delta:
                 continue
 
@@ -677,7 +682,7 @@ class Lumo:
         identified: defaultdict[str, int] = defaultdict(int)
         misidentified: defaultdict[str, int] = defaultdict(int)
 
-        for ajo in self.ajos:
+        for ajo in self._source_ajos:
             if not hasattr(ajo, "language_history") or not ajo.language_history:
                 continue
 
