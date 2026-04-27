@@ -689,7 +689,7 @@ SECTIONS = {
     "2": (
         "error",
         {
-            "1": ("display event errors", check_error_display_event_errors),
+            "1": ("display event errors from log", check_error_display_event_errors),
         },
     ),
     "3": (

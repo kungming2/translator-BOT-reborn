@@ -55,6 +55,8 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: `devtools.py` and `main_wenyuan.py` now also use [Rich](https://github.com/textualize/rich) for better formatting of lookup results.
 * 🔄 CHANGE: Split off the Chinese Reference routine's logger output into its own file.
 * 🔄 CHANGE: Events output is trimmed for all logs, not just translator-BOT's. 
+* 🔄 CHANGE: Using [DeepSeek V4](https://x.com/deepseek_ai/status/2047516922263285776) for title change suggestion queries. Restructured `ai_query()` to more easily switch between services if desired. 
+* 🔄 CHANGE: Use normalized names instead of titles for language name matching (would affect language names like [Mi'kmaq](https://en.wikipedia.org/wiki/Mi%27kmaq_language)).
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours. 
 * 🛠️ BUG FIX: Fix to prevent non-CJK backtick terms from being added to `lookup_cjk` in instruos.
