@@ -23,6 +23,7 @@ Logger tag: [LANG:COUNTRIES]
 import contextlib  # used for search_fuzzy fallback in get_country_emoji
 import csv
 import logging
+import re
 
 import pycountry
 
@@ -110,7 +111,7 @@ def country_converter(
         return "", ""
 
     text_upper: str = text.upper()
-    text_title: str = text.title()
+    text_normalized: str = _normalize_country_text(text)
 
     # Match 2-letter code
     if len(text) == 2 and abbreviations_okay:
@@ -130,12 +131,13 @@ def country_converter(
 
     # Match exact or partial name
     for name, alpha2, _, _, _ in country_list:
-        if text_title == name:
+        name_normalized = _normalize_country_text(name)
+        if text_normalized == name_normalized:
             return alpha2, name
-        elif text_title in name and len(text_title) >= 3:
+        elif text_normalized in name_normalized and len(text_normalized) >= 3:
             if possible_name:
                 logger.debug(
-                    f"Ambiguous partial match for {text_title!r}: "
+                    f"Ambiguous partial match for {text_input!r}: "
                     f"{possible_name!r} overwritten by {name!r}"
                 )
             possible_code = alpha2
@@ -143,7 +145,7 @@ def country_converter(
 
     # Match keyword
     for name, alpha2, _, _, keywords in country_list:
-        if any(text_title == kw for kw in keywords):
+        if any(text_normalized == _normalize_country_text(kw) for kw in keywords):
             return alpha2, name
 
     # Fallback to partial name match
@@ -151,6 +153,14 @@ def country_converter(
         return possible_code, possible_name
 
     return "", ""
+
+
+def _normalize_country_text(text: str) -> str:
+    """Lowercase, strip punctuation, and normalize whitespace for matching."""
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 # ─── Flag emoji utilities ─────────────────────────────────────────────────────

@@ -477,14 +477,14 @@ def _resolve_to_lingvo(
                 return lingvo
 
     # Search by name or alternate name
-    input_title = input_text.title()
+    input_norm = normalize(input_text)
     for _code, lingvo in lingvos.items():
-        if input_title == lingvo.name:
+        if lingvo.name and input_norm == normalize(lingvo.name):
             lingvo_copy = copy.deepcopy(lingvo)
             if not preserve_country:
                 lingvo_copy.country = None
             return lingvo_copy
-        if input_title in (alt.title() for alt in lingvo.name_alternates or []):
+        if any(input_norm == normalize(alt) for alt in (lingvo.name_alternates or [])):
             lingvo_copy = copy.deepcopy(lingvo)
             if not preserve_country:
                 lingvo_copy.country = None
@@ -592,7 +592,11 @@ def _resolve_to_lingvo(
             return lingvo_copy
 
     # Fuzzy match if nothing else worked
-    if fuzzy and input_title not in language_module_settings["FUZZ_IGNORE_WORDS"]:
+    if (
+        fuzzy
+        and input_text.title() not in language_module_settings["FUZZ_IGNORE_WORDS"]
+    ):
+        input_title = input_text.title()
         fuzzy_result = _fuzzy_text(input_title, reference_lists["SUPPORTED_LANGUAGES"])
         if fuzzy_result:
             return converter(
@@ -683,7 +687,7 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
     elif " " in list_string:
         # Space-delimited case — try the whole string first
         match = converter(list_string)
-        items = [list_string] if match is None else list_string.split()
+        items = [list_string] if match is not None else list_string.split()
         logger.debug(f"Space-delimited case, match={match}, items: {items}")
     else:
         items = [list_string]

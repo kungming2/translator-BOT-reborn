@@ -295,6 +295,18 @@ class TestConverterStableCodes(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result.preferred_code, "fr")
 
+    @_skip_if_no_data
+    def test_name_lookup_handles_apostrophe_casing_mikmaq(self) -> None:
+        result = converter("Mi'kmaq")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.name, "Mi'kmaq")
+
+    @_skip_if_no_data
+    def test_name_lookup_handles_apostrophe_casing_tohono_oodham(self) -> None:
+        result = converter("Tohono O'odham")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.name, "Tohono O'odham")
+
 
 class TestConverterEdgeInputs(unittest.TestCase):
     """Inputs that should always return None."""
@@ -511,6 +523,12 @@ class TestParseLanguageList(unittest.TestCase):
         result = parse_language_list("es, en, fr")
         codes = [lingvo.preferred_code for lingvo in result]
         self.assertEqual(codes, sorted(codes))
+
+    @_skip_if_no_data
+    def test_space_delimited_preserves_multiword_language(self) -> None:
+        result = parse_language_list("Old English")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, "Old English")
 
 
 # ---------------------------------------------------------------------------
