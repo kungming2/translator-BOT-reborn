@@ -60,6 +60,7 @@ def notify_op_translated_post(author: str, permalink: str) -> None:
     with contextlib.suppress(APIException):
         message_send(redditor_obj=REDDIT.redditor(author), subject=subject, body=body)
 
+    action_counter(1, "OP translated notifications")
     logger.info(f"Messaged the OP u/{author} about their translated post.")
 
 

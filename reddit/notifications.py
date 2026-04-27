@@ -750,6 +750,8 @@ def notifier_internal(post_type: str, submission: Submission) -> list:
     if not notify_targets:
         return []
 
+    action_counter(len(notify_targets), "Internal notifications")
+
     # Message people on the list.
     logger.info(
         f"Sending internal notifications to {len(notify_targets)} users. | `{submission.id}`"

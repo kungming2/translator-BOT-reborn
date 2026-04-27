@@ -21,6 +21,7 @@ from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
+from monitoring.usage_statistics import action_counter
 from reddit.connection import REDDIT, create_mod_note, is_mod
 from reddit.reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
@@ -167,6 +168,7 @@ def process_verification(confirming_comment: "Comment") -> None:
         insert_query, (comment_id, created_utc, author_name, "process_verification")
     )
     db.conn_main.commit()
+    action_counter(1, "Verification approvals")
 
     logger.info("> Verified procedure complete.")
 
@@ -317,6 +319,7 @@ def verification_parser() -> None:
         logger.info(
             f"Notified moderators about a new verification request from u/{author_string}."
         )
+        action_counter(1, "Verification requests")
 
     return
 

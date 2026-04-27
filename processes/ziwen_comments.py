@@ -104,6 +104,7 @@ def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
         "A message about your translation request",
         message_body,
     )
+    action_counter(1, "Short thanks translated")
 
     return
 
