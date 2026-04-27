@@ -55,7 +55,7 @@ If the title has certain keywords instead (e.g. `all`, `any`, `every`), the "mul
 
 "Defined multiple" posts are posts where the requester has *defined multiple* specific languages that they'd like their request to be for. A post with the title `[English > German, French, Italian] My genealogical records` would be such an example. Defined multiple posts are treated somewhat differently by Ziwen, as they have specific requirements that can be fulfilled, unlike regular multiple posts.  
 
-If a post's title has two or more target languages but one of them is English (e.g. `[Chinese > English/Spanish]`, Ziwen will _not_ parse it as a "defined multiple" post.
+If a post's title has two or more target languages but one of them is English (e.g. `[Chinese > English/Spanish]`), Ziwen will _not_ parse it as a "defined multiple" post.
 
  | 'Multiple' Post Type | Number of Languages             | Can State Commands be Used? |  
 |----------------------|---------------------------------|-----------------------------|

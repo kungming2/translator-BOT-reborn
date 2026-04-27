@@ -1,4 +1,4 @@
-# Language Processsing
+# Language Processing
 
 [← Back to Home](./index.md)
 
@@ -14,7 +14,7 @@ As noted in the home/index documentation, all routines support:
 
 Less publicly advertised is that routines also support [ISO 639-2B](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes), a subset of ISO 639-2 that contains "bibliographic" codes derived from the English name of the language. There are only twenty of these codes and they are not widely known or used; examples would include `wel` for [Welsh](https://en.wikipedia.org/wiki/Welsh_language) and `arm` for [Armenian](https://en.wikipedia.org/wiki/Armenian_language). Their inclusion is solely for completion's sake.
 
-Also supported, though rarely seen, is [Linguist Lists's local use codes](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_used_locally_by_Linguist_List), though standard ISO equivalents are always better and preferred.
+Also supported, though rarely seen, are [Linguist List's local use codes](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_used_locally_by_Linguist_List), though standard ISO equivalents are always better and preferred.
 
 Generally speaking, any field or value that accepts a language code will also accept a language *name*.
 
@@ -29,7 +29,7 @@ If someone wishes to use an ISO 639-2 code for a language family, they should in
 
 ## Converter
 
-The `converter()` function in `languages.py` is the most essential function in the codebase. Its purpose is to accept any input and interpret what language that input intended. The converter will accept the aforementioned codes, standard language names, but even misspelllings to help return accurate identification of languages from user input.
+The `converter()` function in `languages.py` is the most essential function in the codebase. Its purpose is to accept any input and interpret what language that input intended. The converter will accept the aforementioned codes, standard language names, and even misspellings to help return accurate identification of languages from user input.
 
 #### The Lingvo Class 
 

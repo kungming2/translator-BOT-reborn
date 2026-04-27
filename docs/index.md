@@ -18,7 +18,7 @@ This repository encompasses several routines that primarily serve **[r/translato
 
 ## Language Codes and Syntax
 
-All routines use three international ISO standards for language codes and names, all are which are components of [IETF language tags](https://en.wikipedia.org/wiki/IETF_language_tag):
+All routines use three international ISO standards for language codes and names, all of which are components of [IETF language tags](https://en.wikipedia.org/wiki/IETF_language_tag):
 
 * [ISO 639-1/3](https://en.wikipedia.org/wiki/ISO_639), two or three-letter codes for languages (`ar`, `ja`, etc.)
 * [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes), four-letter codes for scripts (`Cyrl`, `Latn`, etc.)

@@ -20,15 +20,22 @@ This page records the version history of the various routines of translator-BOT.
 
 ##### translator-BOT 2.2 "The Hermes Update" (2026-03-12)
 
-* ✨ ADDITION: Hermes ([u/language_exchangeBOT](www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the languages parser). 
+* ✨ ADDITION: Hermes ([u/language_exchangeBOT](www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the language parser). 
     * Hermes now returns seven results for a language match (up from five).
     * Hermes now will prefix its comments with a language-specific greeting.
 * ✨ ADDITION: Specific images in galleries can be selected for transformation. For example, `!transform:h:3` will flip the third image in a gallery horizontally. (suggestion for feature and syntax made by u/Stunning_Pen_8332)
 * ✨ ADDITION: Module `__main__` environment runtimes have all been moved and centralized in `devtools.py`.
 * ✨ ADDITION: Added syntax to return lookup searches for non-English Wikipedia articles. Example: `{{黄河}}:zh`
-* ✨ ADDITION: The lookup function for CJK will now consistently be able to update the bot's comment when the terms looked up are changed in the original comment.
+* ✨ ADDITION: The lookup function for CJK will now consistently be able to update the bot's comment when the looked-up terms are changed in the original comment.
 * ✨ ADDITION: [Wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) lookup has been re-implemented for non-CJK languages.
-* ✨ ADDITION: Non-English Wikipedia results can be fetched by appending a language tag to the regular Wikipedia lookup syntax.  
+* ✨ ADDITION: Non-English Wikipedia results can be fetched by appending a language tag to the regular Wikipedia lookup syntax. 
+* ✨ ADDITION: Wenyuan now reports the following additional metrics in monthly statistics:
+    * Total unique translators active during the reporting period.
+    * Median translation time for requests.
+    * Average number of notified users per request.
+    * Top source-target language pairs.
+    * Number and percentage of image-based requests.
+* ✨ ADDITION: Wenyuan's monthly single-language statistics table now includes month-over-month percentage trend arrows, comparing each language's share of requests against the previous monthly report.
 * 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
 * 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
 * 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
@@ -108,7 +115,7 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 * ✨ ADDITION: Full support for language chaining for all state commands in defined multiple posts (posts where the OP has defined a certain number of languages they want). `!translated:zh`, `!doublecheck:ja+ko`, etc. will work with defined multiple posts.
 * ✨ ADDITION: Messages from the bot can now include language-specific greetings to users. (e.g. 你好, Guten Tag.)
 * ✨ ADDITION: Better Korean-language lookup results and output, including tokenization of Korean sentences.
-* ✨ ADDITION: If it's a request for a image translation, a very short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
+* ✨ ADDITION: If it's a request for an image translation, a very short AI description of the image can be included in the notification message (no machine translations will be included in the description). NSFW images will not be described. 
 * ✨ ADDITION: Wikipedia pages with coordinate attributes from the lookup function will also include a relevant [OpenStreetMap](https://www.openstreetmap.org) link to that location. 
 * 🔄 CHANGE: The codebase is now linted and formatted with [Ruff](https://github.com/astral-sh/ruff).
 * 🔄 CHANGE: Time handling bot-wide has been standardized to [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
@@ -134,7 +141,7 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 * 🔄 CHANGE: Added a cache for CJK lookups. Right now it is write-only but reading support will be introduced later so that lookups for previously searched terms will be much faster and can be retrieved locally.
 * 🛠️ BUG FIX: Fixed slightly incorrect Hakka (Sixian) tone formatting in Markdown.
 * 🛠️ BUG FIX: Fixed a new bug where [hanzi](https://en.wikipedia.org/wiki/Chinese_characters)-only lookup matches were accidentally being converted to simplified Chinese, even for Japanese.
-* 🛠️ BUG FIX: Records of notifications for script codes for now on will save the script codes as well, instead of just "unknown".
+* 🛠️ BUG FIX: Records of notifications for script codes will now save the script codes as well, instead of just "unknown".
 * 🛠️ BUG FIX: Fixed a bug where it was impossible to identify multiple-language posts back to a single language.
 * 🛠️ BUG FIX: Fixed claim handler not posting claim comments, causing `progress_tracker` crashes when checking expired claims
 
@@ -142,9 +149,9 @@ The various routines (Ziwen, Wenyuan, Wenju, and Zhongsheng) no longer have sepa
 
 * 🕯️ REMOVED: The `App` classification for non-defined `Multiple Languages` posts. This was almost never used even after it was introduced, and with the modern interpretation of Rule #R2, there's no need for it. Its three-letter "special" code also clashed with the language-based categories we use. 
 * 🕯️ REMOVED: [Goo](https://help.goo.ne.jp/help/article/2889/) shut down their monolingual Japanese dictionary, so links to their site have been removed from Japanese-lookup results.
-* 🕯️ REMOVED: We formerly had a brigading warner routine set up in Wenju to provide moderators with advance warning if a subreddit known for brigading had linked to r/translator. All such subreddits have since been shutdown and this is no longer needed.
+* 🕯️ REMOVED: We formerly had a brigading warner routine set up in Wenju to provide moderators with advance warning if a subreddit known for brigading had linked to r/translator. All such subreddits have since been shut down and this is no longer needed.
 * 🕯️ REMOVED: Code for long-defunct commands that were no longer used.
-    *  `!reference`: This returned information about a language and has been long removed. There is now an equivalent on the Discord server, `/lang`. 
+    *  `!reference`: This returned information about a language and has long been removed. There is now an equivalent on the Discord server, `/lang`. 
     *  `!restore`: Formerly sent an archived copy of a text-only post if the OP had deleted it to the translator. It has been non-functional since [Pushshift got taken over by Reddit](https://www.reddit.com/r/pushshift/comments/14ei799/pushshift_live_again_and_how_moderators_can/) and its API was sunsetted.
     * `!translate`/`!translator`: These commands formerly allowed you to ask the bot to cross-post posts to r/translator.
     * `!delete`: Formerly allowed OPs or mods to delete bot cross-posts. 
@@ -338,8 +345,8 @@ Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
 * ✨ ADDITION: Added a notifications status link to all notification messages (previously, it was only sent when someone signed up for a new language). 
 * ✨ ADDITION: Added an automatic link to message this subreddit in the comment Ziwen posts when someone tries to use a language code or name it cannot make sense of. 
 * ✨ ADDITION: If a plain `!translate` or `!translator` command is called on a post which already has a language mentioned in the title, the bot will crosspost it as that language instead of "Unknown."
-* ✨ ADDITION: Reconstructed pronunciations for Old Chinese and Middle Chinese is now available for individual Chinese character lookup. 
-* ✨ ADDITION: Pronunciations for Sinitic languages has been reformatted into a cleaner-looking table. 
+* ✨ ADDITION: Reconstructed pronunciations for Old Chinese and Middle Chinese are now available for individual Chinese character lookup. 
+* ✨ ADDITION: Pronunciations for Sinitic languages have been reformatted into a cleaner-looking table. 
 * ✨ ADDITION: If a multiple request is for two or more *defined* languages, Ziwen will send notifications to those signed up for those languages, not those listed for "multiple."
 * ✨ ADDITION: ~~Also allow the requester of a crosspost to remove it with `!delete`.~~
 * ✨ ADDITION: If a crosspost request is made from a known language learning subreddit (e.g. r/LearnJapanese) but has no specified language, the bot will crosspost it as that subreddit's language instead of "Unknown."
@@ -359,7 +366,7 @@ Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
 * 🛠️ BUG FIX: ~~Fixed accidental cross-posting of `!translated` commands used *outside* of r/translator.~~ 
 * 🛠️ BUG FIX: ~~Ziwen will now replace language reference information if there is a newer `!identify` command called on a post.~~ 
 * 🛠️ BUG FIX: Fixed an out of place reference "information" comment for identified "Multiple Languages" posts. 
-* 🛠️ BUG FIX: ~~Fixed a bug where false matches would popup for the re-post checker routine of cross-posting.~~ (Thanks u/ScanianMoose)
+* 🛠️ BUG FIX: ~~Fixed a bug where false matches would pop up for the re-post checker routine of cross-posting.~~ (Thanks u/ScanianMoose)
 * 🛠️ BUG FIX: Fixed a situation where the notifications language routine would write the same language multiple times in a subscription message to the database if the requester used different names for the same language (anti-duplicate code for *sending* already existed). 
 * 🛠️ BUG FIX: Added an error exception for processing regional YouTube videos that are not available at the bot's location. 
 * 🛠️ BUG FIX: Quick fix for verification requests that *don't* have notes.
@@ -386,7 +393,7 @@ Note that all of Zifang's features have been integrated into Ziwen, as of v2.0.
 * 🔄 CHANGE: ~~Fix to ensure r/languagelearning `!search` results don't exceed 10K characters.~~ 
 * 🔄 CHANGE: Moderators check is now retrieved dynamically from Reddit.
 * 🔄 CHANGE: ~~Wikipedia summaries for reference commands now consist of the first 3 sentences (previously first 500 characters)~~
-* 🔄 CHANGE: ~~Ziwen posts gets the posts from the last three minutes instead of the last one due to Reddit's slowness.~~ 
+* 🔄 CHANGE: ~~Ziwen posts get the posts from the last three minutes instead of the last one due to Reddit's slowness.~~ 
 * 🔄 CHANGE: The link in most messages and comments has been changed to use Reddit permalinks instead of redd.it short-form URLs. This is better for mobile compatibility. 
 * 🔄 CHANGE: The romanization of Japanese *kana* has been changed to use inline italics text instead, as our furigana format is dependent on CSS formatting and is not readable on mobile. 
 * 🔄 CHANGE: Ziwen will now write its runtime errors to a text file as a log. 

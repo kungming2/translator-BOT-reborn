@@ -26,7 +26,7 @@ This command is the equivalent of the subreddit's **[CJK Lookup](./lookup.md)**.
 
 This command accepts a Reddit comment's URL or its ID, and returns the commands found within it, providing a way to derive an [Instruo](./models.md) and its [Komando](./models.md)s.
 
-Alternately, ending the command with the `--text` flag evaluates the text before it as a comment. 
+Alternatively, ending the command with the `--text` flag evaluates the text before it as a comment. 
 
 ```
 /comment [comment link/ID]

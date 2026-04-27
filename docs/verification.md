@@ -4,7 +4,7 @@
 
 ## Introduction
 
-**[Verified](www.reddit.com/r/translator/wiki/verified)** is a status on the subreddit that just indicates that moderators have checked that the user has been a positive contributor to the community, and applications are made by commenting on a [regular verification thread](https://www.reddit.com/r/translator/search/?q=title%3Averified&include_over_18=on&restrict_sr=on&t=all&sort=new) that's automatically posted every six months. 
+**[Verified](www.reddit.com/r/translator/wiki/verified)** is a status on the subreddit that indicates moderators have checked that the user has been a positive contributor to the community. Applications are made by commenting on a [regular verification thread](https://www.reddit.com/r/translator/search/?q=title%3Averified&include_over_18=on&restrict_sr=on&t=all&sort=new) that's automatically posted every six months. 
 
 ## Verification Script
 

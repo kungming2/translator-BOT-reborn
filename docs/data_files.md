@@ -59,7 +59,7 @@ These are all [SQLite databases](https://sqlite.org/).
 * **old_comments**: Internal list recording comment IDs that have already been seen and processed by the bot. 
 * **old_posts**: Internal list recording post IDs that have already been seen and processed by the bot. 
 * **total_commands**: Contains a JSON dictionary recording the total number of commands and actions a user has taken.
-**total_notifications**: Contains a JSON dictionary recording the total number of notifications a user has received, indexed by language code. 
+* **total_notifications**: Contains a JSON dictionary recording the total number of notifications a user has received, indexed by language code. 
 * **total_points**: Large table containing points data per comment, username, and post.
 * **verification_database**: Contains verification requests, sorted by username and language.
 
@@ -107,7 +107,7 @@ No data files *used* by the bot appear here; rather, local text reports generate
 | `discord_settings.yaml`   | Contains webhook data for Discord alerts.                               | 
 | `hermes_settings.yaml`    | Settings for [Hermes](./hermes.md).                                     | 
 | `languages_settings.yaml` | Settings for [language name and code parsing](./language_processing.md). | 
-| `scheduler_settings.yaml` | Settings for frequently the bot's Ziwen and Wenju routines run.         | 
+| `scheduler_settings.yaml` | Settings for how frequently the bot's Ziwen and Wenju routines run.     | 
 | `settings.yaml`           | Main settings file.                                                     | 
 | `title_settings.yaml`     | Settings for [title parsing](./title_processing.md).                    | 
 | `wenju_settings.yaml`     | Settings for maintenance operations.                                    | 

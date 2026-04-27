@@ -8,7 +8,7 @@ Ziwen has two lookup functions that are called by wrapping lookup terms with cha
 
 ## CJK Lookup
 
-When a user submits a comment with two \` ([grave accents](https://en.wikipedia.org/wiki/Grave_accent), also known as back ticks) around a text string, Ziwen will look up the string to see if it's a Chinese, Japanese, or Korean character, word, or *[chengyu](https://en.wikipedia.org/wiki/Chengyu)/[yojijukugo](https://en.wikipedia.org/wiki/Yojijukugo)* (idioms) or a word for the post's language. Ziwen will then return its findings, including pronunciations, meaning, and links to online dictionaries for that search. Unlike other commands, there is no explicit word trigger for this function - the presence of two \` around the lookup term is sufficient. (This syntax is often used to indicate programming code text on Reddit)
+When a user submits a comment with two \` ([grave accents](https://en.wikipedia.org/wiki/Grave_accent), also known as backticks) around a text string, Ziwen will look up the string to see if it's a Chinese, Japanese, or Korean character, word, or *[chengyu](https://en.wikipedia.org/wiki/Chengyu)/[yojijukugo](https://en.wikipedia.org/wiki/Yojijukugo)* (idioms), or a word for the post's language. Ziwen will then return its findings, including pronunciations, meanings, and links to online dictionaries for that search. Unlike other commands, there is no explicit word trigger for this function - the presence of two \` around the lookup term is sufficient. (This syntax is often used to indicate programming code text on Reddit)
 
 Chinese or Japanese explanations are included in *chengyu* and *yojijukugo* lookups if Ziwen can find them.
 

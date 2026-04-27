@@ -22,7 +22,7 @@ Several commands detailed below may either require or accept a language tag, add
 
 Adding a second exclamation mark `!` after a command indicates to the bot that the user is requesting a *specific* [ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3) or [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924) codes. Note that Advanced `!identify` will *not* work with language names, but is meant to be used specifically with these *codes*. Trying to use an Advanced `!identify` command with a language name will result in an error.
 
-Specific identifcation is only meant for single-language posts.
+Specific identification is only meant for single-language posts.
 
 ```
 !identify:any!                   # Changes the post to Anyin. 
@@ -135,7 +135,7 @@ These commands are used to help organize the subreddit and to provide supplement
 
 ### Command: *!id/!identify:[language]*
 
-OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name is comprised of more than one word, double quotation marks `"` should be used to mark the language name.
+OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name consists of more than one word, double quotation marks `"` should be used to mark the language name.
 
 This command also has a shorter synonym: `!id`. Both function exactly the same way, though Ziwen will always record its use internally as `!identify` in statistics.
 
@@ -216,7 +216,7 @@ This function also serves as a simple way to find thematically similar posts tha
 The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as a post. This command has strict value requirements:
 
 * `!transform:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `0` and `360` are invalid values as that would just result in the exact same image.
-* `!transform:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid shortform values.
+* `!transform:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid short-form values.
 
 #### Examples
 
