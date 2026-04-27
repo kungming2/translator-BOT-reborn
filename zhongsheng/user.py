@@ -7,7 +7,7 @@ from discord.ext import commands
 from monitoring.usage_statistics import user_statistics_loader
 from utility import format_markdown_table_with_padding
 
-from . import command, search_logs
+from . import command, search_logs, send_long_message
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -28,11 +28,13 @@ async def user_search(ctx: commands.Context, *, user_input: str) -> None:
         username = user_input
 
     await ctx.send(f"🔎 Searching logs and database for `{username}`...")
-    await search_logs(ctx, username, "user")
+    found_results = await search_logs(ctx, username, "user")
 
     stats = user_statistics_loader(username)
     if stats:
         stats_table = format_markdown_table_with_padding(stats)
-        await ctx.send(f"**User Statistics for {username}:**\n{stats_table}")
-    else:
+        await send_long_message(
+            ctx, f"**User Statistics for {username}:**\n{stats_table}"
+        )
+    elif not found_results:
         await ctx.send(f"🈚 No results for {username}.")

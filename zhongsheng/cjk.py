@@ -2,12 +2,17 @@
 # -*- coding: UTF-8 -*-
 """CJK lookup command"""
 
+import logging
+
 from discord.ext import commands
 
+from config import logger as _base_logger
 from lang.languages import converter
 from ziwen_commands.lookup_cjk import perform_cjk_lookups
 
 from . import command, send_long_message
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:CJK"})
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -52,4 +57,8 @@ async def cjk_lookup(
         await send_long_message(ctx, formatted_result)
 
     except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
+        logger.error(
+            f"Error performing CJK lookup for `{language}` / `{search_terms}`: {e}",
+            exc_info=True,
+        )
+        await ctx.send("An error occurred while performing the CJK lookup.")

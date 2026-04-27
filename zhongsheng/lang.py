@@ -2,11 +2,13 @@
 # -*- coding: UTF-8 -*-
 """Language conversion command"""
 
+import logging
 import shlex
 
 from discord import Member
 from discord.ext import commands
 
+from config import logger as _base_logger
 from lang.languages import (
     add_alt_language_name,
     converter,
@@ -14,7 +16,9 @@ from lang.languages import (
     select_random_language,
 )
 
-from . import command
+from . import command, send_long_message
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:LANG"})
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -104,7 +108,10 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
             else:
                 formatted_output = f"\nℹ️ Alternate name `{alt_value}` already exists or could not be added."
 
-        await ctx.send(formatted_output)
+        await send_long_message(ctx, formatted_output)
 
     except Exception as e:
-        await ctx.send(f"⚠️ An error occurred: {str(e)}")
+        logger.error(
+            f"Error converting language input `{language_input}`: {e}", exc_info=True
+        )
+        await ctx.send("⚠️ An error occurred while converting the language input.")

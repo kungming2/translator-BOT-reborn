@@ -8,8 +8,6 @@ Logger tag: [ZS:STATUS]
 """
 
 import logging
-import traceback
-
 import aiohttp
 from discord.ext import commands
 
@@ -17,7 +15,7 @@ from config import logger as _base_logger
 from database import get_recent_event_log_lines
 from reddit.connection import get_random_useragent
 
-from . import command
+from . import command, send_long_message
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 
@@ -53,9 +51,8 @@ async def status(ctx: commands.Context) -> None:
             else:
                 office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
     except Exception as err:
-        tb = traceback.format_exc()
-        logger.error(f"Encountered {err} when fetching quote.")
-        office_response = f"⚠️ An error occurred fetching quote:\n```\n{tb}\n```\n\n"
+        logger.error(f"Encountered {err} when fetching quote.", exc_info=True)
+        office_response = "⚠️ An error occurred fetching quote.\n\n"
 
     # Fetch recent events log entries
     try:
@@ -70,4 +67,4 @@ async def status(ctx: commands.Context) -> None:
     except Exception as e:
         status_response = f"⚠️ An error occurred reading logs: {str(e)}"
 
-    await ctx.send(office_response + status_response)
+    await send_long_message(ctx, office_response + status_response)

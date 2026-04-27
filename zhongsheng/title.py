@@ -3,15 +3,18 @@
 """Title processing command"""
 
 import asyncio
-import traceback
+import logging
 from typing import Any
 
 from discord.ext import commands
 
+from config import logger as _base_logger
 from title.title_ai import title_ai_parser
 from title.title_handling import process_title
 
-from . import command
+from . import command, send_long_message
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:TITLE"})
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -39,7 +42,7 @@ async def title_search(ctx: commands.Context, *, title: str) -> None:
 
         # Check if result is an error tuple
         if isinstance(result, tuple) and len(result) == 2 and result[0] == "error":
-            await ctx.send(f"**AI Parsing Error:** {result[1]}")
+            await send_long_message(ctx, f"**AI Parsing Error:** {result[1]}")
             return
 
         if result:
@@ -54,8 +57,8 @@ async def title_search(ctx: commands.Context, *, title: str) -> None:
         else:
             formatted_output = f"🈚 No valid title processing results for `{title}`"
 
-        await ctx.send(formatted_output)
+        await send_long_message(ctx, formatted_output)
 
     except Exception as e:
-        await ctx.send(f"⚠️ An error occurred: {str(e)}")
-        traceback.print_exc()
+        logger.error(f"Error processing title `{title}`: {e}", exc_info=True)
+        await ctx.send("⚠️ An error occurred while processing the title.")

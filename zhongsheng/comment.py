@@ -6,13 +6,15 @@ import logging
 
 from discord.ext import commands
 
+from config import logger as _base_logger
 from models.instruo import Instruo
 from reddit.connection import REDDIT_HELPER
 
-from . import command
+from . import command, send_long_message
 
 # No need to worry about the PRAW async warning
 logging.getLogger("praw").setLevel(logging.CRITICAL)
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:COMMENT"})
 
 
 # ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -58,10 +60,11 @@ async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
             response = f"**Commands Found:** {len(instruo.commands)}\n"
             response += _format_commands(instruo.commands)
 
-            await ctx.send(response)
+            await send_long_message(ctx, response)
 
         except Exception as e:
-            await ctx.send(f"⚠️ Error processing text: {str(e)}")
+            logger.error(f"Error processing comment text: {e}", exc_info=True)
+            await ctx.send("⚠️ Error processing text.")
             return
     else:
         # Extract comment ID from various URL formats or bare ID
@@ -110,8 +113,9 @@ async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
 
             response += _format_commands(instruo.commands)
 
-            await ctx.send(response)
+            await send_long_message(ctx, response)
 
         except Exception as e:
-            await ctx.send(f"⚠️ Error retrieving comment: {str(e)}")
+            logger.error(f"Error retrieving comment `{comment_id}`: {e}", exc_info=True)
+            await ctx.send("⚠️ Error retrieving comment.")
             return

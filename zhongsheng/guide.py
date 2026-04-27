@@ -16,6 +16,7 @@ COMMAND_DESCRIPTIONS = {
     "user": "Search log files and database for a Reddit username "
     "(accepts strings and URLs). Data limited to the last month",
     "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
+    "search": "Search Reddit translation posts related to a term and return matching results",
     "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
     "Use the ``--text`` flag to check text directly",
     "title": "Process a Reddit post title. Use the ``--ai`` flag for AI parsing",
@@ -36,6 +37,8 @@ COMMAND_ROLES = {
     "lang": ["Moderator", "Helper"],
     "user": ["Moderator"],
     "post": ["Moderator"],
+    "comment": ["Moderator"],
+    "search": ["Moderator", "Helper"],
     "title": ["Moderator"],
     "cjk": ["Moderator", "Helper"],
     "error": ["Moderator"],

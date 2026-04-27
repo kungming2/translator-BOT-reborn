@@ -6,6 +6,7 @@ Allows commands to be defined in separate modules and registered via decorator.
 """
 
 import importlib
+import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -110,6 +111,13 @@ async def send_long_message(
             # Split long paragraph by single newlines
             lines = paragraph.split("\n")
             for line in lines:
+                if len(line) > max_length:
+                    if current_chunk:
+                        chunks.append(current_chunk)
+                        current_chunk = ""
+                    for index in range(0, len(line), max_length):
+                        chunks.append(line[index : index + max_length])
+                    continue
                 if len(current_chunk) + len(line) + 1 > max_length:
                     if current_chunk:
                         chunks.append(current_chunk)
@@ -133,7 +141,7 @@ async def send_long_message(
         await ctx.send(chunk)
 
 
-async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
+async def search_logs(ctx: "Context", search_term: str, term_type: str) -> bool:
     """
     Search through log files and the Ajo database for a given term,
     which can be a username or a post ID.
@@ -144,8 +152,10 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
         term_type: Type of search ('user' or 'post') for display purposes
     """
     from config import SETTINGS, Paths
+    from config import logger as _base_logger
     from database import search_database
 
+    logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:SEARCH"})
     days_back = SETTINGS["log_search_days"]
     log_files = {
         "FILTER": Paths.LOGS["FILTER"],
@@ -174,11 +184,15 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
 
         if not log_lines and not db_results:
             await ctx.send(
-                f"No entries found for {term_type} `{search_term}` in the last {days_back} days."
+                f"No entries found for {term_type} `{search_term}` in logs or "
+                f"database records from the last {days_back} days."
             )
-            return
+            return False
 
-        response = f"Search results for {term_type} `{search_term}` (last {days_back} days):\n```\n"
+        response = (
+            f"Search results for {term_type} `{search_term}` "
+            f"(all scanned logs; database records from the last {days_back} days):\n```\n"
+        )
 
         if log_lines:
             response += f"=== LOG FILES ({len(log_lines)} matches) ===\n"
@@ -209,11 +223,12 @@ async def search_logs(ctx: "Context", search_term: str, term_type: str) -> None:
                 response += ajo_str + "\n"
 
         response += "```"
-        print(response)
         await ctx.send(response)
+        return True
 
     except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        logger.error(
+            f"Error searching logs for {term_type} `{search_term}`: {e}", exc_info=True
+        )
+        await ctx.send("An error occurred while searching logs and database records.")
+        return False

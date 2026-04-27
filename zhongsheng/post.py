@@ -2,13 +2,16 @@
 # -*- coding: UTF-8 -*-
 """Post search command. Used for database inquiry."""
 
-import traceback
+import logging
 
 from discord.ext import commands
 
+from config import logger as _base_logger
 from monitoring.points import points_post_retriever
 
-from . import command, search_logs
+from . import command, search_logs, send_long_message
+
+logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:POST"})
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -62,7 +65,9 @@ async def post_search(ctx: commands.Context, post_input: str) -> None:
             response += f"Total: {len(points_data)} award(s) | {total_points} points\n"
             response += "```"
 
-            await ctx.send(response)
+            await send_long_message(ctx, response)
     except Exception as e:
-        await ctx.send(f"Error retrieving points data: {str(e)}")
-        traceback.print_exc()
+        logger.error(
+            f"Error retrieving points data for post `{post_id}`: {e}", exc_info=True
+        )
+        await ctx.send("Error retrieving points data.")

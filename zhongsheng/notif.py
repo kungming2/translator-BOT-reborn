@@ -19,7 +19,7 @@ from reddit.notifications import (
 )
 from utility import format_markdown_table_with_padding
 
-from . import command
+from . import command, send_long_message
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
 
@@ -181,8 +181,7 @@ async def handle_notif_status(ctx: commands.Context, username: str) -> None:
             line
             for line in lines
             if "Notifications" in line
-            or line.startswith("|")
-            and line.count("|") >= 2 > lines.index(line)
+            or (line.startswith("|") and line.count("|") >= 2)
         ]
 
         if (
@@ -194,4 +193,4 @@ async def handle_notif_status(ctx: commands.Context, username: str) -> None:
                 f"\n\n**Notification Usage Statistics:**\n{formatted_table}"
             )
 
-    await ctx.send(status_message)
+    await send_long_message(ctx, status_message)
