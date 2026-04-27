@@ -8,6 +8,7 @@ Logger tag: [ZS:STATUS]
 """
 
 import logging
+
 import aiohttp
 from discord.ext import commands
 

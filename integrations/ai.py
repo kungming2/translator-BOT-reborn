@@ -65,7 +65,6 @@ def ai_query(
     :return: The AI-generated response content, or None if an error occurred.
     """
 
-    ai_model: str
     user_content: list[dict] | str
     messages: list[dict]
 
