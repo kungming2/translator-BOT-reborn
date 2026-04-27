@@ -528,7 +528,9 @@ class TestParseLanguageList(unittest.TestCase):
     def test_space_delimited_preserves_multiword_language(self) -> None:
         result = parse_language_list("Old English")
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].name, "Old English")
+        # "Old English" is an alternate name for Anglo-Saxon; the canonical
+        # name returned by converter() is "Anglo-Saxon".
+        self.assertEqual(result[0].name, "Anglo-Saxon")
 
 
 # ---------------------------------------------------------------------------

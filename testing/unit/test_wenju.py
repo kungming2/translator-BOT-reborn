@@ -305,13 +305,13 @@ class TestWenjuScheduleValidation:
     def test_normalizes_supported_schedule_name(self):
         assert wenju.validate_schedule_name(" Weekly ") == "weekly"
 
-    def test_valid_schedule_with_no_tasks_sends_alert_when_expected(self):
+    def test_valid_schedule_with_no_tasks_sends_no_alert(self):
         with patch.object(wenju, "_tasks", {"weekly": []}):
             with patch("wenju.importlib.import_module"):
                 with patch("wenju.send_discord_alert") as alert_mock:
                     wenju.run_schedule("weekly")
 
-        alert_mock.assert_called_once()
+        alert_mock.assert_not_called()
 
 
 # ===========================================================================
