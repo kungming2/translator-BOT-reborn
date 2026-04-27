@@ -10,6 +10,7 @@ Compatible with refactored Lumo analyzer (wenyuan_stats.py).
 """
 
 import calendar
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -49,6 +50,119 @@ UTILITY_CODES = [
 ]
 msg = Printer()
 _console = Console()
+
+
+def _previous_month_wiki_key(month_year: str) -> str:
+    """Return the wiki page key for the month before a YYYY-MM report."""
+    year_text, month_text = month_year.split("-")
+    year = int(year_text)
+    month = int(month_text)
+
+    if month == 1:
+        return f"{year - 1}_12"
+    return f"{year}_{month - 1:02d}"
+
+
+def _fetch_previous_month_language_percentages(
+    month_year: str,
+) -> dict[str, float] | None:
+    """Fetch and parse the previous monthly report's language percentages."""
+    wiki_key = _previous_month_wiki_key(month_year)
+
+    try:
+        subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
+        wiki_page = subreddit.wiki[wiki_key]
+        percentages = _parse_monthly_language_percentages(wiki_page.content_md)
+    except Exception as e:
+        logger.warning(
+            "Could not fetch previous monthly statistics wiki page `%s`: %s",
+            wiki_key,
+            e,
+        )
+        return None
+
+    if not percentages:
+        logger.warning(
+            "Previous monthly statistics wiki page `%s` had no parseable "
+            "single-language percentage data.",
+            wiki_key,
+        )
+        return None
+
+    return percentages
+
+
+def _parse_monthly_language_percentages(markdown: str) -> dict[str, float]:
+    """Parse language percentage values from a monthly statistics markdown page."""
+    percentages: dict[str, float] = {}
+    in_single_language_section = False
+    language_index: int | None = None
+    percent_index: int | None = None
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+
+        if line == "### Single-Language Requests":
+            in_single_language_section = True
+            continue
+
+        if not in_single_language_section:
+            continue
+
+        if line.startswith("###") or line.startswith("#####"):
+            break
+
+        if not line or "|" not in line:
+            continue
+
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        normalized_cells = [cell.lower() for cell in cells]
+
+        if (
+            "language" in normalized_cells
+            and "percent of all requests" in normalized_cells
+        ):
+            language_index = normalized_cells.index("language")
+            percent_index = normalized_cells.index("percent of all requests")
+            continue
+
+        if set(cells) <= {"", "---", "----", "-----", "--"}:
+            continue
+
+        if language_index is None or percent_index is None:
+            continue
+
+        if len(cells) <= max(language_index, percent_index):
+            continue
+
+        language = _extract_markdown_link_text(cells[language_index])
+        percent_match = re.search(r"(-?\d+(?:\.\d+)?)\s*%", cells[percent_index])
+
+        if language and percent_match:
+            percentages[language] = float(percent_match.group(1))
+
+    return percentages
+
+
+def _extract_markdown_link_text(value: str) -> str:
+    """Return display text from a markdown link cell, or the stripped cell text."""
+    match = re.search(r"\[([^]]+)]\(", value)
+    if match:
+        return match.group(1).strip()
+    return value.strip()
+
+
+def _language_percentage_trend(
+    language: str, current_percentage: float, previous_percentages: dict[str, float]
+) -> str:
+    """Return a trend symbol comparing current and previous language share."""
+    previous_percentage = previous_percentages.get(language, 0.0)
+
+    if current_percentage > previous_percentage:
+        return "⬆️"
+    if current_percentage < previous_percentage:
+        return "⬇️"
+    return "➡️"
 
 
 # ─── Menu infrastructure ──────────────────────────────────────────────────────
@@ -168,6 +282,13 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     directions = lumo.get_direction_stats()
     identification = lumo.get_identification_stats()
     fastest = lumo.get_fastest_translations()
+    notifications = lumo.get_notification_stats()
+    images = lumo.get_image_stats()
+    source_target_pairs = lumo.get_source_target_pairs(10)
+    unique_translators = lumo.get_unique_translator_count()
+    previous_language_percentages = _fetch_previous_month_language_percentages(
+        month_year
+    )
 
     multiple_language_count = len(lumo.filter_by_type("multiple"))
 
@@ -196,6 +317,14 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     content += f"**Total requests** | **{overall['total_requests']}**\n"
     content += f"**Overall percentage** | **{overall['translation_percentage']}% translated**\n"
     content += f"*Represented languages* | *{overall['unique_languages']}*\n"
+    content += f"*Unique translators* | *{unique_translators}*\n"
+    content += (
+        f"*Average notified users per request* | "
+        f"*{notifications['average_notified_per_request']}*\n"
+    )
+    content += (
+        f"*Image posts* | *{images['image_requests']} ({images['percentage']}%)*\n"
+    )
     content += (
         "*Meta/Community Posts* | *8*\n\n"  # This would need to be tracked separately
     )
@@ -238,9 +367,14 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     content += (
         "Language | Language Family | Total Requests | Percent of All Requests | "
     )
+    if previous_language_percentages is not None:
+        content += "Change | "
     content += "Untranslated Requests | Translation Percentage | Ratio | "
     content += "Identified from 'Unknown' | RI | Wikipedia Link\n"
-    content += "-----|-----|--|----|-----|---|-----|---|---|-----\n"
+    content += "-----|-----|--|----|"
+    if previous_language_percentages is not None:
+        content += "---|"
+    content += "-----|---|-----|---|---|-----\n"
 
     identified_from_unknown = identification.get("identified_from_unknown", {})
     missing_family: list[str] = []
@@ -291,10 +425,17 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
             f'+OR+flair:"[{lingvo.preferred_code.upper()}]"&sort=new&restrict_sr=on)'
         )
 
+        trend_cell = ""
+        if previous_language_percentages is not None:
+            trend = _language_percentage_trend(
+                lang, float(percent_all), previous_language_percentages
+            )
+            trend_cell = f"{trend} | "
+
         row = (
             f"| {lang_link} | {family} | {search_link} | {percent_all}% | "
-            f"{untranslated} | {trans_pct}% | {ratio} | {identified_count} | "
-            f"{ri_value} | {wp_link} |"
+            f"{trend_cell}{untranslated} | {trans_pct}% | {ratio} | "
+            f"{identified_count} | {ri_value} | {wp_link} |"
         )
         content += row + "\n"
 
@@ -319,6 +460,16 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         f"* **Both Non-English**: {directions['non_english']['count']} "
         f"({directions['non_english']['percentage']}%)\n\n"
     )
+
+    if source_target_pairs:
+        content += "##### Top Source-Target Pairs\n\n"
+        content += "Source → Target | Requests\n"
+        content += "---|---\n"
+
+        for pair, count in source_target_pairs:
+            content += f"{pair} | {count}\n"
+
+        content += "\n"
 
     if identified_from_unknown:
         content += "##### 'Unknown' Identifications\n\n"
@@ -408,6 +559,19 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         and avg_hours > 0
     ):
         content += f"* The average request was translated in {avg_hours:.1f} hours.\n"
+        has_any_data = True
+
+    if (
+        (median_seconds := fastest.get("median_translation_seconds")) is not None
+        and isinstance(median_seconds, (int, float))
+        and median_seconds > 0
+    ):
+        median_time = time_convert_to_string_seconds(int(median_seconds))
+        count = fastest.get("timed_translation_count", 0)
+        content += (
+            f"* The median request was translated in {median_time} "
+            f"({count} requests with timing data).\n"
+        )
         has_any_data = True
 
     if not has_any_data:

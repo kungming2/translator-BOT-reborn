@@ -18,6 +18,7 @@ REFACTORED VERSION - Optimized for efficiency and consistency with stable module
 """
 
 import calendar
+import statistics
 import time
 from collections import Counter, defaultdict
 from collections.abc import Iterator
@@ -50,6 +51,8 @@ class FastestStats(TypedDict, total=False):
     to_review: FastestEntry
     to_claimed: FastestEntry
     average_translation_hours: float
+    median_translation_seconds: float
+    timed_translation_count: int
 
 
 # ─── Module-level helpers ─────────────────────────────────────────────────────
@@ -628,6 +631,87 @@ class Lumo:
             },
         }
 
+    def get_unique_translator_count(self) -> int:
+        """Get the number of unique recorded translators in the loaded period."""
+        translators = {
+            translator.strip().lower()
+            for ajo in self._source_ajos
+            for translator in getattr(ajo, "recorded_translators", [])
+            if isinstance(translator, str) and translator.strip()
+        }
+        return len(translators)
+
+    def get_notification_stats(self) -> dict[str, int | float]:
+        """Get aggregate notification stats for the loaded period."""
+        total_requests = len(self._source_ajos)
+        total_notified = 0
+
+        for ajo in self._source_ajos:
+            notified = {
+                username.strip().lower()
+                for username in getattr(ajo, "notified", [])
+                if isinstance(username, str) and username.strip()
+            }
+            total_notified += len(notified)
+
+        average = round(total_notified / total_requests, 2) if total_requests else 0
+
+        return {
+            "total_notified_users": total_notified,
+            "average_notified_per_request": average,
+        }
+
+    def get_image_stats(self) -> dict[str, int | float]:
+        """Get image-post counts and percentages for the loaded period."""
+        total_requests = len(self._source_ajos)
+        image_requests = sum(
+            1 for ajo in self._source_ajos if getattr(ajo, "image_hash", None)
+        )
+        percentage = (
+            round((image_requests / total_requests) * 100, 2) if total_requests else 0
+        )
+
+        return {
+            "image_requests": image_requests,
+            "percentage": percentage,
+        }
+
+    def get_source_target_pairs(self, limit: int = 10) -> list[tuple[str, int]]:
+        """
+        Get the most common source-target language pairs.
+
+        Args:
+            limit: Maximum number of pairs to return.
+
+        Returns:
+            List of (pair, count) tuples, sorted descending.
+        """
+        if limit <= 0:
+            return []
+
+        pair_counts: Counter[str] = Counter()
+
+        for ajo in self._source_ajos:
+            sources = self._language_names_from_field(
+                getattr(ajo, "original_source_language_name", None)
+            )
+            targets = self._language_names_from_field(
+                getattr(ajo, "original_target_language_name", None)
+            )
+
+            if not sources or not targets:
+                fallback_pair = self._fallback_source_target_pair(ajo)
+                if fallback_pair:
+                    pair_counts[fallback_pair] += 1
+                continue
+
+            for source in sources:
+                for target in targets:
+                    if source != target:
+                        pair_counts[f"{source} -> {target}"] += 1
+
+        return pair_counts.most_common(limit)
+
     # ── Time-based analysis ───────────────────────────────────────────────────
 
     def get_fastest_translations(self) -> FastestStats:
@@ -669,6 +753,8 @@ class Lumo:
         if translation_times:
             avg_hours = round(sum(translation_times) / len(translation_times) / 3600, 2)
             fastest["average_translation_hours"] = avg_hours
+            fastest["median_translation_seconds"] = statistics.median(translation_times)
+            fastest["timed_translation_count"] = len(translation_times)
 
         return fastest
 
@@ -799,6 +885,39 @@ class Lumo:
         else:
             return f"{to_count}:{from_count}"
 
+    @staticmethod
+    def _language_names_from_field(value: Any) -> list[str]:
+        """Normalize a saved source/target language field to display names."""
+        if value is None:
+            return []
+
+        items = value if isinstance(value, list) else [value]
+        names = []
+
+        for item in items:
+            name = getattr(item, "name", None)
+            if not name and isinstance(item, str):
+                lingvo = converter(item)
+                name = lingvo.name if lingvo and lingvo.name else item
+
+            if isinstance(name, str) and name.strip():
+                names.append(name.strip())
+
+        return names
+
+    @staticmethod
+    def _fallback_source_target_pair(ajo: Ajo) -> str | None:
+        """Infer a source-target pair when original title fields are unavailable."""
+        if not ajo.lingvo or not ajo.language_name:
+            return None
+
+        if ajo.direction == "english_to":
+            return f"English -> {ajo.language_name}"
+        if ajo.direction == "english_from":
+            return f"{ajo.language_name} -> English"
+
+        return None
+
     def _clear_cache(self) -> None:
         """Clear the language stats cache when data changes."""
         self._cache.clear()
@@ -815,4 +934,8 @@ class Lumo:
             },
             "identifications": self.get_identification_stats(),
             "fastest": self.get_fastest_translations(),
+            "unique_translators": self.get_unique_translator_count(),
+            "notifications": self.get_notification_stats(),
+            "images": self.get_image_stats(),
+            "source_target_pairs": self.get_source_target_pairs(),
         }
