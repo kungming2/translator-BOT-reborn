@@ -91,6 +91,7 @@ For logs, _running_ refers to a fixed-size buffer that retains the most recent d
 | `log_counter.json`     | Cumulative JSON log for all commands and actions, sorted by day. Written to by `action_counter()`.                               | 
 | `log_error.yaml`       | General error log to record errors and contextual information.                                                                   | 
 | `log_events.md`        | Main running log for [logger](https://docs.python.org/3/library/logging.html) events (`INFO` and higher).                        | 
+| `log_events_cr.md`     | Main running log for Chinese Reference's events (`INFO` and higher).                                                             |
 | `log_events_hermes.md` | Main running log for Hermes's events (`INFO` and higher).                                                                        | 
 | `log_filter.md`        | Cumulative log for posts that were filtered out and rejected by [title processing](./title_processing.md).                       | 
 | `log_messaging.csv`    | Running log that records runtimes for sending notifications. | 
@@ -107,7 +108,7 @@ No data files *used* by the bot appear here; rather, local text reports generate
 | `discord_settings.yaml`   | Contains webhook data for Discord alerts.                               | 
 | `hermes_settings.yaml`    | Settings for [Hermes](./hermes.md).                                     | 
 | `languages_settings.yaml` | Settings for [language name and code parsing](./language_processing.md). | 
-| `scheduler_settings.yaml` | Settings for how frequently the bot's Ziwen and Wenju routines run.     | 
+| `scheduler_settings.yaml` | Settings for scheduler paths used to run Ziwen, Wenju, Hermes, and Chinese Reference. | 
 | `settings.yaml`           | Main settings file.                                                     | 
 | `title_settings.yaml`     | Settings for [title parsing](./title_processing.md).                    | 
 | `wenju_settings.yaml`     | Settings for maintenance operations.                                    | 
@@ -118,9 +119,9 @@ The states folder stores files that are not as frequently updated as logs, but a
 
 | Filename               | Function                                                                                                                          |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `_statistics.json`  | Monthly-generated JSON file that collates all historical statistics information from the subreddit wiki.                          |
+| `statistics.json`  | Monthly-generated JSON file that collates all historical statistics information from the subreddit wiki.                          |
 | `iso_codes_updates.yaml`  | Data for [change request reports posted to SIL](https://iso639-3.sil.org/code_changes/change_management) (maintainer of ISO 639-3). |
-| `language_data.yaml`  | Main dataset for language information, collated from `_statistics.json` and other sources.                                        |
+| `language_data.yaml`  | Main dataset for language information, collated from `statistics.json` and other sources.                                        |
 | `utility_lingvo_data.yaml`  | Information for the non-language utility codes used by the bot (`unknown`, `multiple`, `generic`).                                |
 
 ## Templates
@@ -129,4 +130,4 @@ The states folder stores files that are not as frequently updated as logs, but a
 |------------------------------|----------------------------------------------|
 | `responses.yaml`             | Response templates for the bot.              |
 | `moderator_digest.html`      | Template for the moderator status dashboard. |
-| `translation_challenge.yaml` | Markdown text for the translation challenge. |
+| `translation_challenge.md` | Markdown text for the translation challenge. |

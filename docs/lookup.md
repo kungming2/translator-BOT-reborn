@@ -59,7 +59,7 @@ Separate from the CJK lookup function detailed above is a catch-all [Wiktionary]
 
 Due to the not-fully-standardized nature of English Wiktionary content, lookup results may vary in how clean their formatting is, and words with clear entries (e.g. nouns, dictionary forms of verbs, etc.) will have the best results. For the most part, the lookup function will return etymology, pronunciation, and definitions for a word. Note that tokenization *will not be active* for Wiktionary lookups. 
 
-The Wiktionary lookup will generally be conducted in the language of the post. That is, a lookup for `Sprache` on a German post will be automatically conducted for German. Appending a language tag like the CJK lookup text above will also work. 
+The Wiktionary lookup uses the same backtick syntax as CJK lookup. Internally, Ziwen first runs the backtick text through the lookup matcher. Chinese, Japanese, and Korean terms are routed to `lookup_cjk`; all other recognized languages are routed to `lookup_wt`. The Wiktionary lookup will generally be conducted in the language of the post. That is, a lookup for `Sprache` on a German post will be automatically conducted for German. Appending a language tag like the CJK lookup text above will also work.
 
 ```text
 `Wasser`               # Returns word data for Wasser ("water") on a German post

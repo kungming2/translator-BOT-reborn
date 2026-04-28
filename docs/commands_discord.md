@@ -1,4 +1,4 @@
-# Commands (Reddit)
+# Commands (Discord)
 
 [← Back to Home](./index.md)
 
@@ -22,23 +22,12 @@ This command is the equivalent of the subreddit's **[CJK Lookup](./lookup.md)**.
 
 * `[language]` can be `c/j/k` or any code and name conforming to those three languages.
 
-### Command: */comment*
-
-This command accepts a Reddit comment's URL or its ID, and returns the commands found within it, providing a way to derive an [Instruo](./models.md) and its [Komando](./models.md)s.
-
-Alternatively, ending the command with the `--text` flag evaluates the text before it as a comment. 
-
-```
-/comment [comment link/ID]
-/comment [comment text to test] --text
-```
-
 ### Command: */describe*
 
 This command accepts an image URL and generates an AI description of it. This description is used in notifications to give recipients a preview of what the submission is for.
 
 ```
-/image [image url]
+/describe [image url]
 ```
 
 ### Command: */filter*
@@ -72,6 +61,14 @@ Moderators can also add the flag `--add_alt` and an alternate name for the langu
 /lang [language] --add_alt [alternate name]
 ```
 
+### Command: */search*
+
+This command searches for Reddit translation posts related to a term and returns matching post/comment results. Analogous to `!search` on Reddit.
+
+```
+/search [term]
+```
+
 ### Command: */status* 
 
 This command retrieves a random quote from **[The Office API](https://akashrajpurohit.github.io/the-office-api/)**. It has nothing to do with r/translator, but is just a fun addition. It then also appends the last five entries in the events log and calculates how long ago the last entry was.
@@ -83,6 +80,17 @@ This command retrieves a random quote from **[The Office API](https://akashrajpu
 ## Moderator Commands
 
 These commands can only be used by moderators with the `Moderator` role on the server.
+
+### Command: */comment*
+
+This command accepts a Reddit comment's URL or its ID, and returns the commands found within it, providing a way to derive an [Instruo](./models.md) and its [Komando](./models.md)s.
+
+Alternatively, ending the command with the `--text` flag evaluates the text before it as a comment without the need to link to an URL. 
+
+```
+/comment [comment link/ID]
+/comment [comment text to test] --text
+```
 
 ### Command: */error*
 
@@ -97,7 +105,7 @@ This command retrieves the last three errors recorded in the log.
 This command allows moderators to directly edit and query the notifications database. The syntax for the command is:
 
 ```
-/notif [username] [add/remove/status] [language_to_add (optional)]
+/notif [add/remove/status] [username] [language_to_add (optional)]
 ```
 
 Note that `remove` completely removes the user from the notifications database.
@@ -108,6 +116,14 @@ This command looks through the logs and the database for mentions of this post, 
 
 ```
 /post [post link/ID]
+```
+
+### Command: */restart*
+
+This command schedules a restart of Zhongsheng's systemd service. It is only available to users with the `Moderator` role, is restricted to the configured Discord guild ID, and has a five-minute guild-wide cooldown. It requires the host-side restart helper described in [Setup](./setup.md).
+
+```
+/restart
 ```
 
 ### Command: */user*

@@ -5,13 +5,37 @@ description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
+keywords = ["reddit", "moderation", "translation", "bot"]
 authors = [
     {name = "kungming2"},
     {name = "youraveragebear"},
 ]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Communications",
+    "Topic :: Internet",
+]
+
+[project.urls]
+Homepage = "https://github.com/kungming2/translator-BOT-reborn"
+Repository = "https://github.com/kungming2/translator-BOT-reborn"
+Documentation = "https://github.com/kungming2/translator-BOT-reborn/tree/main/docs"
+Issues = "https://github.com/kungming2/translator-BOT-reborn/issues"
 
 [project.optional-dependencies]
-dev = ["types-PyYAML", "types-psutil", "types-requests"]
+dev = [
+    "interrogate",
+    "mypy",
+    "pytest",
+    "ruff",
+    "types-PyYAML",
+    "types-psutil",
+    "types-requests",
+]
 
 [tool.ruff]
 target-version = "py311"

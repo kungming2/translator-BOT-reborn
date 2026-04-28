@@ -24,3 +24,4 @@
 /docs/logging_guidelines.pdf
 /docs/setup.md
 !/_data/auth/api.yaml
+/zhongsheng/restart.py

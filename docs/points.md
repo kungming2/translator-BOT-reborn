@@ -44,3 +44,39 @@ The formula for the language multiplier is `( 1 / ( 100 * [percentage of posts p
 | *!page*                                          | 1                                               |
 | *!search*                                        | 1                                               |
 | *!transform*                                     | 1                                               |
+
+## Implementation
+
+Points are handled in `monitoring/points.py`. The main entry point is `points_tabulator()`, which is called with the triggering comment, the original submission, the post's `Lingvo`, and optionally the post's `Ajo`.
+
+Point records are written to the `total_points` table in `main.db` with:
+
+* `year_month`;
+* `comment_id`;
+* `username`;
+* `points`;
+* `post_id`.
+
+Monthly language multipliers are cached in `cache.db`'s `multiplier_cache` table. If a multiplier is not cached, Ziwen attempts to read the language's statistics wiki page and calculate the multiplier from the latest row. If that fails, the multiplier falls back to `20`. Unknown-language posts use a normalized value of `4`.
+
+## Awarding Rules
+
+`!translated` and `!doublecheck` are special. They can award full translation points to the commenter, or to the parent comment author if the command is used as a short reply or verification of another user's translation. In those cases, the commenter may receive helper points while the translator receives the full language-adjusted value.
+
+Other commands with configured values use `command_points` in `settings.yaml`; currently `identify` is worth `3` and `lookup_cjk` is worth `2`. Commands not listed there generally default to `1` point, while commands listed in `commands_no_args` do not receive points by default.
+
+Long substantive comments by non-OP users receive an additional `1 + round(0.25 * multiplier)` points when the body is over 120 characters. Short OP thank-you replies can credit the parent comment author as the translator if that translator has not already received full translation points for the post.
+
+When full translation credit is awarded, Ziwen also:
+
+* adds the translator to the post's `Ajo` translator list;
+* writes the updated `Ajo`;
+* creates a `SOLID_CONTRIBUTOR` mod note for the translator.
+
+Helper and verification actions can create `HELPFUL_USER` mod notes.
+
+## Retrieval
+
+`points_user_retriever(username)` returns the user's current-month total, all-time total, number of posts participated in, and a month-by-month table. This is used by the message handling flow for user point status requests.
+
+`points_post_retriever(post_id)` returns the point records associated with a post. Zhongsheng uses this to show points data in post lookups.

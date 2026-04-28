@@ -138,7 +138,7 @@ This class represents the parsed information from a post's title to r/translator
 | `target` | `list[Lingvo]` | One or more `Lingvo` objects corresponding to the detected target languages.                                                                                  |
 | `title_actual` | `str` | Cleaned/simplified version of the Reddit post title after removing the language tag formatting.                                                               |
 | `title_original` | `str` | Original unaltered Reddit title text as submitted by the user.                                                                                                |
-| `title_processed` | `str` | Final standardized version of the title after parsing and normalization, as processed by the [title handling](./title_processing) function `process_title()`. |
+| `title_processed` | `str` | Final standardized version of the title after parsing and normalization, as processed by the [title handling](./title_processing.md) function `process_title()`. |
 
 
 ## Komando

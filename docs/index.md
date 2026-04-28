@@ -34,11 +34,14 @@ More information on language processing can be found at the page of the same nam
 
 * [Commands (Ziwen, Reddit)](./commands.md)
 * [Commands (Zhongsheng, Discord)](./commands_discord.md)
+* [Architecture](./architecture.md)
 * [Data Files](./data_files.md)
+* [Development](./development.md)
 * [Language Processing](./language_processing.md)
 * [Lookup Functions](./lookup.md)
 * [Models](./models.md)
 * [Points](./points.md)
+* [Setup](./setup.md)
 * [Technical Information](./technical.md)
 * [Title Processing](./title_processing.md)
 * [Verification](./verification.md)
@@ -46,9 +49,12 @@ More information on language processing can be found at the page of the same nam
 * [Wenyuan](./wenyuan.md)
 
 **Other Routines**
+
+* [Chinese Reference](./chinese_reference.md)
 * [Hermes](./hermes.md)
 
 **Miscellaneous**
 
 * [Deprecated](./deprecated.md)
+* [Logging Guidelines](./logging_guidelines.pdf)
 * [Version History](./version_history.md)

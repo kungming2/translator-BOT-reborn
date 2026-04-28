@@ -8,6 +8,10 @@
 
 The functions are in `/wenju` and are categorized by their rough function. They are collated by timing in this documentation. Tasks have been gradually added over the years, and consequently the functions vary quite widely in terms of their naming and scope.
 
+Wenju uses the `@task(schedule="...")` decorator in `wenju.__init__` to register tasks. `run_schedule()` dynamically imports every sibling module in `/wenju`, which triggers decorator registration without maintaining a manual import list. Valid schedule names are `hourly`, `daily`, `weekly`, and `monthly`; `main_wenju.py` validates the command-line argument and dispatches that schedule.
+
+Each task runs independently inside the selected schedule. If one task fails, Wenju logs the exception, writes an error entry, and continues with the remaining tasks. Weekly and monthly schedules send a Discord alert listing successfully executed tasks; hourly and daily schedules do not.
+
 ## Hourly Functions
 
 * `monitor_controversial_comments()`: Checks r/translator for heavily downvoted comments and alerts moderators to them. 
