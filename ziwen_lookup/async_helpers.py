@@ -8,6 +8,7 @@ Logger tag: [L:ASYNC]
 """
 
 import asyncio
+import inspect
 import logging
 from collections.abc import Callable
 from typing import Any
@@ -63,7 +64,7 @@ async def call_sync_async(func: Callable, *args: Any, **kwargs: Any) -> Any:
     Returns:
         Any: The result of the function call, awaited or executed as appropriate.
     """
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         return await func(*args, **kwargs)
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, func, *args)
