@@ -36,10 +36,9 @@ from discord.ext.commands import Context
 from config import Paths, load_settings
 from config import logger as _base_logger
 from error import error_log_extended
-from zhongsheng import register_commands
+from zhongsheng import load_expected_guild_id, register_commands
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS"})
-EXPECTED_GUILD_NAME = "r/Translator Oversight"
 _tree_synced = False
 
 
@@ -60,31 +59,37 @@ async def sync_application_commands() -> None:
     """
     Sync the application command tree.
 
-    If the expected guild is available, sync there first so updates appear
-    quickly for the moderation server. Otherwise, fall back to a global sync.
+    Sync only to the configured moderation guild. If the expected guild cannot
+    be found, do not fall back to a global sync.
     """
     global _tree_synced
 
     if _tree_synced:
         return
 
-    guild = discord.utils.get(bot.guilds, name=EXPECTED_GUILD_NAME)
-    if guild is not None:
-        bot.tree.copy_global_to(guild=guild)
-        synced_commands = await bot.tree.sync(guild=guild)
-        logger.info(
-            "Synced %s application commands to guild %s (id: %s).",
-            len(synced_commands),
-            guild.name,
-            guild.id,
+    expected_guild_id = load_expected_guild_id(logger)
+    if expected_guild_id is None:
+        logger.error(
+            "Skipping application command sync because no valid guild ID is configured."
         )
-    else:
-        synced_commands = await bot.tree.sync()
-        logger.warning(
-            "Expected guild %r was not found during sync; synced %s global application commands instead.",
-            EXPECTED_GUILD_NAME,
-            len(synced_commands),
+        return
+
+    guild = bot.get_guild(expected_guild_id)
+    if guild is None:
+        logger.error(
+            "Expected guild id %s was not found during sync; skipping global command sync.",
+            expected_guild_id,
         )
+        return
+
+    bot.tree.copy_global_to(guild=guild)
+    synced_commands = await bot.tree.sync(guild=guild)
+    logger.info(
+        "Synced %s application commands to guild %s (id: %s).",
+        len(synced_commands),
+        guild.name,
+        guild.id,
+    )
 
     _tree_synced = True
 
@@ -95,7 +100,8 @@ async def sync_application_commands() -> None:
 @bot.event
 async def on_ready() -> None:
     """Log the connected guild (server) name and ID when the bot comes online."""
-    guild = discord.utils.get(bot.guilds, name=EXPECTED_GUILD_NAME)
+    expected_guild_id = load_expected_guild_id(logger)
+    guild = bot.get_guild(expected_guild_id) if expected_guild_id is not None else None
     if guild:
         logger.info(
             "%s is connected to guild %s (id: %s)",
@@ -105,8 +111,9 @@ async def on_ready() -> None:
         )
     else:
         logger.warning(
-            "%s is connected but could not find the expected guild.",
+            "%s is connected but could not find expected guild id %s.",
             bot.user,
+            expected_guild_id,
         )
 
     await sync_application_commands()
@@ -116,7 +123,11 @@ async def on_ready() -> None:
 async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
     """Handle command errors, rejecting unauthorized roles and logging all others."""
     if isinstance(error, commands.errors.CheckFailure):
-        await ctx.send("You do not have the correct role for this command.")
+        await ctx.send("You do not have the correct role or server for this command.")
+    elif isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(
+            f"Command is on cooldown. Try again in {error.retry_after:.0f}s."
+        )
     else:
         command_name = ctx.command.name if ctx.command else "<unknown>"
         logger.critical(
@@ -141,6 +152,30 @@ async def on_command_completion(ctx: Context) -> None:
 # ─── Bot hooks ────────────────────────────────────────────────────────────────
 
 
+@bot.check
+async def only_expected_guild(ctx: Context) -> bool:
+    """Allow command execution only in the configured moderation guild."""
+    return _is_expected_guild_context(ctx)
+
+
+def _is_expected_guild_context(ctx: Context) -> bool:
+    """Return whether a command context belongs to the configured guild."""
+    expected_guild_id = load_expected_guild_id(logger)
+    actual_guild_id = ctx.guild.id if ctx.guild else None
+
+    if expected_guild_id is not None and actual_guild_id == expected_guild_id:
+        return True
+
+    logger.warning(
+        "Rejected command `/%s` outside the expected guild. guild_id=%s user=%s user_id=%s",
+        ctx.command.name if ctx.command else "<unknown>",
+        actual_guild_id,
+        ctx.author,
+        ctx.author.id,
+    )
+    return False
+
+
 @bot.before_invoke
 async def before_command(ctx: Context) -> None:
     """Prepare command invocation context for both prefix and slash execution."""
@@ -148,6 +183,9 @@ async def before_command(ctx: Context) -> None:
         # Hybrid slash commands must acknowledge the interaction quickly or
         # Discord invalidates the response token with "Unknown interaction".
         await ctx.defer()
+
+    if not _is_expected_guild_context(ctx):
+        raise commands.CheckFailure("Command invoked outside the configured guild.")
 
     if ctx.kwargs:
         for key, value in ctx.kwargs.items():
@@ -172,7 +210,17 @@ async def on_app_command_error(
     user_id = interaction.user.id if interaction.user else "<unknown id>"
 
     if isinstance(error, app_commands.errors.CheckFailure):
-        error_message = "You do not have the correct role for this command."
+        error_message = "You do not have the correct role or server for this command."
+        if interaction.response.is_done():
+            await interaction.followup.send(error_message, ephemeral=True)
+        else:
+            await interaction.response.send_message(error_message, ephemeral=True)
+        return
+
+    if isinstance(error, (commands.CommandOnCooldown, app_commands.CommandOnCooldown)):
+        error_message = (
+            f"Command is on cooldown. Try again in {error.retry_after:.0f}s."
+        )
         if interaction.response.is_done():
             await interaction.followup.send(error_message, ephemeral=True)
         else:

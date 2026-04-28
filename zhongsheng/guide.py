@@ -5,50 +5,7 @@ This should be updated after addition of new features or commands."""
 
 from discord.ext import commands
 
-from . import command
-
-# ─── Command metadata ─────────────────────────────────────────────────────────
-
-# Custom command descriptions. Add one for each command.
-COMMAND_DESCRIPTIONS = {
-    "lang": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
-    "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
-    "user": "Search log files and database for a Reddit username "
-    "(accepts strings and URLs). Data limited to the last month",
-    "post": "Search log files and database for a Reddit post ID (accepts strings and URLs)",
-    "search": "Search Reddit translation posts related to a term and return matching results",
-    "comment": "See relevant data for a Reddit comment with bot commands (accepts strings and URLs). "
-    "Use the ``--text`` flag to check text directly",
-    "title": "Process a Reddit post title. Use the ``--ai`` flag for AI parsing",
-    "filter": "Check if a Reddit post title would be approved or rejected by the title filtration routine",
-    "cjk": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `/cjk c 翻译`)",
-    "error": "Display the 3 most recent error log entries",
-    "describe": "Generate an AI alt-text description of an image from a URL",
-    "status": "Get a random quote from *The Office (US)* and see the last actions by the bot",
-    "notif": "Manage user notification subscriptions for r/translator. "
-    "Use `/notif add [username] [languages]` to add language subscriptions, "
-    "`/notif status [username]` to view current subscriptions and usage statistics, "
-    "or `/notif remove [username]` to purge all subscriptions for that user from the database",
-    "guide": "Display this informational guide about Zhongsheng commands",
-}
-
-# Role requirements for each command.
-COMMAND_ROLES = {
-    "lang": ["Moderator", "Helper"],
-    "user": ["Moderator"],
-    "post": ["Moderator"],
-    "comment": ["Moderator"],
-    "search": ["Moderator", "Helper"],
-    "title": ["Moderator"],
-    "cjk": ["Moderator", "Helper"],
-    "error": ["Moderator"],
-    "describe": ["Moderator", "Helper"],
-    "filter": ["Moderator", "Helper"],
-    "guide": ["Moderator", "Helper"],
-    "status": ["Moderator", "Helper"],
-    "notif": ["Moderator"],
-}
-
+from . import COMMAND_GUIDE, command
 
 # ─── Command handler ──────────────────────────────────────────────────────────
 
@@ -66,9 +23,10 @@ async def guide_command(ctx: commands.Context, command_name: str | None = None) 
     """
     if command_name:
         # Show help for a specific command
-        if command_name in COMMAND_DESCRIPTIONS:
-            description = COMMAND_DESCRIPTIONS[command_name]
-            roles = COMMAND_ROLES.get(command_name, [])
+        command_info = COMMAND_GUIDE.get(command_name)
+        if command_info:
+            description = command_info["description"]
+            roles = command_info["roles"]
             role_text = (
                 f"**Required roles:** {', '.join(roles)}"
                 if roles
@@ -86,8 +44,9 @@ async def guide_command(ctx: commands.Context, command_name: str | None = None) 
         moderator_only = []
         helper_commands = []
 
-        for cmd, desc in sorted(COMMAND_DESCRIPTIONS.items()):
-            roles = COMMAND_ROLES.get(cmd, [])
+        for cmd, command_info in sorted(COMMAND_GUIDE.items()):
+            desc = command_info["description"]
+            roles = command_info["roles"]
 
             if roles == ["Moderator"]:
                 moderator_only.append(f"**/{cmd}** - {desc}")

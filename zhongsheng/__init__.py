@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Any
 
 from discord.ext import commands
 
+from config import Paths, load_settings
+
 if TYPE_CHECKING:
     from discord.ext.commands import Context
 
@@ -21,6 +23,70 @@ if TYPE_CHECKING:
 # ─── Command registry ─────────────────────────────────────────────────────────
 
 _commands: list[dict[str, Any]] = []
+GUILD_ID_SETTING = "ZHONGSHENG_GUILD_ID"
+
+# Guide descriptions and role requirements. Add one entry for each command.
+COMMAND_GUIDE = {
+    "cjk": {
+        "description": "Look up Chinese, Japanese, or Korean words. Use c/j/k as shortcuts (e.g. `/cjk c 翻译`)",
+        "roles": ["Moderator", "Helper"],
+    },
+    "comment": {
+        "description": "Fetch Instruo data and parsed bot commands for a Reddit comment "
+        "(accepts comment IDs and Reddit comment URLs). Use the `--text` flag to parse text directly",
+        "roles": ["Moderator"],
+    },
+    "describe": {
+        "description": "Generate an AI image description from a URL",
+        "roles": ["Moderator", "Helper"],
+    },
+    "error": {
+        "description": "Display the 3 most recent error log entries and event-log errors from the last 3 days",
+        "roles": ["Moderator"],
+    },
+    "filter": {
+        "description": "Check whether a Reddit post title would pass r/translator formatting filters",
+        "roles": ["Moderator", "Helper"],
+    },
+    "guide": {
+        "description": "Display this informational guide about Zhongsheng commands",
+        "roles": ["Moderator", "Helper"],
+    },
+    "lang": {
+        "description": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
+        "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
+        "roles": ["Moderator", "Helper"],
+    },
+    "notif": {
+        "description": "Manage user notification subscriptions for r/translator. "
+        "Use `/notif add [username] [languages]` to add language subscriptions, "
+        "`/notif status [username]` to view current subscriptions and usage statistics, "
+        "or `/notif remove [username]` to purge all subscriptions for that user from the database",
+        "roles": ["Moderator"],
+    },
+    "post": {
+        "description": "Search log files and database for a Reddit post ID (accepts IDs and Reddit post URLs). "
+        "Also shows available points data",
+        "roles": ["Moderator"],
+    },
+    "search": {
+        "description": "Search for Reddit translation posts related to a term and return matching results",
+        "roles": ["Moderator", "Helper"],
+    },
+    "status": {
+        "description": "Get a random quote from *The Office (US)* and see the last 5 Ziwen event-log entries",
+        "roles": ["Moderator", "Helper"],
+    },
+    "title": {
+        "description": "Process a Reddit post title. Use the `--ai` flag for AI parsing",
+        "roles": ["Moderator"],
+    },
+    "user": {
+        "description": "Search log files and database for a Reddit username "
+        "(accepts usernames and Reddit user URLs). Also shows available user statistics",
+        "roles": ["Moderator"],
+    },
+}
 
 
 def command(name: str, help_text: str, roles: list | None = None) -> Callable:
@@ -45,6 +111,26 @@ def command(name: str, help_text: str, roles: list | None = None) -> Callable:
 def get_commands() -> list:
     """Get all registered commands."""
     return _commands
+
+
+def load_expected_guild_id(logger: logging.LoggerAdapter | None = None) -> int | None:
+    """Load the only Discord guild authorized for Zhongsheng commands."""
+    credentials = load_settings(Paths.AUTH["CREDENTIALS"])
+    guild_id = credentials.get(GUILD_ID_SETTING)
+
+    if not guild_id:
+        if logger is not None:
+            logger.error(
+                "Missing required setting %r in credentials file.", GUILD_ID_SETTING
+            )
+        return None
+
+    try:
+        return int(guild_id)
+    except (TypeError, ValueError):
+        if logger is not None:
+            logger.error("%s must be a numeric Discord guild ID.", GUILD_ID_SETTING)
+        return None
 
 
 # ─── Bot registration ─────────────────────────────────────────────────────────
