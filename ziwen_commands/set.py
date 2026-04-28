@@ -65,12 +65,10 @@ def _handle_diskuto_reclassification(
         logger.error(f"Failed to build Diskuto from submission `{post_id}`: {e}")
         message_send(
             comment.author,
-            subject="!set reclassification failed",
-            body=(
-                f"Hello, moderator u/{comment.author},\n\n"
-                f"Could not reclassify post `{post_id}` as a Diskuto — "
-                f"the submission object was unavailable or invalid.\n\n"
-                f"No changes were made."
+            subject=RESPONSE.MSG_SET_RECLASSIFICATION_FAILED_SUBJECT,
+            body=RESPONSE.MSG_SET_RECLASSIFICATION_INVALID.format(
+                moderator=comment.author,
+                post_id=post_id,
             ),
         )
         return None
@@ -84,11 +82,10 @@ def _handle_diskuto_reclassification(
         logger.error(f"diskuto_writer failed for `{post_id}`: {type(e).__name__}: {e}")
         message_send(
             comment.author,
-            subject="!set reclassification failed",
-            body=(
-                f"Hello, moderator u/{comment.author},\n\n"
-                f"Could not write post `{post_id}` to the internal posts database. "
-                f"No changes were made to the Ajo record."
+            subject=RESPONSE.MSG_SET_RECLASSIFICATION_FAILED_SUBJECT,
+            body=RESPONSE.MSG_SET_RECLASSIFICATION_WRITE_FAILED.format(
+                moderator=comment.author,
+                post_id=post_id,
             ),
         )
         return None
@@ -103,13 +100,11 @@ def _handle_diskuto_reclassification(
 
     message_send(
         comment.author,
-        subject="!set reclassification successful",
-        body=(
-            f"Hello, moderator u/{comment.author},\n\n"
-            f"The [post](https://www.reddit.com{submission.permalink}) has been "
-            f"reclassified as a **{post_type}** internal post.\n\n"
-            f"It has been removed from the translation request database and added "
-            f"to the internal posts database. This change is permanent."
+        subject=RESPONSE.MSG_SET_RECLASSIFICATION_SUCCESS_SUBJECT,
+        body=RESPONSE.MSG_SET_RECLASSIFICATION_SUCCESS.format(
+            moderator=comment.author,
+            permalink=submission.permalink,
+            post_type=post_type,
         ),
     )
     logger.info(f"Sent reclassification confirmation to u/{comment.author}.")
@@ -160,7 +155,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         logger.error(f"Invalid or missing Komando data: {komando.data}")
         message_send(
             comment.author,
-            "Invalid !set language",
+            RESPONSE.MSG_SET_INVALID_LANGUAGE_SUBJECT,
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
         logger.info("Replied letting the mod know setting is invalid.")
@@ -172,7 +167,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         logger.error(f"!set data is invalid: {e}")
         message_send(
             comment.author,
-            "Invalid !set language",
+            RESPONSE.MSG_SET_INVALID_LANGUAGE_SUBJECT,
             RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(id_comment_body=comment.body),
         )
         logger.info("Replied letting the mod know setting is invalid.")
@@ -190,10 +185,12 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     set_msg: str
     if len(languages) == 1:
         new_language = languages[0]
-        set_msg = (
-            f"{new_language.greetings}, moderator u/{comment.author},\n\n"
-            f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the language "
-            f"{new_language.name} (`{new_language.preferred_code}`)."
+        set_msg = RESPONSE.MSG_SET_LANGUAGE_SUCCESS.format(
+            greeting=new_language.greetings,
+            moderator=comment.author,
+            permalink=ajo.submission.permalink,
+            language_name=new_language.name,
+            language_code=new_language.preferred_code,
         )
         logger.info(f"Single-language message built for {new_language.preferred_code}.")
     else:
@@ -203,17 +200,18 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         lang_parts = [f"{lang.name} (`{lang.preferred_code}`)" for lang in languages]
         lang_string = ", ".join(lang_parts[:-1]) + f", and {lang_parts[-1]}"
 
-        set_msg = (
-            f"{greeting_string}, moderator u/{comment.author},\n\n"
-            f"The [post](https://www.reddit.com{ajo.submission.permalink}) has been set to the languages "
-            f"{lang_string}."
+        set_msg = RESPONSE.MSG_SET_LANGUAGES_SUCCESS.format(
+            greeting=greeting_string,
+            moderator=comment.author,
+            permalink=ajo.submission.permalink,
+            languages=lang_string,
         )
         logger.info("Multi-language message built.")
 
     try:
         message_send(
             comment.author,
-            subject="!set command successful",
+            subject=RESPONSE.MSG_SET_SUCCESS_SUBJECT,
             body=set_msg,
         )
         logger.info(

@@ -152,9 +152,14 @@ def process_verification(confirming_comment: "Comment") -> None:
     # Message the mod.
     message_send(
         mod_caller,
-        subject=f"Verified u/{verified_person}",
-        body=f"Verified u/{verified_person} for {language_to_verify}. Command called by you "
-        f"[here](https://www.reddit.com{confirming_comment.permalink}?context=10000).",
+        subject=RESPONSE.MSG_VERIFICATION_APPROVED_SUBJECT.format(
+            username=verified_person
+        ),
+        body=RESPONSE.MSG_VERIFICATION_APPROVED.format(
+            username=verified_person,
+            language_name=language_to_verify,
+            permalink=confirming_comment.permalink,
+        ),
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
 

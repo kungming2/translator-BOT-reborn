@@ -57,7 +57,10 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
 
     search_results_body: str = build_search_results(post_ids, search_query)
 
-    results_header: str = f'## Search results on r/translator for "{search_query}":\n\n'
+    results_header: str = RESPONSE.COMMENT_SEARCH_RESULTS_HEADER.format(
+        search_query=search_query
+    )
+    results_header += "\n\n"
     full_reply: str = (
         f"{frequently_translated_info}\n\n{results_header}{search_results_body}"
         if frequently_translated_info

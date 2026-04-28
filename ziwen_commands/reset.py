@@ -19,6 +19,7 @@ from models.instruo import Instruo
 from models.komando import Komando
 from reddit.connection import is_mod
 from reddit.reddit_sender import message_send
+from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:RESET"})
 
@@ -35,13 +36,13 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, ajo: Ajo) -> 
         logger.info(f"!reset, from user u/{comment.author} on `{ajo.id}`.")
         ajo.reset()
 
-        reset_msg: str = (
-            f"The [post](https://redd.it/{ajo.id})'s state has been reset to its original state. "
-            f"This command was called by you [here](https://www.reddit.com{comment.permalink})."
+        reset_msg: str = RESPONSE.MSG_RESET_SUCCESS.format(
+            post_id=ajo.id,
+            permalink=comment.permalink,
         )
         message_send(
             comment.author,
-            subject="!reset command successful",
+            subject=RESPONSE.MSG_RESET_SUCCESS_SUBJECT,
             body=reset_msg,
         )
 

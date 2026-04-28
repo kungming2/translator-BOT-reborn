@@ -326,12 +326,16 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
                 comment_id = duplicate_check["comment_id"]
                 matched_terms = duplicate_check["matched_terms"]
 
-                permalink = kunulo.get_comment_permalink(comment_id)
-                chars_str = ", ".join(f"**{char}**" for char in matched_terms)
+                permalink = kunulo.get_comment_permalink(comment_id).removeprefix(
+                    "https://www.reddit.com"
+                )
+                chars_str = ", ".join(matched_terms)
 
                 duplicate_responses.append(
-                    f"The {cjk_language} term(s) {chars_str} have already been looked up. "
-                    f"Please see [this comment]({permalink})."
+                    RESPONSE.COMMENT_CJK_LOOKUP_DUPLICATE.format(
+                        lookup_terms=chars_str,
+                        permalink=permalink,
+                    ).strip()
                 )
                 logger.info(
                     f"Duplicate found for {cjk_language} terms {matched_terms} "
@@ -349,7 +353,6 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
 
     if duplicate_responses:
         duplicate_section = "\n\n".join(duplicate_responses)
-        duplicate_section += "\n\nIf this is in error, please let a moderator know."
         reply_parts.append(duplicate_section)
 
     if all_lookup_results:
@@ -365,7 +368,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
     if len(final_reply) > 10000:
         final_reply = (
             final_reply[:9000]
-            + "\n\n*Lookup information has been truncated due to excessive length.*"
+            + "\n\n"
+            + RESPONSE.SNIPPET_LOOKUP_TRUNCATED.format(content_type="Lookup")
         )
 
     if existing_bot_reply_id and all_lookup_results:
@@ -376,7 +380,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
         if len(edit_body) > 10000:
             edit_body = (
                 edit_body[:9000]
-                + "\n\n*Lookup information has been truncated due to excessive length.*"
+                + "\n\n"
+                + RESPONSE.SNIPPET_LOOKUP_TRUNCATED.format(content_type="Lookup")
             )
         reddit_edit(existing_bot_reply_id, edit_body)
         logger.info(

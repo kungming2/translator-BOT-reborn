@@ -49,7 +49,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     )
     message_send(
         original_poster,
-        subject="A message from r/translator regarding your translation request",
+        subject=RESPONSE.MSG_MISSING_ASSETS_SUBJECT,
         body=total_message,
     )
 

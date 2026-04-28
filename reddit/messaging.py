@@ -286,9 +286,9 @@ def handle_add(message: Message, message_author: Redditor) -> None:
             lang.name or lang.preferred_code for lang in language_matches
         )
 
-        addition_message = (
-            f"Added the language codes **{match_codes_print}** "
-            f"for u/{add_username} into the notifications database."
+        addition_message = RESPONSE.MSG_NOTIFICATIONS_ADD_SUCCESS.format(
+            language_codes=match_codes_print,
+            username=add_username,
         )
         # Only send Reddit reply if this is a PRAW message object
         if isinstance(message, Message):
@@ -320,9 +320,9 @@ def handle_remove(message: Message, message_author: Redditor) -> None:
 
     subscribed_codes = [x.preferred_code for x in subscribed_codes]
     final_match_codes_print = ", ".join(subscribed_codes)
-    removal_message = (
-        f"Removed the subscriptions for u/{remove_username} from the notifications database. "
-        f"(**{final_match_codes_print}**)"
+    removal_message = RESPONSE.MSG_NOTIFICATIONS_REMOVE_SUCCESS.format(
+        username=remove_username,
+        language_codes=final_match_codes_print,
     )
     # Only send Reddit reply if this is a PRAW message object
     if isinstance(message, Message):

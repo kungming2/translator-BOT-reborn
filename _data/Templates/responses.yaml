@@ -1,31 +1,23 @@
 # This file is handled by responses.py
 
-# MESSAGES - THESE ARE SENT PRIVATELY
+# SHARED FOOTERS - USED BY MULTIPLE GENERATED REPLIES
 
-MSG_UNSUBSCRIBE_BUTTON: ' • [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
-  • [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
-  • [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
-MSG_NSFW_WARNING: '
+BOT_DISCLAIMER: |
+  
+  
+  ---
+  Ziwen: a bot for r/translator • [Documentation](https://github.com/kungming2/translator-BOT-reborn) • [Feedback](https://www.reddit.com/r/translatorBOT)
 
+# LOOKUP ANCHORS - main_chinese_reference.py AND ziwen_commands/lookup_*.py
 
-  (Just FYI, this has been flagged as an **NSFW** post.)'
-MSG_SUBSCRIBE_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.%0A%23%23+You+can+sign+up+for+one+language+or+as+many+as+you%27d+like.%0ALANGUAGES%3A+
-MSG_REMOVAL_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0ALANGUAGES%3A+{language_name}
-MSG_NO_SUBSCRIPTIONS: >
-  Sorry, you're not currently subscribed to notifications for any language requests
-  on r/translator. Would you like to [sign up]({})?
-MSG_CANNOT_PROCESS: >
-  Sorry, but I couldn't process the language names/codes in your message. 
-  Please double-check your message to make sure they're accurate and [try again]({}).
-MSG_MISSING_ASSETS: |
-  Hey there u/{author},
+ANCHOR_WIKIPEDIA: |
+  [](#comment_wikipedia)
+ANCHOR_CJK: |
+  [](#comment_cjk)
+ANCHOR_WIKTIONARY: |
+  [](#comment_wiktionary)
 
-  Another community member marked **[your post](https://www.reddit.com{permalink})** as missing assets (text, images, etc) to be translated. 
-
-  Please update your post with content (text, images, etc.) with the material you want translated.
-
-  If you keep this post, you can re-open your translation request by commenting `!reset` on your post.
-  If you delete this post, submit a new post instead.
+# REDDIT MESSAGING - reddit/messaging.py
 
 MSG_TRANSLATED: |
   Hey there u/{author},
@@ -38,16 +30,55 @@ MSG_TRANSLATED: |
 MSG_SHORT_THANKS_TRANSLATED: |
   Hey there u/{0},
 
-  Thanks for submitting to r/translator! It looks like you left a short "thank you" comment on **[your post]({1})**. 
-  Consequently, I've automatically marked your request as translated. 
+  Thanks for submitting to r/translator! It looks like you left a short "thank you" comment on **[your post]({1})**, so I've automatically marked your request as translated.
 
-  If this is in error, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message={1}). Thank you.
+  If this was a mistake, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message={1}). Thank you.
+
+MSG_SUBSCRIBE_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.%0A%23%23+You+can+sign+up+for+one+language+or+as+many+as+you%27d+like.%0ALANGUAGES%3A+
+MSG_REMOVAL_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0ALANGUAGES%3A+{language_name}
+MSG_UNSUBSCRIBE_BUTTON: ' • [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
+  • [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
+  • [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
+MSG_NO_SUBSCRIPTIONS: >
+  Sorry, you're not currently subscribed to notifications for any language requests
+  on r/translator. Would you like to [sign up]({})?
+MSG_CANNOT_PROCESS: >
+  Sorry, but I couldn't process the language names/codes in your message. 
+  Please double-check your message to make sure they're accurate and [try again]({}).
+MSG_SUBSCRIBE: '{}! You have been subscribed to r/translator notifications for:
+
+
+  * {}
+
+
+  For your reference, here are some statistics on the estimated frequency of requests for those language(s):
+
+
+  {}
+
+
+  To see all your subscribed notifications, please click the **Status** link below.'
+MSG_UNSUBSCRIBE_ALL: |
+  You have been unsubscribed from r/translator notifications for:
+
+  * {} 
+
+  To resubscribe, please [click here]({}).
+
+MSG_NO_POINTS: You haven't earned any points on r/translator yet. You can earn points by helping identify
+  or translate requests in our community!
+MSG_NOTIFICATIONS_ADD_SUCCESS: >
+  Added the language codes **{language_codes}** for u/{username} into the notifications database.
+MSG_NOTIFICATIONS_REMOVE_SUCCESS: >
+  Removed the subscriptions for u/{username} from the notifications database. (**{language_codes}**)
+
+# REDDIT NOTIFICATIONS - reddit/notifications.py
+
 MSG_PAGE: >
 
   {greetings} u/{username},
 
-  This is a page to take a look at a possible {language_name} request. Could you check
-  it out?
+  Could you take a look at this possible {language_name} request?
 
   **[{title}](https://www.reddit.com{permalink})** posted by *u/{post_author}*.
 
@@ -77,30 +108,18 @@ MSG_NOTIFY_IDENTIFY: >
   
   {image_description}
 
+MSG_NSFW_WARNING: '
+
+
+  (Just FYI, this has been flagged as an **NSFW** post.)'
+
+# REDDIT WIKI ALERTS - reddit/wiki.py
+
 MSG_WIKIPAGE_FULL: >
   The [{0} wiki page](https://www.reddit.com/r/translatorBOT/wiki/{0}) seems to be full.
   Please archive some of the older entries on that page.
-MSG_NO_POINTS: You haven't earned any points on r/translator yet. You can earn points by helping identify
-  or translate requests in our community!
-MSG_SUBSCRIBE: '{}! You have been subscribed to r/translator notifications for:
 
-
-  * {}
-
-
-  For your reference, here are some statistics on the estimated frequency of requests for those language(s):
-
-
-  {}
-
-
-  To see all your subscribed notifications, please click the **Status** link below.'
-MSG_UNSUBSCRIBE_ALL: |
-  You have been unsubscribed from r/translator notifications for:
-
-  * {} 
-
-  To resubscribe, please [click here]({}).
+# REQUEST CLOSEOUT - monitoring/request_closeout.py
 
 MSG_CLOSING_OUT_SUBJECT: 'Was your {language} request translated?'
 MSG_CLOSING_OUT: |
@@ -108,23 +127,23 @@ MSG_CLOSING_OUT: |
   Hey there, u/{author}!
 
 
-  Thanks for submitting [your post](https://reddit.com{permalink}) to r/translator! It's been over {days}
-  days since you posted your request, and there's been {num_comments} comments on it since then.
+  Thanks for submitting [your post](https://reddit.com{permalink}) to r/translator! It's been over {days} days since you posted your request, and it has received {num_comments} comments.
 
 
-  If any of those comments fulfilled your {language} translation request, **please reply to that comment
-  with `!translated` to give credit to your translator and close out [your request](https://reddit.com{permalink}).**
-  If your request remains unfulfilled, you do not have to do anything.
-  You may resubmit again with new details in the title/body, if you wish.
+  If one of those comments answered your {language} translation request, please reply to that comment with `!translated`. This gives credit to the translator and closes [your request](https://reddit.com{permalink}).
+
+  If your request has not been answered, you do not need to do anything. You may also resubmit with more details in the title or body.
 
 
-  Thank you for helping keep our community organized! We hope you found it a useful place.
+  Thank you for helping keep our community organized! We hope you found it useful.
 
 
-# COMMENTS - THESE ARE PUBLICLY POSTED.
+# PUBLIC COMMENTS
 # Note that comments must include an invisible Markdown tag in them.
 # This tag should be a lowercase version of the variable name.
 # Example: [](#variable_name)
+
+# PROCESSES - processes/ziwen_posts.py AND processes/ziwen_comments.py
 
 COMMENT_LONG: |
   **Your translation request appears to be very long.** It may take a while for a translator to respond. Consider narrowing the scope of your request or asking for a synopsis or summary instead.
@@ -132,27 +151,16 @@ COMMENT_LONG: |
   If you believe your request is *not* long, you (the OP) may comment `!long` to remove this long-request tag.
 
   *Note: Your post has NOT been removed. This is merely an automated advisory notice and no action is required on your part.* [](#comment_long)
-COMMENT_PAGE_DISALLOWED: Hey, thanks for using my paging service. However, your account needs
-  to be {age} days or older to use the service. [](#comment_page_disallowed)
-COMMENT_NO_LANGUAGE: 'Unfortunately, we don''t have
-  anyone on file for {language_name}.
+COMMENT_UNKNOWN: |
+  **It looks like you have submitted a translation request tagged as 'Unknown'.** 
 
+  * Other community members may help identify your post with the `!identify` or `!page` commands.
+  * Please wait until your request has been fully translated before posting short "thank you" comments.
+  * Do *not* delete your post if it is identified as another language. The bot will automatically notify volunteers for the identified language when possible.
 
-  If someone else is reading this and knows {language_name}, please [sign up for notifications for that
-  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
-  if you would like to be notified for future posts for it! [](#comment_no_language)'
-COMMENT_LANGUAGE_NO_RESULTS: |
-  Sorry, but your identification appears to be an invalid language name or code.
-  
-  ---
-  
-  *Original comment*: 
-  
-  ```
-  {id_comment_body}
-  ```
-  
-  [](#comment_language_no_results)
+  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
+  [](#comment_unknown)
+
 COMMENT_ENGLISH_ONLY: |
   Hey there u/{author},
 
@@ -170,249 +178,25 @@ COMMENT_ENGLISH_ONLY: |
   * If you're requesting the *review of a translation*, please include the source language name and its original text in your resubmitted post to r/translator.
   [](#comment_english_only)
 
+# TITLE HANDLING - title/title_ai.py
+
 COMMENT_BAD_TITLE: |
   Hey there, u/{author}!
 
-  We're happy to help you translate your request, but this post has been automatically removed because:
+  This post was automatically removed because the title does not follow r/translator's required format:
 
-  * It appears that the title is not properly formatted according to our subreddit's guidelines.
-  * Required format: `[Source > Target] Brief Description`
-  * Proper title formatting helps keep our community organized and allows our translators to access requests relevant to them. 
+  `[Source > Target] Brief Description`
 
-  ---
+  Please resubmit your request using this suggested title:
 
-  **What should you do now?**
+  `{new_title}`
 
-  * [Try resubmitting your request with the suggested title text below](https://www.reddit.com/r/translator/submit?title={new_url}):
-  * `{new_title}`
-  * Should you need more information, please read r/translator's [formatting guidelines on the wiki](https://www.reddit.com/r/translator/wiki/rules).
+  [Resubmit with the suggested title](https://www.reddit.com/r/translator/submit?title={new_url})
+
+  For more details, see r/translator's [formatting guidelines](https://www.reddit.com/r/translator/wiki/rules).
   [](#comment_bad_title)
 
-COMMENT_CLAIM: |
-  **Claimer:** u/{claimer} at [{time} UTC](https://time.lol/#{time})
-  
-  **Language:** {language_name} (`{language_code}`)
-
-  *The user above has indicated that they are working on a translation for this {language_name} request.*
-
-  *This post will revert to an unclaimed state if it is not marked as 'Needs Review' or 'Translated' within 8 hours.*
-
-  [](#comment_claim)
-
-COMMENT_CURRENTLY_CLAIMED: |
-  This {language_name} (`{language_code}`) post has already been claimed by u/{claimer_name}. Their in-progress claim will expire in {remaining_time} minutes.
-
-  [](#comment_currently_claimed)
-
-COMMENT_SELF_ALREADY_CLAIMED: |
-  You've already claimed this post. [](#comment_self_already_claimed)
-COMMENT_UNKNOWN: |
-  **It looks like you have submitted a translation request tagged as 'Unknown'.** 
-
-  * Other community members may help you re-categorize your post with the `!identify` or the `!page` commands.
-  * Please refrain from posting short 'thank you' comments until your request has been fully translated.
-  * Do *not* delete your post if it is identified as another language. We will automatically find people who can help you!
-
-  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
-  [](#comment_unknown)
-
-COMMENT_DEFINED_MULTIPLE: |
-  **It looks like you have submitted a translation request for multiple defined languages.** 
-
-  * Translators can use the `!translated` and `!doublecheck` status commands on this post by including the language and command in their comment.
-  * For example, if one is making a French translation, `!translated:french` will work.
-  * Multiple languages are also accepted, separated by a plus symbol. `!doublecheck:zh+ja` will also work. 
-  * This post's flair will automatically update to reflect the state of its requested languages.
-
-  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
-  [](#comment_defined_multiple)
-
-COMMENT_VERIFICATION_RESPONSE: '{}, u/{}. I''ve taken note of your verification request for {}. [](#comment_verification_response)'
-COMMENT_INVALID_VERIFICATION_RESPONSE: |
-  Hey there, u/{username}. It appears that your verification request does not match the required format.
-  
-  Please check your comment against the requirements and reply again with a new comment. If you're still encountering issues, please message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=About+My+Verification+Request&message=https://www.reddit.com{request_link}). 
-  
-  [](#comment_invalid_verification_response)
-COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
-  a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)  # unused
-COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
-  here](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) for a list of valid ISO 15924 codes.  [](#comment_invalid_script)  # unused
-COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
-  Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
-
-COMMENT_DUPLICATE: |
-  Hey there u/{author},
-  
-  It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you've recently submitted and I have removed it as a result.
-  
-  If this removal is in error, please resubmit this post with a *unique* title giving more context for translators.
-  Alternatively, you may message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
-  
-  Thanks!
-  
-  [](#comment_duplicate)
-
-COMMENT_CJK_LOOKUP_DUPLICATE: |
-  It appears that the terms **{lookup_terms}** have already been looked up in this thread.  
-  Please see [this comment](https://www.reddit.com{permalink}) for those results.
-  
-  [](#comment_cjk_lookup_duplicate)
-
-COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
-  Hey there u/{author}, 
-  
-  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {time_ago}. 
-
-  If this is intentional (for example, requesting a different language pair), please disregard this message. 
-  Otherwise, you may want to check if you've already received a translation for this image.
-  
-  [](#comment_image_duplicate_same_author)
-
-COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
-  Hey there u/{author}, 
-  
-  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
-
-  You may want to check that post to see if it has already been translated. 
-  
-  Note: If the images are different, feel free to ignore this. Among other things, images of text often produce similar hashes even when the content differs.
-
-  [](#comment_image_duplicate_different_author)
-
-# IMAGE TRANSFORMATION RELATED COMMENTS
-
-COMMENT_TRANSFORM_NO_DATA: |
-  No transformation specified. Valid transformations are:
-  
-  * ↩️ `90`, `180`, `270` (clockwise rotation)
-  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
-  * ↔️ `h` or `horizontal` (flip horizontally)
-  * ↕️ `v` or `vertical` (flip vertically)
-  
-  Example: `!transform:90`
-  
-  [](#comment_transform_no_data)
-
-COMMENT_TRANSFORM_INVALID: |
-  Invalid transformation: `{0}`. Valid transformations are:
-  
-  * ↩️ `90`, `180`, `270` (clockwise rotation)
-  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
-  * ↔️ `h` or `horizontal` (flip horizontally)
-  * ↕️ `v` or `vertical` (flip vertically)
-  
-  Example: `!transform:90`
-  
-  [](#comment_transform_invalid)
-
-COMMENT_TRANSFORM_NOT_IMAGE_POST: |
-  This command only works on image posts, not text posts.
-  
-  [](#comment_transform_not_image_post)
-
-COMMENT_TRANSFORM_NO_IMAGE: |
-  This post does not appear to contain any links to an image. 
-  The `!transform` command requires an image URL (e.g., ending in .jpg, .png) appear somewhere in the post.
-  
-  [](#comment_transform_no_image)
-
-COMMENT_TRANSFORM_ERROR: |
-  Sorry, I encountered an error while transforming the image:
-  
-  ```
-  {0}
-  ```
-  
-  Please make sure the image URL is accessible and try again.
-  
-  [](#comment_transform_error)
-
-COMMENT_TRANSFORM_SUCCESS_REPLY: |
-  Here's your transformed image(s) ({0}):
-  
-  {1}
-  
-  *Note: This image will be automatically deleted after {2} days.*
-
-  [](#comment_transform_success_reply)
-
-COMMENT_TRANSFORM_INDEX_SINGLE: |
-  The image index argument (e.g. `!transform:90:2`) only applies to gallery posts with multiple images. 
-  This post only has one image — use `!transform:90` instead.
-
-  [](#comment_transform_index_single)
-
-COMMENT_TRANSFORM_INDEX_OOB: |
-  Image index `{0}` is out of range — this post only has `{1}` image(s). 
-  Use a number between `1` and `{1}`.
-
-  [](#comment_transform_index_oob)
-
-# ANCHORS - THESE ARE ADDED TO CONTENT GENERATED ELSEWHERE
-
-ANCHOR_WIKIPEDIA: |
-  [](#comment_wikipedia)
-ANCHOR_CJK: |
-  [](#comment_cjk)
-ANCHOR_WIKTIONARY: |
-  [](#comment_wiktionary)
-
-# POSTS - THESE ARE TEMPLATES FOR POSTS BY THE BOT OR PAGE EDITS
-
-WEEKLY_UNKNOWN_THREAD: |
-  Here are the posts from the last week still marked as "Unknown." Please help identify them if you can!
-
-  | Date   | Title         | Author  |
-  |:-------|:--------------|:--------|
-  {unknown_content}
-
-  *Please make any identifications on the individual request pages.*
-
-WY_MOD_NOTIFICATION_MESSAGE: |
-  ##### Routine Tasks
-
-  | Task | Status |
-  |------|--------|
-  | [Status Update](https://www.reddit.com/r/translatorBOT/wiki/status) | {} |
-  | File Backup | {} |
-
-  ##### Operations
-
-  {}
-
-  {}
-
-  ##### Status Summary
-
-  {}
-
-  ---
-
-  ###### Completed in {}.
-
-WY_NEW_HEADER: |
-  ## {language_name} ({language_family}) ![](%%statistics-h%%)
-
-  *[Statistics](https://www.reddit.com/r/translator/wiki/statistics) for r/translator provided by Wenyuan*
-
-  | Year | Month | Total Requests | Percent of All Requests | Untranslated Requests | Translation Percentage
-  | RI | View Translated Requests |
-  |-----|-------|------|------|------|------|----|------|
-
-WY_FULL_RETRIEVAL_DATA: |
-  | Info                                    | #             |
-  |-----------------------------------------|--------------:|
-  | Total number of processed posts         | {} posts      |
-  | Number of non-supported CSS posts       | {} posts      |
-  | Number of regional language posts       | {} posts      |
-  | Number of problematic posts             | {} posts      |
-  | Overall accuracy                        | {}%           |
-  | Supported posts percentage              | {}%           |
-  | Average processing time per post        | {} seconds    |
-  | Total elapsed time                      | {} seconds    |
-
-# QUERIES FOR AI AGENTS
+# AI QUERY INSTRUCTIONS - title/title_ai.py AND reddit/notifications.py
 
 TITLE_PARSING_QUERY: >
   Assess this Reddit post title which is for a translation request. 
@@ -496,8 +280,308 @@ IMAGE_DESCRIPTION_QUERY: >
   but do not transcribe or translate it. Keep the description to no more
   than three sentences.
 
-BOT_DISCLAIMER: |
-  
+# COMMANDS - ziwen_commands/missing.py
+
+MSG_MISSING_ASSETS_SUBJECT: A message from r/translator regarding your translation request
+MSG_MISSING_ASSETS: |
+  Hey there u/{author},
+
+  Another community member marked **[your post](https://www.reddit.com{permalink})** as missing the text, image, or other material needed for translation.
+
+  Please edit your post to include the material you want translated.
+
+  If you update the post, comment `!reset` on your post to reopen the request.
+  If you delete the post, please submit a new request instead.
+
+# COMMANDS - ziwen_commands/reset.py
+
+MSG_RESET_SUCCESS_SUBJECT: '!reset command successful'
+MSG_RESET_SUCCESS: >
+  The [post](https://redd.it/{post_id})'s state has been reset to its original state.
+  This command was called by you [here](https://www.reddit.com{permalink}).
+
+# COMMANDS - ziwen_commands/nuke.py
+
+MSG_NUKE_SUCCESS_SUBJECT: Nuked u/{username}
+MSG_NUKE_SUCCESS: >
+  Banned and removed all comments and posts from u/{username}. Command called by
+  you [here](https://www.reddit.com{permalink}).
+
+# COMMANDS - ziwen_commands/page.py
+
+COMMENT_PAGE_DISALLOWED: Your account must be at least {age} days old to use the paging service. [](#comment_page_disallowed)
+COMMENT_NO_LANGUAGE: 'Unfortunately, no one is currently subscribed for {language_name} notifications.
+
+
+  If you know {language_name}, you can [sign up for notifications for that
+  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
+  to be notified about future requests. [](#comment_no_language)'
+
+# COMMANDS - ziwen_commands/identify.py AND ziwen_commands/set.py
+
+COMMENT_LANGUAGE_NO_RESULTS: |
+  Sorry, but your identification appears to be an invalid language name or code.
   
   ---
-  Ziwen: a bot for r/translator • [Documentation](https://github.com/kungming2/translator-BOT-reborn) • [Feedback](https://www.reddit.com/r/translatorBOT)
+  
+  *Original comment*: 
+  
+  ```
+  {id_comment_body}
+  ```
+  
+  [](#comment_language_no_results)
+COMMENT_DEFINED_MULTIPLE: |
+  **It looks like you have submitted a translation request for multiple defined languages.** 
+
+  * Translators can use the `!translated` and `!doublecheck` status commands by including the language and command in their comment.
+  * For example, a French translator can use `!translated:french`.
+  * Multiple languages are also accepted, separated by a plus symbol. For example, `!doublecheck:zh+ja`.
+  * This post's flair will automatically update to reflect the state of its requested languages.
+
+  *Note: Your post has NOT been removed. This is merely an automated advisory notice.*
+  [](#comment_defined_multiple)
+
+# COMMANDS - ziwen_commands/set.py
+
+MSG_SET_INVALID_LANGUAGE_SUBJECT: Invalid !set language
+MSG_SET_RECLASSIFICATION_FAILED_SUBJECT: '!set Reclassification Failed'
+MSG_SET_RECLASSIFICATION_INVALID: |
+  Hello, moderator u/{moderator},
+
+  Could not reclassify post `{post_id}` as a Diskuto — the submission object was unavailable or invalid.
+
+  No changes were made.
+MSG_SET_RECLASSIFICATION_WRITE_FAILED: |
+  Hello, moderator u/{moderator},
+
+  Could not write post `{post_id}` to the internal posts database. No changes were made to the Ajo record.
+MSG_SET_RECLASSIFICATION_SUCCESS_SUBJECT: '!set Reclassification Successful'
+MSG_SET_RECLASSIFICATION_SUCCESS: |
+  Hello, moderator u/{moderator},
+
+  The [post](https://www.reddit.com{permalink}) has been reclassified as a **{post_type}** internal post.
+
+  It has been removed from the translation request database and added to the internal posts database. This change is permanent.
+MSG_SET_SUCCESS_SUBJECT: '!set Command Successful'
+MSG_SET_LANGUAGE_SUCCESS: |
+  {greeting}, moderator u/{moderator},
+
+  The [post](https://www.reddit.com{permalink}) has been set to the language {language_name} (`{language_code}`).
+MSG_SET_LANGUAGES_SUCCESS: |
+  {greeting}, moderator u/{moderator},
+
+  The [post](https://www.reddit.com{permalink}) has been set to the languages {languages}.
+
+# COMMANDS - ziwen_commands/claim.py
+
+COMMENT_CLAIM: |
+  **Claimer:** u/{claimer} at [{time} UTC](https://time.lol/#{time})
+  
+  **Language:** {language_name} (`{language_code}`)
+
+  *The user above has indicated that they are working on a translation for this {language_name} request.*
+
+  *This post will revert to an unclaimed state if it is not marked as 'Needs Review' or 'Translated' within 8 hours.*
+
+  [](#comment_claim)
+
+COMMENT_CURRENTLY_CLAIMED: |
+  This {language_name} (`{language_code}`) post has already been claimed by u/{claimer_name}. Their in-progress claim will expire in {remaining_time} minutes.
+
+  [](#comment_currently_claimed)
+
+COMMENT_SELF_ALREADY_CLAIMED: |
+  You've already claimed this post. [](#comment_self_already_claimed)
+
+# COMMANDS - reddit/verification.py
+
+COMMENT_VERIFICATION_RESPONSE: '{}, u/{}. I''ve taken note of your verification request for {}. [](#comment_verification_response)'
+COMMENT_INVALID_VERIFICATION_RESPONSE: |
+  Hey there, u/{username}. It appears that your verification request does not match the required format.
+  
+  Please check your comment against the requirements and post a new comment using the required format. If you're still having trouble, please message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=About+My+Verification+Request&message=https://www.reddit.com{request_link}). 
+  
+  [](#comment_invalid_verification_response)
+MSG_VERIFICATION_APPROVED_SUBJECT: Verified u/{username}
+MSG_VERIFICATION_APPROVED: >
+  Verified u/{username} for {language_name}. Command called by you
+  [here](https://www.reddit.com{permalink}?context=10000).
+
+# COMMANDS - ziwen_commands/lookup_* AND ziwen_lookup/zh.py
+
+COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
+  a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)  # unused
+COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
+  here](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) for a list of valid ISO 15924 codes.  [](#comment_invalid_script)  # unused
+COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
+  Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
+COMMENT_CJK_LOOKUP_DUPLICATE: |
+  It appears that the terms **{lookup_terms}** have already been looked up in this thread.  
+  Please see [this comment](https://www.reddit.com{permalink}) for those results.
+  
+  [](#comment_cjk_lookup_duplicate)
+SNIPPET_LOOKUP_TRUNCATED: >
+  *{content_type} information has been truncated due to excessive length.*
+
+# COMMANDS - ziwen_commands/search.py
+
+COMMENT_SEARCH_RESULTS_HEADER: '## Search results on r/translator for "{search_query}":'
+
+# COMMANDS - ziwen_commands/transform.py
+
+COMMENT_TRANSFORM_NO_DATA: |
+  No transformation specified. Valid transformations are:
+  
+  * ↩️ `90`, `180`, `270` (clockwise rotation)
+  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
+  * ↔️ `h` or `horizontal` (flip horizontally)
+  * ↕️ `v` or `vertical` (flip vertically)
+  
+  Example: `!transform:90`
+  
+  [](#comment_transform_no_data)
+
+COMMENT_TRANSFORM_INVALID: |
+  Invalid transformation: `{0}`. Valid transformations are:
+  
+  * ↩️ `90`, `180`, `270` (clockwise rotation)
+  * ↪️ `-90`, `-180`, `-270` (counterclockwise rotation)
+  * ↔️ `h` or `horizontal` (flip horizontally)
+  * ↕️ `v` or `vertical` (flip vertically)
+  
+  Example: `!transform:90`
+  
+  [](#comment_transform_invalid)
+
+COMMENT_TRANSFORM_NOT_IMAGE_POST: |
+  This command only works on image posts, not text posts.
+  
+  [](#comment_transform_not_image_post)
+
+COMMENT_TRANSFORM_NO_IMAGE: |
+  This post does not appear to contain any links to an image. 
+  The `!transform` command requires an image URL, such as one ending in `.jpg` or `.png`, to appear somewhere in the post.
+  
+  [](#comment_transform_no_image)
+
+COMMENT_TRANSFORM_ERROR: |
+  Sorry, I encountered an error while transforming the image:
+  
+  ```
+  {0}
+  ```
+  
+  Please make sure the image URL is accessible and try again.
+  
+  [](#comment_transform_error)
+
+COMMENT_TRANSFORM_SUCCESS_REPLY: |
+  Here's your transformed image(s) ({0}):
+  
+  {1}
+  
+  *Note: This image will be automatically deleted after {2} days.*
+
+  [](#comment_transform_success_reply)
+
+COMMENT_TRANSFORM_INDEX_SINGLE: |
+  The image index argument (e.g. `!transform:90:2`) only applies to gallery posts with multiple images. 
+  This post only has one image — use `!transform:90` instead.
+
+  [](#comment_transform_index_single)
+
+COMMENT_TRANSFORM_INDEX_OOB: |
+  Image index `{0}` is out of range — this post only has `{1}` image(s). 
+  Use a number between `1` and `{1}`.
+
+  [](#comment_transform_index_oob)
+
+# MONITORING - monitoring/dupe_detector.py
+
+COMMENT_DUPLICATE: |
+  Hey there u/{author},
+  
+  It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you recently submitted, so it has been removed.
+  
+  If this removal is in error, please resubmit this post with a *unique* title giving more context for translators.
+  Alternatively, you may message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
+  
+  Thanks!
+  
+  [](#comment_duplicate)
+
+COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
+  Hey there u/{author}, 
+  
+  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {time_ago}. 
+
+  If this is intentional (for example, requesting a different language pair), please disregard this message. 
+  Otherwise, you may want to check if you've already received a translation for this image.
+  
+  [](#comment_image_duplicate_same_author)
+
+COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
+  Hey there u/{author}, 
+  
+  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+
+  You may want to check that post to see if it has already been translated. 
+  
+  Note: If the images are different, feel free to ignore this. Among other things, images of text often produce similar hashes even when the content differs.
+
+  [](#comment_image_duplicate_different_author)
+
+# POSTS AND WIKI PAGES - Wenju/Wenyuan-generated content
+
+WEEKLY_UNKNOWN_THREAD: |
+  Here are the posts from the last week still marked as "Unknown." Please help identify them if you can!
+
+  | Date   | Title         | Author  |
+  |:-------|:--------------|:--------|
+  {unknown_content}
+
+  *Please make any identifications on the individual request pages.*
+
+WY_MOD_NOTIFICATION_MESSAGE: |
+  ##### Routine Tasks
+
+  | Task | Status |
+  |------|--------|
+  | [Status Update](https://www.reddit.com/r/translatorBOT/wiki/status) | {} |
+  | File Backup | {} |
+
+  ##### Operations
+
+  {}
+
+  {}
+
+  ##### Status Summary
+
+  {}
+
+  ---
+
+  ###### Completed in {}.
+
+WY_NEW_HEADER: |
+  ## {language_name} ({language_family}) ![](%%statistics-h%%)
+
+  *[Statistics](https://www.reddit.com/r/translator/wiki/statistics) for r/translator provided by Wenyuan*
+
+  | Year | Month | Total Requests | Percent of All Requests | Untranslated Requests | Translation Percentage
+  | RI | View Translated Requests |
+  |-----|-------|------|------|------|------|----|------|
+
+WY_FULL_RETRIEVAL_DATA: |
+  | Info                                    | #             |
+  |-----------------------------------------|--------------:|
+  | Total number of processed posts         | {} posts      |
+  | Number of non-supported CSS posts       | {} posts      |
+  | Number of regional language posts       | {} posts      |
+  | Number of problematic posts             | {} posts      |
+  | Overall accuracy                        | {}%           |
+  | Supported posts percentage              | {}%           |
+  | Average processing time per post        | {} seconds    |
+  | Total elapsed time                      | {} seconds    |

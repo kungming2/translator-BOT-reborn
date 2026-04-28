@@ -127,7 +127,8 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
         if len(reply_body) > 10000:
             reply_body = (
                 reply_body[:9000]
-                + "\n\n*Reference information has been truncated due to excessive length.*"
+                + "\n\n"
+                + RESPONSE.SNIPPET_LOOKUP_TRUNCATED.format(content_type="Reference")
             )
 
         # Adapt disclaimer to the subreddit the bot is posting on

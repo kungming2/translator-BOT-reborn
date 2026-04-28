@@ -20,6 +20,7 @@ from models.instruo import Instruo
 from models.komando import Komando
 from reddit.connection import REDDIT, create_mod_note, is_mod, remove_content
 from reddit.reddit_sender import message_send
+from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:NUKE"})
 
@@ -98,10 +99,10 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) ->
     # This is a mod-only command so no testing-mode wrapper is needed.
     message_send(
         mod_caller,
-        subject=f"Nuked u/{nuked_person}",
-        body=(
-            f"Banned and removed all comments and posts from u/{nuked_person}. "
-            f"Command called by you [here](https://www.reddit.com{comment.permalink})."
+        subject=RESPONSE.MSG_NUKE_SUCCESS_SUBJECT.format(username=nuked_person),
+        body=RESPONSE.MSG_NUKE_SUCCESS.format(
+            username=nuked_person,
+            permalink=comment.permalink,
         ),
     )
     logger.info(f">> Notified mod u/{mod_caller} via messages.")
