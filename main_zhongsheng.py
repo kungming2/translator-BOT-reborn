@@ -102,7 +102,7 @@ async def on_ready() -> None:
     """Log the connected guild (server) name and ID when the bot comes online."""
     expected_guild_id = load_expected_guild_id(logger)
     guild = bot.get_guild(expected_guild_id) if expected_guild_id is not None else None
-    if guild:
+    if guild is not None:
         logger.info(
             "%s is connected to guild %s (id: %s)",
             bot.user,

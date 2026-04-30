@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# noinspection PyProtectedMember
 from ziwen_lookup.wiktionary import (
     _is_clean_definition_line,
     _is_clean_etymology_line,
@@ -583,7 +584,8 @@ class TestWiktionarySearch:
         }
     }
 
-    def _make_mock_response(self, json_data: dict, status_code: int = 200) -> MagicMock:
+    @staticmethod
+    def _make_mock_response(json_data: dict, status_code: int = 200) -> MagicMock:
         mock_resp = MagicMock()
         mock_resp.status_code = status_code
         mock_resp.json.return_value = json_data

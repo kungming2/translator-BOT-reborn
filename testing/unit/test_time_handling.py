@@ -4,14 +4,10 @@
 Unit tests for time_handling.py
 """
 
-from datetime import UTC, datetime
-from unittest.mock import patch
-
 import pytest
 
 from time_handling import (
     get_previous_month,
-    messaging_months_elapsed,
     time_convert_to_string_seconds,
     time_convert_to_utc,
 )
@@ -29,7 +25,9 @@ def test_time_convert_to_utc_returns_naive_input_unchanged():
 def test_time_convert_to_string_seconds_handles_pluralization_and_negative():
     assert time_convert_to_string_seconds(1) == "1 second"
     assert time_convert_to_string_seconds(61) == "1 minute"
+    assert time_convert_to_string_seconds(3600) == "1 hour"
     assert time_convert_to_string_seconds(3661) == "1 hour, 1 minute"
+    assert time_convert_to_string_seconds(86400) == "1 day"
     assert time_convert_to_string_seconds(-5) == "0 seconds"
 
 
