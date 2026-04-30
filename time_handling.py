@@ -73,7 +73,7 @@ def convert_to_day(unix_integer: int | float) -> str:
     return datetime.fromtimestamp(int(unix_integer), tz=UTC).strftime("%Y-%m-%d")
 
 
-def time_convert_to_string_seconds(seconds: int) -> str:
+def time_convert_to_string_seconds(seconds: int | float) -> str:
     """
     Convert a duration in seconds to a human-readable time string.
 
@@ -94,10 +94,14 @@ def time_convert_to_string_seconds(seconds: int) -> str:
     elif seconds < 86400:
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
+        if minutes == 0:
+            return _unit(hours, "hour")
         return f"{_unit(hours, 'hour')}, {_unit(minutes, 'minute')}"
     else:
         days = seconds // 86400
         hours = (seconds % 86400) // 3600
+        if hours == 0:
+            return _unit(days, "day")
         return f"{_unit(days, 'day')}, {_unit(hours, 'hour')}"
 
 

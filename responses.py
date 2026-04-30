@@ -66,18 +66,18 @@ class ResponseLoader:
         try:
             with resolved_path.open(encoding="utf-8") as file:
                 loaded = yaml.safe_load(file)
-        except FileNotFoundError as e:
+        except FileNotFoundError as err:
             raise RuntimeError(
                 f"Responses file not found at: {resolved_path.resolve()}"
-            ) from e
-        except PermissionError as e:
+            ) from err
+        except PermissionError as err:
             raise RuntimeError(
                 f"Permission denied while reading responses file: {resolved_path.resolve()}"
-            ) from e
-        except yaml.YAMLError as e:
+            ) from err
+        except yaml.YAMLError as err:
             raise RuntimeError(
                 f"Invalid YAML in responses file: {resolved_path.resolve()}"
-            ) from e
+            ) from err
 
         if loaded is None:
             logger.warning(

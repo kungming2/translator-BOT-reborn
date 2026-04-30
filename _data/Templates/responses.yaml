@@ -514,7 +514,7 @@ COMMENT_DUPLICATE: |
 COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
   Hey there u/{author}, 
   
-  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {time_ago}. 
+  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {previous_post_age} ago. 
 
   If this is intentional (for example, requesting a different language pair), please disregard this message. 
   Otherwise, you may want to check if you've already received a translation for this image.
@@ -524,7 +524,7 @@ COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
 COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
   Hey there u/{author}, 
   
-  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {time_ago}. 
+  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {previous_post_age} ago. 
 
   You may want to check that post to see if it has already been translated. 
   

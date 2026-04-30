@@ -31,6 +31,7 @@ from database import db
 from reddit.connection import is_mod, remove_content
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
+from time_handling import time_convert_to_string_seconds
 
 from .usage_statistics import action_counter
 
@@ -636,14 +637,9 @@ def check_image_duplicate(
 
         previous_post_link = f"https://www.reddit.com/comments/{best_match['post_id']}"
 
-        time_diff_seconds = post.created_utc - best_match["created_utc"]
-        time_diff_hours = time_diff_seconds / 3600
-        time_diff_days = time_diff_seconds / 86400
-
-        if time_diff_days >= 1:
-            time_ago = f"{int(time_diff_days)} day(s) ago"
-        else:
-            time_ago = f"{int(time_diff_hours)} hour(s) ago"
+        previous_post_age = time_convert_to_string_seconds(
+            post.created_utc - best_match["created_utc"]
+        )
 
         same_author = best_match["author"].lower() == post_author.lower()
 
@@ -652,7 +648,7 @@ def check_image_duplicate(
                 author=post_author,
                 similarity_text=similarity_text,
                 previous_link=previous_post_link,
-                time_ago=time_ago,
+                previous_post_age=previous_post_age,
             )
         else:
             comment_text = RESPONSE.COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR.format(
@@ -660,7 +656,7 @@ def check_image_duplicate(
                 similarity_text=similarity_text,
                 previous_link=previous_post_link,
                 previous_author=best_match["author"],
-                time_ago=time_ago,
+                previous_post_age=previous_post_age,
             )
 
         comment_text += "\n\n" + RESPONSE.BOT_DISCLAIMER

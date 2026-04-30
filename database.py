@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING, Any
 
 from config import Paths
 from config import logger as _base_logger
-from time_handling import convert_to_day
+from time_handling import convert_to_day, time_convert_to_string_seconds
 
 if TYPE_CHECKING:
     from models.ajo import Ajo
@@ -663,20 +663,7 @@ def get_recent_event_log_lines(
             delta = current_time - last_event_time
             delta_seconds = delta.total_seconds()
 
-            if delta_seconds < 60:
-                seconds = int(delta_seconds)
-                time_ago = f"{seconds} second{'s' if seconds != 1 else ''} ago"
-            elif delta_seconds < 3600:
-                minutes = int(delta_seconds / 60)
-                time_ago = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
-            else:
-                hours = delta_seconds / 3600
-                if hours < 48:
-                    hours_int = int(hours)
-                    time_ago = f"{hours_int} hour{'s' if hours_int != 1 else ''} ago"
-                else:
-                    days = int(hours / 24)
-                    time_ago = f"{days} day{'s' if days != 1 else ''} ago"
+            time_ago = f"{time_convert_to_string_seconds(delta_seconds)} ago"
         except (IndexError, ValueError):
             time_ago = "unknown"
 
