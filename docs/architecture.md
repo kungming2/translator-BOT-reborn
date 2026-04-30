@@ -25,13 +25,13 @@ Of note: `devtools.py` also serves as a menu with interrogative functions for va
 
 `models/` contains the shared data objects:
 
+* `Ajo`: translation request record;
+* `Diskuto`: internal meta/community post record.
+* `Instruo`: Reddit comment containing commands;
+* `Komando`: parsed command or lookup request;
+* `Kunulo`: bot comments already present on a post;
 * `Lingvo`: language or language-like category;
 * `Titolo`: parsed Reddit post title;
-* `Komando`: parsed command or lookup request;
-* `Instruo`: Reddit comment containing commands;
-* `Ajo`: translation request record;
-* `Kunulo`: bot comments already present on a post;
-* `Diskuto`: internal meta/community post record.
 
 `database.py` centralizes SQLite access. The main runtime databases are documented in [Data Files](./data_files.md).
 
@@ -56,20 +56,48 @@ Tasks are registered with the `@task(schedule="...")` decorator. Before executin
 
 When a schedule runs, each registered task is executed independently. A task exception is logged and written to the error log, but later tasks in the same schedule still run. Weekly and monthly schedules send a Discord completion alert listing successful tasks; hourly and daily schedules run silently unless something logs or errors.
 
+## Wenyuan Menu Entries
+
+Wenyuan's interactive menu is defined in `main_wenyuan.py`. It uses a local `CommandRegistry`, not dynamic module discovery. To add a menu option, add a function in the command definitions area and decorate it with `@registry.register(key, description, category)`.
+
+```python
+@registry.register("my_command", "Short description shown in the menu", "data")
+def my_command() -> None:
+    """Run the command."""
+    user_input = input("\n  Enter a value: ").strip()
+    if not user_input:
+        msg.warn("No value specified.")
+        return
+
+    # Do the work here.
+```
+
+The decorator arguments control:
+
+* `key`: the exact text the operator types at the prompt;
+* `description`: the text shown in the Rich menu table;
+* `category`: the menu group.
+
+Current category keys are `posts`, `test`, `data`, `admin`, and `system`. Their labels and display order are controlled by `CommandRegistry.categories` and `CommandRegistry.display_menu()`. If a new category is needed, add it to both places; otherwise the command may register but not appear in the rendered menu because `display_menu()` iterates a fixed category order.
+
+Command functions should return `None` and handle their own input validation. Use the existing `msg.warn()`, `msg.fail()`, `msg.info()`, and `msg.good()` helpers for operator feedback, and use `_console.print()` with Rich tables or Markdown when the output is structured. Let unexpected exceptions propagate to `CommandRegistry.execute()`, which reports the error and logs it with `exc_info=True`.
+
+The menu loop calls `registry.display_menu()`, reads one command key, and passes it to `registry.execute()`. The key `x` is reserved for exit, so do not use it for a command. Registered command keys are sorted alphabetically within each category when displayed.
+
 ## Supporting Packages
 
 | Package | Responsibility |
 |---------|----------------|
-| `lang/` | Language and country conversion from datasets and state files. |
-| `title/` | Post title parsing, filtering, flair determination, and AI title correction support. |
-| `ziwen_lookup/` | CJK, Wiktionary, Wikipedia, OpenStreetMap, lookup matching, async helpers, and lookup cache formatting. |
-| `reddit/` | Reddit login, sending, notifications, messaging, wiki updates, verification, and moderation helpers. |
-| `monitoring/` | Points, edit tracking, duplicate detection, request closeout, and usage statistics. |
+| `hermes/` | Hermes matching logic, database manager, and tools. |
 | `integrations/` | Discord alerts, AI clients, image handling, and search helpers. |
+| `lang/` | Language and country conversion from datasets and state files. |
+| `monitoring/` | Points, edit tracking, duplicate detection, request closeout, and usage statistics. |
+| `reddit/` | Reddit login, sending, notifications, messaging, wiki updates, verification, and moderation helpers. |
+| `title/` | Post title parsing, filtering, flair determination, and AI title correction support. |
 | `wenju/` | Scheduled maintenance tasks and task registry. |
 | `wenyuan/` | Statistics utilities, monthly wiki updates, challenge posting, and data validation. |
 | `zhongsheng/` | Discord command modules and command registry. |
-| `hermes/` | Hermes matching logic, database manager, and tools. |
+| `ziwen_lookup/` | CJK, Wiktionary, Wikipedia, OpenStreetMap, lookup matching, async helpers, and lookup cache formatting. |
 
 ## Scheduling
 

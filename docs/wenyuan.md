@@ -1,413 +1,310 @@
-# Lumo - Translation Statistics Analyzer
+# Wenyuan / Lumo Statistics
 
-Complete quick reference for all available functions.
+Wenyuan is the statistics and reporting workflow for r/translator. The core
+analytics API lives in `processes.wenyuan_stats.Lumo`; the monthly Reddit/wiki
+report is formatted by `main_wenyuan.py`.
+
+Use this document when you need to load Ajo records, filter them, inspect
+language or period statistics, or understand how the monthly statistics page is
+assembled.
 
 ## Import
+
 ```python
 from processes.wenyuan_stats import Lumo, get_effective_status
 ```
 
----
+## Data Model
+
+`Lumo` works with saved `Ajo` objects from the database. After loading data, it
+keeps two related views:
+
+| View | Used for | Notes |
+| --- | --- | --- |
+| `lumo.ajos` | Language/status statistics, filters, iteration, `len(lumo)` | Defined multiple-language posts are expanded into one synthetic single-language entry per component language. |
+| `lumo._source_ajos` | Post-level period aggregates | Original unexpanded Ajos. Used for translator, notification, image, timing, identification, and source-target metrics so shared post metadata is not counted once per component language. |
+
+This distinction is intentional. A defined multiple-language request should
+count as each of its component languages in language-level tables, but its
+shared post metadata, such as recorded translators or image status, should only
+count once in period-level aggregates.
 
 ## Loading Data
 
 | Method | Description | Example |
-|--------|-------------|---------|
-| `load_ajos(start_time, end_time, all_time)` | Load with custom time range | `lumo.load_ajos(start, end)` |
-| `load_month(year, month)` | Load specific month | `lumo.load_month(2024, 3)` |
-| `load_last_days(days)` | Load last N days | `lumo.load_last_days(7)` |
-| `load_all_time()` | Load everything since 2015 | `lumo.load_all_time()` |
-| `load_for_user(username, start_time, end_time)` | Load user's posts | `lumo.load_for_user('user456')` |
-| `load_single_post(post_id)` | Load single post | `lumo.load_single_post('xyz789')` |
-| `load_from_list(ajos)` | Load from list (testing) | `lumo.load_from_list([ajo1, ajo2])` |
+| --- | --- | --- |
+| `load_ajos(start_time, end_time, all_time=False)` | Load posts in a Unix timestamp range. Uses instance defaults if provided in `Lumo(start_time, end_time)`. | `lumo.load_ajos(start, end)` |
+| `load_month(year, month)` | Load all posts from one calendar month. | `lumo.load_month(2026, 4)` |
+| `load_last_days(days=30)` | Load posts from the last N days. | `lumo.load_last_days(14)` |
+| `load_all_time()` | Load everything from January 1, 2015 to now. | `lumo.load_all_time()` |
+| `load_for_user(username, start_time=None, end_time=None)` | Load posts by a Reddit username, without the `u/` prefix. | `lumo.load_for_user("translator_user")` |
+| `load_single_post(post_id)` | Load one post by Reddit ID. Returns the original Ajo or `None`. | `lumo.load_single_post("abc123")` |
+| `load_from_list(ajos)` | Load a prepared list of Ajo objects. Useful for tests. | `lumo.load_from_list([ajo1, ajo2])` |
 
----
+```python
+lumo = Lumo()
+lumo.load_month(2026, 4)
 
-## Filtering
+print(len(lumo))  # expanded request count
+```
+
+## Filtering And Search
+
+Filtering methods operate on `lumo.ajos`, so defined multiple-language posts are
+searched by their expanded component language entries.
 
 | Method | Description | Example |
-|--------|-------------|---------|
-| `filter_by_language(language)` | Filter by language (name or code) | `lumo.filter_by_language('ja')` |
-| `filter_by_status(status)` | Filter by status | `lumo.filter_by_status('doublecheck')` |
-| `filter_by_direction(direction)` | Filter by direction | `lumo.filter_by_direction('english_from')` |
-| `filter_by_type(type)` | Filter by type | `lumo.filter_by_type('multiple')` |
-| `filter_by_time_range(start, end)` | Filter loaded data by time | `lumo.filter_by_time_range(start, end)` |
-| `search(**kwargs)` | Multiple criteria | `lumo.search(language='ko', status='inprogress')` |
+| --- | --- | --- |
+| `filter_by_language(language)` | Filter by language name, code, or `Lingvo`. Uses `converter()`. | `lumo.filter_by_language("ja")` |
+| `filter_by_status(status)` | Filter by effective status. | `lumo.filter_by_status("doublecheck")` |
+| `filter_by_direction(direction)` | Filter by translation direction. | `lumo.filter_by_direction("english_from")` |
+| `filter_by_type(req_type)` | Filter by Ajo type, usually `single` or `multiple`. | `lumo.filter_by_type("single")` |
+| `filter_by_time_range(start, end)` | Filter currently loaded posts to another timestamp range. | `lumo.filter_by_time_range(start, end)` |
+| `search(**kwargs)` | Combine language, status, type, direction, and author criteria. | `lumo.search(language="ko", status="inprogress")` |
 
-**Status values**: `translated`, `untranslated`, `doublecheck`, `inprogress`, `missing`
+Status values used by `get_effective_status()` are `translated`,
+`untranslated`, `doublecheck`, `inprogress`, and `missing`.
 
-**Direction values**: `english_to`, `english_from`, `english_none`
+Direction values are `english_to`, `english_from`, and `english_none`.
 
-**Type values**: `single`, `multiple`
+```python
+recent_hindi_claims = lumo.search(
+    language="hi",
+    status="inprogress",
+    direction="english_to",
+)
+```
 
----
-
-## Statistics Methods
+## Statistics API
 
 ### Language Statistics
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `get_language_stats(language)` | Stats for single language (cached) | `lumo.get_language_stats('fr')` |
-| `get_stats_for_languages(language_string)` | Stats for multiple languages | `lumo.get_stats_for_languages('zh+ar+ru')` |
-| `get_all_languages()` | List all unique languages | `lumo.get_all_languages()` |
-| `get_language_rankings(by)` | Top languages ranked | `lumo.get_language_rankings(by='translated')` |
-| `get_language_frequency_info(language)` | Frequency data (static) | `Lumo.get_language_frequency_info('es')` |
+| Method | Description | Return shape |
+| --- | --- | --- |
+| `get_language_stats(language)` | Stats for one language. Cached by the input key. | Dict or `None`. |
+| `get_stats_for_languages(language_string)` | Stats for multiple languages parsed by `parse_language_list()`. | Dict keyed by language name. |
+| `get_all_languages()` | Sorted list of represented language names. | `list[str]` |
+| `get_language_rankings(by="total")` | Languages ranked by `total`, `translated`, or `untranslated`. | `list[tuple[str, int]]` |
+| `get_language_frequency_info(language)` | Static Lingvo frequency metadata without loading posts. | Dict or `None`. |
 
-### Overall Statistics
+`get_language_stats()` returns:
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `get_overall_stats()` | Overall statistics | `lumo.get_overall_stats()` |
-| `get_direction_stats()` | Direction breakdown | `lumo.get_direction_stats()` |
-| `get_fastest_translations()` | Fastest processing times | `lumo.get_fastest_translations()` |
-| `get_identification_stats()` | Language identification stats | `lumo.get_identification_stats()` |
-
----
-
-## Time Helper Methods (Static)
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `date_to_unix(year, month, day, hour, minute, second)` | Convert date to timestamp | `Lumo.date_to_unix(2024, 6, 20)` |
-| `month_to_unix_range(year, month)` | Get month timestamp range | `Lumo.month_to_unix_range(2024, 11)` |
-| `last_n_days(days)` | Get last N days range | `Lumo.last_n_days(90)` |
-| `all_time_range()` | Get all-time range | `Lumo.all_time_range()` |
-
----
-
-## Utility Functions
-
-### get_effective_status()
-
-Module-level function for consistent status handling.
 ```python
-from processes.wenyuan_stats import get_effective_status
-
-status = get_effective_status(ajo)
-# Returns: 'translated', 'untranslated', 'doublecheck', 'inprogress', 'missing'
-```
-
-**Note**: For defined multiple posts with mixed statuses, returns the "dominant" status based on priority.
-
-### get_language_frequency_info() (Static)
-
-Get typical frequency without loading data.
-```python
-freq = Lumo.get_language_frequency_info('Italian')
-print(f"{freq['rate_monthly']:.1f} posts/month")
-```
-
----
-
-## Export Methods
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `to_dict()` | Export all statistics as dict | `lumo.to_dict()` |
-
----
-
-## Magic Methods
-
-| Method | Description | Example |
-|--------|-------------|---------|
-| `len(lumo)` | Get number of loaded Ajos | `print(len(lumo))` |
-| `iter(lumo)` | Iterate over Ajos | `for ajo in lumo: ...` |
-| `lumo[index]` | Access Ajo by index | `last = lumo[-1]` |
-| `repr(lumo)` | String representation | `print(lumo)` |
-
----
-
-## Detailed Examples
-
-### get_language_stats()
-```python
-stats = lumo.get_language_stats('Portuguese')
-
-# Returns dict with:
 {
-    'language': 'Portuguese',
-    'total_requests': 85,
-    'translated': 68,
-    'needs_review': 5,
-    'untranslated': 12,
-    'translation_percentage': 86,
-    'percent_of_all_requests': 8.5,
-    'directions': '1.8:1'
+    "language": "Portuguese",
+    "total_requests": 85,
+    "translated": 68,
+    "needs_review": 5,
+    "untranslated": 12,
+    "translation_percentage": 86,
+    "percent_of_all_requests": 8.5,
+    "directions": "1.8:1",
 }
 ```
 
-### get_stats_for_languages()
-```python
-stats = lumo.get_stats_for_languages('Japanese, Korean, Chinese')
-# or with codes
-stats = lumo.get_stats_for_languages('ja+ko+zh')
+`translation_percentage` treats both `translated` and `doublecheck` as
+completed enough for the percentage. The `untranslated` bucket includes
+`untranslated`, `missing`, and `inprogress`.
 
-# Returns dict mapping language names to their stats
-for lang, data in stats.items():
-    print(f"{lang}: {data['total_requests']} requests")
-```
+### Overall And Period Statistics
 
-### get_overall_stats()
+| Method | Description | Notes |
+| --- | --- | --- |
+| `get_overall_stats()` | Overall status counts, translation percentage, and represented-language count. | Uses expanded language entries. |
+| `get_direction_stats()` | Counts and percentages for to-English, from-English, and non-English requests. | Uses expanded language entries. |
+| `get_unique_translator_count()` | Number of distinct recorded translators in the loaded period. | Uses original source Ajos and lowercases usernames. |
+| `get_notification_stats()` | Total notified users and average notified users per request. | Deduplicates notified users per post. |
+| `get_image_stats()` | Image post count and percentage. | Counts source Ajos with `image_hash`. |
+| `get_source_target_pairs(limit=10)` | Most common source-target language pairs. | Uses saved original source/target fields and falls back to direction plus current language when needed. |
+| `get_fastest_translations()` | Fastest translated, review, and claimed posts plus average/median translation timing. | Timing is based on `time_delta - created_utc`. |
+| `get_identification_stats()` | Languages identified from `Unknown` and common misidentified pairs. | Uses `language_history` from original source Ajos. |
+
+Example:
+
 ```python
 overall = lumo.get_overall_stats()
+notifications = lumo.get_notification_stats()
+images = lumo.get_image_stats()
+pairs = lumo.get_source_target_pairs(limit=20)
 
-# Returns dict with:
+print(overall["total_requests"])
+print(notifications["average_notified_per_request"])
+print(f'{images["image_requests"]} image posts ({images["percentage"]}%)')
+for pair, count in pairs:
+    print(pair, count)
+```
+
+`get_fastest_translations()` returns a partial dictionary. Keys are only present
+when timing data exists:
+
+```python
 {
-    'total_requests': 1500,
-    'untranslated': 250,
-    'missing_assets': 15,
-    'in_progress': 80,
-    'needs_review': 55,
-    'translated': 1100,
-    'translation_percentage': 77,
-    'unique_languages': 52
+    "to_translated": {"time": 420, "id": "def456"},
+    "to_review": {"time": 180, "id": "ghi789"},
+    "to_claimed": {"time": 75, "id": "jkl012"},
+    "average_translation_hours": 5.2,
+    "median_translation_seconds": 15120,
+    "timed_translation_count": 43,
 }
 ```
 
-### get_direction_stats()
-```python
-directions = lumo.get_direction_stats()
+### Identification Statistics
 
-# Returns dict with:
+`get_identification_stats()` returns two dictionaries:
+
+```python
 {
-    'to_english': {'count': 720, 'percentage': 48.0},
-    'from_english': {'count': 580, 'percentage': 38.7},
-    'non_english': {'count': 200, 'percentage': 13.3}
-}
-```
-
-### get_language_rankings()
-```python
-# Rank by total requests (default)
-top = lumo.get_language_rankings(by='total')[:10]
-
-# Rank by translated
-top = lumo.get_language_rankings(by='translated')[:10]
-
-# Rank by untranslated
-top = lumo.get_language_rankings(by='untranslated')[:10]
-
-# Returns list of tuples: [('Spanish', 220), ('Arabic', 185), ...]
-```
-
-### get_fastest_translations()
-```python
-fastest = lumo.get_fastest_translations()
-
-# Returns dict with:
-{
-    'to_translated': {'time': 420, 'id': 'def456'},
-    'to_review': {'time': 180, 'id': 'ghi789'},
-    'to_claimed': {'time': 75, 'id': 'jkl012'},
-    'average_translation_hours': 5.2
-}
-```
-
-### get_identification_stats()
-```python
-identification = lumo.get_identification_stats()
-
-# Returns dict with:
-{
-    'identified_from_unknown': {
-        'Hebrew': 18,
-        'Thai': 12,
-        'Armenian': 7
+    "identified_from_unknown": {
+        "Hebrew": 18,
+        "Thai": 12,
     },
-    'misidentified_pairs': {
-        'Chinese → Japanese': 4,
-        'Hindi → Urdu': 3
-    }
+    "misidentified_pairs": {
+        "Chinese -> Japanese": 4,
+        "Hindi -> Urdu": 3,
+    },
 }
 ```
 
-### search()
-```python
-# Search with multiple criteria
-results = lumo.search(
-    language='ar',           # Language name or code
-    status='translated',     # Status
-    type='single',          # Type
-    direction='english_from', # Direction
-    author='polyglot99'     # Author username
-)
-```
+Internally, language history entries are normalized through `converter()` when
+possible. `Unknown`, `Generic`, and `Multiple Languages` are treated as utility
+labels rather than normal language destinations.
 
-### filter_by_time_range()
-```python
-# Load entire year
-lumo.load_ajos(
-    start_time=Lumo.date_to_unix(2024, 1, 1),
-    end_time=Lumo.date_to_unix(2024, 12, 31)
-)
+## Monthly Reddit/Wiki Report
 
-# Filter to Q1 only
-start = Lumo.date_to_unix(2024, 1, 1)
-end = Lumo.date_to_unix(2024, 3, 31, 23, 59, 59)
-q1_posts = lumo.filter_by_time_range(start, end)
-```
+The monthly report is generated in `main_wenyuan.py` by
+`format_lumo_stats_for_reddit(lumo, month_year)`, where `month_year` is a
+`YYYY-MM` string.
 
----
+The report currently includes:
 
-## Common Usage Patterns
+| Section | Source |
+| --- | --- |
+| Overall statistics | `get_overall_stats()`, `filter_by_type("multiple")`, `get_unique_translator_count()`, `get_notification_stats()`, `get_image_stats()` |
+| Language families | `get_all_languages()`, `converter()`, per-language totals |
+| Single-language requests | `get_language_stats()`, family metadata, RI calculation, Wikipedia/search links |
+| Month-over-month change | Previous monthly wiki page, when available and parseable |
+| Translation direction | `get_direction_stats()` |
+| Top source-target pairs | `get_source_target_pairs(10)` |
+| Unknown identifications | `get_identification_stats()["identified_from_unknown"]` |
+| Common misidentified pairs | `get_identification_stats()["misidentified_pairs"]` |
+| Quickest processed posts | `get_fastest_translations()` |
+| Other utility requests | Utility language filters such as `Generic` and `Unknown` |
 
-### Monthly Report
+The single-language table gets an optional `Change` column only when Wenyuan can
+fetch and parse the previous monthly wiki report. The comparison is against the
+previous report's `Percent of All Requests` value for the same language. If the
+previous page is missing, inaccessible, or has an incompatible table structure,
+the entire `Change` column is omitted.
+
+The previous wiki page key is computed from the current `YYYY-MM` month. For
+example, `2026-04` compares against `2026_03`, and January rolls back to the
+prior December page.
+
+Trend symbols are:
+
+| Current percentage vs previous month | Display |
+| --- | --- |
+| Greater than previous | Up arrow |
+| Less than previous | Down arrow |
+| Equal to previous | Right arrow |
+
+These trend arrows are only part of the monthly statistics page. Per-language
+wiki pages are generated separately and do not receive the `Change` column.
+
+## Time Helpers
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `date_to_unix(year, month, day=1, hour=0, minute=0, second=0)` | Convert a UTC date/time to a Unix timestamp. | `Lumo.date_to_unix(2026, 4, 1)` |
+| `month_to_unix_range(year, month)` | Return the first and last Unix timestamps for a calendar month. | `Lumo.month_to_unix_range(2026, 4)` |
+| `last_n_days(days=30)` | Return a timestamp range for the last N days. | `Lumo.last_n_days(90)` |
+| `all_time_range()` | Return January 1, 2015 through now. | `Lumo.all_time_range()` |
+
+## Export And Iteration
+
+| Method | Description |
+| --- | --- |
+| `to_dict()` | Export overall, direction, language, identification, fastest, translator, notification, image, and source-target stats. |
+| `len(lumo)` | Number of expanded loaded Ajos. |
+| `iter(lumo)` | Iterate over expanded loaded Ajos. |
+| `lumo[index]` | Access an expanded loaded Ajo by index. |
+| `repr(lumo)` | Show the loaded Ajo count. |
+
+## Common Recipes
+
+### Generate A Monthly Snapshot
+
 ```python
 lumo = Lumo()
-lumo.load_month(2024, 7)
+lumo.load_month(2026, 4)
 
 overall = lumo.get_overall_stats()
-print(f"Total: {overall['total_requests']}")
-print(f"Translated: {overall['translation_percentage']}%")
+fastest = lumo.get_fastest_translations()
 
-top_langs = lumo.get_language_rankings()[:5]
-for lang, count in top_langs:
-    stats = lumo.get_language_stats(lang)
-    print(f"{lang}: {count} ({stats['translation_percentage']}% translated)")
+print(f'Total expanded requests: {overall["total_requests"]}')
+print(f'Translated: {overall["translation_percentage"]}%')
+print(f'Unique translators: {lumo.get_unique_translator_count()}')
+
+if "median_translation_seconds" in fastest:
+    print(f'Median translation seconds: {fastest["median_translation_seconds"]}')
 ```
 
-### Find Untranslated Posts
+### Find Untranslated Posts For A Language
+
 ```python
 lumo = Lumo()
 lumo.load_last_days(14)
 
-vietnamese = lumo.search(language='vi', status='untranslated')
-for post in vietnamese:
+for post in lumo.search(language="vi", status="untranslated"):
     print(f"{post.title} - https://redd.it/{post.id}")
 ```
 
-### Compare Languages
+### Compare Related Languages
+
 ```python
 lumo = Lumo()
-lumo.load_month(2024, 5)
+lumo.load_month(2026, 4)
 
-stats = lumo.get_stats_for_languages('ru, pl, cs, uk, bg')
-for lang, data in stats.items():
+stats = lumo.get_stats_for_languages("ru, pl, cs, uk, bg")
+for language, data in stats.items():
     if data:
-        print(f"{lang}: {data['translation_percentage']}% translated")
+        print(f'{language}: {data["translation_percentage"]}% translated')
+```
+
+### Inspect Source-Target Pairs
+
+```python
+lumo = Lumo()
+lumo.load_month(2026, 4)
+
+for pair, count in lumo.get_source_target_pairs(limit=20):
+    print(f"{pair}: {count}")
 ```
 
 ### User Activity
+
 ```python
-lumo = Lumo()
-lumo.load_for_user('linguist2024')
-
-print(f"Total posts: {len(lumo)}")
-
-langs = lumo.get_all_languages()
-print(f"Languages: {', '.join(langs)}")
-
 from collections import Counter
+
+lumo = Lumo()
+lumo.load_for_user("translator_user")
+
 statuses = Counter(get_effective_status(ajo) for ajo in lumo)
-for status, count in statuses.items():
-    print(f"{status}: {count}")
+print(f"Expanded posts: {len(lumo)}")
+print(f"Languages: {', '.join(lumo.get_all_languages())}")
+print(statuses)
 ```
 
-### Historical Analysis
-```python
-lumo = Lumo()
-lumo.load_all_time()
+## Notes And Limitations
 
-turkish = lumo.filter_by_language('tr')
-print(f"Total Turkish posts ever: {len(turkish)}")
-
-stats = lumo.get_language_stats('Turkish')
-print(f"Translation rate: {stats['translation_percentage']}%")
-```
-
-### Find Posts Needing Review
-```python
-lumo = Lumo()
-lumo.load_last_days(30)
-
-review_needed = lumo.filter_by_status('doublecheck')
-print(f"Posts needing review: {len(review_needed)}")
-
-for post in review_needed[:10]:
-    print(f"{post.language_name}: {post.title}")
-```
-
-### Language Deep Dive
-```python
-lumo = Lumo()
-lumo.load_month(2024, 10)
-
-# Get all Italian posts
-italian_posts = lumo.filter_by_language('it')
-print(f"Total Italian posts: {len(italian_posts)}")
-
-# Break down by direction
-to_english = [p for p in italian_posts if p.direction == 'english_to']
-from_english = [p for p in italian_posts if p.direction == 'english_from']
-
-print(f"To English: {len(to_english)}")
-print(f"From English: {len(from_english)}")
-```
-
-### Multiple Criteria Search
-```python
-lumo = Lumo()
-lumo.load_last_days(60)
-
-# Find in-progress Hindi posts translating to English
-results = lumo.search(
-    language='hi',
-    status='inprogress',
-    direction='english_to'
-)
-
-print(f"Found {len(results)} posts")
-for post in results:
-    print(f"https://redd.it/{post.id}")
-```
-
----
-
-## Quick Reference
-```python
-# Load data
-lumo.load_month(2024, 8)
-lumo.load_last_days(45)
-lumo.load_all_time()
-lumo.load_for_user('translator789')
-lumo.load_single_post('qrs456')
-lumo.load_from_list([ajo1, ajo2])
-
-# Filter
-lumo.filter_by_language('sv')
-lumo.filter_by_status('inprogress')
-lumo.filter_by_direction('english_none')
-lumo.filter_by_type('single')
-lumo.filter_by_time_range(start, end)
-lumo.search(language='nl', status='translated')
-
-# Statistics
-lumo.get_language_stats('pt')
-lumo.get_stats_for_languages('fi+no+da+sv')
-lumo.get_all_languages()
-lumo.get_language_rankings(by='untranslated')
-lumo.get_overall_stats()
-lumo.get_direction_stats()
-lumo.get_fastest_translations()
-lumo.get_identification_stats()
-
-# Time helpers
-Lumo.date_to_unix(2024, 12, 15)
-Lumo.month_to_unix_range(2024, 4)
-Lumo.last_n_days(120)
-Lumo.all_time_range()
-
-# Utilities
-get_effective_status(ajo)
-Lumo.get_language_frequency_info('el')
-
-# Export
-lumo.to_dict()
-
-# Iteration
-len(lumo)
-for ajo in lumo: ...
-middle = lumo[len(lumo)//2]
-```
+- Most user-facing language methods accept language names or codes through
+  `converter()`.
+- `get_language_stats()` caches by the language input string. Loading new data
+  clears the cache.
+- `filter_by_type("multiple")` operates on the expanded view. Defined
+  multiple-language posts are converted to synthetic single-language entries, so
+  this is not a reliable source-post count for defined multiples after loading.
+- `get_source_target_pairs()` ignores source-target combinations where source
+  and target normalize to the same display name.
+- The monthly formatter still includes a hard-coded meta/community post count.
+  That value is not derived from `Lumo`.

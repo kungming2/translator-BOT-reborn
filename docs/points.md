@@ -14,7 +14,7 @@ The points system on r/translator is designed to serve as a way for community me
 
 ## Language Multiplier
 
-The formula for the language multiplier is `( 1 / ( 100 * [percentage of posts per month] ) * 35)`, up to a cap of `20`. This percentage is dynamically retrieved from the recorded statistics of the previous month, and will therefore adjust over time as languages get less or more popular. Hypothetically, if 35% of posts in a single month were for Arabic, its multiplier would go down to `1` next month. 
+The formula for the language multiplier is `round(35 / [percent of posts per month])`, up to a cap of `20`. The percent value is read as the displayed percentage number from the latest row of the language's recorded statistics wiki page. The multiplier is cached by month and will therefore adjust over time as languages get less or more popular. Hypothetically, if 35% of posts in a single month were for Arabic, its multiplier would go down to `1` next month.
 
 #### Examples (from 2017-09)
 
@@ -35,9 +35,9 @@ The formula for the language multiplier is `( 1 / ( 100 * [percentage of posts p
 | *!translated* (provided a translation)           | 1 + (1 * language multiplier)                   |
 | *!doublecheck*  (provided a translation)         | 1 + (1 * language multiplier)                   |
 | *!identify*                                      | 3                                               |
-| \` Character/word Lookup                         | 2                                               |
-| \` Wikipedia Lookup                              | 1                                               |
-| Substantive comment (no *!translated* comment)   | 1 + (.25 * language multiplier)                 |
+| `` `...` `` Character/word Lookup                | 2                                               |
+| `{{...}}` Wikipedia Lookup                       | 1                                               |
+| Long non-OP comment over 120 characters          | 1 + round(0.25 * language multiplier)           |
 | *!translated* (confirming another's translation) | 1 (and full points awarded to other translator) |
 | *!missing*                                       | 1                                               |
 | *!claim*                                         | 1                                               |
@@ -57,7 +57,7 @@ Point records are written to the `total_points` table in `main.db` with:
 * `points`;
 * `post_id`.
 
-Monthly language multipliers are cached in `cache.db`'s `multiplier_cache` table. If a multiplier is not cached, Ziwen attempts to read the language's statistics wiki page and calculate the multiplier from the latest row. If that fails, the multiplier falls back to `20`. Unknown-language posts use a normalized value of `4`.
+Monthly language multipliers are cached in `cache.db`'s `multiplier_cache` table. If a multiplier is not cached, Ziwen attempts to read the language's statistics wiki page and calculate the multiplier from the latest row. If that fails, the multiplier falls back to `20`. Unknown-language posts use a normalized value of `4` and bypass the wiki/cache lookup.
 
 ## Awarding Rules
 
@@ -65,13 +65,13 @@ Monthly language multipliers are cached in `cache.db`'s `multiplier_cache` table
 
 Other commands with configured values use `command_points` in `settings.yaml`; currently `identify` is worth `3` and `lookup_cjk` is worth `2`. Commands not listed there generally default to `1` point, while commands listed in `commands_no_args` do not receive points by default.
 
-Long substantive comments by non-OP users receive an additional `1 + round(0.25 * multiplier)` points when the body is over 120 characters. Short OP thank-you replies can credit the parent comment author as the translator if that translator has not already received full translation points for the post.
+Long comments by non-OP users receive an additional `1 + round(0.25 * multiplier)` points when the lowercased, stripped body is over 120 characters. This is additive, so it can stack with command points or full translation credit. Short OP thank-you replies can credit the parent comment author as the translator if that translator has not already received full translation points for the post.
 
 When full translation credit is awarded, Ziwen also:
 
 * adds the translator to the post's `Ajo` translator list;
 * writes the updated `Ajo`;
-* creates a `SOLID_CONTRIBUTOR` mod note for the translator.
+* creates a `SOLID_CONTRIBUTOR` [mod note](https://www.reddit.com/r/modnews/comments/t8vafc/announcing_mod_notes/) for the translator.
 
 Helper and verification actions can create `HELPFUL_USER` mod notes.
 

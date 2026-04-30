@@ -18,6 +18,23 @@ Also supported, though rarely seen, are [Linguist List's local use codes](https:
 
 Generally speaking, any field or value that accepts a language code will also accept a language *name*.
 
+#### Language Tags
+
+In this documentation, a **language tag** means a user-facing language identifier that translator-BOT can parse in post titles, commands, and lookups. A tag can be as simple as a language name or ISO language code, or it can include script or region information when a request needs to be more specific.
+
+Common examples include:
+
+```text
+ja
+Chinese
+yue
+pt-BR
+unknown-Hani
+"American Sign Language"
+```
+
+The exact surrounding syntax depends on where the tag appears. For example, commands place it after a colon (`!identify:pt-BR`), lookups append it after a colon added to the lookup text (`` `文化`:ja ``), and post titles use bracketed title syntax. In each case, the language portion is passed through the same converter so downstream code works with normalized `Lingvo` objects rather than raw user text.
+
 #### Unsupported
 
 Routines *do not* support the [rest of the ISO 639-2](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes) standard, as most of those codes:
