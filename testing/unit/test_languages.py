@@ -17,6 +17,7 @@ from collections.abc import Callable
 from typing import Any
 
 from lang.countries import country_converter
+from lang.code_standards import alpha3_code, parse_language_tag
 from lang.languages import (
     converter,
     define_language_lists,
@@ -270,6 +271,18 @@ class TestConverterStableCodes(unittest.TestCase):
         self.assertIsInstance(result, Lingvo)
 
     @_skip_if_no_data
+    def test_bibliographic_alpha3_fre(self) -> None:
+        result = converter("fre")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "fr")
+
+    @_skip_if_no_data
+    def test_terminology_alpha3_deu(self) -> None:
+        result = converter("deu")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "de")
+
+    @_skip_if_no_data
     def test_case_insensitive_EN(self) -> None:
         lower = converter("en")
         upper = converter("EN")
@@ -353,6 +366,25 @@ class TestConverterCompoundCodes(unittest.TestCase):
         result = converter("en-US")
         self.assertIsNotNone(result)
         self.assertIsInstance(result, Lingvo)
+
+    @_skip_if_no_data
+    def test_en_uk_standardizes_to_gb_region(self) -> None:
+        result = converter("en-uk")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "en")
+        self.assertEqual(result.country, "GB")
+
+    @_skip_if_no_data
+    def test_sgn_us_standardizes_to_american_sign_language(self) -> None:
+        result = converter("sgn-US")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "ase")
+
+    @_skip_if_no_data
+    def test_script_tag_returns_base_lingvo(self) -> None:
+        result = converter("zh-Hans")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "zh")
 
 
 class TestConverterScriptPrefix(unittest.TestCase):
@@ -531,6 +563,23 @@ class TestParseLanguageList(unittest.TestCase):
         # "Old English" is an alternate name for Anglo-Saxon; the canonical
         # name returned by converter() is "Anglo-Saxon".
         self.assertEqual(result[0].name, "Anglo-Saxon")
+
+
+# ---------------------------------------------------------------------------
+# langcodes adapter
+# ---------------------------------------------------------------------------
+
+
+class TestCodeStandardsAdapter(unittest.TestCase):
+    def test_alpha3_terminology_and_bibliographic_codes(self) -> None:
+        self.assertEqual(alpha3_code("fr", variant="T"), "fra")
+        self.assertEqual(alpha3_code("fr", variant="B"), "fre")
+
+    def test_parse_language_region_tag(self) -> None:
+        parsed = parse_language_tag("eng_US")
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed.language, "en")
+        self.assertEqual(parsed.territory, "US")
 
 
 # ---------------------------------------------------------------------------

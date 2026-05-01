@@ -40,6 +40,11 @@ from rapidfuzz import fuzz
 
 from config import Paths, load_settings
 from config import logger as _base_logger
+from lang.code_standards import (
+    alpha3_code,
+    parse_language_tag,
+    preferred_standard_code,
+)
 from lang.countries import country_converter
 from models.lingvo import Lingvo
 
@@ -219,6 +224,11 @@ def define_language_lists() -> dict[str, Any]:
         if hasattr(lingvo, "language_code_2b") and lingvo.language_code_2b:
             iso_639_2b[lingvo.language_code_2b] = code_1
 
+        alpha3_t = alpha3_code(code_1, variant="T")
+        alpha3_b = alpha3_code(code_1, variant="B")
+        if alpha3_b and alpha3_b != alpha3_t:
+            iso_639_2b[alpha3_b] = code_1
+
     _language_lists_cache = {
         "SUPPORTED_CODES": supported_codes,
         "SUPPORTED_LANGUAGES": supported_languages,
@@ -349,6 +359,81 @@ def _iso_codes_deep_search(
     return None
 
 
+def _copy_lingvo_for_return(lingvo: Lingvo, preserve_country: bool = False) -> Lingvo:
+    """Return a Lingvo copy, clearing stored country metadata unless requested."""
+    lingvo_copy = copy.deepcopy(lingvo)
+    if not preserve_country:
+        lingvo_copy.country = None
+    return lingvo_copy
+
+
+def _apply_country(base: Lingvo, cc: str, country_name: str) -> Lingvo:
+    """Return a deep copy of base with the country name and code applied."""
+    lingvo_with_country = copy.deepcopy(base)
+    lingvo_with_country.name = (lingvo_with_country.name or "") + f" {{{country_name}}}"
+    lingvo_with_country.country = cc.upper()
+    return lingvo_with_country
+
+
+def _lookup_lingvo_by_standard_code(
+    input_text: str, preserve_country: bool = False
+) -> Lingvo | None:
+    """
+    Resolve code-like input through langcodes before project dataset lookup.
+
+    This catches equivalent codes such as ``eng`` -> ``en`` and ``fre`` -> ``fr``
+    while preserving the project-specific Lingvo layer.
+    """
+    canonical_code = preferred_standard_code(input_text)
+    if not canonical_code:
+        return None
+
+    lingvo = get_lingvos().get(canonical_code.lower())
+    if lingvo is None:
+        return None
+    return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
+
+
+def _resolve_standard_compound_tag(
+    input_text: str, preserve_country: bool = False
+) -> Lingvo | None:
+    """
+    Resolve BCP 47-style language-script-region tags via langcodes.
+
+    Region-specific macrolanguage overrides still come from project settings.
+    Script subtags on known languages normalize to the base Lingvo; script-only
+    requests remain handled by the existing ``unknown-<Script>`` path.
+    """
+    parsed = parse_language_tag(input_text)
+    if parsed is None or not parsed.language:
+        return None
+
+    lingvos = get_lingvos()
+    language_code = parsed.language.lower()
+    territory_code = parsed.territory.upper() if parsed.territory else None
+
+    if territory_code:
+        combo = f"{language_code}-{territory_code}"
+        mapped_code = language_module_settings["ISO_LANGUAGE_COUNTRY_ASSOCIATED"].get(
+            combo
+        )
+        if mapped_code and mapped_code in lingvos:
+            return _copy_lingvo_for_return(
+                lingvos[mapped_code], preserve_country=preserve_country
+            )
+
+    lingvo = lingvos.get(language_code)
+    if lingvo is None:
+        return None
+
+    if territory_code:
+        country_info = country_converter(territory_code, abbreviations_okay=True)
+        if country_info[0]:
+            return _apply_country(lingvo, country_info[0], country_info[1])
+
+    return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
+
+
 # ─── Resolution engine ────────────────────────────────────────────────────────
 
 
@@ -387,31 +472,39 @@ def _resolve_to_lingvo(
             if input_lower in reference_lists.get("ISO_639_1", set()):
                 lingvo = lingvos.get(input_lower)
                 if lingvo:
-                    lingvo_copy = copy.deepcopy(lingvo)
-                    if not preserve_country:
-                        lingvo_copy.country = None
-                    return lingvo_copy
+                    return _copy_lingvo_for_return(
+                        lingvo, preserve_country=preserve_country
+                    )
             return None
         elif len(input_text) == 3:
+            standard_lingvo = _lookup_lingvo_by_standard_code(
+                input_text, preserve_country=preserve_country
+            )
+            if standard_lingvo:
+                return standard_lingvo
             iso_search = _iso_codes_deep_search(input_text, script_search=False)
             if iso_search:
-                lingvo_copy = copy.deepcopy(iso_search)
-                if not preserve_country:
-                    lingvo_copy.country = None
-                return lingvo_copy
+                return _copy_lingvo_for_return(
+                    iso_search, preserve_country=preserve_country
+                )
             return None
         elif len(input_text) == 4:
             iso_search = _iso_codes_deep_search(input_text, script_search=True)
             if iso_search:
-                lingvo_copy = copy.deepcopy(iso_search)
-                if not preserve_country:
-                    lingvo_copy.country = None
-                return lingvo_copy
+                return _copy_lingvo_for_return(
+                    iso_search, preserve_country=preserve_country
+                )
             return None
         else:
             return None
 
     # Normal mode
+    standard_lingvo = _resolve_standard_compound_tag(
+        input_text, preserve_country=preserve_country
+    )
+    if standard_lingvo:
+        return standard_lingvo
+
     # Handle compound codes like zh-CN or unknown-Cyrl first,
     # because that affects country assignment logic
     if "-" in input_text and "Anglo" not in input_text:
@@ -425,10 +518,9 @@ def _resolve_to_lingvo(
             mapped_code = iso_map[combo]
             lingvo = lingvos.get(mapped_code)
             if lingvo:
-                lingvo_copy = copy.deepcopy(lingvo)
-                if not preserve_country:
-                    lingvo_copy.country = None
-                return lingvo_copy
+                return _copy_lingvo_for_return(
+                    lingvo, preserve_country=preserve_country
+                )
 
         # Prefixed script code ("unknown-Cyrl")
         if broader.lower() == "unknown":
@@ -492,15 +584,6 @@ def _resolve_to_lingvo(
 
     # For multi-word inputs (including parenthetical forms like "french (canada)"),
     # check if part of the input names a country and the rest names a language.
-    def _apply_country(base: Lingvo, cc: str, country_name: str) -> Lingvo:
-        """Return a deep copy of base with the country name and code applied."""
-        lingvo_with_country = copy.deepcopy(base)
-        lingvo_with_country.name = (
-            lingvo_with_country.name or ""
-        ) + f" {{{country_name}}}"
-        lingvo_with_country.country = cc.upper()
-        return lingvo_with_country
-
     # Strategy 1: extract a parenthesized token as the country hint first.
     # e.g. "french (canada)" -> country_hint="canada", lang_part="french"
     paren_match = re.search(r"\(([^)]+)\)", input_text)
@@ -546,19 +629,20 @@ def _resolve_to_lingvo(
     if input_lower in reference_lists["ISO_639_1"]:
         lingvo = lingvos.get(input_lower)
         if lingvo:
-            lingvo_copy = copy.deepcopy(lingvo)
-            if not preserve_country:
-                lingvo_copy.country = None
-            return lingvo_copy
+            return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
 
     # If input is 3 letters, find the entry whose language_code_3 matches
     if len(input_lower) == 3:
+        standard_lingvo = _lookup_lingvo_by_standard_code(
+            input_text, preserve_country=preserve_country
+        )
+        if standard_lingvo:
+            return standard_lingvo
         for _code_1, lingvo in lingvos.items():
             if lingvo.language_code_3 == input_lower:
-                lingvo_copy = copy.deepcopy(lingvo)
-                if not preserve_country:
-                    lingvo_copy.country = None
-                return lingvo_copy
+                return _copy_lingvo_for_return(
+                    lingvo, preserve_country=preserve_country
+                )
 
     # Try ISO deep search (language codes then script codes)
     iso_search = _iso_codes_deep_search(input_text)
@@ -566,30 +650,21 @@ def _resolve_to_lingvo(
         iso_search = _iso_codes_deep_search(input_text, script_search=True)
 
     if iso_search:
-        lingvo_copy = copy.deepcopy(iso_search)
-        if not preserve_country:
-            lingvo_copy.country = None
-        return lingvo_copy
+        return _copy_lingvo_for_return(iso_search, preserve_country=preserve_country)
 
     # Special abbreviation fixes (like 'vn' meaning Vietnamese)
     if input_lower in reference_lists["MISTAKE_ABBREVIATIONS"]:
         fixed = reference_lists["MISTAKE_ABBREVIATIONS"][input_lower]
         lingvo = lingvos.get(fixed)
         if lingvo:
-            lingvo_copy = copy.deepcopy(lingvo)
-            if not preserve_country:
-                lingvo_copy.country = None
-            return lingvo_copy
+            return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
     if input_lower in reference_lists["ISO_639_2B"]:
         canonical_code = reference_lists["ISO_639_2B"][input_lower]
         lingvo = lingvos.get(canonical_code)
         if lingvo:
-            lingvo_copy = copy.deepcopy(lingvo)
-            if not preserve_country:
-                lingvo_copy.country = None
-            return lingvo_copy
+            return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
 
     # Fuzzy match if nothing else worked
     if (
@@ -608,10 +683,9 @@ def _resolve_to_lingvo(
         try:
             lingvo_script = _iso_codes_deep_search(input_text, script_search=True)
             if lingvo_script:
-                lingvo_copy = copy.deepcopy(lingvo_script)
-                if not preserve_country:
-                    lingvo_copy.country = None
-                return lingvo_copy
+                return _copy_lingvo_for_return(
+                    lingvo_script, preserve_country=preserve_country
+                )
             else:
                 return None
         except TypeError:
