@@ -36,7 +36,6 @@ from hermes.matching import (
     language_matcher,
     title_parser,
 )
-from hermes.tools import get_statistics, test_parser
 from reddit.connection import REDDIT_HERMES
 
 logger = get_specific_logger("HM", log_path=Paths.HERMES["HERMES_EVENTS"])
@@ -176,39 +175,24 @@ if __name__ == "__main__":
 
     initialize_hermes_db()
 
-    if "--test" in sys.argv:
-        # Parse the optional numeric argument after --test
-        idx = sys.argv.index("--test")
-        try:
-            test_limit = int(sys.argv[idx + 1])
-        except (IndexError, ValueError):
-            test_limit = 100
-        logger.info(f"Running in parser test mode (limit={test_limit}).")
-        test_parser(REDDIT_HERMES, test_limit)
+    try:
+        database_maintenance()
+        get_submissions()
 
-    elif len(sys.argv) > 1:
-        logger.info("Running in statistics mode.")
-        get_statistics()
+    except KeyboardInterrupt:
+        logger.info("Hermes stopped by user (KeyboardInterrupt).")
+        sys.exit(0)
 
-    else:
-        try:
-            database_maintenance()
-            get_submissions()
+    except TRANSIENT_ERRORS as e:
+        logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
+        logger.info("Will retry on next cycle.")
 
-        except KeyboardInterrupt:
-            logger.info("Hermes stopped by user (KeyboardInterrupt).")
-            sys.exit(0)
+    except Exception as exc:
+        entry = f"### {exc}\n\n{traceback.format_exc()}"
+        logger.critical(entry)
+        error_log_basic(entry, "Hermes")
 
-        except TRANSIENT_ERRORS as e:
-            logger.warning(f"Transient error encountered: {type(e).__name__}: {e}")
-            logger.info("Will retry on next cycle.")
-
-        except Exception as exc:
-            entry = f"### {exc}\n\n{traceback.format_exc()}"
-            logger.critical(entry)
-            error_log_basic(entry, "Hermes")
-
-        finally:
-            elapsed_time = round((time.time() - start_time) / 60, 2)
-            logger.info(f"Run {elapsed_time:.2f} minutes.")
-            hermes_db.close_all()
+    finally:
+        elapsed_time = round((time.time() - start_time) / 60, 2)
+        logger.info(f"Run {elapsed_time:.2f} minutes.")
+        hermes_db.close_all()

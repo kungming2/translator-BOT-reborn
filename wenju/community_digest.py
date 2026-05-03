@@ -20,7 +20,7 @@ from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
-from config import SETTINGS
+from config import SETTINGS, TRANSLATORBOT_SUBREDDIT
 from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
@@ -233,7 +233,7 @@ def weekly_bot_action_report() -> None:
 
     report_content = "\n\n".join(report_sections)
 
-    subreddit = REDDIT.subreddit("translatorBOT")
+    subreddit = REDDIT.subreddit(TRANSLATORBOT_SUBREDDIT)
     title = f"u/translator-BOT Mod Action Statistics — {end_date} (Week {week_number})"
 
     submission = subreddit.submit(title=title, selftext=report_content)

@@ -22,7 +22,7 @@ from lxml import html
 from praw.exceptions import PRAWException
 from pypdf import PdfReader
 
-from config import Paths
+from config import TRANSLATORBOT_SUBREDDIT, Paths
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
 from reddit.connection import REDDIT, get_random_useragent
@@ -169,7 +169,6 @@ def post_iso_reports_to_reddit() -> None:
     subreddit if they haven't been posted before. Updates the posted status
     in the YAML file after successful posting.
     """
-    subreddit_name = "translatorBOT"
     current_year_utc = datetime.now(UTC).year
 
     try:
@@ -187,7 +186,7 @@ def post_iso_reports_to_reddit() -> None:
             logger.info("No reports found for the current or previous year.")
             return
 
-        subreddit = REDDIT.subreddit(subreddit_name)
+        subreddit = REDDIT.subreddit(TRANSLATORBOT_SUBREDDIT)
         updated = False
 
         for report in current_and_previous_reports:

@@ -10,7 +10,7 @@ import asyncio
 import logging
 import re
 from pprint import pprint
-from time import perf_counter
+from time import perf_counter, time
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -19,7 +19,7 @@ from wasabi import msg
 from config import SETTINGS, enable_debug_logging
 from database import initialize_all_databases, search_database
 from error import display_event_errors
-from hermes.tools import get_statistics, test_parser, test_title
+from hermes.tools import parse_title_diagnostic, print_statistics, test_parser
 from integrations.ai import fetch_image_description
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 from lang.languages import converter, parse_language_list
@@ -31,6 +31,7 @@ from models.kunulo import Kunulo
 from monitoring.points import points_post_retriever, points_user_retriever
 from reddit.connection import (
     REDDIT_HELPER,
+    REDDIT_HERMES,
     get_random_useragent,
     reddit_status_check,
     search_removal_reasons,
@@ -43,6 +44,7 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
+from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from ziwen_lookup.cache_helpers import get_cjk_cache_top_entries
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
@@ -220,8 +222,10 @@ def check_integrations_ai_image_description() -> None:
 
 
 def check_hermes_statistics() -> None:
-    """Print aggregated language statistics from the Hermes database."""
-    get_statistics()
+    """Print Hermes language statistics for the last 30 days."""
+    end_utc = int(time())
+    start_utc = end_utc - (30 * 24 * 60 * 60)
+    print_statistics(start_utc, end_utc)
 
 
 def check_hermes_parser() -> None:
@@ -232,12 +236,47 @@ def check_hermes_parser() -> None:
     if limit is None:
         return
     with msg.loading(f"Fetching {limit} posts..."):
-        test_parser(REDDIT_HELPER, limit=limit)
+        test_parser(REDDIT_HERMES, limit=limit)
+
+
+def _format_hermes_codes(codes: list[str]) -> str:
+    """Format ISO codes as 'Language Name [code]' strings."""
+    if not codes:
+        return "-"
+
+    parts = []
+    for code in codes:
+        lingvo = converter(code)
+        name = lingvo.name if lingvo else code
+        parts.append(f"{name} [{code}]")
+    return ", ".join(parts)
+
+
+def _format_hermes_levels(levels: dict[str, str]) -> str:
+    """Format Hermes proficiency levels for devtools output."""
+    if not levels:
+        return "-"
+    return "  ".join(f"{code}={level}" for code, level in levels.items())
 
 
 def check_hermes_title() -> None:
     """Interactively parse a manually entered post title via title_parser."""
-    test_title()
+    title = _prompt_text(
+        "Enter a post title to parse (x to back out): ", allow_exit=True
+    )
+    if title is None:
+        return
+
+    with msg.loading("Parsing title..."):
+        diagnostic = parse_title_diagnostic(title)
+
+    msg.good("Hermes title parse complete.")
+    msg.info(f"Title    : {diagnostic.title}")
+    msg.info(f"Offering : {_format_hermes_codes(diagnostic.offering)}")
+    msg.info(f"Seeking  : {_format_hermes_codes(diagnostic.seeking)}")
+    msg.info(f"Levels   : {_format_hermes_levels(diagnostic.levels)}")
+    if not diagnostic.offering and not diagnostic.seeking:
+        msg.warn("Unparsed: no languages detected.")
 
 
 # ─── monitoring ───────────────────────────────────────────────────────────────
@@ -671,6 +710,24 @@ def check_wenju_fetch_iso_reports() -> None:
     msg.good("ISO report fetch complete.")
 
 
+# ─── wenyuan ──────────────────────────────────────────────────────────────────
+
+
+def check_wenyuan_iso_create() -> None:
+    """code_manager: Create a new ISO 639-3 dataset entry."""
+    create_entry()
+
+
+def check_wenyuan_iso_update() -> None:
+    """code_manager: Update an existing ISO 639-3 dataset entry."""
+    update_entry()
+
+
+def check_wenyuan_iso_deprecate() -> None:
+    """code_manager: Remove an ISO 639-3 dataset entry."""
+    deprecate_entry()
+
+
 # ─── Menu runner ──────────────────────────────────────────────────────────────
 #
 # Two-level menu structure:
@@ -695,8 +752,8 @@ SECTIONS = {
     "3": (
         "hermes",
         {
-            "1": ("db statistics", check_hermes_statistics),
-            "2": ("parser diagnostics", check_hermes_parser),
+            "1": ("statistics (last 30 days)", check_hermes_statistics),
+            "2": ("parse recent r/Language_Exchange titles", check_hermes_parser),
             "3": ("manually parse title for matching", check_hermes_title),
         },
     ),
@@ -785,6 +842,17 @@ SECTIONS = {
             "12": (
                 "cache: top entries by fetch_count",
                 check_ziwen_lookup_cache_top_entries,
+            ),
+        },
+    ),
+    "13": (
+        "code_manager",
+        {
+            "1": ("code_manager: create ISO 639-3 entry", check_wenyuan_iso_create),
+            "2": ("code_manager: update ISO 639-3 entry", check_wenyuan_iso_update),
+            "3": (
+                "code_manager: deprecate ISO 639-3 entry",
+                check_wenyuan_iso_deprecate,
             ),
         },
     ),

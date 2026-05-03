@@ -136,6 +136,11 @@ class Paths:
     }
 
 
+# ─── Shared subreddit constants ───────────────────────────────────────────────
+
+TRANSLATORBOT_SUBREDDIT = "translatorBOT"  # Subreddit where bot config and updates are
+
+
 def get_reports_directory(base_dir: str | None = None) -> Path:
     """
     Return the Path object for the current month's reports directory.

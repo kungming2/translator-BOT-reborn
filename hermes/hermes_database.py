@@ -158,6 +158,20 @@ class HermesDatabaseManager(DatabaseManager):
 
     # ── entries table — reads ─────────────────────────────────────────────────
 
+    @staticmethod
+    def _deserialize_rows(
+        rows: list[tuple[str, str, int]],
+    ) -> list[tuple[str, dict[str, Any], int]]:
+        """Deserialise raw DB rows, skipping any that cannot be parsed."""
+        results: list[tuple[str, dict[str, Any], int]] = []
+        for username, raw, posted_utc in rows:
+            data = _parse_user_data(raw)
+            if data is None:
+                logger.warning(f"Could not parse user_data for u/{username}. Skipped.")
+                continue
+            results.append((username, data, posted_utc))
+        return results
+
     def get_entry(self, username: str) -> dict[str, Any] | None:
         """
         Return the stored user_data dict for *username*, or None if not present.
@@ -176,16 +190,28 @@ class HermesDatabaseManager(DatabaseManager):
         """
         cur = self.cursor_hermes
         cur.execute("SELECT username, user_data, posted_utc FROM entries")
-        rows = cur.fetchall()
+        return self._deserialize_rows(cur.fetchall())
 
-        results: list[tuple[str, dict[str, Any], int]] = []
-        for username, raw, posted_utc in rows:
-            data = _parse_user_data(raw)
-            if data is None:
-                logger.warning(f"Could not parse user_data for u/{username}. Skipped.")
-                continue
-            results.append((username, data, posted_utc))
-        return results
+    def get_entries_between(
+        self, start_utc: int, end_utc: int
+    ) -> list[tuple[str, dict[str, Any], int]]:
+        """
+        Return entries with posted_utc in the half-open range
+        [start_utc, end_utc).
+
+        Rows that cannot be deserialised are skipped with a warning.
+        """
+        cur = self.cursor_hermes
+        cur.execute(
+            """
+            SELECT username, user_data, posted_utc
+            FROM entries
+            WHERE posted_utc >= ? AND posted_utc < ?
+            ORDER BY posted_utc 
+            """,
+            (start_utc, end_utc),
+        )
+        return self._deserialize_rows(cur.fetchall())
 
     # ── entries table — writes ────────────────────────────────────────────────
 

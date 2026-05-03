@@ -7,13 +7,17 @@ Neither function is called during the normal bot runtime; both are
 intended for offline inspection and debugging.
 
   get_statistics()  — Summarise offered/sought language counts from the DB.
+  format_statistics_for_reddit() — Format statistics as Markdown.
   test_parser()     — Fetch live posts and print title_parser output for each.
-  test_title()      — Interactively parse a manually entered post title.
+  parse_title_diagnostic() — Parse one title for devtools diagnostics.
 
 Logger tag: [HM:TOOLS]
 """
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
+
+from collections import Counter
+from dataclasses import dataclass
 
 import praw
 
@@ -27,20 +31,51 @@ logger = get_specific_logger("HM:TOOLS", log_path=Paths.HERMES["HERMES_EVENTS"])
 # ─── Database inspection ──────────────────────────────────────────────────────
 
 
-def get_statistics() -> None:
-    """
-    Print aggregated language statistics from the current database to stdout.
-    Useful for manual inspection; not called during the normal runtime loop.
-    """
-    from collections import Counter
+@dataclass(frozen=True)
+class HermesStatistics:
+    """Aggregated Hermes language statistics for a database time range."""
 
+    start_utc: int | None
+    end_utc: int | None
+    post_count: int
+    unique_offered: int
+    unique_sought: int
+    offered_counts: Counter[str]
+    sought_counts: Counter[str]
+
+
+@dataclass(frozen=True)
+class HermesTitleDiagnostic:
+    """Parsed Hermes title data for devtools diagnostics."""
+
+    title: str
+    offering: list[str]
+    seeking: list[str]
+    levels: dict[str, str]
+
+
+def get_statistics(
+    start_utc: int | None = None, end_utc: int | None = None
+) -> HermesStatistics:
+    """
+    Return aggregated language statistics from the current Hermes database.
+
+    If both timestamps are provided, only entries with posted_utc in the
+    half-open range [start_utc, end_utc) are included.
+    """
     from hermes.hermes_database import hermes_db
-    from lang.languages import converter
 
-    entries = hermes_db.get_all_entries()
+    if (start_utc is None) != (end_utc is None):
+        raise ValueError("start_utc and end_utc must be provided together.")
+    if start_utc is not None and end_utc is not None:
+        if start_utc >= end_utc:
+            raise ValueError("start_utc must be earlier than end_utc.")
+        entries = hermes_db.get_entries_between(start_utc, end_utc)
+    else:
+        entries = hermes_db.get_all_entries()
+
     if not entries:
         logger.info("No language data available for statistics.")
-        return
 
     all_offered: list[str] = []
     all_sought: list[str] = []
@@ -49,11 +84,30 @@ def get_statistics() -> None:
         all_offered.extend(data.get("offering", []))
         all_sought.extend(data.get("seeking", []))
 
-    print(
-        f"* Posts in database  : {len(entries):,}\n"
-        f"* Unique offered     : {len(set(all_offered)):,}\n"
-        f"* Unique sought      : {len(set(all_sought)):,}\n"
+    return HermesStatistics(
+        start_utc=start_utc,
+        end_utc=end_utc,
+        post_count=len(entries),
+        unique_offered=len(set(all_offered)),
+        unique_sought=len(set(all_sought)),
+        offered_counts=Counter(all_offered),
+        sought_counts=Counter(all_sought),
     )
+
+
+def format_statistics_for_reddit(stats: HermesStatistics) -> str:
+    """Format Hermes statistics as a Markdown report."""
+    from lang.languages import converter
+
+    post_count_label = (
+        "Posts in period" if stats.start_utc is not None else "Posts in database"
+    )
+    lines = [
+        f"* {post_count_label:<18}: {stats.post_count:,}",
+        f"* Unique offered     : {stats.unique_offered:,}",
+        f"* Unique sought      : {stats.unique_sought:,}",
+        "",
+    ]
 
     header = (
         "| Language | Code | Count | Percentage |\n"
@@ -61,18 +115,31 @@ def get_statistics() -> None:
     )
     row_fmt = "| {name} | `{code}` | {count:,} | {pct:.2%} |"
 
-    for lang_list, label in [(all_offered, "Offered"), (all_sought, "Sought")]:
-        counts = Counter(lang_list)
-        total = len(lang_list)
-        lines: list[str] = []
+    for counts, label in [
+        (stats.offered_counts, "Offered"),
+        (stats.sought_counts, "Sought"),
+    ]:
+        total = sum(counts.values())
+        table_lines: list[str] = []
         for code in sorted(counts):
             count = counts[code]
             lingvo = converter(code)
             name = lingvo.name if lingvo else code
-            lines.append(
-                row_fmt.format(name=name, code=code, count=count, pct=count / total)
+            percentage = count / total if total else 0
+            table_lines.append(
+                row_fmt.format(name=name, code=code, count=count, pct=percentage)
             )
-        print(f"## {label}\n" + header + "\n".join(lines) + "\n")
+        if not table_lines:
+            table_lines.append("| None | `-` | 0 | 0.00% |")
+        lines.append(f"## {label}\n{header}" + "\n".join(table_lines))
+        lines.append("")
+
+    return "\n".join(lines).strip()
+
+
+def print_statistics(start_utc: int | None = None, end_utc: int | None = None) -> None:
+    """Print aggregated Hermes language statistics to stdout."""
+    print(format_statistics_for_reddit(get_statistics(start_utc, end_utc)))
 
 
 # ─── Parser diagnostics ───────────────────────────────────────────────────────
@@ -89,8 +156,8 @@ def test_parser(reddit: praw.Reddit, limit: int = 100) -> None:
         limit:  Number of posts to fetch (default 100).
 
     Usage:
-        python hermes/main_hermes.py --test
-        python hermes/main_hermes.py --test 50
+        python devtools.py
+        Select hermes > parse recent r/Language_Exchange titles.
     """
     from hermes.matching import title_parser
     from lang.languages import converter
@@ -141,60 +208,25 @@ def test_parser(reddit: praw.Reddit, limit: int = 100) -> None:
     print(f"{len(posts)} posts fetched.  {unparsed} unparsed.")
 
 
-# ─── Interactive title test ───────────────────────────────────────────────────
+# ─── Title diagnostics ────────────────────────────────────────────────────────
 
 
-def test_title(title: str | None = None, include_iso_639_3: bool = True) -> None:
+def parse_title_diagnostic(
+    title: str, include_iso_639_3: bool = True
+) -> HermesTitleDiagnostic:
     """
-    Interactively parse a manually entered post title and print the result.
-
-    Prompts for a title if one is not supplied, then runs it through
-    ``title_parser`` and prints offered languages, sought languages, and
-    proficiency levels in the same format used by ``test_parser``.
+    Parse one manually supplied post title for devtools diagnostics.
 
     Args:
-        title:             Title string to parse; prompts stdin if None.
+        title:             Title string to parse.
         include_iso_639_3: If True, also accept ISO 639-3 codes (default True).
     """
     from hermes.matching import title_parser
-    from lang.languages import converter
-
-    if title is None:
-        try:
-            title = input("Enter a post title to parse: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nAborted.")
-            return
-
-    if not title:
-        logger.info("No title supplied.")
-        return
 
     offering, seeking, levels = title_parser(title, include_iso_639_3=include_iso_639_3)
-
-    def _fmt_codes(codes: list[str]) -> str:
-        """Format a list of ISO codes as 'Language Name [code]' strings."""
-        if not codes:
-            return "—"
-        parts = []
-        for code in codes:
-            lingvo = converter(code)
-            name = lingvo.name if lingvo else code
-            parts.append(f"{name} [{code}]")
-        return ", ".join(parts)
-
-    def _fmt_levels(lvls: dict[str, str]) -> str:
-        """Format a levels dict as a space-separated 'code=level' string."""
-        if not lvls:
-            return "—"
-        return "  ".join(f"{k}={v}" for k, v in lvls.items())
-
-    sep = "-" * 80
-    print(sep)
-    print(f"TITLE    : {title}")
-    print(f"OFFERING : {_fmt_codes(offering)}")
-    print(f"SEEKING  : {_fmt_codes(seeking)}")
-    print(f"LEVELS   : {_fmt_levels(levels)}")
-    if not offering and not seeking:
-        print("⚠  UNPARSED — no languages detected.")
-    print(sep)
+    return HermesTitleDiagnostic(
+        title=title,
+        offering=offering,
+        seeking=seeking,
+        levels=levels,
+    )
