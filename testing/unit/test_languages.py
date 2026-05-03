@@ -536,6 +536,26 @@ class TestParseLanguageList(unittest.TestCase):
         self.assertGreater(len(result), 0)
 
     @_skip_if_no_data
+    def test_markdown_instruction_lines_are_ignored(self) -> None:
+        result = parse_language_list(
+            "## Sign up for notifications about new requests.\n"
+            "## Reply with language names or codes below.\n"
+            "Chinese, French"
+        )
+        codes = [lingvo.preferred_code for lingvo in result]
+        self.assertEqual(codes, ["fr", "zh"])
+
+    @_skip_if_no_data
+    def test_leading_quote_prompt_is_ignored(self) -> None:
+        result = parse_language_list(
+            "## Sign up for notifications about new requests.\n"
+            "## Type the language names or codes after the > below.\n"
+            "> Spanish, Japanese, zh"
+        )
+        codes = [lingvo.preferred_code for lingvo in result]
+        self.assertEqual(codes, ["es", "ja", "zh"])
+
+    @_skip_if_no_data
     def test_utility_codes_excluded(self) -> None:
         result = parse_language_list("en, meta, community, all, fr")
         codes = [lingvo.preferred_code for lingvo in result]

@@ -67,6 +67,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         "config": _make_stub_module(
             "config",
             SETTINGS={"subreddit": "translator", "internal_post_types": []},
+            TRANSLATORBOT_SUBREDDIT="translatorBOT",  # ← add this
             Paths=_RealPaths,
             logger=MagicMock(),
             load_settings=MagicMock(return_value={}),

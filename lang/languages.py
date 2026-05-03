@@ -746,8 +746,17 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         list_string = list_string.rpartition("LANGUAGES:")[-1].strip()
         logger.debug(f"After stripping LANGUAGES: prefix: {repr(list_string)}")
     else:
-        list_string = list_string.strip()
-        logger.debug(f"After strip (no LANGUAGES: prefix): {repr(list_string)}")
+        list_string = "\n".join(
+            line
+            for line in list_string.splitlines()
+            if not line.lstrip().startswith("#")
+        ).strip()
+        logger.debug(
+            f"After stripping instruction lines (no LANGUAGES: prefix): {repr(list_string)}"
+        )
+
+    list_string = re.sub(r"(?m)^\s*>\s?", "", list_string).strip()
+    logger.debug(f"After stripping leading quote prompts: {repr(list_string)}")
 
     # Normalize various delimiters to commas
     for delimiter in ["+", "\n", "/", ":", ";"]:

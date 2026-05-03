@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-Run independently and infrequently to update ISO 639-3 code points.
+Utilities for infrequent ISO 639-3 dataset maintenance.
 ...
 
 Logger tag: [WY:CODE]
 """
 
+import csv
 import logging
+import re
 from pathlib import Path
-
-import pandas as pd
 
 from config import Paths
 from config import logger as _base_logger
@@ -22,20 +22,59 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "WY:CODE"})
 
 # Location of our primary ISO dataset for codes
 CSV_PATH = Path(Paths.DATASETS["ISO_CODES"])
+CSV_FIELDS = ["ISO 639-3", "ISO 639-1", "Language Name", "Alternate Names"]
+ISO_639_3_RE = re.compile(r"^[a-z]{3}$")
+ISO_639_1_RE = re.compile(r"^[a-z]{2}$")
 
 
 # ─── I/O helpers ──────────────────────────────────────────────────────────────
 
 
-def load_csv() -> pd.DataFrame | None:
-    """Load the CSV file and return as DataFrame."""
+def _normalize_iso_639_3(value: str) -> str | None:
+    """Return a normalized ISO 639-3 code, or None if invalid."""
+    code = value.strip().lower()
+    if not ISO_639_3_RE.fullmatch(code):
+        print("ISO 639-3 code must be exactly three ASCII letters.")
+        return None
+    return code
+
+
+def _normalize_iso_639_1(value: str) -> str | None:
+    """Return a normalized optional ISO 639-1 code, or None if invalid."""
+    code = value.strip().lower()
+    if not code:
+        return ""
+    if not ISO_639_1_RE.fullmatch(code):
+        print("ISO 639-1 code must be blank or exactly two ASCII letters.")
+        return None
+    return code
+
+
+def _row_for_code(rows: list[dict[str, str]], iso_639_3: str) -> dict[str, str] | None:
+    """Return the dataset row matching an ISO 639-3 code."""
+    for row in rows:
+        if row["ISO 639-3"] == iso_639_3:
+            return row
+    return None
+
+
+def load_csv() -> list[dict[str, str]] | None:
+    """Load the ISO dataset CSV."""
     try:
         encodings = ["utf-8", "latin-1", "iso-8859-1", "cp1252"]
         for encoding in encodings:
             try:
-                df = pd.read_csv(CSV_PATH, encoding=encoding)
+                with open(CSV_PATH, newline="", encoding=encoding) as file:
+                    reader = csv.DictReader(file)
+                    if reader.fieldnames != CSV_FIELDS:
+                        logger.error(
+                            "Unexpected ISO CSV columns: "
+                            f"{reader.fieldnames}. Expected {CSV_FIELDS}."
+                        )
+                        return None
+                    rows = [dict(row) for row in reader]
                 logger.debug(f"Loaded CSV with encoding {encoding!r}")
-                return df
+                return rows
             except (UnicodeDecodeError, UnicodeError):
                 continue
 
@@ -46,10 +85,13 @@ def load_csv() -> pd.DataFrame | None:
         return None
 
 
-def save_csv(df: pd.DataFrame) -> None:
-    """Save DataFrame back to CSV file."""
+def save_csv(rows: list[dict[str, str]]) -> None:
+    """Save rows back to the ISO dataset CSV."""
     try:
-        df.to_csv(CSV_PATH, index=False, encoding="utf-8")
+        with open(CSV_PATH, "w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=CSV_FIELDS, lineterminator="\r\n")
+            writer.writeheader()
+            writer.writerows(rows)
         logger.info("File saved successfully")
     except Exception as e:
         logger.error(f"Failed to save file: {e}")
@@ -60,17 +102,25 @@ def save_csv(df: pd.DataFrame) -> None:
 
 def create_entry() -> None:
     """Create a new ISO 639-3 entry."""
-    df = load_csv()
-    if df is None:
+    rows = load_csv()
+    if rows is None:
         return
 
-    iso_639_3 = input("Enter ISO 639-3 code: ").strip()
+    iso_639_3 = _normalize_iso_639_3(input("Enter ISO 639-3 code: "))
+    if iso_639_3 is None:
+        return
 
-    if iso_639_3 in df["ISO 639-3"].values:
+    if _row_for_code(rows, iso_639_3):
         print(f"ISO 639-3 code '{iso_639_3}' already exists.")
         return
 
     language_name = input("Enter Language Name: ").strip()
+    iso_639_1 = _normalize_iso_639_1(input("Enter ISO 639-1 code (blank if none): "))
+    if iso_639_1 is None:
+        return
+    alternate_names = input(
+        "Enter Alternate Names (semicolon-separated, blank if none): "
+    ).strip()
 
     if not iso_639_3 or not language_name:
         print("ISO 639-3 and Language Name cannot be empty.")
@@ -78,55 +128,84 @@ def create_entry() -> None:
 
     new_row = {
         "ISO 639-3": iso_639_3,
-        "ISO 639-1": "",
+        "ISO 639-1": iso_639_1,
         "Language Name": language_name,
-        "Alternate Names": "",
+        "Alternate Names": alternate_names,
     }
 
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    save_csv(df)
+    rows.append(new_row)
+    save_csv(rows)
     print(f"✓ Created new entry: {iso_639_3} - {language_name}")
 
 
 def update_entry() -> None:
-    """Update the Language Name for an existing ISO 639-3 code."""
-    df = load_csv()
-    if df is None:
+    """Update fields for an existing ISO 639-3 entry."""
+    rows = load_csv()
+    if rows is None:
         return
 
-    iso_639_3 = input("Enter ISO 639-3 code to update: ").strip()
+    iso_639_3 = _normalize_iso_639_3(input("Enter ISO 639-3 code to update: "))
+    if iso_639_3 is None:
+        return
 
-    if iso_639_3 not in df["ISO 639-3"].values:
+    row = _row_for_code(rows, iso_639_3)
+    if row is None:
         print(f"ISO 639-3 code '{iso_639_3}' not found.")
         return
 
-    current_name = df[df["ISO 639-3"] == iso_639_3]["Language Name"].values[0]
-    print(f"Current Language Name: {current_name}")
+    print(f"Current Language Name: {row['Language Name']}")
+    print(f"Current ISO 639-1: {row['ISO 639-1'] or '(none)'}")
+    print(f"Current Alternate Names: {row['Alternate Names'] or '(none)'}")
 
-    new_name = input("Enter updated Language Name: ").strip()
+    new_name = input("Enter updated Language Name (blank to keep current): ").strip()
+    new_iso_639_1 = input(
+        "Enter updated ISO 639-1 code (blank to keep current, '-' to clear): "
+    )
+    new_alternate_names = input(
+        "Enter updated Alternate Names (blank to keep current, '-' to clear): "
+    ).strip()
 
-    if not new_name:
-        print("Language Name cannot be empty.")
+    updates: dict[str, str] = {}
+    if new_name:
+        updates["Language Name"] = new_name
+    if new_iso_639_1.strip():
+        if new_iso_639_1.strip() == "-":
+            updates["ISO 639-1"] = ""
+        else:
+            normalized_iso_639_1 = _normalize_iso_639_1(new_iso_639_1)
+            if normalized_iso_639_1 is None:
+                return
+            updates["ISO 639-1"] = normalized_iso_639_1
+    if new_alternate_names:
+        updates["Alternate Names"] = (
+            "" if new_alternate_names == "-" else new_alternate_names
+        )
+
+    if not updates:
+        print("No changes made.")
         return
 
-    df.loc[df["ISO 639-3"] == iso_639_3, "Language Name"] = new_name
-    save_csv(df)
-    print(f"✓ Updated {iso_639_3}: {current_name} → {new_name}")
+    row.update(updates)
+    save_csv(rows)
+    print(f"✓ Updated {iso_639_3}: {', '.join(updates.keys())}")
 
 
 def deprecate_entry() -> None:
     """Remove a row with the specified ISO 639-3 code."""
-    df = load_csv()
-    if df is None:
+    rows = load_csv()
+    if rows is None:
         return
 
-    iso_639_3 = input("Enter ISO 639-3 code to deprecate: ").strip()
+    iso_639_3 = _normalize_iso_639_3(input("Enter ISO 639-3 code to deprecate: "))
+    if iso_639_3 is None:
+        return
 
-    if iso_639_3 not in df["ISO 639-3"].values:
+    row = _row_for_code(rows, iso_639_3)
+    if row is None:
         print(f"ISO 639-3 code '{iso_639_3}' not found.")
         return
 
-    language_name = df[df["ISO 639-3"] == iso_639_3]["Language Name"].values[0]
+    language_name = row["Language Name"]
     confirm = (
         input(
             f"Are you sure you want to delete '{iso_639_3} - {language_name}'? (yes/no): "
@@ -139,37 +218,5 @@ def deprecate_entry() -> None:
         print("Cancelled.")
         return
 
-    df = df[df["ISO 639-3"] != iso_639_3]
-    save_csv(df)
+    save_csv([row for row in rows if row["ISO 639-3"] != iso_639_3])
     print(f"✓ Deprecated {iso_639_3} - {language_name}")
-
-
-# ─── Entry point ──────────────────────────────────────────────────────────────
-
-
-def main() -> None:
-    """Main menu loop."""
-    while True:
-        print("\n--- ISO Codes Manager ---")
-        print("1. Create new entry")
-        print("2. Update entry")
-        print("3. Deprecate entry")
-        print("4. Exit")
-
-        choice = input("\nSelect operation (1-4): ").strip()
-
-        if choice == "1":
-            create_entry()
-        elif choice == "2":
-            update_entry()
-        elif choice == "3":
-            deprecate_entry()
-        elif choice == "4":
-            print("Goodbye!")
-            break
-        else:
-            print("Invalid choice. Please enter 1-4.")
-
-
-if __name__ == "__main__":
-    main()
