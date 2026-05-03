@@ -10,12 +10,13 @@ Logger tag: [MESSAGING]
 
 import contextlib
 import logging
+import re
 
 import praw
 from praw.exceptions import APIException
 from praw.models import Message, Redditor
 
-from config import Paths, load_settings
+from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
 from lang.languages import parse_language_list
@@ -34,6 +35,32 @@ from reddit.reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MESSAGING"})
+
+NOTIFICATION_LIST_DELIMITER_PATTERN = re.compile(r"[,+/\n:;\s]+")
+
+
+def _notification_request_text(body_text: str) -> str:
+    """Return the user-editable notification list text from a message body."""
+    if "LANGUAGES:" in body_text:
+        return body_text.rpartition("LANGUAGES:")[-1].strip()
+
+    return "\n".join(
+        line for line in body_text.splitlines() if not line.lstrip().startswith("#")
+    ).strip()
+
+
+def _parse_internal_notification_types(body_text: str) -> list[str]:
+    """Extract configured internal notification types from a request body."""
+    request_text = _notification_request_text(body_text).lower()
+    internal_types = {str(item).lower() for item in SETTINGS["internal_post_types"]}
+
+    matches = []
+    for item in NOTIFICATION_LIST_DELIMITER_PATTERN.split(request_text):
+        item = item.strip()
+        if item in internal_types:
+            matches.append(item)
+
+    return sorted(set(matches))
 
 
 # ─── OP notification ──────────────────────────────────────────────────────────
@@ -82,11 +109,14 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     logger.debug(f"[SUB] First 10 excluded words: {commonly_excluded[:10]}")
 
     logger.info(f"New subscription request from u/{message_author}.")
-    language_matches = parse_language_list(body_text)  # Returns Lingvo objects.
+    request_text = _notification_request_text(body_text)
+    language_matches = parse_language_list(request_text)  # Returns Lingvo objects.
+    internal_matches = _parse_internal_notification_types(body_text)
     logger.debug(f"[SUB] After parse_language_list: {len(language_matches)} matches")
     logger.debug(
         f"[SUB] Lingvo preferred_codes: {[x.preferred_code for x in language_matches]}"
     )
+    logger.debug(f"[SUB] Internal notification types: {internal_matches}")
 
     lingvo_names_formatted = []
 
@@ -102,7 +132,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     )
 
     # No valid matches.
-    if not language_matches:  # There are no valid codes to subscribe.
+    if not language_matches and not internal_matches:
         logger.warning("[SUB] No valid matches after filtering - rejecting request")
         reddit_reply(
             message,
@@ -117,7 +147,9 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     )
 
     # Insert the relevant codes.
-    notifier_language_list_editor(language_matches, message_author, "insert")
+    notifier_language_list_editor(
+        language_matches + internal_matches, message_author, "insert"
+    )
 
     # Get the language names of those codes for use in the reply message.
     for lingvo in language_matches:
@@ -127,10 +159,16 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
 
     # Add the various components of the reply.
     thanks_phrase = getattr(
-        language_matches[0], "thanks", "Thank you"
+        language_matches[0] if language_matches else None, "thanks", "Thank you"
     )  # Custom thank you
-    bullet_list = "\n* ".join(lingvo_names_formatted)
-    frequency_table = generate_language_frequency_markdown(language_matches)
+    internal_names_formatted = [
+        f"{post_type.capitalize()} posts" for post_type in internal_matches
+    ]
+    bullet_list = "\n* ".join(lingvo_names_formatted + internal_names_formatted)
+    if language_matches:
+        frequency_table = generate_language_frequency_markdown(language_matches)
+    else:
+        frequency_table = "No language frequency statistics are shown for internal post notifications."
 
     # Pull it all together with the template.
     main_body = RESPONSE.MSG_SUBSCRIBE.format(
@@ -145,7 +183,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
         + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
     )
     logger.info(f"Added notification subscriptions for u/{message_author}.")
-    action_counter(len(language_matches), "Subscriptions")
+    action_counter(len(language_matches) + len(internal_matches), "Subscriptions")
 
 
 def handle_unsubscribe(message: Message, message_author: Redditor) -> None:

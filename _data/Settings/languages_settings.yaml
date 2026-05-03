@@ -1,5 +1,5 @@
-# This settings file stores settings for the title matching routine,
-# under /title.
+# This settings file stores settings for the language parsing routines,
+# under /lang.
 
 # These are English words that may be erroneously recognized as a
 # language due to similarity, and should be ignored for fuzzy matching.

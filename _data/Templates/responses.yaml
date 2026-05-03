@@ -34,11 +34,11 @@ MSG_SHORT_THANKS_TRANSLATED: |
 
   If this was a mistake, please comment `!reset` on your post or message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Please+reset+this+post&message={1}). Thank you.
 
-MSG_SUBSCRIBE_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.%0A%23%23+You+can+sign+up+for+one+language+or+as+many+as+you%27d+like.%0ALANGUAGES%3A+
-MSG_REMOVAL_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0ALANGUAGES%3A+{language_name}
+MSG_SUBSCRIBE_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+r%2Ftranslator+notifications%0A%23%23+Type+the+language+names+or+codes+after+the+%3E+below.+Separate+multiple+languages+with+commas.%0A%3E+
+MSG_REMOVAL_LINK: https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Unsubscribe+from+r%2Ftranslator+notifications%0A%23%23+Add+the+language+names+or+codes+you+want+to+remove+below.%0A{language_name}
 MSG_UNSUBSCRIBE_BUTTON: ' • [Points](https://www.reddit.com/message/compose?to=translator-BOT&subject=Points&message=%23%23+How+many+points+have+I+earned?)
   • [Status](https://www.reddit.com/message/compose?to=translator-BOT&subject=Status&message=%23%23+What+languages+am+I+subscribed+to?)
-  • [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Please+unsubscribe+me+from+the+following+languages.%0A%23%23+List+language+codes+or+names+after+the+colon+below+and+separate+languages+with+commas.+%28List+ALL+to+completely+unsubscribe%29%0ALANGUAGES%3A+ALL)'
+  • [Unsubscribe](https://www.reddit.com/message/compose?to=translator-BOT&subject=Unsubscribe&message=%23%23+Unsubscribe+from+r%2Ftranslator+notifications%0A%23%23+Add+language+names+or+codes+below%2C+or+write+ALL+to+remove+every+subscription.%0AALL)'
 MSG_NO_SUBSCRIPTIONS: >
   Sorry, you're not currently subscribed to notifications for any language requests
   on r/translator. Would you like to [sign up]({})?
@@ -314,7 +314,7 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, no one is currently subscribed for {languag
 
 
   If you know {language_name}, you can [sign up for notifications for that
-  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+notifications+about+new+requests+for+your+language%21%0ALANGUAGES%3A+{language_code})
+  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+r%2Ftranslator+notifications%0A%23%23+Send+this+message+to+be+notified+about+new+{language_name}+requests.%0A{language_code})
   to be notified about future requests. [](#comment_no_language)'
 
 # COMMANDS - ziwen_commands/identify.py AND ziwen_commands/set.py
