@@ -152,11 +152,36 @@ def _extract_markdown_link_text(value: str) -> str:
     return value.strip()
 
 
+def _language_has_recorded_statistics(lingvo: object) -> bool:
+    """Return whether this language has historical statistics.json data."""
+    num_months = getattr(lingvo, "num_months", None)
+    if isinstance(num_months, int) and num_months > 0:
+        return True
+
+    return any(
+        getattr(lingvo, attr, None)
+        for attr in (
+            "link_statistics",
+            "rate_daily",
+            "rate_monthly",
+            "rate_yearly",
+        )
+    )
+
+
 def _language_percentage_trend(
-    language: str, current_percentage: float, previous_percentages: dict[str, float]
+    language: str,
+    current_percentage: float,
+    previous_percentages: dict[str, float],
+    has_recorded_statistics: bool,
 ) -> str:
     """Return a trend symbol comparing current and previous language share."""
-    previous_percentage = previous_percentages.get(language, 0.0)
+    previous_percentage = previous_percentages.get(language)
+
+    if previous_percentage is None:
+        if not has_recorded_statistics:
+            return "🆕"
+        previous_percentage = 0.0
 
     if current_percentage > previous_percentage:
         return "⬆️"
@@ -428,7 +453,10 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         trend_cell = ""
         if previous_language_percentages is not None:
             trend = _language_percentage_trend(
-                lang, float(percent_all), previous_language_percentages
+                lang,
+                float(percent_all),
+                previous_language_percentages,
+                _language_has_recorded_statistics(lingvo),
             )
             trend_cell = f"{trend} | "
 
@@ -632,7 +660,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
 
     content += "\n"
 
-    content += "### Multiple-Language/App Requests\n\n"
+    content += "### Multiple-Language Requests\n\n"
     content += f"* For any and all languages: {multiple_language_count}\n"
     content += "* *The count for defined 'Multiple' requests are integrated into the table above.*\n\n"
 

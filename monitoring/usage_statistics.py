@@ -308,6 +308,14 @@ def get_month_points_summary(year_month: str) -> str:
 # ─── User statistics ──────────────────────────────────────────────────────────
 
 
+def _canonical_notification_language_code(language_code: str) -> str:
+    """Return the canonical display key for stored notification stats."""
+    parts = language_code.split("-", 1)
+    if len(parts) == 2 and parts[0].lower() == parts[1].lower() and len(parts[0]) == 4:
+        return f"unknown-{parts[0].lower()}"
+    return language_code
+
+
 def user_statistics_loader(username: str) -> str | None:
     """
     Look up which commands a user has been recorded as using and return
@@ -356,9 +364,15 @@ def user_statistics_loader(username: str) -> str | None:
         ]
 
     def format_notifications(notifications: dict) -> list[str]:
+        normalized_notifications: dict[str, int] = {}
+        for lang, count in notifications.items():
+            normalized = _canonical_notification_language_code(lang)
+            normalized_notifications[normalized] = (
+                normalized_notifications.get(normalized, 0) + count
+            )
         return [
             f"| Notifications (`{lang}`) | {count} |"
-            for lang, count in sorted(notifications.items())
+            for lang, count in sorted(normalized_notifications.items())
         ]
 
     commands_dict = fetch_data("SELECT * FROM total_commands WHERE username = ?")
