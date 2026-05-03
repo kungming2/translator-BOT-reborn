@@ -344,9 +344,9 @@ def _update_user_notification_count(
     cursor = db.cursor_main
     language_code = lingvo_object.preferred_code
 
-    # Format as unknown-[abcd] for scripts.
+    # Match the subscription key format used for script notifications.
     if lingvo_object.script_code:
-        language_code = f"{language_code}-{lingvo_object.script_code}"
+        language_code = f"unknown-{language_code}"
 
     # Attempt to fetch existing notification records
     cursor.execute(
@@ -681,7 +681,7 @@ def notifier(
             message_subject = f"New {language_name} request on r/translator"
             recipient = REDDIT.redditor(username)
             full_message = (
-                f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
+                f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_NOTIFICATIONS_FOOTER}"
             )
             message_send(
                 redditor_obj=recipient, subject=message_subject, body=full_message
@@ -771,7 +771,7 @@ def notifier_internal(post_type: str, submission: Submission) -> list:
                 post_author=original_post_author,
                 image_description="",
             )
-            full_message = f"{message_body}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_UNSUBSCRIBE_BUTTON}"
+            full_message = f"{message_body}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_NOTIFICATIONS_FOOTER}"
             message_send(
                 redditor_obj=recipient, subject=message_subject, body=full_message
             )

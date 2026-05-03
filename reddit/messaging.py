@@ -180,7 +180,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
         message,
         reply_text=main_body
         + RESPONSE.BOT_DISCLAIMER
-        + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
+        + RESPONSE.MSG_NOTIFICATIONS_FOOTER,
     )
     logger.info(f"Added notification subscriptions for u/{message_author}.")
     action_counter(len(language_matches) + len(internal_matches), "Subscriptions")
@@ -189,9 +189,10 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
 def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
     """Handle unsubscription requests."""
     logger.info(f"New unsubscription request from u/{message_author}.")
+    body_text = message.body
 
     # User wishes to unsubscribe from everything.
-    if message.body.lower().strip().endswith("all"):
+    if body_text.lower().strip().endswith("all"):
         # Pass an empty list.
         notifier_language_list_editor([], message_author, "purge")
         reddit_reply(
@@ -205,8 +206,12 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
         return
 
     # Continue processing the message.
-    language_matches = parse_language_list(message.body)  # Returns Lingvo objects.
-    if not language_matches:  # There are no valid codes to unsubscribe them from.
+    request_text = _notification_request_text(body_text)
+    language_matches = parse_language_list(request_text)  # Returns Lingvo objects.
+    internal_matches = _parse_internal_notification_types(body_text)
+
+    # There are no valid codes or internal notification types to unsubscribe from.
+    if not language_matches and not internal_matches:
         reddit_reply(
             message,
             reply_text=RESPONSE.MSG_CANNOT_PROCESS.format(RESPONSE.MSG_SUBSCRIBE_LINK)
@@ -214,7 +219,7 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
         )
         send_discord_alert(
             f"Unsuccessful Notifications Unsubscribe Attempt: u/{message_author}",
-            f"Forwarded message:`{message.body}`",
+            f"Forwarded message:`{body_text}`",
             "alert",
         )
         logger.info(
@@ -223,10 +228,15 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
         return
 
     final_match_names = []  # For formatting
-    notifier_language_list_editor(language_matches, message_author, "delete")
+    notifier_language_list_editor(
+        language_matches + internal_matches, message_author, "delete"
+    )
     for lingvo in language_matches:
         if lingvo.name is not None:
             final_match_names.append(lingvo.name)
+    final_match_names.extend(
+        f"{post_type.capitalize()} posts" for post_type in internal_matches
+    )
 
     bullet_list = "\n* ".join(final_match_names)
 
@@ -236,10 +246,10 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
             bullet_list, RESPONSE.MSG_SUBSCRIBE_LINK
         )
         + RESPONSE.BOT_DISCLAIMER
-        + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
+        + RESPONSE.MSG_NOTIFICATIONS_FOOTER,
     )
     logger.info(f"Removed notification subscriptions for u/{message_author}.")
-    action_counter(len(language_matches), "Unsubscriptions")
+    action_counter(len(language_matches) + len(internal_matches), "Unsubscriptions")
 
 
 def handle_status(message: Message, message_author: Redditor) -> None:
@@ -294,7 +304,7 @@ def handle_status(message: Message, message_author: Redditor) -> None:
         message,
         reply_text=compilation
         + RESPONSE.BOT_DISCLAIMER
-        + RESPONSE.MSG_UNSUBSCRIBE_BUTTON,
+        + RESPONSE.MSG_NOTIFICATIONS_FOOTER,
     )
 
     return
