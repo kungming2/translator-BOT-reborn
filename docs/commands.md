@@ -4,245 +4,311 @@
 
 ## Introduction
 
-This document details the primary commands, run by the **Ziwen** routine, that work on r/translator and serve to help requesters and translators keep the community organized.
+These are the Reddit comment commands handled by **Ziwen**, the r/translator
+bot. They help requesters and translators update post status, correct language
+flair, call people who know a language, and search for previous translations.
 
-#### Command Arguments for Languages
+## Quick Guide
 
-Several commands detailed below may either require or accept a language tag, added on to the command after a colon `:`. Language names with more than one word must be wrapped in double quotes (e.g. `"American Sign Language"`), and multiple languages can be chained with a plus sign `+`. Here are some examples of valid language tags:
+Most users only need a few commands:
+
+| Command | Use it when... | Example |
+|---------|----------------|---------|
+| `!translated` | A request has been translated. | `!translated` |
+| `!doublecheck` | A translation is present, but needs review. | `!doublecheck` |
+| `!claim` | You are working on a request and want others to know. | `!claim` |
+| `!missing` | The post is missing the text, image, or other content to translate. | `!missing` |
+| `!identify` / `!id` | The post is in the wrong language category, or the language is known. | `!identify:ja` |
+| `!page` | You want Ziwen to notify users who know a language. | `!page:arabic` |
+| `!search` | You want to find earlier r/translator posts with the same text or phrase. | `!search:吉慶有餘` |
+| `!transform` | An attached image needs to be rotated or flipped. | `!transform:90` |
+
+## Language Arguments
+
+Some commands take a **language tag** after a colon. A language tag can be a
+language name, an ISO language code, or a more specific language-region or
+Unknown-script form. See [Language Processing](./language_processing.md) for
+the detailed parser behavior.
+
+Use quotes around language names with more than one word. Use `+` to chain
+multiple languages when a command supports multiple language arguments.
+Country and region names or codes can be added with a hyphen when a language
+needs a regional form.
 
 ```text
-:hy
-:fr-CA
-:german
-:"Swiss German"
-:"old church slavonic"
+!identify:hy                       # Armenian
+!identify:fr-CA                    # French {Canada}
+!identify:german                   # German
+!identify:"Swiss German"           # Swiss German
+!id:"old church slavonic"          # Old Church Slavonic
+!id:pt-brazil                      # Portuguese {Brazil}
+!id:cantonese-HK                   # Cantonese {Hong Kong}
+!identify:ru+it+uzbek              # Multiple Languages [IT, RU, UZ]
 ```
 
-#### Specific !identify Functions
-
-Adding a second exclamation mark `!` after a command indicates to the bot that the user is requesting a *specific* [ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3) or [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924) codes. Note that Advanced `!identify` will *not* work with language names, but is meant to be used specifically with these *codes*. Trying to use an Advanced `!identify` command with a language name will result in an error.
-
-Specific identification is only meant for single-language posts.
-
-```
-!identify:any!                   # Changes the post to Anyin. 
-!identify:zmi!                   # Changes the post to Negeri Sembilan Malay. 
-!identify:Cyrl!                  # Changes the Unknown post to Cyrillic (Script).
-!identify:Latn!                  # Changes the Unknown post to Latin (Script). 
-```
-
-**Plain ISO 639-1/3 Codes**
-
-```
-!page:ar                                                   # Arabic (ISO 639-1)
-!identify:yue                                              # Cantonese (ISO 639-3)
-```
-
-**ISO 639-1/3 Codes or Language Names with Country**
-
-Either a country/region name or country/region code will work.
-
-```
-!identify:de-AO                                             # German {Austria}
-!identify:fr-CAN                                            # French {Canada}
-!id:pt-brazil                                               # Portuguese {Brazil}
-!id:cantonese-HK                                            # Cantonese {Hong Kong}
-```
-
-**Language Names (between quotes if more than one word)**
-```
-!identify:dutch                                             # Dutch
-!page:manchu                                                # Manchu
-!id:"american sign language"                                # American Sign Language
-```
-
-**Scripts (for 'Unknown' posts)**
-```
-!identify:Latn!                                            # Latin (Script)
-!id:Sidd!                                                  # Siddham (Script)
-!identify:unknown-dsrt                                     # Deseret (Script)
-```
+For `!identify`, ambiguous short codes can use strict mode with a second
+exclamation mark after the code. That behavior is covered in the `!identify`
+section below. Strict identification is intended for single-language posts.
 
 ## State Commands
 
-The default state of a single-language post on r/translator is *untranslated*. The commands below can change the state of the post for ease of translators' navigation. 
+State commands change the visible status of a translation request.
 
-Posts with different states will have a "tag" in their flair with the language code in brackets (e.g. `[MS]` for a Malay post). A couple of rare tags are `[?]` for translated "Unknown" posts, and `[--]` for translated posts without any flair text. This implementation was first suggested by u/nomfood.
+| State | Meaning |
+|-------|---------|
+| Untranslated | The default state. The request has not been translated yet. |
+| Translated | The request has been translated. |
+| Needs Review | A translation is present, but someone wants another translator to check it. |
+| In Progress | Someone has claimed the request and is working on it. |
+| Missing | The request is missing content needed for translation. |
 
-*State Commands Note*: A language (or languages) can be included in a state command, but only in a defined multiple post where there are multiple specifically requested languages. In those cases, a command like `!translated:fi` would mark the Finnish component of the request as translated. However, the vast majority of requests do not require or need this syntax.
+State flairs include a bracketed language code, such as `[MS]` for Malay. Two
+rare special cases are `[?]` for translated Unknown posts and `[--]` for
+translated posts with no flair text.
 
-#### List of States
+For normal single-language posts, use state commands without a language
+argument. For a defined multiple-language post, you can target one component by
+adding a language tag:
 
-| State            | Description                                                   |
-|------------------|---------------------------------------------------------------|
-| `(untranslated)` | The post has not been translated (default).                   |
-| `Translated`     | The post has been translated (ideal ending).                  |
-| `Needs Review`   | The post has been marked as needing review.                   |
-| `In Progress`    | The post has been claimed and is currently being worked on.   |
-| `Missing`        | The post is missing content to be translated (e.g. an image). |
+```text
+!translated
+!doublecheck
+!claim
+!translated:fi
+!doublecheck:ja+ko
+```
 
+The language-targeted form only applies to defined multiple-language posts where
+the requested languages are listed individually. It is not needed for most
+requests.
 
-### Command: *!translated*
+### `!translated`
 
-#### Function
+Marks the post as translated. The command can be used by the original poster or
+by another user.
 
-A **!translated** command from a user will mark a post as translated. The user may be the post's original author or someone else.
+If someone other than the original poster uses `!translated`, Ziwen messages the
+original poster to say the post has been translated and asks them to thank their
+translator. That message is skipped if the original poster has already thanked
+translators in a comment, including thanking them in advance. It also asks the
+original poster to keep the post up instead of deleting it after translation.
 
-* If the command is from someone other than the OP, Ziwen will message the OP letting them know that their post is translated, and encourage them to thank their translator.
-* That message also includes a sentence encouraging the OP to keep their post up and not delete it.
+If `!translated` appears in the same comment as `!identify`, Ziwen does not send
+new language notifications for that `!identify` command.
 
-#### Notes
+### `!doublecheck`
 
-* The message will not be sent if the OP has already left a comment thanking translators (including in advance).
-* Notifications will not be sent for `!identify` if `!translated` is in the same comment.
+Marks the post as **Needs Review**. Use this when a translation exists but should
+be checked by another translator.
 
-### Command: *!doublecheck*
+For statistics, Needs Review counts as a completed translation state.
 
-#### Function
+If `!doublecheck` appears in the same comment as `!identify`, Ziwen does not send
+new language notifications for that `!identify` command.
 
-A **!doublecheck** command from a user flags the request as "Needs Review." For statistical purposes this state counts towards the translated percentage for a language. 
+### `!claim`
 
-#### Notes
+Marks the post as **In Progress** and leaves a courtesy notice that you are
+working on the translation. Only one user can claim the same post or defined
+language component at a time. If another user tries to claim something already
+claimed, Ziwen replies to explain that the post or language component is already
+claimed.
 
-* This feature was first suggested by u/r1243.
-* Notifications will not be sent for `!identify` if `!doublecheck` is in the same comment. 
+Claims expire after eight hours if the post is not marked `!translated` or
+`!doublecheck`. When a claim expires, Ziwen resets the post to the untranslated
+state and removes the claim comment.
 
-### Command: *!claim*
+Internally, this state is stored as `inprogress`.
 
-#### Function
+### `!missing`
 
-A **!claim** command from a user will mark a post as "In Progress", serving as a courtesy notice to others that the user intends on completing the translation for that post. 
+Marks the post as **Missing** when the requester has not included the content
+needed for translation, such as a broken image link or missing text.
 
-Only one user can claim a post at any given time. A user who tries to claim an already claimed post will receive a comment from Ziwen telling them that they can't do that. In a defined multiple post, a user can claim a specific language by adding the language code or name (e.g. `!claim:sw`).
-
-#### Notes
-
-* If the post has not been marked as *translated* or *needs review* within eight hours, the flair will be reset to the language's original language category, the state will be set to "untranslated", and the bot's claimed comment will be removed. 
-* The internal state code is `inprogress`.
-
-### Command: *!missing*
-
-#### Function
-
-A **!missing** command from a user will mark a post as missing assets that need to be translated. Perhaps the image link doesn't work, or the OP forgot to include the text they want translated. 
-
-* Ziwen will message the OP letting them know their post is missing content to be translated and urge them to add content or delete and re-submit the post.
-* The OP is also notified that they can use the special `!reset` command (only usable by OPs and mods, see below) to restore the post's state to "untranslated."
+Ziwen messages the original poster asking them to add the missing content or
+delete and resubmit the post. The message also tells them they can use `!reset`
+to restore the post once the missing content is fixed.
 
 ## Post Reference Commands
 
-These commands are used to help organize the subreddit and to provide supplementary information to translators and the OP. All reference commands *must* accept language codes or names as command arguments. 
+Reference commands help correct language information, contact volunteers, or
+find existing translations.
 
-### Command: *!id/!identify:[language]*
+### `!identify:[language]` / `!id:[language]`
 
-OPs often categorize their posts incorrectly, or they don't know what language their post is and submitted it as "Unknown." An **!identify** command changes the category of a post to the specified language in `[ ]`. The flair text will also be changed to "[language name] (Identified)." If the language name consists of more than one word, double quotation marks `"` should be used to mark the language name.
+Changes the post's language category. Use this when a post was submitted under
+the wrong language, or when an Unknown post has been identified. The flair text
+is updated to show the identified language.
 
-This command also has a shorter synonym: `!id`. Both function exactly the same way, though Ziwen will always record its use internally as `!identify` in statistics.
+`!id` is a short form of `!identify`. Both do the same thing, and Ziwen records
+both forms internally as `!identify`.
 
-`!identify` will also work with four-letter [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) codes for "Unknown" posts, but if said code is also a language name (or is close to the spelling of one), the language itself will have priority for post categorization. For example, `!identify:Thai` will categorize a post as the [Thai language](https://en.wikipedia.org/wiki/Thai_language), *not* as "[Thai (Script)](https://en.wikipedia.org/wiki/Thai_alphabet)". On the other hand, `!identify:Sidd` will categorize a post as "[Siddham (Script)](https://en.wikipedia.org/wiki/Siddha%E1%B9%83_script)" since there are no languages called "Sidd."
+```text
+!identify:dutch                   # Dutch                       
+!identify:ban                     # Balinese                       
+!id:"american sign language"      # American Sign Language
+!identify:pt-BR                   # Portuguese {Brazil}
+!identify:unknown-Dsrt            # Deseret (Script)
+```
 
-#### Defined Multiple !identify
+`!identify` can also classify a post as a defined multiple-language request by
+chaining languages with `+`:
 
-If a post should be for more than one defined language, chaining language names or codes with `+` will change it to a *defined multiple* post. 
+```text
+!identify:ru+it+uzbek             # Multiple Languages [IT, RU, UZ]
+```
 
-    !identify:ru+it+uzbek            # Changes the post flair to Multiple Languages [IT, RU, UZ]
+For scripts, use an ISO 15924 code such as `Latn`, `Cyrl`, or `Sidd`, or use an
+Unknown-script tag such as `unknown-Hani`. Script identification keeps the post
+under the Unknown language category while making the script visible in the flair.
 
+```text
+!identify:Latn                   # Latin (Script)
+!identify:Cyrl                   # Cyrillic (Script) 
+!identify:unknown-Hani           # Han Characters (Script)
+```
 
-#### Advanced !identify Functions
+If a code or short word is ambiguous, use strict mode by adding a second `!`
+after the code. Strict mode is for ISO codes, not language names; using a
+language name with strict mode returns an error.
 
-Adding a second exclamation mark `!` after the `!identify` command unlocks a couple of advanced options for users to work with ISO 639-3 and ISO 15924 codes. Note that Advanced `!identify` will *not* work with language names. It's meant to be used specifically with these *codes*. Trying to use an Advanced `!identify` command with a language name will result in an error reply.
+```text
+!identify:any!                     # Anyin
+!identify:ocu!                     # Atzingo Matlatzinca
+!identify:Latn!                    # Latin script
+```
 
+Strict mode is mainly for rare ISO 639-3 false positives and ambiguous short
+strings. For example, `any` may be read as a general word unless strict mode is
+used for the ISO 639-3 code for Anyin.
 
-##### Force ISO 639-3 Language Identification
+When a four-letter script code is also a language name, the language name takes
+priority in normal mode. For example, `!identify:Thai` identifies Thai as a
+language, not Thai script. A code such as `Sidd` identifies Siddham script
+because there is no language named Sidd.
 
-Due to the sheer size of the ISO 639-3 list (it contains over 7800+ languages) it's possible, on very rare occasions, for false positives to happen. It's also possible that the three-letter code is already in use by another more common language - for example, identifying the word "any" will usually result in "Multiple Languages" and not the [Anyin language](https://en.wikipedia.org/wiki/Anyin_language) (ISO 639-3 code: `any`). If that happens, users can force Ziwen to assign a specific ISO 639-3 code by adding a second `!` after the three-letter code. 
+If Ziwen cannot understand the requested language or code, it replies with an
+error and leaves the post unchanged.
 
-    !identify:ocu!                  # Changes the post to Atzingo Matlatzinca. 
-    !identify:zmi!                  # Changes the post to Negeri Sembilan Malay. 
+Ziwen sends notifications for the newly identified language unless the same
+comment also contains `!translated` or `!doublecheck`.
 
-##### Force ISO 15924 Script Identification
+Historical note: this command replaced the older `!wronglanguage` command. The
+old command was deprecated after `!identify` and its shorter `!id` form became
+available.
 
-Ziwen can identify specific scripts with their four-letter [ISO 15924](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) standard for written scripts on posts. Identifying as a script preserves a post's 'Unknown' status. 
+### `!page:[language]`
 
-    !identify:Cyrl!                  # Changes the Unknown post to Cyrillic (Script).
-    !identify:Latn!                  # Changes the Unknown post to Latin (Script). 
+Messages users who are listed in the notifications database for the requested
+language. If more than three users are available for that language, Ziwen chooses
+three at random.
 
-#### Notes
+Use `!page` for tentative identifications, unusual scripts, or posts where
+someone with specific language knowledge should take a look.
 
-* If the requested phrase or code isn't supported, Ziwen will not process it and will leave an error comment noting that.
-* Notifications will be sent out to users in the notifications database if the `!identify` comment *does not* also contain a `!translated` or `!doublecheck` state command.
-* This command used to be `!wronglanguage` but was changed in March 2017 to be more accessible to people. This old command was deprecated in August 2018 and replaced with `!id`. 
-* The specific language targeting for this command was first suggested by u/ScanianMoose. Before their suggestion, `!wronglanguage` just reset a post to "Unknown."
+```text
+!page:ar
+!page:manchu
+!page:fr+it
+```
 
-### Command: *!page:[language]*
+Limitations:
 
-#### Function
+* The caller's Reddit account must be at least fourteen days old.
+* If no users are listed for that language, Ziwen replies to say so.
+* Multiple `!page` commands can be used in one comment, but `+` chaining is
+  usually clearer.
 
-A **!page:[ ]** command from a user will page other subreddit users who know the language(s) specified. If there are more than three users listed for a language, Ziwen will message three at random. This is best used for unsure identifications and to let people confirm a tentative language identification.
+Paged usernames come from the same notifications database used for normal
+language notifications.
 
-#### Limitations
+### `!search:[term]`
 
-* Use of this function is restricted to users with accounts fourteen days and older in order to prevent abuse.
-* Multiple `!page` commands *can* be included in a single comment to page people from many different languages, but language chaining (e.g. `!page:fr+it`) is encouraged.
-* If there are no users listed for that language in the notifications database, Ziwen will reply to the command with a comment informing the user.
+Searches r/translator for earlier posts and comments containing the term. This
+is useful for common phrases, inscriptions, slogans, repeated requests, and
+thematically similar posts. Searching comments is included because normal Reddit
+search often only finds text in titles or post bodies.
 
-#### Notes
+```text
+!search:吉慶有餘
+!search:为人民服务
+!search:今古有神奉志士
+!search:علي
+```
 
-* The usernames that are paged are taken from the notifications database. Paging used to rely on a separate database containing usernames that were manually populated by moderators but that database is no longer in use. As of December 2017, `!page` uses the same notifications database.
+`!search` can also return entries from the
+[frequently requested translations page](https://www.reddit.com/r/translator/wiki/frequently-requested).
 
-### Command: *!search:[term]*
+If there are no results, Ziwen replies to say that nothing was found.
 
-The **!search:[term]** command looks on r/translator to see if anyone has posted something with the search term before. This is most useful for things like 無政府, 吉庆有余, and a whole host of commonly requested phrases that keep showing up on r/translator. The `!search` function  also searches *comments* on r/translator as a regular Reddit search often can only return text in the title or the post itself, but not comments.
-
-This function also serves as a simple way to find thematically similar posts that contain the same content.
-
-#### Examples
-
-    !search:吉慶有餘
-    !search:为人民服务
-    !search:今古有神奉志士
-    !search:علي
-
-#### Notes
-
-* This function is also integrated with the [frequently-requested translations page](www.reddit.com/r/translator/wiki/frequently-requested) and can return information saved on that page. 
-* If there are no results for the search term, Ziwen will leave a comment letting the user know.
-* Ziwen will *not* automatically mark a thread as translated even if the quoted comment contains `!translated`. It'll be up to the person who called the `!search` function to check if the displayed results contain accurate translations.
+Ziwen does not automatically mark a post as translated just because a search
+result contains `!translated`. The person using `!search` still needs to check
+whether the returned translation actually applies.
 
 ## Other Commands
 
-### Command: *!transform:[value]*
+### `!transform:[value]`
 
-The **!transform:[value]** command is used to transform a misaligned image, either through rotation or flipping. This is useful to correct misaligned images that are submitted as a post. This command has strict value requirements:
+Rotates or flips an attached image and replies with a corrected image link.
+This works on image posts, text posts with embedded images, link posts, and
+gallery posts.
 
-* `!transform:[degrees]` rotates the image by the specified number of degrees. Only increments of 90 (`90`, `-90`, `270`) are supported. Negative values rotate the image counterclockwise. Note that `0` and `360` are invalid values as that would just result in the exact same image.
-* `!transform:[direction]` flips the image either horizontally or vertically. `h` and `v` are valid short-form values.
+Supported values:
 
-#### Examples
+| Value | Result |
+|-------|--------|
+| `90` | Rotate 90 degrees clockwise. |
+| `-90` | Rotate 90 degrees counterclockwise. |
+| `180` | Rotate 180 degrees. |
+| `270` | Rotate 270 degrees clockwise. |
+| `-180` | Rotate 180 degrees counterclockwise. |
+| `-270` | Rotate 270 degrees counterclockwise. |
+| `h` or `horizontal` | Flip horizontally. |
+| `v` or `vertical` | Flip vertically. |
 
-    !transform:90  # Rotates image 90 degrees clockwise
-    !transform:-90  # Rotates image 90 degrees counterclockwise
-    !transform:180  # Rotates image 180 degrees clockwise
-    !transform:horizontal  # Flips the image horizontally
-    !transform:v  # Flips the image vertically
-    !transform:90:3  # Flips the third image in a gallery 90 degrees clockwise
+`0` and `360` are invalid rotation values because they would return the same
+image. Use one of the supported values above instead.
 
-#### Notes
+Examples:
 
-* This function uploads transformed images to [ImgBB](https://imgbb.com/). Images uploaded by this bot through this function are automatically deleted after 7 days.
-  * The bot downsamples the image quality in order to reduce the load on ImgBB's servers and speed up operations.
-* This function supports any post with an image attached, including text posts with an embedded image, link posts, and gallery posts.
-* Gallery posts are truncated to the first 10 images (Reddit's maximum allowed image count is 20).
+```text
+!transform:90
+!transform:-90
+!transform:horizontal
+!transform:v
+!transform:90:3                  # Transform the third image in a gallery
+```
 
-## Moderator/OP Commands
+Notes:
 
-OPs (users who made a request) can also use the following commands:
+* Transformed images are uploaded to [ImgBB](https://imgbb.com/) and deleted
+  automatically after 7 days.
+* Ziwen downsamples transformed images to reduce upload size and processing
+  time.
+* Gallery posts are limited to the first 10 images, even though Reddit galleries
+  can contain up to 20 images.
 
-* `!long` manually toggles a post's "Long" status and deletes the advisory comment.
-* `!reset` resets a post to a state as if it had just been processed. This is primarily used in cases where a post was prematurely marked as translated.
+## Original Poster and Moderator Commands
 
-Moderators can use the above commands as well as the following:
+These commands are restricted because they change post state or moderator data.
 
-* `!nuke` bans a user permanently and removes all their posts and comments. This is generally only used for extremely serious trolls.
-* `!set` is functionally identical to `!identify` but can also be used to set a language translation post (ajo) to an internal post (diskuton.)
-* `!verify` sets the flair for a user who submitted a verification request.
+Original posters and moderators can use:
+
+| Command | What it does |
+|---------|--------------|
+| `!long` | Toggles a post's Long status and removes the advisory comment. |
+| `!reset` | Resets a post as if Ziwen had just processed it. This is mainly for posts that were marked translated too early or fixed after being marked missing. |
+
+Moderators can also use:
+
+| Command | What it does |
+|---------|--------------|
+| `!nuke` | Permanently bans a user and removes their posts and comments. This is for severe abuse cases. |
+| `!set:[language]` | Sets a post's language like `!identify`, but as a moderator action. It can also reclassify a post as an internal `meta` or `community` post. |
+| `!verify` | Updates flair for a user who submitted a verification request. |
+
+## Related Lookup Syntax
+
+Ziwen also has lookup functions that do not use `!command` syntax, such as CJK
+backtick lookups and Wikipedia-style lookups. Those are documented separately in
+[Lookup Functions](./lookup.md).
