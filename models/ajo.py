@@ -142,6 +142,16 @@ def _preferred_code_from_titolo(titolo: "Titolo") -> "str | None":
     return titolo.final_code
 
 
+def _language_history_code_from_titolo(titolo: "Titolo") -> "str | None":
+    """
+    Derive the single-post language history entry from a Titolo instance.
+    This should track the actual preferred code, not the CSS flair bucket.
+    """
+    if titolo.final_code == "multiple" or titolo.final_text == "Multiple Languages":
+        return titolo.final_code
+    return _preferred_code_from_titolo(titolo)
+
+
 # ─── Main Ajo class ───────────────────────────────────────────────────────────
 
 
@@ -263,7 +273,8 @@ class Ajo:
                 ajo.type = "multiple"
             else:
                 # Single language, keep as flat list
-                ajo.language_history = [titolo.final_code] if titolo.final_code else []
+                history_code = _language_history_code_from_titolo(titolo)
+                ajo.language_history = [history_code] if history_code else []
                 ajo.status = "untranslated"  # Default
         else:
             ajo.language_history = []
@@ -618,13 +629,15 @@ class Ajo:
                 self.type = "single"
                 self.is_defined_multiple = False
                 self.status = "untranslated"
-                self.language_history = [titolo.final_code] if titolo.final_code else []
+                history_code = _language_history_code_from_titolo(titolo)
+                self.language_history = [history_code] if history_code else []
         else:
             # Single language or no target
             self.type = "single"
             self.is_defined_multiple = False
             self.status = "untranslated"
-            self.language_history = [titolo.final_code] if titolo.final_code else []
+            history_code = _language_history_code_from_titolo(titolo)
+            self.language_history = [history_code] if history_code else []
 
         logger.info(
             f"Reset to type='{self.type}', is_defined_multiple={self.is_defined_multiple}"

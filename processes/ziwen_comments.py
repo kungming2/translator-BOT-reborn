@@ -282,7 +282,9 @@ def ziwen_commands() -> None:
                     and original_ajo
                     and original_ajo.lingvo
                 ):
-                    points_tabulator(comment, original_post, original_ajo.lingvo)
+                    points_tabulator(
+                        comment, original_post, original_ajo.lingvo, original_ajo
+                    )
             else:
                 # Non-command comment on the verified thread — skip silently.
                 if original_post.id == VERIFIED_POST_ID:
