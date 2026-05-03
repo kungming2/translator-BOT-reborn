@@ -19,6 +19,7 @@ import orjson
 from config import Paths
 from config import logger as _base_logger
 from database import db
+from integrations.discord_utils import send_discord_alert
 from models.instruo import Instruo
 from time_handling import get_current_utc_date
 from wenju import WENJU_SETTINGS
@@ -29,6 +30,17 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:USAGE"})
 
 
 # ─── Action counter ───────────────────────────────────────────────────────────
+
+
+def _send_action_counter_alert(
+    action_type: str, count: int
+) -> None:
+    """Send a verbose Discord log entry for a recorded action count."""
+    message = (
+        f"**Action:** `{action_type}`\n"
+        f"**Recorded:** `{count}`\n"
+    )
+    send_discord_alert("Ziwen Logging", message, "logs")
 
 
 def action_counter(messages_number: int, action_type: str) -> None:
@@ -68,6 +80,8 @@ def action_counter(messages_number: int, action_type: str) -> None:
 
     with open(Paths.LOGS["COUNTER"], "wb") as f:
         f.write(orjson.dumps(current_actions))
+
+    _send_action_counter_alert(action_type, count)
 
 
 # ─── Language statistics ──────────────────────────────────────────────────────
