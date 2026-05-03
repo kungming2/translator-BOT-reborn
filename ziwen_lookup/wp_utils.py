@@ -10,6 +10,7 @@ Logger tag: [L:WP]
 import logging
 import re
 
+import requests
 import wikipedia
 
 from config import logger as _base_logger
@@ -107,6 +108,11 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
                     term, auto_suggest=False, redirect=True, sentences=3
                 )
                 wikipage_obj = wikipedia.page(term, auto_suggest=False, redirect=True)
+            except requests.exceptions.RequestException as e:
+                logger.warning(
+                    f">> Wikipedia request failed for '{term}': {e}. Skipping."
+                )
+                continue
             except (
                 wikipedia.exceptions.DisambiguationError,
                 wikipedia.exceptions.PageError,
@@ -115,6 +121,11 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
                     term_summary = wikipedia.summary(term.strip(), sentences=3)
                     wikipage_obj = wikipedia.page(term.strip())
                     term_entry = wikipage_obj.url
+                except requests.exceptions.RequestException as e:
+                    logger.warning(
+                        f">> Wikipedia request failed for '{term}': {e}. Skipping."
+                    )
+                    continue
                 except (
                     wikipedia.exceptions.DisambiguationError,
                     wikipedia.exceptions.PageError,

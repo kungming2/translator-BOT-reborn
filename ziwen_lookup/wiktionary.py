@@ -7,7 +7,6 @@ Wiktionary parser for non-CJK lookup.
 Logger tag: [L:WT]
 """
 
-import pprint
 import re
 
 import requests
@@ -473,14 +472,3 @@ def wiktionary_search(search_term: str, language_name: str) -> dict | None:
     parsed_information = parse_wiktionary(extract.strip(), language_name)
 
     return parsed_information
-
-
-if __name__ == "__main__":
-    while True:
-        test_input = input("Enter a word to look up in Wiktionary: ")
-        test_language = input("Enter a language to look up the previous word in: ")
-        test_result = wiktionary_search(test_input, test_language)
-        pprint.pp(test_result)
-        if test_result:
-            print("\n--- Markdown output ---")
-            print(format_wiktionary_markdown(test_result, test_input, test_language))
