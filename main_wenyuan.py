@@ -1087,7 +1087,6 @@ def post_monthly_statistics(month_year: str) -> None:
         monthly_post = r.submit(
             title=post_title, selftext=new_page_content, send_replies=True
         )
-        monthly_post.mod.sticky(state=True, bottom=True)
         monthly_post.mod.distinguish()
 
         logger.info(

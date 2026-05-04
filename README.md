@@ -45,7 +45,7 @@ python -m pip install -r requirements.txt
 python -m pytest testing/unit -q
 ```
 
-Production setup requires runtime `_data` files and service configuration described in [Setup](docs/data_files.md).
+Production setup requires runtime `_data` files and service configuration described in [Data Files](docs/data_files.md).
 
 ## License
 

@@ -9,6 +9,7 @@ Run individual check functions or execute this file directly to run all checks.
 import asyncio
 import logging
 import re
+from collections.abc import Callable
 from pprint import pprint
 from time import perf_counter, time
 
@@ -60,6 +61,22 @@ from ziwen_lookup.zh import (
 )
 
 _console = Console()
+
+
+CheckFunction = Callable[[], None]
+TimedCheckSetup = Callable[[], CheckFunction | None]
+
+
+class TimedCheck:
+    """Menu entry whose interactive setup should not count as runtime."""
+
+    def __init__(self, setup: TimedCheckSetup) -> None:
+        self.setup = setup
+
+
+def _timed_check(setup: TimedCheckSetup) -> TimedCheck:
+    """Declare a check with setup that runs before elapsed timing starts."""
+    return TimedCheck(setup)
 
 
 def _print_lookup(result: str | None, not_found_msg: str = "No results found.") -> None:
@@ -136,6 +153,18 @@ def _print_elapsed(seconds: float) -> None:
         )
     else:
         _console.print(f"[timing] completed in {seconds:.2f} s", style="#8A00C4")
+
+
+def _run_timed_check(fn: CheckFunction) -> None:
+    """Run a check and print elapsed time for the actual check body."""
+    started = perf_counter()
+    try:
+        fn()
+    except Exception as ex:
+        msg.fail(f"Check failed: {type(ex).__name__}: {ex}")
+    finally:
+        elapsed = perf_counter() - started
+        _print_elapsed(elapsed)
 
 
 # ─── lang ─────────────────────────────────────────────────────────────────────
@@ -308,13 +337,18 @@ def check_monitoring_post() -> None:
 # ─── title ────────────────────────────────────────────────────────────────────
 
 
-def check_title_manual() -> None:
+def check_title_manual(my_test: str) -> None:
     """Test the title parser against a manually entered title string."""
     logger_title = logging.getLogger("title_handling")
     logger_title.setLevel(logging.DEBUG)
-    my_test = input("Enter the title string you wish to test: ")
     titolo_output = process_title(my_test, None, False)
     pprint(vars(titolo_output))
+
+
+def prepare_title_manual() -> CheckFunction:
+    """Prompt for a title before starting the elapsed timer."""
+    my_test = input("Enter the title string you wish to test: ")
+    return lambda: check_title_manual(my_test)
 
 
 def check_title_reddit() -> None:
@@ -732,24 +766,35 @@ def check_wenyuan_iso_deprecate() -> None:
 #
 # Two-level menu structure:
 #   SECTIONS maps a top-level key → (section label, {sub-key: (label, fn)})
-# Adding a new section: append an entry to SECTIONS.
+# Adding a new section: insert it alphabetically by section label.
 # Adding a check to an existing section: append to its inner dict.
 
 SECTIONS = {
     "1": (
+        "code_manager",
+        {
+            "1": ("code_manager: create ISO 639-3 entry", check_wenyuan_iso_create),
+            "2": ("code_manager: update ISO 639-3 entry", check_wenyuan_iso_update),
+            "3": (
+                "code_manager: deprecate ISO 639-3 entry",
+                check_wenyuan_iso_deprecate,
+            ),
+        },
+    ),
+    "2": (
         "database",
         {
             "1": ("search", check_database_search),
             "2": ("initialize all", check_database_initialize),
         },
     ),
-    "2": (
+    "3": (
         "error",
         {
             "1": ("display event errors from log", check_error_display_event_errors),
         },
     ),
-    "3": (
+    "4": (
         "hermes",
         {
             "1": ("statistics (last 30 days)", check_hermes_statistics),
@@ -757,21 +802,21 @@ SECTIONS = {
             "3": ("manually parse title for matching", check_hermes_title),
         },
     ),
-    "4": (
+    "5": (
         "integrations",
         {
             "1": ("ai: image description", check_integrations_ai_image_description),
             "2": ("search", check_integrations_search),
         },
     ),
-    "5": (
+    "6": (
         "lang",
         {
             "1": ("converter", check_lang_converter),
             "2": ("parse language list", check_lang_parse),
         },
     ),
-    "6": (
+    "7": (
         "models",
         {
             "1": ("ajo: from URL", check_models_ajo_url),
@@ -783,14 +828,14 @@ SECTIONS = {
             "7": ("kunulo: from URL", check_models_kunulo),
         },
     ),
-    "7": (
+    "8": (
         "monitoring",
         {
             "1": ("user points", check_monitoring_user),
             "2": ("post points", check_monitoring_post),
         },
     ),
-    "8": (
+    "9": (
         "reddit",
         {
             "1": ("connection: status check", check_reddit_status),
@@ -802,27 +847,27 @@ SECTIONS = {
             "7": ("wiki: most requested langs", check_reddit_wiki_most_requested),
         },
     ),
-    "9": (
+    "10": (
         "title",
         {
-            "1": ("manual test", check_title_manual),
+            "1": ("manual test", _timed_check(prepare_title_manual)),
             "2": ("live Reddit posts", check_title_reddit),
         },
     ),
-    "10": (
+    "11": (
         "utility",
         {
             "1": ("is valid image URL", check_utility_is_valid_image_url),
             "2": ("youtube length", check_utility_youtube),
         },
     ),
-    "11": (
+    "12": (
         "wenju",
         {
             "1": ("iso_updates: fetch reports", check_wenju_fetch_iso_reports),
         },
     ),
-    "12": (
+    "13": (
         "ziwen_lookup",
         {
             "1": ("ja: character", check_ziwen_lookup_ja_character),
@@ -845,17 +890,6 @@ SECTIONS = {
             ),
         },
     ),
-    "13": (
-        "code_manager",
-        {
-            "1": ("code_manager: create ISO 639-3 entry", check_wenyuan_iso_create),
-            "2": ("code_manager: update ISO 639-3 entry", check_wenyuan_iso_update),
-            "3": (
-                "code_manager: deprecate ISO 639-3 entry",
-                check_wenyuan_iso_deprecate,
-            ),
-        },
-    ),
 }
 
 
@@ -873,15 +907,19 @@ def _section_menu(label: str, checks: dict) -> None:
             break
         elif choice in checks:
             sublabel, fn = checks[choice]
-            msg.info(f"Running {label} / {sublabel}...")
-            started = perf_counter()
-            try:
-                fn()
-            except Exception as ex:
-                msg.fail(f"Check failed: {type(ex).__name__}: {ex}")
-            finally:
-                elapsed = perf_counter() - started
-                _print_elapsed(elapsed)
+            if isinstance(fn, TimedCheck):
+                try:
+                    action = fn.setup()
+                except Exception as ex:
+                    msg.fail(f"Check setup failed: {type(ex).__name__}: {ex}")
+                    continue
+                if action is None:
+                    continue
+                msg.info(f"Running {label} / {sublabel}...")
+                _run_timed_check(action)
+            else:
+                msg.info(f"Running {label} / {sublabel}...")
+                _run_timed_check(fn)
         else:
             msg.warn("Invalid choice, please try again.")
 
