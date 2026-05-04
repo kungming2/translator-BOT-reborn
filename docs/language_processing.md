@@ -66,7 +66,10 @@ Three non-language `preferred_code` attributes are non-standard due to the need 
 
 In all of these cases, the standard code will also work in `converter()`.
 
-Scripts' `preferred_code` are their ISO 15924 codes in lowercase. As an example, [Siddham's](https://en.wikipedia.org/wiki/Siddha%E1%B9%83_script) `preferred_code` is `sidd`.
+###### Notes
+
+* Scripts' `preferred_code` are their ISO 15924 codes in lowercase for consistency. As an example, [Siddham's](https://en.wikipedia.org/wiki/Siddha%E1%B9%83_script) `preferred_code` is `sidd`.
+* Languages who have a geographic/country location defined in their ISO 639-3 name (e.g. `ajg` is `Aja (Benin)`) will have the parentheses converted to brackets (e.g. `Aja <Benin>`).
 
 ###### Regional Codes
 

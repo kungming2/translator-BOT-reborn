@@ -30,12 +30,14 @@ This page records the version history of the various routines of translator-BOT.
 * ✨ ADDITION: [Wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) lookup has been re-implemented for non-CJK languages.
 * ✨ ADDITION: Non-English Wikipedia results can be fetched by appending a language tag to the regular Wikipedia lookup syntax.
 * ✨ ADDITION: Wenyuan now reports the following additional metrics in monthly statistics:
-    * Total unique translators active during the reporting period.
+    * Total unique translators credited during the reporting period.
     * Median translation time for requests.
     * Average number of notified users per request.
     * Top source-target language pairs.
     * Number and percentage of image-based requests.
 * ✨ ADDITION: Wenyuan's monthly single-language statistics table now includes month-over-month percentage trend arrows, comparing each language's share of requests against the previous monthly report.
+* ✨ ADDITION: Hermes's statistics routines are now surfaced as monthly reports that will be posted to r/translatorBOT.
+* ✨ ADDITION: `action_counter` also verbosely updates to a mod-only channel on Discord.
 * 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
 * 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
 * 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
@@ -65,10 +67,15 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Using [DeepSeek V4](https://x.com/deepseek_ai/status/2047516922263285776) for title change suggestion queries. Restructured `ai_query()` to more easily switch between services if desired.
 * 🔄 CHANGE: Use normalized names instead of titles for language name matching (would affect language names like [Mi'kmaq](https://en.wikipedia.org/wiki/Mi%27kmaq_language)).
 * 🔄 CHANGE: Integrated [langcodes](https://github.com/rspeer/langcodes) for some edge cases, particularly when it comes to language/country IETF language tags.
+* 🔄 CHANGE: Low-confidence results from AI-parsing will also trigger Discord mod notifications. 
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours.
 * 🛠️ BUG FIX: Fix to prevent non-CJK backtick terms from being added to `lookup_cjk` in instruos.
 * 🛠️ BUG FIX: Fix for an incorrect field in the response for image duplicate removals for a similar image posted by different authors.
+* 🛠️ BUG FIX: The `recorded_translators` field wasn't being updated by `points.py` into the ajo fields.
+* 🛠️ BUG FIX: Internal posts can now be unsubscribed from.
+* 🛠️ BUG FIX: Lookup action counters is now more accurate as it measures the length of the `data` payload.
+* 🛠️ BUG FIX: Notifications records were stored per user in an odd format (e.g. `teng-teng`).
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
 ### translator-BOT 2.1 "The Transformation Update" (2026-02-01)

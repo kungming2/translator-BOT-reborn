@@ -11,7 +11,6 @@ and Chinese-language reference lookup.
 | Goal | Page |
 |------|------|
 | Understand the repository shape and runtime flow. | [Architecture](./architecture.md) |
-| Set up or recover a production-style deployment. | [Setup](./setup.md) |
 | Add commands, scheduled tasks, fields, docs, or tests. | [Development](./development.md) |
 | Review Reddit command syntax and behavior. | [Commands (Ziwen, Reddit)](./commands.md) |
 | Review Discord command syntax and permissions. | [Commands (Zhongsheng, Discord)](./commands_discord.md) |
@@ -57,8 +56,8 @@ aliases, and normalization details.
 | Page | Purpose |
 |------|---------|
 | [Architecture](./architecture.md) | Repository structure, entry points, and routine execution flow. |
-| [Setup](./setup.md) | Production-style setup, private files, service paths, and recovery notes. |
 | [Technical Information](./technical.md) | Runtime details that do not fit a single routine page. |
+| [AI Usage](./ai_usage.md) | External AI API call sites and the data passed to them. |
 | [Development](./development.md) | How to add commands, tasks, data fields, docs, and tests. |
 | [Data Files](./data_files.md) | Shared `_data` files, generated state, and database outputs. |
 | [Models](./models.md) | Shared model objects and their responsibilities. |

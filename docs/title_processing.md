@@ -6,6 +6,9 @@
 
 This document covers the logic Ziwen uses when it parses incoming posts to r/translator, which is mostly contained in `title_handling.py`. When new requests are made to the community, the bot will parse its title in `ziwen_posts.py` and assign attributes to it based on its title.
 
+For transparency about the AI fallback used when rule-based title parsing cannot
+identify a language, see [AI Usage](./ai_usage.md).
+
 ## Single-Language Posts
 
 Ziwen independently determines the right source and target languages from post titles. r/translator encourages people to follow the [proper formatting guidelines](https://www.reddit.com/r/translator/wiki/request-guidelines#wiki_how_should_i_submit_requests_for_translations.3F), especially the inclusion of `>` in the title. However, it's okay for someone to submit a title like `[English to Dutch] Text Paragraph`, even if it doesn't have the `>`, as Ziwen is intentionally written to be tolerant of bad formatting in post titles and to account for as many variations as possible.
