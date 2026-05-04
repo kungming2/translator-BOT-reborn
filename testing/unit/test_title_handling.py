@@ -591,14 +591,16 @@ class TestProcessTitleAIFallback(unittest.TestCase):
     @_skip_if_no_data
     @patch("title.title_handling.title_ai_parser")
     @patch("title.title_handling.update_titolo_from_ai_result")
-    def test_ai_failure_does_not_call_update(
+    def test_ai_failure_calls_update_for_alert_path(
         self,
         mock_update: MagicMock,
         mock_ai_parser: MagicMock,
     ) -> None:
         mock_ai_parser.return_value = ("error", "Confidence value too low")
         process_title("Can someone please translate?", discord_notify=False)
-        mock_update.assert_not_called()
+        mock_update.assert_called_once()
+        args = mock_update.call_args.args
+        self.assertEqual(args[1], ("error", "Confidence value too low"))
 
     @_skip_if_no_data
     @patch("title.title_handling.title_ai_parser")
@@ -611,6 +613,39 @@ class TestProcessTitleAIFallback(unittest.TestCase):
         mock_ai_parser.return_value = ("error", "Confidence value too low")
         result = process_title("Can someone please translate?", discord_notify=False)
         self.assertIsInstance(result, Titolo)
+
+    @_skip_if_no_data
+    @patch("title.title_ai.send_discord_alert")
+    def test_ai_failure_assigns_generic_and_sends_discord_report(
+        self,
+        mock_alert: MagicMock,
+    ) -> None:
+        from title.title_ai import update_titolo_from_ai_result
+
+        post = MagicMock()
+        post.title = "Can someone please translate?"
+        post.id = "abc123"
+        post.permalink = "/r/translator/comments/abc123/test/"
+        result = Titolo()
+
+        update_titolo_from_ai_result(
+            result,
+            ("error", "Confidence value too low"),
+            post,
+            True,
+            determine_flair_fn=lambda _result: None,
+            determine_direction_fn=lambda _source, _target: "english_none",
+            get_notification_languages_fn=lambda _result: [],
+        )
+
+        self.assertEqual(result.final_code, "generic")
+        self.assertEqual(result.final_text, "Generic")
+        mock_alert.assert_called_once()
+        self.assertEqual(
+            mock_alert.call_args.args[0],
+            "AI Unable to Parse Title; No Language Assigned",
+        )
+        self.assertEqual(mock_alert.call_args.args[2], "report")
 
 
 # ---------------------------------------------------------------------------
@@ -660,6 +695,17 @@ class TestProcessTitleDefinedMultiple(unittest.TestCase):
         # [Chinese > English/Spanish]: English in targets → not defined multiple
         titolo = process_title("[Chinese > English/Spanish] test", discord_notify=False)
         self.assertNotEqual(titolo.final_code, "multiple")
+
+    @_skip_if_no_data
+    def test_trailing_prose_all_does_not_create_defined_multiple(self) -> None:
+        titolo = process_title(
+            "English > Spanish; Is this translated correctly at all?",
+            discord_notify=False,
+        )
+        self.assertEqual(titolo.final_code, "es")
+        self.assertEqual(titolo.title_actual, "Is this translated correctly at all ?")
+        self.assertEqual(_codes(titolo.target), ["es"])
+        self.assertEqual(_codes(titolo.notify_languages), ["es"])
 
 
 class TestProcessTitleGeneralMultiple(unittest.TestCase):

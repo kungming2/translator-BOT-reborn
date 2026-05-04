@@ -580,6 +580,35 @@ def _reformat_detected_languages_in_title(title: str) -> str | None:
     return reformatted
 
 
+def _reformat_unbracketed_direction_title(title: str) -> str:
+    """
+    Rebuild "Source > Target; actual title" as "[Source > Target] actual title".
+
+    This preserves support for common malformed titles without letting the
+    target language bleed into title_actual.
+    """
+    if "[" in title or "]" in title or ">" not in title:
+        return title
+
+    source_chunk, remainder = title.split(">", 1)
+    match = re.match(r"\s*([^;:?!]+)([;:?!]+)(.*)$", remainder)
+    if not match:
+        return title
+
+    source_text = source_chunk.strip()
+    target_text = match.group(1).strip()
+    actual_title = match.group(3).strip()
+    if not source_text or not target_text or not actual_title:
+        return title
+
+    if not _resolve_languages(source_text, is_source=True):
+        return title
+    if not _resolve_languages(target_text, is_source=False):
+        return title
+
+    return f"[{source_text} > {target_text}] {actual_title}"
+
+
 def _preprocess_title(post_title: str) -> str:
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
@@ -653,6 +682,8 @@ def _preprocess_title(post_title: str) -> str:
             title = title.replace("-", " ")
 
     # Normalize stray symbols
+    title = _reformat_unbracketed_direction_title(title)
+
     for ch in ["&", "+", "/", "\\", "|", "?"]:
         title = title.replace(ch, f" {ch} ")
     for compound in [">>>", ">>", "> >", "<"]:
@@ -696,6 +727,40 @@ def _is_punctuation_only(s: str) -> bool:
     """Return True if s is non-empty and consists entirely of punctuation."""
     s = s.strip()
     return len(s) > 0 and all(c in string.punctuation for c in s)
+
+
+def _should_keep_general_multiple_match(
+    word: str, cleaned_words: list[str], resolved: list[Lingvo]
+) -> bool:
+    """
+    Return True if a 'multiple' alias is being used as the language chunk.
+
+    Words like "all" and "any" are valid when the title says "[Unknown > Any]"
+    or "into all languages", but they are common prose words in noisy chunks
+    such as "Spanish; is this translated correctly at all?".
+    """
+    word_norm = word.strip().lower()
+    if word_norm not in {
+        "all",
+        "any",
+        "anything",
+        "every",
+        "everything",
+        "many",
+        "multi",
+        "multi-language",
+        "multiple",
+        "mul",
+        "various",
+    }:
+        return True
+
+    if not any(
+        getattr(lang, "preferred_code", None) != "multiple" for lang in resolved
+    ):
+        return True
+
+    return len(cleaned_words) <= 2 and word_norm in cleaned_words[:1]
 
 
 def _clean_text(
@@ -825,6 +890,12 @@ def _resolve_languages(chunk: str, is_source: bool) -> list[Lingvo]:
         if "Eng" in word and len(word) <= 8:
             word = "English"
         result = converter(word)
+        if (
+            result
+            and getattr(result, "preferred_code", None) == "multiple"
+            and not _should_keep_general_multiple_match(word, cleaned_words, resolved)
+        ):
+            continue
         if result:
             resolved.append(result)
             if " " in word:
@@ -919,16 +990,15 @@ def process_title(
         ai_result = title_ai_parser(title, post)
         if not isinstance(ai_result, dict):
             logger.error(f"AI parser failed for title ({title!r}): {ai_result[1]}")
-        else:
-            update_titolo_from_ai_result(
-                result,
-                ai_result,
-                post,
-                discord_notify,
-                determine_flair_fn=_determine_flair,
-                determine_direction_fn=_determine_title_direction,
-                get_notification_languages_fn=_get_notification_languages,
-            )
+        update_titolo_from_ai_result(
+            result,
+            ai_result,
+            post,
+            discord_notify,
+            determine_flair_fn=_determine_flair,
+            determine_direction_fn=_determine_title_direction,
+            get_notification_languages_fn=_get_notification_languages,
+        )
     else:
         _determine_flair(result)
 
