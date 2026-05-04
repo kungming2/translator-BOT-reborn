@@ -32,14 +32,9 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:USAGE"})
 # ─── Action counter ───────────────────────────────────────────────────────────
 
 
-def _send_action_counter_alert(
-    action_type: str, count: int
-) -> None:
+def _send_action_counter_alert(action_type: str, count: int) -> None:
     """Send a verbose Discord log entry for a recorded action count."""
-    message = (
-        f"**Action:** `{action_type}`\n"
-        f"**Recorded:** `{count}`\n"
-    )
+    message = f"**Action:** `{action_type}`\n**Recorded:** `{count}`\n"
     send_discord_alert("Ziwen Logging", message, "logs")
 
 

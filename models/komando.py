@@ -20,6 +20,10 @@ from lang.languages import converter
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
+_LOOKUP_COMMANDS_WITH_PER_ITEM_STATS = frozenset(
+    {"lookup_cjk", "lookup_wp", "lookup_wt"}
+)
+
 
 # ─── Regex pattern builders ───────────────────────────────────────────────────
 
@@ -163,6 +167,19 @@ class Komando:
             specific_mode=self.specific_mode,
             disable_tokenization=self.disable_tokenization,
         )
+
+
+def action_count_for_statistics(komando: Komando) -> int:
+    """
+    Return the usage-statistics count represented by one parsed command.
+
+    Most commands represent one user action, but lookup commands can bundle
+    multiple requested terms into a single Komando. Count those by payload item
+    so usage statistics reflect the number of lookups performed.
+    """
+    if komando.name.lower() in _LOOKUP_COMMANDS_WITH_PER_ITEM_STATS:
+        return len(komando.data or [])
+    return 1
 
 
 # ─── Internal parsing helpers ─────────────────────────────────────────────────
