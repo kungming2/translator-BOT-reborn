@@ -46,6 +46,7 @@ from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
+from zhongsheng.recruit import build_recruitment_markdown, resolve_recruit_languages
 from ziwen_lookup.cache_helpers import get_cjk_cache_top_entries
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
@@ -71,6 +72,7 @@ class TimedCheck:
     """Menu entry whose interactive setup should not count as runtime."""
 
     def __init__(self, setup: TimedCheckSetup) -> None:
+        """Initialize a TimedCheck with a setup function."""
         self.setup = setup
 
 
@@ -744,6 +746,34 @@ def check_wenju_fetch_iso_reports() -> None:
     msg.good("ISO report fetch complete.")
 
 
+def check_wenju_recruitment_markdown() -> None:
+    """recruit: Generate copyable recruitment-post notification rows."""
+    language_text = _prompt_text(
+        "Enter language codes/names for recruitment links (x to back out): ",
+        allow_exit=True,
+    )
+    if language_text is None:
+        return
+
+    with msg.loading("Generating recruitment Markdown..."):
+        language_matches, unresolved_items = resolve_recruit_languages(language_text)
+
+    if not language_matches:
+        msg.fail(
+            f"No valid language codes found in: `{language_text}`. "
+            "Use ISO 639 codes or language names, separated by commas."
+        )
+        return
+
+    markdown = build_recruitment_markdown(language_matches)
+    msg.good("Copy this Markdown into the recruitment post:")
+    _console.print(markdown, highlight=False)
+
+    if unresolved_items:
+        skipped = ", ".join(f"`{item}`" for item in unresolved_items)
+        msg.warn(f"Skipped unresolved items: {skipped}")
+
+
 # ─── wenyuan ──────────────────────────────────────────────────────────────────
 
 
@@ -769,7 +799,11 @@ def check_wenyuan_iso_deprecate() -> None:
 # Adding a new section: insert it alphabetically by section label.
 # Adding a check to an existing section: append to its inner dict.
 
-SECTIONS = {
+# Each leaf value is either a plain CheckFunction or a TimedCheck instance.
+SectionEntry = CheckFunction | TimedCheck
+SectionMap = dict[str, tuple[str, dict[str, tuple[str, SectionEntry]]]]
+
+SECTIONS: SectionMap = {
     "1": (
         "code_manager",
         {
@@ -865,6 +899,10 @@ SECTIONS = {
         "wenju",
         {
             "1": ("iso_updates: fetch reports", check_wenju_fetch_iso_reports),
+            "2": (
+                "recruit: generate recruitment-post Markdown",
+                check_wenju_recruitment_markdown,
+            ),
         },
     ),
     "13": (
@@ -893,7 +931,7 @@ SECTIONS = {
 }
 
 
-def _section_menu(label: str, checks: dict) -> None:
+def _section_menu(label: str, checks: dict[str, tuple[str, SectionEntry]]) -> None:
     """Display and run the sub-menu for a single section."""
     while True:
         msg.divider(label)

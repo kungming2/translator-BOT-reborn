@@ -119,21 +119,15 @@ def generate_language_frequency_markdown(language_list: list) -> str:
 
     for lingvo in language_list:
         language_name = lingvo.name
-        daily = lingvo.rate_daily
-        monthly = lingvo.rate_monthly
-        yearly = lingvo.rate_yearly
         permalink = lingvo.link_statistics
 
-        if all(v is not None for v in (daily, monthly, yearly, permalink)):
-            if daily >= 2:
-                freq, rate = "day", daily
-            elif daily > 0.05:
-                freq, rate = "month", monthly
-            else:
-                freq, rate = "year", yearly
-
+        frequency = describe_language_frequency(lingvo)
+        if frequency and permalink:
             line = line_template.format(
-                name=language_name, url=permalink, rate=rate, freq=freq
+                name=language_name,
+                url=permalink,
+                rate=frequency[0],
+                freq=frequency[1],
             )
         else:
             line = no_data_template.format(name=language_name)
@@ -141,6 +135,30 @@ def generate_language_frequency_markdown(language_list: list) -> str:
         lines.append(line)
 
     return header + "\n".join(lines)
+
+
+def describe_language_frequency(lingvo: object) -> tuple[float, str] | None:
+    """
+    Return the most readable request frequency for a Lingvo.
+
+    The returned tuple is ``(rate, period)``, where period is one of
+    ``day``, ``month``, or ``year``. ``None`` means the Lingvo has incomplete
+    frequency data.
+    """
+    daily = getattr(lingvo, "rate_daily", None)
+    monthly = getattr(lingvo, "rate_monthly", None)
+    yearly = getattr(lingvo, "rate_yearly", None)
+
+    if not all(v is not None for v in (daily, monthly, yearly)):
+        return None
+
+    assert daily is not None and monthly is not None and yearly is not None
+
+    if daily >= 2:
+        return daily, "day"
+    if daily > 0.05:
+        return monthly, "month"
+    return yearly, "year"
 
 
 # ─── Command usage reporting ──────────────────────────────────────────────────

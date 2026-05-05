@@ -69,6 +69,10 @@ COMMAND_GUIDE = {
         "Also shows available points data",
         "roles": ["Moderator"],
     },
+    "recruit": {
+        "description": "Generate copyable recruitment-post notification links and request-frequency rows",
+        "roles": ["Moderator"],
+    },
     "search": {
         "description": "Search for Reddit translation posts related to a term and return matching results",
         "roles": ["Moderator", "Helper"],
