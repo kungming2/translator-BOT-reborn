@@ -147,7 +147,7 @@ def weekly_unknown_thread() -> None:
     unknown_content = "\n".join(unknown_entries)
 
     thread_title = (
-        f'[META] Weekly "Unknown" Identification Thread — {today_str} '
+        f'[Meta] Weekly "Unknown" Identification Thread — {today_str} '
         f"(Week {current_week_utc})"
     )
     body = RESPONSE.WEEKLY_UNKNOWN_THREAD.format(unknown_content=unknown_content)

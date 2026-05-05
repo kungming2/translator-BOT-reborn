@@ -631,7 +631,7 @@ def monthly_statistics_unpinner() -> None:
     for sticky in stickies:
         print(sticky.title)
         if (
-            "[META] r/translator Statistics" in sticky.title
+            "[Meta] r/translator Statistics" in sticky.title
             and sticky.author
             and sticky.author.name == USERNAME
         ):

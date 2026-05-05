@@ -1006,7 +1006,7 @@ def post_monthly_statistics(month_year: str) -> None:
         msg.fail("Invalid date format. Please use YYYY-MM format.")
         return
 
-    post_title = f"[META] r/translator Statistics – {month_english_name} {year_number}"
+    post_title = f"[Meta] r/translator Statistics – {month_english_name} {year_number}"
 
     msg.info(f"Loading statistics for {month_english_name} {year_number}...")
     lumo = Lumo()
