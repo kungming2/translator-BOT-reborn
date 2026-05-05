@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import orjson
 
+import monitoring.usage_statistics as usage_statistics
 from monitoring.usage_statistics import (
     _canonical_notification_language_code,
     action_counter,
@@ -17,17 +18,15 @@ class TestActionCounter(unittest.TestCase):
             counter_path = Path(temp_dir) / "counter.json"
 
             with (
-                patch(
-                    "monitoring.usage_statistics.Paths.LOGS",
+                patch.object(
+                    usage_statistics.Paths,
+                    "LOGS",
                     {"COUNTER": str(counter_path)},
                 ),
-                patch(
-                    "monitoring.usage_statistics.get_current_utc_date",
-                    return_value="2026-05-03",
+                patch.object(
+                    usage_statistics, "get_current_utc_date", return_value="2026-05-03"
                 ),
-                patch(
-                    "monitoring.usage_statistics.send_discord_alert"
-                ) as alert_mock,
+                patch.object(usage_statistics, "send_discord_alert") as alert_mock,
             ):
                 action_counter(2, "Notifications")
 
@@ -36,20 +35,18 @@ class TestActionCounter(unittest.TestCase):
                 {"2026-05-03": {"Notifications": 2}},
             )
             alert_mock.assert_called_once_with(
-                "Action Counter",
+                "Ziwen Logging",
                 (
-                    "Action: `Notifications`\n"
-                    "Recorded: `2`\n"
-                    "Daily total: `2`\n"
-                    "Date: `2026-05-03`"
+                    "**Action:** `Notifications`\n"
+                    "**Recorded:** `2`\n"
                 ),
                 "logs",
             )
 
     def test_skipped_action_does_not_send_discord_log(self) -> None:
         with (
-            patch("monitoring.usage_statistics.Paths.LOGS", {"COUNTER": "unused.json"}),
-            patch("monitoring.usage_statistics.send_discord_alert") as alert_mock,
+            patch.object(usage_statistics.Paths, "LOGS", {"COUNTER": "unused.json"}),
+            patch.object(usage_statistics, "send_discord_alert") as alert_mock,
         ):
             action_counter(0, "Notifications")
 

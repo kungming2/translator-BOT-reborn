@@ -181,15 +181,20 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
 _STUB_ORIGINALS = _register_stubs()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _restore_stub_modules():
-    """Restore sys.modules to its pre-stub state after this session completes."""
-    yield
+def _restore_stubs() -> None:
+    """Restore sys.modules entries replaced for Wenju task imports."""
     for name, original in _STUB_ORIGINALS.items():
         if original is None:
             sys.modules.pop(name, None)
         else:
             sys.modules[name] = original
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _restore_stub_modules():
+    """Restore sys.modules to its pre-stub state after this session completes."""
+    yield
+    _restore_stubs()
 
 
 # This file lives at testing/unit/test_wenju_tasks.py.
@@ -202,6 +207,8 @@ if str(_PROJECT_ROOT) not in sys.path:
 import wenju  # noqa: E402
 import wenju.iso_updates as iso_updates  # noqa: E402
 import wenju.moderator_digest as moderator_digest  # noqa: E402
+
+_restore_stubs()
 
 # ---------------------------------------------------------------------------
 # Minimal wenju package stub so that `from wenju import task` works.
