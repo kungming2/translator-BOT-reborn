@@ -75,7 +75,9 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: The `recorded_translators` field wasn't being updated by `points.py` into the ajo fields.
 * 🛠️ BUG FIX: Internal posts can now be unsubscribed from.
 * 🛠️ BUG FIX: Lookup action counters is now more accurate as it measures the length of the `data` payload.
+* 🛠️ BUG FIX: CJK lookup now strips Reddit rich-text editor backslash escapes from lookup punctuation.
 * 🛠️ BUG FIX: Notifications records were stored per user in an odd format (e.g. `teng-teng`).
+* 🛠️ BUG FIX: Wenju's language of the day task now skips malformed upstream Wikipedia API responses instead of failing the daily run.
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
 ### translator-BOT 2.1 "The Transformation Update" (2026-02-01)

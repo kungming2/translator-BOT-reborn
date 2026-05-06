@@ -21,7 +21,6 @@ Each task runs independently inside the selected schedule. If one task fails, We
 ## Daily Functions
 
 * `archive_modmail()`: Archives modmail conversations older than a pre-configured age where at least one moderator has participated in the conversation.
-* `clean_processed_database()`: Cleans up the processed comments and posts in the database by pruning old entries from the 'old_comments' and 'old_posts' tables.
 * `collate_moderator_digest()`: Sends out a link to an HTML digest of the subreddit's overall state, including average number of commands used, activity data, and other information. This also produces a local Markdown report.
 * `error_log_trimmer()`: Removes resolved errors older than a configured number of weeks from the error log, keeping it from growing indefinitely.
 * `language_of_the_day()`: Randomly selects a language of the day for inclusion in the sidebar of the subreddit as a widget (New Reddit), and as an update to Discord. The function selects ISO 639-1 languages on even days.
@@ -33,6 +32,7 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 ## Weekly Functions
 
+* `clean_processed_database()`: Cleans up the processed comments and posts in the database by pruning old entries from the 'old_comments' and 'old_posts' tables.
 * `deleted_posts_assessor()`: Gathers data on individuals who deleted their posts from the subreddit, focusing on those who deleted translated posts without thanking their translators. This is generally considered quite rude by translators, so this routine helps check for repeat offenders. This also produces a local Markdown report.
 * `fetch_iso_reports()`: Checks ISO 639-3 code change reports from SIL's [change management page](https://iso639-3.sil.org/code_changes/change_management) and if there's something new, saves that report entry to a YAML file for later alerts.
 * `notify_list_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
@@ -44,6 +44,7 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 * `archive_identified_saved()`: Archives the wikipages of '[identified](https://www.reddit.com/r/translator/wiki/identified)' and '[saved](https://www.reddit.com/r/translator/wiki/saved)' to local Markdown files to prevent the wikipages from getting too large.
 * `monthly_rule_violation_report()`: Analyzes the past 30 days of moderation comments to tally rule violations by type, then sends a summary report via Discord.
+* `monthly_hermes_statistics_post()`: Posts the previous full calendar month's Hermes statistics to r/translatorBOT. If the post already exists for that month, the task skips posting.
 * `monthly_statistics_unpinner()`: Simple routine that unpins the monthly statistics sticky if it's still up when the timing runs. 
 * `post_iso_reports_to_reddit()`: Takes the information from `fetch_iso_reports()` and posts the file to r/translatorBOT, as well as updates moderators with that information.
 * `refresh_language_statistics()`: Collects all language wiki pages, parses their statistics, and generates a statistics JSON file that serves as a machine-readable format of the statistical information. Also updates the statistics wiki page with a grouped list of links to each individual language's wiki page.

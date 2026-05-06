@@ -118,6 +118,20 @@ This command looks through the logs and the database for mentions of this post, 
 /post [post link/ID]
 ```
 
+### Command: */recruit*
+
+This command generates copyable Markdown for recruitment posts for the notifications database outside r/translator. It accepts language codes or names (separated by commas) and returns a table with one notification signup link per language plus the estimated request frequency for each language.
+
+```
+/recruit [language codes/names]
+```
+
+Example:
+
+```
+/recruit id, nan, ban
+```
+
 ### Command: */restart*
 
 This command schedules a restart of Zhongsheng's systemd service. It is only available to users with the `Moderator` role, is restricted to the configured Discord guild ID, and has a five-minute guild-wide cooldown. It requires the host-side restart helper described in [Setup](./setup.md).
