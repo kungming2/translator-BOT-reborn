@@ -28,6 +28,18 @@ def test_wikipedia_lookup_treats_json_decode_as_lookup_miss(monkeypatch):
     set_lang_mock.assert_called_once_with("en")
 
 
+def test_wikipedia_page_url_treats_json_decode_as_lookup_miss(monkeypatch):
+    """URL-only Wikipedia lookups should fail soft on malformed API responses."""
+
+    monkeypatch.setattr(
+        wp_utils.wikipedia,
+        "page",
+        MagicMock(side_effect=requests.exceptions.JSONDecodeError("bad json", "", 0)),
+    )
+
+    assert wp_utils.wikipedia_page_url("ISO 639:abc") is None
+
+
 def test_wikipedia_lookup_treats_fallback_request_error_as_lookup_miss(monkeypatch):
     """Fallback lookup request failures should be skipped like a missing page."""
 

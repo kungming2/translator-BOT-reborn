@@ -356,6 +356,12 @@ class TestLookupMatcher(unittest.TestCase):
         result = lookup_matcher("`투쟁`:ko", language_code="zh")
         self.assertIn("ko", result)
 
+    @_skip_on_error
+    def test_reddit_rich_text_escaped_backticks_are_unescaped(self):
+        """Rich-text escaped backticks should not leak slashes into lookup terms."""
+        result = lookup_matcher(r"\`銀\`:zh", language_code=None)
+        self.assertEqual(result, {"zh": [("銀", True)]})
+
     # --- disable_tokenization flag ---
 
     @_skip_on_error

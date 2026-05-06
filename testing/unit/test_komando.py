@@ -15,7 +15,12 @@ from collections.abc import Callable
 from typing import Any
 
 # noinspection PyProtectedMember
-from models.komando import Komando, _check_specific_mode, _deduplicate_args
+from models.komando import (
+    Komando,
+    _check_specific_mode,
+    _deduplicate_args,
+    extract_commands_from_text,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -295,6 +300,21 @@ class TestDeduplicateArgs(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# extract_commands_from_text()
+# ---------------------------------------------------------------------------
+
+
+class TestExtractCommandsFromText(unittest.TestCase):
+    """Command extraction handles Reddit editor escaping."""
+
+    @_skip_if_no_data
+    def test_cjk_lookup_removes_reddit_rich_text_backtick_escapes(self) -> None:
+        commands = extract_commands_from_text(r"\`銀\`:zh")
+        lookup = next(cmd for cmd in commands if cmd.name == "lookup_cjk")
+        self.assertEqual(lookup.data, [("zh", "銀", True)])
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -309,6 +329,7 @@ def run_all_tests() -> unittest.TestResult:
         TestKomandoRemapLanguage,
         TestCheckSpecificMode,
         TestDeduplicateArgs,
+        TestExtractCommandsFromText,
     ):
         suite.addTests(loader.loadTestsFromTestCase(cls))
     runner = unittest.TextTestRunner(verbosity=2)
