@@ -37,6 +37,16 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
 useragent = get_random_useragent()
 
 
+def _remove_reddit_rich_text_escapes(text: str) -> str:
+    """
+    Remove backslashes Reddit's rich-text editor inserts before punctuation.
+
+    The Markdown editor can store a lookup as `銀\`; if the closing
+    backtick remains escaped, the matcher captures `銀` as the lookup term.
+    """
+    return re.sub(r"\\([`*_{}\[\]()#+\-.!|>,;:?])", r"\1", text)
+
+
 # ─── Tokenizers ───────────────────────────────────────────────────────────────
 
 
@@ -154,7 +164,8 @@ def lookup_matcher(
                     return "ko"
         return cjk_code
 
-    original_text: str = str(content_text)
+    content_text = _remove_reddit_rich_text_escapes(str(content_text))
+    original_text: str = content_text
 
     # Remove all triple-backtick blocks (```...```)
     content_text = re.sub(r"```.*?```", "", content_text, flags=re.DOTALL)
