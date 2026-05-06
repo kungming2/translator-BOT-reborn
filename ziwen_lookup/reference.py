@@ -15,7 +15,6 @@ import re
 
 import requests
 import waybackpy
-import wikipedia
 import yaml
 from lxml import html
 from waybackpy import exceptions
@@ -24,6 +23,7 @@ from config import Paths
 from config import logger as _base_logger
 from lang.languages import converter, get_lingvos
 from reddit.connection import get_random_useragent
+from ziwen_lookup.wp_utils import wikipedia_page_url
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})
 
@@ -250,16 +250,8 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     except IndexError:
         ref_data["family"] = "Unknown"
 
-    try:
-        wk_page = wikipedia.page(
-            title=f"ISO 639:{language_code}",
-            auto_suggest=False,
-            redirect=True,
-            preload=False,
-        )
-        ref_data["link_wikipedia"] = wk_page.url
-    except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
-        ref_data["link_wikipedia"] = ""
+    wikipedia_url = wikipedia_page_url(f"ISO 639:{language_code}")
+    ref_data["link_wikipedia"] = wikipedia_url or ""
 
     ref_data["link_ethnologue"] = f"https://www.ethnologue.com/language/{language_code}"
 

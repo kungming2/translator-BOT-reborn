@@ -71,6 +71,36 @@ def get_page_location_data(wikipage_obj: wikipedia.WikipediaPage) -> str | None:
 # ─── Wikipedia lookup ─────────────────────────────────────────────────────────
 
 
+def wikipedia_page_url(
+    title: str,
+    *,
+    auto_suggest: bool = False,
+    redirect: bool = True,
+    preload: bool = False,
+) -> str | None:
+    """
+    Return the canonical Wikipedia page URL for a title, or None on lookup miss.
+
+    This helper is intentionally URL-only; use `wikipedia_lookup()` when the
+    caller needs a rendered summary for Reddit output.
+    """
+    try:
+        page = wikipedia.page(
+            title=title,
+            auto_suggest=auto_suggest,
+            redirect=redirect,
+            preload=preload,
+        )
+    except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
+        logger.info(f"Wikipedia page not resolved for `{title}`.")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"Wikipedia request failed for `{title}`: {e}.")
+        return None
+
+    return page.url
+
+
 def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str | None:
     """
     Basic function to look up terms on Wikipedia.
