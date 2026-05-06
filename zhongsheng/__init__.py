@@ -70,7 +70,8 @@ COMMAND_GUIDE = {
         "roles": ["Moderator"],
     },
     "recruit": {
-        "description": "Generate copyable recruitment-post notification links and request-frequency rows",
+        "description": "Generate copyable recruitment-post notification links and request-frequency rows. "
+        "Separate multiple language names or codes with commas",
         "roles": ["Moderator"],
     },
     "search": {

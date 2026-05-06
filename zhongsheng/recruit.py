@@ -52,7 +52,7 @@ async def recruit(ctx: commands.Context, languages: str) -> None:
     )
 
     markdown = build_recruitment_markdown(language_matches)
-    response = f"Copy this Markdown into the recruitment post:\n\n{markdown}"
+    response = f"Copy this Markdown into the recruitment post:\n\n```\n{markdown}```"
     if unresolved_items:
         response += "\n\nSkipped unresolved items: " + ", ".join(
             f"`{item}`" for item in unresolved_items
@@ -108,18 +108,9 @@ def _split_recruit_language_items(language_text: str) -> list[str]:
 def build_recruitment_markdown(language_matches: list) -> str:
     """Build copyable Markdown recruitment text with notification signup links."""
     target_languages = _format_target_languages(language_matches)
-    intro = [
-        "We're mods over at r/translator. We always strike to make our multilingual community *the* universal place on Reddit to go for a translation, no matter what language people may be looking for. We are however somewhat lacking in the language(s) below, and were hoping some wonderful multilingual people here could help us out.",
-        "",
-        "**Would anyone be interested in helping translate any future requests for these languages on r/translator?** You don't even need to subscribe to our subreddit! We usually get a request for these languages very occasionally. Most requests that come in are pretty simple and casual and don't need advanced knowledge of the languages.",
-        "",
-        "Thanks, all!",
-        "",
-        "---",
-        "",
-        f"### **We have a notifications system that only sends you a message when a request for {target_languages} comes in.** Just send a message to our subreddit bot at the link below.",
-        "",
-    ]
+    intro = RESPONSE.POST_RECRUITMENT_POST_INTRO.format(
+        target_languages=target_languages
+    ).rstrip("\n")
     rows = [
         "| Language | Estimated request frequency | Notification signup |",
         "|---|---:|---|",
@@ -142,7 +133,7 @@ def build_recruitment_markdown(language_matches: list) -> str:
             "You can unsubscribe from those messages at any time!",
         ]
     )
-    return "\n".join(intro + rows)
+    return "\n".join([intro, "", *rows])
 
 
 def _format_target_languages(language_matches: list) -> str:
@@ -162,7 +153,7 @@ def _format_target_languages(language_matches: list) -> str:
 
 def _subscription_link(lingvo: object) -> str:
     """Return a Reddit compose URL that subscribes to one language."""
-    payload = getattr(lingvo, "preferred_code")
+    payload = lingvo.preferred_code
     return RESPONSE.MSG_SUBSCRIBE_LINK + quote_plus(payload)
 
 

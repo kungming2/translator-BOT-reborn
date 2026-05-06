@@ -280,6 +280,19 @@ IMAGE_DESCRIPTION_QUERY: >
   but do not transcribe or translate it. Keep the description to no more
   than three sentences.
 
+# COMMANDS - zhongsheng/recruit.py
+
+POST_RECRUITMENT_POST_INTRO: |
+  We're mods over at r/translator. We always strive to make our multilingual community *the* universal place on Reddit to go for a translation, no matter what language people may be looking for. We are however somewhat lacking in the language(s) below, and were hoping some wonderful multilingual people here could help us out.
+
+  **Would anyone be interested in helping translate any future requests for these languages on r/translator?** You don't even need to subscribe to our subreddit! We usually get a request for these languages very occasionally. Most requests that come in are pretty simple and casual and don't need advanced knowledge of the languages.
+
+  Thanks, all!
+
+  ---
+
+  **We have a notifications system that only sends you a message when a request for {target_languages} comes in.** Just send a message to our subreddit bot at the link below.
+
 # COMMANDS - ziwen_commands/missing.py
 
 MSG_MISSING_ASSETS_SUBJECT: A message from r/translator regarding your translation request
