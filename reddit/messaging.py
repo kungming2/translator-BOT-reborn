@@ -218,8 +218,8 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
             + RESPONSE.BOT_DISCLAIMER,
         )
         send_discord_alert(
-            f"Unsuccessful Notifications Unsubscribe Attempt: u/{message_author}",
-            f"Forwarded message:`{body_text}`",
+            f"Unsuccessful Notifications Unsubscribe Attempt",
+            f"Username: u/{message_author}\n\nForwarded message:```\n{body_text}\n```",
             "alert",
         )
         logger.info(
