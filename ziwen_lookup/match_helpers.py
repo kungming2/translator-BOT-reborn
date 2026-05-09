@@ -41,7 +41,7 @@ def _remove_reddit_rich_text_escapes(text: str) -> str:
     """
     Remove backslashes Reddit's rich-text editor inserts before punctuation.
 
-    The Markdown editor can store a lookup as `銀\`; if the closing
+    The Markdown editor can store a lookup as `銀`; if the closing
     backtick remains escaped, the matcher captures `銀` as the lookup term.
     """
     return re.sub(r"\\([`*_{}\[\]()#+\-.!|>,;:?])", r"\1", text)
