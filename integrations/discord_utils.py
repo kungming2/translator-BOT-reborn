@@ -117,4 +117,4 @@ def send_discord_alert(
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord alert: {e}")
     else:
-        logger.info(f"Discord alert sent to webhook {webhook_name!r}: {subject!r}")
+        logger.debug(f"Discord alert sent to webhook {webhook_name!r}: {subject!r}")
