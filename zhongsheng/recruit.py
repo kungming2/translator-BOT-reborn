@@ -13,7 +13,7 @@ from urllib.parse import quote_plus
 from discord.ext import commands
 
 from config import logger as _base_logger
-from lang.languages import converter
+from lang.languages import converter, Lingvo
 from monitoring.usage_statistics import describe_language_frequency
 from responses import RESPONSE
 
@@ -151,13 +151,13 @@ def _format_target_languages(language_matches: list) -> str:
     return f"{', '.join(names[:-1])}, or {names[-1]}"
 
 
-def _subscription_link(lingvo: object) -> str:
+def _subscription_link(lingvo: Lingvo) -> str:
     """Return a Reddit compose URL that subscribes to one language."""
     payload = lingvo.preferred_code
     return RESPONSE.MSG_SUBSCRIBE_LINK + quote_plus(payload)
 
 
-def _format_frequency(lingvo: object) -> str:
+def _format_frequency(lingvo: Lingvo) -> str:
     """Return a short human-readable frequency estimate for the recruitment table."""
     frequency = describe_language_frequency(lingvo)
     if frequency is None:
