@@ -60,7 +60,7 @@ def build_monthly_statistics_post(
     month_label = month_date.strftime("%B %Y")
     stats = get_statistics(start_utc, end_utc)
 
-    title = f"r/Language_Exchange Hermes Statistics - {month_label}"
+    title = f"r/Language_Exchange Statistics - {month_label}"
     body = "\n\n".join(
         [
             f"# Hermes Statistics – {month_label}",
