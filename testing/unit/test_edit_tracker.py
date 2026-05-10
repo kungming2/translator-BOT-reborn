@@ -18,10 +18,12 @@ from monitoring.edit_tracker import (
     _deserialize_lookup_content,
     _get_cached_comment,
     _is_comment_within_edit_window,
+    _is_processed_comment,
     _remove_from_processed,
     _serialize_komandos,
     _serialize_lookup_content,
     _update_comment_cache,
+    edit_tracker,
 )
 
 # ---------------------------------------------------------------------------
@@ -482,6 +484,99 @@ class TestRemoveFromProcessed:
         assert "DELETE" in query
         assert "old_comments" in query
         conn.commit.assert_called_once()
+
+
+# ===========================================================================
+# _is_processed_comment
+# ===========================================================================
+
+
+class TestIsProcessedComment:
+    def test_true_when_old_comments_has_row(self):
+        cursor = MagicMock()
+        cursor.execute.return_value.fetchone.return_value = (1,)
+        with patch("monitoring.edit_tracker.db") as mock_db:
+            mock_db.cursor_main = cursor
+            assert _is_processed_comment("abc123") is True
+
+    def test_false_when_old_comments_has_no_row(self):
+        cursor = MagicMock()
+        cursor.execute.return_value.fetchone.return_value = None
+        with patch("monitoring.edit_tracker.db") as mock_db:
+            mock_db.cursor_main = cursor
+            assert _is_processed_comment("abc123") is False
+
+
+# ===========================================================================
+# edit_tracker
+# ===========================================================================
+
+
+class TestEditTracker:
+    def test_phase_one_does_not_seed_already_edited_uncached_comment(self):
+        comment = make_comment(body="`福`", edited=True)
+        helper_subreddit = MagicMock()
+        helper_subreddit.comments.return_value = [comment]
+        reddit_subreddit = MagicMock()
+        reddit_subreddit.mod.edited.return_value = []
+
+        with (
+            patch(
+                "monitoring.edit_tracker.SETTINGS",
+                {
+                    "subreddit": "translator",
+                    "comment_edit_num_limit": 1,
+                    "comment_edit_age_max": 1,
+                },
+            ),
+            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
+            patch("monitoring.edit_tracker.REDDIT") as reddit,
+            patch("monitoring.edit_tracker._get_cached_comment", return_value=None),
+            patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
+            patch("monitoring.edit_tracker._cleanup_comment_cache"),
+        ):
+            helper.subreddit.return_value = helper_subreddit
+            reddit.subreddit.return_value = reddit_subreddit
+
+            edit_tracker()
+
+        update_cache.assert_not_called()
+
+    def test_uncached_edited_command_removes_processed_marker(self):
+        comment = make_comment(body="`福`", edited=True)
+        reddit_subreddit = MagicMock()
+        reddit_subreddit.mod.edited.return_value = [comment]
+        cmd = make_komando("lookup_cjk", [("zh", "福", False)])
+
+        with (
+            patch(
+                "monitoring.edit_tracker.SETTINGS",
+                {
+                    "subreddit": "translator",
+                    "comment_edit_num_limit": 1,
+                    "comment_edit_age_max": 1,
+                },
+            ),
+            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
+            patch("monitoring.edit_tracker.REDDIT") as reddit,
+            patch("monitoring.edit_tracker._get_cached_comment", return_value=None),
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[cmd],
+            ),
+            patch("monitoring.edit_tracker.comment_has_command", return_value=True),
+            patch("monitoring.edit_tracker._is_processed_comment", return_value=True),
+            patch("monitoring.edit_tracker._remove_from_processed") as remove,
+            patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
+            patch("monitoring.edit_tracker._cleanup_comment_cache"),
+        ):
+            helper.subreddit.return_value.comments.return_value = []
+            reddit.subreddit.return_value = reddit_subreddit
+
+            edit_tracker()
+
+        update_cache.assert_called_once()
+        remove.assert_called_once_with("abc123")
 
 
 # ===========================================================================

@@ -233,6 +233,15 @@ def _get_cached_comment(comment_id: str) -> "_CachedComment | None":
     )
 
 
+def _is_processed_comment(comment_id: str) -> bool:
+    """Return True when the normal comment loop has already seen this comment."""
+    return bool(
+        db.cursor_main.execute(
+            "SELECT 1 FROM old_comments WHERE id = ?", (comment_id,)
+        ).fetchone()
+    )
+
+
 def _update_comment_cache(
     comment_id: str,
     comment_body: str,
@@ -323,6 +332,13 @@ def edit_tracker() -> None:
         # body to stay cached so Phase 2 can diff against it later).
         cached = _get_cached_comment(comment_id)
         if not cached:
+            if getattr(comment, "edited", False):
+                logger.debug(
+                    f"Edited comment `{comment_id}` not yet cached; leaving it "
+                    "for Phase 2 instead of seeding the edited body as baseline."
+                )
+                continue
+
             # Don't record komandos or lookup_content for the bot's own
             # comments — they would produce false positives in Phase 2.
             author = str(comment.author) if comment.author else ""
@@ -367,15 +383,10 @@ def edit_tracker() -> None:
 
         cached = _get_cached_comment(comment_id)
 
-        # If there's no cache entry, this comment never appeared in the recent
-        # comments feed (it's too old for ziwen_commands to pick up). Triggering
-        # reprocessing would be pointless. Cache the current state as a baseline
-        # so future edits have something to diff against, then skip.
+        # If there's no cache entry, cache the edited state as a new baseline.
+        # When the normal comment loop already processed an older version,
+        # remove that marker so the command handler can process the edit.
         if not cached:
-            logger.debug(
-                f"Comment `{comment_id}` in edited queue but not in cache "
-                f"(too old for recent feed); caching current state, skipping reprocess."
-            )
             new_commands = extract_commands_from_text(comment_new_body)
             new_komandos = ",".join(dict.fromkeys(cmd.name for cmd in new_commands))
             new_lookup_content = _serialize_lookup_content(new_commands)
@@ -386,6 +397,18 @@ def edit_tracker() -> None:
                 new_komandos,
                 new_lookup_content,
             )
+            if _is_processed_comment(comment_id):
+                logger.info(
+                    f"Reprocessing triggered for `{comment_id}`: edited command "
+                    "comment was already processed before it entered the edit cache. "
+                    f"https://www.reddit.com{item.permalink}"
+                )
+                _remove_from_processed(comment_id)
+            else:
+                logger.debug(
+                    f"Comment `{comment_id}` in edited queue but not in cache "
+                    "(not yet processed by the command loop); cached current state."
+                )
             continue
 
         comment_old_body = cached.body
