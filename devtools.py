@@ -15,6 +15,7 @@ from time import perf_counter, time
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.table import Table
 from wasabi import msg
 
 from config import SETTINGS, enable_debug_logging
@@ -91,6 +92,84 @@ def _print_lookup(result: str | None, not_found_msg: str = "No results found.") 
         _console.print()
     else:
         msg.warn(not_found_msg)
+
+
+def _strip_markdown_emphasis(value: str) -> str:
+    """Remove simple Reddit Markdown emphasis from terminal table cells."""
+    return re.sub(r"^\*+|\*+$", "", value.strip())
+
+
+def _format_points_cell(value: str) -> str:
+    """Add thousands separators to integer point table values."""
+    stripped = _strip_markdown_emphasis(value)
+    return f"{int(stripped):,}" if stripped.isdigit() else stripped
+
+
+def _print_points_user_result(result: str) -> None:
+    """Render the user points Markdown response as a Rich terminal table."""
+    lines = result.splitlines()
+    summary_lines: list[str] = []
+    table_rows: list[list[str]] = []
+
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith("|"):
+            cells = [cell.strip() for cell in stripped_line.strip("|").split("|")]
+            if cells and all(re.fullmatch(r":?-+:?", cell) for cell in cells):
+                continue
+            table_rows.append(cells)
+        elif stripped_line:
+            summary_lines.append(stripped_line)
+
+    if not table_rows:
+        msg.info(result)
+        return
+
+    _console.print()
+    _console.print(Markdown("\n\n".join(summary_lines)), style="sandy_brown")
+
+    headers, *rows = table_rows
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column(_strip_markdown_emphasis(headers[0]), style="cyan")
+    table.add_column(_strip_markdown_emphasis(headers[1]), justify="right")
+    table.add_column(_strip_markdown_emphasis(headers[2]), justify="right")
+
+    for row in rows:
+        if len(row) != len(headers):
+            continue
+        month = _strip_markdown_emphasis(row[0])
+        style = "bold" if month.lower() == "total" else None
+        table.add_row(
+            month,
+            _format_points_cell(row[1]),
+            _format_points_cell(row[2]),
+            style=style,
+        )
+
+    _console.print(table)
+    _console.print()
+
+
+def _print_points_post_result(
+    post_id: str, point_records: list[tuple[str, str, int]]
+) -> None:
+    """Render point records for a Reddit post as a Rich terminal table."""
+    _console.print()
+    _console.print(
+        f"Point records for post [bold cyan]{post_id}[/bold cyan]:",
+        style="sandy_brown",
+    )
+
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Comment", style="cyan")
+    table.add_column("User")
+    table.add_column("Points", justify="right")
+
+    for comment_id, username, points in point_records:
+        table.add_row(comment_id, f"u/{username}", f"{points:,}")
+
+    _console.print(table)
+    _console.print()
 
 
 def _prompt_text(
@@ -318,7 +397,7 @@ def check_monitoring_user() -> None:
     my_username = input("Enter a Reddit username: ")
     with msg.loading(f"Retrieving points for u/{my_username}..."):
         result = points_user_retriever(my_username)
-    msg.info(str(result))
+    _print_points_user_result(result)
 
 
 def check_monitoring_post() -> None:
@@ -327,11 +406,7 @@ def check_monitoring_post() -> None:
     with msg.loading(f"Retrieving point records for {my_post_id}..."):
         my_post_result = points_post_retriever(my_post_id)
     if my_post_result:
-        msg.info(f"Point records for post {my_post_id}:")
-        for my_comment_id, my_username, my_points in my_post_result:
-            msg.info(
-                f"  Comment {my_comment_id} | u/{my_username} | {my_points} points"
-            )
+        _print_points_post_result(my_post_id, my_post_result)
     else:
         msg.warn(f"No point records found for post ID: {my_post_id}")
 
@@ -715,13 +790,29 @@ def check_reddit_verified_thread() -> None:
     """verification: Fetch the ID of the current verified thread."""
     with msg.loading("Fetching verified thread ID..."):
         result = get_verified_thread()
-    msg.good(str(result))
+    if not result:
+        msg.warn("No verified thread found.")
+        return
+
+    try:
+        submission = submission_from_input(result)
+    except ValueError as exc:
+        msg.good(str(result))
+        msg.warn(f"Could not build a link for verified thread {result}: {exc}")
+        return
+
+    if submission is None:
+        msg.good(str(result))
+        msg.warn(f"Could not build a link for verified thread {result}.")
+        return
+
+    msg.good(f"{result} | https://www.reddit.com{submission.permalink}")
 
 
 def check_reddit_notifications() -> None:
     """notifications: Fetch usernames subscribed to a given language."""
     notifications_test = _prompt_text(
-        "Enter a language to retrieve notifications for (x to back out): ",
+        "Enter a language to see who is signed up for its notifications (x to back out): ",
         allow_exit=True,
     )
     if notifications_test is None:
