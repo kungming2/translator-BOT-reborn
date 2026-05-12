@@ -66,8 +66,7 @@ def build_monthly_statistics_post(
             f"# Hermes Statistics – {month_label}",
             format_statistics_for_reddit(stats),
             (
-                "These figures summarize active Hermes database entries first "
-                f"recorded from {month_year}-01 through the end of {month_label} UTC."
+                f"*These figures summarize active database entries during {month_label}*."
             ),
         ]
     )
