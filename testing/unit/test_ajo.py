@@ -9,13 +9,8 @@ import unittest
 from unittest.mock import MagicMock
 
 # noinspection PyProtectedMember
-from models.ajo import (
-    Ajo,
-    _convert_to_dict,
-    _normalize_lang_field,
-    ajo_defined_multiple_flair_former,
-    parse_ajo_data,
-)
+from models.ajo import (Ajo, _convert_to_dict, _normalize_lang_field,
+                        ajo_defined_multiple_flair_former, parse_ajo_data)
 from models.lingvo import Lingvo
 from models.titolo import Direction, Titolo
 

@@ -11,24 +11,18 @@ Korean examples drawn from: 들어라 최후 결전 투쟁의 외침을 / 민중
 """
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from ziwen_lookup.cache_helpers import (
-    format_ja_character_from_cache,
-    format_ja_word_from_cache,
-    format_ko_word_from_cache,
-    format_zh_word_from_cache,
-    get_from_cache,
-    parse_ja_output_to_json,
-    parse_ko_output_to_json,
-    parse_zh_output_to_json,
-    save_to_cache,
-)
-from ziwen_lookup.match_helpers import (
-    lookup_ko_tokenizer,
-    lookup_matcher,
-    lookup_zh_ja_tokenizer,
-)
+from ziwen_lookup.cache_helpers import (format_ja_character_from_cache,
+                                        format_ja_word_from_cache,
+                                        format_ko_word_from_cache,
+                                        format_zh_word_from_cache,
+                                        get_from_cache, is_expected_cache_skip,
+                                        parse_ja_output_to_json,
+                                        parse_ko_output_to_json,
+                                        parse_zh_output_to_json, save_to_cache)
+from ziwen_lookup.match_helpers import (lookup_ko_tokenizer, lookup_matcher,
+                                        lookup_zh_ja_tokenizer)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -47,6 +41,45 @@ def _skip_on_error(func):
             self.skipTest(f"Dependency not available: {e}")
 
     return wrapper
+
+
+# ---------------------------------------------------------------------------
+# TestZhVariantSearch
+# ---------------------------------------------------------------------------
+
+
+class TestZhVariantSearch(unittest.TestCase):
+    """Tests for the MOE variant-character lookup helper."""
+
+    def test_variant_character_search_uses_browser_headers(self):
+        try:
+            import ziwen_lookup.zh as zh
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        response = Mock()
+        response.content = b"""
+        <html><body><main><div><form><div>
+        <a href="dictView.jsp?ID=40255&amp;q=1">result</a>
+        </div></form></div></main></body></html>
+        """
+        response.raise_for_status.return_value = None
+
+        session = Mock()
+        session.get.return_value = response
+
+        with patch("ziwen_lookup.zh.requests.Session", return_value=session):
+            result = zh.variant_character_search("行", retries=1)
+
+        self.assertEqual(
+            result, "https://dict.variants.moe.edu.tw/dictView.jsp?ID=40255&q=1"
+        )
+        session.get.assert_called_once()
+        self.assertIn("headers", session.get.call_args.kwargs)
+        self.assertEqual(
+            session.get.call_args.kwargs["headers"]["User-Agent"],
+            zh.useragent["User-Agent"],
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -623,6 +656,15 @@ class TestCacheParserJa(unittest.TestCase):
         )
         parsed = parse_ja_output_to_json(multi_char_md)
         self.assertEqual(parsed, {})
+
+    def test_missing_japanese_term_is_expected_cache_skip(self):
+        """Japanese multi-character tables are valid output but not cacheable."""
+        error = ValueError("No Japanese term found in data")
+        self.assertTrue(is_expected_cache_skip(error))
+
+    def test_unexpected_cache_error_is_not_expected_skip(self):
+        error = RuntimeError("database is locked")
+        self.assertFalse(is_expected_cache_skip(error))
 
     def test_parse_yojijukugo_word_field(self):
         parsed = parse_ja_output_to_json(_JA_YOJIJUKUGO_MARKDOWN)

@@ -6,10 +6,8 @@ from unittest.mock import patch
 import orjson
 
 import monitoring.usage_statistics as usage_statistics
-from monitoring.usage_statistics import (
-    _canonical_notification_language_code,
-    action_counter,
-)
+from monitoring.usage_statistics import (_canonical_notification_language_code,
+                                         action_counter)
 
 
 class TestActionCounter(unittest.TestCase):

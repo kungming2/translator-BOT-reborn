@@ -26,16 +26,11 @@ Requirements (beyond the project's own deps):
 
 import re
 
-from ziwen_lookup.cache_helpers import (
-    format_ko_word_from_cache,
-    get_from_cache,
-    parse_ko_output_to_json,
-    save_to_cache,
-)
-
+from ziwen_lookup.cache_helpers import (format_ko_word_from_cache,
+                                        get_from_cache,
+                                        parse_ko_output_to_json, save_to_cache)
 # noinspection PyProtectedMember
 from ziwen_lookup.ko import _ko_search_raw, _ko_word_fetch, ko_word
-
 # ── project imports ───────────────────────────────────────────────────────────
 from ziwen_lookup.match_helpers import lookup_matcher
 

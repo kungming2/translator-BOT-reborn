@@ -17,15 +17,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # noinspection PyProtectedMember
-from ziwen_lookup.wiktionary import (
-    _is_clean_definition_line,
-    _is_clean_etymology_line,
-    _section_level,
-    _section_name,
-    format_wiktionary_markdown,
-    parse_wiktionary,
-    wiktionary_search,
-)
+from ziwen_lookup.wiktionary import (_is_clean_definition_line,
+                                     _is_clean_etymology_line, _section_level,
+                                     _section_name, format_wiktionary_markdown,
+                                     parse_wiktionary, wiktionary_search)
 
 # ─── Fixtures: raw Wiktionary extracts ───────────────────────────────────────
 

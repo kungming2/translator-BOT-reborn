@@ -12,7 +12,8 @@ from unittest.mock import MagicMock, patch
 import orjson
 import pytest
 
-from models.diskuto import Diskuto, diskuto_exists, diskuto_loader, diskuto_writer
+from models.diskuto import (Diskuto, diskuto_exists, diskuto_loader,
+                            diskuto_writer)
 
 # ---------------------------------------------------------------------------
 # Helpers

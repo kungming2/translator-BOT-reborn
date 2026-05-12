@@ -29,12 +29,8 @@ import re
 import pytest
 import pytest_asyncio  # noqa: F401 – needed for async fixture support
 
-from ziwen_lookup.cache_helpers import (
-    get_from_cache,
-    parse_zh_output_to_json,
-    save_to_cache,
-)
-
+from ziwen_lookup.cache_helpers import (get_from_cache,
+                                        parse_zh_output_to_json, save_to_cache)
 # ── project imports ──────────────────────────────────────────────────────────
 from ziwen_lookup.match_helpers import lookup_matcher
 from ziwen_lookup.zh import zh_character, zh_word, zh_word_chengyu_supplement

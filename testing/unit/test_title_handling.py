@@ -20,15 +20,10 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from models.titolo import Titolo
-
 # noinspection PyProtectedMember
-from title.title_handling import (
-    _determine_title_direction,
-    extract_lingvos_from_text,
-    is_english_only,
-    main_posts_filter,
-    process_title,
-)
+from title.title_handling import (_determine_title_direction,
+                                  extract_lingvos_from_text, is_english_only,
+                                  main_posts_filter, process_title)
 
 # ---------------------------------------------------------------------------
 # Helpers

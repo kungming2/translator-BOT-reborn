@@ -15,12 +15,8 @@ from collections.abc import Callable
 from typing import Any
 
 # noinspection PyProtectedMember
-from models.komando import (
-    Komando,
-    _check_specific_mode,
-    _deduplicate_args,
-    extract_commands_from_text,
-)
+from models.komando import (Komando, _check_specific_mode, _deduplicate_args,
+                            extract_commands_from_text)
 
 # ---------------------------------------------------------------------------
 # Helpers

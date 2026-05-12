@@ -20,14 +20,9 @@ from typing import Any
 
 # noinspection PyProtectedMember
 from hermes.hermes_database import HermesDatabaseManager, _parse_user_data
-
 # noinspection PyProtectedMember
-from hermes.matching import (
-    _extract_segments,
-    get_language_greeting,
-    language_matcher,
-    title_parser,
-)
+from hermes.matching import (_extract_segments, get_language_greeting,
+                             language_matcher, title_parser)
 
 # ---------------------------------------------------------------------------
 # Helpers

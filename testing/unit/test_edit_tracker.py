@@ -11,20 +11,16 @@ import time
 from unittest.mock import MagicMock, patch
 
 # noinspection PyProtectedMember
-from monitoring.edit_tracker import (
-    _CachedComment,
-    _cleanup_comment_cache,
-    _deserialize_komandos,
-    _deserialize_lookup_content,
-    _get_cached_comment,
-    _is_comment_within_edit_window,
-    _is_processed_comment,
-    _remove_from_processed,
-    _serialize_komandos,
-    _serialize_lookup_content,
-    _update_comment_cache,
-    edit_tracker,
-)
+from monitoring.edit_tracker import (_CachedComment, _cleanup_comment_cache,
+                                     _deserialize_komandos,
+                                     _deserialize_lookup_content,
+                                     _get_cached_comment,
+                                     _is_comment_within_edit_window,
+                                     _is_processed_comment,
+                                     _remove_from_processed,
+                                     _serialize_komandos,
+                                     _serialize_lookup_content,
+                                     _update_comment_cache, edit_tracker)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -594,6 +590,16 @@ class TestCleanupCommentCache:
         query, params = cursor.execute.call_args[0]
         assert "DELETE" in query
         assert params == (100,)
+
+    def test_keeps_newest_comments_by_created_utc(self):
+        cursor = MagicMock()
+        with patch("monitoring.edit_tracker.db") as mock_db:
+            mock_db.cursor_cache = cursor
+            mock_db.conn_cache = MagicMock()
+            _cleanup_comment_cache(100)
+
+        query = cursor.execute.call_args[0][0]
+        assert "ORDER BY created_utc DESC, id DESC" in query
 
     def test_commit_called(self):
         conn = MagicMock()

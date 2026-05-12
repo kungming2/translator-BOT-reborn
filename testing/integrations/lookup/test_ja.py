@@ -30,17 +30,13 @@ import re
 
 import pytest
 
-from ziwen_lookup.cache_helpers import (
-    format_ja_character_from_cache,
-    format_ja_word_from_cache,
-    get_from_cache,
-    parse_ja_output_to_json,
-    save_to_cache,
-)
-
+from ziwen_lookup.cache_helpers import (format_ja_character_from_cache,
+                                        format_ja_word_from_cache,
+                                        get_from_cache,
+                                        parse_ja_output_to_json, save_to_cache)
 # noinspection PyProtectedMember
-from ziwen_lookup.ja import _ja_character_fetch, _ja_word_fetch, ja_character, ja_word
-
+from ziwen_lookup.ja import (_ja_character_fetch, _ja_word_fetch, ja_character,
+                             ja_word)
 # ── project imports ───────────────────────────────────────────────────────────
 from ziwen_lookup.match_helpers import lookup_matcher
 

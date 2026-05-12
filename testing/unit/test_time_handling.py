@@ -6,11 +6,8 @@ Unit tests for time_handling.py
 
 import pytest
 
-from time_handling import (
-    get_previous_month,
-    time_convert_to_string_seconds,
-    time_convert_to_utc,
-)
+from time_handling import (get_previous_month, time_convert_to_string_seconds,
+                           time_convert_to_utc)
 
 
 def test_time_convert_to_utc_accepts_z_suffix():

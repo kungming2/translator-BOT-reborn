@@ -16,15 +16,10 @@ import unittest
 from collections.abc import Callable
 from typing import Any
 
-from lang.countries import country_converter
 from lang.code_standards import alpha3_code, parse_language_tag
-from lang.languages import (
-    converter,
-    define_language_lists,
-    get_lingvos,
-    normalize,
-    parse_language_list,
-)
+from lang.countries import country_converter
+from lang.languages import (converter, define_language_lists, get_lingvos,
+                            normalize, parse_language_list)
 from models.lingvo import Lingvo
 
 # ---------------------------------------------------------------------------
