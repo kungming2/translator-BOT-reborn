@@ -62,12 +62,15 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Fixed the `!translated` handler so that an OP will not be notified of a translated post if they are the ones calling the command.
 * 🔄 CHANGE: Wenju's language of the day update will also update [r/languagelearning](https://www.reddit.com/r/languagelearning)'s sidebar at the same time.
 * 🔄 CHANGE: `devtools.py` and `main_wenyuan.py` now also use [Rich](https://github.com/textualize/rich) for better formatting of lookup results.
+* 🔄 CHANGE: `devtools.py` now shows monitoring post-point records as a Rich table and includes a Reddit link when displaying the current verified thread.
+* 🔄 CHANGE: Wenju's Discord rule violation breakdown table is now padded for better readability.
 * 🔄 CHANGE: Split off the Chinese Reference routine's logger output into its own file.
 * 🔄 CHANGE: Events output is trimmed for all logs, not just translator-BOT's.
 * 🔄 CHANGE: Using [DeepSeek V4](https://x.com/deepseek_ai/status/2047516922263285776) for title change suggestion queries. Restructured `ai_query()` to more easily switch between services if desired.
 * 🔄 CHANGE: Use normalized names instead of titles for language name matching (would affect language names like [Mi'kmaq](https://en.wikipedia.org/wiki/Mi%27kmaq_language)).
 * 🔄 CHANGE: Integrated [langcodes](https://github.com/rspeer/langcodes) for some edge cases, particularly when it comes to language/country IETF language tags.
 * 🔄 CHANGE: Low-confidence results from AI-parsing will also trigger Discord mod notifications. 
+* 🔄 CHANGE: Changed YouTube length assessment to use a proper API key instead of `yt-dlp`. 
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours.
 * 🛠️ BUG FIX: Fix to prevent non-CJK backtick terms from being added to `lookup_cjk` in instruos.
@@ -75,7 +78,10 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: The `recorded_translators` field wasn't being updated by `points.py` into the ajo fields.
 * 🛠️ BUG FIX: Internal posts can now be unsubscribed from.
 * 🛠️ BUG FIX: Lookup action counters is now more accurate as it measures the length of the `data` payload.
+* 🛠️ BUG FIX: Chinese character variant links in CJK lookup now use browser-style request headers so the upstream dictionary no longer closes the connection.
+* 🛠️ BUG FIX: Japanese CJK lookup cache skips for non-cacheable multi-character kanji tables are now logged as informational messages instead of errors.
 * 🛠️ BUG FIX: CJK lookup now strips Reddit rich-text editor backslash escapes from lookup punctuation.
+* 🛠️ BUG FIX: Edit-tracker cache cleanup now uses comment timestamps instead of Reddit comment ID ordering, matching [Reddit's move to non-monotonic comment IDs](https://old.reddit.com/r/redditdev/comments/1taa483/upcoming_changes_to_the_comment_id_endpoint/).
 * 🛠️ BUG FIX: Notifications records were stored per user in an odd format (e.g. `teng-teng`).
 * 🛠️ BUG FIX: Wenju's language of the day task now skips malformed upstream Wikipedia API responses instead of failing the daily run.
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.

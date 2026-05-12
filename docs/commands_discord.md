@@ -71,7 +71,7 @@ This command searches for Reddit translation posts related to a term and returns
 
 ### Command: */status* 
 
-This command retrieves a random quote from **[The Office API](https://akashrajpurohit.github.io/the-office-api/)**. It has nothing to do with r/translator, but is just a fun addition. It then also appends the last five entries in the events log and calculates how long ago the last entry was.
+This command checks the bot's internet connection. It then also appends the last five Ziwen entries in the events log and calculates how long ago the last entry was.
 
 ```
 /status
