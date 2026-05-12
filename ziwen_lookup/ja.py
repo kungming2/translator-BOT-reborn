@@ -26,6 +26,7 @@ from ziwen_lookup.cache_helpers import (
     format_ja_character_from_cache,
     format_ja_word_from_cache,
     get_from_cache,
+    is_expected_cache_skip,
     parse_ja_output_to_json,
     save_to_cache,
 )
@@ -214,7 +215,10 @@ def _ja_character_fetch(character: str) -> str:
         save_to_cache(parsed_data, "ja", "ja_character")
         logger.debug(f"Cached result for '{character}'")
     except Exception as ex:
-        logger.error(f"Failed to cache result for '{character}': {ex}")
+        if is_expected_cache_skip(ex):
+            logger.info(f"Skipped cache write for '{character}': {ex}")
+        else:
+            logger.error(f"Failed to cache result for '{character}': {ex}")
 
     return total_data + lookup_line_3
 
@@ -546,7 +550,10 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             save_to_cache(parsed_data, "ja", "ja_word")
             logger.debug(f"Cached result for '{japanese_word}'")
         except Exception as ex:
-            logger.error(f"Failed to cache result for '{japanese_word}': {ex}")
+            if is_expected_cache_skip(ex):
+                logger.info(f"Skipped cache write for '{japanese_word}': {ex}")
+            else:
+                logger.error(f"Failed to cache result for '{japanese_word}': {ex}")
 
         return return_comment + footer
     else:

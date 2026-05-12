@@ -22,6 +22,8 @@ from lang.languages import converter
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:CACHE"})
 
+EXPECTED_CACHE_SKIP_MESSAGES = frozenset({"No Japanese term found in data"})
+
 
 # ─── Cache database access ────────────────────────────────────────────────────
 
@@ -86,6 +88,14 @@ def save_to_cache(data: dict, language_code: str, lookup_type: str) -> None:
     cursor, conn = _get_thread_local_cursor()
     cursor.execute(query, (term, language_code, retrieved_utc, lookup_type, data_json))
     conn.commit()
+
+
+def is_expected_cache_skip(error: Exception) -> bool:
+    """
+    Return whether a cache-write failure represents intentionally
+    non-cacheable lookup output rather than an operational problem.
+    """
+    return isinstance(error, ValueError) and str(error) in EXPECTED_CACHE_SKIP_MESSAGES
 
 
 def get_from_cache(term: str, language_code: str, lookup_type: str) -> dict | None:
