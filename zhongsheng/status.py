@@ -26,34 +26,27 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:STATUS"})
 
 @command(
     name="status",
-    help_text="Shows a random Office quote and the last 5 events from the log for Ziwen.",
+    help_text="Shows internet connectivity and the last 5 events from the log for Ziwen.",
     roles=["Moderator", "Helper"],
 )
 async def status(ctx: commands.Context) -> None:
-    """Combination command to test the connection of the bot to the internet,
-    and also to see when the last action in the events log was taken."""
-    # Fetch a random Office quote
+    """Checks internet connectivity and shows when the last action in the events log was taken."""
+    # Check internet connectivity
     try:
         async with (
             aiohttp.ClientSession() as session,
             session.get(
-                "https://officeapi.akashrajpurohit.com/quote/random",
-                headers={
-                    **get_random_useragent(),
-                    "Accept-Encoding": "gzip, deflate",
-                },  # Explicitly avoid br
+                "https://httpbin.org/get",
+                headers=get_random_useragent(),
             ) as resp,
         ):
             if resp.status == 200:
-                data = await resp.json()
-                character = data.get("character", "Unknown")
-                quote = data.get("quote", "No quote available")
-                office_response = f'**{character}**: "{quote}"\n\n'
+                connectivity_response = "✅ Internet connectivity: OK\n\n"
             else:
-                office_response = f"⚠️ Failed to fetch quote. API returned status code {resp.status}\n\n"
+                connectivity_response = f"⚠️ Unexpected status code {resp.status} from connectivity check.\n\n"
     except Exception as err:
-        logger.error(f"Encountered {err} when fetching quote.", exc_info=True)
-        office_response = "⚠️ An error occurred fetching quote.\n\n"
+        logger.error(f"Encountered {err} when checking connectivity.", exc_info=True)
+        connectivity_response = "⚠️ Internet connectivity check failed.\n\n"
 
     # Fetch recent events log entries
     try:
@@ -68,4 +61,4 @@ async def status(ctx: commands.Context) -> None:
     except Exception as e:
         status_response = f"⚠️ An error occurred reading logs: {str(e)}"
 
-    await send_long_message(ctx, office_response + status_response)
+    await send_long_message(ctx, connectivity_response + status_response)

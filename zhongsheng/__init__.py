@@ -79,7 +79,7 @@ COMMAND_GUIDE = {
         "roles": ["Moderator", "Helper"],
     },
     "status": {
-        "description": "Get a random quote from *The Office (US)* and see the last 5 Ziwen event-log entries",
+        "description": "Checks the internet connection and see the last 5 Ziwen event-log entries",
         "roles": ["Moderator", "Helper"],
     },
     "title": {

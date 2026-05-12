@@ -13,7 +13,7 @@ from urllib.parse import quote_plus
 from discord.ext import commands
 
 from config import logger as _base_logger
-from lang.languages import converter, Lingvo
+from lang.languages import Lingvo, converter
 from monitoring.usage_statistics import describe_language_frequency
 from responses import RESPONSE
 
