@@ -496,13 +496,18 @@ def collate_moderator_digest() -> None:
         (a["count"] for a in actions if a["name"].lower() == "notifications"), 0.0
     )
 
-    mod_page_address = load_settings(Paths.AUTH["CREDENTIALS"])["MODERATOR_DIGEST_URL"]
+    mod_page_address = load_settings(Paths.AUTH["CREDENTIALS"])[
+        "MODERATOR_DIGEST_URL"
+    ].rstrip("/")
     sections = [error_log_md, filter_log_md, activity_md, command_data_md]
     if noted_entries_md is not None:
         sections.append(noted_entries_md)
     total_data = "\n".join(sections)
     subject_line = f"Moderator Digest for {today_date} Compiled"
-    notification_body = f"The [digest dashboard]({mod_page_address}/moderator_digest.html) has been updated."
+    notification_body = (
+        f"The [digest dashboard]({mod_page_address}/moderator_digest.html) "
+        "has been updated."
+    )
 
     digest_summary = f"# {subject_line}\n{total_data}"
 

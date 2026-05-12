@@ -67,6 +67,7 @@ def reddit_status_report() -> None:
     """
     Call reddit_status_check() and alert Discord if any incidents are active.
     This wraps an API that indicates whether Reddit is having issues.
+    We skip minor-level incidents.
 
     :returns:
         - Markdown text if incidents exist
@@ -86,6 +87,9 @@ def reddit_status_report() -> None:
         name = incident.get("name", "Unknown")
         status = incident.get("status", "N/A")
         impact = incident.get("impact", "unknown")
+        if impact.lower() == "minor":  # Exclude minor incidents
+            logger.info(f"Skipping incident {name} (minor incident).")
+            continue
         created = time_convert_to_utc(incident.get("created_at", "N/A"))
         updated = time_convert_to_utc(incident.get("updated_at", "N/A"))
         shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
@@ -116,8 +120,9 @@ def reddit_status_report() -> None:
             f"  - **Updated:** [{updated}](https://time.lol/#{updated})"
         )
 
-    alert_text = "\n".join(lines)
-    send_discord_alert("Reddit Status", alert_text, "reddit_status")
+    if len(lines) > 1:
+        alert_text = "\n".join(lines)
+        send_discord_alert("Reddit Status", alert_text, "reddit_status")
 
     return
 

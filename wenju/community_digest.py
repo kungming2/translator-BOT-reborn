@@ -28,6 +28,7 @@ from reddit.connection import REDDIT, USERNAME
 from reddit.notifications import notifier_internal
 from responses import RESPONSE
 from time_handling import get_current_utc_date
+from utility import format_markdown_table_with_padding
 from wenju import task
 
 # ─── Module-level constants ───────────────────────────────────────────────────
@@ -370,8 +371,7 @@ def monthly_rule_violation_report() -> ModRemovalReport:
     report_sections.append(summary)
 
     if results["violation_counts"]:
-        breakdown = [
-            "## Rule Violation Breakdown",
+        breakdown_table = [
             "| Rule | Count | Percentage |",
             "|------|-------|------------|",
         ]
@@ -381,8 +381,11 @@ def monthly_rule_violation_report() -> ModRemovalReport:
                 if results["total_violations"] > 0
                 else 0
             )
-            breakdown.append(f"| Rule #{rule} | {count} | {percentage:.1f}% |")
-        report_sections.append("\n".join(breakdown))
+            breakdown_table.append(f"| Rule #{rule} | {count} | {percentage:.1f}% |")
+        report_sections.append(
+            "## Rule Violation Breakdown\n"
+            + format_markdown_table_with_padding("\n".join(breakdown_table))
+        )
     else:
         report_sections.append(
             "## Rule Violation Breakdown\nNo violations found in this period."
