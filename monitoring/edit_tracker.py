@@ -285,7 +285,7 @@ def _cleanup_comment_cache(limit: int) -> None:
     cleanup = """
         DELETE FROM comment_cache
         WHERE id NOT IN (
-            SELECT id FROM comment_cache ORDER BY id DESC LIMIT ?
+            SELECT id FROM comment_cache ORDER BY created_utc DESC, id DESC LIMIT ?
         )
     """
     cursor.execute(cleanup, (limit,))
