@@ -32,9 +32,14 @@ dev = [
     "mypy",
     "pytest",
     "ruff",
-    "types-PyYAML",
+    "types-beautifulsoup4",
+    "types-lxml",
+    "types-Pillow",
     "types-psutil",
+    "types-python-dateutil",
+    "types-PyYAML",
     "types-requests",
+    "types-setuptools",
 ]
 
 [tool.ruff]
