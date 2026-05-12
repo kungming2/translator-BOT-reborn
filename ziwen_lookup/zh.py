@@ -16,7 +16,7 @@ import random
 import re
 from contextlib import suppress
 from time import sleep
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 import aiofiles
 import aiohttp
@@ -312,7 +312,9 @@ def variant_character_search(search_term: str, retries: int = 3) -> str | None:
 
     for attempt in range(retries):
         try:
-            response = session.get(base_search_url, timeout=timeout_amount)
+            response = session.get(
+                base_search_url, headers=useragent, timeout=timeout_amount
+            )
             response.raise_for_status()
             tree = html.fromstring(response.content)
 
@@ -322,14 +324,16 @@ def variant_character_search(search_term: str, retries: int = 3) -> str | None:
             if link_elements:
                 href = link_elements[0].get("href")
                 if href:
-                    full_url = base_site + href
+                    full_url = urljoin(base_site, href)
                     return full_url
 
             # If link not found, no need to retry, return None immediately
             return None
 
         except (requests.RequestException, IndexError) as e:
-            logger.error(f"Encountered an error: {e}")
+            logger.warning(
+                f"Variant character lookup failed for '{search_term}' at {base_search_url}: {e}"
+            )
             # If not last attempt, wait a bit and retry
             if attempt < retries - 1:
                 sleep(1)
@@ -484,9 +488,12 @@ def calligraphy_search(character: str) -> str | None:
     formdata = {"sort": "7", "wd": character}
     try:
         with requests.Session() as session:
-            response = session.post("https://www.shufazidian.com/", data=formdata)
+            response = session.post(
+                "https://www.shufazidian.com/", data=formdata, timeout=10
+            )
             response.raise_for_status()
-    except requests.RequestException:
+    except requests.RequestException as e:
+        logger.warning(f"Calligraphy lookup failed for '{character}': {e}")
         return None
 
     # Parse the page with BeautifulSoup and then convert to lxml tree for xpath
