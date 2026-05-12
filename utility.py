@@ -19,21 +19,22 @@ import io
 import logging
 import re
 import time
-from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import imagehash
+import isodate
 import PIL
 import requests
 from PIL import Image
-from yt_dlp import YoutubeDL
 
+from config import Paths, load_settings
 from config import logger as _base_logger
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "UTILITY"})
 
+access_credentials = load_settings(Paths.AUTH["API"])
 
 # ─── URL validation ───────────────────────────────────────────────────────────
 
@@ -224,7 +225,7 @@ def generate_image_hash(image_url: str) -> str | None:
 
 def fetch_youtube_length(youtube_url: str) -> int | None:
     """
-    Return the length of a YouTube video in seconds using yt-dlp.
+    Return the length of a YouTube video in seconds using the YouTube Data API v3.
     Returns None if unable to fetch.
 
     Note: None is returned for both "duration metadata absent" and "fetch
@@ -240,34 +241,47 @@ def fetch_youtube_length(youtube_url: str) -> int | None:
         return None
 
     logger.debug(f"Fetching video length for: {youtube_url}")
+    yt_key = access_credentials["YOUTUBE_API_KEY"]
     start_time = time.time()
 
-    ydl_opts: dict[str, Any] = {
-        "quiet": True,
-        "skip_download": True,
-        "no_warnings": True,
-        "socket_timeout": 60,
-    }
+    # Extract video ID from URL
+    parsed = urlparse(youtube_url)
+    video_id: str | None
+    if parsed.hostname in ("youtu.be",):
+        video_id = parsed.path.lstrip("/")
+    else:
+        video_id = parse_qs(parsed.query).get("v", [None])[0]
+
+    if not video_id:
+        logger.warning(f"Could not extract video ID from URL: {youtube_url}")
+        return None
 
     try:
-        with YoutubeDL(ydl_opts) as ydl:  # type: ignore
-            info = ydl.extract_info(youtube_url, download=False)
-            if info is None:
-                logger.warning(f"No video info returned for {youtube_url}")
-                return None
+        response = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={"part": "contentDetails", "id": video_id, "key": yt_key},
+            timeout=10,
+        )
+        response.raise_for_status()
 
-            duration = info.get("duration")
-            elapsed = time.time() - start_time
+        items = response.json().get("items", [])
+        elapsed = time.time() - start_time
 
-            if duration is not None:
-                logger.debug(f"Video is {duration}s long (fetched in {elapsed:.2f}s)")
-                return int(duration)
-            else:
-                logger.warning(
-                    f"Duration metadata absent for {youtube_url} "
-                    f"(fetched in {elapsed:.2f}s)"
-                )
-                return None
+        if not items:
+            logger.warning(f"No video found for ID {video_id} ({youtube_url})")
+            return None
+
+        duration_iso = items[0]["contentDetails"]["duration"]  # e.g. "PT4M13S"
+        duration = int(isodate.parse_duration(duration_iso).total_seconds())
+        logger.debug(f"Video is {duration}s long (fetched in {elapsed:.2f}s)")
+        return duration
+
+    except requests.exceptions.Timeout as e:
+        logger.warning(f"Request timeout for {youtube_url}: {e}")
+        return None
+    except requests.exceptions.HTTPError as e:
+        logger.warning(f"HTTP error for {youtube_url}: {e}")
+        return None
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(
