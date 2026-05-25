@@ -1105,16 +1105,41 @@ async def _zh_word_fetch(word: str) -> str:
                 x.strip() for x in meaning_blocks if x.strip() not in {"", ", "}
             ).strip()
 
-            # Cantonese.org pronunciation
-            yue_url = f"https://cantonese.org/search.php?q={word}"
-            yue_response = await client.get(yue_url, headers=useragent)
-            yue_tree = html.fromstring(yue_response.content)
-            yue_pronunciation_raw = yue_tree.xpath(
-                '//h3[contains(@class,"resulthead")]/small/strong//text()'
+            # CantoDict pronunciation
+            cantodict_url = (
+                f"https://www.cantonese.sheik.co.uk/dictionary/search/"
+                f"?searchtype=6&text={word}"
             )
-            yue_syllables = yue_pronunciation_raw[: len(word) * 2]
-            yue_pronunciation = _pair_syllables_with_tones(yue_syllables)
-            yue_pronunciation = re.sub(r"(\d)", r"^(\1)", yue_pronunciation)
+            try:
+                yue_response = await client.get(cantodict_url, headers=useragent)
+                yue_tree = html.fromstring(yue_response.content)
+                yue_pronunciation_raw = yue_tree.xpath(
+                    '(//span[@class="listjyutping"])[1]//text()'
+                )
+                if yue_pronunciation_raw:
+                    raw_jyutping = " ".join(
+                        t.strip() for t in yue_pronunciation_raw if t.strip()
+                    )
+                    yue_pronunciation = re.sub(r"(\d)", r"^(\1)", raw_jyutping)
+                    logger.info(f"CantoDict jyutping for '{word}': {yue_pronunciation}")
+            except (httpx.TimeoutException, httpx.HTTPError) as exc:
+                logger.warning(
+                    f"Could not fetch Cantonese pronunciation for '{word}': {exc!r} — "
+                    f"falling back to CCCanto local dictionary."
+                )
+                cccanto_fallback = await _zh_word_dictionary_search(
+                    tradify(word), "cantonese"
+                )
+                if cccanto_fallback and "jyutping" in cccanto_fallback:
+                    yue_pronunciation = cccanto_fallback["jyutping"]
+                    logger.info(
+                        f"Using CCCanto jyutping '{yue_pronunciation}' as fallback."
+                    )
+                elif alternate_jyutping:
+                    yue_pronunciation = alternate_jyutping
+                    logger.info(
+                        f"Using alternate jyutping '{alternate_jyutping}' as fallback."
+                    )
         else:
             cmn_pronunciation = _convert_numbered_pinyin(alternate_pinyin)
             alt_romanize = _zh_word_alternate_romanization(alternate_pinyin, word)

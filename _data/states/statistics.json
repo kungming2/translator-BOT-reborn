@@ -210,8 +210,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/abkhaz",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "abe": {
         "2019-04": {
@@ -632,6 +632,14 @@
             "percentage_translated": 0.0,
             "ri": 0.21
         },
+        "2025-10": {
+            "num_total": 3,
+            "num_translated": 1,
+            "num_untranslated": 2,
+            "percentage_total": 0.0016,
+            "percentage_translated": 0.33,
+            "ri": 0.77
+        },
         "code": "acm",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -639,8 +647,8 @@
             3
         ],
         "maximum_percentage_total": [
-            "2020-10",
-            0.0008
+            "2025-10",
+            0.0016
         ],
         "maximum_percentage_translated": [
             "2018-10",
@@ -659,11 +667,11 @@
             0.0
         ],
         "name": "Mesopotamian Arabic",
-        "num_months": 24,
+        "num_months": 25,
         "permalink": "https://www.reddit.com/r/translator/wiki/mesopotamian_arabic",
         "rate_daily": 0.01,
-        "rate_monthly": 0.3,
-        "rate_yearly": 3.6
+        "rate_monthly": 0.31,
+        "rate_yearly": 3.72
     },
     "acw": {
         "2019-02": {
@@ -752,8 +760,8 @@
         "num_months": 7,
         "permalink": "https://www.reddit.com/r/translator/wiki/hijazi_arabic",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "acx": {
         "2025-03": {
@@ -982,8 +990,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/avestan",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "aeb": {
         "2017-10": {
@@ -1208,8 +1216,8 @@
         "num_months": 24,
         "permalink": "https://www.reddit.com/r/translator/wiki/tunisian_arabic",
         "rate_daily": 0.01,
-        "rate_monthly": 0.3,
-        "rate_yearly": 3.6
+        "rate_monthly": 0.28,
+        "rate_yearly": 3.36
     },
     "af": {
         "2016-07": {
@@ -1586,8 +1594,8 @@
         "num_months": 43,
         "permalink": "https://www.reddit.com/r/translator/wiki/afrikaans",
         "rate_daily": 0.02,
-        "rate_monthly": 0.58,
-        "rate_yearly": 6.96
+        "rate_monthly": 0.55,
+        "rate_yearly": 6.6
     },
     "afb": {
         "2019-10": {
@@ -2012,8 +2020,8 @@
         "num_months": 18,
         "permalink": "https://www.reddit.com/r/translator/wiki/south_levantine_arabic",
         "rate_daily": 0.01,
-        "rate_monthly": 0.24,
-        "rate_yearly": 2.88
+        "rate_monthly": 0.23,
+        "rate_yearly": 2.76
     },
     "ak": {
         "2019-01": {
@@ -2110,8 +2118,8 @@
         "num_months": 8,
         "permalink": "https://www.reddit.com/r/translator/wiki/akan",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "akk": {
         "2019-07": {
@@ -2240,8 +2248,15 @@
         "num_months": 12,
         "permalink": "https://www.reddit.com/r/translator/wiki/akkadian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.13,
-        "rate_yearly": 1.56
+        "rate_monthly": 0.12,
+        "rate_yearly": 1.44
+    },
+    "akl": {
+        "code": "akl",
+        "family": "Austronesian",
+        "name": "Aklanon",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/aklanon"
     },
     "aln": {
         "2018-06": {
@@ -3216,7 +3231,7 @@
             "num_untranslated": 3,
             "percentage_total": 0.0016,
             "percentage_translated": 0.0,
-            "ri": 9.32
+            "ri": 0.47
         },
         "code": "am",
         "family": "Afro-Asiatic",
@@ -3247,9 +3262,9 @@
         "name": "Amharic",
         "num_months": 103,
         "permalink": "https://www.reddit.com/r/translator/wiki/amharic",
-        "rate_daily": 0.11,
-        "rate_monthly": 3.19,
-        "rate_yearly": 38.28
+        "rate_daily": 0.1,
+        "rate_monthly": 3.03,
+        "rate_yearly": 36.36
     },
     "ami": {
         "2020-01": {
@@ -3670,8 +3685,8 @@
         "num_months": 38,
         "permalink": "https://www.reddit.com/r/translator/wiki/anglo-saxon",
         "rate_daily": 0.02,
-        "rate_monthly": 0.47,
-        "rate_yearly": 5.64
+        "rate_monthly": 0.45,
+        "rate_yearly": 5.4
     },
     "apc": {
         "2018-03": {
@@ -4122,6 +4137,14 @@
             "percentage_translated": 0.0,
             "ri": 0.17
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.17
+        },
         "code": "apc",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -4149,11 +4172,11 @@
             0.0
         ],
         "name": "North Levantine Arabic",
-        "num_months": 56,
+        "num_months": 57,
         "permalink": "https://www.reddit.com/r/translator/wiki/north_levantine_arabic",
         "rate_daily": 0.03,
-        "rate_monthly": 1.01,
-        "rate_yearly": 12.12
+        "rate_monthly": 0.97,
+        "rate_yearly": 11.64
     },
     "apd": {
         "2018-06": {
@@ -4252,6 +4275,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.07,
         "rate_yearly": 0.84
+    },
+    "apm": {
+        "code": "apm",
+        "family": "Eyak-Athabaskan",
+        "name": "Mescalero-Chiricahua Apache",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/mescalero-chiricahua_apache"
     },
     "apw": {
         "2018-12": {
@@ -5198,7 +5228,7 @@
             "num_untranslated": 78,
             "percentage_total": 0.0663,
             "percentage_translated": 0.39,
-            "ri": 0.2
+            "ri": 1.88
         },
         "code": "ar",
         "family": "Afro-Asiatic",
@@ -5229,9 +5259,9 @@
         "name": "Arabic",
         "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/arabic",
-        "rate_daily": 4.92,
-        "rate_monthly": 147.46,
-        "rate_yearly": 1769.52
+        "rate_daily": 4.67,
+        "rate_monthly": 140.08,
+        "rate_yearly": 1680.96
     },
     "arc": {
         "2016-10": {
@@ -5656,8 +5686,8 @@
         "num_months": 49,
         "permalink": "https://www.reddit.com/r/translator/wiki/aramaic",
         "rate_daily": 0.02,
-        "rate_monthly": 0.65,
-        "rate_yearly": 7.8
+        "rate_monthly": 0.62,
+        "rate_yearly": 7.44
     },
     "ari": {
         "code": "ari",
@@ -5897,8 +5927,8 @@
         "num_months": 25,
         "permalink": "https://www.reddit.com/r/translator/wiki/algerian_arabic",
         "rate_daily": 0.01,
-        "rate_monthly": 0.33,
-        "rate_yearly": 3.96
+        "rate_monthly": 0.32,
+        "rate_yearly": 3.84
     },
     "ars": {
         "2021-04": {
@@ -6301,8 +6331,8 @@
         "num_months": 41,
         "permalink": "https://www.reddit.com/r/translator/wiki/moroccan_arabic",
         "rate_daily": 0.02,
-        "rate_monthly": 0.52,
-        "rate_yearly": 6.24
+        "rate_monthly": 0.49,
+        "rate_yearly": 5.88
     },
     "arz": {
         "2017-10": {
@@ -6825,6 +6855,14 @@
             "percentage_translated": 1.0,
             "ri": 0.1
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 0.12
+        },
         "code": "arz",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -6852,11 +6890,11 @@
             0.0
         ],
         "name": "Egyptian Arabic",
-        "num_months": 65,
+        "num_months": 66,
         "permalink": "https://www.reddit.com/r/translator/wiki/egyptian_arabic",
         "rate_daily": 0.04,
-        "rate_monthly": 1.19,
-        "rate_yearly": 14.28
+        "rate_monthly": 1.15,
+        "rate_yearly": 13.8
     },
     "as": {
         "2017-09": {
@@ -6961,8 +6999,8 @@
         "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/assamese",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "ase": {
         "2017-10": {
@@ -7315,7 +7353,7 @@
             "num_untranslated": 0,
             "percentage_total": 0.0005,
             "percentage_translated": 1.0,
-            "ri": 62.5
+            "ri": 14.8
         },
         "code": "ase",
         "family": "Sign Language",
@@ -7347,8 +7385,8 @@
         "num_months": 44,
         "permalink": "https://www.reddit.com/r/translator/wiki/american_sign_language",
         "rate_daily": 0.02,
-        "rate_monthly": 0.48,
-        "rate_yearly": 5.76
+        "rate_monthly": 0.46,
+        "rate_yearly": 5.52
     },
     "ast": {
         "2018-07": {
@@ -7399,6 +7437,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.02,
         "rate_yearly": 0.24
+    },
+    "atj": {
+        "code": "atj",
+        "family": "Algic",
+        "name": "Atikamekw",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/atikamekw"
     },
     "av": {
         "2020-05": {
@@ -8033,8 +8078,8 @@
         "num_months": 43,
         "permalink": "https://www.reddit.com/r/translator/wiki/azerbaijani",
         "rate_daily": 0.02,
-        "rate_monthly": 0.57,
-        "rate_yearly": 6.84
+        "rate_monthly": 0.54,
+        "rate_yearly": 6.48
     },
     "ba": {
         "2018-11": {
@@ -8391,50 +8436,298 @@
         "num_months": 22,
         "permalink": "https://www.reddit.com/r/translator/wiki/bambara",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "ban": {
-        "2019-02": {
+        "2017-05": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.0014,
+            "percentage_translated": 0.0,
+            "ri": 3.07
+        },
+        "2017-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0006,
+            "percentage_translated": 0.0,
+            "ri": 1.4
+        },
+        "2017-12": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0006,
+            "percentage_translated": 0.0,
+            "ri": 1.34
+        },
+        "2018-01": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0006,
+            "percentage_translated": 0.0,
+            "ri": 1.28
+        },
+        "2018-03": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0004,
+            "percentage_translated": 1.0,
+            "ri": 0.91
+        },
+        "2018-05": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 0.91
+        },
+        "2018-12": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.69
+        },
+        "2019-01": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.69
+        },
+        "2020-04": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0002,
+            "percentage_translated": 0.0,
+            "ri": 0.47
+        },
+        "2020-06": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0002,
+            "percentage_translated": 1.0,
+            "ri": 0.47
+        },
+        "2020-07": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0002,
+            "percentage_translated": 0.0,
+            "ri": 0.47
+        },
+        "2020-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2021-04": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2021-07": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2021-08": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.17
+        },
+        "2022-01": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2022-02": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2022-03": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2022-08": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2023-01": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.7
+        },
+        "2023-07": {
             "num_total": 1,
             "num_translated": 1,
             "num_untranslated": 0,
             "percentage_total": 0.0003,
             "percentage_translated": 1.0,
-            "ri": 0.57
+            "ri": 0.72
+        },
+        "2023-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.72
+        },
+        "2023-12": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.72
+        },
+        "2024-06": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 0.81
+        },
+        "2024-07": {
+            "num_total": 2,
+            "num_translated": 1,
+            "num_untranslated": 1,
+            "percentage_total": 0.0007,
+            "percentage_translated": 0.5,
+            "ri": 1.42
+        },
+        "2024-08": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": 0.61
+        },
+        "2024-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.0007,
+            "percentage_translated": 0.0,
+            "ri": 1.42
+        },
+        "2024-11": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.0008,
+            "percentage_translated": 0.0,
+            "ri": 1.63
+        },
+        "2025-02": {
+            "num_total": 2,
+            "num_translated": 2,
+            "num_untranslated": 0,
+            "percentage_total": 0.0008,
+            "percentage_translated": 1.0,
+            "ri": 1.63
+        },
+        "2025-03": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0004,
+            "percentage_translated": 1.0,
+            "ri": 0.81
+        },
+        "2025-08": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 0.81
+        },
+        "2025-09": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.02
         },
         "code": "ban",
         "family": "Austronesian",
         "maximum_num_total": [
-            "2019-02",
-            1
+            "2017-05",
+            2
         ],
         "maximum_percentage_total": [
-            "2019-02",
-            0.0003
+            "2017-05",
+            0.0014
         ],
         "maximum_percentage_translated": [
-            "2019-02",
+            "2018-03",
             1.0
         ],
         "minimum_num_total": [
-            "2019-02",
+            "2017-10",
             1
         ],
         "minimum_percentage_total": [
-            "2019-02",
-            0.0003
+            "2020-04",
+            0.0002
         ],
         "minimum_percentage_translated": [
-            "2019-02",
-            1.0
+            "2017-05",
+            0.0
         ],
-        "name": "Bugis",
-        "num_months": 1,
-        "permalink": "https://www.reddit.com/r/translator/wiki/bugis",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.01,
-        "rate_yearly": 0.12
+        "name": "Balinese",
+        "num_months": 32,
+        "permalink": "https://www.reddit.com/r/translator/wiki/balinese",
+        "rate_daily": 0.01,
+        "rate_monthly": 0.32,
+        "rate_yearly": 3.84
     },
     "bar": {
         "2018-10": {
@@ -8619,8 +8912,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/bavarian",
         "rate_daily": 0.01,
-        "rate_monthly": 0.2,
-        "rate_yearly": 2.4
+        "rate_monthly": 0.19,
+        "rate_yearly": 2.28
     },
     "bas": {
         "2022-09": {
@@ -8755,6 +9048,64 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.02,
         "rate_yearly": 0.24
+    },
+    "bcl": {
+        "2024-12": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 0.84
+        },
+        "2025-03": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.0008,
+            "percentage_translated": 0.0,
+            "ri": 1.69
+        },
+        "2025-07": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 0.84
+        },
+        "code": "bcl",
+        "family": "Austronesian",
+        "maximum_num_total": [
+            "2025-03",
+            2
+        ],
+        "maximum_percentage_total": [
+            "2025-03",
+            0.0008
+        ],
+        "maximum_percentage_translated": [
+            "2024-12",
+            0.0
+        ],
+        "minimum_num_total": [
+            "2024-12",
+            1
+        ],
+        "minimum_percentage_total": [
+            "2024-12",
+            0.0004
+        ],
+        "minimum_percentage_translated": [
+            "2024-12",
+            0.0
+        ],
+        "name": "Central Bikol",
+        "num_months": 3,
+        "permalink": "https://www.reddit.com/r/translator/wiki/bikol",
+        "rate_daily": 0.0,
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "be": {
         "2016-06": {
@@ -9059,7 +9410,7 @@
             "num_untranslated": 2,
             "percentage_total": 0.001,
             "percentage_translated": 0.0,
-            "ri": 62.5
+            "ri": 3.61
         },
         "code": "be",
         "family": "Indo-European",
@@ -9091,8 +9442,8 @@
         "num_months": 38,
         "permalink": "https://www.reddit.com/r/translator/wiki/belarusian",
         "rate_daily": 0.02,
-        "rate_monthly": 0.49,
-        "rate_yearly": 5.88
+        "rate_monthly": 0.47,
+        "rate_yearly": 5.64
     },
     "bem": {
         "2021-08": {
@@ -9199,8 +9550,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/british_sign_language",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "bft": {
         "2023-03": {
@@ -10131,7 +10482,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.001,
             "percentage_translated": 0.5,
-            "ri": 7.41
+            "ri": 1.0
         },
         "code": "bg",
         "family": "Indo-European",
@@ -10163,8 +10514,8 @@
         "num_months": 111,
         "permalink": "https://www.reddit.com/r/translator/wiki/bulgarian",
         "rate_daily": 0.13,
-        "rate_monthly": 4.0,
-        "rate_yearly": 48.0
+        "rate_monthly": 3.8,
+        "rate_yearly": 45.6
     },
     "bgc": {
         "2022-12": {
@@ -10331,64 +10682,6 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.05,
         "rate_yearly": 0.6
-    },
-    "bik": {
-        "2024-12": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0004,
-            "percentage_translated": 0.0,
-            "ri": 0.84
-        },
-        "2025-03": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.0,
-            "ri": 1.69
-        },
-        "2025-07": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0004,
-            "percentage_translated": 0.0,
-            "ri": 0.84
-        },
-        "code": "bik",
-        "family": "Austronesian",
-        "maximum_num_total": [
-            "2025-03",
-            2
-        ],
-        "maximum_percentage_total": [
-            "2025-03",
-            0.0008
-        ],
-        "maximum_percentage_translated": [
-            "2024-12",
-            0.0
-        ],
-        "minimum_num_total": [
-            "2024-12",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2024-12",
-            0.0004
-        ],
-        "minimum_percentage_translated": [
-            "2024-12",
-            0.0
-        ],
-        "name": "Bikol",
-        "num_months": 3,
-        "permalink": "https://www.reddit.com/r/translator/wiki/bikol",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
     },
     "bjs": {
         "2018-03": {
@@ -11323,7 +11616,7 @@
             "num_untranslated": 3,
             "percentage_total": 0.0016,
             "percentage_translated": 0.0,
-            "ri": 9.52
+            "ri": 0.05
         },
         "code": "bn",
         "family": "Indo-European",
@@ -11355,8 +11648,8 @@
         "num_months": 101,
         "permalink": "https://www.reddit.com/r/translator/wiki/bengali",
         "rate_daily": 0.1,
-        "rate_monthly": 3.12,
-        "rate_yearly": 37.44
+        "rate_monthly": 2.97,
+        "rate_yearly": 35.64
     },
     "bnn": {
         "2019-10": {
@@ -12281,6 +12574,14 @@
             "percentage_translated": 0.75,
             "ri": 3.32
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 2,
+            "num_untranslated": 3,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.4,
+            "ri": 4.38
+        },
         "code": "bo",
         "family": "Sino-Tibetan",
         "maximum_num_total": [
@@ -12308,11 +12609,11 @@
             0.0
         ],
         "name": "Tibetan",
-        "num_months": 110,
+        "num_months": 111,
         "permalink": "https://www.reddit.com/r/translator/wiki/tibetan",
-        "rate_daily": 0.22,
-        "rate_monthly": 6.53,
-        "rate_yearly": 78.36
+        "rate_daily": 0.21,
+        "rate_monthly": 6.24,
+        "rate_yearly": 74.88
     },
     "br": {
         "2017-12": {
@@ -12521,8 +12822,8 @@
         "num_months": 22,
         "permalink": "https://www.reddit.com/r/translator/wiki/breton",
         "rate_daily": 0.01,
-        "rate_monthly": 0.27,
-        "rate_yearly": 3.24
+        "rate_monthly": 0.26,
+        "rate_yearly": 3.12
     },
     "bra": {
         "2020-03": {
@@ -12735,8 +13036,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/serbo-croatian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.11,
-        "rate_yearly": 1.32
+        "rate_monthly": 0.1,
+        "rate_yearly": 1.2
     },
     "bsk": {
         "2018-12": {
@@ -12868,6 +13169,48 @@
         "name": "Batak Karo",
         "num_months": 1,
         "permalink": "https://www.reddit.com/r/translator/wiki/batak_karo",
+        "rate_daily": 0.0,
+        "rate_monthly": 0.01,
+        "rate_yearly": 0.12
+    },
+    "bug": {
+        "2019-02": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0003,
+            "percentage_translated": 1.0,
+            "ri": 0.57
+        },
+        "code": "bug",
+        "family": "Austronesian",
+        "maximum_num_total": [
+            "2019-02",
+            1
+        ],
+        "maximum_percentage_total": [
+            "2019-02",
+            0.0003
+        ],
+        "maximum_percentage_translated": [
+            "2019-02",
+            1.0
+        ],
+        "minimum_num_total": [
+            "2019-02",
+            1
+        ],
+        "minimum_percentage_total": [
+            "2019-02",
+            0.0003
+        ],
+        "minimum_percentage_translated": [
+            "2019-02",
+            1.0
+        ],
+        "name": "Bugis",
+        "num_months": 1,
+        "permalink": "https://www.reddit.com/r/translator/wiki/bugis",
         "rate_daily": 0.0,
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
@@ -13011,8 +13354,8 @@
         "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/batak",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ca": {
         "2016-07": {
@@ -13477,7 +13820,7 @@
             "num_untranslated": 2,
             "percentage_total": 0.001,
             "percentage_translated": 0.0,
-            "ri": 44.12
+            "ri": 0.87
         },
         "code": "ca",
         "family": "Indo-European",
@@ -13509,8 +13852,8 @@
         "num_months": 58,
         "permalink": "https://www.reddit.com/r/translator/wiki/catalan",
         "rate_daily": 0.02,
-        "rate_monthly": 0.68,
-        "rate_yearly": 8.16
+        "rate_monthly": 0.65,
+        "rate_yearly": 7.8
     },
     "cak": {
         "2019-07": {
@@ -13837,8 +14180,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/chechen",
         "rate_daily": 0.01,
-        "rate_monthly": 0.21,
-        "rate_yearly": 2.52
+        "rate_monthly": 0.2,
+        "rate_yearly": 2.4
     },
     "ceb": {
         "2017-06": {
@@ -14415,7 +14758,7 @@
             "num_untranslated": 2,
             "percentage_total": 0.001,
             "percentage_translated": 0.0,
-            "ri": 17.54
+            "ri": 0.51
         },
         "code": "ceb",
         "family": "Austronesian",
@@ -14446,9 +14789,9 @@
         "name": "Cebuano",
         "num_months": 72,
         "permalink": "https://www.reddit.com/r/translator/wiki/cebuano",
-        "rate_daily": 0.06,
-        "rate_monthly": 1.7,
-        "rate_yearly": 20.4
+        "rate_daily": 0.05,
+        "rate_monthly": 1.62,
+        "rate_yearly": 19.44
     },
     "cfm": {
         "2020-07": {
@@ -14833,7 +15176,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.0005,
             "percentage_translated": 0.0,
-            "ri": 150.0
+            "ri": 28.73
         },
         "code": "chr",
         "family": "Iroquoian",
@@ -14865,8 +15208,8 @@
         "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/cherokee",
         "rate_daily": 0.01,
-        "rate_monthly": 0.2,
-        "rate_yearly": 2.4
+        "rate_monthly": 0.19,
+        "rate_yearly": 2.28
     },
     "chv": {
         "2019-03": {
@@ -14931,8 +15274,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/chuvash",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "cic": {
         "2022-07": {
@@ -15139,8 +15482,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/chaldean_neo-aramaic",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "clm": {
         "2018-08": {
@@ -15255,8 +15598,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/hakha_chin",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "cnr": {
         "2019-07": {
@@ -15393,8 +15736,8 @@
         "num_months": 13,
         "permalink": "https://www.reddit.com/r/translator/wiki/montenegrin",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "co": {
         "2018-05": {
@@ -15491,8 +15834,8 @@
         "num_months": 8,
         "permalink": "https://www.reddit.com/r/translator/wiki/corsican",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "cop": {
         "2017-07": {
@@ -15781,8 +16124,8 @@
         "num_months": 32,
         "permalink": "https://www.reddit.com/r/translator/wiki/coptic",
         "rate_daily": 0.01,
-        "rate_monthly": 0.35,
-        "rate_yearly": 4.2
+        "rate_monthly": 0.33,
+        "rate_yearly": 3.96
     },
     "cr": {
         "2019-10": {
@@ -15895,8 +16238,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/cree",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "crh": {
         "2017-04": {
@@ -16951,7 +17294,7 @@
             "num_untranslated": 4,
             "percentage_total": 0.0026,
             "percentage_translated": 0.2,
-            "ri": 4.9
+            "ri": 1.52
         },
         "code": "cs",
         "family": "Indo-European",
@@ -16982,9 +17325,9 @@
         "name": "Czech",
         "num_months": 112,
         "permalink": "https://www.reddit.com/r/translator/wiki/czech",
-        "rate_daily": 0.2,
-        "rate_monthly": 6.05,
-        "rate_yearly": 72.6
+        "rate_daily": 0.19,
+        "rate_monthly": 5.75,
+        "rate_yearly": 69.0
     },
     "ctd": {
         "2022-11": {
@@ -17799,6 +18142,14 @@
             "percentage_translated": 1.0,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "code": "cu",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -17826,11 +18177,11 @@
             0.0
         ],
         "name": "Old Church Slavonic",
-        "num_months": 91,
+        "num_months": 92,
         "permalink": "https://www.reddit.com/r/translator/wiki/old_church_slavonic",
         "rate_daily": 0.09,
-        "rate_monthly": 2.81,
-        "rate_yearly": 33.72
+        "rate_monthly": 2.67,
+        "rate_yearly": 32.04
     },
     "cy": {
         "2016-07": {
@@ -18407,8 +18758,8 @@
         "num_months": 68,
         "permalink": "https://www.reddit.com/r/translator/wiki/welsh",
         "rate_daily": 0.03,
-        "rate_monthly": 1.04,
-        "rate_yearly": 12.48
+        "rate_monthly": 0.99,
+        "rate_yearly": 11.88
     },
     "da": {
         "2016-06": {
@@ -19267,6 +19618,14 @@
             "percentage_translated": 0.0,
             "ri": 0.58
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 1.45
+        },
         "code": "da",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -19294,11 +19653,11 @@
             0.0
         ],
         "name": "Danish",
-        "num_months": 107,
+        "num_months": 108,
         "permalink": "https://www.reddit.com/r/translator/wiki/danish",
         "rate_daily": 0.15,
-        "rate_monthly": 4.64,
-        "rate_yearly": 55.68
+        "rate_monthly": 4.42,
+        "rate_yearly": 53.04
     },
     "daa": {
         "2019-02": {
@@ -20295,7 +20654,7 @@
             "num_untranslated": 47,
             "percentage_total": 0.0564,
             "percentage_translated": 0.56,
-            "ri": 0.27
+            "ri": 3.39
         },
         "code": "de",
         "family": "Indo-European",
@@ -20326,9 +20685,9 @@
         "name": "German",
         "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/german",
-        "rate_daily": 4.62,
-        "rate_monthly": 138.68,
-        "rate_yearly": 1664.16
+        "rate_daily": 4.39,
+        "rate_monthly": 131.75,
+        "rate_yearly": 1581.0
     },
     "dgr": {
         "2021-07": {
@@ -20603,8 +20962,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/duala",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "dum": {
         "2019-10": {
@@ -20833,6 +21192,14 @@
             "percentage_translated": 0.0,
             "ri": 9.42
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 11.81
+        },
         "code": "dv",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -20860,7 +21227,7 @@
             0.0
         ],
         "name": "Dhivehi",
-        "num_months": 18,
+        "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/dhivehi",
         "rate_daily": 0.01,
         "rate_monthly": 0.17,
@@ -21001,8 +21368,8 @@
         "num_months": 13,
         "permalink": "https://www.reddit.com/r/translator/wiki/dzongkha",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "ee": {
         "2023-04": {
@@ -21863,7 +22230,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.001,
             "percentage_translated": 0.5,
-            "ri": 12.24
+            "ri": null
         },
         "code": "egy",
         "family": "Afro-Asiatic",
@@ -21895,8 +22262,8 @@
         "num_months": 95,
         "permalink": "https://www.reddit.com/r/translator/wiki/ancient_egyptian",
         "rate_daily": 0.08,
-        "rate_monthly": 2.42,
-        "rate_yearly": 29.04
+        "rate_monthly": 2.3,
+        "rate_yearly": 27.6
     },
     "el": {
         "2016-06": {
@@ -22795,6 +23162,14 @@
             "percentage_translated": 0.5,
             "ri": 2.93
         },
+        "2025-10": {
+            "num_total": 8,
+            "num_translated": 4,
+            "num_untranslated": 4,
+            "percentage_total": 0.0041,
+            "percentage_translated": 0.5,
+            "ri": 2.45
+        },
         "code": "el",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -22822,11 +23197,11 @@
             0.14
         ],
         "name": "Greek",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/greek",
-        "rate_daily": 0.61,
-        "rate_monthly": 18.28,
-        "rate_yearly": 219.36
+        "rate_daily": 0.58,
+        "rate_monthly": 17.43,
+        "rate_yearly": 209.16
     },
     "emk": {
         "2019-06": {
@@ -22943,6 +23318,14 @@
             "percentage_translated": 0.0,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "code": "emy",
         "family": "Mayan",
         "maximum_num_total": [
@@ -22970,7 +23353,7 @@
             0.0
         ],
         "name": "Epigraphic Mayan",
-        "num_months": 9,
+        "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/epigraphic_mayan",
         "rate_daily": 0.0,
         "rate_monthly": 0.08,
@@ -23785,6 +24168,14 @@
             "percentage_translated": 0.83,
             "ri": 0.05
         },
+        "2025-10": {
+            "num_total": 18,
+            "num_translated": 10,
+            "num_untranslated": 8,
+            "percentage_total": 0.0093,
+            "percentage_translated": 0.55,
+            "ri": 0.07
+        },
         "code": "en",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -23792,8 +24183,8 @@
             31
         ],
         "maximum_percentage_total": [
-            "2019-03",
-            0.0083
+            "2025-10",
+            0.0093
         ],
         "maximum_percentage_translated": [
             "2017-10",
@@ -23812,11 +24203,11 @@
             0.16
         ],
         "name": "English",
-        "num_months": 101,
+        "num_months": 102,
         "permalink": "https://www.reddit.com/r/translator/wiki/english",
-        "rate_daily": 0.46,
-        "rate_monthly": 13.66,
-        "rate_yearly": 163.92
+        "rate_daily": 0.44,
+        "rate_monthly": 13.12,
+        "rate_yearly": 157.44
     },
     "enf": {
         "2019-03": {
@@ -23995,8 +24386,8 @@
         "num_months": 13,
         "permalink": "https://www.reddit.com/r/translator/wiki/middle_english",
         "rate_daily": 0.01,
-        "rate_monthly": 0.16,
-        "rate_yearly": 1.92
+        "rate_monthly": 0.15,
+        "rate_yearly": 1.8
     },
     "eo": {
         "2017-06": {
@@ -24261,8 +24652,8 @@
         "num_months": 29,
         "permalink": "https://www.reddit.com/r/translator/wiki/esperanto",
         "rate_daily": 0.01,
-        "rate_monthly": 0.35,
-        "rate_yearly": 4.2
+        "rate_monthly": 0.33,
+        "rate_yearly": 3.96
     },
     "es": {
         "2016-06": {
@@ -25161,6 +25552,14 @@
             "percentage_translated": 0.37,
             "ri": 0.43
         },
+        "2025-10": {
+            "num_total": 50,
+            "num_translated": 8,
+            "num_untranslated": 42,
+            "percentage_total": 0.0259,
+            "percentage_translated": 0.16,
+            "ri": 0.38
+        },
         "code": "es",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -25184,15 +25583,15 @@
             0.0202
         ],
         "minimum_percentage_translated": [
-            "2024-12",
-            0.22
+            "2025-10",
+            0.16
         ],
         "name": "Spanish",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/spanish",
-        "rate_daily": 2.83,
-        "rate_monthly": 84.77,
-        "rate_yearly": 1017.24
+        "rate_daily": 2.7,
+        "rate_monthly": 80.95,
+        "rate_yearly": 971.4
     },
     "et": {
         "2016-07": {
@@ -25707,6 +26106,14 @@
             "percentage_translated": 0.0,
             "ri": 2.84
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 7.11
+        },
         "code": "et",
         "family": "Uralic",
         "maximum_num_total": [
@@ -25734,11 +26141,11 @@
             0.0
         ],
         "name": "Estonian",
-        "num_months": 64,
+        "num_months": 65,
         "permalink": "https://www.reddit.com/r/translator/wiki/estonian",
         "rate_daily": 0.03,
-        "rate_monthly": 0.86,
-        "rate_yearly": 10.32
+        "rate_monthly": 0.83,
+        "rate_yearly": 9.96
     },
     "ett": {
         "2019-07": {
@@ -26109,8 +26516,8 @@
         "num_months": 33,
         "permalink": "https://www.reddit.com/r/translator/wiki/basque",
         "rate_daily": 0.01,
-        "rate_monthly": 0.33,
-        "rate_yearly": 3.96
+        "rate_monthly": 0.32,
+        "rate_yearly": 3.84
     },
     "evn": {
         "2018-06": {
@@ -27101,6 +27508,14 @@
             "percentage_translated": 0.29,
             "ri": 1.24
         },
+        "2025-10": {
+            "num_total": 14,
+            "num_translated": 3,
+            "num_untranslated": 11,
+            "percentage_total": 0.0072,
+            "percentage_translated": 0.21,
+            "ri": 1.06
+        },
         "code": "fa",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -27128,11 +27543,11 @@
             0.14
         ],
         "name": "Persian",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/persian",
-        "rate_daily": 0.78,
-        "rate_monthly": 23.52,
-        "rate_yearly": 282.24
+        "rate_daily": 0.75,
+        "rate_monthly": 22.46,
+        "rate_yearly": 269.52
     },
     "fan": {
         "2024-10": {
@@ -28181,6 +28596,14 @@
             "percentage_translated": 0.5,
             "ri": 2.26
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 1.41
+        },
         "code": "fi",
         "family": "Uralic",
         "maximum_num_total": [
@@ -28208,11 +28631,11 @@
             0.0
         ],
         "name": "Finnish",
-        "num_months": 109,
+        "num_months": 110,
         "permalink": "https://www.reddit.com/r/translator/wiki/finnish",
-        "rate_daily": 0.21,
-        "rate_monthly": 6.18,
-        "rate_yearly": 74.16
+        "rate_daily": 0.2,
+        "rate_monthly": 5.88,
+        "rate_yearly": 70.56
     },
     "fia": {
         "2018-03": {
@@ -28269,8 +28692,8 @@
         "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/nobiin",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "fil": {
         "2019-06": {
@@ -28457,8 +28880,8 @@
         "num_months": 11,
         "permalink": "https://www.reddit.com/r/translator/wiki/fijian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "fkv": {
         "2021-05": {
@@ -28711,8 +29134,8 @@
         "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/faroese",
         "rate_daily": 0.01,
-        "rate_monthly": 0.16,
-        "rate_yearly": 1.92
+        "rate_monthly": 0.15,
+        "rate_yearly": 1.8
     },
     "fon": {
         "2020-04": {
@@ -29661,6 +30084,14 @@
             "percentage_translated": 0.26,
             "ri": 0.69
         },
+        "2025-10": {
+            "num_total": 49,
+            "num_translated": 13,
+            "num_untranslated": 36,
+            "percentage_total": 0.0254,
+            "percentage_translated": 0.26,
+            "ri": 0.84
+        },
         "code": "fr",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -29688,11 +30119,11 @@
             0.19
         ],
         "name": "French",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/french",
-        "rate_daily": 2.61,
-        "rate_monthly": 78.31,
-        "rate_yearly": 939.72
+        "rate_daily": 2.49,
+        "rate_monthly": 74.8,
+        "rate_yearly": 897.6
     },
     "frc": {
         "2019-07": {
@@ -29903,8 +30334,8 @@
         "num_months": 12,
         "permalink": "https://www.reddit.com/r/translator/wiki/middle_french",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "fro": {
         "2018-02": {
@@ -30064,9 +30495,9 @@
         "name": "Old French",
         "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/old_french",
-        "rate_daily": 0.01,
-        "rate_monthly": 0.15,
-        "rate_yearly": 1.8
+        "rate_daily": 0.0,
+        "rate_monthly": 0.14,
+        "rate_yearly": 1.68
     },
     "frp": {
         "2019-04": {
@@ -30257,8 +30688,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/pulaar",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "fur": {
         "2019-09": {
@@ -30429,8 +30860,8 @@
         "num_months": 12,
         "permalink": "https://www.reddit.com/r/translator/wiki/frisian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.11,
-        "rate_yearly": 1.32
+        "rate_monthly": 0.1,
+        "rate_yearly": 1.2
     },
     "ga": {
         "2016-06": {
@@ -31273,6 +31704,14 @@
             "percentage_translated": 0.0,
             "ri": 9.61
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 3.44
+        },
         "code": "ga",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -31300,11 +31739,11 @@
             0.0
         ],
         "name": "Irish",
-        "num_months": 105,
+        "num_months": 106,
         "permalink": "https://www.reddit.com/r/translator/wiki/irish",
         "rate_daily": 0.11,
-        "rate_monthly": 3.33,
-        "rate_yearly": 39.96
+        "rate_monthly": 3.17,
+        "rate_yearly": 38.04
     },
     "gag": {
         "2021-04": {
@@ -32061,6 +32500,14 @@
             "percentage_translated": 0.0,
             "ri": 36.88
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 1,
+            "num_untranslated": 1,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.5,
+            "ri": 92.45
+        },
         "code": "gd",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -32088,11 +32535,11 @@
             0.0
         ],
         "name": "Scottish Gaelic",
-        "num_months": 68,
+        "num_months": 69,
         "permalink": "https://www.reddit.com/r/translator/wiki/scottish_gaelic",
         "rate_daily": 0.03,
-        "rate_monthly": 0.84,
-        "rate_yearly": 10.08
+        "rate_monthly": 0.82,
+        "rate_yearly": 9.84
     },
     "gdx": {
         "2023-12": {
@@ -32177,6 +32624,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
+    },
+    "generic": {
+        "code": "generic",
+        "family": "Unknown",
+        "name": "Generic",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/generic"
     },
     "gez": {
         "2018-04": {
@@ -32377,8 +32831,8 @@
         "num_months": 21,
         "permalink": "https://www.reddit.com/r/translator/wiki/geez",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "ghn": {
         "2024-06": {
@@ -32723,8 +33177,8 @@
         "num_months": 11,
         "permalink": "https://www.reddit.com/r/translator/wiki/middle_high_german",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "gml": {
         "2022-06": {
@@ -32887,8 +33341,8 @@
         "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/guarani",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "goh": {
         "2020-04": {
@@ -33101,8 +33555,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/gothic",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "grc": {
         "2017-06": {
@@ -33831,7 +34285,7 @@
             "num_untranslated": 0,
             "percentage_total": 0.0005,
             "percentage_translated": 1.0,
-            "ri": 7.32
+            "ri": null
         },
         "code": "grc",
         "family": "Indo-European",
@@ -33863,8 +34317,8 @@
         "num_months": 91,
         "permalink": "https://www.reddit.com/r/translator/wiki/ancient_greek",
         "rate_daily": 0.13,
-        "rate_monthly": 4.04,
-        "rate_yearly": 48.48
+        "rate_monthly": 3.83,
+        "rate_yearly": 45.96
     },
     "gsg": {
         "2024-04": {
@@ -34346,9 +34800,9 @@
         "name": "Swiss German",
         "num_months": 51,
         "permalink": "https://www.reddit.com/r/translator/wiki/swiss_german",
-        "rate_daily": 0.03,
-        "rate_monthly": 0.75,
-        "rate_yearly": 9.0
+        "rate_daily": 0.02,
+        "rate_monthly": 0.72,
+        "rate_yearly": 8.64
     },
     "gu": {
         "2016-07": {
@@ -35093,8 +35547,8 @@
         "num_months": 89,
         "permalink": "https://www.reddit.com/r/translator/wiki/gujarati",
         "rate_daily": 0.05,
-        "rate_monthly": 1.61,
-        "rate_yearly": 19.32
+        "rate_monthly": 1.53,
+        "rate_yearly": 18.36
     },
     "guc": {
         "2020-11": {
@@ -35475,8 +35929,8 @@
         "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/hausa",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "hak": {
         "2022-02": {
@@ -35937,6 +36391,14 @@
             "percentage_translated": 0.5,
             "ri": 12.83
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 8.04
+        },
         "code": "haw",
         "family": "Austronesian",
         "maximum_num_total": [
@@ -35964,11 +36426,11 @@
             0.0
         ],
         "name": "Hawaiian",
-        "num_months": 50,
+        "num_months": 51,
         "permalink": "https://www.reddit.com/r/translator/wiki/hawaiian",
         "rate_daily": 0.02,
-        "rate_monthly": 0.62,
-        "rate_yearly": 7.44
+        "rate_monthly": 0.6,
+        "rate_yearly": 7.2
     },
     "haz": {
         "2023-06": {
@@ -37033,6 +37495,14 @@
             "percentage_translated": 0.28,
             "ri": 15.46
         },
+        "2025-10": {
+            "num_total": 18,
+            "num_translated": 10,
+            "num_untranslated": 8,
+            "percentage_total": 0.0093,
+            "percentage_translated": 0.55,
+            "ri": 13.82
+        },
         "code": "he",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -37060,11 +37530,11 @@
             0.2
         ],
         "name": "Hebrew",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/hebrew",
-        "rate_daily": 1.05,
-        "rate_monthly": 31.49,
-        "rate_yearly": 377.88
+        "rate_daily": 1.0,
+        "rate_monthly": 30.07,
+        "rate_yearly": 360.84
     },
     "hi": {
         "2016-06": {
@@ -37963,6 +38433,14 @@
             "percentage_translated": 0.22,
             "ri": 0.09
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 3,
+            "num_untranslated": 2,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.6,
+            "ri": 0.05
+        },
         "code": "hi",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -37990,11 +38468,11 @@
             0.07
         ],
         "name": "Hindi",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/hindi",
-        "rate_daily": 0.46,
-        "rate_monthly": 13.89,
-        "rate_yearly": 166.68
+        "rate_daily": 0.44,
+        "rate_monthly": 13.24,
+        "rate_yearly": 158.88
     },
     "hil": {
         "2017-10": {
@@ -38155,8 +38633,8 @@
         "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/hiligaynon",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "hit": {
         "2022-01": {
@@ -38395,6 +38873,14 @@
             "percentage_translated": 0.0,
             "ri": 0.87
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.09
+        },
         "code": "hmn",
         "family": "Hmong-Mien",
         "maximum_num_total": [
@@ -38422,7 +38908,7 @@
             0.0
         ],
         "name": "Hmong",
-        "num_months": 19,
+        "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/hmong",
         "rate_daily": 0.01,
         "rate_monthly": 0.17,
@@ -38463,7 +38949,7 @@
             "2022-02",
             1.0
         ],
-        "name": "Hiri Motu {}",
+        "name": "Hiri Motu",
         "num_months": 1,
         "permalink": "https://www.reddit.com/r/translator/wiki/ho-chunk",
         "rate_daily": 0.0,
@@ -39401,7 +39887,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.001,
             "percentage_translated": 0.5,
-            "ri": 272.73
+            "ri": 1.24
         },
         "code": "hr",
         "family": "Indo-European",
@@ -39433,8 +39919,8 @@
         "num_months": 104,
         "permalink": "https://www.reddit.com/r/translator/wiki/croatian",
         "rate_daily": 0.1,
-        "rate_monthly": 3.08,
-        "rate_yearly": 36.96
+        "rate_monthly": 2.92,
+        "rate_yearly": 35.04
     },
     "hsb": {
         "2018-02": {
@@ -39855,6 +40341,14 @@
             "percentage_translated": 0.0,
             "ri": 1.04
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.52
+        },
         "code": "ht",
         "family": "Creole",
         "maximum_num_total": [
@@ -39882,11 +40376,11 @@
             0.0
         ],
         "name": "Haitian Creole",
-        "num_months": 45,
+        "num_months": 46,
         "permalink": "https://www.reddit.com/r/translator/wiki/haitian_creole",
         "rate_daily": 0.02,
-        "rate_monthly": 0.57,
-        "rate_yearly": 6.84
+        "rate_monthly": 0.55,
+        "rate_yearly": 6.6
     },
     "hu": {
         "2016-07": {
@@ -40777,6 +41271,14 @@
             "percentage_translated": 0.0,
             "ri": 1.53
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 1,
+            "num_untranslated": 4,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.2,
+            "ri": 1.6
+        },
         "code": "hu",
         "family": "Uralic",
         "maximum_num_total": [
@@ -40804,11 +41306,11 @@
             0.0
         ],
         "name": "Hungarian",
-        "num_months": 111,
+        "num_months": 112,
         "permalink": "https://www.reddit.com/r/translator/wiki/hungarian",
-        "rate_daily": 0.3,
-        "rate_monthly": 9.09,
-        "rate_yearly": 109.08
+        "rate_daily": 0.29,
+        "rate_monthly": 8.68,
+        "rate_yearly": 104.16
     },
     "hup": {
         "2019-02": {
@@ -41725,7 +42227,7 @@
             "num_untranslated": 3,
             "percentage_total": 0.0026,
             "percentage_translated": 0.4,
-            "ri": 7.44
+            "ri": 3.89
         },
         "code": "hy",
         "family": "Indo-European",
@@ -41757,8 +42259,8 @@
         "num_months": 103,
         "permalink": "https://www.reddit.com/r/translator/wiki/armenian",
         "rate_daily": 0.13,
-        "rate_monthly": 4.0,
-        "rate_yearly": 48.0
+        "rate_monthly": 3.8,
+        "rate_yearly": 45.6
     },
     "hyw": {
         "2023-02": {
@@ -42777,6 +43279,14 @@
             "percentage_translated": 0.0,
             "ri": 0.04
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 0.02
+        },
         "code": "id",
         "family": "Austronesian",
         "maximum_num_total": [
@@ -42804,11 +43314,11 @@
             0.0
         ],
         "name": "Indonesian",
-        "num_months": 106,
+        "num_months": 107,
         "permalink": "https://www.reddit.com/r/translator/wiki/indonesian",
-        "rate_daily": 0.12,
-        "rate_monthly": 3.54,
-        "rate_yearly": 42.48
+        "rate_daily": 0.11,
+        "rate_monthly": 3.38,
+        "rate_yearly": 40.56
     },
     "ie": {
         "2022-09": {
@@ -43005,6 +43515,14 @@
             "percentage_translated": 0.0,
             "ri": 0.18
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.22
+        },
         "code": "ig",
         "family": "Niger-Congo",
         "maximum_num_total": [
@@ -43032,7 +43550,7 @@
             0.0
         ],
         "name": "Igbo",
-        "num_months": 19,
+        "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/igbo",
         "rate_daily": 0.01,
         "rate_monthly": 0.17,
@@ -43113,6 +43631,14 @@
             "percentage_translated": 0.0,
             "ri": 750.0
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1340.58
+        },
         "code": "ik",
         "family": "Eskimo-Aleut",
         "maximum_num_total": [
@@ -43120,8 +43646,8 @@
             1
         ],
         "maximum_percentage_total": [
-            "2018-11",
-            0.0004
+            "2025-10",
+            0.0005
         ],
         "maximum_percentage_translated": [
             "2018-11",
@@ -43140,11 +43666,11 @@
             0.0
         ],
         "name": "Inupiaq",
-        "num_months": 2,
+        "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/inupiaq",
         "rate_daily": 0.0,
-        "rate_monthly": 0.02,
-        "rate_yearly": 0.24
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ikt": {
         "2025-07": {
@@ -43371,8 +43897,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/iloko",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "inh": {
         "2018-10": {
@@ -43437,8 +43963,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/ingush",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "io": {
         "2021-05": {
@@ -44331,6 +44857,14 @@
             "percentage_translated": 0.5,
             "ri": 25.56
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 25.63
+        },
         "code": "is",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -44358,11 +44892,11 @@
             0.0
         ],
         "name": "Icelandic",
-        "num_months": 106,
+        "num_months": 107,
         "permalink": "https://www.reddit.com/r/translator/wiki/icelandic",
-        "rate_daily": 0.11,
-        "rate_monthly": 3.28,
-        "rate_yearly": 39.36
+        "rate_daily": 0.1,
+        "rate_monthly": 3.13,
+        "rate_yearly": 37.56
     },
     "it": {
         "2016-06": {
@@ -45261,6 +45795,14 @@
             "percentage_translated": 0.26,
             "ri": 1.34
         },
+        "2025-10": {
+            "num_total": 29,
+            "num_translated": 5,
+            "num_untranslated": 24,
+            "percentage_total": 0.015,
+            "percentage_translated": 0.17,
+            "ri": 1.76
+        },
         "code": "it",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -45284,15 +45826,15 @@
             0.0062
         ],
         "minimum_percentage_translated": [
-            "2023-09",
-            0.18
+            "2025-10",
+            0.17
         ],
         "name": "Italian",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/italian",
-        "rate_daily": 1.12,
-        "rate_monthly": 33.72,
-        "rate_yearly": 404.64
+        "rate_daily": 1.08,
+        "rate_monthly": 32.27,
+        "rate_yearly": 387.24
     },
     "itl": {
         "2018-10": {
@@ -45655,8 +46197,8 @@
         "num_months": 36,
         "permalink": "https://www.reddit.com/r/translator/wiki/inuktitut",
         "rate_daily": 0.01,
-        "rate_monthly": 0.4,
-        "rate_yearly": 4.8
+        "rate_monthly": 0.38,
+        "rate_yearly": 4.56
     },
     "ja": {
         "2016-06": {
@@ -46555,6 +47097,14 @@
             "percentage_translated": 0.68,
             "ri": 22.44
         },
+        "2025-10": {
+            "num_total": 658,
+            "num_translated": 433,
+            "num_untranslated": 225,
+            "percentage_total": 0.3406,
+            "percentage_translated": 0.65,
+            "ri": 20.64
+        },
         "code": "ja",
         "family": "Japonic",
         "maximum_num_total": [
@@ -46582,11 +47132,11 @@
             0.31
         ],
         "name": "Japanese",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/japanese",
-        "rate_daily": 34.23,
-        "rate_monthly": 1026.87,
-        "rate_yearly": 12322.44
+        "rate_daily": 32.7,
+        "rate_monthly": 981.01,
+        "rate_yearly": 11772.12
     },
     "jam": {
         "2018-05": {
@@ -46771,8 +47321,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/jamaican_patois",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "jao": {
         "2019-10": {
@@ -47229,8 +47779,8 @@
         "num_months": 31,
         "permalink": "https://www.reddit.com/r/translator/wiki/javanese",
         "rate_daily": 0.01,
-        "rate_monthly": 0.33,
-        "rate_yearly": 3.96
+        "rate_monthly": 0.32,
+        "rate_yearly": 3.84
     },
     "ka": {
         "2016-07": {
@@ -48017,6 +48567,14 @@
             "percentage_translated": 0.3,
             "ri": 7.86
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 2.02
+        },
         "code": "ka",
         "family": "Kartvelian",
         "maximum_num_total": [
@@ -48044,11 +48602,11 @@
             0.0
         ],
         "name": "Georgian",
-        "num_months": 98,
+        "num_months": 99,
         "permalink": "https://www.reddit.com/r/translator/wiki/georgian",
-        "rate_daily": 0.11,
-        "rate_monthly": 3.16,
-        "rate_yearly": 37.92
+        "rate_daily": 0.1,
+        "rate_monthly": 3.01,
+        "rate_yearly": 36.12
     },
     "kaa": {
         "2023-09": {
@@ -48768,9 +49326,9 @@
         "name": "Kabuverdianu",
         "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/kabuverdianu",
-        "rate_daily": 0.01,
-        "rate_monthly": 0.15,
-        "rate_yearly": 1.8
+        "rate_daily": 0.0,
+        "rate_monthly": 0.14,
+        "rate_yearly": 1.68
     },
     "kee": {
         "2021-07": {
@@ -48813,6 +49371,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
+    },
+    "kfr": {
+        "code": "kfr",
+        "family": "Indo-European",
+        "name": "Kachhi",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/kachhi"
     },
     "kg": {
         "2024-03": {
@@ -49607,8 +50172,8 @@
         "num_months": 62,
         "permalink": "https://www.reddit.com/r/translator/wiki/kazakh",
         "rate_daily": 0.03,
-        "rate_monthly": 0.94,
-        "rate_yearly": 11.28
+        "rate_monthly": 0.89,
+        "rate_yearly": 10.68
     },
     "kl": {
         "2017-08": {
@@ -49825,8 +50390,8 @@
         "num_months": 23,
         "permalink": "https://www.reddit.com/r/translator/wiki/kalaallisut",
         "rate_daily": 0.01,
-        "rate_monthly": 0.22,
-        "rate_yearly": 2.64
+        "rate_monthly": 0.21,
+        "rate_yearly": 2.52
     },
     "kla": {
         "2020-12": {
@@ -50733,8 +51298,8 @@
         "num_months": 104,
         "permalink": "https://www.reddit.com/r/translator/wiki/khmer",
         "rate_daily": 0.11,
-        "rate_monthly": 3.4,
-        "rate_yearly": 40.8
+        "rate_monthly": 3.23,
+        "rate_yearly": 38.76
     },
     "kmb": {
         "2019-10": {
@@ -51187,8 +51752,8 @@
         "num_months": 40,
         "permalink": "https://www.reddit.com/r/translator/wiki/kannada",
         "rate_daily": 0.02,
-        "rate_monthly": 0.61,
-        "rate_yearly": 7.32
+        "rate_monthly": 0.57,
+        "rate_yearly": 6.84
     },
     "kne": {
         "2024-10": {
@@ -52129,6 +52694,14 @@
             "percentage_translated": 0.56,
             "ri": 2.91
         },
+        "2025-10": {
+            "num_total": 52,
+            "num_translated": 23,
+            "num_untranslated": 29,
+            "percentage_total": 0.0269,
+            "percentage_translated": 0.44,
+            "ri": 2.71
+        },
         "code": "ko",
         "family": "Language Isolate",
         "maximum_num_total": [
@@ -52156,11 +52729,11 @@
             0.24
         ],
         "name": "Korean",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/korean",
-        "rate_daily": 3.34,
-        "rate_monthly": 100.32,
-        "rate_yearly": 1203.84
+        "rate_daily": 3.19,
+        "rate_monthly": 95.74,
+        "rate_yearly": 1148.88
     },
     "koi": {
         "2018-08": {
@@ -52323,8 +52896,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/kanuri",
         "rate_daily": 0.0,
-        "rate_monthly": 0.09,
-        "rate_yearly": 1.08
+        "rate_monthly": 0.08,
+        "rate_yearly": 0.96
     },
     "krc": {
         "2021-04": {
@@ -52473,8 +53046,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/karelian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ksg": {
         "2024-06": {
@@ -52623,8 +53196,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/sgaw_karen",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ku": {
         "2016-08": {
@@ -53265,8 +53838,8 @@
         "num_months": 76,
         "permalink": "https://www.reddit.com/r/translator/wiki/kurdish",
         "rate_daily": 0.04,
-        "rate_monthly": 1.18,
-        "rate_yearly": 14.16
+        "rate_monthly": 1.12,
+        "rate_yearly": 13.44
     },
     "kum": {
         "2020-05": {
@@ -53683,8 +54256,8 @@
         "num_months": 21,
         "permalink": "https://www.reddit.com/r/translator/wiki/kyrgyz",
         "rate_daily": 0.01,
-        "rate_monthly": 0.25,
-        "rate_yearly": 3.0
+        "rate_monthly": 0.24,
+        "rate_yearly": 2.88
     },
     "la": {
         "2016-06": {
@@ -54583,6 +55156,14 @@
             "percentage_translated": 0.5,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 15,
+            "num_translated": 6,
+            "num_untranslated": 9,
+            "percentage_total": 0.0078,
+            "percentage_translated": 0.4,
+            "ri": null
+        },
         "code": "la",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -54610,11 +55191,11 @@
             0.16
         ],
         "name": "Latin",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/latin",
-        "rate_daily": 0.97,
-        "rate_monthly": 29.16,
-        "rate_yearly": 349.92
+        "rate_daily": 0.93,
+        "rate_monthly": 27.82,
+        "rate_yearly": 333.84
     },
     "lad": {
         "2018-10": {
@@ -54681,6 +55262,14 @@
             "percentage_translated": 1.0,
             "ri": 17.56
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 29.36
+        },
         "code": "lad",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -54688,8 +55277,8 @@
             1
         ],
         "maximum_percentage_total": [
-            "2018-10",
-            0.0004
+            "2025-10",
+            0.0005
         ],
         "maximum_percentage_translated": [
             "2023-10",
@@ -54708,7 +55297,7 @@
             0.0
         ],
         "name": "Ladino",
-        "num_months": 8,
+        "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/ladino",
         "rate_daily": 0.0,
         "rate_monthly": 0.07,
@@ -54867,8 +55456,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/luxembourgish",
         "rate_daily": 0.0,
-        "rate_monthly": 0.09,
-        "rate_yearly": 1.08
+        "rate_monthly": 0.08,
+        "rate_yearly": 0.96
     },
     "lbj": {
         "2025-10": {
@@ -54877,7 +55466,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.0005,
             "percentage_translated": 0.0,
-            "ri": null
+            "ri": 36.56
         },
         "code": "lbj",
         "family": "Sino-Tibetan",
@@ -55091,8 +55680,8 @@
         "num_months": 8,
         "permalink": "https://www.reddit.com/r/translator/wiki/ganda",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "li": {
         "2017-05": {
@@ -55745,6 +56334,14 @@
             "percentage_translated": 0.5,
             "ri": 2.84
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.78
+        },
         "code": "ln",
         "family": "Niger-Congo",
         "maximum_num_total": [
@@ -55772,7 +56369,7 @@
             0.0
         ],
         "name": "Lingala",
-        "num_months": 16,
+        "num_months": 17,
         "permalink": "https://www.reddit.com/r/translator/wiki/lingala",
         "rate_daily": 0.01,
         "rate_monthly": 0.16,
@@ -56243,6 +56840,14 @@
             "percentage_translated": 0.0,
             "ri": 0.79
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.99
+        },
         "code": "lo",
         "family": "Tai-Kadai",
         "maximum_num_total": [
@@ -56270,11 +56875,11 @@
             0.0
         ],
         "name": "Lao",
-        "num_months": 58,
+        "num_months": 59,
         "permalink": "https://www.reddit.com/r/translator/wiki/lao",
         "rate_daily": 0.03,
-        "rate_monthly": 0.83,
-        "rate_yearly": 9.96
+        "rate_monthly": 0.8,
+        "rate_yearly": 9.6
     },
     "lou": {
         "2019-04": {
@@ -57089,6 +57694,14 @@
             "percentage_translated": 0.0,
             "ri": 2.09
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.31
+        },
         "code": "lt",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -57116,11 +57729,11 @@
             0.0
         ],
         "name": "Lithuanian",
-        "num_months": 90,
+        "num_months": 91,
         "permalink": "https://www.reddit.com/r/translator/wiki/lithuanian",
         "rate_daily": 0.06,
-        "rate_monthly": 1.94,
-        "rate_yearly": 23.28
+        "rate_monthly": 1.85,
+        "rate_yearly": 22.2
     },
     "lu": {
         "2022-04": {
@@ -57343,8 +57956,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/lushai",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "lut": {
         "2017-07": {
@@ -58013,6 +58626,14 @@
             "percentage_translated": 0.0,
             "ri": 3.06
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.92
+        },
         "code": "lv",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -58040,11 +58661,11 @@
             0.0
         ],
         "name": "Latvian",
-        "num_months": 72,
+        "num_months": 73,
         "permalink": "https://www.reddit.com/r/translator/wiki/latvian",
         "rate_daily": 0.03,
-        "rate_monthly": 1.04,
-        "rate_yearly": 12.48
+        "rate_monthly": 1.0,
+        "rate_yearly": 12.0
     },
     "lzh": {
         "2018-01": {
@@ -58789,7 +59410,7 @@
             "num_untranslated": 1,
             "percentage_total": 0.0021,
             "percentage_translated": 0.75,
-            "ri": 3.54
+            "ri": null
         },
         "code": "lzh",
         "family": "Sino-Tibetan",
@@ -58820,9 +59441,9 @@
         "name": "Classical Chinese",
         "num_months": 93,
         "permalink": "https://www.reddit.com/r/translator/wiki/classical_chinese",
-        "rate_daily": 0.28,
-        "rate_monthly": 8.36,
-        "rate_yearly": 100.32
+        "rate_daily": 0.26,
+        "rate_monthly": 7.94,
+        "rate_yearly": 95.28
     },
     "mad": {
         "2019-02": {
@@ -59117,6 +59738,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
+    },
+    "men": {
+        "code": "men",
+        "family": "Niger-Congo",
+        "name": "Mende <Sierra Leone>",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/mende_<sierra_leone>"
     },
     "mey": {
         "2020-11": {
@@ -59468,9 +60096,9 @@
         "name": "Malagasy",
         "num_months": 17,
         "permalink": "https://www.reddit.com/r/translator/wiki/malagasy",
-        "rate_daily": 0.01,
-        "rate_monthly": 0.15,
-        "rate_yearly": 1.8
+        "rate_daily": 0.0,
+        "rate_monthly": 0.14,
+        "rate_yearly": 1.68
     },
     "mga": {
         "2019-03": {
@@ -59907,8 +60535,8 @@
         "num_months": 33,
         "permalink": "https://www.reddit.com/r/translator/wiki/maori",
         "rate_daily": 0.01,
-        "rate_monthly": 0.36,
-        "rate_yearly": 4.32
+        "rate_monthly": 0.34,
+        "rate_yearly": 4.08
     },
     "mic": {
         "2021-10": {
@@ -60015,8 +60643,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/minangkabau",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "mk": {
         "2017-05": {
@@ -60425,8 +61053,8 @@
         "num_months": 47,
         "permalink": "https://www.reddit.com/r/translator/wiki/macedonian",
         "rate_daily": 0.02,
-        "rate_monthly": 0.61,
-        "rate_yearly": 7.32
+        "rate_monthly": 0.57,
+        "rate_yearly": 6.84
     },
     "ml": {
         "2017-05": {
@@ -60853,6 +61481,14 @@
             "percentage_translated": 0.0,
             "ri": 0.12
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.12
+        },
         "code": "ml",
         "family": "Dravidian",
         "maximum_num_total": [
@@ -60880,11 +61516,11 @@
             0.0
         ],
         "name": "Malayalam",
-        "num_months": 53,
+        "num_months": 54,
         "permalink": "https://www.reddit.com/r/translator/wiki/malayalam",
         "rate_daily": 0.02,
-        "rate_monthly": 0.71,
-        "rate_yearly": 8.52
+        "rate_monthly": 0.68,
+        "rate_yearly": 8.16
     },
     "mma": {
         "2019-01": {
@@ -61721,6 +62357,14 @@
             "percentage_translated": 0.0,
             "ri": 4.27
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 1.53
+        },
         "code": "mn",
         "family": "Mongolic",
         "maximum_num_total": [
@@ -61748,11 +62392,11 @@
             0.0
         ],
         "name": "Mongolian",
-        "num_months": 99,
+        "num_months": 100,
         "permalink": "https://www.reddit.com/r/translator/wiki/mongolian",
-        "rate_daily": 0.09,
-        "rate_monthly": 2.62,
-        "rate_yearly": 31.44
+        "rate_daily": 0.08,
+        "rate_monthly": 2.5,
+        "rate_yearly": 30.0
     },
     "mnc": {
         "2017-09": {
@@ -62137,8 +62781,8 @@
         "num_months": 44,
         "permalink": "https://www.reddit.com/r/translator/wiki/manchu",
         "rate_daily": 0.02,
-        "rate_monthly": 0.62,
-        "rate_yearly": 7.44
+        "rate_monthly": 0.59,
+        "rate_yearly": 7.08
     },
     "mni": {
         "2019-06": {
@@ -62361,56 +63005,6 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.04,
         "rate_yearly": 0.48
-    },
-    "mon": {
-        "2022-05": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.87
-        },
-        "2024-10": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0004,
-            "percentage_translated": 0.0,
-            "ri": 1.2
-        },
-        "code": "mon",
-        "family": "Mongolic",
-        "maximum_num_total": [
-            "2022-05",
-            1
-        ],
-        "maximum_percentage_total": [
-            "2024-10",
-            0.0004
-        ],
-        "maximum_percentage_translated": [
-            "2022-05",
-            0.0
-        ],
-        "minimum_num_total": [
-            "2022-05",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2022-05",
-            0.0003
-        ],
-        "minimum_percentage_translated": [
-            "2022-05",
-            0.0
-        ],
-        "name": "Mon",
-        "num_months": 2,
-        "permalink": "https://www.reddit.com/r/translator/wiki/mon",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.02,
-        "rate_yearly": 0.24
     },
     "mop": {
         "2021-07": {
@@ -62903,8 +63497,8 @@
         "num_months": 46,
         "permalink": "https://www.reddit.com/r/translator/wiki/marathi",
         "rate_daily": 0.02,
-        "rate_monthly": 0.6,
-        "rate_yearly": 7.2
+        "rate_monthly": 0.57,
+        "rate_yearly": 6.84
     },
     "mrt": {
         "2025-04": {
@@ -63003,8 +63597,8 @@
         "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/maranao",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ms": {
         "2016-08": {
@@ -63623,6 +64217,14 @@
             "percentage_translated": 0.0,
             "ri": 0.21
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 0.21
+        },
         "code": "ms",
         "family": "Austronesian",
         "maximum_num_total": [
@@ -63650,11 +64252,11 @@
             0.0
         ],
         "name": "Malay",
-        "num_months": 77,
+        "num_months": 78,
         "permalink": "https://www.reddit.com/r/translator/wiki/malay",
         "rate_daily": 0.04,
-        "rate_monthly": 1.19,
-        "rate_yearly": 14.28
+        "rate_monthly": 1.14,
+        "rate_yearly": 13.68
     },
     "msb": {
         "2025-09": {
@@ -63931,8 +64533,8 @@
         "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/maltese",
         "rate_daily": 0.01,
-        "rate_monthly": 0.2,
-        "rate_yearly": 2.4
+        "rate_monthly": 0.19,
+        "rate_yearly": 2.28
     },
     "mus": {
         "2018-08": {
@@ -64239,882 +64841,15 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/hmong_daw",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "my": {
-        "2016-08": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.001,
-            "percentage_translated": 1.0,
-            "ri": 0.22
-        },
-        "2016-09": {
-            "num_total": 2,
-            "num_translated": 2,
-            "num_untranslated": 0,
-            "percentage_total": 0.002,
-            "percentage_translated": 1.0,
-            "ri": 0.46
-        },
-        "2016-10": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0009,
-            "percentage_translated": 1.0,
-            "ri": 0.2
-        },
-        "2016-11": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0027,
-            "percentage_translated": 0.33,
-            "ri": 0.6
-        },
-        "2016-12": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0016,
-            "percentage_translated": 0.0,
-            "ri": 0.35
-        },
-        "2017-01": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.0,
-            "ri": 0.18
-        },
-        "2017-03": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0007,
-            "percentage_translated": 1.0,
-            "ri": 0.17
-        },
-        "2017-05": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0007,
-            "percentage_translated": 0.0,
-            "ri": 0.15
-        },
-        "2017-06": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.0,
-            "ri": 0.29
-        },
-        "2017-07": {
-            "num_total": 9,
-            "num_translated": 3,
-            "num_untranslated": 6,
-            "percentage_total": 0.0055,
-            "percentage_translated": 0.33,
-            "ri": 1.22
-        },
-        "2017-08": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.0,
-            "ri": 0.27
-        },
-        "2017-09": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.0,
-            "ri": 0.41
-        },
-        "2017-11": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.33,
-            "ri": 0.41
-        },
-        "2017-12": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0006,
-            "percentage_translated": 1.0,
-            "ri": 0.13
-        },
-        "2018-01": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.0,
-            "ri": 0.38
-        },
-        "2018-02": {
-            "num_total": 3,
-            "num_translated": 2,
-            "num_untranslated": 1,
-            "percentage_total": 0.0016,
-            "percentage_translated": 0.66,
-            "ri": 0.38
-        },
-        "2018-03": {
-            "num_total": 5,
-            "num_translated": 3,
-            "num_untranslated": 2,
-            "percentage_total": 0.0022,
-            "percentage_translated": 0.6,
-            "ri": 0.39
-        },
-        "2018-05": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.0,
-            "ri": 0.23
-        },
-        "2018-07": {
-            "num_total": 4,
-            "num_translated": 3,
-            "num_untranslated": 1,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.75,
-            "ri": 0.25
-        },
-        "2018-08": {
-            "num_total": 3,
-            "num_translated": 2,
-            "num_untranslated": 1,
-            "percentage_total": 0.0011,
-            "percentage_translated": 0.66,
-            "ri": 0.2
-        },
-        "2018-09": {
-            "num_total": 4,
-            "num_translated": 2,
-            "num_untranslated": 2,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.5,
-            "ri": 0.3
-        },
-        "2018-10": {
-            "num_total": 6,
-            "num_translated": 3,
-            "num_untranslated": 3,
-            "percentage_total": 0.0023,
-            "percentage_translated": 0.5,
-            "ri": 0.41
-        },
-        "2018-11": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0015,
-            "percentage_translated": 0.25,
-            "ri": 0.27
-        },
-        "2018-12": {
-            "num_total": 4,
-            "num_translated": 3,
-            "num_untranslated": 1,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.75,
-            "ri": 0.25
-        },
-        "2019-01": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.25,
-            "ri": 0.23
-        },
-        "2019-02": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.05
-        },
-        "2019-03": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0003,
-            "percentage_translated": 1.0,
-            "ri": 0.05
-        },
-        "2019-04": {
-            "num_total": 4,
-            "num_translated": 2,
-            "num_untranslated": 2,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.5,
-            "ri": 0.21
-        },
-        "2019-05": {
-            "num_total": 7,
-            "num_translated": 3,
-            "num_untranslated": 4,
-            "percentage_total": 0.0021,
-            "percentage_translated": 0.42,
-            "ri": 0.37
-        },
-        "2019-06": {
-            "num_total": 6,
-            "num_translated": 2,
-            "num_untranslated": 4,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.33,
-            "ri": 0.31
-        },
-        "2019-07": {
-            "num_total": 4,
-            "num_translated": 3,
-            "num_untranslated": 1,
-            "percentage_total": 0.001,
-            "percentage_translated": 0.75,
-            "ri": 0.17
-        },
-        "2019-08": {
-            "num_total": 7,
-            "num_translated": 4,
-            "num_untranslated": 3,
-            "percentage_total": 0.0019,
-            "percentage_translated": 0.57,
-            "ri": 0.33
-        },
-        "2019-09": {
-            "num_total": 5,
-            "num_translated": 1,
-            "num_untranslated": 4,
-            "percentage_total": 0.0015,
-            "percentage_translated": 0.2,
-            "ri": 0.26
-        },
-        "2019-10": {
-            "num_total": 7,
-            "num_translated": 1,
-            "num_untranslated": 6,
-            "percentage_total": 0.002,
-            "percentage_translated": 0.14,
-            "ri": 0.35
-        },
-        "2019-11": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0006,
-            "percentage_translated": 0.0,
-            "ri": 0.1
-        },
-        "2019-12": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.33,
-            "ri": 0.14
-        },
-        "2020-01": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.0,
-            "ri": 0.14
-        },
-        "2020-02": {
-            "num_total": 5,
-            "num_translated": 3,
-            "num_untranslated": 2,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.6,
-            "ri": 0.23
-        },
-        "2020-03": {
-            "num_total": 2,
-            "num_translated": 1,
-            "num_untranslated": 1,
-            "percentage_total": 0.0005,
-            "percentage_translated": 0.5,
-            "ri": 0.09
-        },
-        "2020-04": {
-            "num_total": 5,
-            "num_translated": 2,
-            "num_untranslated": 3,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.4,
-            "ri": 0.22
-        },
-        "2020-05": {
-            "num_total": 4,
-            "num_translated": 2,
-            "num_untranslated": 2,
-            "percentage_total": 0.0009,
-            "percentage_translated": 0.5,
-            "ri": 0.16
-        },
-        "2020-06": {
-            "num_total": 7,
-            "num_translated": 4,
-            "num_untranslated": 3,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.57,
-            "ri": 0.31
-        },
-        "2020-07": {
-            "num_total": 7,
-            "num_translated": 4,
-            "num_untranslated": 3,
-            "percentage_total": 0.0016,
-            "percentage_translated": 0.57,
-            "ri": 0.29
-        },
-        "2020-08": {
-            "num_total": 4,
-            "num_translated": 0,
-            "num_untranslated": 4,
-            "percentage_total": 0.0009,
-            "percentage_translated": 0.0,
-            "ri": 0.16
-        },
-        "2020-09": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.33,
-            "ri": 0.15
-        },
-        "2020-10": {
-            "num_total": 6,
-            "num_translated": 3,
-            "num_untranslated": 3,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.5,
-            "ri": 0.31
-        },
-        "2020-11": {
-            "num_total": 5,
-            "num_translated": 1,
-            "num_untranslated": 4,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.2,
-            "ri": 0.25
-        },
-        "2020-12": {
-            "num_total": 4,
-            "num_translated": 2,
-            "num_untranslated": 2,
-            "percentage_total": 0.001,
-            "percentage_translated": 0.5,
-            "ri": 0.18
-        },
-        "2021-01": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0002,
-            "percentage_translated": 1.0,
-            "ri": 0.04
-        },
-        "2021-02": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0011,
-            "percentage_translated": 0.25,
-            "ri": 0.2
-        },
-        "2021-03": {
-            "num_total": 5,
-            "num_translated": 4,
-            "num_untranslated": 1,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.8,
-            "ri": 0.22
-        },
-        "2021-04": {
-            "num_total": 5,
-            "num_translated": 3,
-            "num_untranslated": 2,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.6,
-            "ri": 0.24
-        },
-        "2021-05": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.33,
-            "ri": 0.15
-        },
-        "2021-06": {
-            "num_total": 5,
-            "num_translated": 4,
-            "num_untranslated": 1,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.8,
-            "ri": 0.25
-        },
-        "2021-07": {
-            "num_total": 6,
-            "num_translated": 1,
-            "num_untranslated": 5,
-            "percentage_total": 0.0016,
-            "percentage_translated": 0.16,
-            "ri": 0.29
-        },
-        "2021-08": {
-            "num_total": 6,
-            "num_translated": 2,
-            "num_untranslated": 4,
-            "percentage_total": 0.0015,
-            "percentage_translated": 0.33,
-            "ri": 0.27
-        },
-        "2021-09": {
-            "num_total": 5,
-            "num_translated": 2,
-            "num_untranslated": 3,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.4,
-            "ri": 0.25
-        },
-        "2021-10": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.05
-        },
-        "2021-11": {
-            "num_total": 2,
-            "num_translated": 2,
-            "num_untranslated": 0,
-            "percentage_total": 0.0006,
-            "percentage_translated": 1.0,
-            "ri": 0.11
-        },
-        "2021-12": {
-            "num_total": 4,
-            "num_translated": 0,
-            "num_untranslated": 4,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.0,
-            "ri": 0.22
-        },
-        "2022-01": {
-            "num_total": 5,
-            "num_translated": 3,
-            "num_untranslated": 2,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.6,
-            "ri": 0.24
-        },
-        "2022-02": {
-            "num_total": 6,
-            "num_translated": 1,
-            "num_untranslated": 5,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.16,
-            "ri": 0.33
-        },
-        "2022-03": {
-            "num_total": 5,
-            "num_translated": 0,
-            "num_untranslated": 5,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.0,
-            "ri": 0.24
-        },
-        "2022-04": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.05
-        },
-        "2022-05": {
-            "num_total": 2,
-            "num_translated": 1,
-            "num_untranslated": 1,
-            "percentage_total": 0.0006,
-            "percentage_translated": 0.5,
-            "ri": 0.11
-        },
-        "2022-06": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.25,
-            "ri": 0.22
-        },
-        "2022-07": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0005,
-            "percentage_translated": 0.0,
-            "ri": 0.09
-        },
-        "2022-08": {
-            "num_total": 2,
-            "num_translated": 1,
-            "num_untranslated": 1,
-            "percentage_total": 0.0006,
-            "percentage_translated": 0.5,
-            "ri": 0.11
-        },
-        "2022-09": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0009,
-            "percentage_translated": 0.0,
-            "ri": 0.16
-        },
-        "2022-10": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.25,
-            "ri": 0.24
-        },
-        "2022-11": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0003,
-            "percentage_translated": 1.0,
-            "ri": 0.05
-        },
-        "2022-12": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.25,
-            "ri": 0.22
-        },
-        "2023-01": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.05
-        },
-        "2023-02": {
-            "num_total": 5,
-            "num_translated": 1,
-            "num_untranslated": 4,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.2,
-            "ri": 0.31
-        },
-        "2023-03": {
-            "num_total": 2,
-            "num_translated": 1,
-            "num_untranslated": 1,
-            "percentage_total": 0.0007,
-            "percentage_translated": 0.5,
-            "ri": 0.13
-        },
-        "2023-04": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.25,
-            "ri": 0.24
-        },
-        "2023-05": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0009,
-            "percentage_translated": 0.33,
-            "ri": 0.17
-        },
-        "2023-06": {
-            "num_total": 5,
-            "num_translated": 2,
-            "num_untranslated": 3,
-            "percentage_total": 0.0019,
-            "percentage_translated": 0.4,
-            "ri": 0.36
-        },
-        "2023-07": {
-            "num_total": 5,
-            "num_translated": 2,
-            "num_untranslated": 3,
-            "percentage_total": 0.0015,
-            "percentage_translated": 0.4,
-            "ri": 0.28
-        },
-        "2023-08": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0003,
-            "percentage_translated": 1.0,
-            "ri": 0.06
-        },
-        "2023-09": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0003,
-            "percentage_translated": 1.0,
-            "ri": 0.06
-        },
-        "2023-10": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.001,
-            "percentage_translated": 0.0,
-            "ri": 0.19
-        },
-        "2023-11": {
-            "num_total": 8,
-            "num_translated": 3,
-            "num_untranslated": 5,
-            "percentage_total": 0.0027,
-            "percentage_translated": 0.37,
-            "ri": 0.51
-        },
-        "2023-12": {
-            "num_total": 5,
-            "num_translated": 4,
-            "num_untranslated": 1,
-            "percentage_total": 0.0017,
-            "percentage_translated": 0.8,
-            "ri": 0.32
-        },
-        "2024-01": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.25,
-            "ri": 0.24
-        },
-        "2024-02": {
-            "num_total": 3,
-            "num_translated": 2,
-            "num_untranslated": 1,
-            "percentage_total": 0.001,
-            "percentage_translated": 0.66,
-            "ri": 0.19
-        },
-        "2024-03": {
-            "num_total": 6,
-            "num_translated": 1,
-            "num_untranslated": 5,
-            "percentage_total": 0.0021,
-            "percentage_translated": 0.16,
-            "ri": 0.39
-        },
-        "2024-04": {
-            "num_total": 7,
-            "num_translated": 3,
-            "num_untranslated": 4,
-            "percentage_total": 0.0024,
-            "percentage_translated": 0.42,
-            "ri": 0.45
-        },
-        "2024-05": {
-            "num_total": 3,
-            "num_translated": 2,
-            "num_untranslated": 1,
-            "percentage_total": 0.0011,
-            "percentage_translated": 0.66,
-            "ri": 0.21
-        },
-        "2024-06": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0004,
-            "percentage_translated": 1.0,
-            "ri": 0.07
-        },
-        "2024-07": {
-            "num_total": 9,
-            "num_translated": 3,
-            "num_untranslated": 6,
-            "percentage_total": 0.0031,
-            "percentage_translated": 0.33,
-            "ri": 0.58
-        },
-        "2024-08": {
-            "num_total": 4,
-            "num_translated": 2,
-            "num_untranslated": 2,
-            "percentage_total": 0.0013,
-            "percentage_translated": 0.5,
-            "ri": 0.24
-        },
-        "2024-09": {
-            "num_total": 4,
-            "num_translated": 0,
-            "num_untranslated": 4,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.0,
-            "ri": 0.26
-        },
-        "2024-10": {
-            "num_total": 5,
-            "num_translated": 1,
-            "num_untranslated": 4,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.2,
-            "ri": 0.34
-        },
-        "2024-11": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0004,
-            "percentage_translated": 1.0,
-            "ri": 0.07
-        },
-        "2024-12": {
-            "num_total": 5,
-            "num_translated": 0,
-            "num_untranslated": 5,
-            "percentage_total": 0.0018,
-            "percentage_translated": 0.0,
-            "ri": 0.34
-        },
-        "2025-01": {
-            "num_total": 4,
-            "num_translated": 3,
-            "num_untranslated": 1,
-            "percentage_total": 0.0014,
-            "percentage_translated": 0.75,
-            "ri": 0.26
-        },
-        "2025-02": {
-            "num_total": 3,
-            "num_translated": 1,
-            "num_untranslated": 2,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.33,
-            "ri": 0.22
-        },
-        "2025-03": {
-            "num_total": 9,
-            "num_translated": 3,
-            "num_untranslated": 6,
-            "percentage_total": 0.0035,
-            "percentage_translated": 0.33,
-            "ri": 0.65
-        },
-        "2025-05": {
-            "num_total": 5,
-            "num_translated": 3,
-            "num_untranslated": 2,
-            "percentage_total": 0.002,
-            "percentage_translated": 0.6,
-            "ri": 0.37
-        },
-        "2025-06": {
-            "num_total": 7,
-            "num_translated": 2,
-            "num_untranslated": 5,
-            "percentage_total": 0.0027,
-            "percentage_translated": 0.28,
-            "ri": 0.51
-        },
-        "2025-07": {
-            "num_total": 3,
-            "num_translated": 0,
-            "num_untranslated": 3,
-            "percentage_total": 0.0012,
-            "percentage_translated": 0.0,
-            "ri": 0.22
-        },
-        "2025-08": {
-            "num_total": 2,
-            "num_translated": 0,
-            "num_untranslated": 2,
-            "percentage_total": 0.0008,
-            "percentage_translated": 0.0,
-            "ri": 0.15
-        },
-        "2025-09": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0005,
-            "percentage_translated": 0.0,
-            "ri": 0.09
-        },
-        "2025-10": {
-            "num_total": 4,
-            "num_translated": 1,
-            "num_untranslated": 3,
-            "percentage_total": 0.0021,
-            "percentage_translated": 0.25,
-            "ri": 8.57
-        },
         "code": "my",
         "family": "Sino-Tibetan",
-        "maximum_num_total": [
-            "2017-07",
-            9
-        ],
-        "maximum_percentage_total": [
-            "2017-07",
-            0.0055
-        ],
-        "maximum_percentage_translated": [
-            "2016-08",
-            1.0
-        ],
-        "minimum_num_total": [
-            "2016-08",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2021-01",
-            0.0002
-        ],
-        "minimum_percentage_translated": [
-            "2016-12",
-            0.0
-        ],
         "name": "Burmese",
-        "num_months": 105,
-        "permalink": "https://www.reddit.com/r/translator/wiki/burmese",
-        "rate_daily": 0.12,
-        "rate_monthly": 3.47,
-        "rate_yearly": 41.64
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/myanmar"
     },
     "myu": {
         "2025-06": {
@@ -65523,8 +65258,8 @@
         "num_months": 25,
         "permalink": "https://www.reddit.com/r/translator/wiki/min_nan_chinese",
         "rate_daily": 0.01,
-        "rate_monthly": 0.29,
-        "rate_yearly": 3.48
+        "rate_monthly": 0.28,
+        "rate_yearly": 3.36
     },
     "nap": {
         "2017-10": {
@@ -65837,8 +65572,8 @@
         "num_months": 35,
         "permalink": "https://www.reddit.com/r/translator/wiki/neapolitan",
         "rate_daily": 0.01,
-        "rate_monthly": 0.41,
-        "rate_yearly": 4.92
+        "rate_monthly": 0.39,
+        "rate_yearly": 4.68
     },
     "naq": {
         "2022-02": {
@@ -66033,8 +65768,8 @@
         "num_months": 13,
         "permalink": "https://www.reddit.com/r/translator/wiki/classical_nahuatl",
         "rate_daily": 0.0,
-        "rate_monthly": 0.13,
-        "rate_yearly": 1.56
+        "rate_monthly": 0.12,
+        "rate_yearly": 1.44
     },
     "ndq": {
         "2025-04": {
@@ -66221,8 +65956,8 @@
         "num_months": 14,
         "permalink": "https://www.reddit.com/r/translator/wiki/low_german",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "ne": {
         "2017-05": {
@@ -66889,6 +66624,14 @@
             "percentage_translated": 0.5,
             "ri": 0.33
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.17
+        },
         "code": "ne",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -66916,11 +66659,11 @@
             0.0
         ],
         "name": "Nepali",
-        "num_months": 83,
+        "num_months": 84,
         "permalink": "https://www.reddit.com/r/translator/wiki/nepali",
         "rate_daily": 0.05,
-        "rate_monthly": 1.63,
-        "rate_yearly": 19.56
+        "rate_monthly": 1.56,
+        "rate_yearly": 18.72
     },
     "new": {
         "2017-12": {
@@ -66985,8 +66728,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/newari",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "niq": {
         "2019-07": {
@@ -67969,6 +67712,14 @@
             "percentage_translated": 0.25,
             "ri": 1.41
         },
+        "2025-10": {
+            "num_total": 7,
+            "num_translated": 3,
+            "num_untranslated": 4,
+            "percentage_total": 0.0036,
+            "percentage_translated": 0.42,
+            "ri": 1.27
+        },
         "code": "nl",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -67996,11 +67747,11 @@
             0.0
         ],
         "name": "Dutch",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/dutch",
-        "rate_daily": 0.35,
-        "rate_monthly": 10.44,
-        "rate_yearly": 125.28
+        "rate_daily": 0.33,
+        "rate_monthly": 9.97,
+        "rate_yearly": 119.64
     },
     "nll": {
         "2019-02": {
@@ -68121,7 +67872,7 @@
             "2025-06",
             0.0
         ],
-        "name": "Norwegian Nynorsk",
+        "name": "Norwegian (Nynorsk)",
         "num_months": 1,
         "permalink": "https://www.reddit.com/r/translator/wiki/norwegian_nynorsk",
         "rate_daily": 0.0,
@@ -69067,6 +68818,14 @@
             "percentage_translated": 0.33,
             "ri": 2.16
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 0,
+            "num_untranslated": 5,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.0,
+            "ri": 3.87
+        },
         "code": "no",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -69094,11 +68853,11 @@
             0.0
         ],
         "name": "Norwegian",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/norwegian",
-        "rate_daily": 0.17,
-        "rate_monthly": 4.99,
-        "rate_yearly": 59.88
+        "rate_daily": 0.16,
+        "rate_monthly": 4.78,
+        "rate_yearly": 57.36
     },
     "nod": {
         "2020-04": {
@@ -69193,7 +68952,7 @@
             "2018-08",
             0.0
         ],
-        "name": "Old Norse",
+        "name": "Norse {Moldova}",
         "num_months": 2,
         "permalink": "https://www.reddit.com/r/translator/wiki/old_norse",
         "rate_daily": 0.0,
@@ -69635,8 +69394,8 @@
         "num_months": 18,
         "permalink": "https://www.reddit.com/r/translator/wiki/navajo",
         "rate_daily": 0.01,
-        "rate_monthly": 0.19,
-        "rate_yearly": 2.28
+        "rate_monthly": 0.18,
+        "rate_yearly": 2.16
     },
     "nxq": {
         "2020-05": {
@@ -69939,8 +69698,8 @@
         "num_months": 13,
         "permalink": "https://www.reddit.com/r/translator/wiki/occitan",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "och": {
         "2018-10": {
@@ -70078,8 +69837,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/old_dutch",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "oge": {
         "2025-10": {
@@ -70250,8 +70009,8 @@
         "num_months": 12,
         "permalink": "https://www.reddit.com/r/translator/wiki/ojibwe",
         "rate_daily": 0.01,
-        "rate_monthly": 0.17,
-        "rate_yearly": 2.04
+        "rate_monthly": 0.16,
+        "rate_yearly": 1.92
     },
     "ojp": {
         "2020-10": {
@@ -70366,8 +70125,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/middle_korean",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "oko": {
         "2023-01": {
@@ -70418,6 +70177,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.02,
         "rate_yearly": 0.24
+    },
+    "old": {
+        "code": "old",
+        "family": "Niger-Congo",
+        "name": "Mochi",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/mochi"
     },
     "om": {
         "2018-11": {
@@ -70514,8 +70280,8 @@
         "num_months": 8,
         "permalink": "https://www.reddit.com/r/translator/wiki/oromo",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "oma": {
         "2024-04": {
@@ -70822,80 +70588,6 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.12,
         "rate_yearly": 1.44
-    },
-    "orv": {
-        "2020-04": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0002,
-            "percentage_translated": 1.0,
-            "ri": 0.01
-        },
-        "2020-12": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.01
-        },
-        "2021-11": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0003,
-            "percentage_translated": 1.0,
-            "ri": 0.01
-        },
-        "2022-08": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0003,
-            "percentage_translated": 0.0,
-            "ri": 0.01
-        },
-        "2025-07": {
-            "num_total": 1,
-            "num_translated": 1,
-            "num_untranslated": 0,
-            "percentage_total": 0.0004,
-            "percentage_translated": 1.0,
-            "ri": 0.01
-        },
-        "code": "orv",
-        "family": "Indo-European",
-        "maximum_num_total": [
-            "2020-04",
-            1
-        ],
-        "maximum_percentage_total": [
-            "2025-07",
-            0.0004
-        ],
-        "maximum_percentage_translated": [
-            "2020-04",
-            1.0
-        ],
-        "minimum_num_total": [
-            "2020-04",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2020-04",
-            0.0002
-        ],
-        "minimum_percentage_translated": [
-            "2020-12",
-            0.0
-        ],
-        "name": "Old Russian",
-        "num_months": 5,
-        "permalink": "https://www.reddit.com/r/translator/wiki/old_russian",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
     },
     "os": {
         "2024-02": {
@@ -71814,8 +71506,8 @@
         "num_months": 93,
         "permalink": "https://www.reddit.com/r/translator/wiki/ottoman_turkish",
         "rate_daily": 0.11,
-        "rate_monthly": 3.34,
-        "rate_yearly": 40.08
+        "rate_monthly": 3.17,
+        "rate_yearly": 38.04
     },
     "otk": {
         "2018-12": {
@@ -71890,48 +71582,6 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.04,
         "rate_yearly": 0.48
-    },
-    "oui": {
-        "2025-08": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0004,
-            "percentage_translated": 0.0,
-            "ri": null
-        },
-        "code": "oui",
-        "family": "Turkic",
-        "maximum_num_total": [
-            "2025-08",
-            1
-        ],
-        "maximum_percentage_total": [
-            "2025-08",
-            0.0004
-        ],
-        "maximum_percentage_translated": [
-            "2025-08",
-            0.0
-        ],
-        "minimum_num_total": [
-            "2025-08",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2025-08",
-            0.0004
-        ],
-        "minimum_percentage_translated": [
-            "2025-08",
-            0.0
-        ],
-        "name": "Old Uighur",
-        "num_months": 1,
-        "permalink": "https://www.reddit.com/r/translator/wiki/old_uighur",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.01,
-        "rate_yearly": 0.12
     },
     "pa": {
         "2016-07": {
@@ -72782,6 +72432,14 @@
             "percentage_translated": 0.0,
             "ri": 0.63
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 0.27
+        },
         "code": "pa",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -72809,11 +72467,11 @@
             0.0
         ],
         "name": "Punjabi",
-        "num_months": 106,
+        "num_months": 107,
         "permalink": "https://www.reddit.com/r/translator/wiki/punjabi",
-        "rate_daily": 0.15,
-        "rate_monthly": 4.51,
-        "rate_yearly": 54.12
+        "rate_daily": 0.14,
+        "rate_monthly": 4.3,
+        "rate_yearly": 51.6
     },
     "pal": {
         "2020-04": {
@@ -72936,8 +72594,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/pampanga",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "pap": {
         "2017-06": {
@@ -73082,8 +72740,8 @@
         "num_months": 14,
         "permalink": "https://www.reddit.com/r/translator/wiki/papiamento",
         "rate_daily": 0.0,
-        "rate_monthly": 0.14,
-        "rate_yearly": 1.68
+        "rate_monthly": 0.13,
+        "rate_yearly": 1.56
     },
     "pau": {
         "2021-10": {
@@ -73288,8 +72946,8 @@
         "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/nigerian_pidgin",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "pdc": {
         "2017-08": {
@@ -73530,6 +73188,14 @@
             "percentage_translated": 1.0,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "code": "pgl",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -73537,8 +73203,8 @@
             1
         ],
         "maximum_percentage_total": [
-            "2019-11",
-            0.0003
+            "2025-10",
+            0.0005
         ],
         "maximum_percentage_translated": [
             "2019-11",
@@ -73553,17 +73219,25 @@
             0.0003
         ],
         "minimum_percentage_translated": [
-            "2019-11",
-            1.0
+            "2025-10",
+            0.0
         ],
         "name": "Primitive Irish",
-        "num_months": 1,
+        "num_months": 2,
         "permalink": "https://www.reddit.com/r/translator/wiki/primitive_irish",
         "rate_daily": 0.0,
-        "rate_monthly": 0.01,
-        "rate_yearly": 0.12
+        "rate_monthly": 0.02,
+        "rate_yearly": 0.24
     },
     "phn": {
+        "2018-04": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "2019-08": {
             "num_total": 1,
             "num_translated": 0,
@@ -73580,7 +73254,23 @@
             "percentage_translated": 0.0,
             "ri": null
         },
-        "2022-11": {
+        "2021-12": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
+        "2022-01": {
+            "num_total": 4,
+            "num_translated": 0,
+            "num_untranslated": 4,
+            "percentage_total": 0.0011,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
+        "2022-08": {
             "num_total": 1,
             "num_translated": 1,
             "num_untranslated": 0,
@@ -73588,22 +73278,30 @@
             "percentage_translated": 1.0,
             "ri": null
         },
+        "2024-05": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "code": "phn",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
-            "2019-08",
-            1
+            "2022-01",
+            4
         ],
         "maximum_percentage_total": [
-            "2019-08",
-            0.0003
+            "2022-01",
+            0.0011
         ],
         "maximum_percentage_translated": [
-            "2022-11",
+            "2022-08",
             1.0
         ],
         "minimum_num_total": [
-            "2019-08",
+            "2018-04",
             1
         ],
         "minimum_percentage_total": [
@@ -73611,15 +73309,15 @@
             0.0002
         ],
         "minimum_percentage_translated": [
-            "2019-08",
+            "2018-04",
             0.0
         ],
         "name": "Phoenician",
-        "num_months": 3,
-        "permalink": "https://www.reddit.com/r/translator/wiki/punic",
+        "num_months": 7,
+        "permalink": "https://www.reddit.com/r/translator/wiki/phoenician",
         "rate_daily": 0.0,
-        "rate_monthly": 0.03,
-        "rate_yearly": 0.36
+        "rate_monthly": 0.08,
+        "rate_yearly": 0.96
     },
     "pi": {
         "2017-07": {
@@ -73870,6 +73568,14 @@
             "percentage_translated": 0.5,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 1,
+            "num_untranslated": 1,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.5,
+            "ri": null
+        },
         "code": "pi",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -73897,7 +73603,7 @@
             0.0
         ],
         "name": "Pali",
-        "num_months": 31,
+        "num_months": 32,
         "permalink": "https://www.reddit.com/r/translator/wiki/pali",
         "rate_daily": 0.01,
         "rate_monthly": 0.36,
@@ -74850,6 +74556,14 @@
             "percentage_translated": 0.36,
             "ri": 1.04
         },
+        "2025-10": {
+            "num_total": 24,
+            "num_translated": 6,
+            "num_untranslated": 18,
+            "percentage_total": 0.0124,
+            "percentage_translated": 0.25,
+            "ri": 2.36
+        },
         "code": "pl",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -74877,11 +74591,11 @@
             0.1
         ],
         "name": "Polish",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/polish",
-        "rate_daily": 0.78,
-        "rate_monthly": 23.42,
-        "rate_yearly": 281.04
+        "rate_daily": 0.75,
+        "rate_monthly": 22.45,
+        "rate_yearly": 269.4
     },
     "pnb": {
         "2021-08": {
@@ -74996,8 +74710,8 @@
         "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/pohnpeian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "pot": {
         "2024-05": {
@@ -75534,6 +75248,14 @@
             "percentage_translated": 0.0,
             "ri": 0.36
         },
+        "2025-10": {
+            "num_total": 3,
+            "num_translated": 0,
+            "num_untranslated": 3,
+            "percentage_total": 0.0016,
+            "percentage_translated": 0.0,
+            "ri": 1.34
+        },
         "code": "prs",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -75561,11 +75283,11 @@
             0.0
         ],
         "name": "Dari",
-        "num_months": 49,
+        "num_months": 50,
         "permalink": "https://www.reddit.com/r/translator/wiki/dari",
         "rate_daily": 0.02,
-        "rate_monthly": 0.67,
-        "rate_yearly": 8.04
+        "rate_monthly": 0.66,
+        "rate_yearly": 7.92
     },
     "ps": {
         "2016-07": {
@@ -76296,6 +76018,14 @@
             "percentage_translated": 0.0,
             "ri": 0.62
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 0,
+            "num_untranslated": 5,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.0,
+            "ri": 3.08
+        },
         "code": "ps",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -76323,11 +76053,11 @@
             0.0
         ],
         "name": "Pashto",
-        "num_months": 91,
+        "num_months": 92,
         "permalink": "https://www.reddit.com/r/translator/wiki/pashto",
         "rate_daily": 0.07,
-        "rate_monthly": 2.06,
-        "rate_yearly": 24.72
+        "rate_monthly": 2.0,
+        "rate_yearly": 24.0
     },
     "pso": {
         "2024-10": {
@@ -77268,6 +76998,14 @@
             "percentage_translated": 0.37,
             "ri": 0.27
         },
+        "2025-10": {
+            "num_total": 7,
+            "num_translated": 0,
+            "num_untranslated": 7,
+            "percentage_total": 0.0036,
+            "percentage_translated": 0.0,
+            "ri": 0.12
+        },
         "code": "pt",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -77291,15 +77029,15 @@
             0.003
         ],
         "minimum_percentage_translated": [
-            "2016-10",
-            0.16
+            "2025-10",
+            0.0
         ],
         "name": "Portuguese",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/portuguese",
-        "rate_daily": 0.67,
-        "rate_monthly": 19.98,
-        "rate_yearly": 239.76
+        "rate_daily": 0.63,
+        "rate_monthly": 19.04,
+        "rate_yearly": 228.48
     },
     "pue": {
         "2023-07": {
@@ -77818,8 +77556,8 @@
         "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/quechua",
         "rate_daily": 0.01,
-        "rate_monthly": 0.21,
-        "rate_yearly": 2.52
+        "rate_monthly": 0.2,
+        "rate_yearly": 2.4
     },
     "quc": {
         "2018-03": {
@@ -77884,8 +77622,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/k'iche'",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "quh": {
         "2018-03": {
@@ -78040,8 +77778,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/quenya",
         "rate_daily": 0.0,
-        "rate_monthly": 0.11,
-        "rate_yearly": 1.32
+        "rate_monthly": 0.1,
+        "rate_yearly": 1.2
     },
     "rad": {
         "2024-12": {
@@ -78766,8 +78504,8 @@
         "num_months": 3,
         "permalink": "https://www.reddit.com/r/translator/wiki/kirundi",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "ro": {
         "2016-06": {
@@ -79671,9 +79409,9 @@
         "name": "Romanian",
         "num_months": 109,
         "permalink": "https://www.reddit.com/r/translator/wiki/romanian",
-        "rate_daily": 0.19,
-        "rate_monthly": 5.61,
-        "rate_yearly": 67.32
+        "rate_daily": 0.18,
+        "rate_monthly": 5.33,
+        "rate_yearly": 63.96
     },
     "rom": {
         "2017-05": {
@@ -79930,8 +79668,8 @@
         "num_months": 28,
         "permalink": "https://www.reddit.com/r/translator/wiki/romany",
         "rate_daily": 0.01,
-        "rate_monthly": 0.29,
-        "rate_yearly": 3.48
+        "rate_monthly": 0.28,
+        "rate_yearly": 3.36
     },
     "rsl": {
         "2024-12": {
@@ -80872,6 +80610,14 @@
             "percentage_translated": 0.53,
             "ri": 0.97
         },
+        "2025-10": {
+            "num_total": 71,
+            "num_translated": 33,
+            "num_untranslated": 38,
+            "percentage_total": 0.0367,
+            "percentage_translated": 0.46,
+            "ri": 1.07
+        },
         "code": "ru",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -80899,11 +80645,11 @@
             0.41
         ],
         "name": "Russian",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/russian",
-        "rate_daily": 4.17,
-        "rate_monthly": 125.17,
-        "rate_yearly": 1502.04
+        "rate_daily": 3.98,
+        "rate_monthly": 119.5,
+        "rate_yearly": 1434.0
     },
     "rue": {
         "2019-02": {
@@ -81096,8 +80842,8 @@
         "num_months": 20,
         "permalink": "https://www.reddit.com/r/translator/wiki/rusyn",
         "rate_daily": 0.01,
-        "rate_monthly": 0.25,
-        "rate_yearly": 3.0
+        "rate_monthly": 0.23,
+        "rate_yearly": 2.76
     },
     "rug": {
         "2024-06": {
@@ -81342,8 +81088,8 @@
         "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/kinyarwanda",
         "rate_daily": 0.01,
-        "rate_monthly": 0.16,
-        "rate_yearly": 1.92
+        "rate_monthly": 0.15,
+        "rate_yearly": 1.8
     },
     "rwr": {
         "2024-11": {
@@ -81570,8 +81316,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/central_okinawan",
         "rate_daily": 0.01,
-        "rate_monthly": 0.19,
-        "rate_yearly": 2.28
+        "rate_monthly": 0.18,
+        "rate_yearly": 2.16
     },
     "sa": {
         "2016-08": {
@@ -82446,6 +82192,14 @@
             "percentage_translated": 0.72,
             "ri": 201.38
         },
+        "2025-10": {
+            "num_total": 11,
+            "num_translated": 9,
+            "num_untranslated": 2,
+            "percentage_total": 0.0057,
+            "percentage_translated": 0.81,
+            "ri": 209.56
+        },
         "code": "sa",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -82473,11 +82227,11 @@
             0.25
         ],
         "name": "Sanskrit",
-        "num_months": 109,
+        "num_months": 110,
         "permalink": "https://www.reddit.com/r/translator/wiki/sanskrit",
-        "rate_daily": 0.33,
-        "rate_monthly": 9.82,
-        "rate_yearly": 117.84
+        "rate_daily": 0.31,
+        "rate_monthly": 9.42,
+        "rate_yearly": 113.04
     },
     "sah": {
         "2020-11": {
@@ -82582,8 +82336,8 @@
         "num_months": 9,
         "permalink": "https://www.reddit.com/r/translator/wiki/yakut",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "sat": {
         "2021-01": {
@@ -82930,6 +82684,14 @@
             "percentage_translated": 0.0,
             "ri": 0.85
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 0.86
+        },
         "code": "scn",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -82957,7 +82719,7 @@
             0.0
         ],
         "name": "Sicilian",
-        "num_months": 16,
+        "num_months": 17,
         "permalink": "https://www.reddit.com/r/translator/wiki/sicilian",
         "rate_daily": 0.01,
         "rate_monthly": 0.19,
@@ -83146,8 +82908,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/scots",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "sd": {
         "2018-06": {
@@ -83260,8 +83022,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/sindhi",
         "rate_daily": 0.0,
-        "rate_monthly": 0.1,
-        "rate_yearly": 1.2
+        "rate_monthly": 0.09,
+        "rate_yearly": 1.08
     },
     "sdz": {
         "2023-08": {
@@ -83400,8 +83162,8 @@
         "num_months": 8,
         "permalink": "https://www.reddit.com/r/translator/wiki/northern_sami",
         "rate_daily": 0.0,
-        "rate_monthly": 0.08,
-        "rate_yearly": 0.96
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "see": {
         "2022-08": {
@@ -83566,8 +83328,15 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/old_irish",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
+    },
+    "shh": {
+        "code": "shh",
+        "family": "Uto-Aztecan",
+        "name": "Shoshoni",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/shoshoni"
     },
     "shi": {
         "2019-04": {
@@ -84205,9 +83974,9 @@
         "name": "Sinhalese",
         "num_months": 56,
         "permalink": "https://www.reddit.com/r/translator/wiki/sinhalese",
-        "rate_daily": 0.03,
-        "rate_monthly": 0.75,
-        "rate_yearly": 9.0
+        "rate_daily": 0.02,
+        "rate_monthly": 0.72,
+        "rate_yearly": 8.64
     },
     "sjn": {
         "2017-06": {
@@ -84376,8 +84145,8 @@
         "num_months": 17,
         "permalink": "https://www.reddit.com/r/translator/wiki/sindarin",
         "rate_daily": 0.01,
-        "rate_monthly": 0.19,
-        "rate_yearly": 2.28
+        "rate_monthly": 0.18,
+        "rate_yearly": 2.16
     },
     "sjo": {
         "2022-09": {
@@ -85278,8 +85047,8 @@
         "num_months": 97,
         "permalink": "https://www.reddit.com/r/translator/wiki/slovak",
         "rate_daily": 0.09,
-        "rate_monthly": 2.82,
-        "rate_yearly": 33.84
+        "rate_monthly": 2.67,
+        "rate_yearly": 32.04
     },
     "skr": {
         "2022-10": {
@@ -86002,8 +85771,8 @@
         "num_months": 79,
         "permalink": "https://www.reddit.com/r/translator/wiki/slovene",
         "rate_daily": 0.04,
-        "rate_monthly": 1.28,
-        "rate_yearly": 15.36
+        "rate_monthly": 1.22,
+        "rate_yearly": 14.64
     },
     "sm": {
         "2017-11": {
@@ -86180,8 +85949,8 @@
         "num_months": 18,
         "permalink": "https://www.reddit.com/r/translator/wiki/samoan",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "sma": {
         "2023-05": {
@@ -86452,8 +86221,8 @@
         "num_months": 12,
         "permalink": "https://www.reddit.com/r/translator/wiki/shona",
         "rate_daily": 0.0,
-        "rate_monthly": 0.13,
-        "rate_yearly": 1.56
+        "rate_monthly": 0.12,
+        "rate_yearly": 1.44
     },
     "snk": {
         "2018-04": {
@@ -86938,6 +86707,14 @@
             "percentage_translated": 1.0,
             "ri": 0.24
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.24
+        },
         "code": "so",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -86965,11 +86742,11 @@
             0.0
         ],
         "name": "Somali",
-        "num_months": 54,
+        "num_months": 55,
         "permalink": "https://www.reddit.com/r/translator/wiki/somali",
         "rate_daily": 0.03,
-        "rate_monthly": 0.84,
-        "rate_yearly": 10.08
+        "rate_monthly": 0.81,
+        "rate_yearly": 9.72
     },
     "sou": {
         "2018-11": {
@@ -86980,6 +86757,14 @@
             "percentage_translated": 0.0,
             "ri": 0.68
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.89
+        },
         "code": "sou",
         "family": "Tai-Kadai",
         "maximum_num_total": [
@@ -86987,8 +86772,8 @@
             1
         ],
         "maximum_percentage_total": [
-            "2018-11",
-            0.0004
+            "2025-10",
+            0.0005
         ],
         "maximum_percentage_translated": [
             "2018-11",
@@ -87007,11 +86792,11 @@
             0.0
         ],
         "name": "Southern Thai",
-        "num_months": 1,
+        "num_months": 2,
         "permalink": "https://www.reddit.com/r/translator/wiki/southern_thai",
         "rate_daily": 0.0,
-        "rate_monthly": 0.01,
-        "rate_yearly": 0.12
+        "rate_monthly": 0.02,
+        "rate_yearly": 0.24
     },
     "sq": {
         "2016-06": {
@@ -87724,7 +87509,7 @@
             "num_untranslated": 2,
             "percentage_total": 0.001,
             "percentage_translated": 0.0,
-            "ri": 19.87
+            "ri": 3.48
         },
         "code": "sq",
         "family": "Indo-European",
@@ -87756,8 +87541,8 @@
         "num_months": 89,
         "permalink": "https://www.reddit.com/r/translator/wiki/albanian",
         "rate_daily": 0.05,
-        "rate_monthly": 1.5,
-        "rate_yearly": 18.0
+        "rate_monthly": 1.43,
+        "rate_yearly": 17.16
     },
     "sr": {
         "2016-06": {
@@ -88648,6 +88433,14 @@
             "percentage_translated": 0.2,
             "ri": 2.27
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 0.95
+        },
         "code": "sr",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -88675,11 +88468,11 @@
             0.0
         ],
         "name": "Serbian",
-        "num_months": 111,
+        "num_months": 112,
         "permalink": "https://www.reddit.com/r/translator/wiki/serbian",
-        "rate_daily": 0.17,
-        "rate_monthly": 5.02,
-        "rate_yearly": 60.24
+        "rate_daily": 0.16,
+        "rate_monthly": 4.78,
+        "rate_yearly": 57.36
     },
     "sri": {
         "2024-06": {
@@ -89320,8 +89113,8 @@
         "num_months": 22,
         "permalink": "https://www.reddit.com/r/translator/wiki/sumerian",
         "rate_daily": 0.01,
-        "rate_monthly": 0.25,
-        "rate_yearly": 3.0
+        "rate_monthly": 0.23,
+        "rate_yearly": 2.76
     },
     "sv": {
         "2016-06": {
@@ -90220,6 +90013,14 @@
             "percentage_translated": 0.0,
             "ri": 1.88
         },
+        "2025-10": {
+            "num_total": 5,
+            "num_translated": 1,
+            "num_untranslated": 4,
+            "percentage_total": 0.0026,
+            "percentage_translated": 0.2,
+            "ri": 1.63
+        },
         "code": "sv",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -90247,11 +90048,11 @@
             0.0
         ],
         "name": "Swedish",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/swedish",
-        "rate_daily": 0.32,
-        "rate_monthly": 9.61,
-        "rate_yearly": 115.32
+        "rate_daily": 0.31,
+        "rate_monthly": 9.17,
+        "rate_yearly": 110.04
     },
     "sva": {
         "2018-12": {
@@ -90950,8 +90751,8 @@
         "num_months": 76,
         "permalink": "https://www.reddit.com/r/translator/wiki/swahili",
         "rate_daily": 0.04,
-        "rate_monthly": 1.29,
-        "rate_yearly": 15.48
+        "rate_monthly": 1.23,
+        "rate_yearly": 14.76
     },
     "swb": {
         "2019-10": {
@@ -91278,6 +91079,14 @@
             "percentage_translated": 0.33,
             "ri": null
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
         "code": "syc",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -91305,11 +91114,11 @@
             0.0
         ],
         "name": "Syriac",
-        "num_months": 28,
+        "num_months": 29,
         "permalink": "https://www.reddit.com/r/translator/wiki/syriac",
         "rate_daily": 0.01,
-        "rate_monthly": 0.4,
-        "rate_yearly": 4.8
+        "rate_monthly": 0.39,
+        "rate_yearly": 4.68
     },
     "syl": {
         "2022-05": {
@@ -92132,6 +91941,14 @@
             "percentage_translated": 0.0,
             "ri": 0.11
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.05
+        },
         "code": "ta",
         "family": "Dravidian",
         "maximum_num_total": [
@@ -92159,11 +91976,11 @@
             0.0
         ],
         "name": "Tamil",
-        "num_months": 91,
+        "num_months": 92,
         "permalink": "https://www.reddit.com/r/translator/wiki/tamil",
-        "rate_daily": 0.07,
-        "rate_monthly": 1.96,
-        "rate_yearly": 23.52
+        "rate_daily": 0.06,
+        "rate_monthly": 1.88,
+        "rate_yearly": 22.56
     },
     "tah": {
         "2020-04": {
@@ -92228,8 +92045,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/tahitian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "taq": {
         "2018-09": {
@@ -92998,8 +92815,8 @@
         "num_months": 62,
         "permalink": "https://www.reddit.com/r/translator/wiki/telugu",
         "rate_daily": 0.03,
-        "rate_monthly": 0.96,
-        "rate_yearly": 11.52
+        "rate_monthly": 0.91,
+        "rate_yearly": 10.92
     },
     "teg": {
         "2023-04": {
@@ -93106,8 +92923,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/tetum",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "tfn": {
         "code": "tfn",
@@ -93323,8 +93140,8 @@
         "num_months": 22,
         "permalink": "https://www.reddit.com/r/translator/wiki/tajik",
         "rate_daily": 0.01,
-        "rate_monthly": 0.25,
-        "rate_yearly": 3.0
+        "rate_monthly": 0.24,
+        "rate_yearly": 2.88
     },
     "th": {
         "2016-06": {
@@ -94223,6 +94040,14 @@
             "percentage_translated": 0.5,
             "ri": 0.9
         },
+        "2025-10": {
+            "num_total": 9,
+            "num_translated": 7,
+            "num_untranslated": 2,
+            "percentage_total": 0.0047,
+            "percentage_translated": 0.77,
+            "ri": 0.6
+        },
         "code": "th",
         "family": "Tai-Kadai",
         "maximum_num_total": [
@@ -94250,11 +94075,11 @@
             0.18
         ],
         "name": "Thai",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/thai",
-        "rate_daily": 0.71,
-        "rate_monthly": 21.31,
-        "rate_yearly": 255.72
+        "rate_daily": 0.68,
+        "rate_monthly": 20.32,
+        "rate_yearly": 243.84
     },
     "thv": {
         "2018-10": {
@@ -94587,6 +94412,14 @@
             "percentage_translated": 0.0,
             "ri": 0.84
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.53
+        },
         "code": "ti",
         "family": "Afro-Asiatic",
         "maximum_num_total": [
@@ -94614,11 +94447,11 @@
             0.0
         ],
         "name": "Tigrinya",
-        "num_months": 35,
+        "num_months": 36,
         "permalink": "https://www.reddit.com/r/translator/wiki/tigrinya",
         "rate_daily": 0.02,
-        "rate_monthly": 0.46,
-        "rate_yearly": 5.52
+        "rate_monthly": 0.45,
+        "rate_yearly": 5.4
     },
     "tig": {
         "2020-06": {
@@ -94840,6 +94673,14 @@
             "percentage_translated": 0.33,
             "ri": 1.42
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.59
+        },
         "code": "tk",
         "family": "Turkic",
         "maximum_num_total": [
@@ -94867,7 +94708,7 @@
             0.0
         ],
         "name": "Turkmen",
-        "num_months": 15,
+        "num_months": 16,
         "permalink": "https://www.reddit.com/r/translator/wiki/turkmen",
         "rate_daily": 0.01,
         "rate_monthly": 0.15,
@@ -95780,6 +95621,14 @@
             "percentage_translated": 0.66,
             "ri": 0.46
         },
+        "2025-10": {
+            "num_total": 2,
+            "num_translated": 0,
+            "num_untranslated": 2,
+            "percentage_total": 0.001,
+            "percentage_translated": 0.0,
+            "ri": 0.33
+        },
         "code": "tl",
         "family": "Austronesian",
         "maximum_num_total": [
@@ -95807,11 +95656,11 @@
             0.0
         ],
         "name": "Tagalog",
-        "num_months": 108,
+        "num_months": 109,
         "permalink": "https://www.reddit.com/r/translator/wiki/tagalog",
-        "rate_daily": 0.16,
-        "rate_monthly": 4.79,
-        "rate_yearly": 57.48
+        "rate_daily": 0.15,
+        "rate_monthly": 4.57,
+        "rate_yearly": 54.84
     },
     "tlh": {
         "2018-08": {
@@ -95924,8 +95773,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/klingon",
         "rate_daily": 0.0,
-        "rate_monthly": 0.09,
-        "rate_yearly": 1.08
+        "rate_monthly": 0.08,
+        "rate_yearly": 0.96
     },
     "tli": {
         "2023-10": {
@@ -96026,6 +95875,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.03,
         "rate_yearly": 0.36
+    },
+    "tn": {
+        "code": "tn",
+        "family": "Niger-Congo",
+        "name": "Tswana",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/tswana"
     },
     "tnq": {
         "2022-05": {
@@ -96188,8 +96044,8 @@
         "num_months": 11,
         "permalink": "https://www.reddit.com/r/translator/wiki/tonga",
         "rate_daily": 0.0,
-        "rate_monthly": 0.11,
-        "rate_yearly": 1.32
+        "rate_monthly": 0.1,
+        "rate_yearly": 1.2
     },
     "tok": {
         "2024-01": {
@@ -96238,8 +96094,8 @@
         "num_months": 2,
         "permalink": "https://www.reddit.com/r/translator/wiki/toki_pona",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "tpi": {
         "2020-03": {
@@ -97212,6 +97068,14 @@
             "percentage_translated": 0.33,
             "ri": 0.16
         },
+        "2025-10": {
+            "num_total": 3,
+            "num_translated": 0,
+            "num_untranslated": 3,
+            "percentage_total": 0.0016,
+            "percentage_translated": 0.0,
+            "ri": 0.17
+        },
         "code": "tr",
         "family": "Turkic",
         "maximum_num_total": [
@@ -97239,11 +97103,11 @@
             0.0
         ],
         "name": "Turkish",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/turkish",
-        "rate_daily": 0.35,
-        "rate_monthly": 10.56,
-        "rate_yearly": 126.72
+        "rate_daily": 0.34,
+        "rate_monthly": 10.06,
+        "rate_yearly": 120.72
     },
     "trv": {
         "2019-08": {
@@ -97350,8 +97214,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/tsonga",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "tsd": {
         "2023-01": {
@@ -97628,8 +97492,8 @@
         "num_months": 19,
         "permalink": "https://www.reddit.com/r/translator/wiki/tatar",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "ttq": {
         "2018-10": {
@@ -97940,8 +97804,8 @@
         "num_months": 17,
         "permalink": "https://www.reddit.com/r/translator/wiki/twi",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "twf": {
         "2021-01": {
@@ -98188,8 +98052,8 @@
         "num_months": 10,
         "permalink": "https://www.reddit.com/r/translator/wiki/tuvinian",
         "rate_daily": 0.0,
-        "rate_monthly": 0.09,
-        "rate_yearly": 1.08
+        "rate_monthly": 0.08,
+        "rate_yearly": 0.96
     },
     "tzm": {
         "2020-07": {
@@ -98668,8 +98532,8 @@
         "num_months": 34,
         "permalink": "https://www.reddit.com/r/translator/wiki/uyghur",
         "rate_daily": 0.01,
-        "rate_monthly": 0.41,
-        "rate_yearly": 4.92
+        "rate_monthly": 0.39,
+        "rate_yearly": 4.68
     },
     "uga": {
         "2022-07": {
@@ -99586,6 +99450,14 @@
             "percentage_translated": 0.44,
             "ri": 0.92
         },
+        "2025-10": {
+            "num_total": 7,
+            "num_translated": 3,
+            "num_untranslated": 4,
+            "percentage_total": 0.0036,
+            "percentage_translated": 0.42,
+            "ri": 0.75
+        },
         "code": "uk",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -99613,11 +99485,11 @@
             0.0
         ],
         "name": "Ukrainian",
-        "num_months": 109,
+        "num_months": 110,
         "permalink": "https://www.reddit.com/r/translator/wiki/ukrainian",
-        "rate_daily": 0.42,
-        "rate_monthly": 12.54,
-        "rate_yearly": 150.48
+        "rate_daily": 0.4,
+        "rate_monthly": 11.97,
+        "rate_yearly": 143.64
     },
     "unknown": {
         "2024-06": {
@@ -100550,6 +100422,14 @@
             "percentage_translated": 0.25,
             "ri": 0.09
         },
+        "2025-10": {
+            "num_total": 6,
+            "num_translated": 2,
+            "num_untranslated": 4,
+            "percentage_total": 0.0031,
+            "percentage_translated": 0.33,
+            "ri": 0.15
+        },
         "code": "ur",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -100577,11 +100457,11 @@
             0.0
         ],
         "name": "Urdu",
-        "num_months": 111,
+        "num_months": 112,
         "permalink": "https://www.reddit.com/r/translator/wiki/urdu",
-        "rate_daily": 0.26,
-        "rate_monthly": 7.68,
-        "rate_yearly": 92.16
+        "rate_daily": 0.24,
+        "rate_monthly": 7.34,
+        "rate_yearly": 88.08
     },
     "ute": {
         "2019-02": {
@@ -100626,7 +100506,7 @@
             "2019-02",
             0.0
         ],
-        "name": "Ute-Southern Paiute {}",
+        "name": "Ute-Southern Paiute",
         "num_months": 2,
         "permalink": "https://www.reddit.com/r/translator/wiki/ute-southern_paiute",
         "rate_daily": 0.0,
@@ -100936,8 +100816,8 @@
         "num_months": 34,
         "permalink": "https://www.reddit.com/r/translator/wiki/uzbek",
         "rate_daily": 0.01,
-        "rate_monthly": 0.39,
-        "rate_yearly": 4.68
+        "rate_monthly": 0.38,
+        "rate_yearly": 4.56
     },
     "vai": {
         "2023-11": {
@@ -101970,6 +101850,14 @@
             "percentage_translated": 0.4,
             "ri": 0.26
         },
+        "2025-10": {
+            "num_total": 11,
+            "num_translated": 6,
+            "num_untranslated": 5,
+            "percentage_total": 0.0057,
+            "percentage_translated": 0.54,
+            "ri": 0.6
+        },
         "code": "vi",
         "family": "Austroasiatic",
         "maximum_num_total": [
@@ -101997,11 +101885,11 @@
             0.06
         ],
         "name": "Vietnamese",
-        "num_months": 112,
+        "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/vietnamese",
-        "rate_daily": 0.48,
-        "rate_monthly": 14.3,
-        "rate_yearly": 171.6
+        "rate_daily": 0.46,
+        "rate_monthly": 13.68,
+        "rate_yearly": 164.16
     },
     "vo": {
         "2018-11": {
@@ -102250,8 +102138,8 @@
         "num_months": 4,
         "permalink": "https://www.reddit.com/r/translator/wiki/waray",
         "rate_daily": 0.0,
-        "rate_monthly": 0.04,
-        "rate_yearly": 0.48
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
     },
     "wep": {
         "2022-08": {
@@ -102592,8 +102480,8 @@
         "num_months": 28,
         "permalink": "https://www.reddit.com/r/translator/wiki/wolof",
         "rate_daily": 0.01,
-        "rate_monthly": 0.3,
-        "rate_yearly": 3.6
+        "rate_monthly": 0.28,
+        "rate_yearly": 3.36
     },
     "wuu": {
         "2019-11": {
@@ -102644,6 +102532,14 @@
             "percentage_translated": 0.5,
             "ri": 0.01
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0005,
+            "percentage_translated": 1.0,
+            "ri": 0.05
+        },
         "code": "wuu",
         "family": "Sino-Tibetan",
         "maximum_num_total": [
@@ -102671,11 +102567,11 @@
             0.0
         ],
         "name": "Wu Chinese",
-        "num_months": 6,
+        "num_months": 7,
         "permalink": "https://www.reddit.com/r/translator/wiki/wu_chinese",
         "rate_daily": 0.0,
-        "rate_monthly": 0.06,
-        "rate_yearly": 0.72
+        "rate_monthly": 0.07,
+        "rate_yearly": 0.84
     },
     "wwa": {
         "2018-07": {
@@ -102986,8 +102882,8 @@
         "num_months": 18,
         "permalink": "https://www.reddit.com/r/translator/wiki/xhosa",
         "rate_daily": 0.01,
-        "rate_monthly": 0.18,
-        "rate_yearly": 2.16
+        "rate_monthly": 0.17,
+        "rate_yearly": 2.04
     },
     "xib": {
         "2021-12": {
@@ -103215,6 +103111,64 @@
         "rate_monthly": 0.02,
         "rate_yearly": 0.24
     },
+    "xpu": {
+        "2019-08": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0003,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
+        "2021-01": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0002,
+            "percentage_translated": 0.0,
+            "ri": null
+        },
+        "2022-11": {
+            "num_total": 1,
+            "num_translated": 1,
+            "num_untranslated": 0,
+            "percentage_total": 0.0003,
+            "percentage_translated": 1.0,
+            "ri": null
+        },
+        "code": "xpu",
+        "family": "Afro-Asiatic",
+        "maximum_num_total": [
+            "2019-08",
+            1
+        ],
+        "maximum_percentage_total": [
+            "2019-08",
+            0.0003
+        ],
+        "maximum_percentage_translated": [
+            "2022-11",
+            1.0
+        ],
+        "minimum_num_total": [
+            "2019-08",
+            1
+        ],
+        "minimum_percentage_total": [
+            "2021-01",
+            0.0002
+        ],
+        "minimum_percentage_translated": [
+            "2019-08",
+            0.0
+        ],
+        "name": "Punic",
+        "num_months": 3,
+        "permalink": "https://www.reddit.com/r/translator/wiki/punic",
+        "rate_daily": 0.0,
+        "rate_monthly": 0.03,
+        "rate_yearly": 0.36
+    },
     "xqa": {
         "2023-02": {
             "num_total": 1,
@@ -103298,6 +103252,13 @@
         "rate_daily": 0.0,
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
+    },
+    "xsa": {
+        "code": "xsa",
+        "family": "Afro-Asiatic",
+        "name": "Sabaean",
+        "num_months": 0,
+        "permalink": "https://www.reddit.com/r/translator/wiki/sabaean"
     },
     "xsr": {
         "2021-05": {
@@ -104426,6 +104387,14 @@
             "percentage_translated": 0.5,
             "ri": 29.93
         },
+        "2025-10": {
+            "num_total": 3,
+            "num_translated": 0,
+            "num_untranslated": 3,
+            "percentage_total": 0.0016,
+            "percentage_translated": 0.0,
+            "ri": 23.7
+        },
         "code": "yi",
         "family": "Indo-European",
         "maximum_num_total": [
@@ -104453,11 +104422,11 @@
             0.0
         ],
         "name": "Yiddish",
-        "num_months": 102,
+        "num_months": 103,
         "permalink": "https://www.reddit.com/r/translator/wiki/yiddish",
         "rate_daily": 0.14,
-        "rate_monthly": 4.28,
-        "rate_yearly": 51.36
+        "rate_monthly": 4.09,
+        "rate_yearly": 49.08
     },
     "ykg": {
         "2018-07": {
@@ -105000,6 +104969,14 @@
             "percentage_translated": 0.0,
             "ri": 0.11
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.11
+        },
         "code": "yo",
         "family": "Niger-Congo",
         "maximum_num_total": [
@@ -105027,11 +105004,11 @@
             0.0
         ],
         "name": "Yoruba",
-        "num_months": 57,
+        "num_months": 58,
         "permalink": "https://www.reddit.com/r/translator/wiki/yoruba",
         "rate_daily": 0.03,
-        "rate_monthly": 0.79,
-        "rate_yearly": 9.48
+        "rate_monthly": 0.76,
+        "rate_yearly": 9.12
     },
     "yol": {
         "2021-08": {
@@ -106086,7 +106063,7 @@
             "num_untranslated": 2,
             "percentage_total": 0.0016,
             "percentage_translated": 0.33,
-            "ri": 5.17
+            "ri": 0.17
         },
         "code": "yue",
         "family": "Sino-Tibetan",
@@ -106117,9 +106094,9 @@
         "name": "Cantonese",
         "num_months": 110,
         "permalink": "https://www.reddit.com/r/translator/wiki/cantonese",
-        "rate_daily": 0.19,
-        "rate_monthly": 5.73,
-        "rate_yearly": 68.76
+        "rate_daily": 0.18,
+        "rate_monthly": 5.44,
+        "rate_yearly": 65.28
     },
     "yuf": {
         "2023-05": {
@@ -107232,7 +107209,7 @@
             "num_untranslated": 98,
             "percentage_total": 0.1941,
             "percentage_translated": 0.73,
-            "ri": 0.06
+            "ri": 1.38
         },
         "code": "zh",
         "family": "Sino-Tibetan",
@@ -107263,9 +107240,9 @@
         "name": "Chinese",
         "num_months": 113,
         "permalink": "https://www.reddit.com/r/translator/wiki/chinese",
-        "rate_daily": 16.07,
-        "rate_monthly": 482.14,
-        "rate_yearly": 5785.68
+        "rate_daily": 15.27,
+        "rate_monthly": 458.03,
+        "rate_yearly": 5496.36
     },
     "zkh": {
         "2025-01": {
@@ -107648,6 +107625,14 @@
             "percentage_translated": 0.0,
             "ri": 0.12
         },
+        "2025-10": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0005,
+            "percentage_translated": 0.0,
+            "ri": 0.15
+        },
         "code": "zu",
         "family": "Niger-Congo",
         "maximum_num_total": [
@@ -107675,10 +107660,10 @@
             0.0
         ],
         "name": "Zulu",
-        "num_months": 37,
+        "num_months": 38,
         "permalink": "https://www.reddit.com/r/translator/wiki/zulu",
         "rate_daily": 0.01,
-        "rate_monthly": 0.35,
-        "rate_yearly": 4.2
+        "rate_monthly": 0.34,
+        "rate_yearly": 4.08
     }
 }

@@ -37,7 +37,6 @@ def translation_challenge_poster() -> None:
     submission = REDDIT.subreddit(SETTINGS["subreddit"]).submit(
         title=weekly_title, selftext=weekly_challenge_md, send_replies=False
     )
-    submission.mod.sticky(bottom=False)
 
     logger.info(
         "[WY] translation_challenge_poster: Submitted the weekly challenge to r/translator."
