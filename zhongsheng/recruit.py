@@ -57,7 +57,7 @@ async def recruit(ctx: commands.Context, languages: str) -> None:
         "Copy this subject into the recruitment post:\n\n"
         f"```\n{subject}\n```\n\n"
         "Copy this Markdown into the recruitment post body:\n\n"
-        f"```\n{markdown}```"
+        f"```\n{markdown}\n```"
     )
     if unresolved_items:
         response += "\n\nSkipped unresolved items: " + ", ".join(
@@ -117,6 +117,9 @@ def build_recruitment_markdown(language_matches: list) -> str:
     intro = RESPONSE.POST_RECRUITMENT_POST_INTRO.format(
         target_languages=target_languages
     ).rstrip("\n")
+    greeting = _format_recruitment_greeting(language_matches)
+    if greeting:
+        intro = f"{greeting}!\n\n{intro}"
     rows = [
         "| Language | Estimated request frequency | Notification signup |",
         "|---|---:|---|",
@@ -136,7 +139,7 @@ def build_recruitment_markdown(language_matches: list) -> str:
     rows.extend(
         [
             "",
-            "You can unsubscribe from those messages at any time!",
+            _format_recruitment_thanks(language_matches),
         ]
     )
     return "\n".join([intro, "", *rows])
@@ -165,6 +168,37 @@ def _format_target_languages(language_matches: list, escape: bool = True) -> str
     if len(names) == 2:
         return f"{names[0]} or {names[1]}"
     return f"{', '.join(names[:-1])}, or {names[-1]}"
+
+
+def _format_recruitment_greeting(language_matches: list) -> str:
+    """Return native greetings to lead the recruitment post body, when available."""
+    return _format_native_recruitment_phrase(language_matches, "greetings", "hello")
+
+
+def _format_recruitment_thanks(language_matches: list) -> str:
+    """Return native thanks to close the recruitment post body, when available."""
+    thanks = _format_native_recruitment_phrase(language_matches, "thanks", "thanks")
+    if thanks:
+        return f"{thanks}!"
+    return "Thanks, everyone!"
+
+
+def _format_native_recruitment_phrase(
+    language_matches: list, attribute: str, default_value: str
+) -> str:
+    """Return unique native Lingvo phrases, excluding default placeholder values."""
+    phrases = []
+    seen_phrases = set()
+    for lingvo in language_matches:
+        phrase = getattr(lingvo, attribute, "").strip().rstrip("!.?")
+        if not phrase or phrase.lower() == default_value:
+            continue
+        if phrase in seen_phrases:
+            continue
+        phrases.append(phrase)
+        seen_phrases.add(phrase)
+
+    return " ".join(phrases)
 
 
 def _subscription_link(lingvo: Lingvo) -> str:
