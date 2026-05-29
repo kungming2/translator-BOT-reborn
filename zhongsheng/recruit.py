@@ -51,8 +51,14 @@ async def recruit(ctx: commands.Context, languages: str) -> None:
         len(language_matches),
     )
 
+    subject = build_recruitment_subject(language_matches)
     markdown = build_recruitment_markdown(language_matches)
-    response = f"Copy this Markdown into the recruitment post:\n\n```\n{markdown}```"
+    response = (
+        "Copy this subject into the recruitment post:\n\n"
+        f"```\n{subject}\n```\n\n"
+        "Copy this Markdown into the recruitment post body:\n\n"
+        f"```\n{markdown}```"
+    )
     if unresolved_items:
         response += "\n\nSkipped unresolved items: " + ", ".join(
             f"`{item}`" for item in unresolved_items
@@ -136,10 +142,20 @@ def build_recruitment_markdown(language_matches: list) -> str:
     return "\n".join([intro, "", *rows])
 
 
-def _format_target_languages(language_matches: list) -> str:
+def build_recruitment_subject(language_matches: list) -> str:
+    """Build a copyable Reddit post subject for a recruitment post."""
+    target_languages = _format_target_languages(language_matches, escape=False)
+    return RESPONSE.POST_RECRUITMENT_POST_SUBJECT.format(
+        target_languages=target_languages
+    )
+
+
+def _format_target_languages(language_matches: list, escape: bool = True) -> str:
     """Return language names for the recruitment intro sentence."""
     names = [
         _escape_markdown_inline(lingvo.name or lingvo.preferred_code)
+        if escape
+        else lingvo.name or lingvo.preferred_code
         for lingvo in language_matches
     ]
     if not names:
