@@ -318,3 +318,51 @@ def update_statistics_index_page(month_year: str) -> bool:
     except Exception as e:
         logger.error(f"Error updating statistics index page: {e}")
         return False
+
+
+def update_overall_statistics_page(lumo: Lumo, month_year: str) -> bool:
+    """
+    Append the monthly totals row to /wiki/overall_statistics.
+
+    :param lumo: Lumo instance with loaded data.
+    :param month_year: The month and year in YYYY-MM format (e.g., "2025-05").
+    :return: True if the page already had the row or was updated, False otherwise.
+    """
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
+    year, month = month_year.split("-")
+    wiki_page_name = month_year.replace("-", "_")
+    overall = lumo.get_overall_stats()
+
+    year_link = f"[{year}](https://www.reddit.com/r/translator/wiki/{wiki_page_name})"
+    month_year_chunk = f"{year_link} | {month} | "
+    overall_statistics_line = (
+        f"{month_year_chunk}"
+        f"{overall['untranslated']} | "
+        f"{overall['needs_review']} | "
+        f"{overall['translated']} | --- | "
+        f"**{overall['total_requests']}** | "
+        f"**{overall['translation_percentage']}%**"
+    )
+
+    try:
+        overall_statistics_page = r.wiki["overall_statistics"]
+        overall_content = str(overall_statistics_page.content_md)
+
+        if wiki_page_name in overall_content or month_year_chunk in overall_content:
+            logger.info(
+                f"Overall statistics page already contains entry for {month_year}"
+            )
+            return True
+
+        line_separator = "" if overall_content.endswith("\n") else "\n"
+        overall_statistics_page.edit(
+            content=overall_content + line_separator + overall_statistics_line,
+            reason=(
+                f"Updating the overall statistics page with data from {wiki_page_name}."
+            ),
+        )
+        logger.info(f"Updated overall statistics page with {month_year}")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating overall statistics page: {e}")
+        return False

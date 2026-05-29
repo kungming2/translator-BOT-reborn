@@ -36,6 +36,7 @@ from wenyuan.update_wiki_stats import (
     calculate_ri,
     update_language_wiki_pages,
     update_monthly_wiki_page,
+    update_overall_statistics_page,
     update_statistics_index_page,
 )
 from ziwen_lookup.reference import get_language_reference
@@ -987,7 +988,7 @@ def post_monthly_statistics(month_year: str) -> None:
     1. Creates the monthly wiki page (e.g., /wiki/2025_05)
     2. Posts a text submission to the subreddit
     3. Updates individual language wiki pages
-    4. Updates the statistics index page
+    4. Updates the statistics index and overall statistics pages
     5. Adds a points summary comment
 
     Args:
@@ -1100,8 +1101,9 @@ def post_monthly_statistics(month_year: str) -> None:
     msg.info("[3/5] Updating individual language wiki pages...")
     update_language_wiki_pages(lumo, month_year)
 
-    msg.info("[4/5] Updating statistics index page...")
+    msg.info("[4/5] Updating statistics index and overall statistics pages...")
     update_statistics_index_page(month_year)
+    update_overall_statistics_page(lumo, month_year)
 
     # Step 5: Add points summary comment.
     if okay_to_post and monthly_post:
