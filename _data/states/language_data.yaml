@@ -1778,6 +1778,18 @@ cbw:
   - Cabalianon
   - Kinabalianon
   population: 14000
+ccc:
+  country: Peru
+  family: Maipurean
+  language_code_3: ccc
+  link_ethnologue: https://www.ethnologue.com/language/ccc
+  link_wikipedia: https://en.wikipedia.org/wiki/Chamicuro_language
+  name: Chamicuro
+  name_alternates:
+  - Chamekolo
+  - Chamicolo
+  - Chamicura
+  population: 201
 cdj:
   country: India
   family: Indo-European
@@ -2032,8 +2044,6 @@ cnr:
   link_ethnologue: https://www.ethnologue.com/language/cnr
   link_wikipedia: https://en.wikipedia.org/wiki/Montenegrin_language
   name: Montenegrin
-  name_alternates:
-  - Serbo-Croatian
   population: 266130
 co:
   country: France
@@ -2613,6 +2623,22 @@ elu:
   link_wikipedia: https://en.wikipedia.org/wiki/Elu_language_(Papua_New_Guinea)
   name: Elu
   population: 600
+emb:
+  country: Indonesia
+  family: Austronesian
+  language_code_3: emb
+  link_ethnologue: https://www.ethnologue.com/language/emb
+  link_wikipedia: https://en.wikipedia.org/wiki/Embaloh_language
+  name: Embaloh
+  name_alternates:
+  - Maloh
+  - Matoh
+  - Mbaloh
+  - Memaloh
+  - Palin
+  - Sangau
+  - Sanggau
+  population: 10000
 emk:
   country: Guinea
   family: Niger-Congo
@@ -2741,6 +2767,17 @@ es:
   subreddit: spanish
   supported: true
   thanks: Gracias
+eso:
+  country: Estonia
+  family: Sign language
+  language_code_3: eso
+  link_ethnologue: https://www.ethnologue.com/language/eso
+  link_wikipedia: https://en.wikipedia.org/wiki/Estonian_Sign_Language
+  name: Estonian Sign Language
+  name_alternates:
+  - Eesti viipekeel
+  - Viipekeel
+  population: 20000
 et:
   countries_default: EE
   country: Estonia
@@ -3518,6 +3555,7 @@ gom:
   - Gomataki
   - Konkani
   - Southern Kanara
+  - Nawayathi
   population: 3693900
 got:
   family: Indo-European
@@ -6639,6 +6677,16 @@ msb:
   - Masbateño
   - Minasbate
   population: 724000
+msl:
+  country: Indonesia
+  family: Unclassified
+  language_code_3: msl
+  link_ethnologue: https://www.ethnologue.com/language/msl
+  link_wikipedia: https://en.wikipedia.org/wiki/Molof_language
+  name: Molof
+  name_alternates:
+  - Poule
+  population: 230
 msy:
   country: Papua New Guinea
   family: Ramu-Lower Sepik
@@ -8141,6 +8189,19 @@ pt:
   subreddit: portuguese
   supported: true
   thanks: Obrigado
+pto:
+  country: Brazil
+  family: Tupian
+  language_code_3: pto
+  link_ethnologue: https://www.ethnologue.com/language/pto
+  link_wikipedia: https://en.wikipedia.org/wiki/Zo%CA%BC%C3%A9_language
+  name: Zo'e
+  name_alternates:
+  - Poturu
+  - Poturujara
+  - Puturú
+  - Tupí of Cuminapanema
+  population: 201
 ptr:
   country: Vanuatu
   family: Austronesian
@@ -9156,6 +9217,16 @@ sma:
   name_alternates:
   - Southern Lapp
   population: 600
+smg:
+  country: Papua New Guinea
+  family: Baining
+  language_code_3: smg
+  link_ethnologue: https://www.ethnologue.com/language/smg
+  link_wikipedia: https://en.wikipedia.org/wiki/Simbali_language
+  name: Simbali
+  name_alternates:
+  - Asimbali
+  population: 450
 smj:
   country: Sweden
   family: Uralic
@@ -9346,7 +9417,6 @@ sr:
   link_wikipedia: https://en.wikipedia.org/wiki/Serbian_language
   name: Serbian
   name_alternates:
-  - Montenegrin
   - Serbo-Croatian
   - Yugoslavian
   - Serb
@@ -9715,14 +9785,6 @@ ta:
   subreddit: tamil
   supported: true
   thanks: நன்றி
-tah:
-  country: French Polynesia
-  family: Austronesian
-  language_code_3: tah
-  link_ethnologue: https://www.ethnologue.com/language/tah
-  link_wikipedia: https://en.wikipedia.org/wiki/Tahitian_language
-  name: Tahitian
-  population: 68000
 taq:
   country: Mali
   family: Afro-Asiatic
@@ -10248,6 +10310,18 @@ tok:
   link_wikipedia: https://en.wikipedia.org/wiki/Toki_Pona
   name: Toki Pona
   population: 500
+top:
+  country: Mexico
+  family: Totonacan
+  language_code_3: top
+  link_ethnologue: https://www.ethnologue.com/language/top
+  link_wikipedia: https://en.wikipedia.org/wiki/Papantla_Totonac
+  name: Papantla Totonac
+  name_alternates:
+  - Lowland Totonaca
+  - Totonaco
+  - Totonaco de Papantla
+  population: 202000
 tpi:
   country: Papua New Guinea
   family: Creole
@@ -11006,6 +11080,17 @@ win:
   - Hocák
   - Winnebago
   population: 1650
+wja:
+  country: Nigeria
+  family: Niger-Congo
+  language_code_3: wja
+  link_ethnologue: https://www.ethnologue.com/language/wja
+  link_wikipedia: https://en.wikipedia.org/wiki/Waja_language
+  name: Waja
+  name_alternates:
+  - Nyan Wiyau
+  - Wiyaa
+  population: 60000
 wji:
   country: Nigeria
   family: Afro-Asiatic

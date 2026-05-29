@@ -91982,7 +91982,7 @@
         "rate_monthly": 1.88,
         "rate_yearly": 22.56
     },
-    "tah": {
+    "ty": {
         "2020-04": {
             "num_total": 1,
             "num_translated": 0,
@@ -92015,7 +92015,7 @@
             "percentage_translated": 0.0,
             "ri": 58.98
         },
-        "code": "tah",
+        "code": "ty",
         "family": "Austronesian",
         "maximum_num_total": [
             "2020-04",
