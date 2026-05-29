@@ -466,6 +466,11 @@ def _resolve_to_lingvo(
         logger.debug(f"Skipping {input_text} as it's too short.")
         return None
 
+    if input_lower in lingvos:
+        return _copy_lingvo_for_return(
+            lingvos[input_lower], preserve_country=preserve_country
+        )
+
     # Specific mode: strict lookups only
     if specific_mode:
         if len(input_text) == 2:
