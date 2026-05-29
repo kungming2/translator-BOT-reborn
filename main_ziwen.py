@@ -96,11 +96,10 @@ if __name__ == "__main__":
         error_log_extended(traceback.format_exc(), "Ziwen Main")
 
     else:
-        elapsed_time = (time.time() - start_time) / 60
+        elapsed_time = round(((time.time() - start_time) / 60), 2)
         run_time = time_convert_to_string(start_time)
         run_pid = os.getpid()
 
-        # run_information fields: run_time, label, used_calls, mem_usage, elapsed_time, pid
         run_information = (
             run_time,
             "Cycle run",
@@ -110,6 +109,6 @@ if __name__ == "__main__":
             run_pid,
         )
         record_activity_csv("cycle", run_information)
-        logger.info(f"Run {elapsed_time:.2f} minutes.")
+        logger.info(f"Run {elapsed_time} minutes.")
 
         _alert_slow_run(elapsed_time, run_time, used_calls, mem_usage, run_pid)
