@@ -282,6 +282,8 @@ IMAGE_DESCRIPTION_QUERY: >
 
 # COMMANDS - zhongsheng/recruit.py
 
+POST_RECRUITMENT_POST_SUBJECT: Please help us translate {target_languages} requests on Reddit!
+
 POST_RECRUITMENT_POST_INTRO: |
   We're mods over at r/translator. We always strive to make our multilingual community *the* universal place on Reddit to go for a translation, no matter what language people may be looking for. We are however somewhat lacking in the language(s) below, and were hoping some wonderful multilingual people here could help us out.
 
