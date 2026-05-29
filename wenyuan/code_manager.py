@@ -162,7 +162,7 @@ def update_entry() -> None:
         "Enter updated ISO 639-1 code (blank to keep current, '-' to clear): "
     )
     new_alternate_names = input(
-        "Enter updated Alternate Names (blank to keep current, '-' to clear): "
+        "Enter updated Alternate Names (semicolon-separated, blank to keep current, '-' to clear): "
     ).strip()
 
     updates: dict[str, str] = {}
