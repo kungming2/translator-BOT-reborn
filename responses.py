@@ -55,6 +55,7 @@ class ResponseLoader:
         self._data: dict[str, Any] = (
             self._load_yaml(self._yaml_path) if _data is None else dict(_data)
         )
+        self._resolve_derived_templates(self._data)
         self._validate_response_keys(self._data)
         self.responses: SimpleNamespace = SimpleNamespace(**self._data)
 
@@ -110,6 +111,23 @@ class ResponseLoader:
                 "Invalid response key(s) for attribute access: "
                 f"{preview}{suffix}. Keys must be valid Python identifiers."
             )
+
+    @staticmethod
+    def _resolve_derived_templates(data: dict[str, Any]) -> None:
+        """Resolve response-local placeholders that should stay canonical in YAML."""
+        unsubscribe_link = data.get("MSG_UNSUBSCRIBE_LINK")
+        notifications_footer = data.get("MSG_NOTIFICATIONS_FOOTER")
+        if not isinstance(unsubscribe_link, str) or not isinstance(
+            notifications_footer, str
+        ):
+            return
+
+        data["MSG_UNSUBSCRIBE_LINK_ALL"] = unsubscribe_link.replace(
+            "{language_name}", "ALL"
+        )
+        data["MSG_NOTIFICATIONS_FOOTER"] = notifications_footer.replace(
+            "{MSG_UNSUBSCRIBE_LINK_ALL}", data["MSG_UNSUBSCRIBE_LINK_ALL"]
+        )
 
     def __getattr__(self, item: str) -> Any:
         try:

@@ -133,7 +133,7 @@ def build_recruitment_markdown(language_matches: list) -> str:
         link = _subscription_link(lingvo)
         rows.append(
             f"| {language_name} | {frequency} | "
-            f"[Get {language_name} translation notifications]({link}) |"
+            f"➡️ **[Get {language_name} translation notifications]({link})** |"
         )
 
     rows.extend(
