@@ -42,6 +42,27 @@ def _contains_any_phrase(text: str, phrases: list[str]) -> bool:
     return any(_contains_phrase(text, phrase) for phrase in phrases)
 
 
+def _should_tabulate_points(
+    has_command: bool,
+    comment_body: str,
+    author_name: str,
+    original_post_author_name: str,
+    thanks_keywords: list[str],
+) -> bool:
+    """Return True for comments that can produce point records."""
+    if has_command:
+        return True
+
+    if author_name != original_post_author_name and len(comment_body.strip()) > 120:
+        return True
+
+    return (
+        author_name == original_post_author_name
+        and len(comment_body.strip()) < 20
+        and _contains_any_phrase(comment_body, thanks_keywords)
+    )
+
+
 # ─── Internal helpers ─────────────────────────────────────────────────────────
 
 
@@ -235,7 +256,8 @@ def ziwen_commands() -> None:
             # ── Command dispatch ───────────────────────────────────────────────
 
             instruo = None
-            if comment_has_command(comment_body):
+            has_command = comment_has_command(comment_body)
+            if has_command:
                 parent_languages = [original_ajo.lingvo] if original_ajo else []
                 instruo = Instruo.from_comment(
                     comment, parent_languages=parent_languages
@@ -279,15 +301,6 @@ def ziwen_commands() -> None:
 
                 user_statistics_writer(instruo)
                 logger.debug("Recorded user commands in database.")
-
-                if (
-                    not diskuto_exists(original_post.id)
-                    and original_ajo
-                    and original_ajo.lingvo
-                ):
-                    points_tabulator(
-                        comment, original_post, original_ajo.lingvo, original_ajo
-                    )
             else:
                 # Non-command comment on the verified thread — skip silently.
                 if original_post.id == VERIFIED_POST_ID:
@@ -307,6 +320,25 @@ def ziwen_commands() -> None:
             # Process THANKS keywords from original posters.
             if original_ajo and _contains_any_phrase(comment_body, thanks_keywords):
                 _mark_short_thanks_as_translated(comment, original_ajo)
+
+            original_post_author_name = (
+                original_post.author.name if original_post.author else "[deleted]"
+            )
+            if (
+                original_ajo
+                and original_ajo.lingvo
+                and not diskuto_exists(original_post.id)
+                and _should_tabulate_points(
+                    has_command,
+                    comment_body,
+                    author_name,
+                    original_post_author_name,
+                    thanks_keywords,
+                )
+            ):
+                points_tabulator(
+                    comment, original_post, original_ajo.lingvo, original_ajo
+                )
 
             # Check if there was a 'set' command in this comment.
             moderator_set = False

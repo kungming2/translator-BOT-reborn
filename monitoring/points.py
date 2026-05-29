@@ -130,6 +130,29 @@ def points_post_retriever(post_id: str) -> list[tuple[str, str, int]] | None:
     return results
 
 
+def _replace_comment_point_records(
+    comment_id: str, point_records: list[list], post_id: str
+) -> None:
+    """Replace all point records produced by one processed Reddit comment."""
+    cursor = db.cursor_main
+    conn = db.conn_main
+    month_string = get_current_month()
+
+    cursor.execute("DELETE FROM total_points WHERE comment_id = ?", (comment_id,))
+
+    logger.info(
+        f"Writing {len(point_records)} point record(s) to DB for comment `{comment_id}`"
+    )
+    for username, user_points in point_records:
+        logger.debug(f"Writing: ({username} with {user_points} points)")
+        cursor.execute(
+            "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
+            (month_string, comment_id, username, str(user_points), post_id),
+        )
+
+    conn.commit()
+
+
 # ─── Points calculation ───────────────────────────────────────────────────────
 
 
@@ -275,9 +298,6 @@ def points_tabulator(
         return
 
     cursor_main = db.cursor_main
-    conn_main = db.conn_main
-
-    month_string = get_current_month()
 
     instruo = Instruo.from_comment(comment, [original_post_lingvo])
     if original_post and original_post.author:
@@ -535,16 +555,7 @@ def points_tabulator(
             f"Recorded {len(translators_to_record)} translator(s) to Ajo: {', '.join(translators_to_record)}"
         )
 
-    logger.info(
-        f"Writing {len(results)} point record(s) to DB for comment `{comment.id}`"
-    )
-    for username, user_points in results:
-        logger.debug(f"Writing: ({username} with {user_points} points)")
-        cursor_main.execute(
-            "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
-            (month_string, comment_id, username, str(user_points), original_post.id),
-        )
-    conn_main.commit()
+    _replace_comment_point_records(comment_id, results, original_post.id)
     logger.info(f"Points tabulation complete for comment `{comment.id}`")
 
     return
