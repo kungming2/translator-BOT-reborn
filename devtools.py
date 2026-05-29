@@ -47,7 +47,11 @@ from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
-from zhongsheng.recruit import build_recruitment_markdown, resolve_recruit_languages
+from zhongsheng.recruit import (
+    build_recruitment_markdown,
+    build_recruitment_subject,
+    resolve_recruit_languages,
+)
 from ziwen_lookup.cache_helpers import get_cjk_cache_top_entries
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
@@ -856,8 +860,11 @@ def check_wenju_recruitment_markdown() -> None:
         )
         return
 
+    subject = build_recruitment_subject(language_matches)
     markdown = build_recruitment_markdown(language_matches)
-    msg.good("Copy this Markdown into the recruitment post:")
+    msg.good("Copy this subject into the recruitment post:")
+    _console.print(subject, highlight=False)
+    msg.good("Copy this Markdown into the recruitment post body:")
     _console.print(markdown, highlight=False)
 
     if unresolved_items:
