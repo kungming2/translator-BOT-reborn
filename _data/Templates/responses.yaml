@@ -443,6 +443,46 @@ SNIPPET_LOOKUP_TRUNCATED: >
 
 COMMENT_SEARCH_RESULTS_HEADER: '## Search results on r/translator for "{search_query}":'
 
+# COMMANDS - ziwen_commands/calendar.py
+
+COMMENT_CALENDAR_USAGE: |
+  Usage: `!calendar:<calendar>:<year/cycle>:<month>:<day>`
+  For a Chinese sexagenary year only: `!calendar:<cycle-year>`
+
+  Supported calendars: `hebrew`, `islamic`, `persian`, and `chinese`.
+  For Hebrew, Islamic, and Persian dates, use the calendar year. For Chinese dates, use a sexagenary cycle year.
+
+  Examples:
+
+  * `!calendar:hebrew:5784:Tishrei:1`
+  * `!calendar:islamic:1445:Rajab:10`
+  * `!calendar:persian:1403:Bahman:22`
+  * `!calendar:chinese:guimao:4:13`
+  * `!calendar:乙巳`
+
+  [](#comment_calendar_usage)
+
+COMMENT_CALENDAR_INVALID: |
+  I could not convert that calendar date.
+
+  `{error}`
+
+  [](#comment_calendar_invalid)
+
+COMMENT_CALENDAR_RESULT: |
+  Calendar conversion for `{query}`:
+
+  {gregorian_dates}
+
+  [](#comment_calendar_result)
+
+COMMENT_CALENDAR_YEAR_RESULT: |
+  Recent Gregorian years matching `{query}`:
+
+  {gregorian_years}
+
+  [](#comment_calendar_year_result)
+
 # COMMANDS - ziwen_commands/transform.py
 
 COMMENT_TRANSFORM_NO_DATA: |

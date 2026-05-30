@@ -27,6 +27,7 @@ bot_shortform_tags:
 
 # These are commands that accept arguments (including language tags).
 commands_with_args:
+  - "!calendar:"  # Does not accept language tags.
   - "!id:"
   - "!identify:"
   - "!page:"
@@ -37,6 +38,7 @@ commands_with_args:
 # These commands accept arguments, but these arguments are not
 # language tags. This is a subset of commands_with_args.
 commands_skip_conversion:
+  - "!calendar:"  # Does not accept language terms.
   - "!search:"  # Does not accept language tags.
   - "!transform:"  # Does not accept language terms.
 
