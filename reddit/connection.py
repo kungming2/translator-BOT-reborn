@@ -244,7 +244,7 @@ def is_internal_post(submission: "praw.models.Submission") -> bool:
 
 
 def create_mod_note(
-    label: str,
+    label: str | None,
     username: str,
     included_note: str,
 ) -> bool:

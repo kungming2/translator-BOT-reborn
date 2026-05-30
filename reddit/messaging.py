@@ -26,7 +26,7 @@ from monitoring.usage_statistics import (
     generate_language_frequency_markdown,
     user_statistics_loader,
 )
-from reddit.connection import REDDIT, USERNAME
+from reddit.connection import REDDIT, USERNAME, create_mod_note
 from reddit.notifications import (
     notifier_language_list_editor,
     notifier_language_list_retriever,
@@ -182,7 +182,15 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
         + RESPONSE.BOT_DISCLAIMER
         + RESPONSE.MSG_NOTIFICATIONS_FOOTER,
     )
-    logger.info(f"Added notification subscriptions for u/{message_author}.")
+
+    # Add a mod note for the user.
+    all_names = lingvo_names_formatted + internal_names_formatted
+    note_text = f"Subscribed to {', '.join(all_names)} notifications"
+    create_mod_note(None, message_author, note_text)
+
+    logger.info(
+        f"Added notification subscriptions for u/{message_author}: {', '.join(all_names)}."
+    )
     action_counter(len(language_matches) + len(internal_matches), "Subscriptions")
 
 
@@ -237,6 +245,7 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
     final_match_names.extend(
         f"{post_type.capitalize()} posts" for post_type in internal_matches
     )
+    final_names_str = ", ".join(final_match_names)
 
     bullet_list = "\n* ".join(final_match_names)
 
@@ -248,7 +257,12 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
         + RESPONSE.BOT_DISCLAIMER
         + RESPONSE.MSG_NOTIFICATIONS_FOOTER,
     )
-    logger.info(f"Removed notification subscriptions for u/{message_author}.")
+
+    note_text = f"Unsubscribed from {final_names_str} notifications"
+    create_mod_note(None, message_author, note_text)
+    logger.info(
+        f"Removed notification subscriptions for u/{message_author}: {final_names_str}."
+    )
     action_counter(len(language_matches) + len(internal_matches), "Unsubscriptions")
 
 
