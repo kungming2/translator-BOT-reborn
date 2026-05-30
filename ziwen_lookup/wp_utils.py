@@ -12,12 +12,29 @@ import re
 
 import requests
 import wikipedia
+import wikipedia.wikipedia as wikipedia_client
 
 from config import logger as _base_logger
 from lang.languages import converter
 from ziwen_lookup.osm import search_nominatim
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:WP"})
+
+WIKIPEDIA_USER_AGENT = (
+    "translator-BOT-reborn "
+    "(https://github.com/kungming2/translator-BOT-reborn; "
+    "https://github.com/kungming2/) wikipedia/1.4.0"
+)
+
+wikipedia.set_user_agent(WIKIPEDIA_USER_AGENT)
+
+
+def _set_wikipedia_language(language_code: str) -> None:
+    """Set the Wikipedia client language while keeping Wikimedia-safe defaults."""
+    wikipedia.set_lang(language_code)
+    wikipedia_client.API_URL = wikipedia_client.API_URL.replace(
+        "http://", "https://", 1
+    )
 
 
 # ─── Location helpers ─────────────────────────────────────────────────────────
@@ -85,6 +102,7 @@ def wikipedia_page_url(
     caller needs a rendered summary for Reddit output.
     """
     try:
+        _set_wikipedia_language("en")
         page = wikipedia.page(
             title=title,
             auto_suggest=auto_suggest,
@@ -122,9 +140,9 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
     if language_code != "en":
         lingvo = converter(language_code)
         lang_code: str = lingvo.preferred_code if lingvo is not None else language_code
-        wikipedia.set_lang(lang_code)
     else:
         lang_code = "en"
+    _set_wikipedia_language(lang_code)
     logger.info(f"Looking up term {terms} on the `{language_code}` Wikipedia.")
 
     try:
@@ -185,7 +203,7 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
             entries.append(entry_text)
             logger.info(f">> Information for '{term}' retrieved.")
     finally:
-        wikipedia.set_lang("en")  # Always reset to English after lookup
+        _set_wikipedia_language("en")  # Always reset to English after lookup
 
     if entries:
         body_text: str = "\n".join(entries)
