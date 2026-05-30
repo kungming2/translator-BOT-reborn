@@ -375,6 +375,23 @@ def _apply_country(base: Lingvo, cc: str, country_name: str) -> Lingvo:
     return lingvo_with_country
 
 
+def _is_exact_language_identifier(text: str) -> bool:
+    """Return True if text is already an exact language name or alternate."""
+    text_lower = text.strip().lower()
+    if not text_lower:
+        return False
+
+    lingvos = get_lingvos()
+    text_norm = normalize(text)
+    for lingvo in lingvos.values():
+        if lingvo.name and text_norm == normalize(lingvo.name):
+            return True
+        if any(text_norm == normalize(alt) for alt in (lingvo.name_alternates or [])):
+            return True
+
+    return False
+
+
 def _lookup_lingvo_by_standard_code(
     input_text: str, preserve_country: bool = False
 ) -> Lingvo | None:
@@ -621,6 +638,8 @@ def _resolve_to_lingvo(
     if len(words) >= 2:
         for i, word in enumerate(words):
             bare_word = re.sub(r"\W", "", word)  # strip stray punctuation like parens
+            if _is_exact_language_identifier(bare_word):
+                continue
             country_info = country_converter(bare_word, abbreviations_okay=False)
             if country_info[0]:
                 remaining = " ".join(w for j, w in enumerate(words) if j != i)
