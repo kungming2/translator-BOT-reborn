@@ -451,6 +451,7 @@ COMMENT_CALENDAR_USAGE: |
 
   Supported calendars: `hebrew`, `islamic`, `persian`, and `chinese`.
   For Hebrew, Islamic, and Persian dates, use the calendar year. For Chinese dates, use a sexagenary cycle year.
+  Latin-character input is supported for all calendars. Chinese cycle years also accept Chinese characters for the cycle year.
 
   Examples:
 
@@ -464,8 +465,7 @@ COMMENT_CALENDAR_USAGE: |
 
 COMMENT_CALENDAR_INVALID: |
   I could not convert that calendar date.
-
-  `{error}`
+  Please check the calendar name and date format, then try again.
 
   [](#comment_calendar_invalid)
 

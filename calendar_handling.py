@@ -238,6 +238,14 @@ def persian_to_gregorian(year: int, month: int | str, day: int | str) -> date:
     return _dated_calendar_to_gregorian("persian", year, month, day)
 
 
+def _parse_calendar_payload(payload: str) -> tuple[str, str, str, str]:
+    parts = [part.strip() for part in payload.split(":", 3)]
+    if len(parts) != 4 or any(not part for part in parts):
+        raise ValueError(f"Invalid calendar payload: {payload}")
+
+    return parts[0], parts[1], parts[2], parts[3]
+
+
 def calendar_to_gregorian(
     calendar_type: str,
     year_or_cycle: int | str,
@@ -274,6 +282,14 @@ def calendar_to_gregorian(
 
 
 convert_calendar_to_gregorian = calendar_to_gregorian
+
+
+def convert_calendar_payload(payload: str) -> date | list[date] | list[int]:
+    if ":" not in payload:
+        return recent_sexagenary_years(payload)
+
+    calendar_type, year_or_cycle, month, day = _parse_calendar_payload(payload)
+    return calendar_to_gregorian(calendar_type, year_or_cycle, month, day)
 
 
 def normalize_sexagenary_year(name: str) -> str:

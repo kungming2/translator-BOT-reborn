@@ -10,6 +10,7 @@ import asyncio
 import logging
 import re
 from collections.abc import Callable
+from datetime import date
 from pprint import pprint
 from time import perf_counter, time
 
@@ -474,6 +475,31 @@ def check_database_initialize() -> None:
 
 
 # ─── utility ──────────────────────────────────────────────────────────────────
+
+
+def _format_calendar_result_for_devtools(result: date | list[date] | list[int]) -> str:
+    if isinstance(result, date):
+        return result.isoformat()
+    if all(isinstance(item, int) for item in result):
+        return ", ".join(str(year) for year in result)
+    return ", ".join(gregorian_date.isoformat() for gregorian_date in result)
+
+
+def check_utility_calendar() -> None:
+    """Convert a supported calendar payload to Gregorian dates or years."""
+    calendar_input = _prompt_text(
+        "Enter calendar payload, e.g. 乙巳 or islamic:1445:Rajab:10 (x to back out): ",
+        allow_exit=True,
+    )
+    if calendar_input is None:
+        return
+
+    from calendar_handling import convert_calendar_payload
+
+    with msg.loading(f"Converting '{calendar_input}'..."):
+        result = convert_calendar_payload(calendar_input)
+
+    msg.good(_format_calendar_result_for_devtools(result))
 
 
 def check_utility_youtube() -> None:
@@ -1014,8 +1040,9 @@ SECTIONS: SectionMap = {
     "11": (
         "utility",
         {
-            "1": ("is valid image URL", check_utility_is_valid_image_url),
-            "2": ("youtube length", check_utility_youtube),
+            "1": ("calendar conversion", check_utility_calendar),
+            "2": ("is valid image URL", check_utility_is_valid_image_url),
+            "3": ("youtube length", check_utility_youtube),
         },
     ),
     "12": (

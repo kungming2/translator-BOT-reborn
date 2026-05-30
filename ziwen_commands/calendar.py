@@ -24,14 +24,6 @@ from responses import RESPONSE
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CALENDAR"})
 
 
-def _parse_calendar_payload(payload: str) -> tuple[str, str, str, str]:
-    parts = [part.strip() for part in payload.split(":", 3)]
-    if len(parts) != 4 or any(not part for part in parts):
-        raise ValueError(f"Invalid calendar payload: {payload}")
-
-    return parts[0], parts[1], parts[2], parts[3]
-
-
 def _format_gregorian_dates(result: date | list[date]) -> str:
     if isinstance(result, date):
         return f"* `{result.isoformat()}`"
@@ -58,16 +50,9 @@ def _format_cycle_year_result(payload: str, years: list[int]) -> str:
 
 
 def convert_calendar_payload(payload: str) -> date | list[date] | list[int]:
-    if ":" not in payload:
-        from calendar_handling import recent_sexagenary_years
+    from calendar_handling import convert_calendar_payload as convert_payload
 
-        return recent_sexagenary_years(payload)
-
-    calendar_type, year_or_cycle, month, day = _parse_calendar_payload(payload)
-
-    from calendar_handling import calendar_to_gregorian
-
-    return calendar_to_gregorian(calendar_type, year_or_cycle, month, day)
+    return convert_payload(payload)
 
 
 def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> None:
@@ -95,7 +80,7 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, _ajo: Ajo) -> 
             logger.info(f"Invalid !calendar payload {payload!r}: {exc}")
             reddit_reply(
                 comment,
-                RESPONSE.COMMENT_CALENDAR_INVALID.format(error=str(exc))
+                RESPONSE.COMMENT_CALENDAR_INVALID
                 + "\n\n"
                 + RESPONSE.COMMENT_CALENDAR_USAGE
                 + RESPONSE.BOT_DISCLAIMER,
