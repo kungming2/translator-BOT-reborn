@@ -46,6 +46,7 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
+from wenju.status_report import language_of_the_day
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from zhongsheng.recruit import (
     build_recruitment_markdown,
@@ -841,6 +842,30 @@ def check_wenju_fetch_iso_reports() -> None:
     msg.good("ISO report fetch complete.")
 
 
+def check_wenju_language_of_the_day(selected_language: str | None = None) -> None:
+    """status_report: Trigger the language-of-the-day widget update."""
+    with msg.loading("Running language of the day..."):
+        lotd_markdown = language_of_the_day(selected_language)
+
+    if lotd_markdown:
+        msg.good("Language of the day update complete.")
+        _console.print(Markdown(lotd_markdown), style="sandy_brown", justify="left")
+    else:
+        msg.warn("Language of the day did not produce an update.")
+
+
+def prepare_wenju_language_of_the_day() -> CheckFunction | None:
+    """Prompt for an optional LOTD language before starting the elapsed timer."""
+    selected_language = _prompt_text(
+        "Enter a language code/name, leave blank for random, or x to back out: ",
+        allow_exit=True,
+        allow_blank=True,
+    )
+    if selected_language is None:
+        return None
+    return lambda: check_wenju_language_of_the_day(selected_language or None)
+
+
 def check_wenju_recruitment_markdown() -> None:
     """recruit: Generate copyable recruitment-post notification rows."""
     language_text = _prompt_text(
@@ -998,6 +1023,10 @@ SECTIONS: SectionMap = {
         {
             "1": ("iso_updates: fetch reports", check_wenju_fetch_iso_reports),
             "2": (
+                "language of the day: update widget",
+                _timed_check(prepare_wenju_language_of_the_day),
+            ),
+            "3": (
                 "recruit: generate recruitment-post Markdown",
                 check_wenju_recruitment_markdown,
             ),
