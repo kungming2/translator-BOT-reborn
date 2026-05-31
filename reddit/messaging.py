@@ -186,7 +186,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     # Add a mod note for the user.
     all_names = lingvo_names_formatted + internal_names_formatted
     note_text = f"Subscribed to {', '.join(all_names)} notifications"
-    create_mod_note(None, message_author, note_text)
+    create_mod_note(None, str(message_author), note_text)
 
     logger.info(
         f"Added notification subscriptions for u/{message_author}: {', '.join(all_names)}."
@@ -259,7 +259,7 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
     )
 
     note_text = f"Unsubscribed from {final_names_str} notifications"
-    create_mod_note(None, message_author, note_text)
+    create_mod_note(None, str(message_author), note_text)
     logger.info(
         f"Removed notification subscriptions for u/{message_author}: {final_names_str}."
     )
