@@ -121,8 +121,8 @@ def build_recruitment_markdown(language_matches: list) -> str:
     if greeting:
         intro = f"{greeting}!\n\n{intro}"
     rows = [
-        "| Language | Estimated request frequency | Notification signup |",
-        "|---|---:|---|",
+        "| Language | Notification signup | Estimated request frequency |",
+        "|---|---|---:|",
     ]
 
     for lingvo in language_matches:
@@ -132,8 +132,9 @@ def build_recruitment_markdown(language_matches: list) -> str:
         frequency = _format_frequency(lingvo)
         link = _subscription_link(lingvo)
         rows.append(
-            f"| {language_name} | {frequency} | "
-            f"➡️ **[Get {language_name} translation notifications]({link})** |"
+            f"| {language_name} | "
+            f"➡️ **[Get {language_name} translation notifications]({link})** | "
+            f"{frequency} |"
         )
 
     rows.extend(

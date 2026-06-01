@@ -482,7 +482,7 @@ def _format_calendar_result_for_devtools(result: date | list[date] | list[int]) 
         return result.isoformat()
     if all(isinstance(item, int) for item in result):
         return ", ".join(str(year) for year in result)
-    return ", ".join(gregorian_date.isoformat() for gregorian_date in result)
+    return ", ".join(item.isoformat() for item in result if isinstance(item, date))
 
 
 def check_utility_calendar() -> None:
@@ -914,9 +914,9 @@ def check_wenju_recruitment_markdown() -> None:
     subject = build_recruitment_subject(language_matches)
     markdown = build_recruitment_markdown(language_matches)
     msg.good("Copy this subject into the recruitment post:")
-    _console.print(subject, highlight=False)
+    _console.print(f"```\n{subject}\n```", highlight=False)
     msg.good("Copy this Markdown into the recruitment post body:")
-    _console.print(markdown, highlight=False)
+    _console.print(f"```\n{markdown}\n```", highlight=False)
 
     if unresolved_items:
         skipped = ", ".join(f"`{item}`" for item in unresolved_items)
