@@ -21,6 +21,7 @@ Most users only need a few commands:
 | `!identify` / `!id` | The post is in the wrong language category, or the language is known. | `!identify:ja` |
 | `!page` | You want Ziwen to notify users who know a language. | `!page:arabic` |
 | `!search` | You want to find earlier r/translator posts with the same text or phrase. | `!search:吉慶有餘` |
+| `!calendar` | You want to convert a Hebrew, Islamic, Persian, or Chinese calendar date. | `!calendar:hebrew:5784:Tishrei:1` |
 | `!transform` | An attached image needs to be rotated or flipped. | `!transform:90` |
 
 ## Language Arguments
@@ -246,6 +247,37 @@ result contains `!translated`. The person using `!search` still needs to check
 whether the returned translation actually applies.
 
 ## Other Commands
+
+### `!calendar:[calendar]:[year/cycle]:[month]:[day]`
+
+Converts a date from another calendar to its [Gregorian date](https://en.wikipedia.org/wiki/Gregorian_calendar). The argument order is year, month, day. For Chinese lunar dates, use a [sexagenary cycle](https://en.wikipedia.org/wiki/Sexagenary_cycle) year instead of a numbered year.
+
+Supported calendars are `chinese`, `hebrew`, `islamic`, and `persian`.
+
+```text
+!calendar:chinese:guimao:4:13
+!calendar:chinese:癸卯:4:13
+!calendar:乙巳
+!calendar:chinese:丁丑
+!calendar:hebrew:5784:Tishrei:1
+!calendar:islamic:1445:Rajab:10
+!calendar:islamic:1285:3:10
+!calendar:persian:1403:Bahman:22
+```
+
+Numeric months also work. If a month name has spaces, quote the full calendar
+argument:
+
+```text
+!calendar:"islamic:1445:Dhu al-Hijjah:10"
+```
+
+Notes:
+
+* Chinese calendar conversions may return more than one recent matching Gregorian
+date because the cycle year repeats every sixty years.
+* If only a Chinese sexagenary cycle year is supplied, Ziwen returns the three most recent matching Gregorian years instead of a specific date. The optional `chinese` calendar label is also accepted. (e.g. `!calendar:丙午` or `!calendar:chinese:丙午`)
+* Please only use romanized names for non-Chinese calendars' months. (e.g. "[Safar](https://en.wikipedia.org/wiki/Safar)" instead of صَفَر)
 
 ### `!transform:[value]`
 

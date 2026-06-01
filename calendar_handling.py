@@ -288,6 +288,14 @@ def convert_calendar_payload(payload: str) -> date | list[date] | list[int]:
     if ":" not in payload:
         return recent_sexagenary_years(payload)
 
+    calendar_type, sep, cycle_year = payload.partition(":")
+    if (
+        sep
+        and normalize_calendar_name(calendar_type) in CHINESE_CALENDARS
+        and ":" not in cycle_year
+    ):
+        return recent_sexagenary_years(cycle_year)
+
     calendar_type, year_or_cycle, month, day = _parse_calendar_payload(payload)
     return calendar_to_gregorian(calendar_type, year_or_cycle, month, day)
 

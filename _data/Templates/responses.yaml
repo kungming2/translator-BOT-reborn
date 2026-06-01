@@ -446,8 +446,8 @@ COMMENT_SEARCH_RESULTS_HEADER: '## Search results on r/translator for "{search_q
 # COMMANDS - ziwen_commands/calendar.py
 
 COMMENT_CALENDAR_USAGE: |
-  Usage: `!calendar:<calendar>:<year/cycle>:<month>:<day>`
-  For a Chinese sexagenary year only: `!calendar:<cycle-year>`
+  Usage: `!calendar:[calendar]:[year/cycle]:[month]:[day]`
+  For a Chinese sexagenary year only: `!calendar:<cycle-year>` or `!calendar:chinese:<cycle-year>`
 
   Supported calendars: `hebrew`, `islamic`, `persian`, and `chinese`.
   For Hebrew, Islamic, and Persian dates, use the calendar year. For Chinese dates, use a sexagenary cycle year.
@@ -460,6 +460,7 @@ COMMENT_CALENDAR_USAGE: |
   * `!calendar:persian:1403:Bahman:22`
   * `!calendar:chinese:guimao:4:13`
   * `!calendar:乙巳`
+  * `!calendar:chinese:乙巳`
 
   [](#comment_calendar_usage)
 

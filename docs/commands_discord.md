@@ -120,7 +120,7 @@ This command looks through the logs and the database for mentions of this post, 
 
 ### Command: */recruit*
 
-This command generates copyable Markdown for recruitment posts for the notifications database outside r/translator. It accepts language codes or names (separated by commas) and returns a table with one notification signup link per language plus the estimated request frequency for each language.
+This Zhongsheng command generates copyable recruitment post text for the notifications database outside r/translator. It accepts language codes or names (separated by commas) and returns a post subject plus Markdown body text with one notification signup link per language and the estimated request frequency for each language.
 
 ```
 /recruit [language codes/names]
