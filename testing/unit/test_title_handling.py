@@ -686,6 +686,26 @@ class TestProcessTitleDefinedMultiple(unittest.TestCase):
         self.assertNotEqual(titolo.final_code, "multiple")
 
     @_skip_if_no_data
+    def test_or_source_languages_not_parsed_as_multiple(self) -> None:
+        titolo = process_title(
+            "[Persian or Urdu > English] inscriptions on a painting",
+            discord_notify=False,
+        )
+        self.assertEqual(titolo.final_code, "fa")
+        self.assertEqual(titolo.final_text, "Persian")
+        self.assertCountEqual(_codes(titolo.notify_languages), ["fa", "ur"])
+
+    @_skip_if_no_data
+    def test_question_mark_source_languages_not_parsed_as_multiple(self) -> None:
+        titolo = process_title(
+            "[Chinese or Japanese? > English] calligraphy",
+            discord_notify=False,
+        )
+        self.assertEqual(titolo.final_code, "zh")
+        self.assertEqual(titolo.final_text, "Chinese")
+        self.assertCountEqual(_codes(titolo.notify_languages), ["zh", "ja"])
+
+    @_skip_if_no_data
     def test_english_among_targets_not_defined_multiple(self) -> None:
         # [Chinese > English/Spanish]: English in targets → not defined multiple
         titolo = process_title("[Chinese > English/Spanish] test", discord_notify=False)

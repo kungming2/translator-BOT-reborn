@@ -15,8 +15,12 @@ from collections.abc import Callable
 from typing import Any
 
 # noinspection PyProtectedMember
-from models.komando import (Komando, _check_specific_mode, _deduplicate_args,
-                            extract_commands_from_text)
+from models.komando import (
+    Komando,
+    _check_specific_mode,
+    _deduplicate_args,
+    extract_commands_from_text,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -302,6 +306,23 @@ class TestDeduplicateArgs(unittest.TestCase):
 
 class TestExtractCommandsFromText(unittest.TestCase):
     """Command extraction handles Reddit editor escaping."""
+
+    def test_calendar_command_keeps_raw_conversion_payload(self) -> None:
+        commands = extract_commands_from_text("!calendar:hebrew:5784:Tishrei:1")
+        calendar = next(cmd for cmd in commands if cmd.name == "calendar")
+        self.assertEqual(calendar.data, ["hebrew:5784:Tishrei:1"])
+
+    def test_calendar_command_keeps_chinese_cycle_year_payload(self) -> None:
+        commands = extract_commands_from_text("!calendar:乙巳")
+        calendar = next(cmd for cmd in commands if cmd.name == "calendar")
+        self.assertEqual(calendar.data, ["乙巳"])
+
+    def test_calendar_command_keeps_quoted_month_with_spaces(self) -> None:
+        commands = extract_commands_from_text(
+            '!calendar:"islamic:1445:Dhu al-Hijjah:10"'
+        )
+        calendar = next(cmd for cmd in commands if cmd.name == "calendar")
+        self.assertEqual(calendar.data, ["islamic:1445:Dhu al-Hijjah:10"])
 
     @_skip_if_no_data
     def test_cjk_lookup_removes_reddit_rich_text_backtick_escapes(self) -> None:

@@ -16,10 +16,12 @@ import unittest
 from collections.abc import Callable
 from typing import Any
 
+from config import Paths, load_settings
 from lang.code_standards import alpha3_code, parse_language_tag
 from lang.countries import country_converter
-from lang.languages import (converter, define_language_lists, get_lingvos,
-                            normalize, parse_language_list)
+from lang.languages import (_is_exact_language_identifier, converter,
+                            define_language_lists, get_lingvos, normalize,
+                            parse_language_list)
 from models.lingvo import Lingvo
 
 # ---------------------------------------------------------------------------
@@ -290,6 +292,24 @@ class TestConverterStableCodes(unittest.TestCase):
         result = converter("  en  ")
         self.assertIsNotNone(result)
         self.assertEqual(result.preferred_code, "en")
+
+    @_skip_if_no_data
+    def test_legacy_two_letter_code_not_standardized(self) -> None:
+        self.assertIsNone(converter("in"))
+
+    @_skip_if_no_data
+    def test_english_two_word_tokens_only_match_valid_iso_639_1_codes(self) -> None:
+        title_settings = load_settings(Paths.SETTINGS["TITLE_SETTINGS"])
+        valid_iso_639_1 = set(define_language_lists()["ISO_639_1"])
+
+        for word in title_settings["ENGLISH_2_WORDS"]:
+            token = word.lower()
+            with self.subTest(token=token):
+                result = converter(token)
+                if token in valid_iso_639_1:
+                    self.assertIsNotNone(result)
+                else:
+                    self.assertIsNone(result)
 
     @_skip_if_no_data
     def test_name_lookup_english(self) -> None:
@@ -578,6 +598,21 @@ class TestParseLanguageList(unittest.TestCase):
         # "Old English" is an alternate name for Anglo-Saxon; the canonical
         # name returned by converter() is "Anglo-Saxon".
         self.assertEqual(result[0].name, "Anglo-Saxon")
+
+    @_skip_if_no_data
+    def test_space_delimited_duplicate_code_and_name_does_not_apply_country(self) -> None:
+        result = parse_language_list("or Odia")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].preferred_code, "or")
+        self.assertEqual(result[0].name, "Odia")
+        self.assertIsNone(result[0].country)
+
+    @_skip_if_no_data
+    def test_exact_language_identifier_does_not_match_codes(self) -> None:
+        self.assertFalse(_is_exact_language_identifier("fr"))
+        self.assertFalse(_is_exact_language_identifier("or"))
+        self.assertTrue(_is_exact_language_identifier("French"))
+        self.assertTrue(_is_exact_language_identifier("Old English"))
 
 
 # ---------------------------------------------------------------------------

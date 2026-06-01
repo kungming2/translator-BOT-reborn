@@ -25,7 +25,8 @@ def test_wikipedia_lookup_treats_json_decode_as_lookup_miss(monkeypatch):
 
     assert wp_utils.wikipedia_lookup("ISO_639:abc") is None
     page_mock.assert_not_called()
-    set_lang_mock.assert_called_once_with("en")
+    assert set_lang_mock.call_count == 2
+    set_lang_mock.assert_called_with("en")
 
 
 def test_wikipedia_page_url_treats_json_decode_as_lookup_miss(monkeypatch):
@@ -58,4 +59,14 @@ def test_wikipedia_lookup_treats_fallback_request_error_as_lookup_miss(monkeypat
 
     assert wp_utils.wikipedia_lookup("ISO_639:abc") is None
     page_mock.assert_not_called()
-    set_lang_mock.assert_called_once_with("en")
+    assert set_lang_mock.call_count == 2
+    set_lang_mock.assert_called_with("en")
+
+
+def test_wikipedia_language_setup_uses_https_api():
+    """The wikipedia package resets API_URL to HTTP; the helper restores HTTPS."""
+
+    wp_utils._set_wikipedia_language("en")
+
+    assert wp_utils.wikipedia_client.API_URL == "https://en.wikipedia.org/w/api.php"
+    assert "translator-BOT-reborn" in wp_utils.wikipedia_client.USER_AGENT
