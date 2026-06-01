@@ -443,6 +443,9 @@ def _resolve_standard_compound_tag(
     if lingvo is None:
         return None
 
+    if parsed.tag == language_code and len(input_text.strip()) == 2:
+        return None
+
     if territory_code:
         country_info = country_converter(territory_code, abbreviations_okay=True)
         if country_info[0]:
@@ -481,6 +484,10 @@ def _resolve_to_lingvo(
 
     if len(input_text) <= 1:
         logger.debug(f"Skipping {input_text} as it's too short.")
+        return None
+
+    if len(input_lower) == 2 and input_lower not in reference_lists["ISO_639_1"]:
+        logger.debug(f"Skipping {input_text} as a non-ISO-639-1 two-letter token.")
         return None
 
     if input_lower in lingvos:

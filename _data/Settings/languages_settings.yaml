@@ -61,6 +61,7 @@ FUZZ_IGNORE_WORDS:
   - Syrian Arabic
   - Titan
   - Trail
+  - Translation
   - Trench
   - Turks
 # These are languages for which fuzzing usually doesn't play well.

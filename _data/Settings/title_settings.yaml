@@ -81,27 +81,43 @@ ENGLISH_2_WORDS:
   - Au
   - Be
   - Br
+  - Da
+  - De
   - El
+  - Et
+  - Ha
   - He
   - Hi
+  - Ho
   - Id
+  - In
   - Io
   - Is
   - It
   - La
   - Li
+  - Lo
   - Mi
   - Ms
   - My
+  - Na
+  - Ne
   - 'No'
   - Om
   - Or
+  - Pa
+  - Pi
   - Se
+  - Sh
   - So
+  - Ta
   - Te
+  - Ti
   - To
   - Tw
   - Uk
+  - Ve
+  - Yo
 
 # Note that this is actually formatted as a really long string. This
 # has to be split into a list for scripts to parse it correctly.
