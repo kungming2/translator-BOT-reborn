@@ -58,6 +58,8 @@ If the title has certain keywords instead (e.g. `all`, `any`, `every`), the "mul
 
 "Defined multiple" posts are posts where the requester has *defined multiple* specific languages that they'd like their request to be for. A post with the title `[English > German, French, Italian] My genealogical records` would be such an example. Defined multiple posts are treated somewhat differently by Ziwen, as they have specific requirements that can be fulfilled, unlike regular multiple posts.  
 
+Ziwen only treats multiple languages as a *defined multiple* post when the multiple languages are specific non-English target languages. Titles with more than one possible source language, such as `[Persian or Urdu > English]` or `[Chinese/Japanese > English]`, are usually ambiguous identification requests rather than requests for several separate translations. Ziwen may notify subscribers for each possible source language, but it will not assign the post the "multiple" category. Moderators and users can still manually assign multiple languages with `!identify` or `!set` when a post is genuinely asking about more than one source language.
+
 If a post's title has two or more target languages but one of them is English (e.g. `[Chinese > English/Spanish]`), Ziwen will _not_ parse it as a "defined multiple" post.
 
  | 'Multiple' Post Type | Number of Languages             | Can State Commands be Used? |  
@@ -71,7 +73,6 @@ The state commands (`!doublecheck`, `!translated`, `!claim` and `!missing`) (see
 #### Notes
 
 * The `preferred_code` for multiple posts is `multiple` (not [standard ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3#Special_codes) `mul`)
-* Ziwen will *not* assign a post the "multiple" category if there are more than one *source* languages. (e.g. `[Chinese/Japanese >English]`) This is because the vast majority of such posts aren't actually for more than one language; the OP is usually just unsure which language it actually is. Moderators and users can always manually assign multiple languages to any such exceptions.
 * Reddit limits flair text to 64 characters. Consequently, if a *defined multiple* post contains so many target languages that their codes won't all fit in the flair, Ziwen will either truncate the number of language codes to fit in the flair or just set it as an *all multiple* post.
 
 ## Internal Posts

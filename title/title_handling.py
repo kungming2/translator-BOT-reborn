@@ -124,10 +124,10 @@ def _determine_flair(titolo_object: Titolo) -> None:
     Set final_code and final_text on titolo_object.
 
     Decision logic (in order):
-    1. If English is in target → flair on the non-English source language.
+    1. If English is in target → flair on the first non-English source language.
     2. If English is in source → flair on the non-English target language.
-       In both cases, if there are multiple non-English candidates on that
-       side, build a "Multiple Languages [...]" flair rather than picking one.
+       If there are multiple non-English target candidates, build a
+       "Multiple Languages [...]" flair rather than picking one.
     3. Fallback for english_to: flair on source[0].
     4. Fallback for english_from / english_none: flair on target(s), or
        source if target is empty, or generic if nothing is available.
@@ -148,6 +148,12 @@ def _determine_flair(titolo_object: Titolo) -> None:
         )
 
         if len(candidates) > 1:
+            if target_has_english:
+                lang = candidates[0]
+                titolo_object.final_code = _resolve_flair_code(lang)
+                titolo_object.final_text = lang.name or "Unknown"
+                return
+
             preferred_codes = [
                 lng.preferred_code.upper() for lng in candidates if lng.preferred_code
             ]

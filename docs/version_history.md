@@ -18,6 +18,13 @@ This page records the version history of the various routines of translator-BOT.
 
 *Entries which are crossed out indicate [removed or irrelevant functionality](deprecated.md).*
 
+### translator-BOT 2.3 "The Calendar Update" (2026-06-01)
+
+* ✨ ADDITION: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
+🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
+* 🛠️ BUG FIX: Ambiguous source-language titles such as `[Persian or Urdu > English]` now notify all candidate languages without being flaired as multiple-language requests.
+
+
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)
 
 * ✨ ADDITION: Hermes ([u/language_exchangeBOT](https://www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the language parser).
@@ -38,6 +45,7 @@ This page records the version history of the various routines of translator-BOT.
 * ✨ ADDITION: Wenyuan's monthly single-language statistics table now includes month-over-month percentage trend arrows, comparing each language's share of requests against the previous monthly report.
 * ✨ ADDITION: Hermes's statistics routines are now surfaced as monthly reports that will be posted to r/translatorBOT.
 * ✨ ADDITION: `action_counter` also verbosely updates to a mod-only channel on Discord.
+* ✨ ADDITION: Zhongsheng's `/recruit` Discord command now generates copyable recruitment post subjects and Markdown bodies with notification signup links.
 * 🔄 CHANGE: Fix for regional conversion of strings like "Brazilian Portuguese" and "French (Canada)". These should now convert to their proper code-COUNTRY combination (e.g. `pt-BR` and `fr-CA`).
 * 🔄 CHANGE: Instruos now can have a `body_remainder` attribute that contains all text that is NOT a command. It will be `None` if there is no body remainder.
 * 🔄 CHANGE: Renaming certain modules for consistency (modules should share their routine names with the bot's main routine):
@@ -71,7 +79,9 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Integrated [langcodes](https://github.com/rspeer/langcodes) for some edge cases, particularly when it comes to language/country IETF language tags.
 * 🔄 CHANGE: Low-confidence results from AI-parsing will also trigger Discord mod notifications. 
 * 🔄 CHANGE: Changed YouTube length assessment to use a proper API key instead of `yt-dlp`. 
+* 🔄 CHANGE: Subscription and unsubscription from notifications are also recorded in mod notes.
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
+* 🛠️ BUG FIX: Language list parsing no longer treats language codes as exact language-name matches when checking for country hints, preventing short codes or words from being overmatched.
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours.
 * 🛠️ BUG FIX: Fix to prevent non-CJK backtick terms from being added to `lookup_cjk` in instruos.
 * 🛠️ BUG FIX: Fix for an incorrect field in the response for image duplicate removals for a similar image posted by different authors.
@@ -84,6 +94,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Edit-tracker cache cleanup now uses comment timestamps instead of Reddit comment ID ordering, matching [Reddit's move to non-monotonic comment IDs](https://old.reddit.com/r/redditdev/comments/1taa483/upcoming_changes_to_the_comment_id_endpoint/).
 * 🛠️ BUG FIX: Notifications records were stored per user in an odd format (e.g. `teng-teng`).
 * 🛠️ BUG FIX: Wenju's language of the day task now skips malformed upstream Wikipedia API responses instead of failing the daily run.
+* 🛠️ BUG FIX: Added a unique user-agent for Wikipedia to avoid [rate-limiting](https://github.com/goldsmith/Wikipedia/issues/350).
 * 🕯️ REMOVED: Removed the [Babelcarp](https://babelcarp.org/babelcarp/) tea dictionary from `zh_word` as it was returning too many false positives.
 
 ### translator-BOT 2.1 "The Transformation Update" (2026-02-01)
