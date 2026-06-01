@@ -758,7 +758,7 @@ def notify_list_statistics_calculator() -> None:
     missing_num = len(missing_codes)
 
     missing_section = (
-        f"\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
+        f"\n\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
         "| Code | Language Name |\n|---|----|\n" + "\n".join(missing_codes)
     )
     missing_section = format_markdown_table_with_padding(missing_section)
