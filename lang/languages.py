@@ -886,6 +886,12 @@ def add_alt_language_name(language_code: str, alt_name: str) -> bool:
         return False
 
 
+def has_editable_language_entry(language_code: str) -> bool:
+    """Return True if a code is present in the YAML-backed language dataset."""
+    language_data = load_settings(Paths.STATES["LANGUAGE_DATA"]) or {}
+    return language_code in language_data
+
+
 def validate_lingvo_dataset() -> list[str]:
     """
     Validate the language dataset by checking for codes missing required fields.

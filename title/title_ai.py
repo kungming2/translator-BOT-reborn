@@ -223,6 +223,12 @@ def update_titolo_from_ai_result(
             )
 
             determine_flair_fn(result)
+            if result.final_code is None or result.final_text is None:
+                logger.warning(
+                    "AI result did not produce a usable flair; assigning generic."
+                )
+                result.final_code = "generic"
+                result.final_text = "Generic"
             logger.info(
                 f"AI determined flair: {result.final_code=}; {result.final_text=}"
             )
