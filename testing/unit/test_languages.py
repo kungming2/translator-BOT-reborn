@@ -20,7 +20,8 @@ from config import Paths, load_settings
 from lang.code_standards import alpha3_code, parse_language_tag
 from lang.countries import country_converter
 from lang.languages import (_is_exact_language_identifier, converter,
-                            define_language_lists, get_lingvos, normalize,
+                            define_language_lists, get_lingvos,
+                            has_editable_language_entry, normalize,
                             parse_language_list)
 from models.lingvo import Lingvo
 
@@ -278,6 +279,13 @@ class TestConverterStableCodes(unittest.TestCase):
         result = converter("deu")
         self.assertIsNotNone(result)
         self.assertEqual(result.preferred_code, "de")
+
+    @_skip_if_no_data
+    def test_csv_only_language_is_not_yaml_editable(self) -> None:
+        result = converter("pedi")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "nso")
+        self.assertFalse(has_editable_language_entry(result.preferred_code))
 
     @_skip_if_no_data
     def test_case_insensitive_EN(self) -> None:

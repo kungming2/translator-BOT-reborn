@@ -21,9 +21,9 @@ from unittest.mock import MagicMock, patch
 
 from models.titolo import Titolo
 # noinspection PyProtectedMember
-from title.title_handling import (_determine_title_direction,
-                                  extract_lingvos_from_text, is_english_only,
-                                  main_posts_filter, process_title)
+from title.title_handling import (_determine_flair, _determine_title_direction,
+                                   extract_lingvos_from_text, is_english_only,
+                                   main_posts_filter, process_title)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -641,6 +641,40 @@ class TestProcessTitleAIFallback(unittest.TestCase):
             "AI Unable to Parse Title; No Language Assigned",
         )
         self.assertEqual(mock_alert.call_args.args[2], "report")
+
+    @_skip_if_no_data
+    @patch("title.title_ai.send_discord_alert")
+    def test_ai_success_with_unusable_language_assigns_generic(
+        self,
+        mock_alert: MagicMock,
+    ) -> None:
+        from title.title_ai import update_titolo_from_ai_result
+
+        post = MagicMock()
+        post.title = "Morse code > English"
+        post.id = "abc123"
+        post.permalink = "/r/translator/comments/abc123/test/"
+        result = Titolo()
+        ai_payload = {
+            "source_language": {"code": "morse", "name": "Morse code"},
+            "target_language": {"code": "en", "name": "English"},
+            "confidence": 0.92,
+        }
+
+        update_titolo_from_ai_result(
+            result,
+            ai_payload,
+            post,
+            True,
+            determine_flair_fn=_determine_flair,
+            determine_direction_fn=_determine_title_direction,
+            get_notification_languages_fn=lambda _result: [],
+        )
+
+        self.assertEqual(result.final_code, "generic")
+        self.assertEqual(result.final_text, "Generic")
+        mock_alert.assert_called_once()
+        self.assertIn("**Generic** (`generic`)", mock_alert.call_args.args[1])
 
 
 # ---------------------------------------------------------------------------
