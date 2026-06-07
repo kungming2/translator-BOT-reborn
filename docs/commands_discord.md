@@ -17,7 +17,7 @@ These commands can be used by both moderators with the `Moderator` role on the s
 This command is the equivalent of the subreddit's **[CJK Lookup](./lookup.md)**. The syntax for the command is:
 
 ```
-/cjk [language] [search_term]
+/cjk [language] [search term]
 ```
 
 * `[language]` can be `c/j/k` or any code and name conforming to those three languages.
@@ -27,7 +27,7 @@ This command is the equivalent of the subreddit's **[CJK Lookup](./lookup.md)**.
 This command accepts an image URL and generates an AI description of it. This description is used in notifications to give recipients a preview of what the submission is for.
 
 ```
-/describe [image url]
+/describe [image URL]
 ```
 
 ### Command: */filter*
@@ -49,16 +49,20 @@ This command provides information about all the other commands.
 
 ### Command: */lang*
 
-This command is a wrapper for the main language **[converter](./language_processing.md)**. Just like the converter itself, it accepts codes or names, and returns the information in the database on file for the language. The syntax for the command is:
+This command is a wrapper for the main language **[converter](./language_processing.md)**. Just like the converter itself, it accepts codes or names, and returns the information in the database on file for the language.
+
+For ordinary lookups, the `lookup` action is optional.
 
 ```
 /lang [language]
+/lang lookup [language]
+/lang random
 ```
 
-Moderators can also add the flag `--add_alt` and an alternate name for the language to add it to the database.
+Moderators can also add an alternate name for a language to the database. Use the language code when possible; quote multi-word language names if the target language cannot be given as a code.
 
 ```
-/lang [language] --add_alt [alternate name]
+/lang add_alt [language] [alternate name]
 ```
 
 ### Command: */search*
@@ -85,10 +89,10 @@ These commands can only be used by moderators with the `Moderator` role on the s
 
 This command accepts a Reddit comment's URL or its ID, and returns the commands found within it, providing a way to derive an [Instruo](./models.md) and its [Komando](./models.md)s.
 
-Alternatively, ending the command with the `--text` flag evaluates the text before it as a comment without the need to link to an URL. 
+Alternatively, ending the command with the `--text` flag evaluates the text before it as a comment without the need to link to a URL. 
 
 ```
-/comment [comment link/ID]
+/comment [comment link or ID]
 /comment [comment text to test] --text
 ```
 
@@ -105,7 +109,9 @@ This command retrieves the last three errors recorded in the log.
 This command allows moderators to directly edit and query the notifications database. The syntax for the command is:
 
 ```
-/notif [add/remove/status] [username] [language_to_add (optional)]
+/notif add [username] [languages]
+/notif remove [username]
+/notif status [username]
 ```
 
 Note that `remove` completely removes the user from the notifications database.
@@ -115,7 +121,7 @@ Note that `remove` completely removes the user from the notifications database.
 This command looks through the logs and the database for mentions of this post, detailing which actions were performed on the post, and what its [Ajo](./models.md)'s state is. 
 
 ```
-/post [post link/ID]
+/post [post link or ID]
 ```
 
 ### Command: */recruit*
@@ -123,7 +129,7 @@ This command looks through the logs and the database for mentions of this post, 
 This Zhongsheng command generates copyable recruitment post text for the notifications database outside r/translator. It accepts language codes or names (separated by commas) and returns a post subject plus Markdown body text with one notification signup link per language and the estimated request frequency for each language.
 
 ```
-/recruit [language codes/names]
+/recruit [language codes or names]
 ```
 
 Example:
@@ -132,20 +138,12 @@ Example:
 /recruit id, nan, ban
 ```
 
-### Command: */restart*
-
-This command schedules a restart of Zhongsheng's systemd service. It is only available to users with the `Moderator` role, is restricted to the configured Discord guild ID, and has a five-minute guild-wide cooldown. It requires the host-side restart helper described in [Setup](./setup.md).
-
-```
-/restart
-```
-
 ### Command: */user*
 
 Similar to `/post`, this command looks through the logs and the database for mentions of this user, though searches of the Ajo database for a user is limited to the last thirty days in the interest of speed. It will also return data if the user has commands and notifications statistics on the subreddit.
 
 ```
-/user [user profile link/username]
+/user [user profile link or username]
 ```
 
 ### Command: */title*

@@ -20,14 +20,16 @@ This page records the version history of the various routines of translator-BOT.
 
 ### translator-BOT 2.3 "The Calendar Update" (2026-06-01)
 
-* ✨ ADDITION: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
-🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
-* 🛠️ BUG FIX: Ambiguous source-language titles such as `[Persian or Urdu > English]` now notify all candidate languages without being flaired as multiple-language requests.
+* 🚀 FEATURE: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
+* 🔄 CHANGE: Subscriptions and unsubscriptions from notifications are also recorded in mod notes.
+* 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
+* 🛠️ BUG FIX: Ambiguous source-language titles such as `[Persian or Urdu > English]` now notify all candidate languages without being flaired as multiple-language requests, as many of these posts are situations where the requester is unsure of the language being requested, rather than an actual multi-language request.
+* 🔄 CHANGE: Alignment of some Zhongsheng commands to be more syntactically consistent with each other.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)
 
-* ✨ ADDITION: Hermes ([u/language_exchangeBOT](https://www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the language parser).
+* 🚀 FEATURE: Hermes ([u/language_exchangeBOT](https://www.reddit.com/user/language_exchangeBOT/)) has been fully integrated into the "reborn" codebase. Until now, it had been using older, legacy code written for Ziwen a long time ago (particularly the language parser).
     * Hermes now returns seven results for a language match (up from five).
     * Hermes will now prefix its comments with a language-specific greeting.
 * ✨ ADDITION: Specific images in galleries can be selected for transformation. For example, `!transform:h:3` will flip the third image in a gallery horizontally. (suggestion for feature and syntax made by u/Stunning_Pen_8332)
@@ -79,7 +81,6 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Integrated [langcodes](https://github.com/rspeer/langcodes) for some edge cases, particularly when it comes to language/country IETF language tags.
 * 🔄 CHANGE: Low-confidence results from AI-parsing will also trigger Discord mod notifications. 
 * 🔄 CHANGE: Changed YouTube length assessment to use a proper API key instead of `yt-dlp`. 
-* 🔄 CHANGE: Subscription and unsubscription from notifications are also recorded in mod notes.
 * 🛠️ BUG FIX: Fix `KeyError` in `get_language_emoji` for languages without an associated country (e.g. constructed languages like [Interlingua](https://en.wikipedia.org/wiki/Interlingua)).
 * 🛠️ BUG FIX: Language list parsing no longer treats language codes as exact language-name matches when checking for country hints, preventing short codes or words from being overmatched.
 * 🛠️ BUG FIX: Fixed bug in properly assessing the expiry of claim comments where the user did not provide a translation after 8 hours.

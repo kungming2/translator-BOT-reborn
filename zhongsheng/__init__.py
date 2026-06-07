@@ -53,8 +53,9 @@ COMMAND_GUIDE = {
         "roles": ["Moderator", "Helper"],
     },
     "lang": {
-        "description": 'Convert language codes/names. Use "random" for a random language (e.g. `/lang random`). '
-        "Alternate names can be added as `/lang [code] --add_alt [new_name]`",
+        "description": "Convert language codes/names. Use `/lang lookup [language]` "
+        "or the shortcut `/lang [language]`; use `/lang random` for a random language. "
+        "Moderators can add alternate names with `/lang add_alt [code/name] [new_name]`",
         "roles": ["Moderator", "Helper"],
     },
     "notif": {

@@ -29,7 +29,7 @@ RECRUIT_DELIMITER_PATTERN = re.compile(r"[,+/\n:;]+")
     help_text="Generate copyable recruitment-post notification links for language codes.",
     roles=["Moderator"],
 )
-async def recruit(ctx: commands.Context, languages: str) -> None:
+async def recruit(ctx: commands.Context, *, languages: str) -> None:
     """
     Generate Markdown rows for a recruitment post.
 

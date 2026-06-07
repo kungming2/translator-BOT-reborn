@@ -33,7 +33,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "ZS:NOTIF"})
     roles=["Moderator"],
 )
 async def notif(
-    ctx: commands.Context, action: str, username: str, language: str | None = None
+    ctx: commands.Context, action: str, username: str, *, language: str | None = None
 ) -> None:
     """
     Discord wrapper for notification management.
