@@ -2,16 +2,14 @@
 # -*- coding: UTF-8 -*-
 """Tests for Zhongsheng recruitment command output."""
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
-
-import pytest
 
 from zhongsheng import recruit as recruit_module
 
 
-@pytest.mark.asyncio
-async def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
+def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
     """The Discord /recruit command returns both copyable post fields."""
     language_matches = [SimpleNamespace(name="English", preferred_code="en")]
     sent_message = None
@@ -39,7 +37,7 @@ async def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
 
     ctx = SimpleNamespace(author=SimpleNamespace(name="moderator"), send=AsyncMock())
 
-    await recruit_module.recruit(ctx, "en")
+    asyncio.run(recruit_module.recruit(ctx, languages="en"))
 
     assert sent_message is not None
     assert "Copy this subject into the recruitment post:" in sent_message

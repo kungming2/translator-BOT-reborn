@@ -22,9 +22,12 @@ This page records the version history of the various routines of translator-BOT.
 
 * 🚀 FEATURE: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
 * 🔄 CHANGE: Subscriptions and unsubscriptions from notifications are also recorded in mod notes.
+* 🔄 CHANGE: Alignment of some Zhongsheng commands to be more syntactically consistent with each other.
+* 🔄 CHANGE: Moved notifications database reporting to a monthly Wenju cycle and added public reporting of its contents to r/translatorBOT.
+* 🔄 CHANGE: r/translatorBOT reporting submissions are also now routed through a single handler.
+* 🔄 CHANGE: Renamed some exceptions that are handled in order to prepare for [PRAW 8](https://praw.readthedocs.io/en/latest/package_info/praw8_migration.html#praw8-migration)'s upcoming release.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: Ambiguous source-language titles such as `[Persian or Urdu > English]` now notify all candidate languages without being flaired as multiple-language requests, as many of these posts are situations where the requester is unsure of the language being requested, rather than an actual multi-language request.
-* 🔄 CHANGE: Alignment of some Zhongsheng commands to be more syntactically consistent with each other.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

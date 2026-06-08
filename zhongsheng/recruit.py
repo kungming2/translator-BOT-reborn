@@ -212,7 +212,7 @@ def _format_frequency(lingvo: Lingvo) -> str:
     """Return a short human-readable frequency estimate for the recruitment table."""
     frequency = describe_language_frequency(lingvo)
     if frequency is None:
-        return "No recorded statistics"
+        return "No recorded statistics (yet!)"
 
     rate, period = frequency
     return f"{rate:.2f} posts/{period}"
