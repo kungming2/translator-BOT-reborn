@@ -22,10 +22,10 @@ from lxml import html
 from praw.exceptions import PRAWException
 from pypdf import PdfReader
 
-from config import TRANSLATORBOT_SUBREDDIT, Paths
+from config import Paths
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
-from reddit.connection import REDDIT, get_random_useragent
+from reddit.connection import REDDIT, get_random_useragent, submit_translatorbot_post
 from wenju import task
 
 # ─── Module-level constants ───────────────────────────────────────────────────
@@ -186,7 +186,6 @@ def post_iso_reports_to_reddit() -> None:
             logger.info("No reports found for the current or previous year.")
             return
 
-        subreddit = REDDIT.subreddit(TRANSLATORBOT_SUBREDDIT)
         updated = False
 
         for report in current_and_previous_reports:
@@ -204,8 +203,12 @@ def post_iso_reports_to_reddit() -> None:
 
             try:
                 title = f"ISO 639-3 {report_name.title()}"
-                submission = subreddit.submit(title=title, url=pdf_link)
-                submission.flair.select("8bd3439c-3d81-11e7-ac32-0e88f3bc19fa")
+                submit_translatorbot_post(
+                    title,
+                    url=pdf_link,
+                    flair_id="8bd3439c-3d81-11e7-ac32-0e88f3bc19fa",
+                    reddit=REDDIT,
+                )
 
                 report["posted"] = True
                 updated = True

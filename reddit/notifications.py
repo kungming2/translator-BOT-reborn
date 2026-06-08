@@ -14,7 +14,7 @@ import sqlite3
 import time
 
 import orjson
-from praw import exceptions
+from praw.exceptions import RedditAPIException
 from praw.models import Redditor, Submission
 
 from config import SETTINGS
@@ -692,7 +692,7 @@ def notifier(
         except UserNotFoundException:
             logger.info(f"u/{username} no longer exists. Pruning from database.")
             _prune_deleted_user_notifications(username)
-        except exceptions.APIException as e:
+        except RedditAPIException as e:
             logger.info(f"Error sending message to u/{username}. Removing user.")
             logger.error(f"API Exception for u/{username}: {e}")
             _prune_deleted_user_notifications(username)
@@ -779,7 +779,7 @@ def notifier_internal(post_type: str, submission: Submission) -> list:
         except UserNotFoundException:
             logger.info(f"u/{username} no longer exists. Pruning from database.")
             _prune_deleted_user_notifications(username, True)
-        except exceptions.APIException as e:
+        except RedditAPIException as e:
             logger.info(
                 f"Error sending internal message to u/{username}. Removing user."
             )

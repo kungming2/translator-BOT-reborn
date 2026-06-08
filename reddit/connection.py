@@ -18,7 +18,7 @@ from prawcore import exceptions
 from random_user_agent.params import OperatingSystem, SoftwareName
 from random_user_agent.user_agent import UserAgent
 
-from config import SETTINGS, Paths, load_settings
+from config import SETTINGS, TRANSLATORBOT_SUBREDDIT, Paths, load_settings
 from config import logger as _base_logger
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:CONN"})
@@ -167,6 +167,53 @@ def submission_from_input(user_input: str) -> Submission | None:
         return REDDIT_HELPER.submission(id=user_input)
 
     raise ValueError(f"Could not extract a post ID from: {user_input!r}")
+
+
+def submit_translatorbot_post(
+    title: str,
+    *,
+    selftext: str | None = None,
+    url: str | None = None,
+    send_replies: bool | None = None,
+    flair_id: str | None = None,
+    reddit: praw.Reddit | None = None,
+) -> Submission:
+    """
+    Submit a post to r/translatorBOT through a shared Reddit helper.
+
+    :param title: Reddit post title.
+    :param selftext: Markdown body for a self post.
+    :param url: URL for a link post.
+    :param send_replies: Optional PRAW submit argument for inbox replies.
+    :param flair_id: Optional flair template ID to select after posting.
+    :param reddit: Optional authenticated PRAW Reddit instance. Defaults to REDDIT.
+    :return: The created PRAW Submission object.
+    """
+    if selftext is not None and url is not None:
+        raise ValueError(
+            "submit_translatorbot_post accepts either selftext or url, not both."
+        )
+
+    active_reddit = reddit or REDDIT
+    subreddit = active_reddit.subreddit(TRANSLATORBOT_SUBREDDIT)
+    submit_kwargs: dict[str, str | bool] = {"title": title}
+
+    if selftext is not None:
+        submit_kwargs["selftext"] = selftext
+    if url is not None:
+        submit_kwargs["url"] = url
+    if send_replies is not None:
+        submit_kwargs["send_replies"] = send_replies
+
+    submission = subreddit.submit(**submit_kwargs)
+
+    if flair_id is not None:
+        submission.flair.select(flair_id)
+
+    logger.info(
+        f"Posted to r/{TRANSLATORBOT_SUBREDDIT}: https://redd.it/{submission.id}"
+    )
+    return submission
 
 
 # ─── User validation ──────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ and message sending. Testing mode is set in settings.yaml.
 This module provides a safe abstraction layer for Reddit interactions:
 - In production mode, it sends actual Reddit comments/messages
 - In testing mode, it logs the content instead of sending to Reddit
-- All functions handle common exceptions (APIException, NotFound) gracefully
+- All functions handle common exceptions (RedditAPIException, NotFound) gracefully
 
 Functions:
     reddit_reply: Reply to a Comment, Message, or Submission
@@ -21,7 +21,7 @@ Logger tag: [R:SENDER]
 
 import logging
 
-from praw.exceptions import APIException
+from praw.exceptions import RedditAPIException
 from praw.models import Comment, Message, Redditor, Submission
 from prawcore import NotFound
 from prawcore.exceptions import ServerError
@@ -96,11 +96,11 @@ def reddit_reply(
                 logger.info(f"Distinguished reply to `{target_id}`.")
         except NotFound:
             logger.info(f"Object `{target_id}` has been deleted; reply not sent.")
-        except APIException:
+        except RedditAPIException:
             logger.exception(f"Unexpected error replying to `{target_id}`.")
         else:
             return returned_object
-        return None  # reached if NotFound or APIException was raised
+        return None  # reached if NotFound or RedditAPIException was raised
     else:
         logger.warning(
             f"Unsupported object type {type(msg_obj).__name__}; no reply attempted."
@@ -140,7 +140,7 @@ def reddit_edit(comment_id: str, new_body: str) -> Comment | None:
         return updated
     except NotFound:
         logger.info(f"Comment `{comment_id}` no longer exists; edit not sent.")
-    except APIException:
+    except RedditAPIException:
         logger.exception(f"Unexpected error editing comment `{comment_id}`.")
     return None
 
@@ -174,7 +174,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
         try:
             redditor_obj.message(subject=subject, message=body)
             logger.info(f"Successfully sent a private message to u/{username}.")
-        except APIException as ex:
+        except RedditAPIException as ex:
             if ex.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
                 # Specific Reddit PM restriction
                 logger.warning(

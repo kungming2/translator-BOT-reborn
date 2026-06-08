@@ -86,6 +86,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             REDDIT_HELPER=MagicMock(),
             USERNAME="translator-BOT",
             get_random_useragent=MagicMock(return_value={}),
+            submit_translatorbot_post=MagicMock(),
         ),
         "reddit.notifications": _make_stub_module(
             "reddit.notifications", notifier_internal=MagicMock()

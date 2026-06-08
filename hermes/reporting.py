@@ -83,6 +83,7 @@ def post_monthly_statistics(reddit: praw.Reddit | None = None) -> str | None:
         from reddit.connection import REDDIT_HERMES
 
         reddit = REDDIT_HERMES
+    from reddit.connection import submit_translatorbot_post
 
     start_utc, end_utc, month_year = previous_month_bounds()
     title, body = build_monthly_statistics_post(start_utc, end_utc, month_year)
@@ -96,6 +97,11 @@ def post_monthly_statistics(reddit: praw.Reddit | None = None) -> str | None:
         )
         return None
 
-    submission = subreddit.submit(title=title, selftext=body, send_replies=False)
+    submission = submit_translatorbot_post(
+        title,
+        selftext=body,
+        send_replies=False,
+        reddit=reddit,
+    )
     logger.info(f"Posted Hermes monthly statistics: https://redd.it/{submission.id}")
     return f"https://www.reddit.com{submission.permalink}"

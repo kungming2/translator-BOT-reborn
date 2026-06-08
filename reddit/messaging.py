@@ -13,7 +13,7 @@ import logging
 import re
 
 import praw
-from praw.exceptions import APIException
+from praw.exceptions import RedditAPIException
 from praw.models import Message, Redditor
 
 from config import SETTINGS, Paths, load_settings
@@ -84,7 +84,7 @@ def notify_op_translated_post(author: str, permalink: str) -> None:
     )
 
     # User doesn't allow messages or other API exceptions - fail silently
-    with contextlib.suppress(APIException):
+    with contextlib.suppress(RedditAPIException):
         message_send(redditor_obj=REDDIT.redditor(author), subject=subject, body=body)
 
     action_counter(1, "OP translated notifications")

@@ -20,11 +20,11 @@ from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
-from config import SETTINGS, TRANSLATORBOT_SUBREDDIT
+from config import SETTINGS
 from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
-from reddit.connection import REDDIT, USERNAME
+from reddit.connection import REDDIT, USERNAME, submit_translatorbot_post
 from reddit.notifications import notifier_internal
 from responses import RESPONSE
 from time_handling import get_current_utc_date
@@ -234,10 +234,13 @@ def weekly_bot_action_report() -> None:
 
     report_content = "\n\n".join(report_sections)
 
-    subreddit = REDDIT.subreddit(TRANSLATORBOT_SUBREDDIT)
     title = f"u/translator-BOT Mod Action Statistics — {end_date} (Week {week_number})"
 
-    submission = subreddit.submit(title=title, selftext=report_content)
+    submission = submit_translatorbot_post(
+        title,
+        selftext=report_content,
+        reddit=REDDIT,
+    )
     logger.info(f"Report posted: {submission.url}")
 
     return

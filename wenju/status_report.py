@@ -41,10 +41,12 @@ from reddit.connection import (
     REDDIT_HELPER,
     create_mod_note,
     reddit_status_check,
+    submit_translatorbot_post,
     widget_update,
 )
 from reddit.verification import get_verified_thread
 from time_handling import (
+    get_current_month,
     get_current_utc_date,
     get_current_utc_time,
     time_convert_to_utc,
@@ -682,8 +684,8 @@ def deleted_posts_assessor(
     return
 
 
-@task(schedule="weekly")
-def notify_list_statistics_calculator() -> None:
+@task(schedule="monthly")
+def notify_db_statistics_calculator() -> None:
     """
     Gather statistics on the state of our notifications database and
     write the results to a Markdown file.
@@ -691,7 +693,7 @@ def notify_list_statistics_calculator() -> None:
     :return: None
     """
     reports_directory = get_reports_directory()
-    today = get_current_utc_date()
+    this_month = get_current_month()
 
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
     iso_639_1_languages: list[str] = [
@@ -734,7 +736,7 @@ def notify_list_statistics_calculator() -> None:
     dupe_subs = duplicates or ""
 
     summary = (
-        f"## Notifications Database Data for {today}\n\n"
+        f"## Notifications Database Data for {this_month}\n\n"
         f"* Unique entries in notifications database: {unique_langs:,} languages\n"
         f"* Total subscriptions in notifications database: {total_subs:,} subscriptions\n"
         f"* Average notification subscriptions per entry: {average_per:.2f} subscribers\n"
@@ -743,9 +745,9 @@ def notify_list_statistics_calculator() -> None:
     header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
     total_table = header + "\n".join(format_lines)
     total_table = format_markdown_table_with_padding(total_table)
-    logger.debug(f"notify_list_statistics_calculator: Total = {total_subs:,}")
+    logger.debug(f"notify_db_statistics_calculator: Total = {total_subs:,}")
 
-    ignore_codes = {"bh", "en", "nn", "nb"}
+    ignore_codes = {"bh", "en", "nn", "nb"}  # TODO potentially move out into settings
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
         f"| `{code}` | {_l.name} |"
@@ -765,10 +767,22 @@ def notify_list_statistics_calculator() -> None:
 
     final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"
 
-    output_path = f"{reports_directory}/{today}_Notifications.md"
+    output_path = f"{reports_directory}/{this_month}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_text)
 
-    logger.info(f"notify_list_statistics_calculator: Report saved to {output_path}.")
+    logger.info(f"notify_db_statistics_calculator: Report saved to {output_path}.")
+
+    title = f"Notification Database Statistics - {this_month}"
+    submission = submit_translatorbot_post(
+        title,
+        selftext=final_text,
+        send_replies=False,
+        reddit=REDDIT,
+    )
+    logger.info(
+        "notify_db_statistics_calculator: "
+        f"Notifications Database Report posted to Reddit: https://redd.it/{submission.id}"
+    )
 
     return
