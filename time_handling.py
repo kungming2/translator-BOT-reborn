@@ -30,6 +30,11 @@ def get_current_month() -> str:
     return datetime.now(UTC).strftime("%Y-%m")
 
 
+def get_current_month_name() -> str:
+    """Return the current UTC month in 'Month YYYY' format."""
+    return datetime.now(UTC).strftime("%B %Y")
+
+
 # ─── Timestamp conversion ─────────────────────────────────────────────────────
 
 

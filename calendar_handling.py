@@ -37,6 +37,7 @@ CHINESE_BRANCHES = [
 CYCLE = [STEMS[i % 10] + BRANCHES[i % 12] for i in range(60)]
 CHINESE_CYCLE = [CHINESE_STEMS[i % 10] + CHINESE_BRANCHES[i % 12] for i in range(60)]
 CHINESE_TO_PINYIN_CYCLE = dict(zip(CHINESE_CYCLE, CYCLE, strict=True))
+PINYIN_TO_CHINESE_CYCLE = dict(zip(CYCLE, CHINESE_CYCLE, strict=True))
 DATED_CALENDARS = {
     "hebrew": (hebrew.to_gregorian, hebrew.from_gregorian),
     "jewish": (hebrew.to_gregorian, hebrew.from_gregorian),
@@ -298,6 +299,40 @@ def convert_calendar_payload(payload: str) -> date | list[date] | list[int]:
 
     calendar_type, year_or_cycle, month, day = _parse_calendar_payload(payload)
     return calendar_to_gregorian(calendar_type, year_or_cycle, month, day)
+
+
+def format_sexagenary_year_query(name: str) -> str:
+    normalized = normalize_lookup_key(name)
+    pinyin = CHINESE_TO_PINYIN_CYCLE.get(normalized, normalized)
+    characters = PINYIN_TO_CHINESE_CYCLE.get(pinyin)
+    if characters is None:
+        raise ValueError(f"Unknown sexagenary year: {name}")
+
+    if normalized in CHINESE_TO_PINYIN_CYCLE:
+        return f"{characters} ({pinyin})"
+
+    return f"{pinyin} ({characters})"
+
+
+def format_calendar_query(payload: str) -> str:
+    if ":" not in payload:
+        return format_sexagenary_year_query(payload)
+
+    calendar_type, sep, cycle_year = payload.partition(":")
+    if not sep or normalize_calendar_name(calendar_type) not in CHINESE_CALENDARS:
+        return payload
+
+    if ":" not in cycle_year:
+        return f"{calendar_type}:{format_sexagenary_year_query(cycle_year)}"
+
+    try:
+        calendar_type, year_or_cycle, month, day = _parse_calendar_payload(payload)
+    except ValueError:
+        return payload
+
+    return (
+        f"{calendar_type}:{format_sexagenary_year_query(year_or_cycle)}:{month}:{day}"
+    )
 
 
 def normalize_sexagenary_year(name: str) -> str:

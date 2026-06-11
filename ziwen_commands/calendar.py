@@ -36,15 +36,19 @@ def _format_years(years: list[int]) -> str:
 
 
 def _format_calendar_result(payload: str, result: date | list[date]) -> str:
+    from calendar_handling import format_calendar_query
+
     return RESPONSE.COMMENT_CALENDAR_RESULT.format(
-        query=payload,
+        query=format_calendar_query(payload),
         gregorian_dates=_format_gregorian_dates(result),
     )
 
 
 def _format_cycle_year_result(payload: str, years: list[int]) -> str:
+    from calendar_handling import format_calendar_query
+
     return RESPONSE.COMMENT_CALENDAR_YEAR_RESULT.format(
-        query=payload,
+        query=format_calendar_query(payload),
         gregorian_years=_format_years(years),
     )
 
