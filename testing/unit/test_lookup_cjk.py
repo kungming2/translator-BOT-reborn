@@ -10,6 +10,9 @@ Japanese examples drawn from: いざ戦はん / 暴虐の鎖断つ日 / 旗は�
 Korean examples drawn from: 들어라 최후 결전 투쟁의 외침을 / 민중이여 해방의 깃발 아래 서자
 """
 
+import asyncio
+import sys
+import types
 import unittest
 from unittest.mock import Mock, patch
 
@@ -80,6 +83,83 @@ class TestZhVariantSearch(unittest.TestCase):
             session.get.call_args.kwargs["headers"]["User-Agent"],
             zh.useragent["User-Agent"],
         )
+
+
+class TestZhCharacterUnihanFallback(unittest.TestCase):
+    """Tests for Unihan Mandarin fallback in Chinese character lookup."""
+
+    @staticmethod
+    def _import_zh():
+        fake_opencc = types.SimpleNamespace(
+            OpenCC=lambda _config: types.SimpleNamespace(convert=lambda text: text)
+        )
+        with patch.dict(sys.modules, {"opencc": fake_opencc}):
+            import ziwen_lookup.zh as zh
+
+        return zh
+
+    def test_parse_unihan_mandarin_field(self):
+        try:
+            zh = self._import_zh()
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        content = """
+        <html><body><table>
+        <tr><td>kMandarin</td><td>biāo</td></tr>
+        </table></body></html>
+        """
+
+        self.assertEqual(zh._parse_unihan_field(content, "kMandarin"), "biāo")
+
+    def test_character_not_in_mdbg_uses_unihan_mandarin(self):
+        try:
+            zh = self._import_zh()
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        class FakeResponse:
+            async def text(self):
+                return """
+                <html><body>
+                <div class="pinyin">biu1</div>
+                <td class="details">
+                    <div class="hinttext">[Not in dictionary]</div>
+                </td>
+                <div class="defs">to look attentively</div>
+                </body></html>
+                """
+
+        class FakeSession:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+            async def get(self, *args, **kwargs):
+                return FakeResponse()
+
+        async def fake_unihan_mandarin(character):
+            return "biāo"
+
+        with (
+            patch("ziwen_lookup.zh.aiohttp.ClientSession", FakeSession),
+            patch("ziwen_lookup.zh._unihan_mandarin_reading", fake_unihan_mandarin),
+            patch("ziwen_lookup.zh._min_hakka_readings", return_value=None),
+            patch("ziwen_lookup.zh.old_chinese_search", return_value=None),
+            patch("ziwen_lookup.zh._zh_character_other_readings", return_value=None),
+            patch("ziwen_lookup.zh.calligraphy_search", return_value=None),
+            patch("ziwen_lookup.zh.parse_zh_output_to_json", return_value={"term": "䁃"}),
+            patch("ziwen_lookup.zh.save_to_cache"),
+        ):
+            output = asyncio.run(zh._zh_character_fetch("䁃"))
+
+        self.assertIn("| **Mandarin** | *biāo* |", output)
+        self.assertNotIn("| **Mandarin** | *biu1* |", output)
 
 
 # ---------------------------------------------------------------------------

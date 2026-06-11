@@ -306,6 +306,19 @@ class TestConverterStableCodes(unittest.TestCase):
         self.assertIsNone(converter("in"))
 
     @_skip_if_no_data
+    def test_mistake_abbreviations_resolve_before_two_letter_guard(self) -> None:
+        expectations = {
+            "gr": "el",
+            "vn": "vi",
+        }
+
+        for input_text, preferred_code in expectations.items():
+            with self.subTest(input_text=input_text):
+                result = converter(input_text)
+                self.assertIsNotNone(result)
+                self.assertEqual(result.preferred_code, preferred_code)
+
+    @_skip_if_no_data
     def test_english_two_word_tokens_only_match_valid_iso_639_1_codes(self) -> None:
         title_settings = load_settings(Paths.SETTINGS["TITLE_SETTINGS"])
         valid_iso_639_1 = set(define_language_lists()["ISO_639_1"])
