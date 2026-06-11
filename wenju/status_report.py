@@ -46,7 +46,7 @@ from reddit.connection import (
 )
 from reddit.verification import get_verified_thread
 from time_handling import (
-    get_current_month,
+    get_current_month_name,
     get_current_utc_date,
     get_current_utc_time,
     time_convert_to_utc,
@@ -685,15 +685,16 @@ def deleted_posts_assessor(
 
 
 @task(schedule="monthly")
-def notify_db_statistics_calculator() -> None:
+def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
     """
     Gather statistics on the state of our notifications database and
     write the results to a Markdown file.
 
+    :param post_to_reddit: Whether to post the generated report to Reddit.
     :return: None
     """
     reports_directory = get_reports_directory()
-    this_month = get_current_month()
+    this_month = get_current_month_name()
 
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
     iso_639_1_languages: list[str] = [
@@ -743,11 +744,11 @@ def notify_db_statistics_calculator() -> None:
     )
 
     header = "\n\n| Language | Code | Subscribers |\n|------|------|-----|\n"
-    total_table = header + "\n".join(format_lines)
-    total_table = format_markdown_table_with_padding(total_table)
+    total_table_raw = header + "\n".join(format_lines)
+    total_table_padded = format_markdown_table_with_padding(total_table_raw)
     logger.debug(f"notify_db_statistics_calculator: Total = {total_subs:,}")
 
-    ignore_codes = {"bh", "en", "nn", "nb"}  # TODO potentially move out into settings
+    ignore_codes = set(WENJU_SETTINGS["ignored_notification_database_codes"])
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
     missing_codes = [
         f"| `{code}` | {_l.name} |"
@@ -759,24 +760,31 @@ def notify_db_statistics_calculator() -> None:
     ]
     missing_num = len(missing_codes)
 
-    missing_section = (
+    missing_section_raw = (
         f"\n\n### No Subscribers ({missing_num} ISO 639-1 languages)\n"
         "| Code | Language Name |\n|---|----|\n" + "\n".join(missing_codes)
     )
-    missing_section = format_markdown_table_with_padding(missing_section)
+    missing_section_padded = format_markdown_table_with_padding(missing_section_raw)
 
-    final_text = f"{summary}\n{total_table}\n{missing_section}\n\n{dupe_subs}"
+    file_text = (
+        f"{summary}\n{total_table_padded}\n{missing_section_padded}\n\n{dupe_subs}"
+    )
+    reddit_text = f"{summary}\n{total_table_raw}\n{missing_section_raw}\n\n{dupe_subs}"
 
     output_path = f"{reports_directory}/{this_month}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(final_text)
+        f.write(file_text)
 
     logger.info(f"notify_db_statistics_calculator: Report saved to {output_path}.")
 
-    title = f"Notification Database Statistics - {this_month}"
+    if not post_to_reddit:
+        logger.info("notify_db_statistics_calculator: Skipping Reddit post.")
+        return
+
+    title = f"r/translator Notification Database Statistics - {this_month}"
     submission = submit_translatorbot_post(
         title,
-        selftext=final_text,
+        selftext=reddit_text,
         send_replies=False,
         reddit=REDDIT,
     )

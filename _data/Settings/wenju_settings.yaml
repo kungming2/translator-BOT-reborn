@@ -25,6 +25,13 @@ lotd_widget_ids:
   translator: widget_1dn822a2cowgr
   languagelearning: widget_1gth0ozs9w17s
 
+# Notification database - ignored ISO 639-1 language codes
+# These codes are not needed for calculations of missing codes in the
+# database as they do not map well to our requirements.
+ignored_notification_database_codes:
+  - bh  # Bihari (deprecated)
+  - en  # English (unnecessary)
+
 # ─── Wenyuan Settings ──────────--─────────────────────────────────────
 
 # Calculate the Representation Index (RI) based on this world population

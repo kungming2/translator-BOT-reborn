@@ -47,7 +47,7 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
-from wenju.status_report import language_of_the_day
+from wenju.status_report import language_of_the_day, notify_db_statistics_calculator
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from zhongsheng.recruit import (
     build_recruitment_markdown,
@@ -892,6 +892,13 @@ def prepare_wenju_language_of_the_day() -> CheckFunction | None:
     return lambda: check_wenju_language_of_the_day(selected_language or None)
 
 
+def check_wenju_notify_db_statistics() -> None:
+    """status_report: Generate notification database statistics without posting."""
+    with msg.loading("Generating notification database statistics..."):
+        notify_db_statistics_calculator(post_to_reddit=False)
+    msg.good("Notification database statistics report complete. Reddit post skipped.")
+
+
 def check_wenju_recruitment_markdown() -> None:
     """recruit: Generate copyable recruitment-post notification rows."""
     language_text = _prompt_text(
@@ -1056,6 +1063,10 @@ SECTIONS: SectionMap = {
             "3": (
                 "recruit: generate recruitment-post Markdown",
                 check_wenju_recruitment_markdown,
+            ),
+            "4": (
+                "status_report: notification DB statistics report (no Reddit post)",
+                check_wenju_notify_db_statistics,
             ),
         },
     ),
