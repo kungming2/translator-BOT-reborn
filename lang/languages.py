@@ -486,6 +486,15 @@ def _resolve_to_lingvo(
         logger.debug(f"Skipping {input_text} as it's too short.")
         return None
 
+    # Project-owned correction tokens such as ``gr`` -> Greek and ``vn`` ->
+    # Vietnamese are deliberately not ISO 639-1 codes, so they must be handled
+    # before the generic non-ISO two-letter guard.
+    if input_lower in reference_lists["MISTAKE_ABBREVIATIONS"]:
+        fixed = reference_lists["MISTAKE_ABBREVIATIONS"][input_lower]
+        lingvo = lingvos.get(fixed)
+        if lingvo:
+            return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
+
     if len(input_lower) == 2 and input_lower not in reference_lists["ISO_639_1"]:
         logger.debug(f"Skipping {input_text} as a non-ISO-639-1 two-letter token.")
         return None
@@ -682,13 +691,6 @@ def _resolve_to_lingvo(
 
     if iso_search:
         return _copy_lingvo_for_return(iso_search, preserve_country=preserve_country)
-
-    # Special abbreviation fixes (like 'vn' meaning Vietnamese)
-    if input_lower in reference_lists["MISTAKE_ABBREVIATIONS"]:
-        fixed = reference_lists["MISTAKE_ABBREVIATIONS"][input_lower]
-        lingvo = lingvos.get(fixed)
-        if lingvo:
-            return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
     if input_lower in reference_lists["ISO_639_2B"]:
