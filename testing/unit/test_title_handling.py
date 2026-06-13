@@ -322,6 +322,18 @@ class TestMainPostsFilterFailCode1B(unittest.TestCase):
         _, _, reason = main_posts_filter("Translation to English")
         self.assertEqual(reason, "1B")
 
+    @_skip_if_no_data
+    def test_short_title_with_unsupported_language_passes(self) -> None:
+        ok, _, reason = main_posts_filter("Bicol to English")
+        self.assertTrue(ok)
+        self.assertIsNone(reason)
+
+    @_skip_if_no_data
+    def test_short_title_with_unsupported_language_and_english_typo_passes(self) -> None:
+        ok, _, reason = main_posts_filter("Hakka to Englidh")
+        self.assertTrue(ok)
+        self.assertIsNone(reason)
+
 
 # ---------------------------------------------------------------------------
 # process_title() — passing titles
@@ -509,10 +521,20 @@ class TestExtractLingvosFromText(unittest.TestCase):
     @_skip_if_no_data
     def test_english_excluded_by_default(self) -> None:
         result = extract_lingvos_from_text("Translate English text")
-        # English is not supported for flair purposes, so should be absent
-        # unless return_english=True
+        # English is not a useful non-English title clue unless requested.
         if result:
             self.assertNotIn("English", _names(result))
+
+    @_skip_if_no_data
+    def test_unsupported_languages_are_included(self) -> None:
+        result = extract_lingvos_from_text("Bicol translation needed")
+        self.assertIsNotNone(result)
+        self.assertIn("Bikol", _names(result))
+
+    @_skip_if_no_data
+    def test_short_language_names_are_skipped(self) -> None:
+        result = extract_lingvos_from_text("Lao translation needed")
+        self.assertIsNone(result)
 
     @_skip_if_no_data
     def test_english_included_with_flag(self) -> None:

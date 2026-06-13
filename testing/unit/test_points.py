@@ -65,6 +65,33 @@ class TestPointRecordReplacement(unittest.TestCase):
             ],
         )
 
+    def test_skips_excluded_usernames_when_writing_comment_rows(self) -> None:
+        fake_db = _FakeDb()
+
+        with (
+            patch.object(points, "db", fake_db),
+            patch.object(points, "get_current_month", return_value="2026-05"),
+            patch.object(
+                points,
+                "WENJU_SETTINGS",
+                {"points_exclude_usernames": ["AutoModerator", "translator-BOT"]},
+            ),
+        ):
+            points._replace_comment_point_records(
+                "abc123",
+                [["helper", 1], ["automoderator", 7], ["translator-BOT", 20]],
+                "post1",
+            )
+
+        rows = fake_db.cursor_main.execute(
+            """
+            SELECT year_month, comment_id, username, points, post_id
+            FROM total_points
+            """
+        ).fetchall()
+
+        self.assertEqual(rows, [("2026-05", "abc123", "helper", 1, "post1")])
+
 
 if __name__ == "__main__":
     unittest.main()
