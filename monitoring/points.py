@@ -32,7 +32,7 @@ import prawcore
 from praw.exceptions import RedditAPIException
 from praw.models import Comment, Submission
 
-from config import SETTINGS
+from config import Paths, SETTINGS, load_settings
 from config import logger as _base_logger
 from database import db
 from models.ajo import Ajo, ajo_loader, ajo_writer
@@ -47,6 +47,16 @@ from time_handling import get_current_month
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:POINTS"})
+WENJU_SETTINGS = load_settings(Paths.SETTINGS["WENJU_SETTINGS"])
+
+
+def _points_excluded_usernames() -> set[str]:
+    """Return usernames excluded from points awards, normalized for comparison."""
+    return {
+        username.lower()
+        for username in WENJU_SETTINGS.get("points_exclude_usernames", [])
+        if isinstance(username, str)
+    }
 
 
 # ─── Points retrieval ─────────────────────────────────────────────────────────
@@ -137,8 +147,15 @@ def _replace_comment_point_records(
     cursor = db.cursor_main
     conn = db.conn_main
     month_string = get_current_month()
+    excluded_usernames = _points_excluded_usernames()
 
     cursor.execute("DELETE FROM total_points WHERE comment_id = ?", (comment_id,))
+
+    point_records = [
+        [username, user_points]
+        for username, user_points in point_records
+        if isinstance(username, str) and username.lower() not in excluded_usernames
+    ]
 
     logger.info(
         f"Writing {len(point_records)} point record(s) to DB for comment `{comment_id}`"
