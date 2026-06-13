@@ -46,6 +46,7 @@ from reddit.connection import (
 )
 from reddit.verification import get_verified_thread
 from time_handling import (
+    get_current_month,
     get_current_month_name,
     get_current_utc_date,
     get_current_utc_time,
@@ -694,7 +695,8 @@ def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
     :return: None
     """
     reports_directory = get_reports_directory()
-    this_month = get_current_month_name()
+    this_month_digits = get_current_month()
+    this_month_name = get_current_month_name()
 
     iso_639_1_languages_raw = define_language_lists().get("ISO_639_1", [])
     iso_639_1_languages: list[str] = [
@@ -737,7 +739,7 @@ def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
     dupe_subs = duplicates or ""
 
     summary = (
-        f"## Notifications Database Data for {this_month}\n\n"
+        f"## Notifications Database Data for {this_month_name}\n\n"
         f"* Unique entries in notifications database: {unique_langs:,} languages\n"
         f"* Total subscriptions in notifications database: {total_subs:,} subscriptions\n"
         f"* Average notification subscriptions per entry: {average_per:.2f} subscribers\n"
@@ -771,7 +773,7 @@ def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
     )
     reddit_text = f"{summary}\n{total_table_raw}\n{missing_section_raw}\n\n{dupe_subs}"
 
-    output_path = f"{reports_directory}/{this_month}_Notifications.md"
+    output_path = f"{reports_directory}/{this_month_digits}_Notifications.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(file_text)
 
@@ -781,7 +783,7 @@ def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
         logger.info("notify_db_statistics_calculator: Skipping Reddit post.")
         return
 
-    title = f"r/translator Notification Database Statistics - {this_month}"
+    title = f"r/translator Notification Database Statistics - {this_month_name}"
     submission = submit_translatorbot_post(
         title,
         selftext=reddit_text,
