@@ -290,7 +290,7 @@ def extract_lingvos_from_text(
 ) -> list[Lingvo] | None:
     """
     Extract Lingvo objects from a paragraph based on capitalised language-like words.
-    Includes supported languages, and optionally 'English' even if unsupported.
+    Includes recognized non-English languages, and optionally English.
 
     :param text: The paragraph or sentence to search.
     :param return_english: Whether to include 'English' even if unsupported.
@@ -306,10 +306,7 @@ def extract_lingvos_from_text(
         if (
             lingvo
             and lingvo.name
-            and (
-                lingvo.supported
-                or (return_english and lingvo.name.lower() == "english")
-            )
+            and (return_english or lingvo.name.lower() != "english")
             and lingvo not in found
         ):
             found.append(lingvo)

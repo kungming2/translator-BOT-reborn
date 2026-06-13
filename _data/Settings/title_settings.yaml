@@ -27,7 +27,8 @@ ENGLISH_DASHES:
   - '-ENGLISH'
   - '- ENGLISH'
 
-# The standard directional arrow is ">", but people may mistakenly
+# The standard directional arrow is ">", the halfwidth 
+# greater-than sign, but people may mistakenly
 # use other symbols that we can account for here.
 # Used in _preprocess_title: each entry is replaced with " > " to
 # normalize the title before language extraction begins.
@@ -43,6 +44,7 @@ WRONG_DIRECTIONS:
   - '→'
   - '←'
   - '~'
+  - '＞'
 
 # The standard brackets are "[]", but people may mistakenly use other
 # form of brackets. Left and right ones are listed separately.

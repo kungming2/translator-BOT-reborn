@@ -13,12 +13,9 @@ identify a language, see [AI Usage](./ai_usage.md).
 
 Ziwen independently determines the right source and target languages from post titles. r/translator encourages people to follow the [proper formatting guidelines](https://www.reddit.com/r/translator/wiki/request-guidelines#wiki_how_should_i_submit_requests_for_translations.3F), especially the inclusion of `>` in the title. However, it's okay for someone to submit a title like `[English to Dutch] Text Paragraph`, even if it doesn't have the `>`, as Ziwen is intentionally written to be tolerant of bad formatting in post titles and to account for as many variations as possible.
 
-Ziwen will filter out/reject titles that match the following conditions:
-
-1. **The title does not include a target language.** An example of this would be the title `Translate pls`. 
-2. The post's long title "buries the lede" and puts the target language towards the end without brackets. An example of this would be the title `Could somebody please translate these two words from Japanese to English.`
-3. **The title does not include a source language.** An example of this would be the title `Translate to English please`. 
-4. **The post is only for English.** An example of this would be the title `[English >English] "seak out" meaning`. We redirect such inquiries to [r/englishlearning](www.reddit.com/r/EnglishLearning/) or [r/grammar](https://www.reddit.com/r/grammar/).
+Ziwen filters out some badly formatted titles and English-only requests before
+creating an [Ajo](./models.md). Those removals are logged in `log_filter.md`
+with the filter codes described below.
 
 With each rejection, Ziwen also suggests a new title for the post that would adhere to the formatting guidelines. That new title is included in a comment that's posted to the post and Ziwen automatically generates a resubmit link for the OP that pre-fills that new title in.
 
@@ -37,12 +34,16 @@ Moderators and OPs can manually toggle a post's "long" status by using the [comm
 
 r/translator encourages people to follow the [proper formatting guidelines](https://www.reddit.com/r/translator/wiki/rules), especially the inclusion of `>` in the title. However, it's okay for someone to submit a title like `[English to Dutch] Text Paragraph`, even if it doesn't have the `>`, as Ziwen is intentionally written to be tolerant of bad formatting in post titles and to account for as many variations as possible.
 
-Ziwen will filter out/reject titles that match the following criteria:
+Ziwen records the following filter codes when it removes a post for title
+formatting or English-only content:
 
-1. **The title does not include a target language.** An example of this would be the title `Translate pls`. 
-2. **The post's long title "[buries the lede](https://www.merriam-webster.com/wordplay/bury-the-lede-versus-lead)"** and puts the target language towards the end without brackets. An example of this would be the title `Could somebody please translate these two words from Japanese to English.`
-3. **The title does not include a source language.** An example of this would be the title `Translate to English please`. 
-4. **The post is only for English.** An example of this would be the title `[English >English] "seak out" meaning`. We redirect such inquiries to r/englishlearning, r/transcription (for handwriting issues) or r/grammar.
+| Code | Meaning |
+|------|---------|
+| `1` | Ziwen could not find enough title-format clues to treat this as a valid translation request. Usually this means the title is missing a clear language pair or direction, even if it mentions a language. |
+| `1A` | The title has a recognizable `to [language]` direction, but it appears too late in the title instead of near the beginning. Ziwen treats that as burying the required language info. |
+| `1B` | The title is short and says something like `to English`, but Ziwen cannot find any non-English source language. In practice, it looks like a request with a target but no clear source. |
+| `2` | The title uses `>`, but the arrow appears too late in an unbracketed title. Ziwen expects the language direction to be near the front. |
+| `EE` | Ziwen parsed the title as English on both sides, such as `English > English`, so it treats the post as English-only rather than a translation request. We redirect such inquiries to r/englishlearning, r/transcription (for handwriting issues), or r/grammar. |
 
 With each rejection, Ziwen also suggests a new title for the post that would adhere to the formatting guidelines. That new title is included in a comment that's added to the post and Ziwen automatically generates a resubmit link for the OP that pre-fills that new title in, though this resubmit link usually only works on desktop and not on mobile.
 

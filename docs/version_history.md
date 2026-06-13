@@ -30,6 +30,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
 * 🛠️ BUG FIX: Ambiguous source-language titles such as `[Persian or Urdu > English]` now notify all candidate languages without being flaired as multiple-language requests, as many of these posts are situations where the requester is unsure of the language being requested, rather than an actual multi-language request.
+* 🛠️ BUG FIX: Title filtering no longer rejects short `Language to English` titles solely because the detected language is not marked as flair-supported. Unsupported but recognized languages can now still count as valid language clues during title filtering.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)
