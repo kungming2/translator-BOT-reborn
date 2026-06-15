@@ -15,7 +15,9 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
+from typing import cast
 
+from praw.models import Comment
 from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
@@ -1119,7 +1121,7 @@ def post_monthly_statistics(month_year: str) -> None:
         month_use_string = f"{points_year}-{points_month:02d}"
 
         points_summary = get_month_points_summary(month_use_string)
-        points_comment = monthly_post.reply(points_summary)
+        points_comment = cast(Comment, monthly_post.reply(points_summary))
         points_comment.mod.distinguish(sticky=True)
         msg.good("Added points data comment")
 

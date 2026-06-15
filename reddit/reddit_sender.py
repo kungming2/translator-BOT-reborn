@@ -20,6 +20,7 @@ Logger tag: [R:SENDER]
 """
 
 import logging
+from typing import NamedTuple
 
 from praw.exceptions import RedditAPIException
 from praw.models import Comment, Message, Redditor, Submission
@@ -42,6 +43,23 @@ class UserNotFoundException(Exception):
     pass
 
 
+class _RedditErrorDetails(NamedTuple):
+    error_type: str
+    message: str
+
+
+def _reddit_api_error_details(ex: RedditAPIException) -> _RedditErrorDetails:
+    """Extract the first Reddit API error item without relying on legacy attrs."""
+    for item in ex.items:
+        if hasattr(item, "error_type") and hasattr(item, "message"):
+            return _RedditErrorDetails(str(item.error_type), str(item.message))
+        if isinstance(item, list) and len(item) >= 2:
+            return _RedditErrorDetails(str(item[0]), str(item[1]))
+        if isinstance(item, str):
+            return _RedditErrorDetails(item, str(ex))
+    return _RedditErrorDetails(type(ex).__name__, str(ex))
+
+
 # ─── Module-level state ───────────────────────────────────────────────────────
 
 testing_mode = SETTINGS["testing_mode"]
@@ -54,7 +72,7 @@ def reddit_reply(
     msg_obj: Comment | Message | Submission,
     reply_text: str,
     distinguish: bool = False,
-) -> Comment | Submission | None:
+) -> Comment | Message | Submission | None:
     """
     Reply to a Reddit object (Comment, Message, or Submission).
     In testing mode, logs the reply instead of sending it.
@@ -175,17 +193,18 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
             redditor_obj.message(subject=subject, message=body)
             logger.info(f"Successfully sent a private message to u/{username}.")
         except RedditAPIException as ex:
-            if ex.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
+            error = _reddit_api_error_details(ex)
+            if error.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
                 # Specific Reddit PM restriction
                 logger.warning(
                     f"Cannot send message to u/{username}: user has disabled PMs or has not whitelisted the bot."
                 )
-            elif ex.error_type == "RATELIMIT":
+            elif error.error_type == "RATELIMIT":
                 # Rate limited by the API.
                 logger.info(
                     f"Reddit API rate limit reached: Cannot send message to u/{username}."
                 )
-            elif ex.error_type == "USER_DOESNT_EXIST":
+            elif error.error_type == "USER_DOESNT_EXIST":
                 # User no longer exists; raise so callers can clean up.
                 logger.info(
                     f"User does not exist: Unable to send message to u/{username}."
@@ -193,7 +212,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 raise UserNotFoundException(f"u/{username} no longer exists.") from ex
             else:
                 logger.warning(
-                    f"Unable to send a private message to u/{username}: {ex.error_type} - {ex.message}"
+                    f"Unable to send a private message to u/{username}: {error.error_type} - {error.message}"
                 )
         except ServerError as ex:  # Server-side issue.
             logger.exception(f"Encountered server error: {ex}.")

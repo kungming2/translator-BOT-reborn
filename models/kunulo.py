@@ -79,6 +79,13 @@ class Kunulo:
     def __repr__(self) -> str:
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
+    @staticmethod
+    def _is_comment_like(comment: Any) -> bool:
+        """Return whether an object has the PRAW comment fields this parser needs."""
+        return isinstance(getattr(comment, "id", None), str) and isinstance(
+            getattr(comment, "body", None), str
+        )
+
     @classmethod
     def from_submission(cls, submission: Submission) -> "Kunulo":
         """
@@ -99,6 +106,9 @@ class Kunulo:
         submission.comments.replace_more(limit=None)
 
         for comment in submission.comments.list():
+            if not cls._is_comment_like(comment):
+                continue
+
             comment_author = comment.author.name if comment.author else None
             comment_body = comment.body.lower()  # for easier matching
 

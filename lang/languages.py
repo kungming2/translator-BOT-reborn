@@ -656,7 +656,9 @@ def _resolve_to_lingvo(
             bare_word = re.sub(r"\W", "", word)  # strip stray punctuation like parens
             if _is_exact_language_identifier(bare_word):
                 continue
-            country_info = country_converter(bare_word, abbreviations_okay=False)
+            country_info = country_converter(
+                bare_word, abbreviations_okay=False, partial_match=False
+            )
             if country_info[0]:
                 remaining = " ".join(w for j, w in enumerate(words) if j != i)
                 lang_result = _resolve_to_lingvo(
@@ -827,8 +829,11 @@ def parse_language_list(list_string: str) -> list[Lingvo]:
         lang = converter(item)
         logger.debug(f"converter({repr(item)}) returned: {lang}")
         if lang:
-            final_lingvos[lang.preferred_code] = lang
-            logger.debug(f"Added {lang.preferred_code} -> {lang.name}")
+            if lang.preferred_code not in final_lingvos:
+                final_lingvos[lang.preferred_code] = lang
+                logger.debug(f"Added {lang.preferred_code} -> {lang.name}")
+            else:
+                logger.debug(f"Skipped duplicate {lang.preferred_code} -> {lang.name}")
         else:
             logger.debug(f"converter returned None for {repr(item)}")
 

@@ -97,6 +97,7 @@ def title_ai_parser(
     query_kwargs: dict[str, Any] = {
         "behavior": "You are assessing a technical identification",
         "query": query_input,
+        "json_output": True,
     }
 
     if image_url:

@@ -13,16 +13,13 @@ from __future__ import annotations
 import logging
 import re
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 import ddgs
+from praw.models import Comment
 
 from config import SETTINGS
 from config import logger as _base_logger
 from reddit.connection import REDDIT_HELPER, credentials_source
-
-if TYPE_CHECKING:
-    from praw.models import Comment
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
@@ -171,6 +168,9 @@ def build_search_results(post_ids: list[str], search_term: str) -> str:
 
         submission.comments.replace_more(limit=None)
         for comment in submission.comments.list():
+            if not isinstance(comment, Comment):
+                continue
+
             formatted = _extract_relevant_comment(comment, search_term)
             if formatted:
                 result_sections.append(formatted)

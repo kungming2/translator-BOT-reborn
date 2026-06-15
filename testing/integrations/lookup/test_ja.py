@@ -307,13 +307,10 @@ class TestJaWord:
         _assert_meanings(output, "同胞")
         _assert_footer_links(output, "同胞")
 
-    def test_douhou_reading_dohou(self):
+    @pytest.mark.asyncio
+    async def test_douhou_reading_dohou(self):
         """同胞 – reading should be どうほう (dōhō / douhō)."""
-        import asyncio
-
-        output = _strip_cache_marker(
-            asyncio.get_event_loop().run_until_complete(ja_word("同胞"))
-        )
+        output = _strip_cache_marker(await ja_word("同胞"))
         # Accept どうほう in kana or dou hou / dōhō in romaji
         assert re.search(r"どうほう|d[oō]uh[oō]|douhou", output, re.IGNORECASE), (
             f"Expected reading どうほう/dōhō for 同胞:\n{output}"

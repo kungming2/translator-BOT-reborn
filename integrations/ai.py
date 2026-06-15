@@ -10,6 +10,7 @@ Logger tag: [I:AI]
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
 import logging
+from typing import Any
 
 from openai import (
     APIError,  # Used for both DeepSeek and OpenAI
@@ -53,6 +54,7 @@ def ai_query(
     behavior: str = "",
     query: str = "",
     image_url: str | None = None,
+    json_output: bool = False,
 ) -> str | None:
     """
     Pass a query to an AI service, optionally with image support.
@@ -62,6 +64,7 @@ def ai_query(
     :param behavior: System-role instructions for the service.
     :param query: Text prompt to pass to the AI.
     :param image_url: Optional public image URL (OpenAI Vision only).
+    :param json_output: When using DeepSeek, request strict JSON object output.
     :return: The AI-generated response content, or None if an error occurred.
     """
 
@@ -100,11 +103,15 @@ def ai_query(
     # ─── Execute request ──────────────────────────────────────────────
     try:
         # noinspection PyTypeChecker
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,  # type: ignore[arg-type]
-            stream=False,
-        )
+        request_kwargs: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+        }
+        if service == "deepseek" and json_output:
+            request_kwargs["response_format"] = {"type": "json_object"}
+
+        response = client.chat.completions.create(**request_kwargs)  # type: ignore[arg-type]
         assert not isinstance(response, Stream)
         return response.choices[0].message.content
 

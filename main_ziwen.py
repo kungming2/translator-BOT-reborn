@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
         # Probe the API to record usage and collect memory stats
         probe = REDDIT.redditor(USERNAME).created_utc
-        used_calls = REDDIT.auth.limits["used"]
+        used_calls = int(REDDIT.auth.limits["used"] or 0)
 
         mem_bytes = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = f"{mem_bytes / (1024**2):.2f} MB"

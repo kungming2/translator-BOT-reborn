@@ -22,7 +22,7 @@ from collections import Counter
 from datetime import date
 
 from praw.exceptions import RedditAPIException
-from praw.models import TextArea
+from praw.models import Comment, TextArea
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
@@ -640,7 +640,8 @@ def deleted_posts_assessor(
     for submission, original_author in translated_deleted:
         comments = submission.comments.list()
         if not any(
-            getattr(comment.author, "name", None) == original_author
+            isinstance(comment, Comment)
+            and getattr(comment.author, "name", None) == original_author
             for comment in comments
         ):
             impolite_entries.append((submission, original_author))

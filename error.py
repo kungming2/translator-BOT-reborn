@@ -60,7 +60,7 @@ class CustomDumper(yaml.SafeDumper):
     pass
 
 
-def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
+def _str_representer(dumper: CustomDumper, data: str) -> yaml.Node:
     """
     Custom string representer for YAML that formats multi-line strings
     with pipe notation (|) for better readability in error logs.
@@ -72,7 +72,7 @@ def _str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
 
 # PyCharm incorrectly flags this - SafeDumper is compatible with CustomDumper
 # noinspection PyTypeChecker
-CustomDumper.add_representer(str, _str_representer)  # type: ignore[arg-type]
+CustomDumper.add_representer(str, _str_representer)
 
 
 def _atomic_yaml_dump(path: str, data: list[dict[str, Any]]) -> None:

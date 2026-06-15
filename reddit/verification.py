@@ -16,6 +16,8 @@ import sqlite3
 import time
 from typing import TYPE_CHECKING
 
+from praw.models import Comment
+
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
@@ -27,7 +29,7 @@ from reddit.reddit_sender import message_send, reddit_reply
 from responses import RESPONSE
 
 if TYPE_CHECKING:
-    from praw.models import Comment, Redditor
+    from praw.models import Redditor
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:VERIF"})
 
@@ -200,6 +202,9 @@ def verification_parser() -> None:
     cursor = db.cursor_main
 
     for comment in submission.comments.list():
+        if not isinstance(comment, Comment):
+            continue
+
         comment_body = comment.body.strip()
 
         try:

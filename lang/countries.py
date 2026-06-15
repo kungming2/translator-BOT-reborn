@@ -90,7 +90,7 @@ def _load_country_list() -> list[tuple[str, str, str, str, list[str]]]:
 
 
 def country_converter(
-    text_input: str, abbreviations_okay: bool = True
+    text_input: str, abbreviations_okay: bool = True, partial_match: bool = True
 ) -> tuple[str, str]:
     """
     Detect a country based on input. Supports full names, 2-letter
@@ -100,6 +100,8 @@ def country_converter(
         text_input: The input text to match.
         abbreviations_okay: If True, allow matching by abbreviations,
                             like 'CN' or 'MX'. Default is True.
+        partial_match: If True, allow substrings of country names to match
+                       as a fallback. Default is True.
 
     Returns:
         Tuple of (country_code, country_name). Returns ("", "") if no match found.
@@ -134,7 +136,11 @@ def country_converter(
         name_normalized = _normalize_country_text(name)
         if text_normalized == name_normalized:
             return alpha2, name
-        elif text_normalized in name_normalized and len(text_normalized) >= 3:
+        elif (
+            partial_match
+            and text_normalized in name_normalized
+            and len(text_normalized) >= 3
+        ):
             if possible_name:
                 logger.debug(
                     f"Ambiguous partial match for {text_input!r}: "

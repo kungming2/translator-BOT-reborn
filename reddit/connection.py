@@ -196,16 +196,26 @@ def submit_translatorbot_post(
 
     active_reddit = reddit or REDDIT
     subreddit = active_reddit.subreddit(TRANSLATORBOT_SUBREDDIT)
-    submit_kwargs: dict[str, str | bool] = {"title": title}
-
     if selftext is not None:
-        submit_kwargs["selftext"] = selftext
-    if url is not None:
-        submit_kwargs["url"] = url
-    if send_replies is not None:
-        submit_kwargs["send_replies"] = send_replies
-
-    submission = subreddit.submit(**submit_kwargs)
+        if send_replies is None:
+            submission = subreddit.submit(title=title, selftext=selftext)
+        else:
+            submission = subreddit.submit(
+                title=title, selftext=selftext, send_replies=send_replies
+            )
+    elif url is not None:
+        if send_replies is None:
+            submission = subreddit.submit(title=title, url=url)
+        else:
+            submission = subreddit.submit(
+                title=title, url=url, send_replies=send_replies
+            )
+    elif send_replies is None:
+        submission = subreddit.submit(title=title, selftext="")
+    else:
+        submission = subreddit.submit(
+            title=title, selftext="", send_replies=send_replies
+        )
 
     if flair_id is not None:
         submission.flair.select(flair_id)

@@ -611,6 +611,34 @@ def _fetch_from_zitools(character: str) -> dict | None:
         return None
 
 
+def _parse_unihan_field(content: str, field_name: str) -> str | None:
+    """Extract a field value from a Unihan HTML table."""
+    tree = html.fromstring(content)
+    for row in tree.xpath("//tr[td]"):
+        cells = [" ".join(cell.text_content().split()) for cell in row.xpath("./td")]
+        if len(cells) >= 2 and cells[0] == field_name:
+            return cells[1] or None
+    return None
+
+
+async def _unihan_mandarin_reading(character: str) -> str | None:
+    """Fetch the kMandarin reading from Unihan."""
+    encoded_character = quote(character)
+    url = (
+        "https://www.unicode.org/cgi-bin/GetUnihanData.pl"
+        f"?codepoint={encoded_character}"
+    )
+    try:
+        async with aiohttp.ClientSession(headers=useragent) as session:
+            response = await session.get(url, timeout=aiohttp.ClientTimeout(total=10))
+            content = await response.text()
+    except (TimeoutError, aiohttp.ClientError) as exc:
+        logger.warning(f"Unihan Mandarin lookup failed for '{character}': {exc!r}")
+        return None
+
+    return _parse_unihan_field(content, "kMandarin")
+
+
 async def _zh_character_other_readings(character: str) -> str | None:
     """
     Get Sino-Xenic (Korean, Vietnamese, Japanese) readings for a Chinese
@@ -731,6 +759,17 @@ async def _zh_character_fetch(character: str) -> str:
 
     if not multi_mode:
         cmn_pronunciation = " / ".join(cmn_pronunciation_list)
+        mdbg_not_in_dictionary = bool(
+            tree.xpath(
+                '//td[contains(@class,"details")]'
+                '//*[contains(normalize-space(), "[Not in dictionary]")]'
+            )
+        )
+        if mdbg_not_in_dictionary:
+            unihan_mandarin = await _unihan_mandarin_reading(tradify(character))
+            if unihan_mandarin:
+                cmn_pronunciation = unihan_mandarin
+
         yue_pronunciation_list = tree.xpath(
             '//a[contains(@onclick,"pronounce-jyutping")]/text()'
         )

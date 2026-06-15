@@ -32,7 +32,7 @@ import prawcore
 from praw.exceptions import RedditAPIException
 from praw.models import Comment, Submission
 
-from config import Paths, SETTINGS, load_settings
+from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 from database import db
 from models.ajo import Ajo, ajo_loader, ajo_writer

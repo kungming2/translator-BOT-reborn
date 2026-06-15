@@ -629,6 +629,21 @@ class TestParseLanguageList(unittest.TestCase):
         self.assertIsNone(result[0].country)
 
     @_skip_if_no_data
+    def test_duplicate_multiword_language_does_not_apply_partial_country(self) -> None:
+        result = parse_language_list("Norse, Old Norse")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].preferred_code, "non")
+        self.assertEqual(result[0].name, "Norse")
+        self.assertIsNone(result[0].country)
+
+    @_skip_if_no_data
+    def test_country_keyword_language_still_applies_country(self) -> None:
+        result = converter("Canadian French")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "fr")
+        self.assertEqual(result.country, "CA")
+
+    @_skip_if_no_data
     def test_exact_language_identifier_does_not_match_codes(self) -> None:
         self.assertFalse(_is_exact_language_identifier("fr"))
         self.assertFalse(_is_exact_language_identifier("or"))

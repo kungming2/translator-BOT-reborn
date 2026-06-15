@@ -18,7 +18,7 @@ import re
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import orjson
 import prawcore
@@ -305,7 +305,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> dict:
     months_elapsed = messaging_months_elapsed()
 
     if isinstance(page_content, str):
-        page_content = r.wiki[page_content.lower()]
+        page_content = cast(WikiPage, r.wiki[page_content.lower()])
     page_body = page_content.content_md
 
     try:
