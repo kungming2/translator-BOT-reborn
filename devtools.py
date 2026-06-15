@@ -264,12 +264,18 @@ def check_lang_converter() -> None:
     with msg.loading(f"Converting '{my_test}'..."):
         converter_result = converter(my_test)
     if converter_result:
+        country_emoji = converter_result.country_emoji or ""
+        code_display = (
+            f"{country_emoji} `{converter_result.preferred_code}`"
+            if country_emoji
+            else f"`{converter_result.preferred_code}`"
+        )
         msg.good(
-            f"Input: `{my_test}` → Preferred Code: {converter_result.country_emoji} "
-            f"`{converter_result.preferred_code}`"
+            f"Input: `{my_test}` → {converter_result.name} "
+            f"(Preferred Code: {code_display})"
         )
         pprint(vars(converter_result))
-        msg.info(f"Country flag emoji: {converter_result.country_emoji}")
+        msg.info(f"Country flag emoji: {country_emoji or 'None'}")
     else:
         msg.warn("Did not match anything.")
 

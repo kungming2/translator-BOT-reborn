@@ -111,7 +111,7 @@ def ai_query(
         if service == "deepseek" and json_output:
             request_kwargs["response_format"] = {"type": "json_object"}
 
-        response = client.chat.completions.create(**request_kwargs)  # type: ignore[arg-type]
+        response = client.chat.completions.create(**request_kwargs)
         assert not isinstance(response, Stream)
         return response.choices[0].message.content
 

@@ -356,6 +356,14 @@ class TestConverterStableCodes(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result.name, "Tohono O'odham")
 
+    @_skip_if_no_data
+    def test_iso_name_fallback_returns_project_lingvo_when_available(self) -> None:
+        result = converter("Old Norse")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.preferred_code, "non")
+        self.assertEqual(result.name, "Norse")
+        self.assertTrue(result.supported)
+
 
 class TestConverterEdgeInputs(unittest.TestCase):
     """Inputs that should always return None."""
@@ -635,6 +643,13 @@ class TestParseLanguageList(unittest.TestCase):
         self.assertEqual(result[0].preferred_code, "non")
         self.assertEqual(result[0].name, "Norse")
         self.assertIsNone(result[0].country)
+
+    @_skip_if_no_data
+    def test_single_iso_name_fallback_uses_canonical_project_name(self) -> None:
+        result = parse_language_list("old norse")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].preferred_code, "non")
+        self.assertEqual(result[0].name, "Norse")
 
     @_skip_if_no_data
     def test_country_keyword_language_still_applies_country(self) -> None:

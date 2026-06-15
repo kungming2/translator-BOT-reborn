@@ -367,6 +367,16 @@ def _copy_lingvo_for_return(lingvo: Lingvo, preserve_country: bool = False) -> L
     return lingvo_copy
 
 
+def _canonical_copy_for_return(
+    lingvo: Lingvo, preserve_country: bool = False
+) -> Lingvo:
+    """Prefer the project Lingvo entry when an ISO fallback resolves to its code."""
+    canonical = get_lingvos().get(lingvo.preferred_code)
+    if canonical:
+        return _copy_lingvo_for_return(canonical, preserve_country=preserve_country)
+    return _copy_lingvo_for_return(lingvo, preserve_country=preserve_country)
+
+
 def _apply_country(base: Lingvo, cc: str, country_name: str) -> Lingvo:
     """Return a deep copy of base with the country name and code applied."""
     lingvo_with_country = copy.deepcopy(base)
@@ -522,7 +532,7 @@ def _resolve_to_lingvo(
                 return standard_lingvo
             iso_search = _iso_codes_deep_search(input_text, script_search=False)
             if iso_search:
-                return _copy_lingvo_for_return(
+                return _canonical_copy_for_return(
                     iso_search, preserve_country=preserve_country
                 )
             return None
@@ -692,7 +702,7 @@ def _resolve_to_lingvo(
         iso_search = _iso_codes_deep_search(input_text, script_search=True)
 
     if iso_search:
-        return _copy_lingvo_for_return(iso_search, preserve_country=preserve_country)
+        return _canonical_copy_for_return(iso_search, preserve_country=preserve_country)
 
     # ISO 639-2B mapping (e.g., 'fre' -> 'fr')
     if input_lower in reference_lists["ISO_639_2B"]:
@@ -718,7 +728,7 @@ def _resolve_to_lingvo(
         try:
             lingvo_script = _iso_codes_deep_search(input_text, script_search=True)
             if lingvo_script:
-                return _copy_lingvo_for_return(
+                return _canonical_copy_for_return(
                     lingvo_script, preserve_country=preserve_country
                 )
             else:

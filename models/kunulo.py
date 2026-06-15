@@ -16,7 +16,7 @@ Logger tag: [M:KUNULO]
 
 import logging
 import re
-from typing import Any
+from typing import Any, TypeGuard
 
 from praw.models import Comment, Submission
 
@@ -26,7 +26,7 @@ from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KUNULO"})
 
-EntryData = list[str] | None
+EntryData = list[str] | dict[str, Any] | None
 KunuloEntry = tuple[str, EntryData]
 
 
@@ -80,7 +80,7 @@ class Kunulo:
         return f"<Kunulo: ({self._data}) | OP Thanks: {self._op_thanks}>"
 
     @staticmethod
-    def _is_comment_like(comment: Any) -> bool:
+    def _is_comment_like(comment: object) -> TypeGuard[Comment]:
         """Return whether an object has the PRAW comment fields this parser needs."""
         return isinstance(getattr(comment, "id", None), str) and isinstance(
             getattr(comment, "body", None), str
