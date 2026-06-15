@@ -163,7 +163,9 @@ def reddit_edit(comment_id: str, new_body: str) -> Comment | None:
     return None
 
 
-def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
+def message_send(
+    redditor_obj: Redditor, subject: str, body: str, log_success: bool = True
+) -> bool:
     """
     Send a private message to a Reddit user.
     In testing mode, logs the message instead of sending it.
@@ -172,6 +174,11 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
         redditor_obj: A PRAW Redditor object representing the recipient.
         subject: The subject line of the message.
         body: The body text of the message.
+        log_success: If False, suppresses the per-recipient success line.
+
+    Returns:
+        True when the message was sent or would be sent in testing mode; False
+        when Reddit rejected the message without raising a cleanup exception.
     """
     username = getattr(redditor_obj, "name", "unknown")
 
@@ -188,22 +195,27 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 "Subject": subject,
             },
         )
+        return True
     else:
         try:
             redditor_obj.message(subject=subject, message=body)
-            logger.info(f"Successfully sent a private message to u/{username}.")
+            log = logger.info if log_success else logger.debug
+            log(f"Successfully sent a private message to u/{username}.")
+            return True
         except RedditAPIException as ex:
             error = _reddit_api_error_details(ex)
             if error.error_type == "NOT_WHITELISTED_BY_USER_MESSAGE":
                 # Specific Reddit PM restriction
-                logger.warning(
+                logger.info(
                     f"Cannot send message to u/{username}: user has disabled PMs or has not whitelisted the bot."
                 )
+                return False
             elif error.error_type == "RATELIMIT":
                 # Rate limited by the API.
                 logger.info(
                     f"Reddit API rate limit reached: Cannot send message to u/{username}."
                 )
+                return False
             elif error.error_type == "USER_DOESNT_EXIST":
                 # User no longer exists; raise so callers can clean up.
                 logger.info(
@@ -214,5 +226,7 @@ def message_send(redditor_obj: Redditor, subject: str, body: str) -> None:
                 logger.warning(
                     f"Unable to send a private message to u/{username}: {error.error_type} - {error.message}"
                 )
+                return False
         except ServerError as ex:  # Server-side issue.
             logger.exception(f"Encountered server error: {ex}.")
+            return False

@@ -262,15 +262,15 @@ def title_parser(
         language_parser(seeking_raw, include_iso_639_3) if seeking_raw else ([], [])
     )
 
-    logger.info(f"Title Parser | offering: {offering_codes}")
-    logger.info(f"Title Parser | seeking:  {seeking_codes}")
+    logger.debug(f"Title Parser | offering: {offering_codes}")
+    logger.debug(f"Title Parser | seeking:  {seeking_codes}")
 
     offering_levels = (
         level_parser(offering_raw, offering_codes, offering_indices)
         if offering_raw
         else {}
     )
-    logger.info(f"Title Parser | levels:   {offering_levels}")
+    logger.debug(f"Title Parser | levels:   {offering_levels}")
 
     return offering_codes, seeking_codes, offering_levels
 
@@ -424,7 +424,7 @@ def format_matches(
     matches_limit: int = HERMES_SETTINGS["matches_limit"]
 
     sorted_matches = sorted(matches.items(), key=lambda x: x[1][0], reverse=True)
-    logger.info(f"Format Matches: {len(sorted_matches)} raw candidates.")
+    logger.debug(f"Format Matches: {len(sorted_matches)} raw candidates.")
 
     reserved: list = []
     randomised: list = []
@@ -445,6 +445,7 @@ def format_matches(
         return None
 
     selected = sorted(selected, key=lambda x: x[1][0], reverse=True)
+    selected_count = len(selected[:num_of_entries])
 
     lines: list[str] = []
     for match in selected[:num_of_entries]:
@@ -495,6 +496,10 @@ def format_matches(
             lines.append(line)
 
     if not lines:
+        logger.info(
+            f"Match formatting summary: raw_candidates={len(sorted_matches)}, "
+            f"selected={selected_count}, formatted=0."
+        )
         return None
 
     header = (
@@ -504,5 +509,9 @@ def format_matches(
     footer = (
         "\n\n*Please feel free to comment on the above posts "
         "to get in contact with their authors.*"
+    )
+    logger.info(
+        f"Match formatting summary: raw_candidates={len(sorted_matches)}, "
+        f"selected={selected_count}, formatted={len(lines)}."
     )
     return header + "\n".join(lines) + footer

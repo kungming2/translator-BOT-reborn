@@ -25,6 +25,7 @@ from lang.countries import country_converter
 from lang.languages import converter, language_module_settings
 from models.ajo import ajo_loader
 from models.lingvo import Lingvo
+from monitoring.runtime_metrics import increment_runtime_metric
 from monitoring.usage_statistics import action_counter
 from reddit.connection import REDDIT, is_valid_user
 from reddit.reddit_sender import UserNotFoundException, message_send
@@ -133,7 +134,7 @@ def _prune_deleted_user_notifications(
 
 def notifier_language_list_editor(
     language_list: list, user_object: "str | Redditor", mode: str = "insert"
-) -> None:
+) -> dict[str, list[str]]:
     """
     Modify the notification database by inserting or deleting entries for a username.
 
@@ -157,10 +158,18 @@ def notifier_language_list_editor(
             db.cursor_main.execute(
                 "DELETE FROM notify_internal WHERE username = ?", (username,)
             )
-        return
+        return {"added": [], "already": [], "deleted": [], "missing": [], "purged": []}
 
     if not language_list:  # Nothing to process
-        return
+        return {"added": [], "already": [], "deleted": [], "missing": [], "purged": []}
+
+    summary: dict[str, list[str]] = {
+        "added": [],
+        "already": [],
+        "deleted": [],
+        "missing": [],
+        "purged": [],
+    }
 
     for item in language_list:
         # Determine if this is an internal type (meta/community) or a
@@ -187,14 +196,20 @@ def notifier_language_list_editor(
                     f"INSERT INTO {table} ({column}, username) VALUES (?, ?)",
                     sql_params,
                 )
+            summary["added"].append(processed_code)
+        elif mode == "insert" and exists:
+            summary["already"].append(processed_code)
         elif mode == "delete" and exists:
             with db.conn_main:
                 db.cursor_main.execute(
                     f"DELETE FROM {table} WHERE {column} = ? AND username = ?",
                     sql_params,
                 )
+            summary["deleted"].append(processed_code)
+        elif mode == "delete" and not exists:
+            summary["missing"].append(processed_code)
 
-    return
+    return summary
 
 
 def notifier_language_list_retriever(
@@ -649,6 +664,10 @@ def notifier(
     else:
         image_description = ""
 
+    sent_usernames: list[str] = []
+    failed_usernames: list[str] = []
+    attempted_count = len(notify_users_list)
+
     for username in notify_users_list:
         # Choose the message template based on mode
         message_templates = {
@@ -683,19 +702,28 @@ def notifier(
             full_message = (
                 f"{message}{RESPONSE.BOT_DISCLAIMER}{RESPONSE.MSG_NOTIFICATIONS_FOOTER}"
             )
-            message_send(
-                redditor_obj=recipient, subject=message_subject, body=full_message
+            message_sent = message_send(
+                redditor_obj=recipient,
+                subject=message_subject,
+                body=full_message,
+                log_success=False,
             )
-            # Update notification count for this user/language
-            _update_user_notification_count(username, lingvo)
+            if message_sent:
+                sent_usernames.append(username)
+                # Update notification count for this user/language
+                _update_user_notification_count(username, lingvo)
+            else:
+                failed_usernames.append(username)
 
         except UserNotFoundException:
             logger.info(f"u/{username} no longer exists. Pruning from database.")
             _prune_deleted_user_notifications(username)
+            failed_usernames.append(username)
         except RedditAPIException as e:
             logger.info(f"Error sending message to u/{username}. Removing user.")
             logger.error(f"API Exception for u/{username}: {e}")
             _prune_deleted_user_notifications(username)
+            failed_usernames.append(username)
 
     # Record stats about the messaging session
     messaging_mins = (time.time() - messaging_start) / 60
@@ -711,9 +739,13 @@ def notifier(
     )
     record_activity_csv("messaging", payload)
 
+    increment_runtime_metric("notifications_attempted", attempted_count)
+    increment_runtime_metric("notifications_sent", len(sent_usernames))
+
     logger.info(
-        f"Sent notifications to {len(notify_users_list)} "
-        f"users signed up for '{language_name}'."
+        f"Notification summary for '{language_name}': "
+        f"attempted={attempted_count}, sent={len(sent_usernames)}, "
+        f"failed={len(failed_usernames)}."
     )
 
     return notify_users_list

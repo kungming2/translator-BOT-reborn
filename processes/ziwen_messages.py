@@ -15,6 +15,7 @@ from praw.models import Message, Redditor
 
 from config import TRANSIENT_ERRORS
 from config import logger as _base_logger
+from monitoring.runtime_metrics import increment_runtime_metric
 from reddit.connection import REDDIT, is_mod, is_valid_user
 from reddit.messaging import (
     handle_add,
@@ -57,6 +58,7 @@ def ziwen_messages() -> None:
 
     if messages:
         logger.info(f"Processing {len(messages)} unread message(s)")
+        increment_runtime_metric("messages_processed", len(messages))
 
     for message in messages:
         message_id = getattr(message, "id", "<unknown>")

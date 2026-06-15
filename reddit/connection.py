@@ -332,7 +332,7 @@ def create_mod_note(
             redditor=REDDIT.redditor(username),
         )
 
-        logger.info(f"Created {label} note for u/{username}: {included_note}")
+        logger.info(f"Created '{label}' note for u/{username}: '{included_note}'")
         return True
 
     except Exception as e:

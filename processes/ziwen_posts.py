@@ -20,6 +20,7 @@ from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
 from monitoring.dupe_detector import check_image_duplicate, duplicate_detector
 from monitoring.request_closeout import closeout_posts
+from monitoring.runtime_metrics import increment_runtime_metric
 from monitoring.usage_statistics import action_counter
 from reddit.connection import REDDIT, is_internal_post, is_mod, remove_content
 from reddit.notifications import is_user_over_submission_limit, notifier
@@ -100,10 +101,11 @@ def ziwen_posts(post_limit: int | None = None) -> None:
     posts = list(subreddit_object.new(limit=fetch_amount))
     posts.reverse()
     logger.debug(f"Fetched {len(posts)} posts to process.")
+    increment_runtime_metric("posts_seen", len(posts))
 
     # ── Duplicate detection ────────────────────────────────────────────────────
 
-    logger.info("Running duplicate detection...")
+    logger.debug("Running duplicate detection...")
     detection_limit = int(fetch_amount // 4)
     dupes_removed = duplicate_detector(
         list_posts=posts[-detection_limit:],
@@ -113,7 +115,7 @@ def ziwen_posts(post_limit: int | None = None) -> None:
     if dupes_removed:
         logger.info(f"Completed duplicate detection. Removed {dupes_removed} posts.")
     else:
-        logger.info("No duplicate posts found.")
+        logger.debug("No duplicate posts found.")
 
     for post in posts:
         post_ajo = None
@@ -156,6 +158,7 @@ def ziwen_posts(post_limit: int | None = None) -> None:
 
         # Mark post as processed.
         logger.info(f"Now processing `{post_id}`: {post_title}...")
+        increment_runtime_metric("new_posts")
         db.cursor_main.execute(
             "INSERT INTO old_posts (id, created_utc, filtered) VALUES (?, ?, ?)",
             (post_id, int(post.created_utc), 0),
@@ -169,7 +172,10 @@ def ziwen_posts(post_limit: int | None = None) -> None:
             f"{post_title} | `{post_id}`"
         )
         post_okay, filtered_title, filter_reason = main_posts_filter(post_title)
-        logger.info(f"Filter result for `{post_id}`: {post_okay}, {filter_reason}")
+        logger.info(
+            f"Filter result for `{post_id}`: "
+            f"passed={post_okay}; reason={filter_reason or 'n/a'}"
+        )
 
         if not post_okay:
             if not SETTINGS["testing_mode"]:

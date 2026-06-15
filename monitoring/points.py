@@ -157,7 +157,8 @@ def _replace_comment_point_records(
         if isinstance(username, str) and username.lower() not in excluded_usernames
     ]
 
-    logger.info(
+    log = logger.info if point_records else logger.debug
+    log(
         f"Writing {len(point_records)} point record(s) to DB for comment `{comment_id}`"
     )
     for username, user_points in point_records:
@@ -194,7 +195,7 @@ def points_worth_determiner(lingvo_object: Lingvo) -> int:
     )
     row = cursor.fetchone()
     if row:
-        logger.info(f"Found cached multiplier for `{language_code}`: {row[0]}")
+        logger.info(f"Found cached multiplier for '{language_code}': {row[0]}")
         return int(row[0])
 
     logger.debug(f"No cached multiplier for {language_code!r}, fetching from wiki.")
@@ -510,9 +511,10 @@ def points_tabulator(
         else:
             logger.debug(f"[Points] No point value for no-arg command: {name}")
 
-    logger.info(
+    log = logger.info if commands else logger.debug
+    log(
         f"Commands processed for comment `{comment.id}`: {len(commands)} commands, "
-        f"total preliminary points {points}"
+        f"total preliminary points {points}."
     )
 
     if len(body) > 120 and comment_author != op_author:
@@ -524,7 +526,7 @@ def points_tabulator(
         and any(k in body for k in SETTINGS["thanks_keywords"])
         and len(body) < 20
     ):
-        logger.info(f"OP short thank-you from u/{comment_author}")
+        logger.info(f"OP short thank-you from u/{comment_author}.")
         parent_author, parent_comment = get_parent_author(comment)
         if parent_author:
             if parent_author not in translators_to_record:
@@ -559,6 +561,7 @@ def points_tabulator(
     _update_points_status(points_status, comment_author, points)
 
     results = [entry for entry in points_status if entry[1] != 0]
+    total_awarded = sum(entry[1] for entry in results)
 
     if translators_to_record and ajo:
         for translator in translators_to_record:
@@ -568,11 +571,22 @@ def points_tabulator(
             )
 
         ajo_writer(ajo)
+        recorded_translators = ", ".join(
+            f"u/{translator}" for translator in translators_to_record
+        )
         logger.info(
-            f"Recorded {len(translators_to_record)} translator(s) to Ajo: {', '.join(translators_to_record)}"
+            f"Recorded {len(translators_to_record)} translator(s) to Ajo: "
+            f"{recorded_translators}"
         )
 
     _replace_comment_point_records(comment_id, results, original_post.id)
-    logger.info(f"Points tabulation complete for comment `{comment.id}`")
+    summary_log = (
+        logger.info if commands or results or translators_to_record else logger.debug
+    )
+    summary_log(
+        f"Points summary for comment `{comment.id}`: "
+        f"commands={len(commands)}, records={len(results)}, "
+        f"points_awarded={total_awarded}, translators={len(translators_to_record)}."
+    )
 
     return

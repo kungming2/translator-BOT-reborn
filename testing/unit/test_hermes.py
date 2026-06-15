@@ -69,8 +69,9 @@ def _make_db() -> HermesDatabaseManager:
     return mgr
 
 
-# Sample entries matching the real DB snapshot provided
-_NOW = int(time.time())
+# Sample entries matching the real DB snapshot provided.
+# The embedded post metadata stays snapshot-like, but matcher tests should
+# control DB freshness explicitly because language_matcher filters by posted_utc.
 _SAMPLE_ENTRIES: list[tuple[str, dict[str, Any], int]] = [
     (
         "notgingerbutscottish",
@@ -145,6 +146,15 @@ _SAMPLE_ENTRIES: list[tuple[str, dict[str, Any], int]] = [
         1773754191,
     ),
 ]
+
+
+def _fresh_sample_entries(
+    entries: list[tuple[str, dict[str, Any], int]],
+    age_seconds: int = 60,
+) -> list[tuple[str, dict[str, Any], int]]:
+    """Return entries with DB timestamps recent enough for cutoff tests."""
+    posted_utc = int(time.time()) - age_seconds
+    return [(username, data, posted_utc) for username, data, _ in entries]
 
 
 # ---------------------------------------------------------------------------
@@ -358,20 +368,24 @@ class TestLanguageMatcher(unittest.TestCase):
 
     @_skip_if_no_data
     def test_no_languages_returns_none(self) -> None:
-        result = self._run_matcher(_SAMPLE_ENTRIES, [], [])
+        result = self._run_matcher(_fresh_sample_entries(_SAMPLE_ENTRIES), [], [])
         self.assertIsNone(result)
 
     @_skip_if_no_data
     def test_no_matches_returns_none(self) -> None:
         # Query for Swahili — nobody in sample offers/seeks it
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["sw"], ["sw"])
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["sw"], ["sw"]
+        )
         self.assertIsNone(result)
 
     @_skip_if_no_data
     def test_mutual_match_scores_five(self) -> None:
         # slight-angle3070 offers Korean, seeks English
         # Query: offering English, seeking Korean → mutual match → score 5
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["en"], ["ko"])
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["en"], ["ko"]
+        )
         self.assertIsNotNone(result)
         assert result is not None
         self.assertIn("slight-angle3070", result)
@@ -382,7 +396,9 @@ class TestLanguageMatcher(unittest.TestCase):
         # wushuaiii offers English, seeks Arabic
         # Query: seeking English, offering French (not sought by wushuaiii)
         # → target offers what we seek but doesn't seek what we offer → score 3
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["fr"], ["en"])
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["fr"], ["en"]
+        )
         self.assertIsNotNone(result)
         assert result is not None
         self.assertIn("wushuaiii", result)
@@ -391,7 +407,9 @@ class TestLanguageMatcher(unittest.TestCase):
     @_skip_if_no_data
     def test_seek_only_match_scores_two(self) -> None:
         # namrednas seeks French → offering French matches → score 2
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["fr"], ["sw"])
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["fr"], ["sw"]
+        )
         self.assertIsNotNone(result)
         assert result is not None
         self.assertIn("namrednas", result)
@@ -399,8 +417,10 @@ class TestLanguageMatcher(unittest.TestCase):
 
     @_skip_if_no_data
     def test_expired_entries_excluded(self) -> None:
-        # cut_off of 1 second; all sample entries are years old
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["en"], ["ko"], cut_off=1)
+        # cut_off of 1 second; fresh fixtures are still old enough to expire.
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["en"], ["ko"], cut_off=1
+        )
         self.assertIsNone(result)
 
     @_skip_if_no_data
@@ -414,7 +434,7 @@ class TestLanguageMatcher(unittest.TestCase):
                     "seeking": ["en"],
                     "level": {"ko": "Native"},
                 },
-                _NOW - 60,
+                int(time.time()) - 60,
             )
         ]
         result = self._run_matcher(entries, ["en"], ["ko"])
@@ -425,7 +445,9 @@ class TestLanguageMatcher(unittest.TestCase):
 
     @_skip_if_no_data
     def test_result_structure(self) -> None:
-        result = self._run_matcher(_SAMPLE_ENTRIES, ["en"], ["ko"])
+        result = self._run_matcher(
+            _fresh_sample_entries(_SAMPLE_ENTRIES), ["en"], ["ko"]
+        )
         self.assertIsNotNone(result)
         assert result is not None
         for username, data in result.items():

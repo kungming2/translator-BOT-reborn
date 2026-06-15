@@ -21,6 +21,7 @@ from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from models.komando import action_count_for_statistics
 from monitoring.points import points_tabulator
+from monitoring.runtime_metrics import increment_runtime_metric
 from monitoring.usage_statistics import action_counter, user_statistics_writer
 from reddit.connection import REDDIT, credentials_source, is_internal_post
 from reddit.reddit_sender import message_send
@@ -212,6 +213,7 @@ def ziwen_commands() -> None:
                 )
                 db.conn_main.commit()
                 logger.debug(f"Comment `{comment_id}` is now being processed.")
+                increment_runtime_metric("comments_processed")
 
             # Skip the bot's own comments and AutoModerator comments.
             logger.debug(f"Checking author: '{author_name}' against bot: '{username}'")
@@ -285,6 +287,7 @@ def ziwen_commands() -> None:
                     instruo.commands = allowed_commands
 
                 for komando in instruo.commands:
+                    increment_runtime_metric("commands")
                     handler = HANDLERS.get(komando.name.lower())
 
                     if handler:
@@ -293,6 +296,10 @@ def ziwen_commands() -> None:
                             f"post `{original_post.id}`. Passing to handler."
                         )
                         handler(comment, instruo, komando, original_ajo)
+                        logger.info(
+                            f"Command `{komando.name}` completed for `{comment_id}` "
+                            f"on post `{original_post.id}`."
+                        )
                         action_counter(
                             action_count_for_statistics(komando), komando.name
                         )

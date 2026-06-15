@@ -27,7 +27,9 @@ Logger tag: [CR]
 import asyncio
 import re
 import sys
+import time
 import traceback
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import asyncpraw
@@ -47,6 +49,20 @@ if TYPE_CHECKING:
 logger = get_specific_logger("CR", log_path=Paths.CR["CR_EVENTS"])
 
 
+@dataclass
+class ChineseReferenceRunStats:
+    comments_seen: int = 0
+    already_saved: int = 0
+    no_backticks: int = 0
+    no_cjk_matches: int = 0
+    lookup_comments: int = 0
+    tokens: int = 0
+    replies_sent: int = 0
+    replies_failed: int = 0
+    truncated: int = 0
+    no_lookup_output: int = 0
+
+
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 
 
@@ -64,7 +80,9 @@ async def _chinese_reference_login_async(credentials: dict[str, str]) -> "Reddit
 # ─── Comment processing ───────────────────────────────────────────────────────
 
 
-async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
+async def _fetch_and_reply_chinese_comments(
+    reddit: "Reddit", stats: ChineseReferenceRunStats
+) -> None:
     """Fetch comments from the Chinese multireddit and reply to lookup requests."""
     try:
         multireddit = await reddit.multireddit(redditor=USERNAME, name="chinese")
@@ -87,19 +105,24 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
         return
 
     for comment in comments:
+        stats.comments_seen += 1
         body = comment.body
 
         if comment.saved:  # Already processed
+            stats.already_saved += 1
             continue
 
         if "`" not in body:
+            stats.no_backticks += 1
             continue
 
         matches = re.findall(r"`([\u2E80-\u9FFF]+)`", body)
         await comment.save()  # Mark as processed before any reply attempt
 
         if not matches:
+            stats.no_cjk_matches += 1
             continue
+        stats.lookup_comments += 1
 
         # Tokenize multi-character matches into meaningful segments
         tokenized_matches = []
@@ -110,6 +133,7 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
                 )
             else:
                 tokenized_matches.append(item)
+        stats.tokens += len(tokenized_matches)
 
         # Build reply from per-token lookups
         reply_parts = []
@@ -120,11 +144,15 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
                 reply_parts.append(await zh_word(token))
 
         if not reply_parts:
+            stats.no_lookup_output += 1
             continue
 
         reply_body = "\n\n".join(reply_parts)
+        was_truncated = False
 
         if len(reply_body) > 10000:
+            was_truncated = True
+            stats.truncated += 1
             reply_body = (
                 reply_body[:9000]
                 + "\n\n"
@@ -140,33 +168,40 @@ async def _fetch_and_reply_chinese_comments(reddit: "Reddit") -> None:
 
         try:
             reply = await comment.reply(reply_text)
+            stats.replies_sent += 1
             logger.info(
-                f"Replied to lookup request for {tokenized_matches} "
-                f"on r/{comment.subreddit.display_name}. Comment ID: {reply.id}"
+                f"Reply result: source_comment={comment.id}, reply={reply.id}, "
+                f"subreddit={comment.subreddit.display_name}, "
+                f"matches={len(matches)}, tokens={len(tokenized_matches)}, "
+                f"chars={len(reply_text)}, truncated={was_truncated}."
             )
         except exceptions.RedditAPIException as ex:
+            stats.replies_failed += 1
             logger.error(f"Reddit API exception: {ex}")
         except Exception as ex:
+            stats.replies_failed += 1
             logger.error(f"Unexpected exception: {ex}")
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 
-async def chinese_reference_main() -> None:
+async def chinese_reference_main(stats: ChineseReferenceRunStats) -> None:
     """Initialize async PRAW and run the Chinese reference bot."""
     reddit = await _chinese_reference_login_async(credentials_source)
     try:
-        await _fetch_and_reply_chinese_comments(reddit)
+        await _fetch_and_reply_chinese_comments(reddit, stats)
     finally:
         await reddit.close()
 
 
 if __name__ == "__main__":
-    logger.info("Launching Chinese Reference routine.")
+    start_time = time.time()
+    run_stats = ChineseReferenceRunStats()
+    logger.debug("Launching Chinese Reference routine.")
     # noinspection PyBroadException
     try:
-        asyncio.run(chinese_reference_main())
+        asyncio.run(chinese_reference_main(run_stats))
 
     except KeyboardInterrupt:
         logger.info("Chinese Reference routine stopped by user (KeyboardInterrupt).")
@@ -182,4 +217,18 @@ if __name__ == "__main__":
         error_log_basic(error_entry, "Chinese Reference")
 
     else:
-        logger.debug("Chinese Reference routine completed.")
+        elapsed_time = round((time.time() - start_time) / 60, 2)
+        logger.info(
+            "Run complete: "
+            f"comments_seen={run_stats.comments_seen}, "
+            f"already_saved={run_stats.already_saved}, "
+            f"no_backticks={run_stats.no_backticks}, "
+            f"no_cjk_matches={run_stats.no_cjk_matches}, "
+            f"lookup_comments={run_stats.lookup_comments}, "
+            f"tokens={run_stats.tokens}, "
+            f"replies_sent={run_stats.replies_sent}, "
+            f"replies_failed={run_stats.replies_failed}, "
+            f"truncated={run_stats.truncated}, "
+            f"no_lookup_output={run_stats.no_lookup_output}, "
+            f"duration={elapsed_time:.2f}m."
+        )

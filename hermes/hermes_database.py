@@ -248,7 +248,7 @@ class HermesDatabaseManager(DatabaseManager):
         cur = self.cursor_hermes
         cur.execute("DELETE FROM entries WHERE username = ?", (username,))
         self.conn_hermes.commit()
-        logger.info(f"Deleted entry for u/{username}.")
+        logger.debug(f"Deleted entry for u/{username}.")
 
     def delete_entry_by_utc(self, posted_utc: int) -> None:
         """Remove entries by their posted_utc timestamp (used during maintenance)."""
@@ -273,7 +273,7 @@ class HermesDatabaseManager(DatabaseManager):
                 post_id = data.get("id", "unknown")
                 self.delete_entry_by_utc(posted_utc)
                 pruned.append(post_id)
-                logger.info(f"Pruned expired entry: post {post_id} by u/{username}.")
+                logger.debug(f"Pruned expired entry: post {post_id} by u/{username}.")
         return pruned
 
 

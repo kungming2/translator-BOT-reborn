@@ -147,7 +147,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     )
 
     # Insert the relevant codes.
-    notifier_language_list_editor(
+    subscription_summary = notifier_language_list_editor(
         language_matches + internal_matches, message_author, "insert"
     )
 
@@ -189,8 +189,16 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
     create_mod_note(None, str(message_author), note_text)
 
     logger.info(
-        f"Added notification subscriptions for u/{message_author}: {', '.join(all_names)}."
+        f"Subscription summary for u/{message_author}: "
+        f"added={len(subscription_summary['added'])}, "
+        f"already_existing={len(subscription_summary['already'])}, "
+        f"requested={', '.join(all_names)}."
     )
+    if subscription_summary["already"]:
+        logger.info(
+            f"Subscription request already existed for u/{message_author}: "
+            f"{', '.join(subscription_summary['already'])}."
+        )
     action_counter(len(language_matches) + len(internal_matches), "Subscriptions")
 
 

@@ -28,8 +28,9 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: r/translatorBOT reporting submissions are also now routed through a single handler.
 * 🔄 CHANGE: Renamed some exceptions that are handled in order to prepare for [PRAW 8](https://praw.readthedocs.io/en/latest/package_info/praw8_migration.html#praw8-migration)'s upcoming release.
 * 🔄 CHANGE: Added more language data and common country-code mistaken abbreviations for language requests.
-* 🔄 CHANGE: Title assessment AI queries now request strict JSON responses when using DeepSeek.
-* 🔄 CHANGE: More Reddit helper routines have been adjusted for PRAW 8 compatibility.
+* 🔄 CHANGE: Title assessment AI queries now request strict JSON responses when using [DeepSeek](https://platform.deepseek.com/).
+* 🔄 CHANGE: More Reddit helper routines have been adjusted for [PRAW 8 compatibility](https://www.reddit.com/r/redditdev/comments/1u5uvwe/praw_and_async_praw_8_has_been_released/).
+* 🔄 CHANGE: Logging refinements.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
 * 🛠️ BUG FIX: Language list parsing now deduplicates repeated language mentions and avoids treating partial country-name matches as country hints.

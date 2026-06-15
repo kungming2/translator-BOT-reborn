@@ -21,6 +21,7 @@ from database import record_activity_csv
 from error import error_log_extended
 from integrations.discord_utils import send_discord_alert
 from monitoring.edit_tracker import edit_tracker, progress_tracker
+from monitoring.runtime_metrics import reset_runtime_metrics, runtime_metrics_snapshot
 from processes.ziwen_comments import ziwen_commands
 from processes.ziwen_messages import ziwen_messages
 from processes.ziwen_posts import ziwen_posts
@@ -66,6 +67,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     try:
+        reset_runtime_metrics()
         logger.info("Starting cycle run.")
 
         ziwen_posts()  # Process titles of new posts
@@ -81,7 +83,18 @@ if __name__ == "__main__":
 
         mem_bytes = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = f"{mem_bytes / (1024**2):.2f} MB"
-        logger.info(f"Run complete. Calls used: {used_calls}. {mem_usage} used.")
+        metrics = runtime_metrics_snapshot()
+        logger.info(
+            "Run complete: "
+            f"posts_seen={metrics.get('posts_seen', 0)}, "
+            f"new_posts={metrics.get('new_posts', 0)}, "
+            f"comments_processed={metrics.get('comments_processed', 0)}, "
+            f"commands={metrics.get('commands', 0)}, "
+            f"messages_processed={metrics.get('messages_processed', 0)}, "
+            f"notifications_attempted={metrics.get('notifications_attempted', 0)}, "
+            f"notifications_sent={metrics.get('notifications_sent', 0)}, "
+            f"api_calls={used_calls}, memory={mem_usage}."
+        )
 
     except (KeyboardInterrupt, SystemExit):
         logger.info("Manual user shutdown.")

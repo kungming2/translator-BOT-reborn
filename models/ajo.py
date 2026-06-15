@@ -777,8 +777,14 @@ class Ajo:
             )
             return
 
+        previous_status = getattr(self, "status", None)
         self.status = value
-        logger.info(f"Status set to '{value}'.")
+        if previous_status == value:
+            logger.info(f"Ajo `{self.id}` status unchanged: already '{value}'.")
+        else:
+            logger.info(
+                f"Ajo `{self.id}` status changed: '{previous_status}' -> '{value}'."
+            )
 
         # Automatically set closed_out to True when status is 'translated' or 'doublecheck'
         if value in {"translated", "doublecheck"}:
@@ -1022,12 +1028,19 @@ def ajo_writer(new_ajo: "Ajo") -> None:
                     logger.error("Failed to decode legacy Ajo format.")
                     raise e
             if current_dict != stored_ajo_dict:
+                changed_fields = sorted(
+                    key
+                    for key in set(current_dict) | set(stored_ajo_dict)
+                    if current_dict.get(key) != stored_ajo_dict.get(key)
+                )
                 cursor.execute(
                     "UPDATE ajo_database SET ajo = ? WHERE id = ?",
                     (representation, ajo_id),
                 )
                 conn.commit()
-                logger.info(f"Ajo `{ajo_id}` exists, data updated.")
+                logger.info(
+                    f"Ajo `{ajo_id}` updated fields: {', '.join(changed_fields)}."
+                )
             else:
                 logger.debug(f"Ajo `{ajo_id}` exists, but no change in data.")
         else:

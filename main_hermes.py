@@ -24,6 +24,9 @@ Logger tag: [HM]
 import sys
 import time
 import traceback
+from dataclasses import dataclass
+
+from praw.exceptions import PRAWException
 
 from config import TRANSIENT_ERRORS, Paths, get_specific_logger
 from error import error_log_basic
@@ -51,16 +54,35 @@ CUT_OFF: int = HERMES_SETTINGS["cut_off"]
 FETCH_AMOUNT: int = HERMES_SETTINGS["fetch_limit"]
 
 
+@dataclass
+class HermesRunStats:
+    posts_seen: int = 0
+    new_posts: int = 0
+    parsed: int = 0
+    parse_failed: int = 0
+    db_upserts: int = 0
+    replies_sent: int = 0
+    replies_skipped: int = 0
+    expired_pruned: int = 0
+    deleted_pruned: int = 0
+    verified_posts: int = 0
+    raw_candidates: int = 0
+
+
 # ─── Core routines ────────────────────────────────────────────────────────────
 
 
-def get_submissions() -> None:
+def get_submissions(stats: HermesRunStats | None = None) -> None:
     """
     Fetch the most recent posts from r/Language_Exchange (oldest first),
     store/update author entries, then post match replies where appropriate.
     """
+    if stats is None:
+        stats = HermesRunStats()
+
     posts = list(REDDIT_HERMES.subreddit("language_exchange").new(limit=FETCH_AMOUNT))
     posts.reverse()  # Process oldest first for chronological ordering
+    stats.posts_seen += len(posts)
 
     current_time = time.time()
 
@@ -87,13 +109,25 @@ def get_submissions() -> None:
             continue
 
         logger.info(f"New post: '{post.title}' by u/{post_author}")
+        stats.new_posts += 1
 
         # Parse languages from title
         offering, seeking, levels = title_parser(post.title, include_iso_639_3=True)
+        logger.info(
+            f"Parsed title for `{post.id}`: offering={offering}, "
+            f"seeking={seeking}, levels={levels}."
+        )
 
         if not offering and not seeking:
-            logger.info("> Could not parse languages from title. Skipped.")
+            stats.parse_failed += 1
+            logger.info(f"Skipped post `{post.id}`: reason=parse_failed.")
             continue
+        if not offering or not seeking:
+            missing_side = "offering" if not offering else "seeking"
+            logger.info(
+                f"Parsed title for `{post.id}` with warning: empty_{missing_side}."
+            )
+        stats.parsed += 1
 
         user_data = {
             "id": post.id,
@@ -106,11 +140,14 @@ def get_submissions() -> None:
 
         # Upsert the author's entry in the database
         hermes_db.upsert_entry(post_author, user_data, post_created)
+        stats.db_upserts += 1
 
         # Respect heavily-commented posts (they don't need the bot)
         if post.num_comments > CUT_OFF_COMMENTS_MIN:
+            stats.replies_skipped += 1
             logger.info(
-                f">{CUT_OFF_COMMENTS_MIN} comments on post. Skipping match reply."
+                f"Skipped reply for `{post.id}`: reason=too_many_comments, "
+                f"comments={post.num_comments}, threshold={CUT_OFF_COMMENTS_MIN}."
             )
             continue
 
@@ -118,6 +155,7 @@ def get_submissions() -> None:
         greeting = get_language_greeting(offering, seeking)
         match_data = language_matcher(offering, seeking)
         if match_data:
+            stats.raw_candidates += len(match_data)
             match_body = format_matches(match_data, REDDIT_HERMES)
             if match_body:
                 reply_body = (
@@ -125,23 +163,53 @@ def get_submissions() -> None:
                     + match_body
                     + HERMES_BOT_DISCLAIMER
                 )
-                post.reply(reply_body)
-                logger.info(f"> Replied to u/{post_author}.")
+                try:
+                    post.reply(reply_body)
+                except TRANSIENT_ERRORS:
+                    logger.warning(
+                        f"Reply result for `{post.id}`: sent=false, error=transient."
+                    )
+                    raise
+                except PRAWException as exc:
+                    stats.replies_skipped += 1
+                    logger.warning(
+                        f"Reply result for `{post.id}`: sent=false, "
+                        f"error={type(exc).__name__}: {exc}"
+                    )
+                else:
+                    stats.replies_sent += 1
+                    logger.info(f"Reply result for `{post.id}`: sent=true.")
+            else:
+                stats.replies_skipped += 1
+                logger.info(
+                    f"Skipped reply for `{post.id}`: reason=no_formatted_matches, "
+                    f"raw_candidates={len(match_data)}."
+                )
+        else:
+            stats.replies_skipped += 1
+            logger.info(f"Skipped reply for `{post.id}`: reason=no_matches.")
 
 
-def database_maintenance() -> None:
+def database_maintenance(stats: HermesRunStats | None = None) -> None:
     """
     Remove entries that have exceeded the 90-day retention window and
     purge entries whose original posts have since been deleted or removed.
     """
+    if stats is None:
+        stats = HermesRunStats()
+
     # 1. Prune by age
     pruned_ids = hermes_db.prune_old_entries(CUT_OFF)
     if pruned_ids:
-        logger.info(f"Pruned {len(pruned_ids)} expired entries: {pruned_ids}")
+        stats.expired_pruned += len(pruned_ids)
 
     # 2. Verify remaining posts still exist on Reddit
     entries = hermes_db.get_all_entries()
     if not entries:
+        logger.info(
+            "Maintenance summary: expired_pruned=%s, deleted_pruned=0, verified=0.",
+            stats.expired_pruned,
+        )
         return
 
     full_names = [f"t3_{data['id']}" for _, data, _ in entries if data.get("id")]
@@ -153,31 +221,44 @@ def database_maintenance() -> None:
         for submission in REDDIT_HERMES.info(fullnames=full_names[i : i + 100]):
             try:
                 author_name = submission.author.name  # raises AttributeError if deleted
+                stats.verified_posts += 1
                 logger.debug(
                     f"Verified post by u/{author_name} at {submission.permalink}"
                 )
             except AttributeError:
-                logger.info(
+                logger.debug(
                     f"Post {submission.id} deleted/removed. Removing from database."
                 )
                 user_to_delete = author_by_post.get(submission.id)
                 if user_to_delete:
                     hermes_db.delete_entry(user_to_delete)
+                    stats.deleted_pruned += 1
+
+    logger.info(
+        "Maintenance summary: expired_pruned=%s, deleted_pruned=%s, verified=%s.",
+        stats.expired_pruned,
+        stats.deleted_pruned,
+        stats.verified_posts,
+    )
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     start_time = time.time()
+    run_stats = HermesRunStats()
 
-    logger.info("Hermes starting up. Logged in...")
+    logger.info(
+        f"Hermes cycle start: fetch_limit={FETCH_AMOUNT}, "
+        f"reply_cutoff={CUT_OFF_REPLY}, comment_cutoff={CUT_OFF_COMMENTS_MIN}."
+    )
     logger.debug(f"Settings: {HERMES_SETTINGS}")
 
     initialize_hermes_db()
 
     try:
-        database_maintenance()
-        get_submissions()
+        database_maintenance(run_stats)
+        get_submissions(run_stats)
 
     except KeyboardInterrupt:
         logger.info("Hermes stopped by user (KeyboardInterrupt).")
@@ -194,5 +275,19 @@ if __name__ == "__main__":
 
     finally:
         elapsed_time = round((time.time() - start_time) / 60, 2)
-        logger.info(f"Run {elapsed_time:.2f} minutes.")
+        logger.info(
+            "Run complete: "
+            f"posts_seen={run_stats.posts_seen}, "
+            f"new_posts={run_stats.new_posts}, "
+            f"parsed={run_stats.parsed}, "
+            f"parse_failed={run_stats.parse_failed}, "
+            f"db_upserts={run_stats.db_upserts}, "
+            f"replies_sent={run_stats.replies_sent}, "
+            f"replies_skipped={run_stats.replies_skipped}, "
+            f"expired_pruned={run_stats.expired_pruned}, "
+            f"deleted_pruned={run_stats.deleted_pruned}, "
+            f"verified={run_stats.verified_posts}, "
+            f"raw_candidates={run_stats.raw_candidates}, "
+            f"duration={elapsed_time:.2f}m."
+        )
         hermes_db.close_all()

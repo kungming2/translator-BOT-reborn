@@ -493,7 +493,10 @@ def calligraphy_search(character: str) -> str | None:
             )
             response.raise_for_status()
     except requests.RequestException as e:
-        logger.warning(f"Calligraphy lookup failed for '{character}': {e}")
+        logger.warning(
+            f"Calligraphy lookup failed for '{character}'; "
+            f"continuing without calligraphy data: {e}"
+        )
         return None
 
     # Parse the page with BeautifulSoup and then convert to lxml tree for xpath
