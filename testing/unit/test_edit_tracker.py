@@ -574,6 +574,42 @@ class TestEditTracker:
         update_cache.assert_called_once()
         remove.assert_called_once_with("abc123")
 
+    def test_cached_unchanged_edited_comment_skips_command_parsing(self):
+        comment = make_comment(body="`一貫性`", edited=True)
+        cached = _CachedComment(
+            body="`一貫性`",
+            komandos="lookup_cjk",
+            lookup_content="ja:一貫|ja:性§",
+        )
+        reddit_subreddit = MagicMock()
+        reddit_subreddit.mod.edited.return_value = [comment]
+
+        with (
+            patch(
+                "monitoring.edit_tracker.SETTINGS",
+                {
+                    "subreddit": "translator",
+                    "comment_edit_num_limit": 1,
+                    "comment_edit_age_max": 1,
+                },
+            ),
+            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
+            patch("monitoring.edit_tracker.REDDIT") as reddit,
+            patch("monitoring.edit_tracker._get_cached_comment", return_value=cached),
+            patch("monitoring.edit_tracker.comment_has_command") as has_command,
+            patch("monitoring.edit_tracker.extract_commands_from_text") as extract,
+            patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
+            patch("monitoring.edit_tracker._cleanup_comment_cache"),
+        ):
+            helper.subreddit.return_value.comments.return_value = []
+            reddit.subreddit.return_value = reddit_subreddit
+
+            edit_tracker()
+
+        has_command.assert_not_called()
+        extract.assert_not_called()
+        update_cache.assert_not_called()
+
 
 # ===========================================================================
 # _cleanup_comment_cache

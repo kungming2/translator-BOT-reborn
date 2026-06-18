@@ -40,6 +40,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Title filtering no longer rejects short `Language to English` titles solely because the detected language is not marked as flair-supported. Unsupported but recognized languages can now still count as valid language clues during title filtering.
 * 🛠️ BUG FIX: Reddit comment-list parsers now skip non-comment placeholder objects instead of assuming every listed item is a comment.
 * 🛠️ BUG FIX: Chinese character lookups now fall back to [Unihan](https://www.unicode.org)'s Mandarin reading when the dictionary has a character page but marks the character as absent from its dictionary.
+* 🛠️ BUG FIX: Edit tracking now skips command parsing for cached edited comments whose body has not changed, avoiding repeated lookup matcher logs for old edited lookup comments.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

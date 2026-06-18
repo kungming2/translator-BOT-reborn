@@ -84,6 +84,20 @@ def _is_comment_within_edit_window(comment: "Comment") -> bool:
     return not time_diff > age_in_seconds
 
 
+def _command_cache_payload(body: str) -> tuple[str, str]:
+    """
+    Return serialized command names and lookup content for *body*.
+
+    This centralizes the parse so callers can first do cheap cache/body
+    comparisons and only invoke the heavier lookup matcher when command
+    metadata is genuinely needed.
+    """
+    commands = extract_commands_from_text(body)
+    komandos = ",".join(dict.fromkeys(cmd.name for cmd in commands))
+    lookup_content = _serialize_lookup_content(commands)
+    return komandos, lookup_content
+
+
 def _serialize_komandos(text: str) -> str:
     """
     Parse *text* for commands and return a comma-separated string of the
@@ -331,35 +345,39 @@ def edit_tracker() -> None:
         # Only insert; never overwrite in Phase 1 (we want the *original*
         # body to stay cached so Phase 2 can diff against it later).
         cached = _get_cached_comment(comment_id)
-        if not cached:
-            if getattr(comment, "edited", False):
-                logger.debug(
-                    f"Edited comment `{comment_id}` not yet cached; leaving it "
-                    "for Phase 2 instead of seeding the edited body as baseline."
-                )
-                continue
+        if cached:
+            continue
 
-            # Don't record komandos or lookup_content for the bot's own
-            # comments — they would produce false positives in Phase 2.
-            author = str(comment.author) if comment.author else ""
-            if author.lower() == USERNAME.lower():
-                komandos = _NO_COMMANDS
-                lookup_content = ""
-            else:
-                parsed = extract_commands_from_text(comment_body)
-                komandos = ",".join(dict.fromkeys(cmd.name for cmd in parsed))
-                lookup_content = _serialize_lookup_content(parsed)
+        if getattr(comment, "edited", False):
             logger.debug(
-                f"Cached new comment `{comment_id}` "
-                f"(komandos: {komandos if komandos else 'none'})"
+                f"Edited comment `{comment_id}` not yet cached; leaving it "
+                "for Phase 2 instead of seeding the edited body as baseline."
             )
-            _update_comment_cache(
-                comment_id,
-                comment_body,
-                int(comment.created_utc),
-                komandos,
-                lookup_content,
-            )
+            continue
+
+        # Don't record komandos or lookup_content for the bot's own
+        # comments — they would produce false positives in Phase 2.
+        author = str(comment.author) if comment.author else ""
+        if author.lower() == USERNAME.lower():
+            komandos = _NO_COMMANDS
+            lookup_content = ""
+        elif not comment_has_command(comment_body):
+            komandos = _NO_COMMANDS
+            lookup_content = ""
+        else:
+            komandos, lookup_content = _command_cache_payload(comment_body)
+
+        logger.debug(
+            f"Cached new comment `{comment_id}` "
+            f"(komandos: {komandos if komandos else 'none'})"
+        )
+        _update_comment_cache(
+            comment_id,
+            comment_body,
+            int(comment.created_utc),
+            komandos,
+            lookup_content,
+        )
 
     # Phase 2: Fetch only the edited comments from the subreddit.
     # This produces a generator that includes both comments and submissions.
@@ -375,21 +393,23 @@ def edit_tracker() -> None:
         if not _is_comment_within_edit_window(item):
             continue
 
+        cached = _get_cached_comment(comment_id)
+
+        if cached and cached.body == comment_new_body:
+            logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
+            continue
+
         # Fast pre-check: if the new version has no commands at all,
         # there is nothing to reprocess regardless of what the old
         # version contained.
         if not comment_has_command(item):
             continue
 
-        cached = _get_cached_comment(comment_id)
-
         # If there's no cache entry, cache the edited state as a new baseline.
         # When the normal comment loop already processed an older version,
         # remove that marker so the command handler can process the edit.
         if not cached:
-            new_commands = extract_commands_from_text(comment_new_body)
-            new_komandos = ",".join(dict.fromkeys(cmd.name for cmd in new_commands))
-            new_lookup_content = _serialize_lookup_content(new_commands)
+            new_komandos, new_lookup_content = _command_cache_payload(comment_new_body)
             _update_comment_cache(
                 comment_id,
                 comment_new_body,
@@ -409,12 +429,6 @@ def edit_tracker() -> None:
                     f"Comment `{comment_id}` in edited queue but not in cache "
                     "(not yet processed by the command loop); cached current state."
                 )
-            continue
-
-        comment_old_body = cached.body
-
-        if comment_old_body == comment_new_body:
-            logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
             continue
 
         old_command_names: set[str] = cached.command_names
