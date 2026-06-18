@@ -10,7 +10,6 @@ mocked at the boundary.
 Modules covered:
     - wenju/__init__.py  : task decorator & run_schedule
     - community_digest.py: _analyze_bot_mod_log, _analyze_mod_removals,
-                           weekly_unknown_thread (structure)
     - iso_updates.py     : _parse_iso639_newsletter
     - data_maintenance.py: error_log_trimmer (logic), validate_data_files (path scanning)
     - moderator_digest.py: _error_log_count, _activity_csv_handler (statistics),
@@ -97,9 +96,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         "reddit.verification": _make_stub_module(
             "reddit.verification", get_verified_thread=MagicMock()
         ),
-        "responses": _make_stub_module(
-            "responses", RESPONSE=MagicMock(WEEKLY_UNKNOWN_THREAD="{unknown_content}")
-        ),
+        "responses": _make_stub_module("responses", RESPONSE=MagicMock()),
         "error": _make_stub_module("error", error_log_basic=MagicMock()),
         "time_handling": _make_stub_module(
             "time_handling",

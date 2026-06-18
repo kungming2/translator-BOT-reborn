@@ -93,7 +93,7 @@ scheduler.add_job(
 scheduler.add_job(
     run_script,
     "interval",
-    minutes=5,
+    minutes=10,
     id="chinese_reference",
     kwargs={"script": "main_chinese_reference.py", "lock_name": "chinese_reference"},
     max_instances=1,

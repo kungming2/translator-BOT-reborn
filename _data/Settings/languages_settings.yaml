@@ -26,9 +26,9 @@ FUZZ_IGNORE_WORDS:
   - Javanese
   - Kanada
   - Karen
-  - Latina  # Latin
   - Ladin  # Latin
   - Ladino  # Latin
+  - Latina  # Latin
   - Latino  # Latin
   - Lmao  # Lao
   - Logo
@@ -64,13 +64,13 @@ FUZZ_IGNORE_WORDS:
   - Translation
   - Trench
   - Turks
-# These are languages for which fuzzing usually doesn't play well.
+# These are language names for which fuzzing usually doesn't play well.
 # As an example, Javanese is obviously very close to Japanese.
 # Add a proper language name here if it frequently gets misclassified
 # by rapidfuzz similarity matching.
 FUZZ_IGNORE_LANGUAGE_NAMES:
-  - Ancient Egyptian
   - American Sign Language
+  - Ancient Egyptian
   - Javanese
   - Old Church Slavonic
 

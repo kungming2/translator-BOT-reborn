@@ -15,7 +15,9 @@ from dataclasses import dataclass
 from langcodes import Language, standardize_tag
 from langcodes.tag_parser import LanguageTagError
 
-PROJECT_LANGUAGE_CODES = {"unknown", "multiple", "generic"}
+from config import SETTINGS
+
+PROJECT_LANGUAGE_CODES = frozenset(SETTINGS["project_language_codes"])
 
 
 @dataclass(frozen=True)

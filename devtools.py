@@ -49,6 +49,7 @@ from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
 from wenju.status_report import language_of_the_day, notify_db_statistics_calculator
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
+from wenyuan.title_full_retrieval import retrieve_titles_test
 from zhongsheng.recruit import (
     build_recruitment_markdown,
     build_recruitment_subject,
@@ -450,6 +451,16 @@ def check_title_reddit() -> None:
         msg.divider(submission.title[:60])
         titolo_output = process_title(submission.title, submission, False)
         pprint(vars(titolo_output))
+
+
+def check_title_full_retrieval() -> None:
+    """Run the Wenyuan bulk title retrieval test."""
+    num_retrieve = _prompt_int(
+        "Enter the number of posts you wish to test: ", min_value=1
+    )
+    if num_retrieve is None:
+        return
+    retrieve_titles_test(num_retrieve)
 
 
 # ─── database ─────────────────────────────────────────────────────────────────
@@ -1048,6 +1059,7 @@ SECTIONS: SectionMap = {
         {
             "1": ("manual test", _timed_check(prepare_title_manual)),
             "2": ("live Reddit posts", check_title_reddit),
+            "3": ("bulk retrieval test", check_title_full_retrieval),
         },
     ),
     "11": (

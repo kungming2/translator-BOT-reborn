@@ -77,46 +77,46 @@ command_points:
 # if sent by an OP, and if the comment lacks a word in
 # thanks_negation_keywords.
 thanks_keywords:  # Must be lowercase.
+  - amazing
   - appreciate
   - arigato
+  - awesome
+  - brilliant
+  - cheers
   - danke
+  - exactly
+  - fantastic
   - gracias
+  - helped
+  - helpful
+  - kudos
+  - legend
+  - lifesaver
   - merci
+  - perfect
   - solved
   - thank
   - thanks
   - thx
   - tysm
   - tyvm
-  - you rock
-  - awesome
-  - perfect
-  - exactly
-  - helpful
-  - helped
-  - cheers
-  - kudos
-  - legend
-  - lifesaver
-  - brilliant
-  - fantastic
-  - amazing
   - wonderful
+  - you rock
 
 # These keywords prevent a post from being marked as translated if
 # an OP comments with another keyword from thanks_keywords.
 # E.g. "Thanks, **but** that doesn't solve my question."
 thanks_negation_keywords:  # Must be lowercase.
-  - but
-  - however
   - 'no'
   - 'not'
-  - unfortunately
-  - though
   - although
-  - don't
+  - but
   - didn't
   - doesn't
+  - don't
+  - however
+  - though
+  - unfortunately
 
 # The keywords are used for points determination. A reply to another
 # comment with one of these keywords will give credit to that comment's
@@ -164,6 +164,13 @@ defined_multiple_legend:
 internal_post_types:
   - community
   - meta
+
+# Project-specific language pseudo-codes. These are internal bot values,
+# not ISO language codes.
+project_language_codes:
+  - generic
+  - multiple
+  - unknown
 
 # Mod exemption emoji - if a post ends with this emoji and was created
 # by a moderator, it will be treated as a test post and will not trigger

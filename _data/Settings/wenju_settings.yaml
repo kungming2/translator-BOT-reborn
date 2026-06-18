@@ -46,8 +46,8 @@ points_exclude_usernames:
   - translator-ModTeam
 # These are non-language specific utility codes for statistics pages
 utility_codes:
-  - Conlang
-  - Generic
-  - Multiple Languages
-  - Nonlanguage
   - Unknown
+  - Generic
+  - Nonlanguage
+  - Conlang
+  - Multiple Languages

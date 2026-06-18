@@ -27,13 +27,12 @@ ENGLISH_DASHES:
   - '-ENGLISH'
   - '- ENGLISH'
 
-# The standard directional arrow is ">", the halfwidth 
-# greater-than sign, but people may mistakenly
-# use other symbols that we can account for here.
-# Used in _preprocess_title: each entry is replaced with " > " to
-# normalize the title before language extraction begins.
-WRONG_DIRECTIONS:
+# The standard directional arrow is ">", the halfwidth greater-than sign.
+# These aliases are accepted by main_posts_filter as possible source/target
+# separators and are normalized by _preprocess_title to " > " before parsing.
+DIRECTION_ALIASES:
   - '<'
+  - '〉'
   - '〉'
   - '›'
   - '》'
@@ -45,6 +44,19 @@ WRONG_DIRECTIONS:
   - '←'
   - '~'
   - '＞'
+
+# Symbols and words accepted as the directional separator between source
+# and target languages in a post title.
+# Used in _build_required_title_keywords: each connector is paired with
+# every ENGLISH_ALIASES entry and every supported language name to build
+# the full keyword lists used by main_posts_filter. The special value "to"
+# also populates the "to_phrases" sublist (used for Rule 1A placement checks),
+# while non-"to" connectors additionally generate no-space variants
+# (e.g. "en>fr" in addition to "en > fr"). DIRECTION_ALIASES are also
+# included as accepted connectors by the loader.
+CONNECTORS:
+  - '>'
+  - 'to'
 
 # The standard brackets are "[]", but people may mistakenly use other
 # form of brackets. Left and right ones are listed separately.
@@ -75,7 +87,7 @@ WRONG_BRACKETS_RIGHT:
 # Used in _resolve_languages: after splitting a title chunk into words, any
 # 2-letter word whose title-case form is in this set is dropped before
 # language lookup, preventing false ISO 639-1 code matches (e.g. "it" → Italian).
-# Add in title case (Title).
+# Add any new entries in title case (Title).
 ENGLISH_2_WORDS:
   - Am
   - An
@@ -126,9 +138,9 @@ ENGLISH_2_WORDS:
 # Used in _resolve_languages alongside ENGLISH_2_WORDS: any 3-letter word
 # whose title-case form appears in this set (after splitting on whitespace)
 # is dropped before language lookup, preventing false ISO 639-2/3 code
-# matches and common English abbreviations (e.g. "est" → Estonian, "can" → ...),
+# matches and common English abbreviations (e.g. "est" → Estonian),
 # including internet slang and acronyms.
-# Add in title case (Title).
+# Add any new entries in title case (Title).
 ENGLISH_3_WORDS: >-
   Abs Abu Aby Ace Act Add Ado Ads Afk Aft Age Ago Aid Ail Aim Air Ait Aka
   Ale Ama Amp And Ant Ape App Apt Arc Are Ark Arm Art Ash Ask Asp Ass Ate
@@ -168,38 +180,18 @@ ENGLISH_3_WORDS: >-
 # Both "total" and "to_phrases" keyword lists are populated from these pairs.
 # For cased alphabets, write in lowercase.
 ENGLISH_ALIASES:
+  - anglais
   - en
   - eng
-  - english
   - englisch
+  - english
+  - inggris
+  - inglese
   - inglés
   - inglês
-  - inglese
-  - inggris
-  - anglais
   - англи́йский
   - 英语
   - 英語
   - 英文
   - 영어
 
-# Symbols and words accepted as the directional separator between source
-# and target languages in a post title.
-# Used in _build_required_title_keywords: each connector is paired with
-# every ENGLISH_ALIASES entry and every supported language name to build
-# the full keyword lists used by main_posts_filter. The special value "to"
-# also populates the "to_phrases" sublist (used for Rule 1A placement checks),
-# while non-"to" connectors additionally generate no-space variants
-# (e.g. "en>fr" in addition to "en > fr").
-CONNECTORS:
-  - '>'
-  - 'to'
-  - '<'  # shows up in mistakes
-  - '〉'
-  - '〉'
-  - '›'
-  - '》'
-  - '»'
-  - '⟶'
-  - '→'
-  - '~'

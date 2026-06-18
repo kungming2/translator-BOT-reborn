@@ -17,7 +17,7 @@ import logging
 import re
 import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from config import SETTINGS
@@ -26,8 +26,6 @@ from database import db
 from integrations.discord_utils import send_discord_alert
 from reddit.connection import REDDIT, USERNAME, submit_translatorbot_post
 from reddit.notifications import notifier_internal
-from responses import RESPONSE
-from time_handling import get_current_utc_date
 from utility import format_markdown_table_with_padding
 from wenju import task
 
@@ -112,50 +110,6 @@ def send_internal_post_digest() -> None:
         logger.info(
             f"Processed {sum(post_type_counts.values())} internal post(s) — {counts_summary}"
         )
-
-    return
-
-
-# ─── Weekly community threads ─────────────────────────────────────────────────
-
-
-@task(schedule="weekly")
-def weekly_unknown_thread() -> None:
-    """
-    Post the Weekly 'Unknown' thread: a round-up of all posts from the last
-    seven days still marked as "Unknown".
-    """
-    r = REDDIT.subreddit(SETTINGS["subreddit"])
-    today_str = get_current_utc_date()
-
-    current_week_utc = datetime.now(UTC).strftime("%U")
-
-    unknown_entries: list[str] = []
-
-    for item in r.search('flair:"Unknown"', sort="new", time_filter="week"):
-        if item.link_flair_css_class == "unknown":
-            title_safe = item.title.replace("|", " ")  # Avoid Markdown table conflicts
-            post_date = datetime.fromtimestamp(item.created_utc).strftime("%Y-%m-%d")
-            unknown_entries.append(
-                f"| {post_date} | **[{title_safe}]({item.permalink})** | u/{item.author} |"
-            )
-
-    if not unknown_entries:
-        logger.debug("No 'Unknown' posts found this week.")
-        return
-
-    unknown_entries.reverse()  # Oldest first
-    unknown_content = "\n".join(unknown_entries)
-
-    thread_title = (
-        f'[Meta] Weekly "Unknown" Identification Thread — {today_str} '
-        f"(Week {current_week_utc})"
-    )
-    body = RESPONSE.WEEKLY_UNKNOWN_THREAD.format(unknown_content=unknown_content)
-
-    submission = r.submit(title=thread_title, selftext=body, send_replies=False)
-    submission.mod.distinguish()
-    logger.info(f"Posted weekly 'Unknown' thread (Week {current_week_utc}).")
 
     return
 

@@ -38,13 +38,7 @@ WY_NEW_HEADER = (
     "|-----------------------|----|-------------------------|\n"
 )
 
-# Utility codes that get special handling
-UTILITY_CODES = [
-    "Unknown",
-    "Nonlanguage",
-    "Conlang",
-    "Multiple Languages",
-]
+UTILITY_CODES = WENYUAN_SETTINGS["utility_codes"]
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

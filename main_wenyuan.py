@@ -31,9 +31,9 @@ from monitoring.usage_statistics import get_month_points_summary
 from processes.wenyuan_stats import FastestEntry, Lumo
 from reddit.connection import REDDIT
 from time_handling import time_convert_to_string_seconds
+from wenyuan import WENYUAN_SETTINGS
 from wenyuan.challenge_poster import translation_challenge_poster
 from wenyuan.data_validator import data_validator
-from wenyuan.title_full_retrieval import retrieve_titles_test
 from wenyuan.update_wiki_stats import (
     calculate_ri,
     update_language_wiki_pages,
@@ -43,14 +43,7 @@ from wenyuan.update_wiki_stats import (
 )
 from ziwen_lookup.reference import get_language_reference
 
-# Utility codes that get special handling
-UTILITY_CODES = [
-    "Unknown",
-    "Generic",
-    "Nonlanguage",
-    "Conlang",
-    "Multiple Languages",
-]
+UTILITY_CODES = WENYUAN_SETTINGS["utility_codes"]
 msg = Printer()
 _console = Console()
 
@@ -214,10 +207,10 @@ class CommandRegistry:
         categories."""
         self.commands: dict[str, MenuOption] = {}
         self.categories = {
-            "posts": "Create Posts",
-            "test": "Testing Functions",
-            "data": "Data Retrieval",
-            "admin": "Administrative",
+            "posts": "Reddit Posts",
+            "stats": "Statistics",
+            "reference": "Reference Data",
+            "test": "Testing",
             "system": "System",
         }
 
@@ -251,7 +244,7 @@ class CommandRegistry:
         table.add_column("Description", style="white")
         table.add_column("Category", style="dim")
 
-        for category_key in ["posts", "test", "data", "admin", "system"]:
+        for category_key in ["posts", "stats", "reference", "test", "system"]:
             if category_key not in categorized:
                 continue
             category_label = self.categories.get(category_key, category_key)
@@ -720,20 +713,10 @@ def post_challenge() -> None:
     translation_challenge_poster()
 
 
-@registry.register("title_retrieval", "Test bulk title testing data", "test")
-def title_full_retrieval() -> None:
-    """Test full retrieval."""
-    num_retrieve = input("\n  Enter the number of posts you wish to test: ").strip()
-    try:
-        retrieve_titles_test(int(num_retrieve))
-    except ValueError:
-        msg.fail("Invalid number. Please enter a valid integer.")
-
-
 @registry.register(
     "lang_reference",
     "Fetch reference data for a language from Ethnologue/Wikipedia",
-    "data",
+    "reference",
 )
 def fetch_language_reference() -> None:
     """Fetch reference data for a language from archived Ethnologue and Wikipedia."""
@@ -801,7 +784,7 @@ def fetch_language_reference() -> None:
 @registry.register(
     "period_stats",
     "Retrieve abbreviated language statistics from a time period as a list",
-    "data",
+    "stats",
 )
 def retrieve_post_stats() -> None:
     """Retrieve post statistics using the Lumo analyzer."""
@@ -897,7 +880,7 @@ def retrieve_post_stats() -> None:
 
 
 @registry.register(
-    "lang_stats", "Get detailed statistics for specific language(s)", "data"
+    "lang_stats", "Get detailed statistics for specific language(s)", "stats"
 )
 def get_language_details() -> None:
     """Get detailed statistics for a specific language or multiple languages."""
@@ -961,7 +944,7 @@ def get_language_details() -> None:
 
 
 @registry.register(
-    "post_monthly", "Analyze and post full monthly statistics to Reddit", "admin"
+    "post_monthly", "Analyze and post full monthly statistics to Reddit", "posts"
 )
 def post_monthly_statistics_menu() -> None:
     """Menu wrapper for posting monthly statistics."""

@@ -38,7 +38,6 @@ Each task runs independently inside the selected schedule. If one task fails, We
 * `notify_db_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
 * `update_verified_list()`:  Updates the subreddit wiki page '[verified](https://www.reddit.com/r/translator/wiki/verified)' with a sorted list of verified users organized by language. Also flags users with problematic flairs.
 * `weekly_bot_action_report()`: Generates a weekly report of mod actions on Reddit taken by u/translator-BOT and posts it to r/translatorBOT, including a breakdown of action types and counts for the period.
-* `weekly_unknown_thread()`: Posts a weekly 'Unknown' thread to r/translator, which is a round-up of all posts from the last week that are still marked as "Unknown" and have not been assigned a more specific language classification.
 
 ## Monthly Functions
 

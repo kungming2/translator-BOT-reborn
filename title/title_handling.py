@@ -48,6 +48,14 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "T:TITLE"})
 title_settings = load_settings(Paths.SETTINGS["TITLE_SETTINGS"])
 
 
+def _setting_list(*keys: str) -> list[str]:
+    """Return unique string values from one or more title setting lists."""
+    values: list[str] = []
+    for key in keys:
+        values.extend(title_settings.get(key, []))
+    return list(dict.fromkeys(values))
+
+
 # ─── Flair helpers ────────────────────────────────────────────────────────────
 
 
@@ -354,7 +362,7 @@ def _build_required_title_keywords() -> dict[str, list[str]]:
     supported_languages = define_language_lists()["SUPPORTED_LANGUAGES"]
 
     english_aliases = title_settings["ENGLISH_ALIASES"]
-    connectors = title_settings["CONNECTORS"]
+    connectors = _setting_list("CONNECTORS", "DIRECTION_ALIASES")
 
     for eng in english_aliases:
         for conn in connectors:
@@ -612,6 +620,68 @@ def _reformat_unbracketed_direction_title(title: str) -> str:
     return f"[{source_text} > {target_text}] {actual_title}"
 
 
+def _leading_language_phrase(text: str, max_words: int = 4) -> tuple[str, str] | None:
+    """
+    Return the first recognizable language phrase and remaining text.
+
+    This is intentionally prefix-based for explicit "source > target" titles:
+    once a user has put the direction first, only the words immediately after
+    the connector should be considered part of the target language.
+    """
+    match = re.match(rf"\s*((?:[A-Za-z][\w-]*\s*){{1,{max_words}}})(.*)$", text)
+    if not match:
+        return None
+
+    phrase_text = match.group(1).strip()
+    words = phrase_text.split()
+
+    for word_count in range(min(max_words, len(words)), 0, -1):
+        candidate = " ".join(words[:word_count]).strip()
+        if converter(candidate):
+            consumed = " ".join(words[:word_count])
+            remainder = text[text.lower().find(consumed.lower()) + len(consumed) :]
+            return candidate, remainder.strip(" -:;,.")
+
+    return None
+
+
+def _reformat_leading_direction_title(title: str) -> str:
+    """
+    Rebuild leading unbracketed "Source > Target actual title" direction tags.
+
+    This protects explicit direction titles from the looser fallback heuristic
+    that scans later prose for language-like words.
+    """
+    if "[" in title or "]" in title:
+        return title
+
+    match = re.match(
+        r"^\s*(?P<source>[^>]+?)\s*(?:>|\bto\b)\s*(?P<remainder>.+)$",
+        title,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return title
+
+    source_text = match.group("source").strip(" -:;,.")
+    remainder = match.group("remainder").strip()
+    source_text = re.sub(r"\(\s*\?\s*\)", "", source_text).strip()
+    if not source_text or not remainder:
+        return title
+
+    target_match = _leading_language_phrase(remainder)
+    if not target_match:
+        return title
+
+    target_text, actual_title = target_match
+    if not _resolve_languages(source_text, is_source=True):
+        return title
+    if not _resolve_languages(target_text, is_source=False):
+        return title
+
+    return f"[{source_text} > {target_text}] {actual_title}".strip()
+
+
 def _preprocess_title(post_title: str) -> str:
     """
     Normalize a Reddit post title by fixing brackets, typos, symbols,
@@ -631,7 +701,7 @@ def _preprocess_title(post_title: str) -> str:
     title = title.replace("Scots Gaelic", "Scottish Gaelic")
 
     # Replace unicode bracket/direction variants
-    for keyword in title_settings["WRONG_DIRECTIONS"]:
+    for keyword in _setting_list("DIRECTION_ALIASES", "WRONG_DIRECTIONS"):
         title = title.replace(keyword, " > ")
     for keyword in title_settings["WRONG_BRACKETS_LEFT"]:
         title = title.replace(keyword, " [")
@@ -645,6 +715,8 @@ def _preprocess_title(post_title: str) -> str:
     ):
         title = title.replace("(", "[", 1).replace(")", "]", 1)
         title = title.replace("{", "[", 1).replace("}", "]", 1)
+
+    title = _reformat_leading_direction_title(title)
 
     # Attempt reformatting only if no clear format and no brackets present
     if not any(b in title for b in ["[", "]"]) and not has_clear_format:

@@ -13,6 +13,7 @@ from collections import defaultdict
 from praw.models import Comment
 
 from config import logger as _base_logger
+from lang.code_standards import PROJECT_LANGUAGE_CODES
 from lang.languages import converter
 from models.ajo import Ajo
 from models.instruo import Instruo
@@ -24,7 +25,7 @@ from ziwen_lookup.wiktionary import format_wiktionary_markdown, wiktionary_searc
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:WT"})
 
-_AMBIGUOUS_CODES: frozenset[str] = frozenset({"multiple", "generic", "unknown"})
+_AMBIGUOUS_CODES: frozenset[str] = PROJECT_LANGUAGE_CODES
 
 
 # ─── Reply formatting ─────────────────────────────────────────────────────────

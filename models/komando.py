@@ -16,6 +16,7 @@ from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
+from lang.code_standards import PROJECT_LANGUAGE_CODES
 from lang.languages import converter
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
@@ -443,7 +444,7 @@ def extract_commands_from_text(
         language_code = None
         if parent_languages:
             code = parent_languages[0].preferred_code
-            if code not in {"multiple", "generic", "unknown"} and len(code) in (2, 3):
+            if code not in PROJECT_LANGUAGE_CODES and len(code) in (2, 3):
                 language_code = code
 
         # Pass disable_tokenization flag to lookup_matcher

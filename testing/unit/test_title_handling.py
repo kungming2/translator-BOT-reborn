@@ -394,6 +394,28 @@ class TestProcessTitleLanguageExtraction(unittest.TestCase):
         titolo = process_title("unknown > spanish", discord_notify=False)
         self.assertIn("Spanish", _names(titolo.target))
 
+    @_skip_if_no_data
+    def test_leading_english_target_not_replaced_by_label_in_description(self) -> None:
+        titolo = process_title(
+            "Arabic(?) > English handwritten label on cologne/perfume",
+            discord_notify=False,
+        )
+        self.assertEqual(_codes(titolo.source), ["ar"])
+        self.assertEqual(_codes(titolo.target), ["en"])
+        self.assertEqual(titolo.final_text, "Arabic")
+        self.assertIn("handwritten label", titolo.title_actual.lower())
+
+    @_skip_if_no_data
+    def test_leading_english_target_not_replaced_by_tang_in_description(self) -> None:
+        titolo = process_title(
+            "Japanese > English - Help translating Japanese sword tang (ww2)",
+            discord_notify=False,
+        )
+        self.assertEqual(_codes(titolo.source), ["ja"])
+        self.assertEqual(_codes(titolo.target), ["en"])
+        self.assertEqual(titolo.final_text, "Japanese")
+        self.assertIn("sword tang", titolo.title_actual.lower())
+
 
 class TestProcessTitleTitoloFields(unittest.TestCase):
     """process_title populates Titolo metadata fields correctly."""

@@ -29,7 +29,9 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Renamed some exceptions that are handled in order to prepare for [PRAW 8](https://praw.readthedocs.io/en/latest/package_info/praw8_migration.html#praw8-migration)'s upcoming release.
 * 🔄 CHANGE: Added more language data and common country-code mistaken abbreviations for language requests.
 * 🔄 CHANGE: Title assessment AI queries now request strict JSON responses when using [DeepSeek](https://platform.deepseek.com/).
+* 🔄 CHANGE: Consolidated title direction separator settings so alternate arrow symbols are listed once, accepted by the title filter, and normalized before parsing.
 * 🔄 CHANGE: More Reddit helper routines have been adjusted for [PRAW 8 compatibility](https://www.reddit.com/r/redditdev/comments/1u5uvwe/praw_and_async_praw_8_has_been_released/).
+* 🔄 CHANGE: Centralized internal project language pseudo-codes in settings, shared Wenyuan utility-code configuration between statistics modules, and moved Wenyuan's bulk title retrieval test into `devtools.py`.
 * 🔄 CHANGE: Logging refinements.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
