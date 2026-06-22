@@ -325,11 +325,11 @@ MSG_NUKE_SUCCESS: >
 # COMMANDS - ziwen_commands/page.py
 
 COMMENT_PAGE_DISALLOWED: Your account must be at least {age} days old to use the paging service. [](#comment_page_disallowed)
-COMMENT_NO_LANGUAGE: 'Unfortunately, no one is currently subscribed for {language_name} notifications.
+COMMENT_NO_LANGUAGE: 'Unfortunately, no one is currently subscribed for {language_name} (`{language_code}`) notifications.
 
 
   If you know {language_name}, you can [sign up for notifications for that
-  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+r%2Ftranslator+notifications%0A%23%23+Send+this+message+to+be+notified+about+new+{language_name}+requests.%0A{language_code})
+  language](https://www.reddit.com/message/compose?to=translator-BOT&subject=Subscribe&message=%23%23+Sign+up+for+r%2Ftranslator+notifications%0A%23%23+Send+this+message+to+be+notified+about+new+{language_name}+requests.%0A%3E+{language_code})
   to be notified about future requests. [](#comment_no_language)'
 
 # COMMANDS - ziwen_commands/identify.py AND ziwen_commands/set.py

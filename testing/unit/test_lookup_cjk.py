@@ -291,6 +291,65 @@ class TestZhJaTokenizer(unittest.TestCase):
         self.assertEqual(result, [])
 
 
+class TestCjkLookupNormalization(unittest.TestCase):
+    """Compatibility ideographs should normalize before cache/fetch lookup."""
+
+    def test_ja_character_normalizes_compatibility_ideograph(self):
+        import ziwen_lookup.ja as ja
+
+        with (
+            patch("ziwen_lookup.ja.get_from_cache", return_value=None) as cache,
+            patch("ziwen_lookup.ja._ja_character_fetch", return_value="ok") as fetch,
+        ):
+            result = ja.ja_character("晴")
+
+        self.assertEqual(result, "ok")
+        cache.assert_called_once_with("晴", "ja", "ja_character")
+        fetch.assert_called_once_with("晴")
+
+    def test_ja_word_normalizes_compatibility_ideograph(self):
+        import ziwen_lookup.ja as ja
+
+        with (
+            patch("ziwen_lookup.ja.get_from_cache", return_value=None) as cache,
+            patch("ziwen_lookup.ja._ja_word_fetch", return_value="ok") as fetch,
+        ):
+            result = asyncio.run(ja.ja_word("晴"))
+
+        self.assertEqual(result, "ok")
+        cache.assert_called_once_with("晴", "ja", "ja_word")
+        fetch.assert_called_once_with("晴")
+
+    def test_zh_character_normalizes_compatibility_ideograph(self):
+        import ziwen_lookup.zh as zh
+
+        async def fake_cache_lookup(character, fetch_func):
+            self.assertIs(fetch_func, zh._zh_character_fetch)
+            return character
+
+        with patch(
+            "ziwen_lookup.zh.get_cached_or_fetch_zh_character",
+            side_effect=fake_cache_lookup,
+        ) as cache_lookup:
+            result = asyncio.run(zh.zh_character("晴"))
+
+        self.assertEqual(result, "晴")
+        cache_lookup.assert_called_once()
+
+    def test_zh_word_normalizes_compatibility_ideograph(self):
+        import ziwen_lookup.zh as zh
+
+        with (
+            patch("ziwen_lookup.zh.get_from_cache", return_value=None) as cache,
+            patch("ziwen_lookup.zh._zh_word_fetch", return_value="ok") as fetch,
+        ):
+            result = asyncio.run(zh.zh_word("晴"))
+
+        self.assertEqual(result, "ok")
+        cache.assert_called_once_with("晴", "zh", "zh_word")
+        fetch.assert_called_once_with("晴")
+
+
 # ---------------------------------------------------------------------------
 # TestKoTokenizer
 # ---------------------------------------------------------------------------

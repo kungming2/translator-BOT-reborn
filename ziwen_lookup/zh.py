@@ -14,6 +14,7 @@ import json
 import logging
 import random
 import re
+import unicodedata
 from contextlib import suppress
 from time import sleep
 from urllib.parse import quote, urljoin
@@ -44,6 +45,12 @@ from ziwen_lookup.cache_helpers import (
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
 useragent = get_random_useragent()
+
+
+def _normalize_chinese_lookup_key(text: str) -> str:
+    """Normalize compatibility forms before Chinese dictionary/cache lookup."""
+    return unicodedata.normalize("NFKC", text.strip())
+
 
 # ─── Traditional/simplified conversion ─────────────────────────────────────────────
 
@@ -946,6 +953,7 @@ async def zh_character(character: str) -> str:
     :param character: Any Chinese character or string.
     :return: Formatted string containing the character's information.
     """
+    character = _normalize_chinese_lookup_key(character)
     return await get_cached_or_fetch_zh_character(character, _zh_character_fetch)
 
 
@@ -1260,7 +1268,7 @@ async def zh_word(word: str) -> str:
     :return: Formatted string containing pronunciation and meanings.
     """
     # Check cache directly with traditional form
-    word = word.strip()
+    word = _normalize_chinese_lookup_key(word)
     trad_word = tradify(word)
     cached = get_from_cache(trad_word, "zh", "zh_word")
 

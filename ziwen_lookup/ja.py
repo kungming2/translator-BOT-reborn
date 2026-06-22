@@ -9,6 +9,7 @@ Logger tag: [L:JA]
 
 import logging
 import re
+import unicodedata
 from time import sleep
 from typing import Any
 
@@ -35,6 +36,11 @@ from ziwen_lookup.zh import calligraphy_search
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:JA"})
 
 useragent = get_random_useragent()
+
+
+def _normalize_japanese_lookup_key(text: str) -> str:
+    """Normalize compatibility forms before Japanese dictionary/cache lookup."""
+    return unicodedata.normalize("NFKC", text.strip())
 
 
 # ─── Romanization helper ──────────────────────────────────────────────────────
@@ -232,6 +238,7 @@ def ja_character(character: str) -> str:
                       work with individual katakana.
     :return: A formatted string with readings, meanings, and resource links.
     """
+    character = _normalize_japanese_lookup_key(character)
     cached = get_from_cache(character, "ja", "ja_character")
 
     if cached and cached.get("word"):
@@ -573,7 +580,7 @@ async def ja_word(japanese_word: str) -> str | None:
     :param japanese_word: A Japanese word.
     :return: Formatted string with readings and meanings, or None.
     """
-    japanese_word = japanese_word.strip()
+    japanese_word = _normalize_japanese_lookup_key(japanese_word)
 
     cached = get_from_cache(japanese_word, "ja", "ja_word")
 

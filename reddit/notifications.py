@@ -604,8 +604,9 @@ def notifier(
             search_code = f"unknown-{lingvo.preferred_code}"
 
         if lingvo.country:
-            country_code = country_converter(lingvo.country)
-            search_code = f"{lingvo.preferred_code}-{country_code}"
+            country_code, _ = country_converter(lingvo.country)
+            if country_code:
+                search_code = f"{lingvo.preferred_code}-{country_code}"
 
         # Append users subscribed to script/regional variants
         regional_data = _notifier_specific_language_filter(lingvo)
@@ -748,7 +749,7 @@ def notifier(
         f"failed={len(failed_usernames)}."
     )
 
-    return notify_users_list
+    return sent_usernames
 
 
 def notifier_internal(post_type: str, submission: Submission) -> list:

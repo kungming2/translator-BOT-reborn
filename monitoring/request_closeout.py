@@ -38,6 +38,21 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "MN:CLOSEOUT"})
 # ─── Closeout messaging ───────────────────────────────────────────────────────
 
 
+def _is_completed_status(status: str | dict[str, str]) -> bool:
+    """Return True when a post status no longer needs closeout."""
+    completed_statuses = {"translated", "doublecheck"}
+
+    if isinstance(status, str):
+        return status in completed_statuses
+
+    if isinstance(status, dict):
+        return bool(status) and all(
+            language_status in completed_statuses for language_status in status.values()
+        )
+
+    return False
+
+
 def _send_closeout_messages(
     actionable_posts: list["Submission"],
     ajos_map: dict[str, "Ajo"],
@@ -141,11 +156,7 @@ def closeout_posts() -> None:
     posts_to_process = [
         post
         for post in ajos_to_close
-        if (
-            not isinstance(post.status, str)
-            or post.status not in ["translated", "doublecheck"]
-        )
-        and not post.closed_out
+        if not _is_completed_status(post.status) and not post.closed_out
     ]
 
     if posts_to_process:

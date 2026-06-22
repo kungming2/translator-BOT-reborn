@@ -10,7 +10,11 @@ Run with:
 from unittest.mock import MagicMock, patch
 
 # noinspection PyProtectedMember
-from monitoring.request_closeout import _send_closeout_messages, closeout_posts
+from monitoring.request_closeout import (
+    _is_completed_status,
+    _send_closeout_messages,
+    closeout_posts,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -49,6 +53,48 @@ def make_submission(
     sub.removed_by_category = removed_by_category
     sub.permalink = permalink
     return sub
+
+
+# ===========================================================================
+# _is_completed_status
+# ===========================================================================
+
+
+class TestIsCompletedStatus:
+    def test_single_translated_is_completed(self):
+        assert _is_completed_status("translated") is True
+
+    def test_single_doublecheck_is_completed(self):
+        assert _is_completed_status("doublecheck") is True
+
+    def test_single_untranslated_is_not_completed(self):
+        assert _is_completed_status("untranslated") is False
+
+    def test_defined_multiple_all_translated_or_doublecheck_is_completed(self):
+        assert (
+            _is_completed_status(
+                {
+                    "es": "translated",
+                    "fr": "doublecheck",
+                    "de": "translated",
+                }
+            )
+            is True
+        )
+
+    def test_defined_multiple_mixed_statuses_is_not_completed(self):
+        assert (
+            _is_completed_status(
+                {
+                    "es": "translated",
+                    "fr": "untranslated",
+                }
+            )
+            is False
+        )
+
+    def test_empty_defined_multiple_status_is_not_completed(self):
+        assert _is_completed_status({}) is False
 
 
 # ===========================================================================
@@ -231,6 +277,37 @@ class TestCloseoutPosts:
         )
         actionable = mock_send.call_args[0][0]
         assert actionable == []
+
+    def test_completed_defined_multiple_post_is_skipped(self):
+        ajo = make_ajo(
+            status={
+                "es": "translated",
+                "fr": "doublecheck",
+            }
+        )
+        mock_send = self._run(
+            db_rows=[{"id": ajo.id}],
+            ajos=[ajo],
+            submissions={ajo.id: make_submission(post_id=ajo.id, num_comments=10)},
+        )
+        actionable = mock_send.call_args[0][0]
+        assert actionable == []
+
+    def test_mixed_defined_multiple_post_is_actionable(self):
+        ajo = make_ajo(
+            status={
+                "es": "translated",
+                "fr": "untranslated",
+            }
+        )
+        sub = make_submission(post_id=ajo.id, num_comments=10)
+        mock_send = self._run(
+            db_rows=[{"id": ajo.id}],
+            ajos=[ajo],
+            submissions={ajo.id: sub},
+        )
+        actionable = mock_send.call_args[0][0]
+        assert sub in actionable
 
     def test_already_closed_out_post_is_skipped(self):
         ajo = make_ajo(closed_out=True)

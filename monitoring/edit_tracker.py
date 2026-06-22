@@ -218,6 +218,11 @@ class _CachedComment:
         return self._komando_set
 
     @property
+    def komandos(self) -> str:
+        """Serialized command names exactly as stored in comment_cache."""
+        return self._komandos_str
+
+    @property
     def cjk_terms(self) -> set[str]:
         """Deserialized CJK term set from lookup_content."""
         return _deserialize_lookup_content(self.lookup_content)[0]
@@ -294,12 +299,12 @@ def _remove_from_processed(comment_id: str) -> None:
 
 
 def _cleanup_comment_cache(limit: int) -> None:
-    """Remove oldest entries beyond the comment limit."""
+    """Remove least-recently cached entries beyond the comment limit."""
     cursor = db.cursor_cache
     cleanup = """
         DELETE FROM comment_cache
         WHERE id NOT IN (
-            SELECT id FROM comment_cache ORDER BY created_utc DESC, id DESC LIMIT ?
+            SELECT id FROM comment_cache ORDER BY rowid DESC LIMIT ?
         )
     """
     cursor.execute(cleanup, (limit,))
@@ -358,10 +363,7 @@ def edit_tracker() -> None:
         # Don't record komandos or lookup_content for the bot's own
         # comments — they would produce false positives in Phase 2.
         author = str(comment.author) if comment.author else ""
-        if author.lower() == USERNAME.lower():
-            komandos = _NO_COMMANDS
-            lookup_content = ""
-        elif not comment_has_command(comment_body):
+        if author.lower() == USERNAME.lower() or not comment_has_command(comment_body):
             komandos = _NO_COMMANDS
             lookup_content = ""
         else:
@@ -397,6 +399,13 @@ def edit_tracker() -> None:
 
         if cached and cached.body == comment_new_body:
             logger.debug(f"Comment `{comment_id}`: body unchanged, skipping.")
+            _update_comment_cache(
+                comment_id,
+                comment_new_body,
+                int(item.created_utc),
+                cached.komandos,
+                cached.lookup_content,
+            )
             continue
 
         # Fast pre-check: if the new version has no commands at all,

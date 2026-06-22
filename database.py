@@ -438,6 +438,7 @@ def record_activity_csv(run_type: str, data_tuple: tuple) -> None:
             "Language",
             "Duration (Minutes)",
             "Time Per Notification (Seconds)",
+            "PID",
         ]
     else:
         raise ValueError(

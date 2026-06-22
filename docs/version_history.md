@@ -33,6 +33,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: More Reddit helper routines have been adjusted for [PRAW 8 compatibility](https://www.reddit.com/r/redditdev/comments/1u5uvwe/praw_and_async_praw_8_has_been_released/).
 * 🔄 CHANGE: Centralized internal project language pseudo-codes in settings, shared Wenyuan utility-code configuration between statistics modules, and moved Wenyuan's bulk title retrieval test into `devtools.py`.
 * 🔄 CHANGE: Logging refinements.
+* 🔄 CHANGE: Japanese and Chinese lookup keys are now Unicode-normalized before cache and dictionary lookups, so compatibility ideographs such as `晴` resolve to their canonical forms.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
 * 🛠️ BUG FIX: Language list parsing now deduplicates repeated language mentions and avoids treating partial country-name matches as country hints.
@@ -41,6 +42,9 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Reddit comment-list parsers now skip non-comment placeholder objects instead of assuming every listed item is a comment.
 * 🛠️ BUG FIX: Chinese character lookups now fall back to [Unihan](https://www.unicode.org)'s Mandarin reading when the dictionary has a character page but marks the character as absent from its dictionary.
 * 🛠️ BUG FIX: Edit tracking now skips command parsing for cached edited comments whose body has not changed, avoiding repeated lookup matcher logs for old edited lookup comments.
+* 🛠️ BUG FIX: Post notification tracking now records only users who were successfully messaged, so users with failed notification attempts are not incorrectly marked as already notified for that request.
+* 🛠️ BUG FIX: Regional notification lookups now build country-specific subscription keys correctly, so requests such as Brazilian Portuguese use keys like `pt-BR`.
+* 🛠️ BUG FIX: Request closeout now treats defined multiple-language posts as complete when every language is either `translated` or `doublecheck`, avoiding unnecessary closeout messages for fulfilled multi-language requests.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

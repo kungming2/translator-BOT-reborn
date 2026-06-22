@@ -608,7 +608,13 @@ class TestEditTracker:
 
         has_command.assert_not_called()
         extract.assert_not_called()
-        update_cache.assert_not_called()
+        update_cache.assert_called_once_with(
+            "abc123",
+            "`一貫性`",
+            int(comment.created_utc),
+            "lookup_cjk",
+            "ja:一貫|ja:性§",
+        )
 
 
 # ===========================================================================
@@ -627,7 +633,7 @@ class TestCleanupCommentCache:
         assert "DELETE" in query
         assert params == (100,)
 
-    def test_keeps_newest_comments_by_created_utc(self):
+    def test_keeps_most_recently_cached_comments_by_rowid(self):
         cursor = MagicMock()
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
@@ -635,7 +641,7 @@ class TestCleanupCommentCache:
             _cleanup_comment_cache(100)
 
         query = cursor.execute.call_args[0][0]
-        assert "ORDER BY created_utc DESC, id DESC" in query
+        assert "ORDER BY rowid DESC" in query
 
     def test_commit_called(self):
         conn = MagicMock()
