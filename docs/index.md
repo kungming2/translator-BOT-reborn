@@ -67,6 +67,7 @@ aliases, and normalization details.
 | Page | Purpose |
 |------|---------|
 | [Commands (Ziwen, Reddit)](./commands.md) | Reddit command syntax, behavior, and restrictions. |
+| [Ziwen Reddit Messages](messages.md) | Reddit inbox message routing for subscriptions, status, points, and moderator notification maintenance. |
 | [Commands (Zhongsheng, Discord)](./commands_discord.md) | Discord command syntax, roles, and operational usage. |
 | [Language Processing](./language_processing.md) | Language tags, aliases, normalization, and parser behavior. |
 | [Lookup Functions](./lookup.md) | Lookup command behavior and supported reference sources. |

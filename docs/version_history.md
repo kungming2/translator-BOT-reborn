@@ -23,6 +23,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🚀 FEATURE: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
 * 🔄 CHANGE: Chinese sexagenary cycle years returned by `!calendar` now include both pinyin and Chinese characters, regardless of which form was used in the query.
 * 🔄 CHANGE: Subscriptions and unsubscriptions from notifications are also recorded in mod notes.
+* 🔄 CHANGE: Points message replies now return only r/translator points; command usage statistics remain available through status message replies.
 * 🔄 CHANGE: Alignment of some Zhongsheng commands to be more syntactically consistent with each other.
 * 🔄 CHANGE: Moved notifications database reporting to a monthly Wenju cycle and added public reporting of its contents to r/translatorBOT.
 * 🔄 CHANGE: r/translatorBOT reporting submissions are also now routed through a single handler.

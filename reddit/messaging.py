@@ -291,7 +291,10 @@ def handle_status(message: Message, message_author: Redditor) -> None:
     else:
         # Process language subscriptions
         final_match_names_set = {
-            f"{entry.name}{' (Script)' if len(entry.preferred_code) == 4 else ''}"
+            (
+                f"{entry.name}{' (Script)' if len(entry.preferred_code) == 4 else ''} "
+                f"(`{entry.preferred_code}`)"
+            )
             for entry in final_match_entries
         }
         final_match_names = sorted(list(final_match_names_set), key=lambda x: x.lower())
@@ -411,26 +414,14 @@ def handle_points(message: Message, message_author: Redditor) -> None:
     user_points_output = "### Points on r/translator\n\n" + points_user_retriever(
         message_author.name
     )
-    user_commands_statistics_data = user_statistics_loader(message_author.name)
-    if user_commands_statistics_data is not None:
-        commands_component = (
-            "\n\n### Commands Statistics\n\n" + user_commands_statistics_data
-        )
-    else:
-        commands_component = ""
-    reply_body = user_points_output + commands_component
-    has_commands = user_commands_statistics_data is not None
 
     try:
         reddit_reply(
             message,
-            reply_text=reply_body + RESPONSE.BOT_DISCLAIMER,
+            reply_text=user_points_output + RESPONSE.BOT_DISCLAIMER,
         )
     except praw.exceptions.RedditAPIException:
         logger.error("Rate limit reached.")
     else:
-        logger.info(
-            f"Sent points summary to u/{message_author.name} "
-            f"(commands stats included: {has_commands})"
-        )
+        logger.info(f"Sent points summary to u/{message_author.name}.")
         action_counter(1, "Points checks")
