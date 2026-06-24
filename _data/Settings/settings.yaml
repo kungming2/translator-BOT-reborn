@@ -145,6 +145,8 @@ claim_period: 28800
 user_age_page: 14
 # How many users !page should contact.
 num_users_page: 3
+# Maximum number of languages !page should process from a single request.
+max_page_languages: 10
 
 # Search function uses... (DDG or Reddit)
 search_engine: DDG

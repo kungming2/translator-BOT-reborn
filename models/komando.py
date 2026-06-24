@@ -24,6 +24,7 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 _LOOKUP_COMMANDS_WITH_PER_ITEM_STATS = frozenset(
     {"lookup_cjk", "lookup_wp", "lookup_wt"}
 )
+_STANDALONE_ONLY_COMMANDS = frozenset({"!nuke"})
 
 
 # ─── Regex pattern builders ───────────────────────────────────────────────────
@@ -274,6 +275,18 @@ def _extract_text_within_curly_braces(text: str) -> list[tuple[str, str | None]]
     return matches
 
 
+def _strip_markdown_blockquotes(text: str) -> str:
+    """Remove Markdown blockquote lines before command parsing."""
+    return "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith(">")
+    )
+
+
+def _has_standalone_command(text: str, command: str) -> bool:
+    """Return True when a command appears alone on a non-quoted line."""
+    return bool(re.search(rf"(?im)^\s*{re.escape(command)}\s*$", text))
+
+
 # ─── Main parsing function ────────────────────────────────────────────────────
 
 
@@ -310,7 +323,7 @@ def extract_commands_from_text(
     commands_dict: defaultdict[str, list[Any]] = defaultdict(list)
     specific_mode_dict = defaultdict(bool)
     disable_tokenization_dict = defaultdict(bool)
-    original_text = text.strip()
+    original_text = _strip_markdown_blockquotes(text).strip()
 
     # Normalize curly quotes in both cases
     text = original_text.replace("\u201c", '"').replace("\u201d", '"')
@@ -412,6 +425,11 @@ def extract_commands_from_text(
     # Commands with no arguments
     for cmd in SETTINGS["commands_no_args"]:
         cmd_lower = cmd.lower()
+        if cmd_lower in _STANDALONE_ONLY_COMMANDS:
+            if _has_standalone_command(text, cmd_lower):
+                canonical = cmd_lower.lstrip("!")
+                commands_dict.setdefault(canonical, [])
+            continue
         if cmd_lower in text_lower:
             canonical = cmd_lower.lstrip("!")
             commands_dict.setdefault(canonical, [])

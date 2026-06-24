@@ -27,7 +27,12 @@ from praw.models import Comment
 
 from config import SETTINGS
 from config import logger as _base_logger
-from models.komando import Komando, extract_commands_from_text
+from models.komando import (
+    Komando,
+    _has_standalone_command,
+    _strip_markdown_blockquotes,
+    extract_commands_from_text,
+)
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
@@ -220,6 +225,8 @@ def comment_has_command(comment: Comment | str) -> bool:
     else:
         text = comment.body.lower().strip()
 
+    text = _strip_markdown_blockquotes(text)
+
     # Remove multiline code blocks (triple backticks)
     text = re.sub(r"```[\s\S]*?```", "", text)  # non-greedy, removes across lines
 
@@ -248,6 +255,10 @@ def comment_has_command(comment: Comment | str) -> bool:
 
     # Check commands with no arguments
     for cmd in SETTINGS["commands_no_args"]:
+        if cmd == "!nuke":
+            if _has_standalone_command(text, cmd):
+                return True
+            continue
         if cmd in text:
             return True
 

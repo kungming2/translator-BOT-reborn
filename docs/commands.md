@@ -216,6 +216,8 @@ someone with specific language knowledge should take a look.
 Limitations:
 
 * The caller's Reddit account must be at least fourteen days old.
+* Each `!page` command can request up to ten languages. If more than ten
+  languages are supplied, Ziwen processes only the first ten.
 * If no users are listed for that language, Ziwen replies to say so.
 * Multiple `!page` commands can be used in one comment, but `+` chaining is
   usually clearer.

@@ -25,6 +25,7 @@ from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:PAGE"})
+MAX_PAGE_LANGUAGES: int = SETTINGS["max_page_languages"]
 
 
 # ─── Command handler ──────────────────────────────────────────────────────────
@@ -56,6 +57,12 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     paging_languages = komando.data
     if not paging_languages:
         return
+    if len(paging_languages) > MAX_PAGE_LANGUAGES:
+        logger.info(
+            f"!page request included {len(paging_languages)} languages; "
+            f"processing first {MAX_PAGE_LANGUAGES}."
+        )
+        paging_languages = paging_languages[:MAX_PAGE_LANGUAGES]
 
     for language in paging_languages:
         original_post = REDDIT_HELPER.submission(ajo.id)

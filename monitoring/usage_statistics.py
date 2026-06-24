@@ -111,30 +111,40 @@ def generate_language_frequency_markdown(language_list: list) -> str:
         "|----------------------|--------------------------:|:------|\n"
     )
     line_template = (
-        "| [{name}]({url})        | {rate:.2f} posts              | {freq} |"
+        "| [{label}]({url})        | {rate:.2f} posts              | {freq} |"
     )
-    no_data_template = "| {name:<21} | No recorded statistics     | ---   |"
+    no_data_template = "| {label:<21} | No recorded statistics     | ---   |"
 
     lines = []
 
     for lingvo in language_list:
-        language_name = lingvo.name
+        language_label = _format_language_frequency_label(lingvo)
         permalink = lingvo.link_statistics
 
         frequency = describe_language_frequency(lingvo)
         if frequency and permalink:
             line = line_template.format(
-                name=language_name,
+                label=language_label,
                 url=permalink,
                 rate=frequency[0],
                 freq=frequency[1],
             )
         else:
-            line = no_data_template.format(name=language_name)
+            line = no_data_template.format(label=language_label)
 
         lines.append(line)
 
     return header + "\n".join(lines)
+
+
+def _format_language_frequency_label(lingvo: object) -> str:
+    """Return a frequency-table label with the notification code when available."""
+    language_name = getattr(lingvo, "name", None)
+    language_code = getattr(lingvo, "preferred_code", None)
+
+    if language_name and language_code:
+        return f"{language_name} (`{language_code}`)"
+    return str(language_name or language_code or "")
 
 
 def describe_language_frequency(lingvo: object) -> tuple[float, str] | None:

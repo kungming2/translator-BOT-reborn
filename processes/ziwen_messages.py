@@ -48,7 +48,7 @@ def ziwen_messages() -> None:
     - remove: Remove user (moderators only)
     """
     try:
-        messages = list(REDDIT.inbox.unread(limit=10))
+        messages = list(REDDIT.inbox.unread(limit=25))
     except TRANSIENT_ERRORS as ex:
         logger.warning(f"Encountered a transient error while fetching messages: {ex}")
         return

@@ -10,7 +10,7 @@ Commands on the server are prefixed with a slash (`/`) in order to differentiate
 
 ## Public Commands
 
-These commands can be used by both moderators with the `Moderator` role on the server, as well as regular users with the `Helper` role. 
+Unless otherwise noted, these commands can be used by both moderators with the `Moderator` role on the server, as well as regular users with the `Helper` role. 
 
 ### Command: */cjk*
 
@@ -24,7 +24,7 @@ This command is the equivalent of the subreddit's **[CJK Lookup](./lookup.md)**.
 
 ### Command: */describe*
 
-This command accepts an image URL and generates an AI description of it. This description is used in notifications to give recipients a preview of what the submission is for.
+Moderator-only. This command accepts an image URL and generates an AI description of it. This description is used in notifications to give recipients a preview of what the submission is for.
 
 ```
 /describe [image URL]

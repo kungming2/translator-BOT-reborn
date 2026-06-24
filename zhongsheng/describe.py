@@ -7,6 +7,7 @@ import asyncio
 from discord.ext import commands
 
 from integrations.ai import fetch_image_description
+from utility import is_valid_image_url
 
 from . import command
 
@@ -17,7 +18,7 @@ from . import command
 @command(
     name="describe",
     help_text="Generates an AI description of an image from a URL.",
-    roles=["Moderator", "Helper"],
+    roles=["Moderator"],
 )
 async def describe_image(ctx: commands.Context, image_url: str) -> None:
     """
@@ -28,10 +29,12 @@ async def describe_image(ctx: commands.Context, image_url: str) -> None:
     Example: /describe https://example.com/image.jpg
     """
     try:
-        # Validate URL format (http links are supported, just in case)
-        if not image_url.startswith(("http://", "https://")):
+        # Validate URL format and ensure it points to a supported image type.
+        if not image_url.startswith(("http://", "https://")) or not is_valid_image_url(
+            image_url
+        ):
             await ctx.send(
-                "⚠️ Error: Please provide a valid image URL starting with http:// or https://"
+                "⚠️ Error: Please provide a valid image URL ending in jpg, jpeg, png, or webp."
             )
             return
 
