@@ -330,6 +330,24 @@ class TestExtractCommandsFromText(unittest.TestCase):
         lookup = next(cmd for cmd in commands if cmd.name == "lookup_cjk")
         self.assertEqual(lookup.data, [("zh", "銀", True)])
 
+    @_skip_if_no_data
+    def test_nuke_command_extracted_when_standalone(self) -> None:
+        commands = extract_commands_from_text("!nuke")
+        names = [cmd.name for cmd in commands]
+        self.assertIn("nuke", names)
+
+    @_skip_if_no_data
+    def test_nuke_command_not_extracted_from_prose(self) -> None:
+        commands = extract_commands_from_text("Please do not use !nuke here.")
+        names = [cmd.name for cmd in commands]
+        self.assertNotIn("nuke", names)
+
+    @_skip_if_no_data
+    def test_nuke_command_not_extracted_from_blockquote(self) -> None:
+        commands = extract_commands_from_text("> !nuke")
+        names = [cmd.name for cmd in commands]
+        self.assertNotIn("nuke", names)
+
 
 # ---------------------------------------------------------------------------
 # Runner

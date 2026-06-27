@@ -474,6 +474,18 @@ class TestCommentHasCommand(unittest.TestCase):
         comment = _make_mock_comment(body="just a reply, no commands here")
         self.assertFalse(comment_has_command(comment))
 
+    @_skip_if_no_data
+    def test_standalone_nuke_command_detected(self) -> None:
+        self.assertTrue(comment_has_command("!nuke"))
+
+    @_skip_if_no_data
+    def test_nuke_command_in_prose_not_detected(self) -> None:
+        self.assertFalse(comment_has_command("Please do not use !nuke here."))
+
+    @_skip_if_no_data
+    def test_nuke_command_in_blockquote_not_detected(self) -> None:
+        self.assertFalse(comment_has_command("> !nuke"))
+
 
 # ---------------------------------------------------------------------------
 # Runner

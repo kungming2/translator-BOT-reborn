@@ -128,6 +128,32 @@
   .actions-table td { padding: 0.45rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-family: var(--mono); font-size: 0.78rem; color: var(--text); }
   .actions-table td:last-child { text-align: right; color: var(--accent); font-weight: 500; }
   .actions-table tr:last-child td { border-bottom: none; }
+  .native-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .native-table th {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .native-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-family: var(--mono);
+    color: var(--text);
+    vertical-align: top;
+  }
+  .native-table th:first-child,
+  .native-table td:first-child { padding-left: 0; }
+  .native-table th:last-child,
+  .native-table td:last-child { padding-right: 0; }
+  .native-table .num { text-align: right; color: var(--accent); font-weight: 500; white-space: nowrap; }
+  .native-table .muted { color: var(--muted); }
+  .table-title { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.65rem; }
+  .table-block + .table-block { margin-top: 1.2rem; }
   .bar-cell { display: flex; align-items: center; gap: 0.5rem; }
   .bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; }
@@ -143,6 +169,9 @@
     body { padding: 1rem; }
     .grid { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: 1fr; }
+    .native-table { font-size: 0.72rem; }
+    .native-table th,
+    .native-table td { padding: 0.45rem 0.35rem; }
   }
 </style>
 </head>
@@ -211,6 +240,101 @@
       </thead>
       <tbody></tbody>
     </table>
+  </div>
+  <div id="wenyuan-section" style="display:none">
+    <div class="section-label" id="wenyuan-label">Wenyuan Statistics</div>
+    <div class="grid grid-3">
+      <div class="card" style="animation-delay:0.32s">
+        <div class="card-label">Requests</div>
+        <div class="stat-big" id="wy-total"></div>
+        <div class="stat-sub" id="wy-translated"></div>
+      </div>
+      <div class="card" style="animation-delay:0.34s">
+        <div class="card-label">Languages</div>
+        <div class="stat-big" id="wy-languages"></div>
+        <div class="stat-sub" id="wy-translators"></div>
+      </div>
+      <div class="card" style="animation-delay:0.36s">
+        <div class="card-label">Median Translation Time</div>
+        <div class="stat-big" id="wy-median"></div>
+        <div class="stat-sub" id="wy-timed-count"></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card" style="animation-delay:0.38s">
+        <div class="table-block">
+          <div class="table-title">Overall Status</div>
+          <table class="native-table" id="wy-overall-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th class="num">Requests</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="animation-delay:0.4s">
+        <div class="table-block">
+          <div class="table-title">Translation Direction</div>
+          <table class="native-table" id="wy-directions-table">
+            <thead>
+              <tr>
+                <th>Direction</th>
+                <th class="num">Requests</th>
+                <th class="num">Share</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card" style="animation-delay:0.42s">
+        <div class="table-block">
+          <div class="table-title">Top Languages</div>
+          <table class="native-table" id="wy-languages-table">
+            <thead>
+              <tr>
+                <th>Language</th>
+                <th class="num">Requests</th>
+                <th class="num">Translated</th>
+                <th class="num">Needs Review</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="animation-delay:0.44s">
+        <div class="table-block">
+          <div class="table-title">Source-Target Pairs</div>
+          <table class="native-table" id="wy-pairs-table">
+            <thead>
+              <tr>
+                <th>Pair</th>
+                <th class="num">Requests</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-block">
+          <div class="table-title">Notifications and Media</div>
+          <table class="native-table" id="wy-extra-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th class="num">Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="flagged-section" style="display:none">
     <div class="section-label">Entries with Tags to Note</div>
@@ -286,6 +410,123 @@ filteredActions.forEach(({ name, count }) => {
   `;
   tbody.appendChild(tr);
 });
+
+function addRows(tableSelector, rows) {
+  const tableBody = document.querySelector(tableSelector + ' tbody');
+  tableBody.textContent = '';
+
+  if (!rows || rows.length === 0) {
+    const colCount = document.querySelectorAll(tableSelector + ' thead th').length || 1;
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.className = 'muted';
+    td.colSpan = colCount;
+    td.textContent = 'No data available';
+    tr.appendChild(td);
+    tableBody.appendChild(tr);
+    return;
+  }
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    row.forEach(cell => {
+      const td = document.createElement('td');
+      if (cell && typeof cell === 'object') {
+        td.textContent = cell.value;
+        if (cell.className) td.className = cell.className;
+      } else {
+        td.textContent = cell;
+      }
+      tr.appendChild(td);
+    });
+    tableBody.appendChild(tr);
+  });
+}
+
+function formatPercent(value) {
+  const numeric = Number(value || 0);
+  return numeric.toFixed(Number.isInteger(numeric) ? 0 : 2) + '%';
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+// Wenyuan period statistics
+if (DATA.wenyuanPeriodStats) {
+  const wy = DATA.wenyuanPeriodStats;
+  const overall = wy.overall || {};
+  const timing = wy.timing || {};
+  const notifications = wy.notifications || {};
+  const images = wy.images || {};
+
+  document.getElementById('wenyuan-section').style.display = 'block';
+  document.getElementById('wenyuan-label').textContent =
+    'Wenyuan Statistics — ' + (wy.periodLabel || 'last 30 days');
+  document.getElementById('wy-total').textContent = formatCount(overall.total_requests);
+  document.getElementById('wy-translated').textContent =
+    formatCount(overall.translated) + ' translated · ' +
+    formatPercent(overall.translation_percentage);
+  document.getElementById('wy-languages').textContent = formatCount(overall.unique_languages);
+  document.getElementById('wy-translators').textContent =
+    'Unique translators: ' + formatCount(wy.uniqueTranslators);
+  document.getElementById('wy-median').textContent =
+    timing.medianTranslationDisplay || 'N/A';
+  document.getElementById('wy-timed-count').textContent =
+    formatCount(timing.timedTranslationCount) + ' timed translations';
+
+  addRows('#wy-overall-table', [
+    ['Translated', { value: formatCount(overall.translated), className: 'num' }],
+    ['Needs review', { value: formatCount(overall.needs_review), className: 'num' }],
+    ['Untranslated', { value: formatCount(overall.untranslated), className: 'num' }],
+    ['In progress', { value: formatCount(overall.in_progress), className: 'num' }],
+    ['Missing assets', { value: formatCount(overall.missing_assets), className: 'num' }],
+  ]);
+
+  const directionRows = [
+    ['To English', wy.directions && wy.directions.to_english],
+    ['From English', wy.directions && wy.directions.from_english],
+    ['Non-English', wy.directions && wy.directions.non_english],
+  ].map(([label, data]) => [
+    label,
+    { value: formatCount(data && data.count), className: 'num' },
+    { value: formatPercent(data && data.percentage), className: 'num' },
+  ]);
+  addRows('#wy-directions-table', directionRows);
+
+  addRows('#wy-languages-table', (wy.topLanguages || []).map(lang => [
+    lang.language,
+    { value: formatCount(lang.requests), className: 'num' },
+    { value: formatPercent(lang.translationPercentage), className: 'num' },
+    { value: formatCount(lang.needsReview), className: 'num' },
+  ]));
+
+  addRows('#wy-pairs-table', (wy.sourceTargetPairs || []).map(pair => [
+    pair.pair,
+    { value: formatCount(pair.requests), className: 'num' },
+  ]));
+
+  addRows('#wy-extra-table', [
+    ['Average notified users / request', {
+      value: Number(notifications.average_notified_per_request || 0).toFixed(2),
+      className: 'num',
+    }],
+    ['Total notified users', {
+      value: formatCount(notifications.total_notified_users),
+      className: 'num',
+    }],
+    ['Image posts', {
+      value: formatCount(images.image_requests) + ' (' + formatPercent(images.percentage) + ')',
+      className: 'num',
+    }],
+    ['Average translation time', {
+      value: timing.averageTranslationHours
+        ? Number(timing.averageTranslationHours).toFixed(2) + ' hours'
+        : 'N/A',
+      className: 'num',
+    }],
+  ]);
+}
 
 // Flagged posts
 if (DATA.flaggedPosts && DATA.flaggedPosts.length > 0) {

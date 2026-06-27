@@ -580,6 +580,45 @@ class TestRenderHtmlDashboard:
         assert result.endswith("</html>")
 
 
+class TestWenyuanPeriodStats:
+    def test_collects_wenyuan_period_stats(self, monkeypatch):
+        sample_stats = {
+            "periodLabel": "last 30 days",
+            "overall": {
+                "total_requests": 42,
+                "translated": 30,
+                "translation_percentage": 71,
+                "unique_languages": 12,
+            },
+            "timing": {"medianTranslationDisplay": "2 hours"},
+        }
+        stub = _make_stub_module(
+            "main_wenyuan",
+            build_period_stats_data=MagicMock(return_value=sample_stats),
+        )
+        monkeypatch.setitem(sys.modules, "main_wenyuan", stub)
+
+        summary, data = moderator_digest._wenyuan_period_stats(30)
+
+        stub.build_period_stats_data.assert_called_once_with(30)
+        assert data == sample_stats
+        assert summary is not None
+        assert "**Total requests**: 42" in summary
+        assert "**Median translation time**: 2 hours" in summary
+
+    def test_collects_wenyuan_period_stats_fails_soft(self, monkeypatch):
+        stub = _make_stub_module(
+            "main_wenyuan",
+            build_period_stats_data=MagicMock(side_effect=RuntimeError("boom")),
+        )
+        monkeypatch.setitem(sys.modules, "main_wenyuan", stub)
+
+        summary, data = moderator_digest._wenyuan_period_stats(30)
+
+        assert summary is None
+        assert data is None
+
+
 # ===========================================================================
 # Tests: error_log_trimmer logic  (data_maintenance.py)
 # ===========================================================================

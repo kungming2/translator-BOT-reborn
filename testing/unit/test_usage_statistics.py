@@ -1,13 +1,15 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import orjson
 
 import monitoring.usage_statistics as usage_statistics
 from monitoring.usage_statistics import (_canonical_notification_language_code,
-                                         action_counter)
+                                         action_counter,
+                                         generate_language_frequency_markdown)
 
 
 class TestActionCounter(unittest.TestCase):
@@ -63,6 +65,42 @@ class TestNotificationStatsFormatting(unittest.TestCase):
     def test_existing_unknown_script_key_is_preserved(self) -> None:
         self.assertEqual(
             _canonical_notification_language_code("unknown-teng"), "unknown-teng"
+        )
+
+
+class TestLanguageFrequencyMarkdown(unittest.TestCase):
+    def test_frequency_table_includes_language_code_in_linked_name(self) -> None:
+        language = SimpleNamespace(
+            name="Volapuk",
+            preferred_code="vo",
+            link_statistics="https://example.test/vo",
+            rate_daily=0.0003,
+            rate_monthly=0.01,
+            rate_yearly=0.12,
+        )
+
+        markdown = generate_language_frequency_markdown([language])
+
+        self.assertIn(
+            "| [Volapuk (`vo`)](https://example.test/vo)        | 0.12 posts              | year |",
+            markdown,
+        )
+
+    def test_frequency_table_includes_language_code_without_statistics(self) -> None:
+        language = SimpleNamespace(
+            name="Example",
+            preferred_code="ex",
+            link_statistics=None,
+            rate_daily=None,
+            rate_monthly=None,
+            rate_yearly=None,
+        )
+
+        markdown = generate_language_frequency_markdown([language])
+
+        self.assertIn(
+            "| Example (`ex`)        | No recorded statistics     | ---   |",
+            markdown,
         )
 
 

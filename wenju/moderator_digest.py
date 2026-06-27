@@ -412,6 +412,42 @@ def _note_language_tags() -> tuple[str | None, list[dict[str, str | int]]]:
     return formatted_output, flagged_data
 
 
+def _wenyuan_period_stats(
+    days: int = 30,
+) -> tuple[str | None, dict[str, object] | None]:
+    """Collect Wenyuan period statistics for the moderator digest."""
+    try:
+        from main_wenyuan import build_period_stats_data
+
+        stats_data = build_period_stats_data(days)
+    except Exception as e:
+        logger.error("Failed to collect Wenyuan period statistics — %s", e)
+        return None, None
+
+    overall = stats_data.get("overall", {})
+    if not isinstance(overall, dict):
+        return None, stats_data
+
+    period_label = stats_data.get("periodLabel", f"last {days} days")
+    timing = stats_data.get("timing", {})
+    median_display = None
+    if isinstance(timing, dict):
+        median_display = timing.get("medianTranslationDisplay")
+
+    summary = (
+        "\n# Wenyuan Statistics\n"
+        f"* **Period**: {period_label}\n"
+        f"* **Total requests**: {overall.get('total_requests', 0)}\n"
+        f"* **Translated**: {overall.get('translated', 0)} "
+        f"({overall.get('translation_percentage', 0)}%)\n"
+        f"* **Unique languages**: {overall.get('unique_languages', 0)}"
+    )
+    if median_display:
+        summary += f"\n* **Median translation time**: {median_display}"
+
+    return summary, stats_data
+
+
 # ─── HTML rendering ───────────────────────────────────────────────────────────
 
 
@@ -464,6 +500,7 @@ def collate_moderator_digest() -> None:
     )
     command_data_md = format_markdown_table_with_padding(command_data_raw)
     noted_entries_md, flagged_data = _note_language_tags()
+    wenyuan_stats_md, wenyuan_stats_data = _wenyuan_period_stats(30)
 
     # generate_command_usage_report returns a Markdown table; parse rows
     # directly from command_data_raw before padding is applied.
@@ -500,6 +537,8 @@ def collate_moderator_digest() -> None:
         "MODERATOR_DIGEST_URL"
     ].rstrip("/")
     sections = [error_log_md, filter_log_md, activity_md, command_data_md]
+    if wenyuan_stats_md is not None:
+        sections.append(wenyuan_stats_md)
     if noted_entries_md is not None:
         sections.append(noted_entries_md)
     total_data = "\n".join(sections)
@@ -531,6 +570,7 @@ def collate_moderator_digest() -> None:
         "notifications": notifications,
         "actions": actions,
         "flaggedPosts": flagged_data,
+        "wenyuanPeriodStats": wenyuan_stats_data,
     }
 
     folder_to_save = get_reports_directory()

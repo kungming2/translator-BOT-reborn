@@ -11,7 +11,7 @@ Logger tag: [ZW:CLAIM]
 import logging
 import re
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from praw.models import Comment
@@ -30,6 +30,7 @@ from time_handling import get_current_utc_time
 from . import update_status
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CLAIM"})
+CLAIM_PERIOD_SECONDS = 8 * 60 * 60
 
 
 # ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -73,8 +74,12 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
                 # Parse ISO 8601 format: "2025-10-09T14:30:00Z"
                 # Replace 'Z' with '+00:00' for fromisoformat compatibility
                 claim_time = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                if claim_time.tzinfo is None:
+                    claim_time = claim_time.replace(tzinfo=UTC)
                 claim_timestamp = int(claim_time.timestamp())
-                result["seconds_until_expiry"] = int(claim_timestamp - current_time)
+                result["seconds_until_expiry"] = int(
+                    claim_timestamp + CLAIM_PERIOD_SECONDS - current_time
+                )
             except (ValueError, AttributeError):
                 pass
 

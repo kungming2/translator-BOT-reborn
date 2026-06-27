@@ -43,6 +43,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Reddit comment-list parsers now skip non-comment placeholder objects instead of assuming every listed item is a comment.
 * 🛠️ BUG FIX: Chinese character lookups now fall back to [Unihan](https://www.unicode.org)'s Mandarin reading when the dictionary has a character page but marks the character as absent from its dictionary.
 * 🛠️ BUG FIX: Edit tracking now skips command parsing for cached edited comments whose body has not changed, avoiding repeated lookup matcher logs for old edited lookup comments.
+* 🛠️ BUG FIX: Claim tracking now waits the full 8-hour claim period before resetting in-progress posts, rather than treating the claim comment's creation time as the expiry time.
 * 🛠️ BUG FIX: Post notification tracking now records only users who were successfully messaged, so users with failed notification attempts are not incorrectly marked as already notified for that request.
 * 🛠️ BUG FIX: Regional notification lookups now build country-specific subscription keys correctly, so requests such as Brazilian Portuguese use keys like `pt-BR`.
 * 🛠️ BUG FIX: Request closeout now treats defined multiple-language posts as complete when every language is either `translated` or `doublecheck`, avoiding unnecessary closeout messages for fulfilled multi-language requests.
