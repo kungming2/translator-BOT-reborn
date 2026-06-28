@@ -1064,7 +1064,7 @@ def process_title(
         logger.info(f"> Could not make sense of title ({title!r}). Asking AI...")
         ai_result = title_ai_parser(title, post)
         if not isinstance(ai_result, dict):
-            logger.error(f"AI parser failed for title ({title!r}): {ai_result[1]}")
+            logger.warning(f"AI parser failed for title ({title!r}): {ai_result[1]}")
         update_titolo_from_ai_result(
             result,
             ai_result,

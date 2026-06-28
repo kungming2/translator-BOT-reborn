@@ -28,6 +28,7 @@ def _import_ziwen_comments():
             logger=MagicMock(),
         ),
         "database": _make_stub_module("database", db=MagicMock()),
+        "error": _make_stub_module("error", error_log_basic=MagicMock()),
         "models.ajo": _make_stub_module(
             "models.ajo", Ajo=MagicMock(), ajo_loader=MagicMock()
         ),
@@ -163,3 +164,56 @@ def test_point_tabulation_skips_long_op_thanks() -> None:
     assert not ziwen_comments._should_tabulate_points(
         False, long_thanks, "op", "op", ["thanks", "thank you"]
     )
+
+
+def test_comment_processing_failure_writes_error_log() -> None:
+    ziwen_comments = _import_ziwen_comments()
+    error_entries: list[tuple[str, str]] = []
+
+    class FakeCursor:
+        def execute(self, query, _params=()):
+            if "SELECT 1 FROM old_comments" in query:
+                return types.SimpleNamespace(fetchone=lambda: None)
+            if "SELECT filtered FROM old_posts" in query:
+                return types.SimpleNamespace(fetchone=lambda: None)
+            return self
+
+    def raise_handler(_comment, _instruo, _komando, _ajo):
+        raise RuntimeError("handler failed")
+
+    fake_post = types.SimpleNamespace(id="post1")
+    fake_comment = types.SimpleNamespace(
+        id="comment1",
+        submission=fake_post,
+        body="!nuke",
+        author=types.SimpleNamespace(name="helper"),
+        created_utc=123,
+        permalink="/r/translator/comments/post1/title/comment1/",
+    )
+    fake_subreddit = types.SimpleNamespace(
+        comments=MagicMock(return_value=[fake_comment])
+    )
+    ziwen_comments.REDDIT.subreddit.return_value = fake_subreddit
+    ziwen_comments.db.cursor_main = FakeCursor()
+    ziwen_comments.db.conn_main = types.SimpleNamespace(commit=MagicMock())
+    ziwen_comments.ajo_loader.return_value = types.SimpleNamespace(lingvo="German")
+    ziwen_comments.comment_has_command.return_value = True
+    ziwen_comments.Instruo.from_comment.return_value = types.SimpleNamespace(
+        commands=[types.SimpleNamespace(name="nuke", data=[])]
+    )
+    ziwen_comments.HANDLERS["nuke"] = raise_handler
+    ziwen_comments.error_log_basic = (
+        lambda entry, routine: error_entries.append((entry, routine))
+    )
+
+    ziwen_comments.ziwen_commands()
+
+    assert len(error_entries) == 1
+    entry, routine = error_entries[0]
+    assert routine == "Ziwen Comments"
+    assert "Failed while processing comment `comment1` on post `post1`." in entry
+    assert (
+        "Comment URL: https://www.reddit.com/r/translator/comments/post1/title/comment1/"
+        in entry
+    )
+    assert "RuntimeError: handler failed" in entry

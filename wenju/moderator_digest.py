@@ -34,6 +34,48 @@ from wenju import WENJU_SETTINGS, task
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODDIG"})
 
 
+# ─── Report writers ───────────────────────────────────────────────────────────
+
+
+def _write_markdown_digest(md_path: Path, digest_summary: str) -> Path | None:
+    """
+    Save the Markdown archive for the digest.
+
+    The Markdown report is archival; the HTML dashboard is the moderator-facing
+    output. If an existing daily Markdown file cannot be overwritten, try a
+    same-day fallback filename so the daily digest can still complete.
+    """
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        md_path.write_text(digest_summary, encoding="utf-8")
+        return md_path
+    except OSError as err:
+        fallback_path = md_path.with_name(
+            f"{md_path.stem}-{datetime.now(UTC).strftime('%H%M%S')}{md_path.suffix}"
+        )
+        try:
+            fallback_path.write_text(digest_summary, encoding="utf-8")
+        except OSError as fallback_err:
+            logger.error(
+                "Moderator digest Markdown archive was not written. "
+                "Failed to write %s (%s); fallback %s also failed (%s).",
+                md_path,
+                err,
+                fallback_path,
+                fallback_err,
+            )
+            return None
+
+        logger.warning(
+            "Could not overwrite Markdown moderator digest at %s (%s); "
+            "saved fallback archive to %s.",
+            md_path,
+            err,
+            fallback_path,
+        )
+        return fallback_path
+
+
 # ─── Digest data collectors ───────────────────────────────────────────────────
 
 
@@ -579,18 +621,20 @@ def collate_moderator_digest() -> None:
     # bookmarked or referenced from a single stable path.
     html_path = Path(folder_to_save).parent / "moderator_digest.html"
 
-    md_path.parent.mkdir(parents=True, exist_ok=True)
-    with md_path.open("w", encoding="utf-8") as f:
-        f.write(digest_summary)
+    written_md_path = _write_markdown_digest(md_path, digest_summary)
 
     html_content = _render_html_dashboard(today_date_str, dashboard_data)
     html_path.parent.mkdir(parents=True, exist_ok=True)
     with html_path.open("w", encoding="utf-8") as f:
         f.write(html_content)
 
-    logger.info(
-        f"Daily administrative report completed and saved to {md_path} and {html_path}"
-    )
+    if written_md_path is None:
+        logger.info(f"Daily administrative report completed and saved to {html_path}")
+    else:
+        logger.info(
+            "Daily administrative report completed and saved to "
+            f"{written_md_path} and {html_path}"
+        )
 
     send_discord_alert(subject_line, notification_body, "alert")
     logger.info("Daily moderator digest completed.")

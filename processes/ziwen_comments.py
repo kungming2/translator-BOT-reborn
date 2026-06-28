@@ -10,12 +10,14 @@ Logger tag: [ZW:C]
 import logging
 import re
 import time
+import traceback
 
 from praw.models import Comment
 
 from config import SETTINGS, TRANSIENT_ERRORS
 from config import logger as _base_logger
 from database import db
+from error import error_log_basic
 from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
@@ -366,10 +368,29 @@ def ziwen_commands() -> None:
             if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
                 original_ajo.update_reddit(moderator_set=moderator_set)
         except Exception:
+            comment_id = getattr(comment, "id", "<unknown>")
+            post_id = getattr(getattr(comment, "submission", None), "id", "<unknown>")
+            permalink = getattr(comment, "permalink", "")
             logger.exception(
                 "Failed while processing comment `%s` on post `%s`. Comment URL: https://www.reddit.com%s",
-                getattr(comment, "id", "<unknown>"),
-                getattr(getattr(comment, "submission", None), "id", "<unknown>"),
-                getattr(comment, "permalink", ""),
+                comment_id,
+                post_id,
+                permalink,
             )
+            try:
+                error_log_basic(
+                    (
+                        f"Failed while processing comment `{comment_id}` on post "
+                        f"`{post_id}`.\n"
+                        f"Comment URL: https://www.reddit.com{permalink}\n\n"
+                        f"{traceback.format_exc()}"
+                    ),
+                    "Ziwen Comments",
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to write error log entry for comment `%s` on post `%s`.",
+                    comment_id,
+                    post_id,
+                )
             continue

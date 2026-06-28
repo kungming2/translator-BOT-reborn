@@ -64,6 +64,20 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         )
         paging_languages = paging_languages[:MAX_PAGE_LANGUAGES]
 
+    valid_paging_languages = [language for language in paging_languages if language]
+    if len(valid_paging_languages) != len(paging_languages):
+        logger.warning(f"Invalid or missing Komando data: {komando.data}")
+        invalid_text = RESPONSE.COMMENT_LANGUAGE_NO_RESULTS.format(
+            id_comment_body=comment.body
+        )
+        if not valid_paging_languages:
+            reddit_reply(comment, invalid_text)
+            logger.info("Replied letting them know the page language is invalid.")
+            return
+        replying_text.append(invalid_text)
+
+    paging_languages = valid_paging_languages
+
     for language in paging_languages:
         original_post = REDDIT_HELPER.submission(ajo.id)
         people_messaged: list = notifier(language, original_post, mode="page")

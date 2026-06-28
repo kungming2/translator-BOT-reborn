@@ -12,6 +12,7 @@ import logging
 from collections.abc import Generator
 
 from praw.models import Comment, Submission
+from prawcore import exceptions
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -34,12 +35,24 @@ def _remove_items(
     subreddit: str,
     nuke_reason: str,
     nuked_person: str,
-) -> None:
+    skip_item_id: str | None = None,
+) -> bool:
     """Remove all subreddit items from a generator (submissions or comments)."""
-    for item in generator:
-        if item.subreddit.display_name.lower() == subreddit:
-            remove_content(item, "spam", nuke_reason)
+    try:
+        for item in generator:
+            if skip_item_id is not None and getattr(item, "id", None) == skip_item_id:
+                continue
+            if item.subreddit.display_name.lower() == subreddit:
+                remove_content(item, "spam", nuke_reason)
+    except exceptions.NotFound:
+        logger.warning(
+            f">> Could not enumerate {item_type} from u/{nuked_person}; "
+            "account may be shadowbanned or deleted."
+        )
+        return False
+
     logger.info(f">> Removed all {item_type} from u/{nuked_person}.")
+    return True
 
 
 # ─── Command handler ──────────────────────────────────────────────────────────
@@ -79,22 +92,33 @@ def handle(comment: Comment, _instruo: Instruo, _komando: Komando, _ajo: Ajo) ->
     REDDIT.subreddit(subreddit).banned.add(nuked_person, ban_reason=nuke_reason)
     logger.info(f">> Banned u/{nuked_person}.")
 
-    _remove_items(
+    remove_content(parent, "spam", nuke_reason)
+    logger.info(f">> Removed directly targeted item from u/{nuked_person}.")
+    parent_id = parent.id
+
+    removed_submissions = _remove_items(
         nuked_person.submissions.new(limit=None),
         "submissions",
         subreddit,
         nuke_reason,
         nuked_person,
+        parent_id,
     )
-    _remove_items(
+    removed_comments = _remove_items(
         nuked_person.comments.new(limit=None),
         "comments",
         subreddit,
         nuke_reason,
         nuked_person,
+        parent_id,
     )
 
-    logger.info(f">> Completely nuked u/{nuked_person}.")
+    if removed_submissions and removed_comments:
+        logger.info(f">> Completely nuked u/{nuked_person}.")
+    else:
+        logger.info(
+            f">> Nuked u/{nuked_person}; profile history cleanup was partially skipped."
+        )
 
     # This is a mod-only command so no testing-mode wrapper is needed.
     message_send(
