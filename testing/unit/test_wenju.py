@@ -26,7 +26,7 @@ import sys
 import textwrap
 import types
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -84,8 +84,11 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             REDDIT=MagicMock(),
             REDDIT_HELPER=MagicMock(),
             USERNAME="translator-BOT",
+            create_mod_note=MagicMock(),
             get_random_useragent=MagicMock(return_value={}),
+            reddit_status_check=MagicMock(),
             submit_translatorbot_post=MagicMock(),
+            widget_update=MagicMock(),
         ),
         "reddit.notifications": _make_stub_module(
             "reddit.notifications", notifier_internal=MagicMock()
@@ -103,6 +106,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             get_current_utc_date=MagicMock(return_value="2024-01-15"),
             get_current_utc_time=MagicMock(return_value="12:00:00"),
             get_current_month=MagicMock(return_value="2024-01"),
+            get_current_month_name=MagicMock(return_value="January 2024"),
             get_previous_month=MagicMock(return_value="2023-12"),
             messaging_months_elapsed=MagicMock(return_value=1),
             time_convert_to_string_seconds=MagicMock(return_value="1 day"),
@@ -139,7 +143,10 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         ),
         "praw": _make_stub_module("praw"),
         "praw.models": _make_stub_module(
-            "praw.models", WikiPage=MagicMock(), TextArea=MagicMock()
+            "praw.models",
+            Comment=MagicMock(),
+            WikiPage=MagicMock(),
+            TextArea=MagicMock(),
         ),
         "praw.exceptions": _make_stub_module(
             "praw.exceptions",
@@ -205,6 +212,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 import wenju  # noqa: E402
 import wenju.iso_updates as iso_updates  # noqa: E402
 import wenju.moderator_digest as moderator_digest  # noqa: E402
+import wenju.status_report as status_report  # noqa: E402
 
 _restore_stubs()
 
@@ -318,6 +326,56 @@ class TestWenjuScheduleValidation:
                     wenju.run_schedule("weekly")
 
         alert_mock.assert_not_called()
+
+
+class TestLanguageOfTheDaySelection:
+    @staticmethod
+    def _next_iso_639_1_days(start_day: date, count: int) -> list[date]:
+        days = []
+        current_day = start_day
+        while len(days) < count:
+            if status_report._is_iso_639_1_lotd_day(current_day):
+                days.append(current_day)
+            current_day = date.fromordinal(current_day.toordinal() + 1)
+        return days
+
+    def test_iso_639_1_cycle_uses_each_candidate_before_repeating(self):
+        candidates = ["aa", "bb", "cc", "dd", "ee"]
+        days = self._next_iso_639_1_days(
+            status_report.LOTD_ISO_639_1_EPOCH, len(candidates)
+        )
+
+        selected = [
+            status_report._deterministic_iso_639_1_lotd_code(candidates, day)
+            for day in days
+        ]
+
+        assert sorted(selected) == sorted(candidates)
+        assert len(set(selected)) == len(candidates)
+
+    def test_iso_639_1_selection_is_stable_for_same_day(self):
+        candidates = ["aa", "bb", "cc", "dd", "ee"]
+        selected_day = date(2026, 1, 2)
+
+        first = status_report._deterministic_iso_639_1_lotd_code(
+            candidates, selected_day
+        )
+        second = status_report._deterministic_iso_639_1_lotd_code(
+            candidates, selected_day
+        )
+
+        assert first == second
+
+    def test_iso_639_1_candidates_are_normalized_and_deduplicated(self):
+        candidates = ["AA", "bb", "aa", "Cc"]
+        days = self._next_iso_639_1_days(status_report.LOTD_ISO_639_1_EPOCH, 3)
+
+        selected = [
+            status_report._deterministic_iso_639_1_lotd_code(candidates, day)
+            for day in days
+        ]
+
+        assert sorted(selected) == ["aa", "bb", "cc"]
 
 
 # ===========================================================================

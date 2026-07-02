@@ -15,6 +15,7 @@ Logger tag: [WJ:REPORT]
 
 import json
 import logging
+import random
 import re
 import sqlite3
 import time
@@ -60,6 +61,9 @@ from ziwen_lookup.wp_utils import wikipedia_lookup
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
+
+LOTD_ISO_639_1_EPOCH = date(2026, 1, 1)
+LOTD_ISO_639_1_SEED = "translatorbot:lotd:iso6391"
 
 
 # ─── Hourly monitoring tasks ──────────────────────────────────────────────────
@@ -318,6 +322,55 @@ def update_sidebar_statistics() -> None:
 # ─── Daily tasks ──────────────────────────────────────────────────────────────
 
 
+def _is_iso_639_1_lotd_day(day: date) -> bool:
+    """Return whether the LOTD schedule should use the ISO 639-1 pool."""
+    return day.day % 2 == 0
+
+
+def _iso_639_1_lotd_slots_before(day: date) -> int:
+    """Count ISO 639-1 LOTD slots from the fixed epoch before day."""
+    if day <= LOTD_ISO_639_1_EPOCH:
+        return 0
+
+    return sum(
+        1
+        for ordinal in range(LOTD_ISO_639_1_EPOCH.toordinal(), day.toordinal())
+        if _is_iso_639_1_lotd_day(date.fromordinal(ordinal))
+    )
+
+
+def _deterministic_iso_639_1_lotd_code(
+    candidates: list[str] | set[str], day: date
+) -> str | None:
+    """
+    Select an ISO 639-1 LOTD code from a deterministic shuffled cycle.
+
+    Each cycle contains every candidate once, so ISO 639-1 languages do not
+    repeat until the full pool has been used.
+    """
+    codes = sorted({code.lower() for code in candidates if code})
+    if not codes:
+        return None
+
+    slot_count = _iso_639_1_lotd_slots_before(day)
+    cycle_number, index_in_cycle = divmod(slot_count, len(codes))
+    cycle_codes = codes.copy()
+    rng = random.Random(f"{LOTD_ISO_639_1_SEED}:{cycle_number}")
+    rng.shuffle(cycle_codes)
+    return cycle_codes[index_in_cycle]
+
+
+def _select_iso_639_1_language_of_the_day(day: date):
+    """Select the ISO 639-1 LOTD Lingvo without persisted selection state."""
+    iso_639_1_languages = define_language_lists().get("ISO_639_1", set())
+    selected_code = _deterministic_iso_639_1_lotd_code(iso_639_1_languages, day)
+    if not selected_code:
+        return None
+
+    logger.info(f"Selecting an ISO 639-1 language today: `{selected_code}`.")
+    return converter(selected_code)
+
+
 @task(schedule="daily")
 def language_of_the_day(selected_language: str | None = None) -> str | None:
     """
@@ -335,13 +388,12 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     today = date.today()
 
     # Post ISO 639-1 languages on even days to surface more familiar languages.
-    iso_639_1_day = today.day % 2 == 0
+    iso_639_1_day = _is_iso_639_1_lotd_day(today)
 
     if not selected_language and not iso_639_1_day:
         today_language = select_random_language()
     elif not selected_language and iso_639_1_day:
-        today_language = select_random_language(True)
-        logger.info("Selecting an ISO 639-1 language today.")
+        today_language = _select_iso_639_1_language_of_the_day(today)
     else:
         assert (
             selected_language is not None
