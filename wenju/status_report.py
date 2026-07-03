@@ -37,6 +37,7 @@ from lang.languages import (
     select_random_language,
 )
 from models.ajo import Ajo, ajo_loader
+from models.lingvo import Lingvo
 from reddit.connection import (
     REDDIT,
     REDDIT_HELPER,
@@ -360,7 +361,7 @@ def _deterministic_iso_639_1_lotd_code(
     return cycle_codes[index_in_cycle]
 
 
-def _select_iso_639_1_language_of_the_day(day: date):
+def _select_iso_639_1_language_of_the_day(day: date) -> Lingvo | None:
     """Select the ISO 639-1 LOTD Lingvo without persisted selection state."""
     iso_639_1_languages = define_language_lists().get("ISO_639_1", set())
     selected_code = _deterministic_iso_639_1_lotd_code(iso_639_1_languages, day)

@@ -254,10 +254,10 @@ def calendar_to_gregorian(
     day: int | str,
     *,
     reference: date | None = None,
-    start=1900,
-    end=2100,
-    leap_month=False,
-    count=2,
+    start: int = 1900,
+    end: int = 2100,
+    leap_month: bool = False,
+    count: int = 2,
 ) -> date | list[date]:
     calendar_name = normalize_calendar_name(calendar_type)
     if calendar_name in CHINESE_CALENDARS:
@@ -340,7 +340,7 @@ def normalize_sexagenary_year(name: str) -> str:
     return CHINESE_TO_PINYIN_CYCLE.get(normalized, normalized)
 
 
-def sexagenary_years(name: str, start=1900, end=2100):
+def sexagenary_years(name: str, start: int = 1900, end: int = 2100) -> list[int]:
     name = normalize_sexagenary_year(name)
     if name not in CYCLE:
         raise ValueError(f"Unknown sexagenary year: {name}")
@@ -355,9 +355,9 @@ def recent_sexagenary_years(
     name: str,
     *,
     reference: date | None = None,
-    start=1900,
-    end=2100,
-    count=3,
+    start: int = 1900,
+    end: int = 2100,
+    count: int = 3,
 ) -> list[int]:
     if reference is None:
         reference = date.today()
@@ -377,17 +377,17 @@ def lunar_notation_to_recent_solar(
     lunar_day: int,
     *,
     reference: date | None = None,
-    start=1900,
-    end=2100,
-    leap_month=False,
-    count=2,
-):
+    start: int = 1900,
+    end: int = 2100,
+    leap_month: bool = False,
+    count: int = 2,
+) -> list[date]:
     from lunardate import LunarDate
 
     if reference is None:
         reference = date.today()
 
-    candidates = []
+    candidates: list[date] = []
 
     for y in sexagenary_years(ganzhi, start, end):
         try:

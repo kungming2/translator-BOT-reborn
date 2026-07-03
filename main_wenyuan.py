@@ -475,8 +475,10 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
                 missing_family_reference_cache[language_code] = _lookup_missing_family(
                     lang, language_code
                 )
-            family = missing_family_reference_cache[language_code]
-            if not family:
+            cached_family = missing_family_reference_cache[language_code]
+            if cached_family:
+                family = cached_family
+            else:
                 family = "N/A"
                 missing_family.append(f"{lang} ({language_code})")
 

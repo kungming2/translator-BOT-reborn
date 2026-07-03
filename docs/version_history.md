@@ -49,6 +49,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Regional notification lookups now build country-specific subscription keys correctly, so requests such as Brazilian Portuguese use keys like `pt-BR`.
 * 🛠️ BUG FIX: Request closeout now treats defined multiple-language posts as complete when every language is either `translated` or `doublecheck`, avoiding unnecessary closeout messages for fulfilled multi-language requests.
 * 🛠️ BUG FIX: The `!nuke` command now treats 404 responses while fetching a banned user's profile history as a partial cleanup case, so shadowbanned users can still be banned, have the targeted item removed, and notify the moderator without aborting the command.
+* 🛠️ BUG FIX: Hardened `!transform` image fetching against unsafe hosts, private-network redirects, oversized downloads, unsupported content types, and oversized decoded images.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

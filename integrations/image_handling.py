@@ -10,11 +10,14 @@ Logger tag: [I:IMAGE]
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
 import base64
+import ipaddress
 import logging
+import socket
 from io import BytesIO
+from urllib.parse import urljoin, urlparse
 
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
@@ -24,6 +27,21 @@ from config import logger as _base_logger
 logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
 
 access_credentials = load_settings(Paths.AUTH["API"])
+
+ALLOWED_TRANSFORM_IMAGE_HOSTS = frozenset(
+    {
+        "i.redd.it",
+        "preview.redd.it",
+        "external-preview.redd.it",
+        "i.imgur.com",
+    }
+)
+ALLOWED_TRANSFORM_CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
+MAX_TRANSFORM_IMAGE_BYTES = 20 * 1024 * 1024
+MAX_TRANSFORM_IMAGE_PIXELS = 60_000_000
+MAX_TRANSFORM_IMAGE_DIMENSION = 10_000
+MAX_TRANSFORM_REDIRECTS = 3
+TRANSFORM_DOWNLOAD_TIMEOUT = (5, 15)
 
 # Normalisation map for shorthand codes and counterclockwise degree values.
 TRANSFORM_MAP: dict[str, str] = {
@@ -35,6 +53,130 @@ TRANSFORM_MAP: dict[str, str] = {
     "-180": "180",
     "-270": "90",
 }
+
+
+class TransformImageError(ValueError):
+    """Raised when a transform source image is unsafe or unsupported."""
+
+
+def _validate_transform_url(url: str) -> str:
+    parsed = urlparse(url.strip())
+    if parsed.scheme not in {"http", "https"}:
+        raise TransformImageError("Image URL must use http or https.")
+    if not parsed.hostname:
+        raise TransformImageError("Image URL must include a hostname.")
+    if parsed.username or parsed.password:
+        raise TransformImageError("Image URL must not include credentials.")
+
+    hostname = parsed.hostname.lower()
+    if hostname not in ALLOWED_TRANSFORM_IMAGE_HOSTS:
+        raise TransformImageError(f"Image host is not allowed: {hostname}")
+
+    _validate_public_hostname(hostname)
+    return parsed.geturl()
+
+
+def _validate_public_hostname(hostname: str) -> None:
+    try:
+        addr_infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror as e:
+        raise TransformImageError(f"Unable to resolve image host: {hostname}") from e
+
+    addresses = {info[4][0] for info in addr_infos}
+    if not addresses:
+        raise TransformImageError(f"Unable to resolve image host: {hostname}")
+
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise TransformImageError(f"Image host resolves to blocked IP: {address}")
+
+
+def _is_allowed_content_type(content_type: str) -> bool:
+    media_type = content_type.split(";", 1)[0].strip().lower()
+    return media_type in ALLOWED_TRANSFORM_CONTENT_TYPES
+
+
+def _fetch_transform_image_bytes(image_url: str) -> bytes:
+    current_url = _validate_transform_url(image_url)
+
+    for _redirect_count in range(MAX_TRANSFORM_REDIRECTS + 1):
+        with requests.get(
+            current_url,
+            allow_redirects=False,
+            stream=True,
+            timeout=TRANSFORM_DOWNLOAD_TIMEOUT,
+        ) as response:
+            if response.is_redirect or response.is_permanent_redirect:
+                location = response.headers.get("Location")
+                if not location:
+                    raise TransformImageError(
+                        "Image redirect did not include Location."
+                    )
+                current_url = _validate_transform_url(urljoin(current_url, location))
+                continue
+
+            response.raise_for_status()
+
+            content_type = response.headers.get("Content-Type", "")
+            if not _is_allowed_content_type(content_type):
+                raise TransformImageError(
+                    f"Image response has unsupported Content-Type: {content_type}"
+                )
+
+            content_length = response.headers.get("Content-Length")
+            if (
+                content_length
+                and content_length.isdigit()
+                and int(content_length) > MAX_TRANSFORM_IMAGE_BYTES
+            ):
+                raise TransformImageError("Image response is too large.")
+
+            buffer = BytesIO()
+            downloaded = 0
+            for chunk in response.iter_content(chunk_size=8192):
+                if not chunk:
+                    continue
+                downloaded += len(chunk)
+                if downloaded > MAX_TRANSFORM_IMAGE_BYTES:
+                    raise TransformImageError("Image response exceeded size limit.")
+                buffer.write(chunk)
+
+            return buffer.getvalue()
+
+    raise TransformImageError("Image URL redirected too many times.")
+
+
+def _open_transform_image(image_bytes: bytes) -> Image.Image:
+    previous_max_pixels = Image.MAX_IMAGE_PIXELS
+    Image.MAX_IMAGE_PIXELS = MAX_TRANSFORM_IMAGE_PIXELS
+
+    try:
+        with Image.open(BytesIO(image_bytes)) as image:
+            image.verify()
+
+        img = Image.open(BytesIO(image_bytes))
+        width, height = img.size
+        if (
+            width > MAX_TRANSFORM_IMAGE_DIMENSION
+            or height > MAX_TRANSFORM_IMAGE_DIMENSION
+            or width * height > MAX_TRANSFORM_IMAGE_PIXELS
+        ):
+            raise TransformImageError("Image dimensions are too large.")
+
+        img.load()
+        return img
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as e:
+        raise TransformImageError("Image response could not be decoded.") from e
+    finally:
+        Image.MAX_IMAGE_PIXELS = previous_max_pixels
 
 
 # ─── Image transformation ─────────────────────────────────────────────────────
@@ -55,13 +197,11 @@ def rotate_or_flip_image(image_url: str, transformation: str) -> Image.Image:
     logger.debug(f"Downloading image from {image_url}")
 
     try:
-        response = requests.get(image_url, timeout=45)
-        response.raise_for_status()
-        img: Image.Image = Image.open(BytesIO(response.content))
+        img = _open_transform_image(_fetch_transform_image_bytes(image_url))
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to download image from {image_url}: {e}")
         raise
-    except Exception as e:
+    except TransformImageError as e:
         logger.error(f"Failed to open image from {image_url}: {e}")
         raise
     logger.debug(
