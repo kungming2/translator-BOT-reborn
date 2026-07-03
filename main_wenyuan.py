@@ -285,6 +285,50 @@ registry = CommandRegistry()
 # ─── Statistics formatting ────────────────────────────────────────────────────
 
 
+def _lookup_missing_family(language_name: str, language_code: str) -> str | None:
+    """Fetch reference data for a missing language family and return it if found."""
+    msg.info(
+        f"Fetching reference data for missing family: "
+        f"{language_name} ({language_code})..."
+    )
+
+    try:
+        reference_data = get_language_reference(language_code)
+    except Exception as e:
+        logger.exception(
+            "Could not fetch reference data for missing family `%s` (`%s`): %s",
+            language_name,
+            language_code,
+            e,
+        )
+        msg.warn(
+            f"Reference lookup failed for {language_name} ({language_code}); "
+            "leaving family as N/A."
+        )
+        return None
+
+    if not reference_data:
+        msg.warn(
+            f"Reference lookup found no data for {language_name} ({language_code}); "
+            "leaving family as N/A."
+        )
+        return None
+
+    family = reference_data.get("family")
+    if isinstance(family, str):
+        family = family.strip()
+
+    if family and family.lower() != "unknown":
+        msg.good(f"Found family for {language_name} ({language_code}): {family}")
+        return family
+
+    msg.warn(
+        f"Reference lookup for {language_name} ({language_code}) did not include "
+        "family data; leaving family as N/A."
+    )
+    return None
+
+
 def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
     """
     Format Lumo statistics into Reddit markdown for posting.
@@ -399,6 +443,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
 
     identified_from_unknown = identification.get("identified_from_unknown", {})
     missing_family: list[str] = []
+    missing_family_reference_cache: dict[str, str | None] = {}
 
     for lang in all_languages:
         if lang in UTILITY_CODES:
@@ -425,8 +470,15 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         if lingvo.family:
             family = lingvo.family
         else:
-            family = "N/A"
-            missing_family.append(lang)
+            language_code = lingvo.preferred_code.lower()
+            if language_code not in missing_family_reference_cache:
+                missing_family_reference_cache[language_code] = _lookup_missing_family(
+                    lang, language_code
+                )
+            family = missing_family_reference_cache[language_code]
+            if not family:
+                family = "N/A"
+                missing_family.append(f"{lang} ({language_code})")
 
         ri_value = "---"
         if lingvo.population and lingvo.population > 0:
