@@ -364,8 +364,7 @@ def _format_hakka_sixian_reading(reading: str) -> str:
     reading = reading.translate(_HAKKA_TONE_DIGITS)
     reading = re.sub(r"(\d{1,4})([A-Za-z])", r"\1 \2", reading)
     formatted = [
-        re.sub(r"([A-Za-z])(\d+)", r"\1^(\2)", word)
-        for word in reading.split()
+        re.sub(r"([A-Za-z])(\d+)", r"\1^(\2)", word) for word in reading.split()
     ]
     return " ".join(formatted)
 

@@ -35,6 +35,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Centralized internal project language pseudo-codes in settings, shared Wenyuan utility-code configuration between statistics modules, and moved Wenyuan's bulk title retrieval test into `devtools.py`.
 * 🔄 CHANGE: Logging refinements.
 * 🔄 CHANGE: Japanese and Chinese lookup keys are now Unicode-normalized before cache and dictionary lookups, so compatibility ideographs such as `晴` resolve to their canonical forms.
+* 🔄 CHANGE: Chinese CJK lookup now reads supplementary Southern Min and Hakka pronunciations from MoEDict's JSON endpoints instead of scraping MoEDict HTML pages.
 * 🔄 CHANGE: Wenju's ISO 639-1 language of the day selection now uses a deterministic shuffled cycle, reducing quick repeats without requiring persistent selection state.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
