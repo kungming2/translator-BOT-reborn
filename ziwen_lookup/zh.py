@@ -15,7 +15,6 @@ import logging
 import random
 import re
 import unicodedata
-from contextlib import suppress
 from time import sleep
 from urllib.parse import quote, urljoin
 
@@ -350,6 +349,27 @@ def variant_character_search(search_term: str, retries: int = 3) -> str | None:
     return None
 
 
+_HAKKA_TONE_DIGITS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+
+
+def _moedict_api_response(path: str, term: str) -> object:
+    encoded_term = quote(term, safe="")
+    url = f"https://www.moedict.tw/api/{path}/{encoded_term}.json"
+    response = requests.get(url, headers=useragent, timeout=5)
+    response.raise_for_status()
+    return response.json()
+
+
+def _format_hakka_sixian_reading(reading: str) -> str:
+    reading = reading.translate(_HAKKA_TONE_DIGITS)
+    reading = re.sub(r"(\d{1,4})([A-Za-z])", r"\1 \2", reading)
+    formatted = [
+        re.sub(r"([A-Za-z])(\d+)", r"\1^(\2)", word)
+        for word in reading.split()
+    ]
+    return " ".join(formatted)
+
+
 def _min_hakka_readings(character: str) -> str:
     """
     Returns Hokkien and Hakka (Sixian) readings for a given Chinese
@@ -360,35 +380,51 @@ def _min_hakka_readings(character: str) -> str:
     """
 
     def get_min_reading(char: str) -> str:
-        url = f"https://www.moedict.tw/'{char}"
-        response = requests.get(url, headers=useragent)
-        tree = html.fromstring(response.content)
+        try:
+            data = _moedict_api_response("t", char)
+        except (requests.RequestException, ValueError) as e:
+            logger.warning(f"Southern Min lookup failed for '{char}': {e}")
+            return ""
 
-        with suppress(IndexError):
-            annotation = tree.xpath(
-                '//ru[contains(@class,"rightangle") and contains(@order,"0")]/@annotation'
-            )[0]
-            return f"\n| **Southern Min** | *{annotation}* |"
+        if not isinstance(data, dict):
+            return ""
+        heteronyms = data.get("heteronyms", [])
+        if not isinstance(heteronyms, list):
+            return ""
+
+        for heteronym in heteronyms:
+            if not isinstance(heteronym, dict):
+                continue
+            annotation = heteronym.get("trs")
+            if isinstance(annotation, str) and annotation.strip():
+                return f"\n| **Southern Min** | *{annotation.strip()}* |"
         return ""
 
     def get_hak_reading(char: str) -> str:
-        url = f"https://www.moedict.tw/:{char}"
-        response = requests.get(url, headers=useragent)
-        tree = html.fromstring(response.content)
-
-        reading = tree.xpath(
-            'string(//span[contains(@data-reactid,"$0.6.2.1")])'
-        ).strip()
-        if not reading:
+        try:
+            data = _moedict_api_response("h", char)
+        except (requests.RequestException, ValueError) as e:
+            logger.warning(f"Hakka lookup failed for '{char}': {e}")
             return ""
 
-        # Normalize and format superscript tones
-        reading = re.sub(r"(\d{1,4})([a-z])", r"\1 \2", reading)
-        formatted = []
-        for word in reading.split():
-            word = re.sub(r"([a-z])(\d+)", r"\1^(\2)", word)
-            formatted.append(word)
-        return f"\n| **Hakka (Sixian)** | *{' '.join(formatted)}* |"
+        if not isinstance(data, dict):
+            return ""
+        heteronyms = data.get("heteronyms", [])
+        if not isinstance(heteronyms, list):
+            return ""
+
+        for heteronym in heteronyms:
+            if not isinstance(heteronym, dict):
+                continue
+            pinyin = heteronym.get("pinyin")
+            if not isinstance(pinyin, str):
+                continue
+            match = re.search(r"(?:^|\s)四⃞(?P<reading>.*?)(?=\s\S⃞|$)", pinyin)
+            if match:
+                reading = _format_hakka_sixian_reading(match.group("reading").strip())
+                if reading:
+                    return f"\n| **Hakka (Sixian)** | *{reading}* |"
+        return ""
 
     min_reading = get_min_reading(character)
     hak_reading = get_hak_reading(character)

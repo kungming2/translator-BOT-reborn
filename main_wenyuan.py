@@ -14,7 +14,7 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import cast
 
 from praw.models import Comment
@@ -240,22 +240,20 @@ class CommandRegistry:
             show_edge=True,
             padding=(0, 1),
         )
-        table.add_column("Command", style="cyan", no_wrap=True)
-        table.add_column("Description", style="white")
-        table.add_column("Category", style="dim")
+        table.add_column("Command", style="cyan", no_wrap=True, min_width=18)
+        table.add_column("Description", style="white", min_width=32)
+        table.add_column("Category", style="dim", no_wrap=True, min_width=14)
 
-        for category_key in ["posts", "stats", "reference", "test", "system"]:
+        for category_key in ["stats", "reference", "posts", "test", "system"]:
             if category_key not in categorized:
                 continue
             category_label = self.categories.get(category_key, category_key)
-            first = True
             for cmd in sorted(categorized[category_key], key=lambda x: x.key):
                 table.add_row(
                     cmd.key,
                     cmd.description,
-                    category_label if first else "",
+                    category_label,
                 )
-                first = False
 
         _console.print()
         _console.print(table)
@@ -758,6 +756,96 @@ def _print_language_stats(stats: dict[str, object]) -> None:
     _console.print(table)
 
 
+def _format_ajo_date(created_utc: int | None) -> str:
+    """Return a compact UTC date for an Ajo timestamp."""
+    if created_utc is None:
+        return "Unknown"
+    return datetime.fromtimestamp(created_utc, UTC).strftime("%Y-%m-%d")
+
+
+def _format_ajo_direction(direction: str | None) -> str:
+    """Return a readable compact direction label."""
+    direction_labels = {
+        "english_to": "To English",
+        "english_from": "From English",
+        "english_none": "Non-English",
+        "english_both": "English both",
+    }
+    if direction is None:
+        return "Unknown"
+    return direction_labels.get(direction, direction)
+
+
+def _created_utc_sort_key(candidate: object) -> int:
+    """Return an Ajo-like object's created timestamp for newest-first sorting."""
+    created_utc = getattr(candidate, "created_utc", None)
+    return created_utc if isinstance(created_utc, int) else 0
+
+
+def _parse_recent_ajo_limit() -> int:
+    """Prompt for how many recent Ajos to show with language statistics."""
+    limit_input = input(
+        "  Number of recent matching Ajos to show (press Enter for 5, 0 for none): "
+    ).strip()
+
+    if not limit_input:
+        return 5
+
+    try:
+        limit = int(limit_input)
+    except ValueError:
+        msg.warn("Invalid Ajo count. Skipping recent Ajo list.")
+        return 0
+
+    if limit < 0:
+        msg.warn("Ajo count cannot be negative. Skipping recent Ajo list.")
+        return 0
+
+    return limit
+
+
+def _print_recent_language_ajos(lumo: Lumo, language: str, limit: int) -> None:
+    """Print the newest loaded Ajos matching a language."""
+    if limit < 1:
+        return
+
+    matching_ajos = sorted(
+        lumo.filter_by_language(language),
+        key=_created_utc_sort_key,
+        reverse=True,
+    )
+
+    if not matching_ajos:
+        return
+
+    lingvo = converter(language)
+    language_name = lingvo.name if lingvo and lingvo.name else language
+    table = Table(
+        title=f"Last {min(limit, len(matching_ajos))} {language_name} Ajos",
+        box=box.SIMPLE_HEAD,
+        show_header=True,
+        header_style="bold",
+        title_style="bold sandy_brown",
+        padding=(0, 1),
+    )
+    table.add_column("Date", style="dim", no_wrap=True, width=10)
+    table.add_column("Post", style="cyan", no_wrap=True, min_width=14)
+    table.add_column("Status", style="white", no_wrap=True, min_width=12)
+    table.add_column("Direction", style="white", no_wrap=True, min_width=12)
+
+    for recent_match in matching_ajos[:limit]:
+        post_id = recent_match.id or "Unknown"
+        table.add_row(
+            _format_ajo_date(recent_match.created_utc),
+            f"redd.it/{post_id}" if recent_match.id else post_id,
+            str(recent_match.status),
+            _format_ajo_direction(recent_match.direction),
+        )
+
+    _console.print()
+    _console.print(table)
+
+
 def build_period_stats_data(days: int = 30) -> dict[str, object]:
     """Build serializable Wenyuan statistics for the latest N days."""
     lumo = Lumo()
@@ -822,15 +910,15 @@ def build_period_stats_data(days: int = 30) -> dict[str, object]:
 # ─── Command definitions ──────────────────────────────────────────────────────
 
 
-@registry.register("challenge", "Post the weekly translation challenge", "posts")
+@registry.register("post_challenge", "Post weekly challenge", "posts")
 def post_challenge() -> None:
     """Post the weekly translation challenge."""
     translation_challenge_poster()
 
 
 @registry.register(
-    "lang_reference",
-    "Fetch reference data for a language from Ethnologue/Wikipedia",
+    "language_reference",
+    "Fetch language reference data",
     "reference",
 )
 def fetch_language_reference() -> None:
@@ -898,7 +986,7 @@ def fetch_language_reference() -> None:
 
 @registry.register(
     "period_stats",
-    "Retrieve abbreviated language statistics from a time period as a list",
+    "Show stats for a time period",
     "stats",
 )
 def retrieve_post_stats() -> None:
@@ -994,9 +1082,7 @@ def retrieve_post_stats() -> None:
     return None
 
 
-@registry.register(
-    "lang_stats", "Get detailed statistics for specific language(s)", "stats"
-)
+@registry.register("language_stats", "Show stats for selected languages", "stats")
 def get_language_details() -> None:
     """Get detailed statistics for a specific language or multiple languages."""
     language_input = input(
@@ -1008,6 +1094,7 @@ def get_language_details() -> None:
         return
 
     period = input("  Time period (YYYY-MM or press Enter for last 30 days): ").strip()
+    recent_ajo_limit = _parse_recent_ajo_limit()
 
     lumo = Lumo()
 
@@ -1038,6 +1125,7 @@ def get_language_details() -> None:
                     msg.text(
                         f"Typical frequency: {freq_info['rate_monthly']:.2f} posts/month"
                     )
+                _print_recent_language_ajos(lumo, lang_name, recent_ajo_limit)
             else:
                 msg.warn(
                     f"{lang_name}: No data found for this language in the specified period."
@@ -1054,13 +1142,12 @@ def get_language_details() -> None:
                 msg.text(f"  Daily: {freq_info['rate_daily']:.2f} posts/day")
                 msg.text(f"  Monthly: {freq_info['rate_monthly']:.2f} posts/month")
                 msg.text(f"  Yearly: {freq_info['rate_yearly']:.2f} posts/year")
+            _print_recent_language_ajos(lumo, language_input, recent_ajo_limit)
         else:
             msg.warn(f"No data found for '{language_input}' in {period_desc}")
 
 
-@registry.register(
-    "post_monthly", "Analyze and post full monthly statistics to Reddit", "posts"
-)
+@registry.register("post_monthly_stats", "Post monthly statistics report", "stats")
 def post_monthly_statistics_menu() -> None:
     """Menu wrapper for posting monthly statistics."""
     month_year = input("\n  Enter month (YYYY-MM) to post statistics for: ").strip()

@@ -85,6 +85,71 @@ class TestZhVariantSearch(unittest.TestCase):
         )
 
 
+class TestZhMoedictReadings(unittest.TestCase):
+    """Tests for MoEDict Southern Min and Hakka JSON enrichment."""
+
+    def test_min_hakka_readings_use_moedict_json_apis(self):
+        try:
+            import ziwen_lookup.zh as zh
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        class FakeResponse:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return self.payload
+
+        calls = []
+
+        def fake_get(url, **kwargs):
+            calls.append((url, kwargs))
+            if "/api/t/" in url:
+                return FakeResponse({"heteronyms": [{"trs": "siann-im"}]})
+            if "/api/h/" in url:
+                return FakeResponse(
+                    {
+                        "heteronyms": [
+                            {
+                                "pinyin": (
+                                    "四⃞sang²⁴im²⁴ 海⃞shang⁵³rhim⁵³ "
+                                    "大⃞shang³³rhim³³"
+                                )
+                            }
+                        ]
+                    }
+                )
+            raise AssertionError(f"Unexpected URL: {url}")
+
+        with patch("ziwen_lookup.zh.requests.get", side_effect=fake_get):
+            result = zh._min_hakka_readings("聲音")
+
+        self.assertEqual(
+            result,
+            "\n| **Southern Min** | *siann-im* |"
+            "\n| **Hakka (Sixian)** | *sang^(24) im^(24)* |",
+        )
+        self.assertIn("/api/t/%E8%81%B2%E9%9F%B3.json", calls[0][0])
+        self.assertIn("/api/h/%E8%81%B2%E9%9F%B3.json", calls[1][0])
+        self.assertEqual(calls[0][1]["timeout"], 5)
+
+    def test_min_hakka_readings_fail_softly(self):
+        try:
+            import ziwen_lookup.zh as zh
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        with patch(
+            "ziwen_lookup.zh.requests.get",
+            side_effect=zh.requests.RequestException("down"),
+        ):
+            self.assertEqual(zh._min_hakka_readings("聲音"), "")
+
+
 class TestZhCharacterUnihanFallback(unittest.TestCase):
     """Tests for Unihan Mandarin fallback in Chinese character lookup."""
 
