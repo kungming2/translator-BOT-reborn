@@ -391,7 +391,7 @@ def lunar_notation_to_recent_solar(
 
     for y in sexagenary_years(ganzhi, start, end):
         try:
-            solar = LunarDate(y, lunar_month, lunar_day, leap_month).toSolarDate()
+            solar = LunarDate(y, lunar_month, lunar_day, leap_month).to_solar_date()
             if solar <= reference:
                 candidates.append(solar)
         except ValueError:
