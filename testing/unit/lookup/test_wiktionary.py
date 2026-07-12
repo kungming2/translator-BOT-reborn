@@ -645,6 +645,7 @@ class TestWiktionarySearch:
             else call_kwargs[0][1]
         )
         assert params["titles"] == "schadenfreude"
+        assert call_kwargs.kwargs["timeout"] == (5, 15)
 
     @patch("ziwen_lookup.wiktionary.requests.get")
     def test_language_name_normalized_via_converter(self, mock_get):

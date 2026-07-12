@@ -4,7 +4,6 @@
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
 import logging
-import subprocess
 import sys
 from pathlib import Path
 
@@ -13,11 +12,48 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from config import SCHEDULER_SETTINGS
 from scheduler.lock import AlreadyRunningError, script_lock
+from scheduler.process import run_bounded_process
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 BOT_DIR = Path(SCHEDULER_SETTINGS["main_bot_directory"])
 LOG_DIR = Path(SCHEDULER_SETTINGS["main_log_directory"])
+DEFAULT_JOB_TIMEOUTS: dict[str, int] = {
+    "ziwen": 170,
+    "chinese_reference": 540,
+    "hermes": 1500,
+    "wenju_hourly": 3000,
+    "wenju_daily": 3600,
+    "wenju_weekly": 3600,
+    "wenju_monthly": 7200,
+}
+JOB_TIMEOUTS = SCHEDULER_SETTINGS.get("job_timeouts_seconds", DEFAULT_JOB_TIMEOUTS)
+TERMINATION_GRACE_SECONDS = SCHEDULER_SETTINGS.get("termination_grace_seconds", 60)
+
+
+def _positive_int_setting(value: object, setting_name: str) -> int:
+    """Return a positive integer setting or fail during scheduler startup."""
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{setting_name} must be a positive integer")
+    return value
+
+
+TERMINATION_GRACE_SECONDS = _positive_int_setting(
+    TERMINATION_GRACE_SECONDS, "termination_grace_seconds"
+)
+
+for _job_name in (
+    "ziwen",
+    "chinese_reference",
+    "hermes",
+    "wenju_hourly",
+    "wenju_daily",
+    "wenju_weekly",
+    "wenju_monthly",
+):
+    if _job_name not in JOB_TIMEOUTS:
+        raise ValueError(f"Missing scheduler timeout for {_job_name}")
+    _positive_int_setting(JOB_TIMEOUTS[_job_name], f"job_timeouts_seconds.{_job_name}")
 
 # ─── Logging setup ────────────────────────────────────────────────────────────
 
@@ -42,18 +78,26 @@ def run_script(
     args = args or []
     name = lock_name or Path(script).stem
     log_file = LOG_DIR / f"{name}.log"
+    timeout_seconds = _positive_int_setting(
+        JOB_TIMEOUTS.get(name), f"job_timeouts_seconds.{name}"
+    )
 
     try:
         with script_lock(name):
             log.info(f"Starting {name} {' '.join(args)}")
             with open(log_file, "a") as lf:
-                result = subprocess.run(
+                return_code = run_bounded_process(
                     [sys.executable, str(BOT_DIR / script)] + args,
-                    stdout=lf,
-                    stderr=lf,
+                    lf,
+                    timeout_seconds,
+                    TERMINATION_GRACE_SECONDS,
+                    name,
+                    log,
                 )
-            if result.returncode != 0:
-                log.error(f"{name} exited with code {result.returncode}")
+            if return_code is None:
+                return
+            if return_code != 0:
+                log.error(f"{name} exited with code {return_code}")
             else:
                 log.info(f"Finished {name}")
     except AlreadyRunningError:

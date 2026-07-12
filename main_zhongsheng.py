@@ -44,14 +44,10 @@ _tree_synced = False
 
 # ─── Bot setup ────────────────────────────────────────────────────────────────
 
-intents = discord.Intents.default()
-if hasattr(intents, "message_content"):
-    intents.message_content = True
-else:
-    logger.warning(
-        "discord.Intents.message_content is unavailable in this installed Discord library; "
-        "prefix command handling may be limited, but slash commands will still work."
-    )
+intents = discord.Intents(
+    discord.Intents.default().value,
+    message_content=True,
+)
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 

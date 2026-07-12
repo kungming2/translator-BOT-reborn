@@ -14,6 +14,7 @@ from urllib.parse import quote
 import requests
 
 from config import logger as _base_logger
+from integrations.http import DEFAULT_HTTP_TIMEOUT
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:OSM"})
 
@@ -46,7 +47,7 @@ def search_nominatim(
     headers: dict[str, str] = {"User-Agent": "Python OSM Search Script"}
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=DEFAULT_HTTP_TIMEOUT)
         response.raise_for_status()
         results: list[dict[str, Any]] = response.json()
 

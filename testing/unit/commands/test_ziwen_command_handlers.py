@@ -9,11 +9,16 @@ import types
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Protocol
 from unittest.mock import MagicMock
 
 
 class FakeNotFound(Exception):
     pass
+
+
+class HasId(Protocol):
+    id: str
 
 
 class FakeAuthor:
@@ -124,10 +129,12 @@ class FakeKunulo:
     def delete(self, tag: str) -> None:
         self.deleted.append(tag)
 
-    def get_tag(self, _tag: str) -> None:
+    @staticmethod
+    def get_tag(_tag: str) -> None:
         return None
 
-    def check_existing_cjk_lookups(self, *_args, **_kwargs) -> None:
+    @staticmethod
+    def check_existing_cjk_lookups(*_args, **_kwargs) -> None:
         return None
 
     def find_cjk_reply_for_comment(self, _comment_id: str) -> str | None:
@@ -139,7 +146,8 @@ class FakeKunulo:
     def find_wt_reply_for_comment(self, _comment_id: str) -> str | None:
         return self.existing_wt_reply
 
-    def get_comment_permalink(self, comment_id: str) -> str:
+    @staticmethod
+    def get_comment_permalink(comment_id: str) -> str:
         return f"https://www.reddit.com/r/translator/comments/post/{comment_id}/"
 
 
@@ -381,6 +389,39 @@ def _patch_kunulo(monkeypatch, module, kunulo: FakeKunulo) -> None:
     )
 
 
+def _setup_nuke_test(monkeypatch, nuked: FakeAuthor):
+    module = _load_command_module(monkeypatch, "nuke")
+    mod = FakeAuthor("mod")
+    parent = FakeComment(author=nuked)
+    comment = FakeComment(author=mod, parent=parent)
+    banned = SimpleNamespace(add=MagicMock())
+    reddit = SimpleNamespace(
+        subreddit=MagicMock(return_value=SimpleNamespace(banned=banned))
+    )
+    removed: list[HasId] = []
+    sent: list[tuple[object, str, str]] = []
+    monkeypatch.setattr(module, "is_mod", lambda _author: True)
+    monkeypatch.setattr(module, "REDDIT", reddit)
+    monkeypatch.setattr(
+        module, "remove_content", lambda item, *_args: removed.append(item)
+    )
+    monkeypatch.setattr(
+        module,
+        "message_send",
+        lambda target, subject, body: sent.append((target, subject, body)),
+    )
+    monkeypatch.setattr(module, "create_mod_note", MagicMock())
+    return module, mod, parent, comment, banned, removed, sent
+
+
+def _assert_nuke_completed(module, mod: FakeAuthor, banned, sent) -> None:
+    banned.add.assert_called_once()
+    assert sent[0][0] is mod
+    module.create_mod_note.assert_called_once_with(
+        "PERMA_BAN", "spammer", "Mod u/mod nuked u/spammer."
+    )
+
+
 def test_calendar_replies_with_converted_date(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "calendar")
     replies: list[str] = []
@@ -579,8 +620,6 @@ def test_missing_updates_status_and_messages_original_poster(monkeypatch) -> Non
 
 
 def test_nuke_bans_removes_content_messages_mod_and_notes(monkeypatch) -> None:
-    module = _load_command_module(monkeypatch, "nuke")
-    mod = FakeAuthor("mod")
     nuked = FakeAuthor("spammer")
     nuked.submissions = SimpleNamespace(
         new=lambda limit=None: iter(
@@ -606,69 +645,33 @@ def test_nuke_bans_removes_content_messages_mod_and_notes(monkeypatch) -> None:
             ]
         )
     )
-    parent = FakeComment(author=nuked)
-    comment = FakeComment(author=mod, parent=parent)
-    banned = SimpleNamespace(add=MagicMock())
-    reddit = SimpleNamespace(
-        subreddit=MagicMock(return_value=SimpleNamespace(banned=banned))
+    module, mod, _, comment, banned, removed, sent = _setup_nuke_test(
+        monkeypatch, nuked
     )
-    removed: list[object] = []
-    sent: list[tuple[object, str, str]] = []
-    monkeypatch.setattr(module, "is_mod", lambda _author: True)
-    monkeypatch.setattr(module, "REDDIT", reddit)
-    monkeypatch.setattr(
-        module, "remove_content", lambda item, *_args: removed.append(item)
-    )
-    monkeypatch.setattr(
-        module,
-        "message_send",
-        lambda target, subject, body: sent.append((target, subject, body)),
-    )
-    monkeypatch.setattr(module, "create_mod_note", MagicMock())
 
     module.handle(comment, None, FakeKomando(name="nuke"), FakeAjo())
 
-    banned.add.assert_called_once()
     assert [item.id for item in removed] == ["comment1", "submission1", "comment2"]
-    assert sent[0][0] is mod
-    module.create_mod_note.assert_called_once_with(
-        "PERMA_BAN", "spammer", "Mod u/mod nuked u/spammer."
-    )
+    _assert_nuke_completed(module, mod, banned, sent)
 
 
 def test_nuke_continues_when_shadowbanned_user_history_404s(monkeypatch) -> None:
-    module = _load_command_module(monkeypatch, "nuke")
-    mod = FakeAuthor("mod")
     nuked = FakeAuthor("spammer")
 
     def unavailable_history():
-        raise FakeNotFound("shadowbanned")
-        yield
+        fetch_item = MagicMock(side_effect=FakeNotFound("shadowbanned"))
+        return iter(fetch_item, None)
 
     nuked.submissions = SimpleNamespace(new=lambda limit=None: unavailable_history())
     nuked.comments = SimpleNamespace(new=lambda limit=None: unavailable_history())
-    parent = FakeComment(author=nuked)
-    comment = FakeComment(author=mod, parent=parent)
-    banned = SimpleNamespace(add=MagicMock())
-    reddit = SimpleNamespace(
-        subreddit=MagicMock(return_value=SimpleNamespace(banned=banned))
+    module, mod, parent, comment, banned, removed, sent = _setup_nuke_test(
+        monkeypatch, nuked
     )
-    removed: list[object] = []
-    sent: list[tuple[object, str, str]] = []
-    monkeypatch.setattr(module, "is_mod", lambda _author: True)
-    monkeypatch.setattr(module, "REDDIT", reddit)
-    monkeypatch.setattr(module, "remove_content", lambda item, *_args: removed.append(item))
-    monkeypatch.setattr(module, "message_send", lambda target, subject, body: sent.append((target, subject, body)))
-    monkeypatch.setattr(module, "create_mod_note", MagicMock())
 
     module.handle(comment, None, FakeKomando(name="nuke"), FakeAjo())
 
-    banned.add.assert_called_once()
     assert removed == [parent]
-    assert sent[0][0] is mod
-    module.create_mod_note.assert_called_once_with(
-        "PERMA_BAN", "spammer", "Mod u/mod nuked u/spammer."
-    )
+    _assert_nuke_completed(module, mod, banned, sent)
 
 
 def test_page_replies_when_no_subscribers_exist(monkeypatch) -> None:

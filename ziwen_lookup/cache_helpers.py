@@ -380,6 +380,15 @@ def format_zh_character_from_cache(cached_data: dict) -> str:
                 f"\n\n**Chinese Calligraphy Variants**: [{trad}]({sfzd_image}) "
                 f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *{variant_link}*)"
             )
+        elif sfds or variants:
+            links = []
+            if sfds:
+                links.append(f"*[SFDS]({sfds})*")
+            if variants:
+                links.append(f"*[YTZZD]({variants})*")
+            calligraphy_section = "\n\n**Chinese Calligraphy Resources**: " + ", ".join(
+                links
+            )
 
     meanings_section = f'\n\n**Meanings**: "{meanings}"'
 
@@ -615,6 +624,15 @@ def format_ja_character_from_cache(cached_data: dict) -> str:
             calligraphy_section = (
                 f"\n\n**Chinese Calligraphy Variants**: [{word}]({sfzd}) "
                 f"(*[SFZD](https://www.shufazidian.com/)*, *[SFDS]({sfds})*, *[YTZZD]({variants})*)"
+            )
+        elif sfds or variants:
+            links = []
+            if sfds:
+                links.append(f"*[SFDS]({sfds})*")
+            if variants:
+                links.append(f"*[YTZZD]({variants})*")
+            calligraphy_section = "\n\n**Chinese Calligraphy Resources**: " + ", ".join(
+                links
             )
 
     meanings_section = f'\n\n**Meanings**: "{meanings}"'

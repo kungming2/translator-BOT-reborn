@@ -14,24 +14,24 @@ def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
     language_matches = [SimpleNamespace(name="English", preferred_code="en")]
     sent_message = None
 
-    async def capture_long_message(ctx, content: str) -> None:
+    async def capture_long_message(_ctx, content: str) -> None:
         nonlocal sent_message
         sent_message = content
 
     monkeypatch.setattr(
         recruit_module,
         "resolve_recruit_languages",
-        lambda languages: (language_matches, []),
+        lambda _languages: (language_matches, []),
     )
     monkeypatch.setattr(
         recruit_module,
         "build_recruitment_subject",
-        lambda matches: "Please help us translate English requests on Reddit!",
+        lambda _matches: "Please help us translate English requests on Reddit!",
     )
     monkeypatch.setattr(
         recruit_module,
         "build_recruitment_markdown",
-        lambda matches: "Recruitment post body",
+        lambda _matches: "Recruitment post body",
     )
     monkeypatch.setattr(recruit_module, "send_long_message", capture_long_message)
 
@@ -61,7 +61,7 @@ def test_recruitment_markdown_starts_with_native_greeting(monkeypatch) -> None:
     monkeypatch.setattr(
         recruit_module,
         "describe_language_frequency",
-        lambda lingvo: None,
+        lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -93,7 +93,7 @@ def test_recruitment_markdown_omits_default_english_greeting(monkeypatch) -> Non
     monkeypatch.setattr(
         recruit_module,
         "describe_language_frequency",
-        lambda lingvo: None,
+        lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -125,7 +125,7 @@ def test_recruitment_markdown_puts_signup_before_frequency(monkeypatch) -> None:
     monkeypatch.setattr(
         recruit_module,
         "describe_language_frequency",
-        lambda lingvo: (9.12, "year"),
+        lambda _lingvo: (9.12, "year"),
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -163,7 +163,7 @@ def test_recruitment_markdown_ends_with_native_thanks(monkeypatch) -> None:
     monkeypatch.setattr(
         recruit_module,
         "describe_language_frequency",
-        lambda lingvo: None,
+        lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -195,7 +195,7 @@ def test_recruitment_markdown_falls_back_to_default_thanks(monkeypatch) -> None:
     monkeypatch.setattr(
         recruit_module,
         "describe_language_frequency",
-        lambda lingvo: None,
+        lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(

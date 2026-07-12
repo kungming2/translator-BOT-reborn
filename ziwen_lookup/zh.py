@@ -45,6 +45,9 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
 useragent = get_random_useragent()
 
+CALLIGRAPHY_ATTEMPTS = 2
+CALLIGRAPHY_TIMEOUT = (2, 2)
+
 
 def _normalize_chinese_lookup_key(text: str) -> str:
     """Normalize compatibility forms before Chinese dictionary/cache lookup."""
@@ -527,19 +530,45 @@ def calligraphy_search(character: str) -> str | None:
         else "[YTZZD](https://dict.variants.moe.edu.tw/)"
     )
 
+    fallback_links = (
+        f"\n\n**Chinese Calligraphy Resources**: "
+        f"*[SFDS]({gx_url})*, *{variant_formatted}*"
+    )
     formdata = {"sort": "7", "wd": character}
-    try:
-        with requests.Session() as session:
-            response = session.post(
-                "https://www.shufazidian.com/", data=formdata, timeout=10
-            )
-            response.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning(
-            f"Calligraphy lookup failed for '{character}'; "
-            f"continuing without calligraphy data: {e}"
-        )
-        return None
+    response = None
+    with requests.Session() as session:
+        for attempt in range(1, CALLIGRAPHY_ATTEMPTS + 1):
+            try:
+                response = session.post(
+                    "https://www.shufazidian.com/",
+                    data=formdata,
+                    timeout=CALLIGRAPHY_TIMEOUT,
+                )
+                response.raise_for_status()
+                break
+            except (requests.Timeout, requests.ConnectionError) as e:
+                response = None
+                if attempt == CALLIGRAPHY_ATTEMPTS:
+                    logger.warning(
+                        f"Calligraphy image lookup failed for '{character}' "
+                        f"after {attempt} attempts; returning fallback links: {e}"
+                    )
+                else:
+                    logger.debug(
+                        f"Calligraphy image lookup attempt {attempt} failed for "
+                        f"'{character}'; retrying in {attempt} second(s): {e}"
+                    )
+                    sleep(attempt)
+            except requests.RequestException as e:
+                response = None
+                logger.warning(
+                    f"Calligraphy image lookup failed for '{character}'; "
+                    f"returning fallback links: {e}"
+                )
+                break
+
+    if response is None:
+        return fallback_links
 
     # Parse the page with BeautifulSoup and then convert to lxml tree for xpath
     soup = Bs(response.content, "lxml")
@@ -556,7 +585,11 @@ def calligraphy_search(character: str) -> str | None:
             break  # Assuming first matching image is enough
 
     if not complete_image:
-        return None
+        logger.warning(
+            f"Calligraphy image lookup returned no usable image for '{character}'; "
+            "returning fallback links."
+        )
+        return fallback_links
 
     image_string = (
         f"\n\n**Chinese Calligraphy Variants**: [{character}]({complete_image}) "

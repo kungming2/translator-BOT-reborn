@@ -19,6 +19,7 @@ from typing import Any
 from config import Paths, load_settings
 from lang.code_standards import alpha3_code, parse_language_tag
 from lang.countries import country_converter
+# noinspection PyProtectedMember
 from lang.languages import (_is_exact_language_identifier, converter,
                             define_language_lists, get_lingvos,
                             has_editable_language_entry, normalize,

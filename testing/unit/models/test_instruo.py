@@ -487,30 +487,8 @@ class TestCommentHasCommand(unittest.TestCase):
         self.assertFalse(comment_has_command("> !nuke"))
 
 
-# ---------------------------------------------------------------------------
-# Runner
-# ---------------------------------------------------------------------------
-
-
-def run_all_tests() -> unittest.TestResult:
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    for cls in (
-        TestInstruoInit,
-        TestInstruoRepr,
-        TestInstruoToDict,
-        TestInstruoFromText,
-        TestInstruoFromComment,
-        TestStripCommands,
-        TestCommentHasCommand,
-    ):
-        suite.addTests(loader.loadTestsFromTestCase(cls))
-    runner = unittest.TextTestRunner(verbosity=2)
-    return runner.run(suite)
-
-
 if __name__ == "__main__":
     print("=" * 70)
     print("Instruo Test Suite")
     print("=" * 70)
-    run_all_tests()
+    unittest.main(verbosity=2)

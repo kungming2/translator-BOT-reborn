@@ -21,6 +21,7 @@ from waybackpy import exceptions
 
 from config import Paths
 from config import logger as _base_logger
+from integrations.http import DEFAULT_HTTP_TIMEOUT
 from lang.languages import converter, get_lingvos
 from reddit.connection import get_random_useragent
 from ziwen_lookup.wp_utils import wikipedia_page_url
@@ -164,7 +165,9 @@ def _fetch_language_reference_data(lookup_url: str, language_code: str) -> dict 
     ref_data: dict = {"language_code_3": language_code}
 
     try:
-        response = requests.get(lookup_url, headers=useragent)
+        response = requests.get(
+            lookup_url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT
+        )
         response.raise_for_status()
         tree = html.fromstring(response.content)
     except requests.RequestException as e:

@@ -162,20 +162,18 @@ COMMENT_UNKNOWN: |
   [](#comment_unknown)
 
 COMMENT_ENGLISH_ONLY: |
-  Hey there u/{author},
+  Hey u/{author},
 
-  * Your post above was automatically removed because it appears to be an English-to-English request, not a translation between different languages.
-  * r/translator is for translation across languages, so requests like paraphrasing/rewording, proofreading, grammar help, or transcription in English are not considered translation requests here.
+  Your post was automatically removed because it appears to ask for help with English rather than translation between different languages.
 
-  ---
+  r/translator does not handle English proofreading, grammar questions, or English transcription. The following communities may be able to help:
 
-  **Our Recommendations**
+  * English learning, video transcription, or word explanations: **r/EnglishLearning** or **r/Grammar**
+  * Proofreading written English: **r/Proofreading**
+  * Deciphering illegible handwriting: **r/transcription**
 
-  * Answers on English language learning, English video transcriptions, or word explanations: **r/EnglishLearning** or **r/Grammar**
-  * Proofreading of written English content: **r/Proofreading** (please note their sidebar rules for submissions.)
-  * Decipherment of illegible handwriting: **r/transcription** 
+  If you are requesting a review of an existing translation, please resubmit your post with the source language and original text included.
 
-  * If you're requesting the *review of a translation*, please include the source language name and its original text in your resubmitted post to r/translator.
   [](#comment_english_only)
 
 # TITLE HANDLING - title/title_ai.py
@@ -199,25 +197,10 @@ COMMENT_BAD_TITLE: |
 # AI QUERY INSTRUCTIONS - title/title_ai.py AND reddit/notifications.py
 
 TITLE_PARSING_QUERY: >
-  Assess this Reddit post title which is for a translation request. 
-  Output what you assess to be the source language and target language, 
-  and the percentage confidence for your assessment in the
-  following valid JSON format:
+  Identify the source and target languages in this Reddit translation-request title.
 
-  {{
-    "source_language": {{
-      "name": "LANGUAGE_1",
-      "code": "LANGUAGE_1_ISO_639-3_CODE"
-    }},
-    "target_language": {{
-      "name": "LANGUAGE_2",
-      "code": "LANGUAGE_2_ISO_639-3_CODE"
-    }},
-    "confidence": PERCENTAGE (out of 1.0)
-  }}
+  Return only valid JSON in this format:
 
-  EXAMPLE JSON OUTPUT:
-  
   {
     "source_language": {
       "name": "Japanese",
@@ -230,30 +213,19 @@ TITLE_PARSING_QUERY: >
     "confidence": 0.95
   }
 
-  If the title indicates that the user does not know the source language
-   (e.g. the likely source is "I don't know"/"idk"/"no clue" return 
-  the source_language name as "Unknown", and the source_language code as
-  "unknown".
+  Use an ISO 639-1 code when one is available. Otherwise, use a valid ISO 639-3
+  code. Make sure each code matches its language name.
 
-  CRITICAL: You MUST use ISO 639-1 codes (2 letters, e.g., "en", "es", "fr") 
-  OR ISO 639-3 codes (3 letters, e.g., "eng", "spa", "fra") ONLY. 
-  Do NOT use ISO 639-2 or ISO 639-5 codes under any circumstances.
+  If the title says that the source language is unknown, return
+  {"name": "Unknown", "code": "unknown"} for the source language.
 
-  Use ISO 639-1 codes when available (preferred). Use ISO 639-3 codes ONLY 
-  as a fallback for languages that do not have an ISO 639-1 code.
+  If either language cannot be determined or has no valid ISO 639-1 or ISO 639-3
+  code, return an empty object ({}) for that language.
 
-  Both source and target languages must have a valid ISO 639-1 or ISO 639-3 
-  code to be included in the response, unless the source is "Unknown".
-  
-  Any ISO 639-3 code MUST BE FULLY VALID. Double-check your determined codes and names
-  to ensure that they are valid and that they correspond with each other.
-  For example, Japanese is `ja` and Hawaiian is `haw`.
-  Lower your confidence score if there is no correspondence.
+  Set confidence to a number from 0.0 to 1.0 representing confidence in the
+  overall assessment. Do not include explanations or Markdown.
 
-  If a source or target language cannot be assessed or does not have a valid
-  ISO 639-1 or 639-3 code, return a blank dictionary ({{}}) for that language.
-
-  This is the post title:
+  Post title:
 
 TITLE_REFORMATTING_QUERY: >
   Assess this malformed Reddit post title for a translation community.
@@ -312,7 +284,7 @@ MSG_MISSING_ASSETS: |
 
 MSG_RESET_SUCCESS_SUBJECT: '!reset command successful'
 MSG_RESET_SUCCESS: >
-  The [post](https://redd.it/{post_id})'s state has been reset to its original state.
+  The [post](https://redd.it/{post_id})'s state has been reset to its original untranslated state.
   This command was called by you [here](https://www.reddit.com{permalink}).
 
 # COMMANDS - ziwen_commands/nuke.py
@@ -335,16 +307,16 @@ COMMENT_NO_LANGUAGE: 'Unfortunately, no one is currently subscribed for {languag
 # COMMANDS - ziwen_commands/identify.py AND ziwen_commands/set.py
 
 COMMENT_LANGUAGE_NO_RESULTS: |
-  Sorry, but your identification appears to be an invalid language name or code.
-  
-  ---
-  
-  *Original comment*: 
-  
+  Sorry, I couldn't recognize one or more of the language names or codes in your command.
+
+  Your original comment:
+
   ```
   {id_comment_body}
   ```
-  
+
+  Please check the language names or codes and try again.
+
   [](#comment_language_no_results)
 COMMENT_DEFINED_MULTIPLE: |
   **It looks like you have submitted a translation request for multiple defined languages.** 
@@ -425,10 +397,11 @@ MSG_VERIFICATION_APPROVED: >
 
 # COMMANDS - ziwen_commands/lookup_* AND ziwen_lookup/zh.py
 
-COMMENT_INVALID_CODE: Sorry, but `{0}` doesn't look like anything to me. Would you like to [send my creator
+COMMENT_INVALID_CODE: I couldn't recognize `{0}` as a supported language or script code. Would you like to [send my creator
   a message about it?](https://www.reddit.com/message/compose?to=%2Fr%2FtranslatorBOT&subject=Identification+for+'{0}'&message=%5BPlease+check+this+out+%5D%28{1}%29%21) [](#comment_invalid_code)  # unused
-COMMENT_INVALID_SCRIPT: Sorry, but the script code `{}` doesn't look like anything to me. Please [see
-  here](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes) for a list of valid ISO 15924 codes.  [](#comment_invalid_script)  # unused
+COMMENT_INVALID_SCRIPT: I couldn't recognize `{}` as a valid ISO 15924 script code. Please [see
+  this list of valid ISO 15924 codes](https://en.wikipedia.org/wiki/ISO_15924#List_of_codes).
+  [](#comment_invalid_script)  # unused
 COMMENT_INVALID_ZH_CHARACTER: '**There were no results for {}**. Please check to make sure it is a valid
   Chinese character. Alternatively, it may be an uncommon variant that is not in online dictionaries. [](#comment_invalid_zh_character)'
 COMMENT_CJK_LOOKUP_DUPLICATE: |
@@ -556,48 +529,33 @@ COMMENT_TRANSFORM_INDEX_OOB: |
 # MONITORING - monitoring/dupe_detector.py
 
 COMMENT_DUPLICATE: |
-  Hey there u/{author},
-  
-  It appears that this post may be a duplicate of [another post](https://www.reddit.com{original_link}) that you recently submitted, so it has been removed.
-  
-  If this removal is in error, please resubmit this post with a *unique* title giving more context for translators.
-  Alternatively, you may message the r/translator moderators [here](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}).
-  
-  Thanks!
-  
+  Hey u/{author},
+
+  This post was automatically removed because it appears to duplicate [another post](https://www.reddit.com{original_link}) you recently submitted.
+
+  If this is a different request, please resubmit it with a unique title rather than reusing the title from your previous post. You can also [contact the r/translator moderators](https://www.reddit.com/message/compose?to=r/translator&subject=Non-duplicate+Post&message=https://www.reddit.com{dupe_link}) if you believe the removal was a mistake.
+
   [](#comment_duplicate)
 
 COMMENT_IMAGE_DUPLICATE_SAME_AUTHOR: |
-  Hey there u/{author}, 
-  
-  It looks like the image in this post is {similarity_text} an image you posted [here]({previous_link}) {previous_post_age} ago. 
+  Hey u/{author},
 
-  If this is intentional (for example, requesting a different language pair), please disregard this message. 
-  Otherwise, you may want to check if you've already received a translation for this image.
-  
+  This image looks {similarity_text} one you posted [here]({previous_link}) {previous_post_age} ago. You may want to check whether it has already been translated.
+
+  If you reposted intentionally—for example, to request a different language pair or because the earlier post received no responses—feel free to ignore this message.
+
   [](#comment_image_duplicate_same_author)
 
 COMMENT_IMAGE_DUPLICATE_DIFFERENT_AUTHOR: |
-  Hey there u/{author}, 
-  
-  The image in this post is {similarity_text} an image posted by u/{previous_author} [here]({previous_link}) {previous_post_age} ago. 
+  Hey u/{author},
 
-  You may want to check that post to see if it has already been translated. 
-  
-  Note: If the images are different, feel free to ignore this. Among other things, images of text often produce similar hashes even when the content differs.
+  This image looks {similarity_text} one posted by u/{previous_author} [here]({previous_link}) {previous_post_age} ago. You may want to check whether it has already been translated.
+
+  Image matching is not always accurate, especially for images containing text. If these images are different, feel free to ignore this message.
 
   [](#comment_image_duplicate_different_author)
 
 # POSTS AND WIKI PAGES - Wenju/Wenyuan-generated content
-
-WEEKLY_UNKNOWN_THREAD: |
-  Here are the posts from the last week still marked as "Unknown." Please help identify them if you can!
-
-  | Date   | Title         | Author  |
-  |:-------|:--------------|:--------|
-  {unknown_content}
-
-  *Please make any identifications on the individual request pages.*
 
 WY_MOD_NOTIFICATION_MESSAGE: |
   ##### Routine Tasks

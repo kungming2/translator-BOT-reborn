@@ -150,6 +150,7 @@ def _replace_comment_point_records(
     excluded_usernames = _points_excluded_usernames()
 
     cursor.execute("DELETE FROM total_points WHERE comment_id = ?", (comment_id,))
+    removed_count = cursor.rowcount
 
     point_records = [
         [username, user_points]
@@ -157,9 +158,10 @@ def _replace_comment_point_records(
         if isinstance(username, str) and username.lower() not in excluded_usernames
     ]
 
-    log = logger.info if point_records else logger.debug
+    log = logger.info if point_records or removed_count else logger.debug
     log(
-        f"Writing {len(point_records)} point record(s) to DB for comment `{comment_id}`"
+        f"Replacing point records for comment `{comment_id}`: "
+        f"removed={removed_count}, recalculated={len(point_records)}."
     )
     for username, user_points in point_records:
         logger.debug(f"Writing: ({username} with {user_points} points)")

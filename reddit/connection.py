@@ -243,8 +243,13 @@ def is_mod(user: str | Redditor) -> bool:
     else:
         raise TypeError("`user` must be a string or Redditor object")
 
+    if username is None:
+        return False
+
     return username.lower() in (
-        mod.name.lower() for mod in REDDIT.subreddit(SETTINGS["subreddit"]).moderator()
+        mod.name.lower()
+        for mod in REDDIT.subreddit(SETTINGS["subreddit"]).moderator()
+        if mod.name is not None
     )
 
 

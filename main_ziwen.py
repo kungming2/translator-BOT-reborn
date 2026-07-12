@@ -77,9 +77,9 @@ if __name__ == "__main__":
         ziwen_messages()  # Handle messages (e.g. notification subscriptions)
         verification_parser()  # Process verification requests
 
-        # Probe the API to record usage and collect memory stats
+        # Probe the API to refresh PRAW's rate-limit state and collect memory stats
         probe = REDDIT.redditor(USERNAME).created_utc
-        used_calls = int(REDDIT.auth.limits["used"] or 0)
+        rate_window_calls_used = int(REDDIT.auth.limits["used"] or 0)
 
         mem_bytes = psutil.Process(os.getpid()).memory_info().rss
         mem_usage = f"{mem_bytes / (1024**2):.2f} MB"
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             f"messages_processed={metrics.get('messages_processed', 0)}, "
             f"notifications_attempted={metrics.get('notifications_attempted', 0)}, "
             f"notifications_sent={metrics.get('notifications_sent', 0)}, "
-            f"api_calls={used_calls}, memory={mem_usage}."
+            f"rate_window_calls_used={rate_window_calls_used}, memory={mem_usage}."
         )
 
     except (KeyboardInterrupt, SystemExit):
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         run_information = (
             run_time,
             "Cycle run",
-            used_calls,
+            rate_window_calls_used,
             mem_usage,
             elapsed_time,
             run_pid,
@@ -124,4 +124,6 @@ if __name__ == "__main__":
         record_activity_csv("cycle", run_information)
         logger.info(f"Run {elapsed_time} minutes.")
 
-        _alert_slow_run(elapsed_time, run_time, used_calls, mem_usage, run_pid)
+        _alert_slow_run(
+            elapsed_time, run_time, rate_window_calls_used, mem_usage, run_pid
+        )

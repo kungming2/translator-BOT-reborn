@@ -170,11 +170,11 @@ def get_submissions(stats: HermesRunStats | None = None) -> None:
                         f"Reply result for `{post.id}`: sent=false, error=transient."
                     )
                     raise
-                except PRAWException as exc:
+                except PRAWException as reply_exc:
                     stats.replies_skipped += 1
                     logger.warning(
                         f"Reply result for `{post.id}`: sent=false, "
-                        f"error={type(exc).__name__}: {exc}"
+                        f"error={type(reply_exc).__name__}: {reply_exc}"
                     )
                 else:
                     stats.replies_sent += 1

@@ -18,6 +18,7 @@ import requests
 
 from config import Paths, load_settings
 from config import logger as _base_logger
+from integrations.http import DISCORD_HTTP_TIMEOUT
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
@@ -106,13 +107,16 @@ def send_discord_alert(
                     webhook_url,
                     data={"payload_json": json.dumps(payload)},
                     files={"file": (attach.name, img_file, "image/png")},
+                    timeout=DISCORD_HTTP_TIMEOUT,
                 )
         else:
             if image_path:
                 logger.warning(
                     f"Screenshot file not found, sending without image: {image_path}"
                 )
-            response = requests.post(webhook_url, json=payload)
+            response = requests.post(
+                webhook_url, json=payload, timeout=DISCORD_HTTP_TIMEOUT
+            )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to send Discord alert: {e}")

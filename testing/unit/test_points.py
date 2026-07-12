@@ -1,3 +1,4 @@
+import importlib
 import sqlite3
 import sys
 import types
@@ -6,7 +7,7 @@ from unittest.mock import patch
 
 sys.modules.setdefault("isodate", types.ModuleType("isodate"))
 
-import monitoring.points as points
+points = importlib.import_module("monitoring.points")
 
 
 class _FakeDb:

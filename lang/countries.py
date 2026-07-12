@@ -207,8 +207,6 @@ def get_country_emoji(country_name: str) -> str:
 
     # Strategies 2–4: pycountry fallback — catches entries present in pycountry
     # but absent from the CSV.
-    country = None
-
     country = pycountry.countries.get(name=country_name)
 
     if not country:

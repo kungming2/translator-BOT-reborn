@@ -14,7 +14,7 @@ import asyncio
 import sys
 import types
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from ziwen_lookup.cache_helpers import (format_ja_character_from_cache,
                                         format_ja_word_from_cache,
@@ -85,6 +85,73 @@ class TestZhVariantSearch(unittest.TestCase):
         )
 
 
+class TestZhCalligraphySearch(unittest.TestCase):
+    """Tests for bounded SFZD retries and same-run fallback resources."""
+
+    @staticmethod
+    def _session_with_post(side_effect):
+        session = MagicMock()
+        session.post.side_effect = side_effect
+        session.__enter__.return_value = session
+        return session
+
+    def test_retries_transient_failure_and_returns_image_in_same_run(self):
+        try:
+            import ziwen_lookup.zh as zh
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        response = Mock()
+        response.content = b'<html><img src="https://img.example/shufa6/1/test.jpg"></html>'
+        response.raise_for_status.return_value = None
+        session = self._session_with_post(
+            [zh.requests.ConnectTimeout("slow"), response]
+        )
+
+        with (
+            patch("ziwen_lookup.zh.requests.Session", return_value=session),
+            patch("ziwen_lookup.zh.simplify", side_effect=lambda text: text),
+            patch("ziwen_lookup.zh.tradify", side_effect=lambda text: text),
+            patch(
+                "ziwen_lookup.zh.variant_character_search",
+                return_value="https://dict.variants.moe.edu.tw/dictView.jsp?ID=1&q=1",
+            ),
+            patch("ziwen_lookup.zh.sleep") as retry_sleep,
+        ):
+            result = zh.calligraphy_search("行")
+
+        self.assertIn("**Chinese Calligraphy Variants**", result)
+        self.assertIn("https://img.example/shufa6/test.jpg", result)
+        self.assertEqual(session.post.call_count, 2)
+        retry_sleep.assert_called_once_with(1)
+        self.assertEqual(session.post.call_args.kwargs["timeout"], (2, 2))
+
+    def test_exhausted_retries_return_partial_resources_in_same_run(self):
+        try:
+            import ziwen_lookup.zh as zh
+        except ModuleNotFoundError as e:
+            self.skipTest(f"Dependency not available: {e}")
+
+        session = self._session_with_post(zh.requests.ConnectTimeout("down"))
+        variant_url = "https://dict.variants.moe.edu.tw/dictView.jsp?ID=1&q=1"
+
+        with (
+            patch("ziwen_lookup.zh.requests.Session", return_value=session),
+            patch("ziwen_lookup.zh.simplify", side_effect=lambda text: text),
+            patch("ziwen_lookup.zh.tradify", side_effect=lambda text: text),
+            patch("ziwen_lookup.zh.variant_character_search", return_value=variant_url),
+            patch("ziwen_lookup.zh.sleep") as retry_sleep,
+        ):
+            result = zh.calligraphy_search("行")
+
+        self.assertIn("**Chinese Calligraphy Resources**", result)
+        self.assertIn("https://www.sfds.cn/884C/", result)
+        self.assertIn(variant_url, result)
+        self.assertNotIn("[SFZD]", result)
+        self.assertEqual(session.post.call_count, 2)
+        retry_sleep.assert_called_once_with(1)
+
+
 class TestZhMoedictReadings(unittest.TestCase):
     """Tests for MoEDict Southern Min and Hakka JSON enrichment."""
 
@@ -98,7 +165,8 @@ class TestZhMoedictReadings(unittest.TestCase):
             def __init__(self, payload):
                 self.payload = payload
 
-            def raise_for_status(self):
+            @staticmethod
+            def raise_for_status():
                 return None
 
             def json(self):
@@ -158,9 +226,11 @@ class TestZhCharacterUnihanFallback(unittest.TestCase):
         fake_opencc = types.SimpleNamespace(
             OpenCC=lambda _config: types.SimpleNamespace(convert=lambda text: text)
         )
+        zh = None
         with patch.dict(sys.modules, {"opencc": fake_opencc}):
             import ziwen_lookup.zh as zh
 
+        assert zh is not None
         return zh
 
     def test_parse_unihan_mandarin_field(self):
@@ -184,7 +254,8 @@ class TestZhCharacterUnihanFallback(unittest.TestCase):
             self.skipTest(f"Dependency not available: {e}")
 
         class FakeResponse:
-            async def text(self):
+            @staticmethod
+            async def text():
                 return """
                 <html><body>
                 <div class="pinyin">biu1</div>
@@ -196,19 +267,20 @@ class TestZhCharacterUnihanFallback(unittest.TestCase):
                 """
 
         class FakeSession:
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *_args, **_kwargs):
                 pass
 
             async def __aenter__(self):
                 return self
 
-            async def __aexit__(self, exc_type, exc, tb):
+            async def __aexit__(self, _exc_type, _exc, _tb):
                 return False
 
-            async def get(self, *args, **kwargs):
+            @staticmethod
+            async def get(*_args, **_kwargs):
                 return FakeResponse()
 
-        async def fake_unihan_mandarin(character):
+        async def fake_unihan_mandarin(_character):
             return "biāo"
 
         with (

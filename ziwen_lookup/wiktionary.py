@@ -12,6 +12,7 @@ import re
 import requests
 
 from config import SETTINGS
+from integrations.http import DEFAULT_HTTP_TIMEOUT
 from lang.languages import converter
 from reddit.connection import get_random_useragent
 
@@ -455,7 +456,12 @@ def wiktionary_search(search_term: str, language_name: str) -> dict | None:
         "titles": search_term,
     }
 
-    response = requests.get(api_url, headers=get_random_useragent(), params=params)
+    response = requests.get(
+        api_url,
+        headers=get_random_useragent(),
+        params=params,
+        timeout=DEFAULT_HTTP_TIMEOUT,
+    )
     response.raise_for_status()
 
     data = response.json()

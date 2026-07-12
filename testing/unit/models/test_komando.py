@@ -349,30 +349,8 @@ class TestExtractCommandsFromText(unittest.TestCase):
         self.assertNotIn("nuke", names)
 
 
-# ---------------------------------------------------------------------------
-# Runner
-# ---------------------------------------------------------------------------
-
-
-def run_all_tests() -> unittest.TestResult:
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    for cls in (
-        TestKomandoInit,
-        TestKomandoRepr,
-        TestKomandoToDict,
-        TestKomandoRemapLanguage,
-        TestCheckSpecificMode,
-        TestDeduplicateArgs,
-        TestExtractCommandsFromText,
-    ):
-        suite.addTests(loader.loadTestsFromTestCase(cls))
-    runner = unittest.TextTestRunner(verbosity=2)
-    return runner.run(suite)
-
-
 if __name__ == "__main__":
     print("=" * 70)
     print("Komando Test Suite")
     print("=" * 70)
-    run_all_tests()
+    unittest.main(verbosity=2)

@@ -21,6 +21,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from config import logger as _base_logger
+from integrations.http import DEFAULT_HTTP_TIMEOUT
 from reddit.connection import get_random_useragent
 from ziwen_lookup.async_helpers import call_sync_async, fetch_json
 from ziwen_lookup.cache_helpers import (
@@ -105,8 +106,11 @@ def _ja_character_fetch(character: str) -> str:
     if kana_test:
         kana: str = kana_test.group(0)
         response = requests.get(
-            f"https://jisho.org/search/{character}%20%23particle", headers=useragent
+            f"https://jisho.org/search/{character}%20%23particle",
+            headers=useragent,
+            timeout=DEFAULT_HTTP_TIMEOUT,
         )
+        response.raise_for_status()
         tree = html.fromstring(response.content)
         meaning_list: list[str] = tree.xpath(
             '//span[contains(@class,"meaning-meaning")]/text()'
@@ -121,8 +125,11 @@ def _ja_character_fetch(character: str) -> str:
     elif not multi_mode:
         # Single kanji mode
         response = requests.get(
-            f"https://jisho.org/search/{character}%20%23kanji", headers=useragent
+            f"https://jisho.org/search/{character}%20%23kanji",
+            headers=useragent,
+            timeout=DEFAULT_HTTP_TIMEOUT,
         )
+        response.raise_for_status()
         tree = html.fromstring(response.content)
 
         meanings: list[str] = tree.xpath(
@@ -162,8 +169,11 @@ def _ja_character_fetch(character: str) -> str:
 
         for moji in character:
             response = requests.get(
-                f"https://jisho.org/search/{moji}%20%23kanji", headers=useragent
+                f"https://jisho.org/search/{moji}%20%23kanji",
+                headers=useragent,
+                timeout=DEFAULT_HTTP_TIMEOUT,
             )
+            response.raise_for_status()
             tree = html.fromstring(response.content)
 
             kun_chunk, on_chunk = _format_kun_on_readings(tree)
@@ -336,7 +346,8 @@ def _ja_name_search(ja_given_name: str) -> str | None:
     names_with_readings: list[str] = []
 
     url: str = f"https://kanji.reader.bz/{ja_given_name}"
-    eth_page = requests.get(url, headers=useragent)
+    eth_page = requests.get(url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT)
+    eth_page.raise_for_status()
     tree = html.fromstring(eth_page.content)
 
     name_content: list[str] = tree.xpath('//div[contains(@id,"main")]/p[1]/text()')
@@ -389,7 +400,10 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
         contain_url: str = f"https://yoji.jitenon.jp/kanji/{first_char}/contain/"
         logger.debug(f"Looking up {yojijukugo} via contain page: {contain_url}")
 
-        contain_resp = requests.get(contain_url, headers=useragent)
+        contain_resp = requests.get(
+            contain_url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT
+        )
+        contain_resp.raise_for_status()
         contain_resp.encoding = contain_resp.apparent_encoding
         contain_tree = html.fromstring(contain_resp.text)
 
@@ -406,7 +420,10 @@ def _ja_word_yojijukugo(yojijukugo: str) -> str | None:
             entry_url = "https://yoji.jitenon.jp" + entry_url
         logger.debug(f"Following entry link: {entry_url}")
 
-        entry_resp = requests.get(entry_url, headers=useragent)
+        entry_resp = requests.get(
+            entry_url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT
+        )
+        entry_resp.raise_for_status()
         entry_resp.encoding = entry_resp.apparent_encoding
         tree = html.fromstring(entry_resp.text)
 

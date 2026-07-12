@@ -30,7 +30,8 @@ class FakeResponse:
     def __exit__(self, *_args: object) -> None:
         return None
 
-    def raise_for_status(self) -> None:
+    @staticmethod
+    def raise_for_status() -> None:
         return None
 
     def iter_content(self, chunk_size: int = 8192):

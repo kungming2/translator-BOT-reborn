@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>r/translator Moderator Digest — __DATE_STR__</title>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/x-icon" href="../templates/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../templates/favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!--suppress CssNoGenericFontName, CssUnusedSymbol -->
 <style>
   :root {
     --bg: #f5f6f8;
@@ -344,6 +345,8 @@
   </div>
 </div>
 <script>
+// Replaced by wenju/moderator_digest.py when the report is generated.
+//noinspection JSUnresolvedReference
 const DATA = __DATA_JSON__;
 
 document.getElementById('digest-date').textContent = 'Generated for ' + DATA.date;
@@ -388,7 +391,7 @@ if (cycles.length > 0) {
     bar.title = val + ' min';
     const label = document.createElement('div');
     label.className = 'cycle-val';
-    label.textContent = val;
+    label.textContent = String(val);
     wrap.appendChild(bar);
     wrap.appendChild(label);
     chartEl.appendChild(wrap);
@@ -403,11 +406,21 @@ const tbody = document.querySelector('#actions-table tbody');
 filteredActions.forEach(({ name, count }) => {
   const pct = (count / maxCount * 100).toFixed(1);
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${name}</td>
-    <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div></td>
-    <td>${count.toFixed(2)}</td>
-  `;
+  const nameCell = tr.insertCell();
+  nameCell.textContent = name;
+  const barCell = tr.insertCell();
+  const barContainer = document.createElement('div');
+  barContainer.className = 'bar-cell';
+  const barBackground = document.createElement('div');
+  barBackground.className = 'bar-bg';
+  const barFill = document.createElement('div');
+  barFill.className = 'bar-fill';
+  barFill.style.width = pct + '%';
+  barBackground.appendChild(barFill);
+  barContainer.appendChild(barBackground);
+  barCell.appendChild(barContainer);
+  const countCell = tr.insertCell();
+  countCell.textContent = count.toFixed(2);
   tbody.appendChild(tr);
 });
 
@@ -535,11 +548,21 @@ if (DATA.flaggedPosts && DATA.flaggedPosts.length > 0) {
   DATA.flaggedPosts.forEach(post => {
     const item = document.createElement('div');
     item.className = 'flagged-item';
-    item.innerHTML = `
-      <a class="flagged-title" href="${post.url}" target="_blank">${post.title}</a>
-      <span class="tag-badge">${post.flair}</span>
-      <span class="flagged-meta">${post.date} · ${post.comments} comments</span>
-    `;
+    const titleLink = document.createElement('a');
+    titleLink.className = 'flagged-title';
+    titleLink.href = post.url;
+    titleLink.target = '_blank';
+    titleLink.rel = 'noopener noreferrer';
+    titleLink.textContent = post.title;
+    const flairBadge = document.createElement('span');
+    flairBadge.className = 'tag-badge';
+    flairBadge.textContent = post['flair'];
+    const metadata = document.createElement('span');
+    metadata.className = 'flagged-meta';
+    metadata.textContent = post.date + ' · ' + post['comments'] + ' comments';
+    item.appendChild(titleLink);
+    item.appendChild(flairBadge);
+    item.appendChild(metadata);
     list.appendChild(item);
   });
 }
