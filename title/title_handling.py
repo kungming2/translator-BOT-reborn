@@ -39,7 +39,11 @@ from lang.countries import country_converter
 from lang.languages import converter, define_language_lists
 from models.lingvo import Lingvo
 from models.titolo import Titolo
-from title.title_ai import title_ai_parser, update_titolo_from_ai_result
+from title.title_ai import (
+    assign_generic_and_report,
+    title_ai_parser,
+    update_titolo_from_ai_result,
+)
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
@@ -1048,6 +1052,24 @@ def process_title(
 
     result.direction = _determine_title_direction(result.source, result.target)
     result.notify_languages = _get_notification_languages(result) or []
+
+    source_has_english = any(lang.preferred_code == "en" for lang in result.source)
+    target_has_english = any(lang.preferred_code == "en" for lang in result.target)
+    source_has_non_english = any(lang.preferred_code != "en" for lang in result.source)
+
+    # When English is one of the requested targets, the source language drives
+    # flair and subscriber routing. Recognized alternative targets must not make
+    # an unresolved source look like a successfully parsed defined multiple.
+    if (
+        source_chunk.strip()
+        and target_has_english
+        and not source_has_english
+        and not source_has_non_english
+    ):
+        reason = "The source-language label could not be resolved."
+        logger.warning(f"{reason} Title: {title!r}")
+        assign_generic_and_report(result, post, discord_notify, reason)
+        return result
 
     # AI fallback: triggered when no non-English language was resolved
     combined_languages = [

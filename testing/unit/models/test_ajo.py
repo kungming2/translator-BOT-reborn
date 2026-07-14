@@ -802,6 +802,48 @@ class TestAjoFromTitolo(unittest.TestCase):
         self.assertIn("zh", ajo.status)
         self.assertIn("vi", ajo.status)
 
+    def test_from_titolo_generic_source_is_not_defined_multiple(self):
+        """Alternative targets must not override a generic source classification."""
+        titolo = make_titolo(
+            source_codes=[],
+            target_codes=[
+                ("Spanish", "es", "spa"),
+                ("English", "en", "eng"),
+                ("German", "de", "deu"),
+            ],
+            final_code="generic",
+            final_text="Generic",
+            direction="english_to",
+        )
+
+        ajo = Ajo.from_titolo(titolo)
+
+        self.assertEqual(ajo.type, "single")
+        self.assertFalse(ajo.is_defined_multiple)
+        self.assertEqual(ajo.status, "untranslated")
+        self.assertEqual(ajo.language_history, ["generic"])
+
+    def test_reset_generic_source_is_not_defined_multiple(self):
+        """Reset should preserve generic classification despite alternative targets."""
+        titolo = make_titolo(
+            source_codes=[],
+            target_codes=[
+                ("Spanish", "es", "spa"),
+                ("English", "en", "eng"),
+                ("German", "de", "deu"),
+            ],
+            final_code="generic",
+            final_text="Generic",
+            direction="english_to",
+        )
+        ajo = Ajo()
+        ajo._reset_to_titolo(titolo)
+
+        self.assertEqual(ajo.type, "single")
+        self.assertFalse(ajo.is_defined_multiple)
+        self.assertEqual(ajo.status, "untranslated")
+        self.assertEqual(ajo.language_history, ["generic"])
+
     def test_from_titolo_non_defined_multiple_code(self):
         """final_code='multiple' with one non-English target should be non-defined multiple."""
         titolo = make_titolo(

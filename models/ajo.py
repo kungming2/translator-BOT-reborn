@@ -252,7 +252,7 @@ class Ajo:
             ]
 
             # If multiple languages (defined multiple), wrap in a list
-            if len(non_english_targets) > 1:
+            if len(non_english_targets) > 1 and titolo.final_code == "multiple":
                 ajo.language_history = [
                     [lang.preferred_code for lang in non_english_targets]
                 ]
@@ -608,8 +608,10 @@ class Ajo:
         self.author_messaged = False
         self.is_identified = False
 
-        # Determine if this should be a multiple or single post based on targets
-        if titolo.target and len(titolo.target) > 1:
+        # A target list is a defined multiple only when title parsing explicitly
+        # classified it that way. This prevents alternative targets from
+        # overriding a generic or unresolved source-language classification.
+        if titolo.target and len(titolo.target) > 1 and titolo.final_code == "multiple":
             # Multiple languages detected
             non_english_targets = [
                 lang for lang in titolo.target if lang.preferred_code != "en"

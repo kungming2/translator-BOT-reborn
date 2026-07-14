@@ -662,6 +662,36 @@ class TestProcessTitleAIFallback(unittest.TestCase):
         self.assertIsInstance(result, Titolo)
 
     @_skip_if_no_data
+    @patch("title.title_handling.title_ai_parser")
+    @patch("title.title_ai.send_discord_alert")
+    def test_unresolved_source_with_english_target_uses_generic_report(
+        self,
+        mock_alert: MagicMock,
+        mock_ai_parser: MagicMock,
+    ) -> None:
+        raw_title = (
+            "[Purépecha>Spanish,English, or German] "
+            "Vestido de Oro by La Deuda Jejéa"
+        )
+        post = MagicMock()
+        post.title = raw_title
+        post.id = "1uvhcjj"
+        post.permalink = "/r/translator/comments/1uvhcjj/example/"
+
+        result = process_title(raw_title, post=post)
+
+        self.assertEqual(result.final_code, "generic")
+        self.assertEqual(result.final_text, "Generic")
+        self.assertEqual(result.notify_languages, [])
+        mock_ai_parser.assert_not_called()
+        mock_alert.assert_called_once()
+        self.assertEqual(
+            mock_alert.call_args.args[0],
+            "Unable to Parse Title; No Language Assigned",
+        )
+        self.assertEqual(mock_alert.call_args.args[2], "report")
+
+    @_skip_if_no_data
     @patch("title.title_ai.send_discord_alert")
     def test_ai_failure_assigns_generic_and_sends_discord_report(
         self,

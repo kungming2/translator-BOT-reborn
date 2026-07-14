@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-AI-assisted title parsing and correction for r/translator posts.
+AI-assisted title parsing, generic reporting, and correction for r/translator posts.
 
 This module handles the fallback path triggered when the rule-based title
 parser in title_handling.py cannot identify any non-English language from a
 post title. It calls an external AI service (OpenAI) to assess the title,
 optionally using an attached image for additional context, and writes the
 result back into a Titolo object.
+
+It also owns the Discord report used when rule-based parsing can recognize
+targets but cannot resolve the source language that should drive routing.
 
 It also provides format_title_correction_comment, which constructs a Reddit
 comment suggesting a reformatted title when a post fails the filter.
@@ -20,6 +23,7 @@ parser internals.
 Key components:
     title_ai_parser                 -- Call AI service and return parsed language data.
     format_title_correction_comment -- Build a correction comment for bad titles.
+    assign_generic_and_report       -- Apply generic routing and report it to Discord.
     update_titolo_from_ai_result    -- Write AI result back into a Titolo object.
 
 Logger tag: [T:AI]
@@ -167,6 +171,35 @@ def format_title_correction_comment(title_text: str, author: str) -> str:
 
 
 # ─── Titolo update ────────────────────────────────────────────────────────────
+
+
+def assign_generic_and_report(
+    result: Titolo,
+    post: Submission | None,
+    discord_notify: bool,
+    reason: str,
+) -> None:
+    """Assign generic routing and report a title that needs identification."""
+    result.final_code = "generic"
+    result.final_text = "Generic"
+    result.notify_languages = []
+
+    if post:
+        logger.info(
+            f"Generic title routing applied to '{post.title}' | `{post.id}`: {reason}"
+        )
+        if discord_notify:
+            subject = "Unable to Parse Title; No Language Assigned"
+            message = (
+                f"{reason} Assigned a generic category. Please check and assign "
+                f"[this post](https://www.reddit.com{post.permalink}) an accurate "
+                "language category."
+                f"\n\n**Post Title**: [{post.title}]"
+                f"(https://www.reddit.com{post.permalink})"
+            )
+            send_discord_alert(subject, message, "report")
+    else:
+        logger.info(f"Generic title routing applied in test mode: {reason}")
 
 
 def update_titolo_from_ai_result(
