@@ -698,11 +698,30 @@ class TestPublicStatsDashboard:
         assert "prefers-color-scheme: dark" in template
         assert 'id="comparison-section"' in template
         assert 'id="daily-volume-chart"' in template
+        assert "Notification-Eligible Posts" in template
+        assert "Daily average · Last 3 days" in template
+        assert "Daily Language-Request Volume — Last 30 Days" in template
+        assert 'id="cmp-backlog-current"' not in template
+        assert "metrics.medianTranslationSeconds" in template
+        assert "const LANGUAGE_COLORS = Object.freeze" in template
+        assert 'ja: "#ED1C24"' in template
+        assert 'vi: "#CCC244"' in template
+        assert 'yue: "#85A542"' in template
+        assert 'mg: "#A1539F"' in template
+        assert "LANGUAGE_COLORS[language.code]" in template
+        assert 'id="wy-language-summary"' in template
+        assert 'id="wy-total"' not in template
+        assert 'id="wy-median"' not in template
         assert template.index('id="actions-label"') > template.index(
             'id="wenyuan-section"'
         )
         assert 'rel="icon"' in template
         assert "data:image/png;base64,__FAVICON_BASE64__" in template
+        assert 'rel="apple-touch-icon"' in template
+        assert "suppress HtmlUnknownTarget" in template
+        assert 'sizes="180x180"' in template
+        assert 'href="/apple-touch-icon.png"' in template
+        assert "img-src 'self' data:" in template
         data_element = re.search(
             r'<script id="public-stats-data"[^>]*>(.*?)</script>', template, re.DOTALL
         )
@@ -731,6 +750,15 @@ class TestPublicStatsDashboard:
         assert output.read_text(encoding="utf-8") == "new page"
         assert list(tmp_path.glob("*.tmp")) == []
 
+    def test_atomic_write_replaces_complete_binary_asset(self, tmp_path):
+        output = tmp_path / "apple-touch-icon.png"
+        output.write_bytes(b"old icon")
+
+        moderator_digest._atomic_write_bytes(output, b"new icon")
+
+        assert output.read_bytes() == b"new icon"
+        assert list(tmp_path.glob("*.tmp")) == []
+
     def test_public_generation_is_hourly_and_moderator_digest_is_daily(self):
         tasks = wenju.get_tasks()
 
@@ -750,6 +778,9 @@ class TestPublicStatsDashboard:
             "wenyuan_data": {"postCount": 100},
         }
         output = tmp_path / "index.html"
+        touch_icon_source = tmp_path / "source-touch-icon.png"
+        touch_icon_source.write_bytes(b"touch icon")
+        touch_icon_output = tmp_path / "apple-touch-icon.png"
 
         with (
             patch.object(
@@ -765,7 +796,12 @@ class TestPublicStatsDashboard:
             patch.object(
                 moderator_digest.Paths,
                 "PUBLIC",
-                {"STATS": str(output)},
+                {"STATS": str(output), "TOUCH_ICON": str(touch_icon_output)},
+            ),
+            patch.object(
+                moderator_digest.Paths,
+                "ICONS",
+                {"PUBLIC_STATS_TOUCH_ICON": str(touch_icon_source)},
             ),
             patch.object(
                 moderator_digest, "WENJU_SETTINGS", {"report_command_average": 3}
@@ -778,6 +814,7 @@ class TestPublicStatsDashboard:
             moderator_digest.generate_public_statistics()
 
         assert output.read_text(encoding="utf-8") == "public page"
+        assert touch_icon_output.read_bytes() == b"touch icon"
         collect_mock.assert_called_once()
         alert_mock.assert_not_called()
 

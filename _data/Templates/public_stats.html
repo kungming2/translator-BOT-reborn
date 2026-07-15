@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-__CSP_NONCE__'; script-src 'nonce-__CSP_NONCE__'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-__CSP_NONCE__'; script-src 'nonce-__CSP_NONCE__'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,__FAVICON_BASE64__">
+<!--suppress HtmlUnknownTarget -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <title>r/translator Public Statistics — __DATE_STR__</title>
 <style nonce="__CSP_NONCE__">
   :root {
     color-scheme: light;
     --bg: #f5f6f8;
     --surface: #fff;
-    --surface2: #eef0f5;
     --border: #d8dce8;
     --accent: #2563eb;
     --accent2: #7c3aed;
@@ -77,7 +78,6 @@
   .status.stale { border-color: rgb(161 98 7 / 30%); background: rgb(161 98 7 / 8%); color: var(--yellow); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid-4 { grid-template-columns: repeat(4, 1fr); }
   .card {
     position: relative;
     overflow: hidden;
@@ -116,6 +116,13 @@
   .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
   .table-block + .table-block { margin-top: 1.25rem; }
   .table-title { margin-bottom: .65rem; color: var(--muted); font: .66rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .table-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: .65rem; }
+  .table-heading .table-title { margin-bottom: 0; }
+  .table-meta { color: var(--muted); font: .66rem/1.4 var(--mono); text-align: right; }
+  .language-label { display: inline-flex; align-items: center; gap: .5rem; }
+  .language-link { color: inherit; text-decoration-color: var(--muted); text-underline-offset: .18em; }
+  .language-link:hover { color: var(--accent); text-decoration-color: currentColor; }
+  .language-swatch { width: .7rem; height: .7rem; flex: 0 0 .7rem; border: 1px solid rgb(0 0 0 / 18%); border-radius: 2px; }
   .comparison-card .stat-big { font-size: 1.65rem; }
   .trend { display: inline-block; margin-top: .55rem; font: 600 .68rem/1.4 var(--mono); }
   .trend.good { color: var(--green); }
@@ -135,7 +142,6 @@
       color-scheme: dark;
       --bg: #10131a;
       --surface: #181d27;
-      --surface2: #222938;
       --border: #343d50;
       --accent: #78a5ff;
       --accent2: #a78bfa;
@@ -155,8 +161,10 @@
   }
   @media (max-width: 680px) {
     body { padding: 1rem; font-size: 100%; }
-    .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .grid, .grid-3 { grid-template-columns: 1fr; }
     .header { flex-direction: column; }
+    .table-heading { align-items: flex-start; flex-direction: column; gap: .25rem; }
+    .table-meta { text-align: left; }
     .card { padding: 1rem; }
   }
 </style>
@@ -165,7 +173,7 @@
 <main class="page">
   <header class="header">
     <div>
-      <h1>r/translator Public Statistics</h1>
+      <h1>r/translator Public Statistics Dashboard</h1>
       <div class="date" id="generated-date">Statistics snapshot for __DATE_STR__</div>
     </div>
     <div class="status" id="freshness-status">HOURLY SNAPSHOT</div>
@@ -180,40 +188,22 @@
       <div class="stat-sub" id="filter-range"></div>
     </div>
     <div class="card">
-      <div class="card-label">New Posts</div>
+      <div class="card-label">Notification-Eligible Posts</div>
       <div class="stat-big" id="new-posts"></div>
-      <div class="stat-sub">Daily average</div>
+      <div class="stat-sub">Daily average · Last 3 days</div>
     </div>
     <div class="card">
       <div class="card-label">Notifications</div>
       <div class="stat-big" id="notifications"></div>
-      <div class="stat-sub">Daily average</div>
+      <div class="stat-sub">Daily average · Last 3 days</div>
     </div>
   </div>
 
   <section id="wenyuan-section" hidden>
     <div class="section-label" id="wenyuan-label">Wenyuan Statistics</div>
-    <div class="grid grid-3">
-      <div class="card">
-        <div class="card-label">Requests</div>
-        <div class="stat-big" id="wy-total"></div>
-        <div class="stat-sub" id="wy-translated"></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Languages</div>
-        <div class="stat-big" id="wy-languages"></div>
-        <div class="stat-sub" id="wy-translators"></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Median Translation Time</div>
-        <div class="stat-big" id="wy-median"></div>
-        <div class="stat-sub" id="wy-timed-count"></div>
-      </div>
-    </div>
-
     <div id="comparison-section" hidden>
       <div class="section-label">Current vs Previous 30 Days</div>
-      <div class="grid grid-4">
+      <div class="grid grid-3">
         <div class="card comparison-card">
           <div class="card-label">Request Volume</div>
           <div class="stat-big" id="cmp-requests-current"></div>
@@ -221,7 +211,7 @@
           <div class="trend neutral" id="cmp-requests-trend"></div>
         </div>
         <div class="card comparison-card">
-          <div class="card-label">Completion Rate</div>
+          <div class="card-label">Translated Percentage</div>
           <div class="stat-big" id="cmp-completion-current"></div>
           <div class="stat-sub" id="cmp-completion-previous"></div>
           <div class="trend neutral" id="cmp-completion-trend"></div>
@@ -232,17 +222,11 @@
           <div class="stat-sub" id="cmp-median-previous"></div>
           <div class="trend neutral" id="cmp-median-trend"></div>
         </div>
-        <div class="card comparison-card">
-          <div class="card-label">Backlog</div>
-          <div class="stat-big" id="cmp-backlog-current"></div>
-          <div class="stat-sub" id="cmp-backlog-previous"></div>
-          <div class="trend neutral" id="cmp-backlog-trend"></div>
-        </div>
       </div>
     </div>
 
     <div id="volume-section" hidden>
-      <div class="section-label">Daily Request Volume — Last 30 Days</div>
+      <div class="section-label">Daily Language-Request Volume — Last 30 Days</div>
       <div class="card chart-card">
         <svg class="volume-chart" id="daily-volume-chart" viewBox="0 0 900 260" role="img" aria-labelledby="volume-chart-title volume-chart-description">
           <title id="volume-chart-title">Daily translation request volume</title>
@@ -257,7 +241,13 @@
       <div class="card"><div class="table-title">Translation Direction</div><table id="wy-directions-table"><thead><tr><th>Direction</th><th class="num">Requests</th><th class="num">Share</th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="grid">
-      <div class="card"><div class="table-title">Top Languages</div><table id="wy-languages-table"><thead><tr><th>Language</th><th class="num">Requests</th><th class="num">Translated</th><th class="num">Needs Review</th></tr></thead><tbody></tbody></table></div>
+      <div class="card">
+        <div class="table-heading">
+          <div class="table-title">Top Languages</div>
+          <div class="table-meta" id="wy-language-summary"></div>
+        </div>
+        <table id="wy-languages-table"><thead><tr><th>Language</th><th class="num">Requests</th><th class="num">Translated</th><th class="num">Needs Review</th></tr></thead><tbody></tbody></table>
+      </div>
       <div class="card">
         <div class="table-block"><div class="table-title">Source-Target Pairs</div><table id="wy-pairs-table"><thead><tr><th>Pair</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
         <div class="table-block"><div class="table-title">Notifications and Media</div><table id="wy-extra-table"><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody></tbody></table></div>
@@ -273,13 +263,55 @@
     </table>
   </div>
 
-  <footer class="footer">Aggregated statistics for r/translator. No private moderator or user records are included.</footer>
+  <footer class="footer">All statistics are aggregated and anonymized.</footer>
 </main>
 
 <script id="public-stats-data" type="application/json" nonce="__CSP_NONCE__">"__DATA_JSON__"</script>
 <script nonce="__CSP_NONCE__">
 "use strict";
 const DATA = JSON.parse(document.getElementById("public-stats-data").textContent);
+const LANGUAGE_COLORS = Object.freeze({
+  // Semitic
+  syc: "#E39F43", am: "#E39F43", ar: "#E39F43", mt: "#E39F43", arc: "#E39F43", acm: "#E39F43", aeb: "#E39F43", arq: "#E39F43", ary: "#E39F43", arz: "#E39F43", he: "#E39F43",
+  // Balto-Slavic
+  be: "#5291C1", bg: "#5291C1", bs: "#5291C1", cs: "#5291C1", uk: "#5291C1", sr: "#5291C1", hr: "#5291C1", lt: "#5291C1", sk: "#5291C1", ru: "#5291C1", pl: "#5291C1", mk: "#5291C1", sl: "#5291C1", lv: "#5291C1", cu: "#5291C1",
+  // Indo-Iranian
+  tg: "#14294C", pi: "#14294C", bn: "#14294C", fa: "#14294C", gu: "#14294C", hi: "#14294C", pa: "#14294C", mr: "#14294C", ku: "#14294C", ur: "#14294C", sa: "#14294C", ps: "#14294C", ne: "#14294C", si: "#14294C",
+  // Romance
+  ca: "#2856A5", co: "#2856A5", es: "#2856A5", fr: "#2856A5", it: "#2856A5", la: "#2856A5", pt: "#2856A5", ro: "#2856A5", scn: "#2856A5", nap: "#2856A5", sc: "#2856A5",
+  // Germanic
+  de: "#0F2E5B", fo: "#0F2E5B", li: "#0F2E5B", lb: "#0F2E5B", da: "#0F2E5B", is: "#0F2E5B", yi: "#0F2E5B", no: "#0F2E5B", sv: "#0F2E5B", nl: "#0F2E5B", non: "#0F2E5B", ang: "#0F2E5B", gsw: "#0F2E5B", af: "#0F2E5B",
+  dz: "#1B3A19", bo: "#1B3A19", my: "#1B3A19",
+  tw: "#398984", ln: "#398984", xh: "#398984", yo: "#398984", sw: "#398984", zu: "#398984",
+  br: "#3384C0", cy: "#3384C0", ga: "#3384C0", gd: "#3384C0",
+  et: "#382610", hu: "#382610",
+  id: "#813183", ban: "#813183", haw: "#813183", jv: "#813183", mi: "#813183", ms: "#813183",
+  tl: "#A1539F", ceb: "#A1539F", mg: "#A1539F",
+  // Dravidian
+  kn: "#A190C4", ml: "#A190C4", ta: "#A190C4", te: "#A190C4",
+  lzh: "#85A542", zh: "#85A542", yue: "#85A542", "zh-yue": "#85A542",
+  ko: "#BC997B", eu: "#BC997B",
+  cop: "#EDAB37", egy: "#EDAB37",
+  grc: "#5B91CC", el: "#5B91CC",
+  lo: "#B2588F", th: "#B2588F",
+  kl: "#EADD69", chr: "#EADD69", iu: "#EADD69", nv: "#EADD69", qu: "#EADD69",
+  eo: "#A3C4A4",
+  ota: "#867E44", az: "#867E44", tr: "#867E44",
+  tt: "#9D8F59", kk: "#9D8F59",
+  ug: "#847B48", uz: "#847B48",
+  om: "#CA8D48", so: "#CA8D48",
+  fi: "#3F3222",
+  ht: "#A3B3C6",
+  hy: "#1C4A7A",
+  ja: "#ED1C24",
+  ka: "#97CCD2",
+  km: "#BCA70A",
+  mn: "#926828",
+  sq: "#3592F9",
+  vi: "#CCC244",
+  ase: "#F5978E",
+  green: "#0cfb00",
+});
 
 function setText(id, value) {
   document.getElementById(id).textContent = String(value);
@@ -294,12 +326,31 @@ function formatCount(value) {
   return Number(value || 0).toLocaleString();
 }
 
+function languageSearchUrl(language, code) {
+  const params = new URLSearchParams({
+    q: "flair:" + language + " OR flair:[" + String(code).toUpperCase() + "]",
+    include_over_18: "on",
+    restrict_sr: "on",
+    t: "month",
+    sort: "new"
+  });
+  return "https://www.reddit.com/r/translator/search/?" + params.toString();
+}
+
 function formatDuration(seconds) {
   if (!Number.isFinite(Number(seconds))) return "N/A";
-  const value = Number(seconds);
-  if (value < 3600) return Math.round(value / 60) + " min";
-  if (value < 172800) return (value / 3600).toFixed(1) + " hr";
-  return (value / 86400).toFixed(1) + " days";
+  const value = Math.max(0, Math.floor(Number(seconds)));
+  if (value < 60) return value + "s";
+  const totalMinutes = Math.floor(value / 60);
+  if (totalMinutes < 60) return totalMinutes + "m";
+  const totalHours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (totalHours < 24) {
+    return totalHours + "h" + (minutes ? " " + minutes + "m" : "");
+  }
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  return days + "d" + (hours ? " " + hours + "h" : "");
 }
 
 function renderComparisonMetric(prefix, metric, formatter, deltaFormatter) {
@@ -392,8 +443,8 @@ function renderDailyVolume(rows) {
   const peak = rows.reduce((highest, row) => Number(row.requests) > Number(highest.requests) ? row : highest, rows[0]);
   setText(
     "volume-summary",
-    "Daily average: " + (total / rows.length).toFixed(1) +
-      " · Peak: " + formatCount(peak.requests) + " requests on " + peak.date
+    "30-day daily average: " + (total / rows.length).toFixed(1) +
+      " · Peak: " + formatCount(peak.requests) + " language requests on " + peak.date
   );
 }
 
@@ -415,7 +466,27 @@ function addRows(tableId, rows) {
     values.forEach(value => {
       const cell = document.createElement("td");
       if (value && typeof value === "object") {
-        cell.textContent = String(value.value);
+        if (value.color || value.href) {
+          const label = document.createElement(value.href ? "a" : "span");
+          label.className = "language-label";
+          if (value.href) {
+            label.classList.add("language-link");
+            label.href = String(value.href);
+          }
+          if (value.color) {
+            const swatch = document.createElement("span");
+            swatch.className = "language-swatch";
+            swatch.style.backgroundColor = String(value.color);
+            swatch.setAttribute("aria-hidden", "true");
+            label.appendChild(swatch);
+          }
+          const text = document.createElement("span");
+          text.textContent = String(value.value);
+          label.appendChild(text);
+          cell.appendChild(label);
+        } else {
+          cell.textContent = String(value.value);
+        }
         if (value.className) cell.className = value.className;
       } else {
         cell.textContent = String(value);
@@ -478,20 +549,20 @@ if (DATA.wenyuanPeriodStats) {
   const notificationStats = wy.notifications || {};
   const images = wy.images || {};
   document.getElementById("wenyuan-section").hidden = false;
-  setText("wenyuan-label", "Wenyuan Statistics — " + (wy.periodLabel || "last 30 days"));
-  setText("wy-total", formatCount(overall.total_requests));
-  setText("wy-translated", formatCount(overall.translated) + " translated · " + formatPercent(overall.translation_percentage));
-  setText("wy-languages", formatCount(overall.unique_languages));
-  setText("wy-translators", "Unique translators: " + formatCount(wy.uniqueTranslators));
-  setText("wy-median", timing.medianTranslationDisplay || "N/A");
-  setText("wy-timed-count", formatCount(timing.timedTranslationCount) + " timed translations");
+  setText("wenyuan-label", "Wenyuan Statistics");
+  setText(
+    "wy-language-summary",
+    formatCount((wy.topLanguages || []).length) + " ranked · " +
+      formatCount(overall.unique_languages) + " represented · " +
+      formatCount(wy.uniqueTranslators) + " unique translators"
+  );
 
-  if (wy.comparison && wy.comparison.metrics) {
-    const metrics = wy.comparison.metrics;
+  const metrics = wy.comparison && wy.comparison["metrics"];
+  if (metrics) {
     document.getElementById("comparison-section").hidden = false;
     renderComparisonMetric(
       "cmp-requests",
-      metrics.requests,
+      metrics["requests"],
       formatCount,
       metric => metric.percentChange === null
         ? formatCount(Math.abs(metric.delta)) + " requests"
@@ -499,26 +570,18 @@ if (DATA.wenyuanPeriodStats) {
     );
     renderComparisonMetric(
       "cmp-completion",
-      metrics.completionRate,
+      metrics["completionRate"],
       formatPercent,
       metric => Math.abs(metric.delta).toFixed(1) + " percentage points"
     );
     renderComparisonMetric(
       "cmp-median",
-      metrics.medianTranslationSeconds,
+      metrics["medianTranslationSeconds"],
       formatDuration,
       metric => formatDuration(Math.abs(metric.delta))
     );
-    renderComparisonMetric(
-      "cmp-backlog",
-      metrics.backlog,
-      formatCount,
-      metric => metric.percentChange === null
-        ? formatCount(Math.abs(metric.delta)) + " requests"
-        : Math.abs(metric.percentChange).toFixed(1) + "%"
-    );
   }
-  renderDailyVolume(wy.dailyVolume || []);
+  renderDailyVolume(wy["dailyVolume"] || []);
 
   addRows("#wy-overall-table", [
     ["Translated", {value: formatCount(overall.translated), className: "num"}],
@@ -533,12 +596,16 @@ if (DATA.wenyuanPeriodStats) {
     ["Non-English", wy.directions && wy.directions.non_english]
   ].map(item => [item[0], {value: formatCount(item[1] && item[1].count), className: "num"}, {value: formatPercent(item[1] && item[1].percentage), className: "num"}]));
   addRows("#wy-languages-table", (wy.topLanguages || []).map(language => [
-    language.language,
+    {
+      value: language.language,
+      color: LANGUAGE_COLORS[language.code],
+      href: languageSearchUrl(language.language, language.code)
+    },
     {value: formatCount(language.requests), className: "num"},
     {value: formatPercent(language.translationPercentage), className: "num"},
     {value: formatCount(language.needsReview), className: "num"}
   ]));
-  addRows("#wy-pairs-table", (wy.sourceTargetPairs || []).map(pair => [pair.pair, {value: formatCount(pair.requests), className: "num"}]));
+  addRows("#wy-pairs-table", (wy.sourceTargetPairs || []).map(pair => [pair.pair.replace(" -> ", " → "), {value: formatCount(pair.requests), className: "num"}]));
   addRows("#wy-extra-table", [
     ["Average notified users / request", {value: Number(notificationStats.average_notified_per_request || 0).toFixed(2), className: "num"}],
     ["Total notified users", {value: formatCount(notificationStats.total_notified_users), className: "num"}],

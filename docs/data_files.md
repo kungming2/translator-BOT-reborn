@@ -103,7 +103,7 @@ No data files *used* by the bot appear here; rather, local text reports generate
 
 ## Public
 
-This directory is the isolated document root for files that may be served publicly. The hourly Wenju schedule atomically refreshes `index.html` from the `public_stats.html` template; do not serve the parent `_data` directory.
+This directory is the isolated document root for files that may be served publicly. The hourly Wenju schedule atomically refreshes `index.html` from the `public_stats.html` template and publishes `apple-touch-icon.png` for iOS and iPadOS Home Screen bookmarks; it does not serve the parent `_data` directory.
 
 ## Settings
 

@@ -862,11 +862,18 @@ def _serialize_period_stats(
     fastest = lumo.get_fastest_translations()
 
     top_languages = []
-    for language, count in lumo.get_language_rankings(by="total")[:10]:
+    ranked_languages = [
+        (language, count)
+        for language, count in lumo.get_language_rankings(by="total")
+        if language.casefold() not in {"unknown", "nonlanguage"}
+    ][:15]
+    for language, count in ranked_languages:
         stats = lumo.get_language_stats(language)
+        lingvo = converter(language)
         top_languages.append(
             {
                 "language": language,
+                "code": lingvo.preferred_code if lingvo is not None else None,
                 "requests": count,
                 "percentOfAllRequests": stats["percent_of_all_requests"]
                 if stats

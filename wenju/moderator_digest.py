@@ -651,6 +651,17 @@ def _atomic_write_text(path: Path, content: str) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
+def _atomic_write_bytes(path: Path, content: bytes) -> None:
+    """Replace a generated binary asset atomically."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary_path.write_bytes(content)
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
 # ─── Scheduled tasks ──────────────────────────────────────────────────────────
 
 
@@ -668,8 +679,15 @@ def generate_public_statistics() -> None:
     public_data = _build_public_dashboard_data(today_date_str, statistics)
     public_html = _render_public_stats_dashboard(today_date_str, public_data)
     public_html_path = Path(Paths.PUBLIC["STATS"])
+    public_touch_icon_path = Path(Paths.PUBLIC["TOUCH_ICON"])
+    touch_icon = Path(Paths.ICONS["PUBLIC_STATS_TOUCH_ICON"]).read_bytes()
+    _atomic_write_bytes(public_touch_icon_path, touch_icon)
     _atomic_write_text(public_html_path, public_html)
-    logger.info("Public statistics snapshot saved to %s", public_html_path)
+    logger.info(
+        "Public statistics snapshot saved to %s with touch icon %s",
+        public_html_path,
+        public_touch_icon_path,
+    )
 
 
 @task(schedule="daily")

@@ -69,6 +69,7 @@ class Paths:
     # Static image assets used by generated pages and bot components.
     ICONS: dict[str, str] = {
         "PUBLIC_STATS_FAVICON": str(_icons / "public_stats_favicon.png"),
+        "PUBLIC_STATS_TOUCH_ICON": str(_icons / "public_stats_touch_icon.png"),
     }
 
     # Language reference datasets (almost never changed)
@@ -125,6 +126,7 @@ class Paths:
     _public = _data / "public"
     PUBLIC: dict[str, str] = {
         "STATS": str(_public / "index.html"),
+        "TOUCH_ICON": str(_public / "apple-touch-icon.png"),
     }
 
     # Archival output files
