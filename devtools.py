@@ -47,7 +47,10 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
-from wenju.moderator_digest import collate_moderator_digest
+from wenju.moderator_digest import (
+    collate_moderator_digest,
+    generate_public_statistics,
+)
 from wenju.status_report import language_of_the_day, notify_db_statistics_calculator
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from wenyuan.title_full_retrieval import retrieve_titles_test
@@ -924,6 +927,13 @@ def check_wenju_moderator_digest() -> None:
     msg.good("Moderator digest generated and Discord alert sent.")
 
 
+def check_wenju_public_statistics() -> None:
+    """public_stats: Regenerate the public statistics page."""
+    with msg.loading("Generating public statistics page..."):
+        generate_public_statistics()
+    msg.good("Public statistics page regenerated. No notification sent.")
+
+
 def check_wenju_recruitment_markdown() -> None:
     """recruit: Generate copyable recruitment-post notification rows."""
     language_text = _prompt_text(
@@ -1091,10 +1101,14 @@ SECTIONS: SectionMap = {
                 check_wenju_moderator_digest,
             ),
             "4": (
+                "public_stats: regenerate public page",
+                check_wenju_public_statistics,
+            ),
+            "5": (
                 "recruit: generate recruitment-post Markdown",
                 check_wenju_recruitment_markdown,
             ),
-            "5": (
+            "6": (
                 "status_report: notification DB statistics report (no Reddit post)",
                 check_wenju_notify_db_statistics,
             ),

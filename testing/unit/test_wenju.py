@@ -698,6 +698,9 @@ class TestPublicStatsDashboard:
         assert "prefers-color-scheme: dark" in template
         assert 'id="comparison-section"' in template
         assert 'id="daily-volume-chart"' in template
+        assert template.index('id="actions-label"') > template.index(
+            'id="wenyuan-section"'
+        )
         assert 'rel="icon"' in template
         assert "data:image/png;base64,__FAVICON_BASE64__" in template
         data_element = re.search(
