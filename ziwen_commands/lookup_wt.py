@@ -120,9 +120,14 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     for language_name, terms in grouped.items():
         for term in terms:
             result = wiktionary_search(term, language_name)
-            if result:
+            if result and result.get("definition"):
                 formatted = format_wiktionary_markdown(result, term, language_name)
                 reply_parts.append(formatted)
+            elif result:
+                logger.info(
+                    f"> Wiktionary result for '{term}' ({language_name}) has no "
+                    "definitions. Skipping."
+                )
             else:
                 logger.info(f"> No Wiktionary result for '{term}' ({language_name}).")
 

@@ -21,6 +21,7 @@ This page records the version history of the various routines of translator-BOT.
 ### translator-BOT 2.3 "The Calendar Update" (2026-06-01)
 
 * 🚀 FEATURE: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
+* ✨ ADDITION: Wenju now generates an isolated public statistics dashboard every hour using aggregate data shared with the moderator digest, without exposing private moderator sections or sending additional Discord alerts.
 * 🔄 CHANGE: Chinese sexagenary cycle years returned by `!calendar` now include both pinyin and Chinese characters, regardless of which form was used in the query.
 * 🔄 CHANGE: Subscriptions and unsubscriptions from notifications are also recorded in mod notes.
 * 🔄 CHANGE: Points message replies now return only r/translator points; command usage statistics remain available through status message replies.
@@ -51,6 +52,8 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Request closeout now treats defined multiple-language posts as complete when every language is either `translated` or `doublecheck`, avoiding unnecessary closeout messages for fulfilled multi-language requests.
 * 🛠️ BUG FIX: The `!nuke` command now treats 404 responses while fetching a banned user's profile history as a partial cleanup case, so shadowbanned users can still be banned, have the targeted item removed, and notify the moderator without aborting the command.
 * 🛠️ BUG FIX: Hardened `!transform` image fetching against unsafe hosts, private-network redirects, oversized downloads, unsupported content types, and oversized decoded images.
+* 🛠️ BUG FIX: Wiktionary lookups now skip results without definitions instead of attempting to format empty entries or posting an empty reply.
+* 🛠️ BUG FIX: Japanese name-source HTTP failures now fall back cleanly to the remaining Japanese lookup sources instead of aborting the lookup.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

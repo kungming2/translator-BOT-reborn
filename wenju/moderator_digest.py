@@ -2,7 +2,8 @@
 # -*- coding: UTF-8 -*-
 """
 Formerly posted to a wiki "dashboard", this provides a daily digest of
-information and statistics to moderators via Discord.
+information and statistics to moderators via Discord, plus a separate hourly
+public statistics snapshot.
 ...
 
 Logger tag: [WJ:MODDIG]
@@ -13,6 +14,8 @@ Logger tag: [WJ:MODDIG]
 import csv
 import json
 import logging
+import os
+import secrets
 import time
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -32,6 +35,26 @@ from wenju import WENJU_SETTINGS, task
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODDIG"})
+
+
+class _ActionEntry(TypedDict):
+    """A parsed action row from the command usage report."""
+
+    name: str
+    count: float
+
+
+class _SharedStatistics(TypedDict):
+    """Statistics used by both the private and public dashboards."""
+
+    filter_markdown: str
+    filter_data: dict[str, object]
+    command_markdown: str
+    actions: list[_ActionEntry]
+    new_posts: float
+    notifications: float
+    wenyuan_markdown: str | None
+    wenyuan_data: dict[str, object] | None
 
 
 # ─── Report writers ───────────────────────────────────────────────────────────
@@ -490,6 +513,66 @@ def _wenyuan_period_stats(
     return summary, stats_data
 
 
+def _parse_command_actions(command_report: str) -> list[_ActionEntry]:
+    """Parse action/count rows from a command-usage Markdown table."""
+    actions: list[_ActionEntry] = []
+    for line in command_report.splitlines():
+        line = line.strip()
+        if (
+            not line.startswith("|")
+            or line.startswith("| Action")
+            or line.startswith("|---")
+        ):
+            continue
+        parts = [part.strip() for part in line.strip("|").split("|")]
+        if len(parts) == 2:
+            try:
+                actions.append({"name": parts[0], "count": float(parts[1])})
+            except ValueError:
+                continue
+    return actions
+
+
+def _collect_shared_statistics(
+    today_date: date, current_time: int, days_ago: int
+) -> _SharedStatistics:
+    """Collect the statistics shared by the daily and hourly dashboards."""
+    back_start_date = current_time - (86400 * days_ago)
+    filter_markdown, filter_data = _filter_log_tabulator(
+        start_date=back_start_date, end_date=today_date
+    )
+    command_report = generate_command_usage_report(
+        back_start_date, current_time, days_ago
+    )
+    actions = _parse_command_actions(command_report)
+    wenyuan_markdown, wenyuan_data = _wenyuan_period_stats(30)
+
+    return {
+        "filter_markdown": filter_markdown,
+        "filter_data": filter_data,
+        "command_markdown": format_markdown_table_with_padding(command_report),
+        "actions": actions,
+        "new_posts": next(
+            (
+                action["count"]
+                for action in actions
+                if action["name"].lower() == "new posts"
+            ),
+            0.0,
+        ),
+        "notifications": next(
+            (
+                action["count"]
+                for action in actions
+                if action["name"].lower() == "notifications"
+            ),
+            0.0,
+        ),
+        "wenyuan_markdown": wenyuan_markdown,
+        "wenyuan_data": wenyuan_data,
+    }
+
+
 # ─── HTML rendering ───────────────────────────────────────────────────────────
 
 
@@ -512,7 +595,77 @@ def _render_html_dashboard(date_str: str, data: dict) -> str:
     )
 
 
-# ─── Digest task ──────────────────────────────────────────────────────────────
+def _json_for_html(data: dict) -> str:
+    """Serialize JSON for safe inclusion in an HTML script-data element."""
+    return (
+        json.dumps(data, indent=2)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+    )
+
+
+def _build_public_dashboard_data(
+    date_str: str, statistics: _SharedStatistics
+) -> dict[str, object]:
+    """Return the explicit allowlist of shared statistics safe to publish."""
+    return {
+        "date": date_str,
+        "generatedAt": datetime.now(UTC).isoformat(timespec="seconds"),
+        "filter": statistics["filter_data"]
+        or {"ratePerDay": 0, "startDate": date_str, "endDate": date_str},
+        "newPosts": statistics["new_posts"],
+        "notifications": statistics["notifications"],
+        "actions": statistics["actions"],
+        "wenyuanPeriodStats": statistics["wenyuan_data"],
+    }
+
+
+def _render_public_stats_dashboard(date_str: str, data: dict) -> str:
+    """Render the allowlisted public statistics as a self-contained HTML page."""
+    with open(Paths.TEMPLATES["PUBLIC_STATS"], encoding="utf-8") as f:
+        template = f.read()
+
+    csp_nonce = secrets.token_urlsafe(24)
+    return (
+        template.replace("__DATE_STR__", date_str)
+        .replace('"__DATA_JSON__"', _json_for_html(data))
+        .replace("__CSP_NONCE__", csp_nonce)
+    )
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Replace a generated page atomically so readers never see a partial file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary_path.write_text(content, encoding="utf-8")
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+# ─── Scheduled tasks ──────────────────────────────────────────────────────────
+
+
+@task(schedule="hourly")
+def generate_public_statistics() -> None:
+    """Generate the isolated public statistics snapshot without notifications."""
+    logger.info("Generating public statistics snapshot...")
+    today_date_str = get_current_utc_date()
+    today_date = datetime.strptime(today_date_str, "%Y-%m-%d").date()
+    statistics = _collect_shared_statistics(
+        today_date,
+        int(time.time()),
+        WENJU_SETTINGS["report_command_average"],
+    )
+    public_data = _build_public_dashboard_data(today_date_str, statistics)
+    public_html = _render_public_stats_dashboard(today_date_str, public_data)
+    public_html_path = Path(Paths.PUBLIC["STATS"])
+    _atomic_write_text(public_html_path, public_html)
+    logger.info("Public statistics snapshot saved to %s", public_html_path)
 
 
 @task(schedule="daily")
@@ -528,59 +681,24 @@ def collate_moderator_digest() -> None:
     today_date_str = get_current_utc_date()
     today_date = datetime.strptime(today_date_str, "%Y-%m-%d").date()
     days_ago = WENJU_SETTINGS["report_command_average"]
-    time_delta = 86400 * days_ago
     current_time = int(time.time())
-    back_start_date = current_time - time_delta
+    shared_statistics = _collect_shared_statistics(today_date, current_time, days_ago)
 
     error_log_md, error_data = _error_log_count()
-    filter_log_md, filter_data = _filter_log_tabulator(
-        start_date=back_start_date, end_date=today_date
-    )
     activity_md, activity_data = _activity_csv_handler()
-    command_data_raw = generate_command_usage_report(
-        back_start_date, current_time, days_ago
-    )
-    command_data_md = format_markdown_table_with_padding(command_data_raw)
     noted_entries_md, flagged_data = _note_language_tags()
-    wenyuan_stats_md, wenyuan_stats_data = _wenyuan_period_stats(30)
-
-    # generate_command_usage_report returns a Markdown table; parse rows
-    # directly from command_data_raw before padding is applied.
-    class _ActionEntry(TypedDict):
-        """A single parsed action row from the command usage report."""
-
-        name: str
-        count: float
-
-    actions: list[_ActionEntry] = []
-    for line in command_data_raw.splitlines():
-        line = line.strip()
-        if (
-            not line.startswith("|")
-            or line.startswith("| Action")
-            or line.startswith("|---")
-        ):
-            continue
-        parts = [p.strip() for p in line.strip("|").split("|")]
-        if len(parts) == 2:
-            try:
-                actions.append({"name": parts[0], "count": float(parts[1])})
-            except ValueError:
-                continue
-
-    new_posts = next(
-        (a["count"] for a in actions if a["name"].lower() == "new posts"), 0.0
-    )
-    notifications = next(
-        (a["count"] for a in actions if a["name"].lower() == "notifications"), 0.0
-    )
 
     mod_page_address = load_settings(Paths.AUTH["CREDENTIALS"])[
         "MODERATOR_DIGEST_URL"
     ].rstrip("/")
-    sections = [error_log_md, filter_log_md, activity_md, command_data_md]
-    if wenyuan_stats_md is not None:
-        sections.append(wenyuan_stats_md)
+    sections = [
+        error_log_md,
+        shared_statistics["filter_markdown"],
+        activity_md,
+        shared_statistics["command_markdown"],
+    ]
+    if shared_statistics["wenyuan_markdown"] is not None:
+        sections.append(shared_statistics["wenyuan_markdown"])
     if noted_entries_md is not None:
         sections.append(noted_entries_md)
     total_data = "\n".join(sections)
@@ -597,8 +715,8 @@ def collate_moderator_digest() -> None:
         "errors": error_data
         if error_data
         else {"count": 0, "lastEntry": "N/A", "resolved": True},
-        "filter": filter_data
-        if filter_data
+        "filter": shared_statistics["filter_data"]
+        if shared_statistics["filter_data"]
         else {"ratePerDay": 0, "startDate": today_date_str, "endDate": today_date_str},
         "activity": activity_data
         if activity_data
@@ -608,11 +726,11 @@ def collate_moderator_digest() -> None:
             "avgCycleMin": 0,
             "longestCycles": [],
         },
-        "newPosts": new_posts,
-        "notifications": notifications,
-        "actions": actions,
+        "newPosts": shared_statistics["new_posts"],
+        "notifications": shared_statistics["notifications"],
+        "actions": shared_statistics["actions"],
         "flaggedPosts": flagged_data,
-        "wenyuanPeriodStats": wenyuan_stats_data,
+        "wenyuanPeriodStats": shared_statistics["wenyuan_data"],
     }
 
     folder_to_save = get_reports_directory()
@@ -620,7 +738,6 @@ def collate_moderator_digest() -> None:
     # HTML is a single fixed file, overwritten each run, so it can be
     # bookmarked or referenced from a single stable path.
     html_path = Path(folder_to_save).parent / "moderator_digest.html"
-
     written_md_path = _write_markdown_digest(md_path, digest_summary)
 
     html_content = _render_html_dashboard(today_date_str, dashboard_data)
@@ -629,7 +746,7 @@ def collate_moderator_digest() -> None:
         f.write(html_content)
 
     if written_md_path is None:
-        logger.info(f"Daily administrative report completed and saved to {html_path}")
+        logger.info("Daily administrative report completed and saved to %s", html_path)
     else:
         logger.info(
             "Daily administrative report completed and saved to "

@@ -15,13 +15,14 @@ Each task runs independently inside the selected schedule. If one task fails, We
 ## Hourly Functions
 
 * `monitor_controversial_comments()`: Checks r/translator for heavily downvoted comments and alerts moderators to them. 
+* `generate_public_statistics()`: Refreshes the isolated public `index.html` statistics snapshot from the `public_stats.html` template. It shares aggregate collection logic with the moderator digest but does not collect private dashboard sections or send a Discord alert.
 * `reddit_status_report()`: Checks the [Reddit Status API](https://www.redditstatus.com/) for any issues. Alerts the Discord if there are any current incidents recorded. 
 * `update_sidebar_statistics()`: Updates the r/translator sidebar with the latest statistics from the past 24 hours. It edits the sidebar "wikipage" on Old Reddit and edits a widget on New Reddit.
 
 ## Daily Functions
 
 * `archive_modmail()`: Archives modmail conversations older than a pre-configured age where at least one moderator has participated in the conversation.
-* `collate_moderator_digest()`: Sends out a link to an HTML digest of the subreddit's overall state, including average number of commands used, activity data, and other information. This also produces a local Markdown report.
+* `collate_moderator_digest()`: Sends out a link to an HTML digest of the subreddit's overall state, including average number of commands used, activity data, and other information. It also produces a local Markdown report. Shared public statistics are collected through the same helper but published separately by the hourly `generate_public_statistics()` task.
 * `error_log_trimmer()`: Removes resolved errors older than a configured number of weeks from the error log, keeping it from growing indefinitely.
 * `language_of_the_day()`: Randomly selects a language of the day for inclusion in the sidebar of the subreddit as a widget (New Reddit), and as an update to Discord. The function selects ISO 639-1 languages on even days.
 * `log_trimmer()`: Trims the events log (where `logger` writes to) to keep only a relatively large amount of recent entries. Also trims the activity CSV log.

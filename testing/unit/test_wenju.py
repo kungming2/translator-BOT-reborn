@@ -13,7 +13,7 @@ Modules covered:
     - iso_updates.py     : _parse_iso639_newsletter
     - data_maintenance.py: error_log_trimmer (logic), validate_data_files (path scanning)
     - moderator_digest.py: _error_log_count, _activity_csv_handler (statistics),
-                           _render_html_dashboard
+                           dashboard rendering and public-data allowlisting
     - status_report.py   : reddit_status_report (incident formatting)
 """
 
@@ -137,6 +137,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         "models.ajo": _make_stub_module(
             "models.ajo", Ajo=MagicMock(), ajo_loader=MagicMock(return_value=None)
         ),
+        "models.lingvo": _make_stub_module("models.lingvo", Lingvo=MagicMock()),
         "utility": _make_stub_module(
             "utility",
             format_markdown_table_with_padding=MagicMock(side_effect=lambda x: x),
@@ -636,6 +637,149 @@ class TestRenderHtmlDashboard:
 
         assert result.startswith("<html>")
         assert result.endswith("</html>")
+
+
+class TestPublicStatsDashboard:
+    PUBLIC_KEYS = {
+        "date",
+        "generatedAt",
+        "filter",
+        "newPosts",
+        "notifications",
+        "actions",
+        "wenyuanPeriodStats",
+    }
+
+    def test_public_data_uses_an_explicit_allowlist(self):
+        statistics = {
+            "filter_markdown": "filter",
+            "filter_data": {"ratePerDay": 1.5},
+            "command_markdown": "commands",
+            "actions": [{"name": "identify", "count": 2.0}],
+            "new_posts": 20.0,
+            "notifications": 50.0,
+            "wenyuan_markdown": "wenyuan",
+            "wenyuan_data": {"postCount": 100},
+            "errors": {"count": 3, "lastEntry": "private", "resolved": False},
+            "activity": {"avgApiCalls": 100, "avgMemoryMB": 500},
+            "flaggedPosts": [{"title": "private moderation queue"}],
+        }
+
+        result = moderator_digest._build_public_dashboard_data("2026-07-14", statistics)
+
+        assert set(result) == self.PUBLIC_KEYS
+        assert "errors" not in result
+        assert "activity" not in result
+        assert "flaggedPosts" not in result
+
+    def test_public_json_cannot_close_its_script_element(self):
+        hostile = {"value": "</script><script>alert('x')</script>"}
+
+        result = moderator_digest._json_for_html(hostile)
+
+        assert "</script>" not in result.lower()
+        assert "\\u003c/script\\u003e" in result
+        assert json.loads(result) == hostile
+
+    def test_public_template_omits_private_sections(self):
+        template = Path(moderator_digest.Paths.TEMPLATES["PUBLIC_STATS"]).read_text(
+            encoding="utf-8"
+        )
+
+        assert "Error Log" not in template
+        assert "Cycle Averages" not in template
+        assert "Entries with Tags to Note" not in template
+        assert "fonts.googleapis.com" not in template
+        assert "unsafe-inline" not in template
+        data_element = re.search(
+            r'<script id="public-stats-data"[^>]*>(.*?)</script>', template, re.DOTALL
+        )
+        assert data_element is not None
+        assert json.loads(data_element.group(1)) == "__DATA_JSON__"
+
+    def test_public_renderer_applies_one_nonce_and_safe_json(self):
+        result = moderator_digest._render_public_stats_dashboard(
+            "2026-07-14", {"value": "</script><script>alert('x')</script>"}
+        )
+
+        assert "__CSP_NONCE__" not in result
+        assert "</script><script>" not in result.lower()
+        nonces = re.findall(r'nonce="([^"]+)"', result)
+        assert len(nonces) == 3
+        assert len(set(nonces)) == 1
+
+    def test_atomic_write_replaces_complete_page(self, tmp_path):
+        output = tmp_path / "public_stats.html"
+        output.write_text("old page", encoding="utf-8")
+
+        moderator_digest._atomic_write_text(output, "new page")
+
+        assert output.read_text(encoding="utf-8") == "new page"
+        assert list(tmp_path.glob("*.tmp")) == []
+
+    def test_public_generation_is_hourly_and_moderator_digest_is_daily(self):
+        tasks = wenju.get_tasks()
+
+        assert moderator_digest.generate_public_statistics in tasks["hourly"]
+        assert moderator_digest.collate_moderator_digest in tasks["daily"]
+        assert moderator_digest.generate_public_statistics not in tasks["daily"]
+
+    def test_hourly_generation_uses_only_shared_statistics(self, tmp_path):
+        statistics = {
+            "filter_markdown": "filter",
+            "filter_data": {"ratePerDay": 1.5},
+            "command_markdown": "commands",
+            "actions": [{"name": "identify", "count": 2.0}],
+            "new_posts": 20.0,
+            "notifications": 50.0,
+            "wenyuan_markdown": "wenyuan",
+            "wenyuan_data": {"postCount": 100},
+        }
+        output = tmp_path / "index.html"
+
+        with (
+            patch.object(
+                moderator_digest,
+                "_collect_shared_statistics",
+                return_value=statistics,
+            ) as collect_mock,
+            patch.object(
+                moderator_digest,
+                "_render_public_stats_dashboard",
+                return_value="public page",
+            ),
+            patch.object(
+                moderator_digest.Paths,
+                "PUBLIC",
+                {"STATS": str(output)},
+            ),
+            patch.object(
+                moderator_digest, "WENJU_SETTINGS", {"report_command_average": 3}
+            ),
+            patch.object(
+                moderator_digest, "get_current_utc_date", return_value="2026-07-14"
+            ),
+            patch.object(moderator_digest, "send_discord_alert") as alert_mock,
+        ):
+            moderator_digest.generate_public_statistics()
+
+        assert output.read_text(encoding="utf-8") == "public page"
+        collect_mock.assert_called_once()
+        alert_mock.assert_not_called()
+
+    def test_command_actions_are_parsed_once_for_both_dashboards(self):
+        report = """\
+| Action | Daily Average |
+|---|---:|
+| New posts | 12.5 |
+| Notifications | 42 |
+| malformed | not-a-number |
+"""
+
+        assert moderator_digest._parse_command_actions(report) == [
+            {"name": "New posts", "count": 12.5},
+            {"name": "Notifications", "count": 42.0},
+        ]
 
 
 class TestWenyuanPeriodStats:

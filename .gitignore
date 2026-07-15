@@ -17,6 +17,7 @@
 /_data/logs/
 /_data/logs/log_counter.json
 /_data/logs/log_filter.md
+/_data/public/
 /_data/reports/
 /_data/settings/discord_settings.yaml
 /_data/settings/scheduler_settings.yaml

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-__CSP_NONCE__'; script-src 'nonce-__CSP_NONCE__'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>r/translator Public Statistics — __DATE_STR__</title>
+<style nonce="__CSP_NONCE__">
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8;
+    --surface: #fff;
+    --surface2: #eef0f5;
+    --border: #d8dce8;
+    --accent: #2563eb;
+    --accent2: #7c3aed;
+    --green: #15803d;
+    --yellow: #a16207;
+    --text: #1a1d2e;
+    --muted: #687082;
+    --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+    --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    padding: 2rem;
+    background: var(--bg);
+    color: var(--text);
+    font: 112.5%/1.5 var(--sans);
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgb(37 99 235 / 4%) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(37 99 235 / 4%) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; }
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 {
+    margin-bottom: .25rem;
+    color: var(--accent);
+    font: 600 1.15rem/1.3 var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .date, .status, .card-label, .section-label, th, td { font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace; }
+  .date { color: var(--muted); font-size: .75rem; letter-spacing: .04em; }
+  .status {
+    flex-shrink: 0;
+    padding: .35rem .75rem;
+    border: 1px solid rgb(21 128 61 / 25%);
+    border-radius: 4px;
+    background: rgb(21 128 61 / 8%);
+    color: var(--green);
+    font-size: .7rem;
+    letter-spacing: .06em;
+  }
+  .status.stale { border-color: rgb(161 98 7 / 30%); background: rgb(161 98 7 / 8%); color: var(--yellow); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: .65;
+  }
+  .card-label, .section-label, th {
+    color: var(--muted);
+    font-size: .65rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+  .card-label { margin-bottom: .7rem; }
+  .section-label { margin: 1.5rem 0 .75rem; }
+  .stat-big { color: var(--text); font: 600 2rem/1 var(--mono); }
+  .stat-unit { margin-left: .3rem; color: var(--muted); font-size: .8rem; }
+  .stat-sub { margin-top: .4rem; color: var(--muted); font: .75rem/1.4 var(--mono); }
+  table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+  th { padding: 0 0 .6rem; border-bottom: 1px solid var(--border); text-align: left; }
+  td { padding: .48rem 0; border-bottom: 1px solid rgb(0 0 0 / 6%); }
+  tbody tr:last-child td { border-bottom: 0; }
+  th.num, td.num { text-align: right; }
+  td.num { color: var(--accent); font-weight: 600; white-space: nowrap; }
+  .bar-cell { display: flex; align-items: center; }
+  .bar-bg { width: 100%; height: 4px; overflow: hidden; border-radius: 2px; background: var(--border); }
+  .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .table-block + .table-block { margin-top: 1.25rem; }
+  .table-title { margin-bottom: .65rem; color: var(--muted); font: .66rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .muted { color: var(--muted); }
+  .footer { margin-top: 2rem; color: var(--muted); text-align: center; font-size: .72rem; }
+  @media (max-width: 680px) {
+    body { padding: 1rem; font-size: 100%; }
+    .grid, .grid-3 { grid-template-columns: 1fr; }
+    .header { flex-direction: column; }
+    .card { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <div>
+      <h1>r/translator Public Statistics</h1>
+      <div class="date" id="generated-date">Statistics snapshot for __DATE_STR__</div>
+    </div>
+    <div class="status" id="freshness-status">DAILY SNAPSHOT</div>
+  </header>
+
+  <noscript><div class="card">JavaScript is required to display this statistics snapshot.</div></noscript>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-label">Filter Rate</div>
+      <div class="stat-big" id="filter-rate"></div>
+      <div class="stat-sub" id="filter-range"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">New Posts</div>
+      <div class="stat-big" id="new-posts"></div>
+      <div class="stat-sub">Daily average</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Notifications</div>
+      <div class="stat-big" id="notifications"></div>
+      <div class="stat-sub">Daily average</div>
+    </div>
+  </div>
+
+  <div class="section-label">Bot Actions — Daily Average</div>
+  <div class="card">
+    <table id="actions-table">
+      <thead><tr><th>Action</th><th style="width:45%">Volume</th><th class="num">Average</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <section id="wenyuan-section" hidden>
+    <div class="section-label" id="wenyuan-label">Wenyuan Statistics</div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="card-label">Requests</div>
+        <div class="stat-big" id="wy-total"></div>
+        <div class="stat-sub" id="wy-translated"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Languages</div>
+        <div class="stat-big" id="wy-languages"></div>
+        <div class="stat-sub" id="wy-translators"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Median Translation Time</div>
+        <div class="stat-big" id="wy-median"></div>
+        <div class="stat-sub" id="wy-timed-count"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><div class="table-title">Overall Status</div><table id="wy-overall-table"><thead><tr><th>Status</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
+      <div class="card"><div class="table-title">Translation Direction</div><table id="wy-directions-table"><thead><tr><th>Direction</th><th class="num">Requests</th><th class="num">Share</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="table-title">Top Languages</div><table id="wy-languages-table"><thead><tr><th>Language</th><th class="num">Requests</th><th class="num">Translated</th><th class="num">Needs Review</th></tr></thead><tbody></tbody></table></div>
+      <div class="card">
+        <div class="table-block"><div class="table-title">Source-Target Pairs</div><table id="wy-pairs-table"><thead><tr><th>Pair</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-block"><div class="table-title">Notifications and Media</div><table id="wy-extra-table"><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">Aggregated statistics for r/translator. No private moderator or user records are included.</footer>
+</main>
+
+<script id="public-stats-data" type="application/json" nonce="__CSP_NONCE__">"__DATA_JSON__"</script>
+<script nonce="__CSP_NONCE__">
+"use strict";
+const DATA = JSON.parse(document.getElementById("public-stats-data").textContent);
+
+function setText(id, value) {
+  document.getElementById(id).textContent = String(value);
+}
+
+function formatPercent(value) {
+  const numeric = Number(value || 0);
+  return numeric.toFixed(Number.isInteger(numeric) ? 0 : 2) + "%";
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+function addRows(tableId, rows) {
+  const tableBody = document.querySelector(tableId + " tbody");
+  tableBody.textContent = "";
+  if (!rows || rows.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "muted";
+    cell.colSpan = document.querySelectorAll(tableId + " thead th").length || 1;
+    cell.textContent = "No data available";
+    row.appendChild(cell);
+    tableBody.appendChild(row);
+    return;
+  }
+  rows.forEach(values => {
+    const row = document.createElement("tr");
+    values.forEach(value => {
+      const cell = document.createElement("td");
+      if (value && typeof value === "object") {
+        cell.textContent = String(value.value);
+        if (value.className) cell.className = value.className;
+      } else {
+        cell.textContent = String(value);
+      }
+      row.appendChild(cell);
+    });
+    tableBody.appendChild(row);
+  });
+}
+
+const generatedTime = Date.parse(DATA.generatedAt);
+if (Number.isFinite(generatedTime)) {
+  setText("generated-date", "Generated " + new Date(generatedTime).toISOString().replace("T", " ").replace(".000Z", " UTC"));
+}
+if (Number.isFinite(generatedTime) && Date.now() - generatedTime > 36 * 60 * 60 * 1000) {
+  const status = document.getElementById("freshness-status");
+  status.textContent = "STALE SNAPSHOT";
+  status.classList.add("stale");
+}
+
+const filterRate = document.getElementById("filter-rate");
+filterRate.textContent = String(DATA.filter.ratePerDay);
+const filterUnit = document.createElement("span");
+filterUnit.className = "stat-unit";
+filterUnit.textContent = "/day";
+filterRate.appendChild(filterUnit);
+setText("filter-range", DATA.filter.startDate + " to " + DATA.filter.endDate);
+setText("new-posts", Number(DATA.newPosts).toFixed(1));
+setText("notifications", Number(DATA.notifications).toFixed(1));
+
+const excludedActions = new Set(["new posts", "notifications"]);
+const actions = DATA.actions.filter(action => !excludedActions.has(action.name.toLowerCase()));
+const maxActionCount = Math.max(...actions.map(action => action.count), 1);
+const actionBody = document.querySelector("#actions-table tbody");
+actions.forEach(action => {
+  const row = document.createElement("tr");
+  const nameCell = row.insertCell();
+  nameCell.textContent = action.name;
+  const volumeCell = row.insertCell();
+  const background = document.createElement("div");
+  background.className = "bar-bg";
+  const fill = document.createElement("div");
+  fill.className = "bar-fill";
+  fill.style.width = (action.count / maxActionCount * 100).toFixed(1) + "%";
+  background.appendChild(fill);
+  const container = document.createElement("div");
+  container.className = "bar-cell";
+  container.appendChild(background);
+  volumeCell.appendChild(container);
+  const countCell = row.insertCell();
+  countCell.className = "num";
+  countCell.textContent = Number(action.count).toFixed(2);
+  actionBody.appendChild(row);
+});
+
+if (DATA.wenyuanPeriodStats) {
+  const wy = DATA.wenyuanPeriodStats;
+  const overall = wy.overall || {};
+  const timing = wy.timing || {};
+  const notificationStats = wy.notifications || {};
+  const images = wy.images || {};
+  document.getElementById("wenyuan-section").hidden = false;
+  setText("wenyuan-label", "Wenyuan Statistics — " + (wy.periodLabel || "last 30 days"));
+  setText("wy-total", formatCount(overall.total_requests));
+  setText("wy-translated", formatCount(overall.translated) + " translated · " + formatPercent(overall.translation_percentage));
+  setText("wy-languages", formatCount(overall.unique_languages));
+  setText("wy-translators", "Unique translators: " + formatCount(wy.uniqueTranslators));
+  setText("wy-median", timing.medianTranslationDisplay || "N/A");
+  setText("wy-timed-count", formatCount(timing.timedTranslationCount) + " timed translations");
+
+  addRows("#wy-overall-table", [
+    ["Translated", {value: formatCount(overall.translated), className: "num"}],
+    ["Needs review", {value: formatCount(overall.needs_review), className: "num"}],
+    ["Untranslated", {value: formatCount(overall.untranslated), className: "num"}],
+    ["In progress", {value: formatCount(overall.in_progress), className: "num"}],
+    ["Missing assets", {value: formatCount(overall.missing_assets), className: "num"}]
+  ]);
+  addRows("#wy-directions-table", [
+    ["To English", wy.directions && wy.directions.to_english],
+    ["From English", wy.directions && wy.directions.from_english],
+    ["Non-English", wy.directions && wy.directions.non_english]
+  ].map(item => [item[0], {value: formatCount(item[1] && item[1].count), className: "num"}, {value: formatPercent(item[1] && item[1].percentage), className: "num"}]));
+  addRows("#wy-languages-table", (wy.topLanguages || []).map(language => [
+    language.language,
+    {value: formatCount(language.requests), className: "num"},
+    {value: formatPercent(language.translationPercentage), className: "num"},
+    {value: formatCount(language.needsReview), className: "num"}
+  ]));
+  addRows("#wy-pairs-table", (wy.sourceTargetPairs || []).map(pair => [pair.pair, {value: formatCount(pair.requests), className: "num"}]));
+  addRows("#wy-extra-table", [
+    ["Average notified users / request", {value: Number(notificationStats.average_notified_per_request || 0).toFixed(2), className: "num"}],
+    ["Total notified users", {value: formatCount(notificationStats.total_notified_users), className: "num"}],
+    ["Image posts", {value: formatCount(images.image_requests) + " (" + formatPercent(images.percentage) + ")", className: "num"}],
+    ["Average translation time", {value: timing.averageTranslationHours ? Number(timing.averageTranslationHours).toFixed(2) + " hours" : "N/A", className: "num"}]
+  ]);
+}
+</script>
+</body>
+</html>

@@ -56,11 +56,12 @@ class Paths:
     # Written responses and templates by the bot.
     # Included here for completion; for regular use, utilize
     # responses.py's RESPONSE object instead.
-    # Also has a HTML template for the rendered moderator digest.
+    # Also has HTML templates for the rendered moderator and public dashboards.
     _tmpl = _data / "templates"
     TEMPLATES: dict[str, str] = {
         "RESPONSES": str(_tmpl / "responses.yaml"),
         "MODERATOR_DIGEST": str(_tmpl / "moderator_digest.html"),
+        "PUBLIC_STATS": str(_tmpl / "public_stats.html"),
         "TRANSLATION_CHALLENGE": str(_tmpl / "translation_challenge.md"),
     }
 
@@ -113,6 +114,12 @@ class Paths:
     WENYUAN: dict[str, str] = {
         "MONTHLY_STATISTICS": str(_wy / "monthly_statistics_output.md"),
     }  # currently unused
+
+    # Files safe to expose through a static web server.
+    _public = _data / "public"
+    PUBLIC: dict[str, str] = {
+        "STATS": str(_public / "index.html"),
+    }
 
     # Archival output files
     _ar = _data / "archival"

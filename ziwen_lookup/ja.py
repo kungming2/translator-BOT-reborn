@@ -346,8 +346,13 @@ def _ja_name_search(ja_given_name: str) -> str | None:
     names_with_readings: list[str] = []
 
     url: str = f"https://kanji.reader.bz/{ja_given_name}"
-    eth_page = requests.get(url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT)
-    eth_page.raise_for_status()
+    try:
+        eth_page = requests.get(url, headers=useragent, timeout=DEFAULT_HTTP_TIMEOUT)
+        eth_page.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning(f"Name lookup unavailable for '{ja_given_name}': {e}")
+        return None
+
     tree = html.fromstring(eth_page.content)
 
     name_content: list[str] = tree.xpath('//div[contains(@id,"main")]/p[1]/text()')

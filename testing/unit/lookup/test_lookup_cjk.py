@@ -428,6 +428,44 @@ class TestZhJaTokenizer(unittest.TestCase):
         self.assertEqual(result, [])
 
 
+class TestJaNameSearch(unittest.TestCase):
+    """The optional Japanese name source should fail softly."""
+
+    def test_http_error_returns_none(self):
+        import ziwen_lookup.ja as ja
+
+        response = Mock()
+        response.raise_for_status.side_effect = ja.requests.HTTPError(
+            "403 Client Error: Forbidden"
+        )
+
+        with patch("ziwen_lookup.ja.requests.get", return_value=response):
+            result = ja._ja_name_search("玉峰")
+
+        self.assertIsNone(result)
+
+    def test_http_error_allows_word_lookup_to_continue_to_character_fallback(self):
+        import ziwen_lookup.ja as ja
+
+        async def no_jisho_result(_session, _url):
+            return None
+
+        response = Mock()
+        response.raise_for_status.side_effect = ja.requests.HTTPError(
+            "403 Client Error: Forbidden"
+        )
+
+        with (
+            patch("ziwen_lookup.ja.fetch_json", new=no_jisho_result),
+            patch("ziwen_lookup.ja.requests.get", return_value=response),
+            patch("ziwen_lookup.ja._sfx_search", return_value=None),
+            patch("ziwen_lookup.ja.ja_character", return_value="character fallback"),
+        ):
+            result = asyncio.run(ja._ja_word_fetch("玉峰"))
+
+        self.assertEqual(result, "character fallback")
+
+
 class TestCjkLookupNormalization(unittest.TestCase):
     """Compatibility ideographs should normalize before cache/fetch lookup."""
 

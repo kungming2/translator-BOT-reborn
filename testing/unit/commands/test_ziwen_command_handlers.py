@@ -346,7 +346,9 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
             format_wiktionary_markdown=MagicMock(
                 side_effect=lambda _result, term, language: f"WT {term} {language}"
             ),
-            wiktionary_search=MagicMock(return_value={"word": "kunulo"}),
+            wiktionary_search=MagicMock(
+                return_value={"word": "kunulo", "definition": ["companion"]}
+            ),
         ),
         "ziwen_lookup.wp_utils": _make_stub_module(
             "ziwen_lookup.wp_utils",
@@ -603,6 +605,59 @@ def test_lookup_wt_uses_explicit_language_and_replies(monkeypatch) -> None:
 
     assert "WT kunulo EO" in replies[0]
     assert "[](#wt_parent_wt1)" in replies[0]
+
+
+def test_lookup_wt_skips_result_without_definitions(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    replies: list[str] = []
+    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    monkeypatch.setattr(
+        module,
+        "wiktionary_search",
+        lambda term, _language: (
+            {"word": term, "definition": None}
+            if term == "empty"
+            else {"word": term, "definition": ["usable"]}
+        ),
+    )
+
+    module.handle(
+        FakeComment(comment_id="wt2"),
+        None,
+        FakeKomando(
+            [("eo", "empty", True), ("eo", "valid", True)],
+            "lookup_wt",
+        ),
+        FakeAjo(),
+    )
+
+    assert len(replies) == 1
+    assert "WT valid EO" in replies[0]
+    assert "WT empty EO" not in replies[0]
+
+
+def test_lookup_wt_does_not_reply_when_all_results_lack_definitions(
+    monkeypatch,
+) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    replies: list[str] = []
+    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    monkeypatch.setattr(
+        module,
+        "wiktionary_search",
+        lambda term, _language: {"word": term, "definition": None},
+    )
+
+    module.handle(
+        FakeComment(comment_id="wt3"),
+        None,
+        FakeKomando([("it", "empty", True)], "lookup_wt"),
+        FakeAjo(),
+    )
+
+    assert replies == []
 
 
 def test_missing_updates_status_and_messages_original_poster(monkeypatch) -> None:
