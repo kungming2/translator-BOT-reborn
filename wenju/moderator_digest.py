@@ -484,7 +484,7 @@ def _wenyuan_period_stats(
     try:
         from main_wenyuan import build_period_stats_data
 
-        stats_data = build_period_stats_data(days)
+        stats_data = build_period_stats_data(days, include_comparison=True)
     except Exception as e:
         logger.error("Failed to collect Wenyuan period statistics — %s", e)
         return None, None

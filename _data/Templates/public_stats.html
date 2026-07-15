@@ -17,8 +17,11 @@
     --accent2: #7c3aed;
     --green: #15803d;
     --yellow: #a16207;
+    --red: #b91c1c;
     --text: #1a1d2e;
     --muted: #687082;
+    --row-border: rgb(0 0 0 / 6%);
+    --chart-grid: rgb(104 112 130 / 22%);
     --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
     --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -73,6 +76,7 @@
   .status.stale { border-color: rgb(161 98 7 / 30%); background: rgb(161 98 7 / 8%); color: var(--yellow); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
   .card {
     position: relative;
     overflow: hidden;
@@ -102,7 +106,7 @@
   .stat-sub { margin-top: .4rem; color: var(--muted); font: .75rem/1.4 var(--mono); }
   table { width: 100%; border-collapse: collapse; font-size: .78rem; }
   th { padding: 0 0 .6rem; border-bottom: 1px solid var(--border); text-align: left; }
-  td { padding: .48rem 0; border-bottom: 1px solid rgb(0 0 0 / 6%); }
+  td { padding: .48rem 0; border-bottom: 1px solid var(--row-border); }
   tbody tr:last-child td { border-bottom: 0; }
   th.num, td.num { text-align: right; }
   td.num { color: var(--accent); font-weight: 600; white-space: nowrap; }
@@ -111,11 +115,46 @@
   .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
   .table-block + .table-block { margin-top: 1.25rem; }
   .table-title { margin-bottom: .65rem; color: var(--muted); font: .66rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .comparison-card .stat-big { font-size: 1.65rem; }
+  .trend { display: inline-block; margin-top: .55rem; font: 600 .68rem/1.4 var(--mono); }
+  .trend.good { color: var(--green); }
+  .trend.bad { color: var(--red); }
+  .trend.neutral { color: var(--muted); }
+  .chart-card { padding-bottom: 1rem; }
+  .volume-chart { display: block; width: 100%; height: auto; min-height: 180px; overflow: visible; }
+  .chart-grid-line { stroke: var(--chart-grid); stroke-width: 1; }
+  .chart-bar { fill: var(--accent); opacity: .82; }
+  .chart-bar:hover { fill: var(--accent2); opacity: 1; }
+  .chart-label { fill: var(--muted); font: 18px var(--mono); }
+  .chart-summary { margin-top: .4rem; color: var(--muted); font: .72rem/1.4 var(--mono); }
   .muted { color: var(--muted); }
   .footer { margin-top: 2rem; color: var(--muted); text-align: center; font-size: .72rem; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #10131a;
+      --surface: #181d27;
+      --surface2: #222938;
+      --border: #343d50;
+      --accent: #78a5ff;
+      --accent2: #a78bfa;
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #edf1f7;
+      --muted: #a7b0c0;
+      --row-border: rgb(255 255 255 / 8%);
+      --chart-grid: rgb(167 176 192 / 24%);
+    }
+    body::before {
+      background-image:
+        linear-gradient(rgb(120 165 255 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(120 165 255 / 5%) 1px, transparent 1px);
+    }
+  }
   @media (max-width: 680px) {
     body { padding: 1rem; font-size: 100%; }
-    .grid, .grid-3 { grid-template-columns: 1fr; }
+    .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     .header { flex-direction: column; }
     .card { padding: 1rem; }
   }
@@ -128,7 +167,7 @@
       <h1>r/translator Public Statistics</h1>
       <div class="date" id="generated-date">Statistics snapshot for __DATE_STR__</div>
     </div>
-    <div class="status" id="freshness-status">DAILY SNAPSHOT</div>
+    <div class="status" id="freshness-status">HOURLY SNAPSHOT</div>
   </header>
 
   <noscript><div class="card">JavaScript is required to display this statistics snapshot.</div></noscript>
@@ -179,6 +218,47 @@
       </div>
     </div>
 
+    <div id="comparison-section" hidden>
+      <div class="section-label">Current vs Previous 30 Days</div>
+      <div class="grid grid-4">
+        <div class="card comparison-card">
+          <div class="card-label">Request Volume</div>
+          <div class="stat-big" id="cmp-requests-current"></div>
+          <div class="stat-sub" id="cmp-requests-previous"></div>
+          <div class="trend neutral" id="cmp-requests-trend"></div>
+        </div>
+        <div class="card comparison-card">
+          <div class="card-label">Completion Rate</div>
+          <div class="stat-big" id="cmp-completion-current"></div>
+          <div class="stat-sub" id="cmp-completion-previous"></div>
+          <div class="trend neutral" id="cmp-completion-trend"></div>
+        </div>
+        <div class="card comparison-card">
+          <div class="card-label">Median Translation Time</div>
+          <div class="stat-big" id="cmp-median-current"></div>
+          <div class="stat-sub" id="cmp-median-previous"></div>
+          <div class="trend neutral" id="cmp-median-trend"></div>
+        </div>
+        <div class="card comparison-card">
+          <div class="card-label">Backlog</div>
+          <div class="stat-big" id="cmp-backlog-current"></div>
+          <div class="stat-sub" id="cmp-backlog-previous"></div>
+          <div class="trend neutral" id="cmp-backlog-trend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="volume-section" hidden>
+      <div class="section-label">Daily Request Volume — Last 30 Days</div>
+      <div class="card chart-card">
+        <svg class="volume-chart" id="daily-volume-chart" viewBox="0 0 900 260" role="img" aria-labelledby="volume-chart-title volume-chart-description">
+          <title id="volume-chart-title">Daily translation request volume</title>
+          <desc id="volume-chart-description">Bar chart of requests received on each of the last 30 UTC calendar days.</desc>
+        </svg>
+        <div class="chart-summary" id="volume-summary"></div>
+      </div>
+    </div>
+
     <div class="grid">
       <div class="card"><div class="table-title">Overall Status</div><table id="wy-overall-table"><thead><tr><th>Status</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
       <div class="card"><div class="table-title">Translation Direction</div><table id="wy-directions-table"><thead><tr><th>Direction</th><th class="num">Requests</th><th class="num">Share</th></tr></thead><tbody></tbody></table></div>
@@ -211,6 +291,109 @@ function formatPercent(value) {
 
 function formatCount(value) {
   return Number(value || 0).toLocaleString();
+}
+
+function formatDuration(seconds) {
+  if (!Number.isFinite(Number(seconds))) return "N/A";
+  const value = Number(seconds);
+  if (value < 3600) return Math.round(value / 60) + " min";
+  if (value < 172800) return (value / 3600).toFixed(1) + " hr";
+  return (value / 86400).toFixed(1) + " days";
+}
+
+function renderComparisonMetric(prefix, metric, formatter, deltaFormatter) {
+  if (!metric) return;
+  setText(prefix + "-current", formatter(metric.current));
+  setText(prefix + "-previous", "Previous: " + formatter(metric.previous));
+  const trend = document.getElementById(prefix + "-trend");
+  trend.className = "trend neutral";
+  if (metric.delta === null || metric.delta === undefined) {
+    trend.textContent = "Comparison unavailable";
+    return;
+  }
+  if (Number(metric.delta) === 0) {
+    trend.textContent = "No change";
+    return;
+  }
+  const arrow = Number(metric.delta) > 0 ? "↑" : "↓";
+  trend.textContent = arrow + " " + deltaFormatter(metric);
+  if (metric.improved === true) trend.className = "trend good";
+  if (metric.improved === false) trend.className = "trend bad";
+}
+
+function svgElement(name, attributes) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+  Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+  return element;
+}
+
+function renderDailyVolume(rows) {
+  if (!rows || rows.length === 0) return;
+  document.getElementById("volume-section").hidden = false;
+  const svg = document.getElementById("daily-volume-chart");
+  const title = svg.querySelector("title");
+  const description = svg.querySelector("desc");
+  svg.replaceChildren(title, description);
+
+  const width = 900;
+  const height = 260;
+  const left = 48;
+  const right = 12;
+  const top = 16;
+  const bottom = 42;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const maximum = Math.max(...rows.map(row => Number(row.requests) || 0), 1);
+  const slotWidth = plotWidth / rows.length;
+  const barWidth = Math.max(slotWidth - 5, 3);
+
+  [0, .5, 1].forEach(fraction => {
+    const y = top + plotHeight - (plotHeight * fraction);
+    const line = svgElement("line", {x1: left, y1: y, x2: width - right, y2: y});
+    line.classList.add("chart-grid-line");
+    svg.appendChild(line);
+    const label = svgElement("text", {x: left - 8, y: y + 6, "text-anchor": "end"});
+    label.classList.add("chart-label");
+    label.textContent = String(Math.round(maximum * fraction));
+    svg.appendChild(label);
+  });
+
+  rows.forEach((row, index) => {
+    const requests = Number(row.requests) || 0;
+    const barHeight = requests / maximum * plotHeight;
+    const x = left + (index * slotWidth) + ((slotWidth - barWidth) / 2);
+    const bar = svgElement("rect", {
+      x,
+      y: top + plotHeight - barHeight,
+      width: barWidth,
+      height: barHeight,
+      rx: 2
+    });
+    bar.classList.add("chart-bar");
+    const tooltip = svgElement("title", {});
+    tooltip.textContent = row.date + ": " + formatCount(requests) + " requests";
+    bar.appendChild(tooltip);
+    svg.appendChild(bar);
+
+    if (index % 5 === 0 || index === rows.length - 1) {
+      const label = svgElement("text", {
+        x: left + (index * slotWidth) + (slotWidth / 2),
+        y: height - 12,
+        "text-anchor": "middle"
+      });
+      label.classList.add("chart-label");
+      label.textContent = String(row.date).slice(5);
+      svg.appendChild(label);
+    }
+  });
+
+  const total = rows.reduce((sum, row) => sum + (Number(row.requests) || 0), 0);
+  const peak = rows.reduce((highest, row) => Number(row.requests) > Number(highest.requests) ? row : highest, rows[0]);
+  setText(
+    "volume-summary",
+    "Daily average: " + (total / rows.length).toFixed(1) +
+      " · Peak: " + formatCount(peak.requests) + " requests on " + peak.date
+  );
 }
 
 function addRows(tableId, rows) {
@@ -246,7 +429,7 @@ const generatedTime = Date.parse(DATA.generatedAt);
 if (Number.isFinite(generatedTime)) {
   setText("generated-date", "Generated " + new Date(generatedTime).toISOString().replace("T", " ").replace(".000Z", " UTC"));
 }
-if (Number.isFinite(generatedTime) && Date.now() - generatedTime > 36 * 60 * 60 * 1000) {
+if (Number.isFinite(generatedTime) && Date.now() - generatedTime > 3 * 60 * 60 * 1000) {
   const status = document.getElementById("freshness-status");
   status.textContent = "STALE SNAPSHOT";
   status.classList.add("stale");
@@ -301,6 +484,40 @@ if (DATA.wenyuanPeriodStats) {
   setText("wy-translators", "Unique translators: " + formatCount(wy.uniqueTranslators));
   setText("wy-median", timing.medianTranslationDisplay || "N/A");
   setText("wy-timed-count", formatCount(timing.timedTranslationCount) + " timed translations");
+
+  if (wy.comparison && wy.comparison.metrics) {
+    const metrics = wy.comparison.metrics;
+    document.getElementById("comparison-section").hidden = false;
+    renderComparisonMetric(
+      "cmp-requests",
+      metrics.requests,
+      formatCount,
+      metric => metric.percentChange === null
+        ? formatCount(Math.abs(metric.delta)) + " requests"
+        : Math.abs(metric.percentChange).toFixed(1) + "%"
+    );
+    renderComparisonMetric(
+      "cmp-completion",
+      metrics.completionRate,
+      formatPercent,
+      metric => Math.abs(metric.delta).toFixed(1) + " percentage points"
+    );
+    renderComparisonMetric(
+      "cmp-median",
+      metrics.medianTranslationSeconds,
+      formatDuration,
+      metric => formatDuration(Math.abs(metric.delta))
+    );
+    renderComparisonMetric(
+      "cmp-backlog",
+      metrics.backlog,
+      formatCount,
+      metric => metric.percentChange === null
+        ? formatCount(Math.abs(metric.delta)) + " requests"
+        : Math.abs(metric.percentChange).toFixed(1) + "%"
+    );
+  }
+  renderDailyVolume(wy.dailyVolume || []);
 
   addRows("#wy-overall-table", [
     ["Translated", {value: formatCount(overall.translated), className: "num"}],

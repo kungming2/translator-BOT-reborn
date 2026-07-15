@@ -28,7 +28,12 @@ from config import SETTINGS, logger
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
 from monitoring.usage_statistics import get_month_points_summary
-from processes.wenyuan_stats import FastestEntry, Lumo
+from processes.wenyuan_stats import (
+    FastestEntry,
+    Lumo,
+    build_comparison_metric,
+    get_backlog_count,
+)
 from reddit.connection import REDDIT
 from time_handling import time_convert_to_string_seconds
 from wenyuan import WENYUAN_SETTINGS
@@ -846,11 +851,10 @@ def _print_recent_language_ajos(lumo: Lumo, language: str, limit: int) -> None:
     _console.print(table)
 
 
-def build_period_stats_data(days: int = 30) -> dict[str, object]:
-    """Build serializable Wenyuan statistics for the latest N days."""
-    lumo = Lumo()
-    lumo.load_last_days(days)
-
+def _serialize_period_stats(
+    lumo: Lumo, days: int, period_label: str
+) -> dict[str, object]:
+    """Serialize one loaded Lumo period for dashboard rendering."""
     overall = lumo.get_overall_stats()
     directions = lumo.get_direction_stats()
     notifications = lumo.get_notification_stats()
@@ -884,7 +888,7 @@ def build_period_stats_data(days: int = 30) -> dict[str, object]:
     average_hours = fastest.get("average_translation_hours")
 
     return {
-        "periodLabel": f"last {days} days",
+        "periodLabel": period_label,
         "days": days,
         "postCount": len(lumo),
         "overall": overall,
@@ -905,6 +909,55 @@ def build_period_stats_data(days: int = 30) -> dict[str, object]:
         "topLanguages": top_languages,
         "sourceTargetPairs": source_target_pairs,
     }
+
+
+def build_period_stats_data(
+    days: int = 30, *, include_comparison: bool = False
+) -> dict[str, object]:
+    """Build serializable Wenyuan statistics for the latest N days."""
+    current_end = int(time.time())
+    current_start = current_end - (days * 86400)
+    current_lumo = Lumo()
+    current_lumo.load_ajos(current_start, current_end)
+    result = _serialize_period_stats(current_lumo, days, f"last {days} days")
+
+    if not include_comparison:
+        return result
+
+    previous_lumo = Lumo()
+    previous_lumo.load_ajos(current_start - (days * 86400), current_start - 1)
+    current_overall = current_lumo.get_overall_stats()
+    previous_overall = previous_lumo.get_overall_stats()
+    current_timing = current_lumo.get_fastest_translations()
+    previous_timing = previous_lumo.get_fastest_translations()
+
+    result["comparison"] = {
+        "periodDays": days,
+        "metrics": {
+            "requests": build_comparison_metric(
+                int(current_overall.get("total_requests", 0)),
+                int(previous_overall.get("total_requests", 0)),
+                lower_is_better=None,
+            ),
+            "completionRate": build_comparison_metric(
+                float(current_overall.get("translation_percentage", 0)),
+                float(previous_overall.get("translation_percentage", 0)),
+                lower_is_better=False,
+            ),
+            "medianTranslationSeconds": build_comparison_metric(
+                current_timing.get("median_translation_seconds"),
+                previous_timing.get("median_translation_seconds"),
+                lower_is_better=True,
+            ),
+            "backlog": build_comparison_metric(
+                get_backlog_count(current_overall),
+                get_backlog_count(previous_overall),
+                lower_is_better=True,
+            ),
+        },
+    }
+    result["dailyVolume"] = current_lumo.get_daily_request_volume(days, current_end)
+    return result
 
 
 # ─── Command definitions ──────────────────────────────────────────────────────

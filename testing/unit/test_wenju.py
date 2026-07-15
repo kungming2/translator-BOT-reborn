@@ -72,7 +72,9 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             load_settings=MagicMock(return_value={}),
             get_reports_directory=_real_get_reports_directory,
         ),
-        "database": _make_stub_module("database", db=MagicMock()),
+        "database": _make_stub_module(
+            "database", db=MagicMock(), search_database=MagicMock()
+        ),
         "integrations": _make_stub_module("integrations"),
         "integrations.discord_utils": _make_stub_module(
             "integrations.discord_utils",
@@ -120,6 +122,7 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             validate_lingvo_dataset=MagicMock(return_value=[]),
             define_language_lists=MagicMock(return_value={}),
             get_lingvos=MagicMock(return_value=[]),
+            parse_language_list=MagicMock(return_value=[]),
             select_random_language=MagicMock(return_value=None),
         ),
         "lang.countries": _make_stub_module(
@@ -214,6 +217,7 @@ import wenju  # noqa: E402
 import wenju.iso_updates as iso_updates  # noqa: E402
 import wenju.moderator_digest as moderator_digest  # noqa: E402
 import wenju.status_report as status_report  # noqa: E402
+import processes.wenyuan_stats as wenyuan_stats  # noqa: E402
 
 _restore_stubs()
 
@@ -691,6 +695,9 @@ class TestPublicStatsDashboard:
         assert "Entries with Tags to Note" not in template
         assert "fonts.googleapis.com" not in template
         assert "unsafe-inline" not in template
+        assert "prefers-color-scheme: dark" in template
+        assert 'id="comparison-section"' in template
+        assert 'id="daily-volume-chart"' in template
         data_element = re.search(
             r'<script id="public-stats-data"[^>]*>(.*?)</script>', template, re.DOTALL
         )
@@ -802,7 +809,9 @@ class TestWenyuanPeriodStats:
 
         summary, data = moderator_digest._wenyuan_period_stats(30)
 
-        stub.build_period_stats_data.assert_called_once_with(30)
+        stub.build_period_stats_data.assert_called_once_with(
+            30, include_comparison=True
+        )
         assert data == sample_stats
         assert summary is not None
         assert "**Total requests**: 42" in summary
@@ -819,6 +828,65 @@ class TestWenyuanPeriodStats:
 
         assert summary is None
         assert data is None
+
+
+class TestWenyuanDailyVolume:
+    def test_returns_zero_filled_utc_calendar_days(self):
+        lumo = object.__new__(wenyuan_stats.Lumo)
+        lumo.end_time = int(datetime(2026, 7, 14, 12, tzinfo=timezone.utc).timestamp())
+        lumo.ajos = [
+            types.SimpleNamespace(
+                created_utc=datetime(2026, 7, 12, 1, tzinfo=timezone.utc).timestamp()
+            ),
+            types.SimpleNamespace(
+                created_utc=datetime(2026, 7, 12, 23, tzinfo=timezone.utc).timestamp()
+            ),
+            types.SimpleNamespace(
+                created_utc=datetime(2026, 7, 14, 2, tzinfo=timezone.utc).timestamp()
+            ),
+        ]
+
+        result = lumo.get_daily_request_volume(3, lumo.end_time)
+
+        assert result == [
+            {"date": "2026-07-12", "requests": 2},
+            {"date": "2026-07-13", "requests": 0},
+            {"date": "2026-07-14", "requests": 1},
+        ]
+
+    def test_comparison_marks_directional_improvement(self):
+        completion = wenyuan_stats.build_comparison_metric(
+            70, 60, lower_is_better=False
+        )
+        median_time = wenyuan_stats.build_comparison_metric(
+            3600, 7200, lower_is_better=True
+        )
+        request_volume = wenyuan_stats.build_comparison_metric(
+            120, 100, lower_is_better=None
+        )
+
+        assert completion == {
+            "current": 70,
+            "previous": 60,
+            "delta": 10,
+            "percentChange": 16.7,
+            "improved": True,
+        }
+        assert median_time["improved"] is True
+        assert request_volume["improved"] is None
+
+    def test_backlog_excludes_needs_review(self):
+        assert (
+            wenyuan_stats.get_backlog_count(
+                {
+                    "untranslated": 8,
+                    "missing_assets": 2,
+                    "in_progress": 1,
+                    "needs_review": 5,
+                }
+            )
+            == 11
+        )
 
 
 # ===========================================================================

@@ -22,7 +22,7 @@ import statistics
 import time
 from collections import Counter, defaultdict
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any, TypedDict
 
 from database import db, search_database
@@ -88,6 +88,47 @@ def get_effective_status(ajo: Ajo) -> str:
             return "missing"
         return "untranslated"
     return "untranslated"
+
+
+def get_backlog_count(overall: dict[str, object]) -> int:
+    """Count requests that have not reached translated or review status."""
+    backlog = 0
+    for key in ("untranslated", "missing_assets", "in_progress"):
+        value = overall.get(key, 0)
+        if isinstance(value, (int, float)):
+            backlog += int(value)
+    return backlog
+
+
+def build_comparison_metric(
+    current: int | float | None,
+    previous: int | float | None,
+    *,
+    lower_is_better: bool | None,
+) -> dict[str, int | float | bool | None]:
+    """Build a serializable current-versus-previous metric."""
+    if current is None or previous is None:
+        return {
+            "current": current,
+            "previous": previous,
+            "delta": None,
+            "percentChange": None,
+            "improved": None,
+        }
+
+    delta = current - previous
+    percent_change = round((delta / previous) * 100, 1) if previous else None
+    improved = None
+    if lower_is_better is not None and delta != 0:
+        improved = delta < 0 if lower_is_better else delta > 0
+
+    return {
+        "current": current,
+        "previous": previous,
+        "delta": round(delta, 2),
+        "percentChange": percent_change,
+        "improved": improved,
+    }
 
 
 # ─── Main Lumo class ──────────────────────────────────────────────────────────
@@ -711,6 +752,25 @@ class Lumo:
                         pair_counts[f"{source} -> {target}"] += 1
 
         return pair_counts.most_common(limit)
+
+    def get_daily_request_volume(
+        self, days: int = 30, end_time: int | None = None
+    ) -> list[dict[str, str | int]]:
+        """Return one request count for each UTC calendar day in the period."""
+        if days <= 0:
+            return []
+
+        period_end = end_time or self.end_time or int(time.time())
+        end_date = datetime.fromtimestamp(period_end, UTC).date()
+        dates = [
+            end_date - timedelta(days=offset) for offset in range(days - 1, -1, -1)
+        ]
+        counts: Counter[date] = Counter()
+        for ajo in self.ajos:
+            created_utc = getattr(ajo, "created_utc", None)
+            if isinstance(created_utc, (int, float)):
+                counts[datetime.fromtimestamp(created_utc, UTC).date()] += 1
+        return [{"date": day.isoformat(), "requests": counts[day]} for day in dates]
 
     # ── Time-based analysis ───────────────────────────────────────────────────
 

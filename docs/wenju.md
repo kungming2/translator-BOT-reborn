@@ -15,7 +15,7 @@ Each task runs independently inside the selected schedule. If one task fails, We
 ## Hourly Functions
 
 * `monitor_controversial_comments()`: Checks r/translator for heavily downvoted comments and alerts moderators to them. 
-* `generate_public_statistics()`: Refreshes the isolated public `index.html` statistics snapshot from the `public_stats.html` template. It shares aggregate collection logic with the moderator digest but does not collect private dashboard sections or send a Discord alert.
+* `generate_public_statistics()`: Refreshes the isolated public `index.html` statistics snapshot from the `public_stats.html` template. It includes a current-versus-previous 30-day comparison and a 30-day daily request-volume chart, shares aggregate collection logic with the moderator digest, and does not collect private dashboard sections or send a Discord alert.
 * `reddit_status_report()`: Checks the [Reddit Status API](https://www.redditstatus.com/) for any issues. Alerts the Discord if there are any current incidents recorded. 
 * `update_sidebar_statistics()`: Updates the r/translator sidebar with the latest statistics from the past 24 hours. It edits the sidebar "wikipage" on Old Reddit and edits a widget on New Reddit.
 
