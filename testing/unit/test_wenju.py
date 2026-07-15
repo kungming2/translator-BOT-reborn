@@ -698,6 +698,8 @@ class TestPublicStatsDashboard:
         assert "prefers-color-scheme: dark" in template
         assert 'id="comparison-section"' in template
         assert 'id="daily-volume-chart"' in template
+        assert 'rel="icon"' in template
+        assert "data:image/png;base64,__FAVICON_BASE64__" in template
         data_element = re.search(
             r'<script id="public-stats-data"[^>]*>(.*?)</script>', template, re.DOTALL
         )
@@ -710,6 +712,8 @@ class TestPublicStatsDashboard:
         )
 
         assert "__CSP_NONCE__" not in result
+        assert "__FAVICON_BASE64__" not in result
+        assert 'href="data:image/png;base64,' in result
         assert "</script><script>" not in result.lower()
         nonces = re.findall(r'nonce="([^"]+)"', result)
         assert len(nonces) == 3

@@ -11,6 +11,7 @@ Logger tag: [WJ:MODDIG]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
+import base64
 import csv
 import json
 import logging
@@ -627,11 +628,14 @@ def _render_public_stats_dashboard(date_str: str, data: dict) -> str:
     """Render the allowlisted public statistics as a self-contained HTML page."""
     with open(Paths.TEMPLATES["PUBLIC_STATS"], encoding="utf-8") as f:
         template = f.read()
+    with open(Paths.ICONS["PUBLIC_STATS_FAVICON"], "rb") as f:
+        favicon_base64 = base64.b64encode(f.read()).decode("ascii")
 
     csp_nonce = secrets.token_urlsafe(24)
     return (
         template.replace("__DATE_STR__", date_str)
         .replace('"__DATA_JSON__"', _json_for_html(data))
+        .replace("__FAVICON_BASE64__", favicon_base64)
         .replace("__CSP_NONCE__", csp_nonce)
     )
 

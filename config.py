@@ -27,6 +27,7 @@ BASE_DIR: str = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR: str = os.path.join(BASE_DIR, "_data")
 
 _data = Path(DATA_DIR)
+_icons = Path(BASE_DIR) / "icons"
 
 
 class Paths:
@@ -63,6 +64,11 @@ class Paths:
         "MODERATOR_DIGEST": str(_tmpl / "moderator_digest.html"),
         "PUBLIC_STATS": str(_tmpl / "public_stats.html"),
         "TRANSLATION_CHALLENGE": str(_tmpl / "translation_challenge.md"),
+    }
+
+    # Static image assets used by generated pages and bot components.
+    ICONS: dict[str, str] = {
+        "PUBLIC_STATS_FAVICON": str(_icons / "public_stats_favicon.png"),
     }
 
     # Language reference datasets (almost never changed)
