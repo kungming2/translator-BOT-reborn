@@ -133,6 +133,5 @@ The states folder stores files that are not as frequently updated as logs, but a
 | Filename                     | Function                                     |
 |------------------------------|----------------------------------------------|
 | `responses.yaml`             | Response templates for the bot.              |
-| `moderator_digest.html`      | Template for the moderator status dashboard. |
 | `public_stats.html`          | Template for the allowlisted, public statistics dashboard. |
 | `translation_challenge.md` | Markdown text for the translation challenge. |

@@ -14,7 +14,7 @@ from discord.ext import commands
 
 from config import logger as _base_logger
 from lang.languages import Lingvo, converter
-from monitoring.usage_statistics import describe_language_frequency
+from monitoring.language_frequency import describe_language_frequency
 from responses import RESPONSE
 
 from . import command, send_long_message

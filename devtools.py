@@ -47,10 +47,8 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
-from wenju.moderator_digest import (
-    collate_moderator_digest,
-    generate_public_statistics,
-)
+from wenju.moderator_update import send_moderator_update
+from wenju.public_statistics import generate_public_statistics
 from wenju.status_report import language_of_the_day, notify_db_statistics_calculator
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from wenyuan.title_full_retrieval import retrieve_titles_test
@@ -920,11 +918,11 @@ def check_wenju_notify_db_statistics() -> None:
     msg.good("Notification database statistics report complete. Reddit post skipped.")
 
 
-def check_wenju_moderator_digest() -> None:
-    """moderator_digest: Generate and send the moderator digest."""
-    with msg.loading("Generating moderator digest..."):
-        collate_moderator_digest()
-    msg.good("Moderator digest generated and Discord alert sent.")
+def check_wenju_moderator_update() -> None:
+    """moderator_update: Send operational information to Discord."""
+    with msg.loading("Preparing moderator update..."):
+        send_moderator_update()
+    msg.good("Moderator error-log and performance update sent to Discord.")
 
 
 def check_wenju_public_statistics() -> None:
@@ -1097,8 +1095,8 @@ SECTIONS: SectionMap = {
                 _timed_check(prepare_wenju_language_of_the_day),
             ),
             "3": (
-                "moderator_digest: generate and send digest",
-                check_wenju_moderator_digest,
+                "moderator_update: send error and performance data",
+                check_wenju_moderator_update,
             ),
             "4": (
                 "public_stats: regenerate public page",

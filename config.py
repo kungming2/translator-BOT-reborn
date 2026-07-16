@@ -57,11 +57,10 @@ class Paths:
     # Written responses and templates by the bot.
     # Included here for completion; for regular use, utilize
     # responses.py's RESPONSE object instead.
-    # Also has HTML templates for the rendered moderator and public dashboards.
+    # Also has the HTML template for the rendered public dashboard.
     _tmpl = _data / "templates"
     TEMPLATES: dict[str, str] = {
         "RESPONSES": str(_tmpl / "responses.yaml"),
-        "MODERATOR_DIGEST": str(_tmpl / "moderator_digest.html"),
         "PUBLIC_STATS": str(_tmpl / "public_stats.html"),
         "TRANSLATION_CHALLENGE": str(_tmpl / "translation_challenge.md"),
     }

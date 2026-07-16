@@ -140,6 +140,83 @@ def points_post_retriever(post_id: str) -> list[tuple[str, str, int]] | None:
     return results
 
 
+def _get_month_stats(username: str, year_month: str) -> tuple[int, int]:
+    """Calculate points and unique posts for a user in a specific month."""
+    query = """
+            SELECT points, post_id
+            FROM total_points
+            WHERE username = ? \
+              AND year_month = ? \
+            """
+    results = db.fetchall_main(query, (username, year_month))
+
+    total_points = sum(row["points"] for row in results)
+    unique_posts = len({row["post_id"] for row in results})
+    return total_points, unique_posts
+
+
+def _get_total_stats(username: str) -> tuple[int, int]:
+    """Calculate cumulative points and unique posts for a user."""
+    query = """
+            SELECT points, post_id
+            FROM total_points
+            WHERE username = ? \
+            """
+    results = db.fetchall_main(query, (username,))
+
+    total_points = sum(row["points"] for row in results)
+    unique_posts = len({row["post_id"] for row in results})
+    return total_points, unique_posts
+
+
+def get_month_points_summary(year_month: str) -> str:
+    """Generate the monthly moderator-facing points summary table."""
+    point_threshold = WENJU_SETTINGS["minimum_points_display_threshold"]
+    header = (
+        f"\n| Username | Points in {year_month} | Total Cumulative Points | "
+        f"Participated Posts in {year_month} | Total Participated Posts |\n"
+        "|-----------|--------|-------|------|-----------|"
+    )
+
+    query = """
+            SELECT DISTINCT username
+            FROM total_points
+            WHERE year_month = ?
+            ORDER BY LOWER(username) \
+            """
+    results = db.fetchall_main(query, (year_month,))
+    usernames = [row["username"] for row in results]
+    excluded_usernames = WENJU_SETTINGS["points_exclude_usernames"]
+    usernames = [
+        username for username in usernames if username not in excluded_usernames
+    ]
+
+    user_stats = []
+    for username in usernames:
+        month_points, month_posts = _get_month_stats(username, year_month)
+        if month_points < point_threshold:
+            continue
+
+        total_points, total_posts = _get_total_stats(username)
+        user_stats.append(
+            {
+                "username": username.replace("_", r"\_"),
+                "month_points": month_points,
+                "month_posts": month_posts,
+                "total_points": total_points,
+                "total_posts": total_posts,
+            }
+        )
+
+    user_stats.sort(key=lambda user: user["month_points"], reverse=True)
+    rows = [
+        f"\n| u\\/{user['username']} | {user['month_points']} | {user['total_points']} | "
+        f"{user['month_posts']} posts | {user['total_posts']} posts |"
+        for user in user_stats
+    ]
+    return header + "".join(rows)
+
+
 def _replace_comment_point_records(
     comment_id: str, point_records: list[list], post_id: str
 ) -> None:

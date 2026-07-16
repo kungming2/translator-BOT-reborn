@@ -23,7 +23,7 @@ from config import logger as _base_logger
 from database import db
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
-from monitoring.usage_statistics import action_counter
+from monitoring.action_statistics import action_counter
 from reddit.connection import REDDIT, create_mod_note, is_mod
 from reddit.reddit_sender import message_send, reddit_reply
 from responses import RESPONSE

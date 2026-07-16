@@ -18,10 +18,10 @@ from config import logger as _base_logger
 from database import db, record_filter_log
 from models.ajo import Ajo
 from models.diskuto import Diskuto, diskuto_exists, diskuto_writer
+from monitoring.action_statistics import action_counter
 from monitoring.dupe_detector import check_image_duplicate, duplicate_detector
 from monitoring.request_closeout import closeout_posts
 from monitoring.runtime_metrics import increment_runtime_metric
-from monitoring.usage_statistics import action_counter
 from reddit.connection import REDDIT, is_internal_post, is_mod, remove_content
 from reddit.notifications import is_user_over_submission_limit, notifier
 from reddit.reddit_sender import reddit_reply

@@ -4,7 +4,7 @@
 
 from discord.ext import commands
 
-from monitoring.usage_statistics import user_statistics_loader
+from monitoring.user_statistics import user_statistics_loader
 from utility import format_markdown_table_with_padding
 
 from . import command, search_logs, send_long_message

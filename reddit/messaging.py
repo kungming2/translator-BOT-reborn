@@ -20,12 +20,10 @@ from config import SETTINGS, Paths, load_settings
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
 from lang.languages import parse_language_list
+from monitoring.action_statistics import action_counter
+from monitoring.language_frequency import generate_language_frequency_markdown
 from monitoring.points import points_user_retriever
-from monitoring.usage_statistics import (
-    action_counter,
-    generate_language_frequency_markdown,
-    user_statistics_loader,
-)
+from monitoring.user_statistics import user_statistics_loader
 from reddit.connection import REDDIT, USERNAME, create_mod_note
 from reddit.notifications import (
     notifier_language_list_editor,

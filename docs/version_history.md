@@ -21,7 +21,9 @@ This page records the version history of the various routines of translator-BOT.
 ### translator-BOT 2.3 "The Calendar Update" (2026-06-01)
 
 * 🚀 FEATURE: The new `!calendar` command can now convert dates in four different calendars ([Chinese](https://en.wikipedia.org/wiki/Chinese_calendar), [Hebrew](https://en.wikipedia.org/wiki/Hebrew_calendar), [Islamic](https://en.wikipedia.org/wiki/Islamic_calendar), and [Persian](https://en.wikipedia.org/wiki/Solar_Hijri_calendar)) into Gregorian dates. Note that this is a unidirectional conversion and the command does not support Gregorian date conversion. See the [commands](./commands.md) document for specific formatting requirements.
-* ✨ ADDITION: Wenju now generates an isolated public statistics dashboard every hour using aggregate data shared with the moderator digest, without exposing private moderator sections or sending additional Discord alerts.
+* ✨ ADDITION: Wenju now generates an isolated public statistics dashboard every hour without exposing operational moderator data or sending additional Discord alerts.
+* 🔄 CHANGE: The former moderator digest now sends only error-log and runtime-performance information directly to Discord from a dedicated moderator-update task; its separate HTML dashboard and Markdown report have been retired. 
+* 🔄 CHANGE: Removed unused legacy statistics formatters, simplified public filter-rate collection to structured data, moved monthly points reporting into the points subsystem, and split the remaining action, language-frequency, and per-user helpers into focused monitoring modules.
 * 🔄 CHANGE: Chinese sexagenary cycle years returned by `!calendar` now include both pinyin and Chinese characters, regardless of which form was used in the query.
 * 🔄 CHANGE: Subscriptions and unsubscriptions from notifications are also recorded in mod notes.
 * 🔄 CHANGE: Points message replies now return only r/translator points; command usage statistics remain available through status message replies.

@@ -20,7 +20,7 @@ from config import SETTINGS
 from config import logger as _base_logger
 from database import db
 from models.ajo import ajo_loader
-from monitoring.usage_statistics import action_counter
+from monitoring.action_statistics import action_counter
 from reddit.connection import REDDIT, is_valid_user
 from reddit.reddit_sender import message_send
 from responses import RESPONSE

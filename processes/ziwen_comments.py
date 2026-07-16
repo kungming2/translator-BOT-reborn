@@ -22,9 +22,10 @@ from models.ajo import Ajo, ajo_loader
 from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from models.komando import action_count_for_statistics
+from monitoring.action_statistics import action_counter
 from monitoring.points import points_tabulator
 from monitoring.runtime_metrics import increment_runtime_metric
-from monitoring.usage_statistics import action_counter, user_statistics_writer
+from monitoring.user_statistics import user_statistics_writer
 from reddit.connection import REDDIT, credentials_source, is_internal_post
 from reddit.reddit_sender import message_send
 from reddit.verification import VERIFIED_POST_ID

@@ -33,7 +33,7 @@ from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
 from time_handling import time_convert_to_string_seconds
 
-from .usage_statistics import action_counter
+from .action_statistics import action_counter
 
 if TYPE_CHECKING:
     from praw import Reddit

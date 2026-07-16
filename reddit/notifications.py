@@ -25,8 +25,8 @@ from lang.countries import country_converter
 from lang.languages import converter, language_module_settings
 from models.ajo import ajo_loader
 from models.lingvo import Lingvo
+from monitoring.action_statistics import action_counter
 from monitoring.runtime_metrics import increment_runtime_metric
-from monitoring.usage_statistics import action_counter
 from reddit.connection import REDDIT, is_valid_user
 from reddit.reddit_sender import UserNotFoundException, message_send
 from reddit.startup import STATE
