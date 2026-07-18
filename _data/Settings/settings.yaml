@@ -6,6 +6,9 @@
 # Main subreddit to monitor.
 subreddit: translator
 
+# Subreddit where bot configuration, reports, and status updates are posted.
+meta_subreddit: translatorBOT
+
 # Testing mode. If true, the bot will not send any messages and will
 # instead output them to a local Markdown file.
 testing_mode: false
@@ -144,7 +147,7 @@ claim_period: 28800
 # the paging system.
 user_age_page: 14
 # How many users !page should contact.
-num_users_page: 3
+num_users_page: 5
 # Maximum number of languages !page should process from a single request.
 max_page_languages: 10
 
@@ -195,16 +198,28 @@ video_long_seconds: 300
 post_long_characters: 1500
 
 # Hardcoded how many posts are Unknown every month
-unknown_language_default_rate: 160
+unknown_language_default_rate: 60
 
 # Month delta for points calculation. How many months ago do we want to
 # use as a reference for points calculation?
 points_months_delta: 3
 
+# Points policy
+points_unknown_language_value: 4
+points_language_multiplier_coefficient: 35
+points_language_maximum: 20
+points_long_comment_character_threshold: 120
+points_long_comment_bonus_multiplier: 0.25
+points_short_thank_character_threshold: 20
+
 # Duplicate detector settings
 duplicate_semantic_threshold: 0.85
 duplicate_fuzzy_threshold: 85
+duplicate_numerical_threshold: 5
 duplicate_age_limit: 24  # in hours
+duplicate_use_semantic: true
+duplicate_image_age_limit_days: 90
+duplicate_image_max_distance: 5
 
 # Database settings
 log_search_days: 30  # How many days' worth of data we search for
@@ -218,6 +233,21 @@ max_gallery_images_transform: 10
 image_retention_age: 7
 # Image JPEG quality (percentage)
 image_jpeg_quality: 60
+
+# Security and resource limits for images downloaded by !transform.
+transform_allowed_image_hosts:
+  - i.redd.it
+  - preview.redd.it
+  - external-preview.redd.it
+  - i.imgur.com
+transform_max_image_bytes: 20971520  # 20 MiB
+transform_max_image_pixels: 60000000
+transform_max_image_dimension: 10000
+transform_max_redirects: 3
+transform_download_timeout_seconds:
+  connect: 5
+  read: 15
+transform_upload_timeout_seconds: 45
 
 # Maximum number of lines in a Wiktionary definition to keep
 max_num_definition_lines: 8
@@ -237,6 +267,12 @@ notifications_monthly_limit: 30
 # A number that defines how many MAX number of people we message for
 # a single language post.
 notifications_user_limit: 30
+# Languages averaging fewer monthly posts than this are treated as rare and
+# can notify every subscriber when the API limiter is disabled.
+notifications_rare_language_rate_threshold: 5
+
+# Maximum number of unread inbox items Ziwen processes in one cycle.
+max_messages: 25
 
 
 # ─── Cache Settings ───---─────────────────────────────────────────────

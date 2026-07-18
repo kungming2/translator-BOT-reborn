@@ -6,6 +6,10 @@ from unittest.mock import MagicMock
 from models.komando import Komando, action_count_for_statistics
 
 
+class FakeTransientError(Exception):
+    pass
+
+
 def _make_stub_module(name: str, **attrs) -> types.ModuleType:
     module = types.ModuleType(name)
     for key, value in attrs.items():
@@ -24,7 +28,7 @@ def _import_ziwen_comments():
                 "thanks_keywords": ["thanks", "thank you"],
                 "testing_mode": True,
             },
-            TRANSIENT_ERRORS=(Exception,),
+            TRANSIENT_ERRORS=(FakeTransientError,),
             logger=MagicMock(),
         ),
         "database": _make_stub_module("database", db=MagicMock()),
@@ -43,10 +47,11 @@ def _import_ziwen_comments():
         "monitoring.points": _make_stub_module(
             "monitoring.points", points_tabulator=MagicMock()
         ),
-        "monitoring.usage_statistics": _make_stub_module(
-            "monitoring.usage_statistics",
-            action_counter=MagicMock(),
-            user_statistics_writer=MagicMock(),
+        "monitoring.action_statistics": _make_stub_module(
+            "monitoring.action_statistics", action_counter=MagicMock()
+        ),
+        "monitoring.user_statistics": _make_stub_module(
+            "monitoring.user_statistics", user_statistics_writer=MagicMock()
         ),
         "reddit.connection": _make_stub_module(
             "reddit.connection",
@@ -166,6 +171,46 @@ def test_point_tabulation_skips_long_op_thanks() -> None:
     )
 
 
+def test_short_thanks_success_marks_author_messaged() -> None:
+    ziwen_comments = _import_ziwen_comments()
+    comment = types.SimpleNamespace(
+        author=types.SimpleNamespace(name="requester"),
+        body="thanks",
+    )
+    ajo = MagicMock(
+        author="requester",
+        type="single",
+        status="untranslated",
+        is_identified=False,
+        id="post1",
+    )
+    ziwen_comments.message_send.return_value = True
+
+    ziwen_comments._mark_short_thanks_as_translated(comment, ajo)
+
+    ajo.set_author_messaged.assert_called_once_with(True)
+
+
+def test_short_thanks_failed_message_does_not_mark_author_messaged() -> None:
+    ziwen_comments = _import_ziwen_comments()
+    comment = types.SimpleNamespace(
+        author=types.SimpleNamespace(name="requester"),
+        body="thanks",
+    )
+    ajo = MagicMock(
+        author="requester",
+        type="single",
+        status="untranslated",
+        is_identified=False,
+        id="post1",
+    )
+    ziwen_comments.message_send.return_value = False
+
+    ziwen_comments._mark_short_thanks_as_translated(comment, ajo)
+
+    ajo.set_author_messaged.assert_not_called()
+
+
 def test_comment_processing_failure_writes_error_log() -> None:
     ziwen_comments = _import_ziwen_comments()
     error_entries: list[tuple[str, str]] = []
@@ -217,3 +262,35 @@ def test_comment_processing_failure_writes_error_log() -> None:
         in entry
     )
     assert "RuntimeError: handler failed" in entry
+
+
+def test_transient_comment_processing_failure_is_not_written_to_error_log() -> None:
+    ziwen_comments = _import_ziwen_comments()
+    fake_post = types.SimpleNamespace(id="post1")
+    fake_comment = types.SimpleNamespace(
+        id="comment1",
+        submission=fake_post,
+        body="ordinary reply",
+        author=types.SimpleNamespace(name="helper"),
+        permalink="/r/translator/comments/post1/title/comment1/",
+    )
+    ziwen_comments.REDDIT.subreddit.return_value = types.SimpleNamespace(
+        comments=MagicMock(return_value=[fake_comment])
+    )
+    ziwen_comments.is_internal_post.side_effect = FakeTransientError(
+        "received 500 HTTP response"
+    )
+    ziwen_comments.error_log_basic = MagicMock()
+    ziwen_comments.logger = MagicMock()
+
+    ziwen_comments.ziwen_commands()
+
+    ziwen_comments.error_log_basic.assert_not_called()
+    ziwen_comments.logger.warning.assert_called_once_with(
+        "Transient error while processing comment `%s` on post `%s`: %s: %s. "
+        "Skipping it for this cycle.",
+        "comment1",
+        "post1",
+        "FakeTransientError",
+        ziwen_comments.is_internal_post.side_effect,
+    )

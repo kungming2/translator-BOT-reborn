@@ -16,8 +16,7 @@ in YAML format with contextual information. It supports two logging modes:
    - Provides rich context for debugging
 
 Error logs are stored in YAML format with custom formatting for multi-line
-strings (using pipe notation) for better readability. The retrieve_error_log
-function can format these logs as Markdown for easy review.
+strings (using pipe notation) for better readability.
 
 Typical usage:
     from error import error_log_extended
@@ -267,37 +266,6 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
 
 
 # ─── Error log readers ────────────────────────────────────────────────────────
-
-
-def retrieve_error_log() -> str:
-    """
-    Retrieve the error log and format it as a human-readable Markdown string.
-
-    :return: Formatted Markdown string.
-    """
-    paragraphs = []
-
-    data = _load_error_entries(Paths.LOGS["ERROR"])
-    if not os.path.exists(Paths.LOGS["ERROR"]):
-        return "No error log found."
-
-    for entry in data:
-        lines = []
-        for key, value in entry.items():
-            if isinstance(value, dict):
-                lines.append(f"**{key.capitalize()}:**")
-                for subkey, subvalue in value.items():
-                    formatted_value = str(subvalue).replace("\n", "\n    ")
-                    lines.append(f"  - **{subkey}:** {formatted_value}")
-            else:
-                formatted_value = str(value).replace("\n", "\n  ")
-                lines.append(f"**{key.capitalize()}:** {formatted_value}")
-
-        paragraph = "\n".join(lines)
-        paragraphs.append(paragraph)
-    final_text = "\n---\n".join(paragraphs)
-
-    return final_text
 
 
 def display_event_errors(days: int = 7) -> list[str]:

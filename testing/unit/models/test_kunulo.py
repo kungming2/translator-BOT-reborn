@@ -219,15 +219,6 @@ class TestKunuloGetAllEntries:
         assert Kunulo().get_all_entries("missing") == []
 
 
-class TestKunuloGetCommentIds:
-    def test_returns_ids_only(self):
-        k = Kunulo(data={"comment_unknown": [("abc", None), ("def", ["x"])]})
-        assert k.get_comment_ids("comment_unknown") == ["abc", "def"]
-
-    def test_empty_list_for_missing_tag(self):
-        assert Kunulo().get_comment_ids("missing") == []
-
-
 class TestKunuloCheckExistingCjkLookups:
     def test_exact_match_found(self):
         k = Kunulo(data={"comment_cjk": [("abc123", ["实", "现", "心"])]})

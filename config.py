@@ -150,11 +150,6 @@ class Paths:
     }
 
 
-# ─── Shared subreddit constants ───────────────────────────────────────────────
-
-TRANSLATORBOT_SUBREDDIT = "translatorBOT"  # Subreddit where bot config and updates are
-
-
 def get_reports_directory(base_dir: str | None = None) -> Path:
     """
     Return the Path object for the current month's reports directory.
@@ -325,3 +320,9 @@ except (FileNotFoundError, ValueError, TypeError) as exc:
         f"SETTINGS='{Paths.SETTINGS['SETTINGS']}', "
         f"SCHEDULER_SETTINGS='{Paths.SETTINGS['SCHEDULER_SETTINGS']}'"
     ) from exc
+
+# Subreddit where bot configuration, reports, and status updates are posted.
+_meta_subreddit = SETTINGS.get("meta_subreddit")
+if not isinstance(_meta_subreddit, str) or not _meta_subreddit.strip():
+    raise RuntimeError("Setting 'meta_subreddit' must be a non-empty string")
+TRANSLATORBOT_SUBREDDIT = _meta_subreddit.strip()

@@ -9,8 +9,13 @@ import unittest
 from unittest.mock import MagicMock
 
 # noinspection PyProtectedMember
-from models.ajo import (Ajo, _convert_to_dict, _normalize_lang_field,
-                        ajo_defined_multiple_flair_former, parse_ajo_data)
+from models.ajo import (
+    Ajo,
+    _convert_to_dict,
+    _normalize_lang_field,
+    ajo_defined_multiple_flair_former,
+    parse_ajo_data,
+)
 from models.lingvo import Lingvo
 from models.titolo import Direction, Titolo
 
@@ -457,73 +462,6 @@ class TestAjoStatusManagement(unittest.TestCase):
         self.ajo.set_defined_multiple_status("vi", "inprogress")
         self.assertIsInstance(self.ajo.status, dict)
         self.assertEqual(self.ajo.status["vi"], "inprogress")
-
-
-# ===========================================================================
-# TestAjoTyping
-# ===========================================================================
-
-
-class TestAjoTyping(unittest.TestCase):
-    """Test post type management."""
-
-    def setUp(self):
-        self.ajo = Ajo()
-
-    def test_set_type_single(self):
-        self.ajo.set_type("single")
-        self.assertEqual(self.ajo.type, "single")
-
-    def test_set_type_multiple(self):
-        self.ajo.set_type("multiple")
-        self.assertEqual(self.ajo.type, "multiple")
-
-    def test_set_type_invalid_raises(self):
-        with self.assertRaises(ValueError):
-            self.ajo.set_type("invalid")
-
-    def test_type_change_to_single_resets_is_defined_multiple(self):
-        self.ajo.is_defined_multiple = True
-        self.ajo.set_type("single")
-        self.assertFalse(self.ajo.is_defined_multiple)
-
-    def test_type_change_to_multiple_does_not_reset_is_defined_multiple(self):
-        self.ajo.is_defined_multiple = True
-        self.ajo.set_type("multiple")
-        self.assertTrue(self.ajo.is_defined_multiple)
-
-
-# ===========================================================================
-# TestAjoDefinedMultiple
-# ===========================================================================
-
-
-class TestAjoDefinedMultiple(unittest.TestCase):
-    """Test defined multiple toggling and flag management."""
-
-    def setUp(self):
-        self.ajo = Ajo()
-
-    def test_set_is_defined_multiple_true(self):
-        self.ajo.set_is_defined_multiple(True)
-        self.assertTrue(self.ajo.is_defined_multiple)
-
-    def test_set_is_defined_multiple_false(self):
-        self.ajo.is_defined_multiple = True
-        self.ajo.set_is_defined_multiple(False)
-        self.assertFalse(self.ajo.is_defined_multiple)
-
-    def test_toggle_is_defined_multiple_off(self):
-        self.ajo.is_defined_multiple = True
-        result = self.ajo.toggle_is_defined_multiple()
-        self.assertFalse(result)
-        self.assertFalse(self.ajo.is_defined_multiple)
-
-    def test_toggle_is_defined_multiple_on(self):
-        self.ajo.is_defined_multiple = False
-        result = self.ajo.toggle_is_defined_multiple()
-        self.assertTrue(result)
-        self.assertTrue(self.ajo.is_defined_multiple)
 
 
 # ===========================================================================
@@ -1099,7 +1037,7 @@ class TestUtilityFunctions(unittest.TestCase):
         self.assertEqual(result["id"], "123")
 
     def test_parse_ajo_data_invalid_raises(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             parse_ajo_data("this is not parseable !!!")
 
 
@@ -1151,8 +1089,6 @@ def run_all_tests():
         TestAjoImmutableProperties,
         TestAjoLanguageManagement,
         TestAjoStatusManagement,
-        TestAjoTyping,
-        TestAjoDefinedMultiple,
         TestAjoSerialization,
         TestAjoFromTitolo,
         TestAjoMiscMethods,

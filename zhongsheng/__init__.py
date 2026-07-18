@@ -114,11 +114,6 @@ def command(name: str, help_text: str, roles: list | None = None) -> Callable:
     return decorator
 
 
-def get_commands() -> list:
-    """Get all registered commands."""
-    return _commands
-
-
 def load_expected_guild_id(logger: logging.LoggerAdapter | None = None) -> int | None:
     """Load the only Discord guild authorized for Zhongsheng commands."""
     credentials = load_settings(Paths.AUTH["CREDENTIALS"])

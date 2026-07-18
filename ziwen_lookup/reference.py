@@ -21,9 +21,8 @@ from waybackpy import exceptions
 
 from config import Paths
 from config import logger as _base_logger
-from integrations.http import DEFAULT_HTTP_TIMEOUT
+from integrations.http import DEFAULT_HTTP_TIMEOUT, get_random_useragent
 from lang.languages import converter, get_lingvos
-from reddit.connection import get_random_useragent
 from ziwen_lookup.wp_utils import wikipedia_page_url
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:REF"})

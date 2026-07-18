@@ -118,16 +118,6 @@ def _generate_multi_flair_text(language_codes: list[str], max_length: int = 64) 
     return f"{prefix}{', '.join(included_codes)}{suffix}"
 
 
-def _first_non_english(language_list: list) -> Lingvo | None:
-    """
-    Return the first Lingvo in the list whose name is not 'English', or None.
-    """
-    for lang in language_list:
-        if lang and lang.name != "English":
-            return lang
-    return None
-
-
 # ─── Flair determination ──────────────────────────────────────────────────────
 
 

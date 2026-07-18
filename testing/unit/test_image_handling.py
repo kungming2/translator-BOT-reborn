@@ -53,6 +53,40 @@ def _png_bytes(width: int = 2, height: int = 2) -> bytes:
     return buffer.getvalue()
 
 
+def test_transform_settings_load_validated_values(monkeypatch) -> None:
+    monkeypatch.setitem(
+        image_handling.SETTINGS,
+        "transform_allowed_image_hosts",
+        ["I.REDD.IT.", "i.imgur.com"],
+    )
+    monkeypatch.setitem(
+        image_handling.SETTINGS,
+        "transform_download_timeout_seconds",
+        {"connect": 4, "read": 12},
+    )
+
+    assert image_handling._transform_hosts_setting() == frozenset(
+        {"i.redd.it", "i.imgur.com"}
+    )
+    assert image_handling._transform_download_timeout_setting() == (4, 12)
+
+
+@pytest.mark.parametrize("value", [None, True, 0, -1, 1.5, "5"])
+def test_transform_positive_integer_setting_rejects_invalid_values(
+    monkeypatch, value: object
+) -> None:
+    monkeypatch.setitem(image_handling.SETTINGS, "test_transform_limit", value)
+
+    with pytest.raises(RuntimeError, match="must be a positive integer"):
+        image_handling._int_setting("test_transform_limit", minimum=1)
+
+
+def test_transform_integer_setting_allows_zero_at_zero_minimum(monkeypatch) -> None:
+    monkeypatch.setitem(image_handling.SETTINGS, "test_transform_limit", 0)
+
+    assert image_handling._int_setting("test_transform_limit", minimum=0) == 0
+
+
 def test_transform_fetch_rejects_untrusted_host(monkeypatch) -> None:
     get_mock = MagicMock()
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)

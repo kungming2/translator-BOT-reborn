@@ -128,6 +128,7 @@
   .trend.good { color: var(--green); }
   .trend.bad { color: var(--red); }
   .trend.neutral { color: var(--muted); }
+  #volume-section { margin-bottom: 1rem; }
   .chart-card { padding-bottom: 1rem; }
   .volume-chart { display: block; width: 100%; height: auto; min-height: 180px; overflow: visible; }
   .chart-grid-line { stroke: var(--chart-grid); stroke-width: 1; }
@@ -280,7 +281,8 @@ const LANGUAGE_COLORS = Object.freeze({
   // Romance
   ca: "#2856A5", co: "#2856A5", es: "#2856A5", fr: "#2856A5", it: "#2856A5", la: "#2856A5", pt: "#2856A5", ro: "#2856A5", scn: "#2856A5", nap: "#2856A5", sc: "#2856A5",
   // Germanic
-  de: "#0F2E5B", fo: "#0F2E5B", li: "#0F2E5B", lb: "#0F2E5B", da: "#0F2E5B", is: "#0F2E5B", yi: "#0F2E5B", no: "#0F2E5B", sv: "#0F2E5B", nl: "#0F2E5B", non: "#0F2E5B", ang: "#0F2E5B", gsw: "#0F2E5B", af: "#0F2E5B",
+  de: "#0F2E5B", fo: "#0F2E5B", li: "#0F2E5B", lb: "#0F2E5B", da: "#0F2E5B", is: "#0F2E5B", yi: "#0F2E5B", no: "#0F2E5B", sv: "#0F2E5B", nl: "#0F2E5B", non: "#0F2E5B", ang: "#0F2E5B", gsw: "#0F2E5B", af: "#0F2E5B", en: "#0F2E5B",
+  // Tibeto-Burman
   dz: "#1B3A19", bo: "#1B3A19", my: "#1B3A19",
   tw: "#398984", ln: "#398984", xh: "#398984", yo: "#398984", sw: "#398984", zu: "#398984",
   br: "#3384C0", cy: "#3384C0", ga: "#3384C0", gd: "#3384C0",
@@ -289,7 +291,9 @@ const LANGUAGE_COLORS = Object.freeze({
   tl: "#A1539F", ceb: "#A1539F", mg: "#A1539F",
   // Dravidian
   kn: "#A190C4", ml: "#A190C4", ta: "#A190C4", te: "#A190C4",
+  // Sinitic
   lzh: "#85A542", zh: "#85A542", yue: "#85A542", "zh-yue": "#85A542",
+  // Language Isolates
   ko: "#BC997B", eu: "#BC997B",
   cop: "#EDAB37", egy: "#EDAB37",
   grc: "#5B91CC", el: "#5B91CC",

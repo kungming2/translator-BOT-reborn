@@ -9,7 +9,6 @@ Logger tag: [L:JA]
 
 import logging
 import re
-import unicodedata
 from time import sleep
 from typing import Any
 
@@ -21,8 +20,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from config import logger as _base_logger
-from integrations.http import DEFAULT_HTTP_TIMEOUT
-from reddit.connection import get_random_useragent
+from integrations.http import DEFAULT_HTTP_TIMEOUT, get_random_useragent
 from ziwen_lookup.async_helpers import call_sync_async, fetch_json
 from ziwen_lookup.cache_helpers import (
     format_ja_character_from_cache,
@@ -32,16 +30,12 @@ from ziwen_lookup.cache_helpers import (
     parse_ja_output_to_json,
     save_to_cache,
 )
+from ziwen_lookup.normalization import normalize_lookup_key
 from ziwen_lookup.zh import calligraphy_search
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:JA"})
 
 useragent = get_random_useragent()
-
-
-def _normalize_japanese_lookup_key(text: str) -> str:
-    """Normalize compatibility forms before Japanese dictionary/cache lookup."""
-    return unicodedata.normalize("NFKC", text.strip())
 
 
 # ─── Romanization helper ──────────────────────────────────────────────────────
@@ -248,7 +242,7 @@ def ja_character(character: str) -> str:
                       work with individual katakana.
     :return: A formatted string with readings, meanings, and resource links.
     """
-    character = _normalize_japanese_lookup_key(character)
+    character = normalize_lookup_key(character)
     cached = get_from_cache(character, "ja", "ja_character")
 
     if cached and cached.get("word"):
@@ -602,7 +596,7 @@ async def ja_word(japanese_word: str) -> str | None:
     :param japanese_word: A Japanese word.
     :return: Formatted string with readings and meanings, or None.
     """
-    japanese_word = _normalize_japanese_lookup_key(japanese_word)
+    japanese_word = normalize_lookup_key(japanese_word)
 
     cached = get_from_cache(japanese_word, "ja", "ja_word")
 

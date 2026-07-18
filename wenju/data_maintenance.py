@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import Any, Union, cast
 
 import orjson
-import prawcore
 import yaml
 from praw.models import WikiPage
 
@@ -31,13 +30,12 @@ from database import db
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter, validate_lingvo_dataset
 from monitoring.points import points_worth_determiner
-from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
+from reddit.connection import REDDIT, REDDIT_HELPER
 from reddit.wiki import fetch_most_requested_languages
 from time_handling import (
     get_current_month,
     get_previous_month,
     messaging_months_elapsed,
-    time_convert_to_string_seconds,
 )
 from wenju import WENJU_SETTINGS, task
 
@@ -613,85 +611,3 @@ def archive_identified_saved() -> None:
     archive_page(r.wiki["saved"], Paths.ARCHIVAL["ALL_SAVED"], "Saved")
 
     return
-
-
-@task(schedule="monthly")
-def monthly_statistics_unpinner() -> None:
-    """Unpin the statistics posts if still pinned when the monthly routine runs."""
-    sub = REDDIT.subreddit(SETTINGS["subreddit"])
-    stickies = []
-
-    for i in range(1, 3):  # Try sticky 1 and sticky 2
-        try:
-            sticky = sub.sticky(number=i)
-            stickies.append(sticky)
-        except prawcore.exceptions.NotFound:
-            continue
-
-    for sticky in stickies:
-        print(sticky.title)
-        if (
-            "[Meta] r/translator Statistics" in sticky.title
-            and sticky.author
-            and sticky.author.name == USERNAME
-        ):
-            sticky.mod.sticky(state=False)
-            logger.info("Monthly Statistics Unpinner: Unpinned monthly post.")
-
-    return
-
-
-@task(schedule="daily")
-def archive_modmail() -> None:
-    """Archive modmail conversations older than days_max days where a
-    moderator has participated in the conversation."""
-    days_max = WENJU_SETTINGS["modmail_archival_age"]
-
-    logger.debug("Assessing modmail...")
-    subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
-
-    mod_names = [mod.name.lower() for mod in subreddit.moderator()]
-    logger.debug(f"Moderators: {mod_names}")
-
-    unread_counts = subreddit.modmail.unread_count()
-    for key, count in unread_counts.items():
-        if count > 0:
-            logger.debug(f"Current '{key}' in modmail: {count}")
-
-    current_time = datetime.now(UTC)
-    max_age_seconds = days_max * 86400
-
-    for convo in subreddit.modmail.conversations():
-        convo.read()
-
-        last_updated = datetime.fromisoformat(convo.last_updated)
-        convo_age = (current_time - last_updated).total_seconds()
-        readable_age = time_convert_to_string_seconds(int(convo_age))
-
-        participants = (
-            [author.name for author in convo.authors] if convo.authors else []
-        )
-        mod_participant = next(
-            (name for name in participants if name.lower() in mod_names), None
-        )
-        logger.debug(
-            f"Conversation '{convo.subject}' | Age: {readable_age} | "
-            f"Authors: {participants} | Mod participant: {mod_participant}"
-        )
-
-        if convo_age > max_age_seconds and mod_participant:
-            convo.archive()
-            logger.info(
-                f"Conversation by u/{convo.participant} archived. "
-                f"({readable_age} old, mod u/{mod_participant} participated)."
-            )
-        else:
-            skip_reason = (
-                "not old enough"
-                if convo_age <= max_age_seconds
-                else "no moderator participated"
-            )
-            logger.debug(
-                f"Conversation by u/{convo.participant} not archived. "
-                f"({readable_age}, {skip_reason.title()})."
-            )

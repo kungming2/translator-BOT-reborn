@@ -125,11 +125,13 @@ def _mark_short_thanks_as_translated(comment: Comment, ajo: Ajo) -> None:
     message_body = RESPONSE.MSG_SHORT_THANKS_TRANSLATED.format(
         comment.author, f"https://redd.it/{ajo.id}"
     )
-    message_send(
+    message_sent = message_send(
         comment.author,
         "A message about your translation request",
         message_body,
     )
+    if message_sent:
+        ajo.set_author_messaged(True)
     action_counter(1, "Short thanks translated")
 
     return
@@ -368,6 +370,17 @@ def ziwen_commands() -> None:
             # and skip if the only command was 'verify'.
             if not SETTINGS["testing_mode"] and not skip_update and original_ajo:
                 original_ajo.update_reddit(moderator_set=moderator_set)
+        except TRANSIENT_ERRORS as ex:
+            comment_id = getattr(comment, "id", "<unknown>")
+            post_id = getattr(getattr(comment, "submission", None), "id", "<unknown>")
+            logger.warning(
+                "Transient error while processing comment `%s` on post `%s`: %s: %s. "
+                "Skipping it for this cycle.",
+                comment_id,
+                post_id,
+                type(ex).__name__,
+                ex,
+            )
         except Exception:
             comment_id = getattr(comment, "id", "<unknown>")
             post_id = getattr(getattr(comment, "submission", None), "id", "<unknown>")

@@ -12,30 +12,21 @@ Logger tag: [WJ:DIGEST]
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
 
-import json
 import logging
-import re
 import time
-from collections import Counter
 from datetime import datetime
-from typing import Any
 
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
-from integrations.discord_utils import send_discord_alert
+from models.diskuto import diskuto_loader, diskuto_writer
 from reddit.connection import REDDIT, USERNAME, submit_translatorbot_post
 from reddit.notifications import notifier_internal
-from utility import format_markdown_table_with_padding
 from wenju import task
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DIGEST"})
-
-# Type alias for the structured result returned by _analyze_mod_removals
-ModRemovalReport = dict[str, Any]
-
 
 # ─── Internal post digest ─────────────────────────────────────────────────────
 
@@ -50,7 +41,7 @@ def send_internal_post_digest() -> None:
     cutoff_time = int(time.time()) - (24 * 60 * 60)
 
     query = """
-        SELECT id, created_utc, content 
+        SELECT id
         FROM internal_posts 
         WHERE created_utc >= ?
     """
@@ -60,19 +51,15 @@ def send_internal_post_digest() -> None:
 
     for post in posts:
         post_id = post["id"]
-        content_str = post["content"]
-
-        try:
-            content = json.loads(content_str)
-        except json.JSONDecodeError:
-            logger.warning(f"Warning: Could not parse content for post {post_id}")
+        diskuto = diskuto_loader(post_id)
+        if diskuto is None:
             continue
 
-        if content.get("processed", False):
+        if diskuto.processed:
             continue
 
-        post_type = content.get("post_type")
-        submission_id = content.get("id")
+        post_type = diskuto.post_type
+        submission_id = diskuto.id
         logger.info(
             f"Post {post_id}: post_type={post_type!r}, submission_id={submission_id!r}"
         )
@@ -90,17 +77,8 @@ def send_internal_post_digest() -> None:
         notifier_internal(post_type, submission)
         post_type_counts[post_type] = post_type_counts.get(post_type, 0) + 1
 
-        content["processed"] = True
-        updated_content = json.dumps(content)
-
-        update_query = """
-            UPDATE internal_posts 
-            SET content = ? 
-            WHERE id = ?
-        """
-        cursor = db.cursor_main
-        cursor.execute(update_query, (updated_content, post_id))
-        db.conn_main.commit()
+        diskuto.mark_processed()
+        diskuto_writer(diskuto)
 
     if post_type_counts:
         counts_summary = ", ".join(
@@ -198,159 +176,3 @@ def weekly_bot_action_report() -> None:
     logger.info(f"Report posted: {submission.url}")
 
     return
-
-
-# ─── Rule violation reporting ─────────────────────────────────────────────────
-
-
-def _analyze_mod_removals(start_time: int, end_time: int) -> ModRemovalReport:
-    """
-    Analyze mod removal comments to count rule violations.
-
-    Args:
-        start_time: UTC timestamp for the start of the analysis period
-        end_time: UTC timestamp for the end of the analysis period
-
-    Returns:
-        Report dict with keys: start_time, end_time, start_date, end_date,
-        total_comments_checked, total_violations, unique_rules_violated,
-        violation_counts.
-    """
-    subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
-    mod_team_account = REDDIT.redditor(f"{subreddit}-ModTeam")
-
-    rule_pattern = re.compile(r"\[Rule #([A-Z]\d+)]", re.IGNORECASE)
-
-    rule_violations: list[str] = []
-    total_comments_checked: int = 0
-
-    logger.info(f"Fetching comments from u/{subreddit}-ModTeam...")
-    try:
-        for comment in mod_team_account.comments.new(limit=None):
-            total_comments_checked += 1
-
-            if not (start_time <= comment.created_utc <= end_time):
-                if comment.created_utc < start_time:
-                    break
-                continue
-
-            rules_found = rule_pattern.findall(comment.body)
-            for rule in rules_found:
-                rule_upper = rule.upper()
-                rule_violations.append(rule_upper)
-                logger.info(
-                    f"Found Rule #{rule_upper} in ModTeam comment: "
-                    f"https://www.reddit.com/{comment.permalink}"
-                )
-
-    except Exception as e:
-        logger.error(f"Error fetching comments from u/translator-ModTeam: {e}")
-
-    logger.info("Fetching distinguished mod comments from r/translator...")
-    try:
-        moderators: list[str] = [mod.name for mod in subreddit.moderator()]
-
-        for comment in subreddit.comments(limit=None):
-            total_comments_checked += 1
-
-            if not (start_time <= comment.created_utc <= end_time):
-                if comment.created_utc < start_time:
-                    break
-                continue
-
-            if (
-                comment.author
-                and comment.author.name in moderators
-                and comment.distinguished
-            ):
-                rules_found = rule_pattern.findall(comment.body)
-                for rule in rules_found:
-                    rule_upper = rule.upper()
-                    rule_violations.append(rule_upper)
-                    logger.info(
-                        f"Found Rule #{rule_upper} in distinguished comment: "
-                        f"https://www.reddit.com/{comment.permalink}"
-                    )
-
-    except Exception as e:
-        logger.error(f"Error fetching distinguished comments: {e}")
-
-    violation_counts = Counter(rule_violations)
-
-    results = {
-        "start_time": start_time,
-        "end_time": end_time,
-        "start_date": datetime.fromtimestamp(start_time).strftime(
-            "%Y-%m-%d %H:%M:%S UTC"
-        ),
-        "end_date": datetime.fromtimestamp(end_time).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "total_comments_checked": total_comments_checked,
-        "total_violations": len(rule_violations),
-        "unique_rules_violated": len(violation_counts),
-        "violation_counts": dict(violation_counts.most_common()),
-    }
-
-    logger.info("Rule violation analysis complete:")
-    logger.info(f"  Period: {results['start_date']} to {results['end_date']}")
-    logger.info(f"  Total mod comments checked: {total_comments_checked}")
-    logger.info(f"  Total violations found: {results['total_violations']}")
-    logger.info(f"  Unique rules violated: {results['unique_rules_violated']}")
-    logger.info(f"  Top 5 violations: {violation_counts.most_common(5)}")
-
-    return results
-
-
-@task(schedule="monthly")
-def monthly_rule_violation_report() -> ModRemovalReport:
-    """
-    Generate a monthly report of rule violations and send via Discord webhook.
-
-    Returns:
-        The raw ModRemovalReport produced by _analyze_mod_removals.
-    """
-    end_time = int(time.time())
-    start_time = end_time - (30 * 24 * 60 * 60)
-
-    results: ModRemovalReport = _analyze_mod_removals(start_time, end_time)
-
-    subject_line = (
-        f"Monthly r/translator Rule Violation Report - {results['end_date'][:10]}"
-    )
-
-    report_sections: list[str] = []
-
-    summary = f"""## Summary
-- **Analysis Period**: {results["start_date"]} to {results["end_date"]}
-- **Total Comments Checked**: {results["total_comments_checked"]:,}
-- **Total Violations Found**: {results["total_violations"]}
-- **Unique Rules Violated**: {results["unique_rules_violated"]}
-"""
-    report_sections.append(summary)
-
-    if results["violation_counts"]:
-        breakdown_table = [
-            "| Rule | Count | Percentage |",
-            "|------|-------|------------|",
-        ]
-        for rule, count in results["violation_counts"].items():
-            percentage = (
-                (count / results["total_violations"] * 100)
-                if results["total_violations"] > 0
-                else 0
-            )
-            breakdown_table.append(f"| Rule #{rule} | {count} | {percentage:.1f}% |")
-        report_sections.append(
-            "## Rule Violation Breakdown\n"
-            + format_markdown_table_with_padding("\n".join(breakdown_table))
-        )
-    else:
-        report_sections.append(
-            "## Rule Violation Breakdown\nNo violations found in this period."
-        )
-
-    total_data = "\n\n".join(report_sections)
-
-    send_discord_alert(subject_line, total_data, "notification")
-    logger.info("Monthly rule violation report sent via Discord.")
-
-    return results

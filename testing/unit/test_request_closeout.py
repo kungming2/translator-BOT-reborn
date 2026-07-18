@@ -108,6 +108,7 @@ class TestSendCloseoutMessages:
         with (
             patch("monitoring.request_closeout.is_valid_user", return_value=valid_user),
             patch("monitoring.request_closeout.message_send") as mock_send,
+            patch("monitoring.request_closeout.ajo_writer"),
             patch("monitoring.request_closeout.RESPONSE") as mock_resp,
         ):
             mock_resp.MSG_CLOSING_OUT_SUBJECT.format.return_value = "Subject"
@@ -121,6 +122,40 @@ class TestSendCloseoutMessages:
         ajo = make_ajo()
         mock_send = self._run([sub], {sub.id: ajo})
         mock_send.assert_called_once()
+
+    def test_successful_message_marks_author_messaged_and_persists(self):
+        sub = make_submission()
+        ajo = make_ajo()
+        with (
+            patch("monitoring.request_closeout.is_valid_user", return_value=True),
+            patch("monitoring.request_closeout.message_send", return_value=True),
+            patch("monitoring.request_closeout.ajo_writer") as mock_writer,
+            patch("monitoring.request_closeout.RESPONSE") as mock_resp,
+        ):
+            mock_resp.MSG_CLOSING_OUT_SUBJECT.format.return_value = "Subject"
+            mock_resp.MSG_CLOSING_OUT.format.return_value = "Body"
+            mock_resp.BOT_DISCLAIMER = ""
+            _send_closeout_messages([sub], {sub.id: ajo}, 7.0)
+
+        ajo.set_author_messaged.assert_called_once_with(True)
+        mock_writer.assert_called_once_with(ajo)
+
+    def test_failed_message_does_not_mark_author_messaged(self):
+        sub = make_submission()
+        ajo = make_ajo()
+        with (
+            patch("monitoring.request_closeout.is_valid_user", return_value=True),
+            patch("monitoring.request_closeout.message_send", return_value=False),
+            patch("monitoring.request_closeout.ajo_writer") as mock_writer,
+            patch("monitoring.request_closeout.RESPONSE") as mock_resp,
+        ):
+            mock_resp.MSG_CLOSING_OUT_SUBJECT.format.return_value = "Subject"
+            mock_resp.MSG_CLOSING_OUT.format.return_value = "Body"
+            mock_resp.BOT_DISCLAIMER = ""
+            _send_closeout_messages([sub], {sub.id: ajo}, 7.0)
+
+        ajo.set_author_messaged.assert_not_called()
+        mock_writer.assert_not_called()
 
     def test_skips_deleted_author(self):
         sub = make_submission()
@@ -151,6 +186,7 @@ class TestSendCloseoutMessages:
         with (
             patch("monitoring.request_closeout.is_valid_user", return_value=True),
             patch("monitoring.request_closeout.message_send"),
+            patch("monitoring.request_closeout.ajo_writer"),
             patch("monitoring.request_closeout.RESPONSE") as mock_resp,
         ):
             mock_resp.MSG_CLOSING_OUT_SUBJECT.format.return_value = "Subject"
@@ -167,6 +203,7 @@ class TestSendCloseoutMessages:
         with (
             patch("monitoring.request_closeout.is_valid_user", return_value=True),
             patch("monitoring.request_closeout.message_send"),
+            patch("monitoring.request_closeout.ajo_writer"),
             patch("monitoring.request_closeout.RESPONSE") as mock_resp,
         ):
             mock_resp.MSG_CLOSING_OUT_SUBJECT.format.return_value = "Subject"

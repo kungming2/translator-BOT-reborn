@@ -172,17 +172,6 @@ class HermesDatabaseManager(DatabaseManager):
             results.append((username, data, posted_utc))
         return results
 
-    def get_entry(self, username: str) -> dict[str, Any] | None:
-        """
-        Return the stored user_data dict for *username*, or None if not present.
-        """
-        cur = self.cursor_hermes
-        cur.execute("SELECT user_data FROM entries WHERE username = ?", (username,))
-        row = cur.fetchone()
-        if row is None:
-            return None
-        return _parse_user_data(row[0])
-
     def get_all_entries(self) -> list[tuple[str, dict[str, Any], int]]:
         """
         Return all entries as a list of (username, user_data_dict, posted_utc)

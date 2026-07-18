@@ -28,20 +28,73 @@ logger = logging.LoggerAdapter(_base_logger, {"tag": "I:IMAGE"})
 
 access_credentials = load_settings(Paths.AUTH["API"])
 
-ALLOWED_TRANSFORM_IMAGE_HOSTS = frozenset(
-    {
-        "i.redd.it",
-        "preview.redd.it",
-        "external-preview.redd.it",
-        "i.imgur.com",
-    }
-)
+
+def _int_setting(setting_name: str, *, minimum: int) -> int:
+    """Return an integer setting at or above the required minimum."""
+    value = SETTINGS.get(setting_name)
+    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+        requirement = (
+            "a positive integer"
+            if minimum == 1
+            else f"an integer of at least {minimum}"
+        )
+        raise RuntimeError(f"Setting '{setting_name}' must be {requirement}")
+    return value
+
+
+def _transform_hosts_setting() -> frozenset[str]:
+    """Load and validate the transform image host allowlist."""
+    value = SETTINGS.get("transform_allowed_image_hosts")
+    if not isinstance(value, list) or not value:
+        raise RuntimeError(
+            "Setting 'transform_allowed_image_hosts' must be a non-empty list"
+        )
+
+    hosts: set[str] = set()
+    for item in value:
+        if not isinstance(item, str):
+            raise RuntimeError(
+                "Setting 'transform_allowed_image_hosts' must contain only strings"
+            )
+        host = item.strip().lower().rstrip(".")
+        if not host or "://" in host or any(char in host for char in "/:@"):
+            raise RuntimeError(
+                "Setting 'transform_allowed_image_hosts' contains an invalid hostname"
+            )
+        hosts.add(host)
+
+    return frozenset(hosts)
+
+
+def _transform_download_timeout_setting() -> tuple[int, int]:
+    """Load the validated requests connect/read timeout pair."""
+    value = SETTINGS.get("transform_download_timeout_seconds")
+    if not isinstance(value, dict):
+        raise RuntimeError(
+            "Setting 'transform_download_timeout_seconds' must be a mapping"
+        )
+
+    timeouts: list[int] = []
+    for key in ("connect", "read"):
+        timeout = value.get(key)
+        if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout <= 0:
+            raise RuntimeError(
+                f"Setting 'transform_download_timeout_seconds.{key}' "
+                "must be a positive integer"
+            )
+        timeouts.append(timeout)
+
+    return timeouts[0], timeouts[1]
+
+
+ALLOWED_TRANSFORM_IMAGE_HOSTS = _transform_hosts_setting()
 ALLOWED_TRANSFORM_CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
-MAX_TRANSFORM_IMAGE_BYTES = 20 * 1024 * 1024
-MAX_TRANSFORM_IMAGE_PIXELS = 60_000_000
-MAX_TRANSFORM_IMAGE_DIMENSION = 10_000
-MAX_TRANSFORM_REDIRECTS = 3
-TRANSFORM_DOWNLOAD_TIMEOUT = (5, 15)
+MAX_TRANSFORM_IMAGE_BYTES = _int_setting("transform_max_image_bytes", minimum=1)
+MAX_TRANSFORM_IMAGE_PIXELS = _int_setting("transform_max_image_pixels", minimum=1)
+MAX_TRANSFORM_IMAGE_DIMENSION = _int_setting("transform_max_image_dimension", minimum=1)
+MAX_TRANSFORM_REDIRECTS = _int_setting("transform_max_redirects", minimum=0)
+TRANSFORM_DOWNLOAD_TIMEOUT = _transform_download_timeout_setting()
+TRANSFORM_UPLOAD_TIMEOUT = _int_setting("transform_upload_timeout_seconds", minimum=1)
 
 # Normalisation map for shorthand codes and counterclockwise degree values.
 TRANSFORM_MAP: dict[str, str] = {
@@ -280,7 +333,11 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
         payload["name"] = title
 
     logger.debug(f"Uploading to ImgBB (expiration: {expiration_seconds}s)")
-    response = requests.post("https://api.imgbb.com/1/upload", data=payload, timeout=45)
+    response = requests.post(
+        "https://api.imgbb.com/1/upload",
+        data=payload,
+        timeout=TRANSFORM_UPLOAD_TIMEOUT,
+    )
     response.raise_for_status()
 
     result = response.json()

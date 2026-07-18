@@ -15,8 +15,6 @@ import requests
 from praw.exceptions import RedditAPIException
 from praw.models import Redditor, Submission
 from prawcore import exceptions
-from random_user_agent.params import OperatingSystem, SoftwareName
-from random_user_agent.user_agent import UserAgent
 
 from config import SETTINGS, TRANSLATORBOT_SUBREDDIT, Paths, load_settings
 from config import logger as _base_logger
@@ -109,31 +107,6 @@ def reddit_status_check() -> list[dict] | None:
         )
 
     return incidents
-
-
-def get_random_useragent() -> dict[str, str]:
-    """
-    Returns a dictionary with a random User-Agent and a
-    default Accept header. Generally used with website accessing
-    requests.
-    """
-    software_names = [SoftwareName.CHROME.value]
-    operating_systems = [OperatingSystem.WINDOWS.value, OperatingSystem.LINUX.value]
-
-    user_agent_rotator = UserAgent(
-        software_names=software_names, operating_systems=operating_systems, limit=1
-    )
-
-    # Get Random User Agent String.
-    user_agent = user_agent_rotator.get_random_user_agent()
-
-    return {
-        "User-Agent": user_agent,
-        "Accept": (
-            "text/html,application/json,application/xhtml+xml,"
-            "application/xml;q=0.9,image/webp,*/*;q=0.8"
-        ),
-    }
 
 
 def submission_from_input(user_input: str) -> Submission | None:

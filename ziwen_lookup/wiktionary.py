@@ -12,9 +12,8 @@ import re
 import requests
 
 from config import SETTINGS
-from integrations.http import DEFAULT_HTTP_TIMEOUT
+from integrations.http import DEFAULT_HTTP_TIMEOUT, get_random_useragent
 from lang.languages import converter
-from reddit.connection import get_random_useragent
 
 # ─── Wiktionary parser ────────────────────────────────────────────────────────
 

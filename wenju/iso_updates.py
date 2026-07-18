@@ -25,7 +25,8 @@ from pypdf import PdfReader
 from config import Paths
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
-from reddit.connection import REDDIT, get_random_useragent, submit_translatorbot_post
+from integrations.http import get_random_useragent
+from reddit.connection import REDDIT, submit_translatorbot_post
 from wenju import task
 
 # ─── Module-level constants ───────────────────────────────────────────────────

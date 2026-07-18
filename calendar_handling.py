@@ -227,18 +227,6 @@ def _dated_calendar_to_gregorian(
     return gregorian
 
 
-def hebrew_to_gregorian(year: int, month: int | str, day: int | str) -> date:
-    return _dated_calendar_to_gregorian("hebrew", year, month, day)
-
-
-def islamic_to_gregorian(year: int, month: int | str, day: int | str) -> date:
-    return _dated_calendar_to_gregorian("islamic", year, month, day)
-
-
-def persian_to_gregorian(year: int, month: int | str, day: int | str) -> date:
-    return _dated_calendar_to_gregorian("persian", year, month, day)
-
-
 def _parse_calendar_payload(payload: str) -> tuple[str, str, str, str]:
     parts = [part.strip() for part in payload.split(":", 3)]
     if len(parts) != 4 or any(not part for part in parts):
@@ -280,9 +268,6 @@ def calendar_to_gregorian(
         ) from exc
 
     return _dated_calendar_to_gregorian(calendar_type, year, month, day)
-
-
-convert_calendar_to_gregorian = calendar_to_gregorian
 
 
 def convert_calendar_payload(payload: str) -> date | list[date] | list[int]:

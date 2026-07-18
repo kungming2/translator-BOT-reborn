@@ -13,7 +13,7 @@ import logging
 
 from praw.models import Message, Redditor
 
-from config import TRANSIENT_ERRORS
+from config import SETTINGS, TRANSIENT_ERRORS
 from config import logger as _base_logger
 from monitoring.runtime_metrics import increment_runtime_metric
 from reddit.connection import REDDIT, is_mod, is_valid_user
@@ -48,7 +48,7 @@ def ziwen_messages() -> None:
     - remove: Remove user (moderators only)
     """
     try:
-        messages = list(REDDIT.inbox.unread(limit=25))
+        messages = list(REDDIT.inbox.unread(limit=SETTINGS["max_messages"]))
     except TRANSIENT_ERRORS as ex:
         logger.warning(f"Encountered a transient error while fetching messages: {ex}")
         return

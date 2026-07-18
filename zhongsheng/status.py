@@ -14,7 +14,7 @@ from discord.ext import commands
 
 from config import logger as _base_logger
 from database import get_recent_event_log_lines
-from reddit.connection import get_random_useragent
+from integrations.http import get_random_useragent
 
 from . import command, send_long_message
 

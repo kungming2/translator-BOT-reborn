@@ -5,7 +5,6 @@ Test suite for models/komando.py.
 
 Covers:
   - Komando class: initialization, __repr__, to_dict
-  - remap_language(): happy path, wrong name raises, empty data
   - _check_specific_mode(): trailing !, valid/invalid lengths, punctuation
   - _deduplicate_args(): strings, tuples, mixed; order preservation
 """
@@ -151,62 +150,6 @@ class TestKomandoToDict(unittest.TestCase):
 
         komando = Komando("lookup_wp", data=["Volapuk"])
         json.dumps(komando.to_dict())  # should not raise
-
-
-# ---------------------------------------------------------------------------
-# Komando.remap_language
-# ---------------------------------------------------------------------------
-
-
-class TestKomandoRemapLanguage(unittest.TestCase):
-    """remap_language() remaps language codes in lookup_cjk data."""
-
-    def test_remap_three_tuple_format(self) -> None:
-        komando = Komando(
-            "lookup_cjk", data=[("zh", "中文", False), ("zh", "麻将", True)]
-        )
-        remapped = komando.remap_language("ja")
-        self.assertIsInstance(remapped, Komando)
-        for entry in remapped.data:
-            self.assertEqual(entry[0], "ja")
-
-    def test_remap_two_tuple_format(self) -> None:
-        komando = Komando("lookup_cjk", data=[("zh", "中文")])
-        remapped = komando.remap_language("ko")
-        self.assertEqual(remapped.data[0][0], "ko")
-        self.assertEqual(remapped.data[0][1], "中文")
-
-    def test_remap_preserves_term(self) -> None:
-        komando = Komando("lookup_cjk", data=[("zh", "時間", False)])
-        remapped = komando.remap_language("ja")
-        self.assertEqual(remapped.data[0][1], "時間")
-
-    def test_remap_preserves_flags(self) -> None:
-        komando = Komando(
-            "lookup_cjk",
-            data=[("zh", "中文", False)],
-            specific_mode=True,
-            disable_tokenization=True,
-        )
-        remapped = komando.remap_language("ja")
-        self.assertTrue(remapped.specific_mode)
-        self.assertTrue(remapped.disable_tokenization)
-
-    def test_remap_wrong_name_raises(self) -> None:
-        komando = Komando("identify", data=[("zh", "中文", False)])
-        with self.assertRaises(ValueError):
-            komando.remap_language("ja")
-
-    def test_remap_empty_data_returns_copy(self) -> None:
-        komando = Komando("lookup_cjk", data=None)
-        remapped = komando.remap_language("ja")
-        self.assertIsNone(remapped.data)
-        self.assertEqual(remapped.name, "lookup_cjk")
-
-    def test_remap_returns_new_object(self) -> None:
-        komando = Komando("lookup_cjk", data=[("zh", "中文", False)])
-        remapped = komando.remap_language("ja")
-        self.assertIsNot(remapped, komando)
 
 
 # ---------------------------------------------------------------------------

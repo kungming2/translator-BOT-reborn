@@ -13,9 +13,8 @@ This module manages the entire points system for r/translator:
 - Maintains monthly and all-time point records in the database
 - Provides point summaries for users upon request
 
-Point values are cached monthly and range from 4-20 depending on language
-frequency. Rarer languages receive higher multipliers to encourage diverse
-language support.
+Point values are cached monthly and use the configured language-value policy.
+Rarer languages receive higher multipliers to encourage diverse language support.
 ...
 
 Logger tag: [MN:POINTS]
@@ -264,7 +263,7 @@ def points_worth_determiner(lingvo_object: Lingvo) -> int:
     language_code = lingvo_object.preferred_code.lower()
 
     if language_code == "unknown":
-        return 4  # Normalized value for unknown languages
+        return SETTINGS["points_unknown_language_value"]
 
     month_string = get_current_month()
     cursor = db.cursor_cache
@@ -298,9 +297,11 @@ def points_worth_determiner(lingvo_object: Lingvo) -> int:
 
         total_percent = float(last_month_data.split(" | ")[3].rstrip("%"))
 
-        raw_point_value = 35 * (1 / total_percent)
+        raw_point_value = SETTINGS["points_language_multiplier_coefficient"] * (
+            1 / total_percent
+        )
         final_point_value = int(round(raw_point_value))
-        final_point_value = min(final_point_value, 20)
+        final_point_value = min(final_point_value, SETTINGS["points_language_maximum"])
 
     except (
         prawcore.exceptions.NotFound,
@@ -310,7 +311,7 @@ def points_worth_determiner(lingvo_object: Lingvo) -> int:
         ZeroDivisionError,
     ) as e:
         logger.debug(f"Fallback for `{language_code}` due to error: {e}")
-        final_point_value = 20  # Max score for unknown/rare/missing wiki entries
+        final_point_value = SETTINGS["points_language_maximum"]
 
     insert_data = (month_string, language_code, final_point_value)
     db.cursor_cache.execute(
@@ -596,14 +597,19 @@ def points_tabulator(
         f"total preliminary points {points}."
     )
 
-    if len(body) > 120 and comment_author != op_author:
-        points += 1 + int(round(0.25 * multiplier))
+    if (
+        len(body) > SETTINGS["points_long_comment_character_threshold"]
+        and comment_author != op_author
+    ):
+        points += 1 + int(
+            round(SETTINGS["points_long_comment_bonus_multiplier"] * multiplier)
+        )
 
     # OP short thank-you cases
     if (
         comment_author == op_author
         and any(k in body for k in SETTINGS["thanks_keywords"])
-        and len(body) < 20
+        and len(body) < SETTINGS["points_short_thank_character_threshold"]
     ):
         logger.info(f"OP short thank-you from u/{comment_author}.")
         parent_author, parent_comment = get_parent_author(comment)

@@ -12,8 +12,7 @@ from unittest.mock import MagicMock, patch
 import orjson
 import pytest
 
-from models.diskuto import (Diskuto, diskuto_exists, diskuto_loader,
-                            diskuto_writer)
+from models.diskuto import Diskuto, diskuto_exists, diskuto_loader, diskuto_writer
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -124,22 +123,22 @@ class TestDiskutoToDict:
         assert result["processed"] is True
 
 
-class TestDiskutoToggleProcessed:
+class TestDiskutoMarkProcessed:
     def test_false_to_true(self):
         d = Diskuto(processed=False)
-        d.toggle_processed()
+        d.mark_processed()
         assert d.processed is True
 
-    def test_true_to_false(self):
+    def test_true_remains_true(self):
         d = Diskuto(processed=True)
-        d.toggle_processed()
-        assert d.processed is False
+        d.mark_processed()
+        assert d.processed is True
 
-    def test_double_toggle_returns_original(self):
+    def test_repeated_calls_remain_true(self):
         d = Diskuto(processed=False)
-        d.toggle_processed()
-        d.toggle_processed()
-        assert d.processed is False
+        d.mark_processed()
+        d.mark_processed()
+        assert d.processed is True
 
 
 class TestDiskutoProcessPost:

@@ -155,9 +155,6 @@ class Lumo:
         self.start_time = start_time
         self.end_time = end_time
 
-        # Earliest possible post date: January 1, 2015
-        self.EARLIEST_POST = self.date_to_unix(2015, 1, 1)
-
     def __iter__(self) -> Iterator[Ajo]:
         """Allow direct iteration over Lumo instance."""
         return iter(self.ajos)

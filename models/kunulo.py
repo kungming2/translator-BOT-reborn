@@ -312,7 +312,7 @@ class Kunulo:
         self, tag: str, index: int = 0
     ) -> KunuloEntry | tuple[None, None]:
         """
-        Get the comment ID and its associated data for a tag.
+        Get the comment ID and its associated data for a tag. Unused.
 
         Args:
             tag: The tag identifier to look up
@@ -339,19 +339,6 @@ class Kunulo:
         """
         entries = self._data.get(tag, [])
         return [self._normalize_entry(e) for e in entries]
-
-    def get_comment_ids(self, tag: str) -> list[str]:
-        """
-        Get all comment IDs for a tag (without associated data).
-
-        Args:
-            tag: The tag identifier to look up
-
-        Returns:
-            list: List of comment IDs, or empty list if tag doesn't exist
-        """
-        entries = self._data.get(tag, [])
-        return [self._normalize_entry(e)[0] for e in entries]
 
     def find_cjk_reply_for_comment(self, triggering_comment_id: str) -> str | None:
         """

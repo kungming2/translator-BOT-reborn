@@ -175,12 +175,12 @@ scheduler.add_job(
     misfire_grace_time=300,
 )
 
-# Daily at 23:57 UTC
+# Daily at 23:50 UTC
 scheduler.add_job(
     run_script,
     "cron",
     hour=23,
-    minute=57,
+    minute=50,
     id="wenju_daily",
     kwargs={"script": "main_wenju.py", "args": ["daily"], "lock_name": "wenju_daily"},
     max_instances=1,

@@ -123,53 +123,6 @@ class Komando:
             "disable_tokenization": self.disable_tokenization,
         }
 
-    # ── Mutation ──────────────────────────────────────────────────────────────
-
-    def remap_language(self, target_lang_code: str) -> "Komando":
-        """
-        Remap all language codes in self.data to a target language code.
-        Only works for 'lookup_cjk' komandos.
-
-        :param target_lang_code: Target language code (e.g., 'ja', 'ko')
-        :return: New Komando object with remapped language codes
-        :raises ValueError: If self.name is not 'lookup_cjk'
-        """
-        if self.name != "lookup_cjk":
-            raise ValueError(
-                f"remap_language only works with 'lookup_cjk' komandos, got '{self.name}'"
-            )
-
-        if not self.data:
-            return Komando(
-                name=self.name,
-                data=self.data,
-                specific_mode=self.specific_mode,
-                disable_tokenization=self.disable_tokenization,
-            )
-
-        logger.info(f"Remapping {len(self.data)} entries to '{target_lang_code}'.")
-
-        # Handle both old format (lang, term) and new format (lang, term, explicit)
-        remapped_data = []
-        for entry in self.data:
-            if len(entry) == 3:
-                # New format: (lang, term, explicit)
-                _, term, explicit = entry
-                remapped_data.append((target_lang_code, term, explicit))
-            elif len(entry) == 2:
-                # Old format: (lang, term)
-                _, term = entry
-                remapped_data.append((target_lang_code, term, False))
-            else:
-                remapped_data.append(entry)
-
-        return Komando(
-            name=self.name,
-            data=remapped_data,
-            specific_mode=self.specific_mode,
-            disable_tokenization=self.disable_tokenization,
-        )
-
 
 def action_count_for_statistics(komando: Komando) -> int:
     """

@@ -9,11 +9,11 @@ mocked at the boundary.
 
 Modules covered:
     - wenju/__init__.py  : task decorator & run_schedule
-    - community_digest.py: _analyze_bot_mod_log, _analyze_mod_removals,
+    - community_digest.py: weekly bot-action report calculations
     - iso_updates.py     : _parse_iso639_newsletter
     - data_maintenance.py: error_log_trimmer (logic), validate_data_files (path scanning)
-    - moderator_digest.py: _error_log_count, _activity_csv_handler (statistics),
-                           dashboard rendering and public-data allowlisting
+    - moderator_reporting.py: moderator-report collectors and rule analysis
+    - public_statistics.py: dashboard rendering and public-data allowlisting
     - status_report.py   : reddit_status_report (incident formatting)
 """
 
@@ -80,6 +80,9 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             "integrations.discord_utils",
             send_discord_alert=MagicMock(),
         ),
+        "integrations.http": _make_stub_module(
+            "integrations.http", get_random_useragent=MagicMock(return_value={})
+        ),
         "reddit": _make_stub_module("reddit"),
         "reddit.connection": _make_stub_module(
             "reddit.connection",
@@ -132,9 +135,10 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         "monitoring.points": _make_stub_module(
             "monitoring.points", points_worth_determiner=MagicMock()
         ),
-        "monitoring.usage_statistics": _make_stub_module(
-            "monitoring.usage_statistics",
-            generate_command_usage_report=MagicMock(return_value=""),
+        "monitoring.action_statistics": _make_stub_module(
+            "monitoring.action_statistics",
+            ActionAverage=dict,
+            get_action_daily_averages=MagicMock(return_value=[]),
         ),
         "models": _make_stub_module("models"),
         "models.ajo": _make_stub_module(
@@ -208,16 +212,21 @@ def _restore_stub_modules():
 
 # This file lives at testing/unit/test_wenju_tasks.py.
 # The project root (parent of both wenju/ and testing/) is two levels up.
-# Insert it so that `import wenju.moderator_digest` etc. resolve correctly.
+# Insert it so that imports from the real `wenju` package resolve correctly.
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+import processes.wenyuan_stats as wenyuan_stats  # noqa: E402
 import wenju  # noqa: E402
 import wenju.iso_updates as iso_updates  # noqa: E402
-import wenju.moderator_digest as moderator_digest  # noqa: E402
-import wenju.status_report as status_report  # noqa: E402
-import processes.wenyuan_stats as wenyuan_stats  # noqa: E402
+import wenju.moderation_monitoring as moderation_monitoring  # noqa: E402
+import wenju.moderator_reporting as moderator_update  # noqa: E402
+import wenju.public_statistics as public_statistics  # noqa: E402
+import wenju.sidebar_updates as sidebar_updates  # noqa: E402
+import wenju.status_report as status_report  # noqa: E402, F401
+import wenju.subreddit_maintenance as subreddit_maintenance  # noqa: E402
+import wenyuan.period_statistics as period_statistics  # noqa: E402
 
 _restore_stubs()
 
@@ -339,7 +348,7 @@ class TestLanguageOfTheDaySelection:
         days = []
         current_day = start_day
         while len(days) < count:
-            if status_report._is_iso_639_1_lotd_day(current_day):
+            if sidebar_updates._is_iso_639_1_lotd_day(current_day):
                 days.append(current_day)
             current_day = date.fromordinal(current_day.toordinal() + 1)
         return days
@@ -347,11 +356,11 @@ class TestLanguageOfTheDaySelection:
     def test_iso_639_1_cycle_uses_each_candidate_before_repeating(self):
         candidates = ["aa", "bb", "cc", "dd", "ee"]
         days = self._next_iso_639_1_days(
-            status_report.LOTD_ISO_639_1_EPOCH, len(candidates)
+            sidebar_updates.LOTD_ISO_639_1_EPOCH, len(candidates)
         )
 
         selected = [
-            status_report._deterministic_iso_639_1_lotd_code(candidates, day)
+            sidebar_updates._deterministic_iso_639_1_lotd_code(candidates, day)
             for day in days
         ]
 
@@ -362,10 +371,10 @@ class TestLanguageOfTheDaySelection:
         candidates = ["aa", "bb", "cc", "dd", "ee"]
         selected_day = date(2026, 1, 2)
 
-        first = status_report._deterministic_iso_639_1_lotd_code(
+        first = sidebar_updates._deterministic_iso_639_1_lotd_code(
             candidates, selected_day
         )
-        second = status_report._deterministic_iso_639_1_lotd_code(
+        second = sidebar_updates._deterministic_iso_639_1_lotd_code(
             candidates, selected_day
         )
 
@@ -373,10 +382,10 @@ class TestLanguageOfTheDaySelection:
 
     def test_iso_639_1_candidates_are_normalized_and_deduplicated(self):
         candidates = ["AA", "bb", "aa", "Cc"]
-        days = self._next_iso_639_1_days(status_report.LOTD_ISO_639_1_EPOCH, 3)
+        days = self._next_iso_639_1_days(sidebar_updates.LOTD_ISO_639_1_EPOCH, 3)
 
         selected = [
-            status_report._deterministic_iso_639_1_lotd_code(candidates, day)
+            sidebar_updates._deterministic_iso_639_1_lotd_code(candidates, day)
             for day in days
         ]
 
@@ -481,7 +490,7 @@ class TestParseIso639Newsletter:
 
 
 # ===========================================================================
-# Tests: _error_log_count  (moderator_digest.py)
+# Tests: _error_log_summary  (moderator_reporting.py)
 # ===========================================================================
 
 
@@ -497,11 +506,11 @@ class TestErrorLogCount:
         log_file.write_text("[]", encoding="utf-8")
 
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+            {**moderator_update.Paths.LOGS, "ERROR": str(log_file)},
         ):
-            result_md, result_data = moderator_digest._error_log_count()
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["count"] == 0
 
@@ -515,11 +524,11 @@ class TestErrorLogCount:
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+            {**moderator_update.Paths.LOGS, "ERROR": str(log_file)},
         ):
-            result_md, result_data = moderator_digest._error_log_count()
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["count"] == 3
 
@@ -532,11 +541,11 @@ class TestErrorLogCount:
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+            {**moderator_update.Paths.LOGS, "ERROR": str(log_file)},
         ):
-            result_md, result_data = moderator_digest._error_log_count()
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["resolved"] is True
         assert "(resolved)" in result_data["lastEntry"]
@@ -547,22 +556,22 @@ class TestErrorLogCount:
         log_file.write_text(yaml.dump(entries), encoding="utf-8")
 
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+            {**moderator_update.Paths.LOGS, "ERROR": str(log_file)},
         ):
-            result_md, result_data = moderator_digest._error_log_count()
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["resolved"] is False
         assert "(resolved)" not in result_data["lastEntry"]
 
     def test_missing_file_returns_zero_gracefully(self, tmp_path):
         patched_logs = {
-            **moderator_digest.Paths.LOGS,
+            **moderator_update.Paths.LOGS,
             "ERROR": str(tmp_path / "nonexistent.yaml"),
         }
-        with patch.object(moderator_digest.Paths, "LOGS", patched_logs):
-            result_md, result_data = moderator_digest._error_log_count()
+        with patch.object(moderator_update.Paths, "LOGS", patched_logs):
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["count"] == 0
         assert "missing" in result_md.lower()
@@ -572,77 +581,16 @@ class TestErrorLogCount:
         log_file.write_text(": bad: [yaml: content", encoding="utf-8")
 
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ERROR": str(log_file)},
+            {**moderator_update.Paths.LOGS, "ERROR": str(log_file)},
         ):
-            result_md, result_data = moderator_digest._error_log_count()
+            result_md, result_data = moderator_update._error_log_summary()
 
         assert result_data["count"] == 0
 
 
 # ===========================================================================
-# Tests: _render_html_dashboard  (moderator_digest.py)
-# ===========================================================================
-
-
-class TestRenderHtmlDashboard:
-    TEMPLATE = "<html>Date: __DATE_STR__ Data: __DATA_JSON__</html>"
-    SAMPLE_DATA = {"errors": {"count": 0}, "filter": {}, "activity": {}}
-
-    def test_replaces_date_placeholder(self, tmp_path):
-        tpl = tmp_path / "template.html"
-        tpl.write_text(self.TEMPLATE, encoding="utf-8")
-
-        with patch.object(
-            moderator_digest.Paths,
-            "TEMPLATES",
-            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
-        ):
-            result = moderator_digest._render_html_dashboard(
-                "2024-01-15", self.SAMPLE_DATA
-            )
-
-        assert "2024-01-15" in result
-        assert "__DATE_STR__" not in result
-
-    def test_replaces_data_placeholder_with_valid_json(self, tmp_path):
-        tpl = tmp_path / "template.html"
-        tpl.write_text(self.TEMPLATE, encoding="utf-8")
-
-        with patch.object(
-            moderator_digest.Paths,
-            "TEMPLATES",
-            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
-        ):
-            result = moderator_digest._render_html_dashboard(
-                "2024-01-15", self.SAMPLE_DATA
-            )
-
-        assert "__DATA_JSON__" not in result
-        # The injected JSON should be valid
-        start = result.index("Data: ") + len("Data: ")
-        end = result.index("</html>")
-        parsed = json.loads(result[start:end])
-        assert parsed == self.SAMPLE_DATA
-
-    def test_output_contains_template_structure(self, tmp_path):
-        tpl = tmp_path / "template.html"
-        tpl.write_text(self.TEMPLATE, encoding="utf-8")
-
-        with patch.object(
-            moderator_digest.Paths,
-            "TEMPLATES",
-            {**moderator_digest.Paths.TEMPLATES, "MODERATOR_DIGEST": str(tpl)},
-        ):
-            result = moderator_digest._render_html_dashboard(
-                "2024-01-15", self.SAMPLE_DATA
-            )
-
-        assert result.startswith("<html>")
-        assert result.endswith("</html>")
-
-
 class TestPublicStatsDashboard:
     PUBLIC_KEYS = {
         "date",
@@ -656,20 +604,17 @@ class TestPublicStatsDashboard:
 
     def test_public_data_uses_an_explicit_allowlist(self):
         statistics = {
-            "filter_markdown": "filter",
             "filter_data": {"ratePerDay": 1.5},
-            "command_markdown": "commands",
             "actions": [{"name": "identify", "count": 2.0}],
             "new_posts": 20.0,
             "notifications": 50.0,
-            "wenyuan_markdown": "wenyuan",
             "wenyuan_data": {"postCount": 100},
             "errors": {"count": 3, "lastEntry": "private", "resolved": False},
             "activity": {"avgApiCalls": 100, "avgMemoryMB": 500},
             "flaggedPosts": [{"title": "private moderation queue"}],
         }
 
-        result = moderator_digest._build_public_dashboard_data("2026-07-14", statistics)
+        result = public_statistics._build_public_dashboard_data("2026-07-14", statistics)
 
         assert set(result) == self.PUBLIC_KEYS
         assert "errors" not in result
@@ -679,14 +624,14 @@ class TestPublicStatsDashboard:
     def test_public_json_cannot_close_its_script_element(self):
         hostile = {"value": "</script><script>alert('x')</script>"}
 
-        result = moderator_digest._json_for_html(hostile)
+        result = public_statistics._json_for_html(hostile)
 
         assert "</script>" not in result.lower()
         assert "\\u003c/script\\u003e" in result
         assert json.loads(result) == hostile
 
     def test_public_template_omits_private_sections(self):
-        template = Path(moderator_digest.Paths.TEMPLATES["PUBLIC_STATS"]).read_text(
+        template = Path(public_statistics.Paths.TEMPLATES["PUBLIC_STATS"]).read_text(
             encoding="utf-8"
         )
 
@@ -702,7 +647,7 @@ class TestPublicStatsDashboard:
         assert "Daily average · Last 3 days" in template
         assert "Daily Language-Request Volume — Last 30 Days" in template
         assert 'id="cmp-backlog-current"' not in template
-        assert "metrics.medianTranslationSeconds" in template
+        assert 'metrics["medianTranslationSeconds"]' in template
         assert "const LANGUAGE_COLORS = Object.freeze" in template
         assert 'ja: "#ED1C24"' in template
         assert 'vi: "#CCC244"' in template
@@ -729,7 +674,7 @@ class TestPublicStatsDashboard:
         assert json.loads(data_element.group(1)) == "__DATA_JSON__"
 
     def test_public_renderer_applies_one_nonce_and_safe_json(self):
-        result = moderator_digest._render_public_stats_dashboard(
+        result = public_statistics._render_public_stats_dashboard(
             "2026-07-14", {"value": "</script><script>alert('x')</script>"}
         )
 
@@ -745,7 +690,7 @@ class TestPublicStatsDashboard:
         output = tmp_path / "public_stats.html"
         output.write_text("old page", encoding="utf-8")
 
-        moderator_digest._atomic_write_text(output, "new page")
+        public_statistics._atomic_write_text(output, "new page")
 
         assert output.read_text(encoding="utf-8") == "new page"
         assert list(tmp_path.glob("*.tmp")) == []
@@ -754,27 +699,60 @@ class TestPublicStatsDashboard:
         output = tmp_path / "apple-touch-icon.png"
         output.write_bytes(b"old icon")
 
-        moderator_digest._atomic_write_bytes(output, b"new icon")
+        public_statistics._atomic_write_bytes(output, b"new icon")
 
         assert output.read_bytes() == b"new icon"
         assert list(tmp_path.glob("*.tmp")) == []
 
-    def test_public_generation_is_hourly_and_moderator_digest_is_daily(self):
+    def test_reorganized_tasks_keep_their_schedules(self):
         tasks = wenju.get_tasks()
 
-        assert moderator_digest.generate_public_statistics in tasks["hourly"]
-        assert moderator_digest.collate_moderator_digest in tasks["daily"]
-        assert moderator_digest.generate_public_statistics not in tasks["daily"]
+        assert public_statistics.generate_public_statistics in tasks["hourly"]
+        assert moderation_monitoring.monitor_controversial_comments in tasks["hourly"]
+        assert sidebar_updates.update_sidebar_statistics in tasks["hourly"]
+        assert moderator_update.send_moderator_update in tasks["daily"]
+        assert moderation_monitoring.modqueue_assessor in tasks["daily"]
+        assert sidebar_updates.language_of_the_day in tasks["daily"]
+        assert subreddit_maintenance.archive_modmail in tasks["daily"]
+        assert subreddit_maintenance.update_verified_list in tasks["weekly"]
+        assert moderator_update.monthly_rule_violation_report in tasks["monthly"]
+        assert subreddit_maintenance.monthly_statistics_unpinner in tasks["monthly"]
+        assert public_statistics.generate_public_statistics not in tasks["daily"]
 
-    def test_hourly_generation_uses_only_shared_statistics(self, tmp_path):
+    def test_moderator_update_sends_only_operational_information(self):
+        with (
+            patch.object(
+                moderator_update,
+                "_error_log_summary",
+                return_value=("# Error Log\n* **Error log entries**: 2", {}),
+            ),
+            patch.object(
+                moderator_update,
+                "_activity_csv_summary",
+                return_value=("* **Average API Calls**: 12.5/cycle", {}),
+            ),
+            patch.object(
+                moderator_update, "get_current_utc_date", return_value="2026-07-15"
+            ),
+            patch.object(moderator_update, "send_discord_alert") as alert_mock,
+            patch.object(public_statistics, "_collect_public_statistics") as stats_mock,
+        ):
+            moderator_update.send_moderator_update()
+
+        stats_mock.assert_not_called()
+        alert_mock.assert_called_once_with(
+            "Moderator Update for 2026-07-15",
+            "# Error Log\n* **Error log entries**: 2\n\n"
+            "# Performance\n* **Average API Calls**: 12.5/cycle",
+            "alert",
+        )
+
+    def test_hourly_generation_uses_only_public_statistics(self, tmp_path):
         statistics = {
-            "filter_markdown": "filter",
             "filter_data": {"ratePerDay": 1.5},
-            "command_markdown": "commands",
             "actions": [{"name": "identify", "count": 2.0}],
             "new_posts": 20.0,
             "notifications": 50.0,
-            "wenyuan_markdown": "wenyuan",
             "wenyuan_data": {"postCount": 100},
         }
         output = tmp_path / "index.html"
@@ -784,57 +762,111 @@ class TestPublicStatsDashboard:
 
         with (
             patch.object(
-                moderator_digest,
-                "_collect_shared_statistics",
+                public_statistics,
+                "_collect_public_statistics",
                 return_value=statistics,
             ) as collect_mock,
             patch.object(
-                moderator_digest,
+                public_statistics,
                 "_render_public_stats_dashboard",
                 return_value="public page",
             ),
             patch.object(
-                moderator_digest.Paths,
+                public_statistics.Paths,
                 "PUBLIC",
                 {"STATS": str(output), "TOUCH_ICON": str(touch_icon_output)},
             ),
             patch.object(
-                moderator_digest.Paths,
+                public_statistics.Paths,
                 "ICONS",
                 {"PUBLIC_STATS_TOUCH_ICON": str(touch_icon_source)},
             ),
             patch.object(
-                moderator_digest, "WENJU_SETTINGS", {"report_command_average": 3}
+                public_statistics, "WENJU_SETTINGS", {"report_command_average": 3}
             ),
             patch.object(
-                moderator_digest, "get_current_utc_date", return_value="2026-07-14"
+                public_statistics, "get_current_utc_date", return_value="2026-07-14"
             ),
-            patch.object(moderator_digest, "send_discord_alert") as alert_mock,
         ):
-            moderator_digest.generate_public_statistics()
+            public_statistics.generate_public_statistics()
 
         assert output.read_text(encoding="utf-8") == "public page"
         assert touch_icon_output.read_bytes() == b"touch icon"
         collect_mock.assert_called_once()
-        alert_mock.assert_not_called()
 
-    def test_command_actions_are_parsed_once_for_both_dashboards(self):
-        report = """\
-| Action | Daily Average |
-|---|---:|
-| New posts | 12.5 |
-| Notifications | 42 |
-| malformed | not-a-number |
-"""
-
-        assert moderator_digest._parse_command_actions(report) == [
+    def test_public_collection_consumes_structured_action_averages(self):
+        actions = [
             {"name": "New posts", "count": 12.5},
             {"name": "Notifications", "count": 42.0},
         ]
+        with (
+            patch.object(
+                public_statistics,
+                "_collect_filter_statistics",
+                return_value={
+                    "ratePerDay": 1.5,
+                    "startDate": "2026-07-12",
+                    "endDate": "2026-07-15",
+                },
+            ),
+            patch.object(
+                public_statistics, "get_action_daily_averages", return_value=actions
+            ) as action_mock,
+            patch.object(
+                public_statistics, "_wenyuan_period_stats", return_value={"days": 30}
+            ),
+        ):
+            result = public_statistics._collect_public_statistics(
+                date(2026, 7, 15), 2_000_000, 3
+            )
+
+        action_mock.assert_called_once_with(2_000_000 - (86400 * 3), 2_000_000, 3)
+        assert result["actions"] == actions
+        assert result["new_posts"] == 12.5
+        assert result["notifications"] == 42.0
+
+    def test_filter_collection_returns_structured_data_only(self, tmp_path):
+        filter_log = tmp_path / "log_filter.md"
+        filter_log.write_text(
+            "Date | Title | Code\n"
+            "-----|-------|-----\n"
+            "2026-07-11 | outside | 1\n"
+            "2026-07-12 | first | 1\n"
+            "2026-07-14 | second | 1A\n"
+            "2026-07-15 | third | 1\n",
+            encoding="utf-8",
+        )
+
+        with patch.object(
+            public_statistics.Paths,
+            "LOGS",
+            {**public_statistics.Paths.LOGS, "FILTER": str(filter_log)},
+        ):
+            result = public_statistics._collect_filter_statistics(
+                date(2026, 7, 12), date(2026, 7, 15)
+            )
+
+        assert result == {
+            "ratePerDay": 1.0,
+            "startDate": "2026-07-12",
+            "endDate": "2026-07-15",
+        }
+
+    def test_filter_collection_returns_none_when_log_is_missing(self, tmp_path):
+        with patch.object(
+            public_statistics.Paths,
+            "LOGS",
+            {**public_statistics.Paths.LOGS, "FILTER": str(tmp_path / "missing.md")},
+        ):
+            result = public_statistics._collect_filter_statistics(
+                date(2026, 7, 12), date(2026, 7, 15)
+            )
+
+        assert result is None
 
 
 class TestWenyuanPeriodStats:
-    def test_collects_wenyuan_period_stats(self, monkeypatch):
+    def test_collects_wenyuan_period_stats(self):
         sample_stats = {
             "periodLabel": "last 30 days",
             "overall": {
@@ -845,33 +877,80 @@ class TestWenyuanPeriodStats:
             },
             "timing": {"medianTranslationDisplay": "2 hours"},
         }
-        stub = _make_stub_module(
-            "main_wenyuan",
-            build_period_stats_data=MagicMock(return_value=sample_stats),
-        )
-        monkeypatch.setitem(sys.modules, "main_wenyuan", stub)
+        with patch.object(
+            public_statistics, "build_period_stats_data", return_value=sample_stats
+        ) as build_mock:
+            data = public_statistics._wenyuan_period_stats(30)
 
-        summary, data = moderator_digest._wenyuan_period_stats(30)
-
-        stub.build_period_stats_data.assert_called_once_with(
-            30, include_comparison=True
-        )
+        build_mock.assert_called_once_with(30, include_comparison=True)
         assert data == sample_stats
-        assert summary is not None
-        assert "**Total requests**: 42" in summary
-        assert "**Median translation time**: 2 hours" in summary
 
-    def test_collects_wenyuan_period_stats_fails_soft(self, monkeypatch):
-        stub = _make_stub_module(
-            "main_wenyuan",
-            build_period_stats_data=MagicMock(side_effect=RuntimeError("boom")),
-        )
-        monkeypatch.setitem(sys.modules, "main_wenyuan", stub)
+    def test_collects_wenyuan_period_stats_fails_soft(self):
+        with patch.object(
+            public_statistics,
+            "build_period_stats_data",
+            side_effect=RuntimeError("boom"),
+        ):
+            data = public_statistics._wenyuan_period_stats(30)
 
-        summary, data = moderator_digest._wenyuan_period_stats(30)
-
-        assert summary is None
         assert data is None
+
+    def test_serializes_lumo_for_reporting(self):
+        lumo = MagicMock()
+        lumo.__len__.return_value = 5
+        lumo.get_overall_stats.return_value = {"total_requests": 5}
+        lumo.get_direction_stats.return_value = {"to_english": {"count": 3}}
+        lumo.get_notification_stats.return_value = {"total_notified_users": 8}
+        lumo.get_image_stats.return_value = {"image_requests": 1}
+        lumo.get_fastest_translations.return_value = {
+            "average_translation_hours": 1.5,
+            "median_translation_seconds": 3600,
+            "timed_translation_count": 4,
+        }
+        lumo.get_language_rankings.return_value = [("Spanish", 5)]
+        lumo.get_language_stats.return_value = {
+            "percent_of_all_requests": 100,
+            "translation_percentage": 80,
+            "needs_review": 1,
+            "untranslated": 0,
+        }
+        lumo.get_unique_translator_count.return_value = 3
+        lumo.get_source_target_pairs.return_value = [("Spanish -> English", 4)]
+
+        with (
+            patch.object(
+                period_statistics,
+                "converter",
+                return_value=types.SimpleNamespace(preferred_code="es"),
+            ),
+            patch.object(
+                period_statistics,
+                "time_convert_to_string_seconds",
+                return_value="1 hour",
+            ),
+        ):
+            result = period_statistics._serialize_period_stats(
+                lumo, 30, "last 30 days"
+            )
+
+        assert result["postCount"] == 5
+        assert result["timing"] == {
+            "averageTranslationHours": 1.5,
+            "medianTranslationSeconds": 3600,
+            "medianTranslationDisplay": "1 hour",
+            "timedTranslationCount": 4,
+        }
+        assert result["topLanguages"] == [
+            {
+                "language": "Spanish",
+                "code": "es",
+                "requests": 5,
+                "percentOfAllRequests": 100,
+                "translationPercentage": 80,
+                "needsReview": 1,
+                "untranslated": 0,
+            }
+        ]
 
 
 class TestWenyuanDailyVolume:
@@ -986,7 +1065,7 @@ class TestErrorLogTrimmerLogic:
 
 
 # ===========================================================================
-# Tests: _analyze_mod_removals rule-pattern extraction  (community_digest.py)
+# Tests: _analyze_mod_removals rule-pattern extraction  (moderator_reporting.py)
 # ===========================================================================
 
 
@@ -1072,7 +1151,7 @@ class TestBotActionReportMath:
 
 
 # ===========================================================================
-# Tests: monthly_rule_violation_report structure  (community_digest.py)
+# Tests: monthly_rule_violation_report structure  (moderator_reporting.py)
 # ===========================================================================
 
 
@@ -1135,13 +1214,13 @@ class TestModRemovalReportStructure:
 
 
 # ===========================================================================
-# Tests: _activity_csv_handler statistics  (moderator_digest.py)
+# Tests: _activity_csv_summary statistics  (moderator_reporting.py)
 # ===========================================================================
 
 
 class TestActivityCsvHandlerStatistics:
     """
-    Tests the average/longest-cycle calculations in _activity_csv_handler
+    Tests the average/longest-cycle calculations in _activity_csv_summary
     by feeding a known CSV through a mocked file open.
     """
 
@@ -1160,14 +1239,13 @@ class TestActivityCsvHandlerStatistics:
         csv_file = tmp_path / "activity.csv"
         csv_file.write_text(self.CSV_CONTENT, encoding="utf-8")
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
-            {**moderator_digest.Paths.LOGS, "ACTIVITY": str(csv_file)},
+            {**moderator_update.Paths.LOGS, "ACTIVITY": str(csv_file)},
         ):
-            with patch.object(
-                moderator_digest, "WENJU_SETTINGS", {"lines_to_keep": 1000}
-            ):
-                summary, data = moderator_digest._activity_csv_handler()
+            summary, data = moderator_update._activity_csv_summary()
+
+        assert csv_file.read_text(encoding="utf-8") == self.CSV_CONTENT
         return summary, data
 
     def test_average_api_calls(self, csv_result):
@@ -1190,14 +1268,14 @@ class TestActivityCsvHandlerStatistics:
 
     def test_missing_file_returns_fallback_string(self, tmp_path):
         with patch.object(
-            moderator_digest.Paths,
+            moderator_update.Paths,
             "LOGS",
             {
-                **moderator_digest.Paths.LOGS,
+                **moderator_update.Paths.LOGS,
                 "ACTIVITY": str(tmp_path / "nonexistent.csv"),
             },
         ):
-            summary, data = moderator_digest._activity_csv_handler()
+            summary, data = moderator_update._activity_csv_summary()
 
         assert "missing" in summary.lower()
         assert data == {}

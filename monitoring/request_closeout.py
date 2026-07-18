@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from config import SETTINGS
 from config import logger as _base_logger
 from database import db
-from models.ajo import ajo_loader
+from models.ajo import ajo_loader, ajo_writer
 from monitoring.action_statistics import action_counter
 from reddit.connection import REDDIT, is_valid_user
 from reddit.reddit_sender import message_send
@@ -96,11 +96,14 @@ def _send_closeout_messages(
         )
         closeout_message += RESPONSE.BOT_DISCLAIMER
 
-        message_send(
+        message_sent = message_send(
             redditor_obj=author,
             subject=subject_line,
             body=closeout_message,
         )
+        if message_sent:
+            ajo.set_author_messaged(True)
+            ajo_writer(ajo)
         action_counter(1, "Closeout messages")
         logger.info(
             f"Messaged u/{author} about "

@@ -24,6 +24,7 @@ from database import initialize_all_databases, search_database
 from error import display_event_errors
 from hermes.tools import parse_title_diagnostic, print_statistics, test_parser
 from integrations.ai import fetch_image_description
+from integrations.http import get_random_useragent
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 from lang.languages import converter, parse_language_list
 from lang.languages import logger as lang_logger
@@ -35,7 +36,6 @@ from monitoring.points import points_post_retriever, points_user_retriever
 from reddit.connection import (
     REDDIT_HELPER,
     REDDIT_HERMES,
-    get_random_useragent,
     reddit_status_check,
     search_removal_reasons,
     submission_from_input,
@@ -47,9 +47,10 @@ from reddit.wiki import fetch_most_requested_languages
 from title.title_handling import process_title
 from utility import fetch_youtube_length, is_valid_image_url
 from wenju.iso_updates import fetch_iso_reports
-from wenju.moderator_update import send_moderator_update
+from wenju.moderator_reporting import send_moderator_update
 from wenju.public_statistics import generate_public_statistics
-from wenju.status_report import language_of_the_day, notify_db_statistics_calculator
+from wenju.sidebar_updates import language_of_the_day
+from wenju.status_report import notify_db_statistics_calculator
 from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from wenyuan.title_full_retrieval import retrieve_titles_test
 from zhongsheng.recruit import (
@@ -816,7 +817,7 @@ def check_reddit_removal_reasons() -> None:
 
 
 def check_reddit_useragent() -> None:
-    """connection: Generate and display a random user agent."""
+    """http: Generate and display a random user agent."""
     ua = get_random_useragent()
     msg.info(f"User-Agent : {ua['User-Agent']}")
     msg.info(f"Accept     : {ua['Accept']}")

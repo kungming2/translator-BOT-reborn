@@ -822,45 +822,11 @@ class Ajo:
         # Set the status for the specific language
         self.status[language_code] = status_value
 
-    def set_type(self, value: str) -> None:
-        """
-        Set the type of the post.
-        Must be either 'single' or 'multiple'.
-        If changing from 'multiple' to 'single', reset
-        is_defined_multiple to False.
-        """
-        if value not in ["single", "multiple"]:
-            raise ValueError("Post type must be 'single' or 'multiple'.")
-        self.type = value
-
-        # Reset is_defined_multiple if type is changed to 'single'
-        if value == "single":
-            self.is_defined_multiple = False
-
     def set_is_long(self, value: bool) -> None:
         """
         Set whether the post is marked as long.
         """
         self.is_long = bool(value)
-
-    def set_is_defined_multiple(self, value: bool) -> None:
-        """
-        Set whether the post is marked as a defined multiple post.
-        This should only be meaningful when type is 'multiple'.
-
-        :param value: Boolean indicating if this is a defined multiple.
-        """
-        self.is_defined_multiple = bool(value)
-
-    def toggle_is_defined_multiple(self) -> bool:
-        """
-        Toggle the is_defined_multiple attribute between True and False.
-        Returns the new value after toggling.
-
-        :return: The new value of is_defined_multiple after toggling.
-        """
-        self.is_defined_multiple = not self.is_defined_multiple
-        return self.is_defined_multiple
 
     def set_closed_out(self, value: bool) -> None:
         """

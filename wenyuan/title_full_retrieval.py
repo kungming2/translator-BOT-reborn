@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
-from models.ajo import ajo_loader, determine_flair_and_update
 from reddit.connection import REDDIT_HELPER
 from title.title_handling import process_title
 from utility import format_markdown_table_with_padding
@@ -327,48 +326,3 @@ def retrieve_titles_test(fetch_amount: int = 1000) -> None:
 
     print(full_document)
     _save_to_file(full_document)
-
-
-def examine_flair_for_ajo(
-    ajo_id: str, initial_update: bool = False, moderator_set: bool = False
-) -> None:
-    """
-    Load an Ajo object and test flair determination with testing mode enabled.
-
-    Args:
-        ajo_id: The ID of the Ajo/submission to load
-        initial_update: If True, always sets flair even if unchanged (default: False)
-        moderator_set: If True, skips adding "(Identified)" to flair text (default: False)
-    """
-    original_testing_mode = SETTINGS.get("testing_mode", False)
-
-    try:
-        SETTINGS["testing_mode"] = True
-
-        logger.info(f"Loading Ajo object for ID: {ajo_id}")
-        ajo = ajo_loader(ajo_id)
-
-        if ajo is None:
-            logger.error(f"Failed to load Ajo object for ID: {ajo_id}")
-            return
-
-        logger.info(f"Testing flair determination for Ajo: {ajo_id}")
-        determine_flair_and_update(
-            ajo, initial_update=initial_update, moderator_set=moderator_set
-        )
-
-        logger.info(
-            f"Flair Test Results for {ajo_id}:\n"
-            f"  CSS Class: {getattr(ajo, 'output_post_flair_css', 'N/A')}\n"
-            f"  Flair Text: {getattr(ajo, 'output_post_flair_text', 'N/A')}\n"
-            f"  Language: {getattr(ajo.lingvo, 'name', 'N/A') if ajo.lingvo else 'No lingvo'}\n"
-            f"  Post Type: {ajo.type}\n"
-            f"  Status: {getattr(ajo, 'status', 'N/A')}"
-        )
-
-    except Exception as e:
-        logger.error(f"Error testing flair for Ajo {ajo_id}: {e}", exc_info=True)
-
-    finally:
-        SETTINGS["testing_mode"] = original_testing_mode
-        logger.debug(f"Restored testing_mode to: {original_testing_mode}")

@@ -14,7 +14,6 @@ import json
 import logging
 import random
 import re
-import unicodedata
 from time import sleep
 from urllib.parse import quote, urljoin
 
@@ -30,7 +29,7 @@ from pypinyin import Style, lazy_pinyin
 
 from config import Paths
 from config import logger as _base_logger
-from reddit.connection import get_random_useragent
+from integrations.http import get_random_useragent
 from responses import RESPONSE
 from ziwen_lookup.async_helpers import call_sync_async
 from ziwen_lookup.cache_helpers import (
@@ -40,6 +39,7 @@ from ziwen_lookup.cache_helpers import (
     parse_zh_output_to_json,
     save_to_cache,
 )
+from ziwen_lookup.normalization import normalize_lookup_key
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:ZH"})
 
@@ -47,11 +47,6 @@ useragent = get_random_useragent()
 
 CALLIGRAPHY_ATTEMPTS = 2
 CALLIGRAPHY_TIMEOUT = (2, 2)
-
-
-def _normalize_chinese_lookup_key(text: str) -> str:
-    """Normalize compatibility forms before Chinese dictionary/cache lookup."""
-    return unicodedata.normalize("NFKC", text.strip())
 
 
 # ─── Traditional/simplified conversion ─────────────────────────────────────────────
@@ -149,39 +144,6 @@ def _convert_numbered_pinyin(s: str) -> str:
     result += t
 
     return result
-
-
-def vowel_neighbor(letter: str, word: str) -> bool:
-    """Checks a letter to see if vowels are around it."""
-    vowels = "aeiouy"
-
-    for i in range(len(word)):
-        if word[i] == letter:
-            if i > 0 and word[i - 1] in vowels:
-                return True
-            if i < len(word) - 1 and word[i + 1] in vowels:
-                return True
-    return False
-
-
-def _vowel_preceder(letter: str, word: str) -> bool:
-    """Checks a letter to see if vowels precede it."""
-    vowels = "aeiouy"
-
-    for i in range(len(word)):
-        if word[i] == letter and i > 0 and word[i - 1] in vowels:
-            return True
-    return False
-
-
-def _pair_syllables_with_tones(raw_syllables: list[str]) -> str:
-    """Pairs Cantonese syllables and tone numbers correctly."""
-    pairs = []
-    for i in range(0, len(raw_syllables) - 1, 2):
-        syllable = raw_syllables[i]
-        tone = raw_syllables[i + 1]
-        pairs.append(f"{syllable}{tone}")
-    return " ".join(pairs)
 
 
 def _zh_word_alternate_romanization(
@@ -1021,7 +983,7 @@ async def zh_character(character: str) -> str:
     :param character: Any Chinese character or string.
     :return: Formatted string containing the character's information.
     """
-    character = _normalize_chinese_lookup_key(character)
+    character = normalize_lookup_key(character)
     return await get_cached_or_fetch_zh_character(character, _zh_character_fetch)
 
 
@@ -1336,7 +1298,7 @@ async def zh_word(word: str) -> str:
     :return: Formatted string containing pronunciation and meanings.
     """
     # Check cache directly with traditional form
-    word = _normalize_chinese_lookup_key(word)
+    word = normalize_lookup_key(word)
     trad_word = tradify(word)
     cached = get_from_cache(trad_word, "zh", "zh_word")
 

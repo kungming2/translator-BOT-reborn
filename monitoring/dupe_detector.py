@@ -11,7 +11,6 @@ Logger tag: [MN:DUPE]
 from __future__ import annotations
 
 # ─── Imports ──────────────────────────────────────────────────────────────────
-import hashlib
 import logging
 import re
 import time
@@ -27,7 +26,6 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from config import logger as _base_logger
-from database import db
 from reddit.connection import is_mod, remove_content
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
@@ -170,21 +168,6 @@ class DuplicateDetector:
         if 0 < avg_diff <= 3:
             return True
         return len(set(differences)) == 1 and differences[0] != 0
-
-    def create_title_hash(self, title: str) -> str:
-        """
-        Create a hash of the title for exact duplicate detection.
-
-        Args:
-            title: Title string
-
-        Returns:
-            SHA256 hash of normalized title
-        """
-        normalized = self.normalize_text(title)
-        cleaned = re.sub(r"[^a-z\s]", "", normalized)
-        cleaned = re.sub(r"\s+", " ", cleaned).strip()
-        return hashlib.sha256(cleaned.encode()).hexdigest()
 
     # ── Similarity methods ────────────────────────────────────────────────────
 
@@ -684,89 +667,4 @@ def check_image_duplicate(
 
     except Exception as e:
         logger.error(f"Error checking image duplicate for `{post.id}`: {e}")
-        return None
-
-
-# ─── Image duplicate statistics ───────────────────────────────────────────────
-
-
-def get_image_duplicate_stats(days: int = 7) -> dict | None:
-    """
-    Get statistics about image duplicates in the database.
-    Useful for monitoring and tuning the duplicate detection parameters.
-
-    Args:
-        days: Number of days to analyze (default: 7)
-
-    Returns:
-        dict: Statistics about image duplicates
-        {
-            'total_image_posts': int,
-            'unique_hashes': int,
-            'duplicate_groups': list[dict],  # Groups of posts with identical hashes
-            'time_range_days': int
-        }
-    """
-    cutoff_utc = int(time.time()) - (days * 86400)
-
-    try:
-        query = """
-                SELECT id, created_utc, ajo
-                FROM ajo_database
-                WHERE ajo LIKE '%image_hash%'
-                  AND created_utc >= ? \
-                """
-        results = db.fetchall_ajo(query, (cutoff_utc,))
-
-        hash_groups = defaultdict(list)
-        total_posts = 0
-
-        for result in results:
-            try:
-                data = orjson.loads(result["ajo"])
-                image_hash = data.get("image_hash")
-
-                if image_hash:
-                    total_posts += 1
-                    hash_groups[image_hash].append(
-                        {
-                            "post_id": result["id"],
-                            "created_utc": result["created_utc"],
-                            "author": data.get("author", "unknown"),
-                            "title": data.get("title", ""),
-                        }
-                    )
-            except Exception as e:
-                logger.debug(f"Error processing result: {e}")
-                continue
-
-        duplicate_groups = [
-            {
-                "hash": hash_val,
-                "count": len(posts),
-                "posts": sorted(posts, key=lambda x: x["created_utc"]),
-            }
-            for hash_val, posts in hash_groups.items()
-            if len(posts) > 1
-        ]
-
-        duplicate_groups.sort(key=lambda x: x["count"], reverse=True)
-
-        stats = {
-            "total_image_posts": total_posts,
-            "unique_hashes": len(hash_groups),
-            "duplicate_groups": duplicate_groups,
-            "time_range_days": days,
-        }
-
-        logger.info(
-            f"Found {total_posts} image posts with "
-            f"{len(hash_groups)} unique hashes over {days} days. "
-            f"{len(duplicate_groups)} groups with exact duplicates."
-        )
-
-        return stats
-
-    except Exception as e:
-        logger.error(f"Error getting statistics: {e}")
         return None

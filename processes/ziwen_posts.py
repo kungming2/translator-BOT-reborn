@@ -111,6 +111,11 @@ def ziwen_posts(post_limit: int | None = None) -> None:
         list_posts=posts[-detection_limit:],
         reddit_instance=REDDIT,
         testing_mode=SETTINGS["testing_mode"],
+        semantic_threshold=SETTINGS["duplicate_semantic_threshold"],
+        fuzzy_threshold=SETTINGS["duplicate_fuzzy_threshold"],
+        numerical_threshold=SETTINGS["duplicate_numerical_threshold"],
+        age_limit_hours=SETTINGS["duplicate_age_limit"],
+        use_semantic=SETTINGS["duplicate_use_semantic"],
     )
     if dupes_removed:
         logger.info(f"Completed duplicate detection. Removed {dupes_removed} posts.")
@@ -136,7 +141,9 @@ def ziwen_posts(post_limit: int | None = None) -> None:
         # Handle internal posts (meta, community, etc.) separately.
         if is_internal_post(post):
             if diskuto_exists(post_id):
-                logger.debug(f"> Internal post `{post_id}` has already been processed.")
+                logger.debug(
+                    f"> Internal post `{post_id}` already exists in the internal post database."
+                )
                 continue
             else:
                 diskuto_output = Diskuto.process_post(post)
@@ -245,8 +252,8 @@ def ziwen_posts(post_limit: int | None = None) -> None:
             duplicate_result = check_image_duplicate(
                 post=post,
                 ajo=post_ajo,
-                days_lookback=90,
-                max_distance=5,
+                days_lookback=SETTINGS["duplicate_image_age_limit_days"],
+                max_distance=SETTINGS["duplicate_image_max_distance"],
                 testing_mode=SETTINGS["testing_mode"],
             )
 

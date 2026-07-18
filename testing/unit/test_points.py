@@ -27,6 +27,50 @@ class _FakeDb:
         )
         self.conn_main.commit()
 
+    def fetchall_main(self, query: str, params: tuple = ()) -> list[dict]:
+        cursor = self.conn_main.execute(query, params)
+        columns = [description[0] for description in cursor.description]
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+class TestMonthPointsSummary(unittest.TestCase):
+    def test_formats_ranked_points_and_applies_existing_filters(self) -> None:
+        fake_db = _FakeDb()
+        fake_db.cursor_main.executemany(
+            "INSERT INTO total_points VALUES (?, ?, ?, ?, ?)",
+            [
+                ("2026-05", "c1", "helper_one", 5, "post1"),
+                ("2026-05", "c2", "helper_one", 7, "post2"),
+                ("2026-04", "c3", "helper_one", 3, "post3"),
+                ("2026-05", "c4", "other", 8, "post4"),
+                ("2026-05", "c5", "below_threshold", 4, "post5"),
+                ("2026-05", "c6", "AutoModerator", 100, "post6"),
+            ],
+        )
+        fake_db.conn_main.commit()
+
+        with (
+            patch.object(points, "db", fake_db),
+            patch.object(
+                points,
+                "WENJU_SETTINGS",
+                {
+                    "minimum_points_display_threshold": 5,
+                    "points_exclude_usernames": ["AutoModerator"],
+                },
+            ),
+        ):
+            summary = points.get_month_points_summary("2026-05")
+
+        helper_row = "| u\\/helper\\_one | 12 | 15 | 2 posts | 3 posts |"
+        other_row = "| u\\/other | 8 | 8 | 1 posts | 1 posts |"
+        self.assertIn("| Username | Points in 2026-05 |", summary)
+        self.assertIn(helper_row, summary)
+        self.assertIn(other_row, summary)
+        self.assertLess(summary.index(helper_row), summary.index(other_row))
+        self.assertNotIn("below_threshold", summary)
+        self.assertNotIn("AutoModerator", summary)
+
 
 class TestPointRecordReplacement(unittest.TestCase):
     def test_replaces_existing_comment_rows_instead_of_appending(self) -> None:
@@ -92,6 +136,16 @@ class TestPointRecordReplacement(unittest.TestCase):
         ).fetchall()
 
         self.assertEqual(rows, [("2026-05", "abc123", "helper", 1, "post1")])
+
+
+class TestPointsPolicySettings(unittest.TestCase):
+    def test_unknown_language_value_uses_primary_settings(self) -> None:
+        lingvo = types.SimpleNamespace(preferred_code="unknown")
+
+        with patch.dict(points.SETTINGS, {"points_unknown_language_value": 9}):
+            result = points.points_worth_determiner(lingvo)
+
+        self.assertEqual(result, 9)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,21 @@
+import importlib
+import sys
+import types
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from models.lingvo import Lingvo
-from reddit import notifications
+
+_previous_startup_module = sys.modules.get("reddit.startup")
+_startup_stub = types.ModuleType("reddit.startup")
+_startup_stub.STATE = SimpleNamespace(recent_submitters=[])
+sys.modules["reddit.startup"] = _startup_stub
+notifications = importlib.import_module("reddit.notifications")
+
+if _previous_startup_module is None:
+    del sys.modules["reddit.startup"]
+else:
+    sys.modules["reddit.startup"] = _previous_startup_module
 
 
 class _Cursor:
@@ -111,3 +124,23 @@ def test_notifier_uses_alpha2_country_code_for_regional_subscription_query():
 
     assert result == []
     assert db.conn_main.cursor_obj.executed[-1][1] == ("pt-BR",)
+
+
+def test_notification_rate_limiter_uses_configured_rare_language_threshold():
+    subscribers = [f"user_{index}" for index in range(10)]
+
+    with patch.dict(
+        notifications.SETTINGS,
+        {
+            "notifications_api_limiter_on": False,
+            "notifications_rare_language_rate_threshold": 7,
+            "notifications_user_limit": 10,
+        },
+    ):
+        selected = notifications._notification_rate_limiter(
+            subscribers,
+            _lingvo(rate_monthly=6),
+            monthly_limit=1,
+        )
+
+    assert selected == sorted(subscribers)

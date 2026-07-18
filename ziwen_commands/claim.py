@@ -16,6 +16,7 @@ from typing import Any
 
 from praw.models import Comment
 
+from config import SETTINGS
 from config import logger as _base_logger
 from lang.languages import converter
 from models.ajo import Ajo
@@ -30,7 +31,7 @@ from time_handling import get_current_utc_time
 from . import update_status
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "ZW:CLAIM"})
-CLAIM_PERIOD_SECONDS = 8 * 60 * 60
+CLAIM_PERIOD_SECONDS: int = SETTINGS["claim_period"]
 
 
 # ─── Internal helpers ─────────────────────────────────────────────────────────

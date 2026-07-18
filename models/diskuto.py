@@ -111,11 +111,9 @@ class Diskuto:
 
     # ── State mutation methods ─────────────────────────────────────────────────
 
-    def toggle_processed(self) -> None:
-        """
-        Flip the processed flag (True -> False or False -> True).
-        """
-        self.processed = not self.processed
+    def mark_processed(self) -> None:
+        """Mark that this internal post has passed through the notifier."""
+        self.processed = True
 
     # ── Reddit actions ────────────────────────────────────────────────────────
 

@@ -432,7 +432,10 @@ def _notification_rate_limiter(
         average_posts_per_month = SETTINGS["unknown_language_default_rate"]
 
     # Calculate users to notify
-    if average_posts_per_month < 5:  # Notify everyone for rarer languages
+    rare_language_rate_threshold = SETTINGS[
+        "notifications_rare_language_rate_threshold"
+    ]
+    if average_posts_per_month < rare_language_rate_threshold:
         # If the API limits on messages are off, return the entire list.
         # Otherwise, return up to the user limit maximum.
         if not SETTINGS["notifications_api_limiter_on"]:

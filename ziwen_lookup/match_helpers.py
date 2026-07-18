@@ -28,8 +28,8 @@ from kiwipiepy import Kiwi
 
 from config import Paths, load_settings
 from config import logger as _base_logger
+from integrations.http import get_random_useragent
 from lang.languages import converter
-from reddit.connection import get_random_useragent
 from title.title_handling import extract_lingvos_from_text
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
