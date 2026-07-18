@@ -10,6 +10,19 @@ The functions are in `/wenju` and are categorized by their rough function. They 
 
 Wenju uses the `@task(schedule="...")` decorator in `wenju.__init__` to register tasks. `run_schedule()` dynamically imports every sibling module in `/wenju`, which triggers decorator registration without maintaining a manual import list. Valid schedule names are `hourly`, `daily`, `weekly`, and `monthly`; `main_wenju.py` validates the command-line argument and dispatches that schedule.
 
+The task modules are organized by responsibility:
+
+* `community_digest.py`: public/community notifications and reports.
+* `data_maintenance.py`: local file, database, cache, and archival maintenance.
+* `hermes_reporting.py`: scheduled Hermes reporting wrappers.
+* `iso_updates.py`: ISO 639-3 change-report collection and posting.
+* `moderation_monitoring.py`: moderation signals and queue alerts.
+* `moderator_reporting.py`: operational and rule-violation reports for moderators.
+* `public_statistics.py`: the generated public statistics dashboard.
+* `sidebar_updates.py`: Old and New Reddit sidebar content.
+* `status_report.py`: Reddit status and database reports.
+* `subreddit_maintenance.py`: subreddit wiki, flair, sticky, and modmail maintenance.
+
 Each task runs independently inside the selected schedule. If one task fails, Wenju logs the exception, writes an error entry, and continues with the remaining tasks. Weekly and monthly schedules send a Discord alert listing successfully executed tasks; hourly and daily schedules do not.
 
 ## Hourly Functions
@@ -36,7 +49,6 @@ Each task runs independently inside the selected schedule. If one task fails, We
 * `clean_processed_database()`: Cleans up the processed comments and posts in the database by pruning old entries from the 'old_comments' and 'old_posts' tables.
 * `deleted_posts_assessor()`: Gathers data on individuals who deleted their posts from the subreddit, focusing on those who deleted translated posts without thanking their translators. This is generally considered quite rude by translators, so this routine helps check for repeat offenders. This also produces a local Markdown report.
 * `fetch_iso_reports()`: Checks ISO 639-3 code change reports from SIL's [change management page](https://iso639-3.sil.org/code_changes/change_management) and if there's something new, saves that report entry to a YAML file for later alerts.
-* `notify_db_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
 * `update_verified_list()`:  Updates the subreddit wiki page '[verified](https://www.reddit.com/r/translator/wiki/verified)' with a sorted list of verified users organized by language. Also flags users with problematic flairs.
 * `weekly_bot_action_report()`: Generates a weekly report of mod actions on Reddit taken by u/translator-BOT and posts it to r/translatorBOT, including a breakdown of action types and counts for the period.
 
@@ -46,5 +58,6 @@ Each task runs independently inside the selected schedule. If one task fails, We
 * `monthly_rule_violation_report()`: Analyzes the past 30 days of moderation comments to tally rule violations by type, then sends a summary report via Discord.
 * `monthly_hermes_statistics_post()`: Posts the previous full calendar month's Hermes statistics to r/translatorBOT. If the post already exists for that month, the task skips posting.
 * `monthly_statistics_unpinner()`: Simple routine that unpins the monthly statistics sticky if it's still up when the timing runs. 
+* `notify_db_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
 * `post_iso_reports_to_reddit()`: Takes the information from `fetch_iso_reports()` and posts the file to r/translatorBOT, as well as updates moderators with that information.
 * `refresh_language_statistics()`: Collects all language wiki pages, parses their statistics, and generates a statistics JSON file that serves as a machine-readable format of the statistical information. Also updates the statistics wiki page with a grouped list of links to each individual language's wiki page.

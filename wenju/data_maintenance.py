@@ -27,6 +27,7 @@ from praw.models import WikiPage
 from config import SETTINGS, Paths
 from config import logger as _base_logger
 from database import db
+from error import CustomDumper
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter, validate_lingvo_dataset
 from monitoring.points import points_worth_determiner
@@ -125,7 +126,14 @@ def error_log_trimmer() -> None:
 
     with open(error_log_path, "w", encoding="utf-8") as f:
         if trimmed:
-            yaml.dump(trimmed, f, allow_unicode=True, sort_keys=False)
+            yaml.dump(
+                trimmed,
+                f,
+                Dumper=CustomDumper,
+                allow_unicode=True,
+                sort_keys=False,
+                default_flow_style=False,
+            )
 
     removed = len(entries) - len(trimmed)
     if removed:
