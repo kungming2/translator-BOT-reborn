@@ -23,6 +23,7 @@ from models.diskuto import diskuto_exists
 from models.instruo import Instruo, comment_has_command
 from models.komando import action_count_for_statistics
 from monitoring.action_statistics import action_counter
+from monitoring.edit_tracker import cache_processed_comment
 from monitoring.points import points_tabulator
 from monitoring.runtime_metrics import increment_runtime_metric
 from monitoring.user_statistics import user_statistics_writer
@@ -187,8 +188,9 @@ def ziwen_commands() -> None:
         try:
             comment_id = comment.id
             original_post = comment.submission
+            comment_snapshot_body = comment.body.strip()
             comment_body = (
-                comment.body.lower()
+                comment_snapshot_body.lower()
             )  # lowercase for ease of command matching
 
             # ── Pre-flight checks ──────────────────────────────────────────────
@@ -269,6 +271,12 @@ def ziwen_commands() -> None:
                 instruo = Instruo.from_comment(
                     comment, parent_languages=parent_languages
                 )
+                cache_processed_comment(
+                    comment_id,
+                    comment_snapshot_body,
+                    int(comment.created_utc),
+                    instruo.commands,
+                )
 
                 logger.info(
                     f"> Derived instruo and ajo for `{comment.id}` on "
@@ -314,6 +322,12 @@ def ziwen_commands() -> None:
                 user_statistics_writer(instruo)
                 logger.debug("Recorded user commands in database.")
             else:
+                cache_processed_comment(
+                    comment_id,
+                    comment_snapshot_body,
+                    int(comment.created_utc),
+                    [],
+                )
                 # Non-command comment on the verified thread — skip silently.
                 if original_post.id == VERIFIED_POST_ID:
                     logger.debug(

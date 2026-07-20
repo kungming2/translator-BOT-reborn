@@ -247,7 +247,7 @@
           <div class="table-title">Top Languages</div>
           <div class="table-meta" id="wy-language-summary"></div>
         </div>
-        <table id="wy-languages-table"><thead><tr><th>Language</th><th class="num">Requests</th><th class="num">Translated</th><th class="num">Needs Review</th></tr></thead><tbody></tbody></table>
+        <table id="wy-languages-table"><thead><tr><th>Language</th><th class="num">Requests</th><th class="num">% of Total</th><th class="num">Translated %</th></tr></thead><tbody></tbody></table>
       </div>
       <div class="card">
         <div class="table-block"><div class="table-title">Source-Target Pairs</div><table id="wy-pairs-table"><thead><tr><th>Pair</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
@@ -272,49 +272,76 @@
 "use strict";
 const DATA = JSON.parse(document.getElementById("public-stats-data").textContent);
 const LANGUAGE_COLORS = Object.freeze({
-  // Semitic
-  syc: "#E39F43", am: "#E39F43", ar: "#E39F43", mt: "#E39F43", arc: "#E39F43", acm: "#E39F43", aeb: "#E39F43", arq: "#E39F43", ary: "#E39F43", arz: "#E39F43", he: "#E39F43",
+  // Indo-European
   // Balto-Slavic
   be: "#5291C1", bg: "#5291C1", bs: "#5291C1", cs: "#5291C1", uk: "#5291C1", sr: "#5291C1", hr: "#5291C1", lt: "#5291C1", sk: "#5291C1", ru: "#5291C1", pl: "#5291C1", mk: "#5291C1", sl: "#5291C1", lv: "#5291C1", cu: "#5291C1",
+  // Celtic
+  br: "#3384C0", cy: "#3384C0", ga: "#3384C0", gd: "#3384C0",
+  // Germanic
+  de: "#0F2E5B", fo: "#0F2E5B", li: "#0F2E5B", lb: "#0F2E5B", da: "#0F2E5B", is: "#0F2E5B", yi: "#0F2E5B", no: "#0F2E5B", sv: "#0F2E5B", nl: "#0F2E5B", non: "#0F2E5B", ang: "#0F2E5B", gsw: "#0F2E5B", af: "#0F2E5B", en: "#0F2E5B",
+  // Hellenic
+  grc: "#5B91CC", el: "#5B91CC",
   // Indo-Iranian
   tg: "#14294C", pi: "#14294C", bn: "#14294C", fa: "#14294C", gu: "#14294C", hi: "#14294C", pa: "#14294C", mr: "#14294C", ku: "#14294C", ur: "#14294C", sa: "#14294C", ps: "#14294C", ne: "#14294C", si: "#14294C",
   // Romance
   ca: "#2856A5", co: "#2856A5", es: "#2856A5", fr: "#2856A5", it: "#2856A5", la: "#2856A5", pt: "#2856A5", ro: "#2856A5", scn: "#2856A5", nap: "#2856A5", sc: "#2856A5",
-  // Germanic
-  de: "#0F2E5B", fo: "#0F2E5B", li: "#0F2E5B", lb: "#0F2E5B", da: "#0F2E5B", is: "#0F2E5B", yi: "#0F2E5B", no: "#0F2E5B", sv: "#0F2E5B", nl: "#0F2E5B", non: "#0F2E5B", ang: "#0F2E5B", gsw: "#0F2E5B", af: "#0F2E5B", en: "#0F2E5B",
+  // Other Indo-European branches
+  hy: "#1C4A7A", sq: "#3592F9",
+
+  // Afro-Asiatic
+  // Cushitic
+  om: "#CA8D48", so: "#CA8D48",
+  // Egyptian
+  cop: "#EDAB37", egy: "#EDAB37",
+  // Semitic
+  syc: "#E39F43", am: "#E39F43", ar: "#E39F43", mt: "#E39F43", arc: "#E39F43", acm: "#E39F43", aeb: "#E39F43", arq: "#E39F43", ary: "#E39F43", arz: "#E39F43", he: "#E39F43",
+
+  // Sino-Tibetan
   // Tibeto-Burman
   dz: "#1B3A19", bo: "#1B3A19", my: "#1B3A19",
-  tw: "#398984", ln: "#398984", xh: "#398984", yo: "#398984", sw: "#398984", zu: "#398984",
-  br: "#3384C0", cy: "#3384C0", ga: "#3384C0", gd: "#3384C0",
-  et: "#382610", hu: "#382610",
-  id: "#813183", ban: "#813183", haw: "#813183", jv: "#813183", mi: "#813183", ms: "#813183",
-  tl: "#A1539F", ceb: "#A1539F", mg: "#A1539F",
-  // Dravidian
-  kn: "#A190C4", ml: "#A190C4", ta: "#A190C4", te: "#A190C4",
   // Sinitic
   lzh: "#85A542", zh: "#85A542", yue: "#85A542", "zh-yue": "#85A542",
-  // Language Isolates
-  ko: "#BC997B", eu: "#BC997B",
-  cop: "#EDAB37", egy: "#EDAB37",
-  grc: "#5B91CC", el: "#5B91CC",
-  lo: "#B2588F", th: "#B2588F",
-  kl: "#EADD69", chr: "#EADD69", iu: "#EADD69", nv: "#EADD69", qu: "#EADD69",
-  eo: "#A3C4A4",
+
+  // Niger-Congo
+  tw: "#398984", ln: "#398984", xh: "#398984", yo: "#398984", sw: "#398984", zu: "#398984",
+
+  // Uralic
+  et: "#382610", hu: "#382610",
+  fi: "#3F3222",
+
+  // Austronesian
+  id: "#813183", ban: "#813183", haw: "#813183", jv: "#813183", mi: "#813183", ms: "#813183",
+  tl: "#A1539F", ceb: "#A1539F", mg: "#A1539F",
+
+  // Dravidian
+  kn: "#A190C4", ml: "#A190C4", ta: "#A190C4", te: "#A190C4",
+
+  // Turkic
   ota: "#867E44", az: "#867E44", tr: "#867E44",
   tt: "#9D8F59", kk: "#9D8F59",
   ug: "#847B48", uz: "#847B48",
-  om: "#CA8D48", so: "#CA8D48",
-  fi: "#3F3222",
-  ht: "#A3B3C6",
-  hy: "#1C4A7A",
+
+  // Austroasiatic
+  km: "#BCA70A", vi: "#CCC244",
+
+  // Kra-Dai
+  lo: "#B2588F", th: "#B2588F",
+
+  // Indigenous languages of the Americas (combined from multiple families)
+  kl: "#EADD69", chr: "#EADD69", iu: "#EADD69", nv: "#EADD69", qu: "#EADD69",
+
+  // Language isolates and independent language families
+  ko: "#BC997B", eu: "#BC997B",
   ja: "#ED1C24",
   ka: "#97CCD2",
-  km: "#BCA70A",
   mn: "#926828",
-  sq: "#3592F9",
-  vi: "#CCC244",
+
+  // Constructed language
+  eo: "#A3C4A4",
+  // Creoles
+  ht: "#A3B3C6",
+  // Sign language
   ase: "#F5978E",
-  green: "#0cfb00",
 });
 
 function setText(id, value) {
@@ -606,8 +633,8 @@ if (DATA.wenyuanPeriodStats) {
       href: languageSearchUrl(language.language, language.code)
     },
     {value: formatCount(language.requests), className: "num"},
-    {value: formatPercent(language.translationPercentage), className: "num"},
-    {value: formatCount(language.needsReview), className: "num"}
+    {value: formatPercent(language.percentOfAllRequests), className: "num"},
+    {value: formatPercent(language.translationPercentage), className: "num"}
   ]));
   addRows("#wy-pairs-table", (wy.sourceTargetPairs || []).map(pair => [pair.pair.replace(" -> ", " → "), {value: formatCount(pair.requests), className: "num"}]));
   addRows("#wy-extra-table", [

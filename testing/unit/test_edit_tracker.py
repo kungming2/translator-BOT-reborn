@@ -11,16 +11,21 @@ import time
 from unittest.mock import MagicMock, patch
 
 # noinspection PyProtectedMember
-from monitoring.edit_tracker import (_CachedComment, _cleanup_comment_cache,
-                                     _deserialize_komandos,
-                                     _deserialize_lookup_content,
-                                     _get_cached_comment,
-                                     _is_comment_within_edit_window,
-                                     _is_processed_comment,
-                                     _remove_from_processed,
-                                     _serialize_komandos,
-                                     _serialize_lookup_content,
-                                     _update_comment_cache, edit_tracker)
+from monitoring.edit_tracker import (
+    _CachedComment,
+    _cleanup_comment_cache,
+    _deserialize_komandos,
+    _deserialize_lookup_content,
+    _get_cached_comment,
+    _is_comment_within_edit_window,
+    _is_processed_comment,
+    _remove_from_processed,
+    _serialize_komandos,
+    _serialize_lookup_content,
+    _update_comment_cache,
+    cache_processed_comment,
+    edit_tracker,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -463,6 +468,27 @@ class TestUpdateCommentCache:
         assert len(bound_values) == 5
 
 
+class TestCacheProcessedComment:
+    def test_stores_exact_processed_body_and_resolved_commands(self):
+        cmd = make_komando("lookup_cjk", [("zh", "艾", True)])
+
+        with patch("monitoring.edit_tracker._update_comment_cache") as update_cache:
+            cache_processed_comment(
+                "abc123",
+                "Clearly `艾`:zh, not 文",
+                1784572042,
+                [cmd],
+            )
+
+        update_cache.assert_called_once_with(
+            "abc123",
+            "Clearly `艾`:zh, not 文",
+            1784572042,
+            "lookup_cjk",
+            "zh:艾§",
+        )
+
+
 # ===========================================================================
 # _remove_from_processed
 # ===========================================================================
@@ -509,6 +535,50 @@ class TestIsProcessedComment:
 
 
 class TestEditTracker:
+    def test_phase_one_reprocesses_ninja_edit_that_adds_lookup(self):
+        comment = make_comment(body="Clearly `艾`:zh, not 文", edited=False)
+        cached = _CachedComment(
+            body="Clearly 艾, not 文",
+            komandos="",
+            lookup_content="",
+        )
+        cmd = make_komando("lookup_cjk", [("zh", "艾", True)])
+
+        with (
+            patch(
+                "monitoring.edit_tracker.SETTINGS",
+                {
+                    "subreddit": "translator",
+                    "comment_edit_num_limit": 1,
+                    "comment_edit_age_max": 1,
+                },
+            ),
+            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
+            patch("monitoring.edit_tracker.REDDIT") as reddit,
+            patch("monitoring.edit_tracker._get_cached_comment", return_value=cached),
+            patch("monitoring.edit_tracker.comment_has_command", return_value=True),
+            patch(
+                "monitoring.edit_tracker.extract_commands_from_text",
+                return_value=[cmd],
+            ),
+            patch("monitoring.edit_tracker._remove_from_processed") as remove,
+            patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
+            patch("monitoring.edit_tracker._cleanup_comment_cache"),
+        ):
+            helper.subreddit.return_value.comments.return_value = [comment]
+            reddit.subreddit.return_value.mod.edited.return_value = []
+
+            edit_tracker()
+
+        remove.assert_called_once_with("abc123")
+        update_cache.assert_called_once_with(
+            "abc123",
+            "Clearly `艾`:zh, not 文",
+            int(comment.created_utc),
+            "lookup_cjk",
+            "zh:艾§",
+        )
+
     def test_phase_one_does_not_seed_already_edited_uncached_comment(self):
         comment = make_comment(body="`福`", edited=True)
         helper_subreddit = MagicMock()

@@ -54,7 +54,10 @@ def _extract_date_from_text(text: str) -> str | None:
     Returns:
         Date string in YYYY-MM-DD format, or None
     """
-    pattern = r"\b(\d{4}-\d{2}-\d{2})\b"
+    # ISO 8601 timestamps continue with ``T``, which is a regex word character.
+    # A trailing word boundary would therefore reject normal log timestamps such
+    # as ``2026-07-19T19:31:14Z``.
+    pattern = r"\b(\d{4}-\d{2}-\d{2})(?!\d)"
     match = re.search(pattern, text)
     if match:
         date_str = match.group(1)

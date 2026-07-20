@@ -47,6 +47,9 @@ def _import_ziwen_comments():
         "monitoring.points": _make_stub_module(
             "monitoring.points", points_tabulator=MagicMock()
         ),
+        "monitoring.edit_tracker": _make_stub_module(
+            "monitoring.edit_tracker", cache_processed_comment=MagicMock()
+        ),
         "monitoring.action_statistics": _make_stub_module(
             "monitoring.action_statistics", action_counter=MagicMock()
         ),
@@ -209,6 +212,45 @@ def test_short_thanks_failed_message_does_not_mark_author_messaged() -> None:
     ziwen_comments._mark_short_thanks_as_translated(comment, ajo)
 
     ajo.set_author_messaged.assert_not_called()
+
+
+def test_plain_comment_body_is_cached_as_edit_baseline() -> None:
+    ziwen_comments = _import_ziwen_comments()
+
+    class FakeCursor:
+        def execute(self, query, _params=()):
+            if "SELECT 1 FROM old_comments" in query:
+                return types.SimpleNamespace(fetchone=lambda: None)
+            if "SELECT filtered FROM old_posts" in query:
+                return types.SimpleNamespace(fetchone=lambda: None)
+            return self
+
+    fake_post = types.SimpleNamespace(
+        id="post1",
+        author=types.SimpleNamespace(name="requester"),
+    )
+    fake_comment = types.SimpleNamespace(
+        id="comment1",
+        submission=fake_post,
+        body="Initial body without a lookup",
+        author=types.SimpleNamespace(name="helper"),
+        created_utc=123,
+        permalink="/r/translator/comments/post1/title/comment1/",
+    )
+    ziwen_comments.REDDIT.subreddit.return_value.comments.return_value = [fake_comment]
+    ziwen_comments.db.cursor_main = FakeCursor()
+    ziwen_comments.db.conn_main = types.SimpleNamespace(commit=MagicMock())
+    ziwen_comments.ajo_loader.return_value = types.SimpleNamespace(lingvo="Spanish")
+    ziwen_comments.comment_has_command.return_value = False
+
+    ziwen_comments.ziwen_commands()
+
+    ziwen_comments.cache_processed_comment.assert_called_once_with(
+        "comment1",
+        "Initial body without a lookup",
+        123,
+        [],
+    )
 
 
 def test_comment_processing_failure_writes_error_log() -> None:

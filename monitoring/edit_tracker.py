@@ -290,6 +290,76 @@ def _update_comment_cache(
     db.conn_cache.commit()
 
 
+def cache_processed_comment(
+    comment_id: str,
+    comment_body: str,
+    created_utc: int,
+    commands: list,
+) -> None:
+    """Cache the exact body and commands seen by the normal comment loop.
+
+    This establishes a baseline even when a comment is created after the edit
+    tracker's recent-comment pass but before ``ziwen_commands()`` runs. A later
+    ninja edit can then be detected from the recent-comment listing even when
+    Reddit leaves the comment's ``edited`` attribute false.
+    """
+    komandos = ",".join(dict.fromkeys(cmd.name for cmd in commands))
+    lookup_content = _serialize_lookup_content(commands)
+    _update_comment_cache(
+        comment_id,
+        comment_body,
+        created_utc,
+        komandos,
+        lookup_content,
+    )
+
+
+def _reconcile_cached_comment(comment: "Comment", cached: _CachedComment) -> None:
+    """Compare a changed live comment with its processed cache baseline."""
+    comment_id = comment.id
+    comment_new_body = comment.body.strip()
+
+    if not comment_has_command(comment_new_body):
+        return
+
+    new_commands = extract_commands_from_text(comment_new_body)
+    new_command_names: set[str] = {cmd.name for cmd in new_commands}
+    added_commands = new_command_names - cached.command_names
+
+    new_lookup_content = _serialize_lookup_content(new_commands)
+    old_cjk, old_wp = _deserialize_lookup_content(cached.lookup_content)
+    new_cjk, new_wp = _deserialize_lookup_content(new_lookup_content)
+    lookup_content_changed = (old_cjk != new_cjk) or (old_wp != new_wp)
+
+    if added_commands or lookup_content_changed:
+        if added_commands:
+            reason = f"new command(s) {sorted(added_commands)} detected"
+        else:
+            reason = (
+                "lookup content changed "
+                f"(cjk: {old_cjk!r} → {new_cjk!r}, "
+                f"wp: {old_wp!r} → {new_wp!r})"
+            )
+        logger.info(
+            f"Reprocessing triggered for `{comment_id}`: {reason}. "
+            f"https://www.reddit.com{comment.permalink}"
+        )
+        _remove_from_processed(comment_id)
+    else:
+        logger.debug(
+            f"Comment `{comment_id}` edited but no new commands or lookup "
+            "content changes detected "
+            f"(had={sorted(cached.command_names)}, now={sorted(new_command_names)})."
+        )
+
+    cache_processed_comment(
+        comment_id,
+        comment_new_body,
+        int(comment.created_utc),
+        new_commands,
+    )
+
+
 def _remove_from_processed(comment_id: str) -> None:
     """Force a reprocess by removing from the processed comment database."""
     cursor = db.cursor_main
@@ -350,7 +420,11 @@ def edit_tracker() -> None:
         # Only insert; never overwrite in Phase 1 (we want the *original*
         # body to stay cached so Phase 2 can diff against it later).
         cached = _get_cached_comment(comment_id)
+        if cached and cached.body == comment_body:
+            continue
+
         if cached:
+            _reconcile_cached_comment(comment, cached)
             continue
 
         if getattr(comment, "edited", False):
@@ -440,53 +514,7 @@ def edit_tracker() -> None:
                 )
             continue
 
-        old_command_names: set[str] = cached.command_names
-        new_commands = extract_commands_from_text(comment_new_body)
-        new_command_names: set[str] = {cmd.name for cmd in new_commands}
-
-        added_commands = new_command_names - old_command_names
-
-        # Also check whether lookup content changed even if command names
-        # did not. This catches the case where the user edits the backtick
-        # content (e.g. toggling the tokenization-disable ``!`` suffix, or
-        # changing the looked-up term or Wikipedia language code) without
-        # adding a new command keyword.
-        new_lookup_content = _serialize_lookup_content(new_commands)
-        old_cjk, old_wp = _deserialize_lookup_content(cached.lookup_content)
-        new_cjk, new_wp = _deserialize_lookup_content(new_lookup_content)
-        lookup_content_changed = (old_cjk != new_cjk) or (old_wp != new_wp)
-
-        if added_commands or lookup_content_changed:
-            if added_commands:
-                reason = f"new command(s) {sorted(added_commands)} detected"
-            else:
-                reason = (
-                    f"lookup content changed "
-                    f"(cjk: {old_cjk!r} → {new_cjk!r}, "
-                    f"wp: {old_wp!r} → {new_wp!r})"
-                )
-            logger.info(
-                f"Reprocessing triggered for `{comment_id}`: {reason}. "
-                f"https://www.reddit.com{item.permalink}"
-            )
-            _remove_from_processed(comment_id)
-        else:
-            logger.debug(
-                f"Comment `{comment_id}` edited but no new commands or lookup "
-                f"content changes detected "
-                f"(had={sorted(old_command_names)}, now={sorted(new_command_names)})."
-            )
-
-        new_komandos = ",".join(
-            dict.fromkeys(cmd.name for cmd in new_commands)  # ordered dedup
-        )
-        _update_comment_cache(
-            comment_id,
-            comment_new_body,
-            int(item.created_utc),
-            new_komandos,
-            new_lookup_content,
-        )
+        _reconcile_cached_comment(item, cached)
 
     # Phase 3: Cache cleanup.
     _cleanup_comment_cache(total_keep_num)
