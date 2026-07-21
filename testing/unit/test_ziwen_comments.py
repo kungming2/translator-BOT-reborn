@@ -296,14 +296,14 @@ def test_comment_processing_failure_writes_error_log() -> None:
     ziwen_comments.ziwen_commands()
 
     assert len(error_entries) == 1
-    entry, routine = error_entries[0]
-    assert routine == "Ziwen Comments"
-    assert "Failed while processing comment `comment1` on post `post1`." in entry
+    logged_entry, logged_routine = error_entries[0]
+    assert logged_routine == "Ziwen Comments"
+    assert "Failed while processing comment `comment1` on post `post1`." in logged_entry
     assert (
         "Comment URL: https://www.reddit.com/r/translator/comments/post1/title/comment1/"
-        in entry
+        in logged_entry
     )
-    assert "RuntimeError: handler failed" in entry
+    assert "RuntimeError: handler failed" in logged_entry
 
 
 def test_transient_comment_processing_failure_is_not_written_to_error_log() -> None:

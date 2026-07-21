@@ -238,6 +238,7 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
             "config",
             logger=logging.getLogger("test"),
             SETTINGS={
+                "claim_period": 8 * 60 * 60,
                 "image_retention_age": 30,
                 "internal_post_types": ["community", "meta"],
                 "max_gallery_images_transform": 5,
@@ -365,8 +366,8 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
         ),
     }
 
-    for name, module in stubs.items():
-        monkeypatch.setitem(sys.modules, name, module)
+    for module_name, module in stubs.items():
+        monkeypatch.setitem(sys.modules, module_name, module)
     return stubs
 
 

@@ -540,6 +540,8 @@ def calligraphy_search(character: str) -> str | None:
     complete_image = None
 
     for url in images:
+        if not isinstance(url, str):
+            continue
         if len(url) < 20 or "gif" in url.lower():
             continue
         if "shufa6" in url:
@@ -1003,10 +1005,10 @@ async def _zh_word_dictionary_search(
         raise ValueError("dictionary_type must be either 'buddhist' or 'cantonese'")
 
     async with aiofiles.open(file_address, encoding="utf-8") as f:
-        file_content = await f.read()
+        file_content: str = await f.read()
     lines = file_content.splitlines()
 
-    relevant_line = None
+    relevant_line: str | None = None
     for entry in lines:
         traditional_headword = entry.split(" ", 1)[0]
         if chinese_word == traditional_headword:

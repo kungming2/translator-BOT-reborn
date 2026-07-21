@@ -112,6 +112,10 @@ class TransformImageError(ValueError):
     """Raised when a transform source image is unsafe or unsupported."""
 
 
+class ImgBBUploadError(RuntimeError):
+    """Raised when a transformed image cannot be uploaded to ImgBB."""
+
+
 def _validate_transform_url(url: str) -> str:
     parsed = urlparse(url.strip())
     if parsed.scheme not in {"http", "https"}:
@@ -317,8 +321,7 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
     :param image: PIL Image object to upload.
     :param title: Optional filename/title for the upload.
     :return: URL of the uploaded image.
-    :raises requests.HTTPError: If the HTTP request fails.
-    :raises Exception: If ImgBB reports an unsuccessful upload.
+    :raises ImgBBUploadError: If the request fails or ImgBB rejects the upload.
     """
     # Expiration is stored in settings as days; the API expects seconds.
     expiration_seconds: int = SETTINGS["image_retention_age"] * 86400
@@ -333,12 +336,33 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
         payload["name"] = title
 
     logger.debug(f"Uploading to ImgBB (expiration: {expiration_seconds}s)")
-    response = requests.post(
-        "https://api.imgbb.com/1/upload",
-        data=payload,
-        timeout=TRANSFORM_UPLOAD_TIMEOUT,
-    )
-    response.raise_for_status()
+    try:
+        response = requests.post(
+            "https://api.imgbb.com/1/upload",
+            data=payload,
+            timeout=TRANSFORM_UPLOAD_TIMEOUT,
+        )
+    except requests.RequestException as e:
+        logger.error(f"ImgBB upload request failed: {type(e).__name__}: {e}")
+        raise ImgBBUploadError("The image-hosting service could not be reached.") from e
+
+    if not response.ok:
+        # ImgBB normally returns a small JSON error object. Record it before
+        # raising, since requests' default HTTPError text omits the response
+        # body that explains why the upload was rejected. Redact the API key
+        # defensively in case an upstream response ever echoes request data.
+        response_body = response.text.strip() or "<empty response body>"
+        response_body = response_body.replace(
+            access_credentials["IMGBB_API_KEY"], "<redacted API key>"
+        )[:2000]
+        logger.error(
+            f"ImgBB upload rejected: HTTP {response.status_code} "
+            f"{response.reason}; response: {response_body}"
+        )
+        raise ImgBBUploadError(
+            f"The image-hosting service rejected the upload "
+            f"(HTTP {response.status_code})."
+        )
 
     result = response.json()
     if result.get("success"):
@@ -346,5 +370,5 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
         logger.info(f"Image uploaded successfully at {result['data']['display_url']}")
         return url
 
-    logger.error(f"Upload failed: {result}")
-    raise Exception(f"Upload failed: {result}")
+    logger.error(f"ImgBB reported an unsuccessful upload: {result}")
+    raise ImgBBUploadError("The image-hosting service reported an unsuccessful upload.")

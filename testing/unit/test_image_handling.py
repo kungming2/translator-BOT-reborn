@@ -6,6 +6,7 @@ from io import BytesIO
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 from PIL import Image
 
 from integrations import image_handling
@@ -200,3 +201,46 @@ def test_rotate_or_flip_image_accepts_safe_png(monkeypatch) -> None:
     result = image_handling.rotate_or_flip_image("https://i.redd.it/image.png", "90")
 
     assert result.size == (1, 2)
+
+
+def test_imgbb_rejection_logs_response_and_raises_safe_error(monkeypatch) -> None:
+    api_key = image_handling.access_credentials["IMGBB_API_KEY"]
+    response = MagicMock(
+        ok=False,
+        status_code=400,
+        reason="Bad Request",
+        text=(
+            '{"error":{"message":"Invalid API v1 key.","code":100},'
+            f'"echoed_key":"{api_key}","status_code":400}}'
+        ),
+    )
+    post_mock = MagicMock(return_value=response)
+    error_mock = MagicMock()
+    monkeypatch.setattr(image_handling.requests, "post", post_mock)
+    monkeypatch.setattr(image_handling.logger, "error", error_mock)
+
+    with pytest.raises(
+        image_handling.ImgBBUploadError,
+        match=r"image-hosting service rejected the upload \(HTTP 400\)",
+    ):
+        image_handling.upload_to_imgbb(Image.new("RGB", (1, 1), "white"))
+
+    logged_message = error_mock.call_args.args[0]
+    assert "HTTP 400 Bad Request" in logged_message
+    assert "Invalid API v1 key" in logged_message
+    assert "<redacted API key>" in logged_message
+    assert api_key not in logged_message
+
+
+def test_imgbb_connection_failure_raises_host_specific_error(monkeypatch) -> None:
+    monkeypatch.setattr(
+        image_handling.requests,
+        "post",
+        MagicMock(side_effect=requests.ConnectionError("network unavailable")),
+    )
+
+    with pytest.raises(
+        image_handling.ImgBBUploadError,
+        match="image-hosting service could not be reached",
+    ):
+        image_handling.upload_to_imgbb(Image.new("RGB", (1, 1), "white"))

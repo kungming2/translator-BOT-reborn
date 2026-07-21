@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,__FAVICON_BASE64__">
 <!--suppress HtmlUnknownTarget -->
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<title>r/translator Public Statistics — __DATE_STR__</title>
+<title>r/translator Public Statistics Dashboard — __DATE_STR__</title>
 <style nonce="__CSP_NONCE__">
   :root {
     color-scheme: light;
@@ -116,9 +116,9 @@
   .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
   .table-block + .table-block { margin-top: 1.25rem; }
   .table-title { margin-bottom: .65rem; color: var(--muted); font: .66rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-  .table-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: .65rem; }
-  .table-heading .table-title { margin-bottom: 0; }
-  .table-meta { color: var(--muted); font: .66rem/1.4 var(--mono); text-align: right; }
+  .table-heading { margin-bottom: .65rem; }
+  .table-heading .table-title { margin-bottom: .2rem; }
+  .table-meta { color: var(--muted); font: .66rem/1.4 var(--mono); }
   .language-label { display: inline-flex; align-items: center; gap: .5rem; }
   .language-link { color: inherit; text-decoration-color: var(--muted); text-underline-offset: .18em; }
   .language-link:hover { color: var(--accent); text-decoration-color: currentColor; }
@@ -164,8 +164,6 @@
     body { padding: 1rem; font-size: 100%; }
     .grid, .grid-3 { grid-template-columns: 1fr; }
     .header { flex-direction: column; }
-    .table-heading { align-items: flex-start; flex-direction: column; gap: .25rem; }
-    .table-meta { text-align: left; }
     .card { padding: 1rem; }
   }
 </style>
@@ -194,7 +192,7 @@
       <div class="stat-sub">Daily average · Last 3 days</div>
     </div>
     <div class="card">
-      <div class="card-label">Notifications</div>
+      <div class="card-label">Notifications Sent</div>
       <div class="stat-big" id="notifications"></div>
       <div class="stat-sub">Daily average · Last 3 days</div>
     </div>
@@ -238,7 +236,7 @@
     </div>
 
     <div class="grid">
-      <div class="card"><div class="table-title">Overall Status</div><table id="wy-overall-table"><thead><tr><th>Status</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
+      <div class="card"><div class="table-title">Requests by Status</div><table id="wy-overall-table"><thead><tr><th>Status</th><th class="num">Requests</th></tr></thead><tbody></tbody></table></div>
       <div class="card"><div class="table-title">Translation Direction</div><table id="wy-directions-table"><thead><tr><th>Direction</th><th class="num">Requests</th><th class="num">Share</th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="grid">
@@ -530,7 +528,7 @@ function addRows(tableId, rows) {
 
 const generatedTime = Date.parse(DATA.generatedAt);
 if (Number.isFinite(generatedTime)) {
-  setText("generated-date", "Generated " + new Date(generatedTime).toISOString().replace("T", " ").replace(".000Z", " UTC"));
+  setText("generated-date", "Updated at " + new Date(generatedTime).toISOString().replace("T", " ").replace(".000Z", " UTC"));
 }
 if (Number.isFinite(generatedTime) && Date.now() - generatedTime > 3 * 60 * 60 * 1000) {
   const status = document.getElementById("freshness-status");

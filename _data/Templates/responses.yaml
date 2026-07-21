@@ -495,13 +495,13 @@ COMMENT_TRANSFORM_NO_IMAGE: |
   [](#comment_transform_no_image)
 
 COMMENT_TRANSFORM_ERROR: |
-  Sorry, I encountered an error while transforming the image:
+  Sorry, I couldn't finish processing and hosting the image:
   
   ```
   {0}
   ```
   
-  Please make sure the image URL is accessible and try again.
+  The details above indicate whether the source image could not be processed or the transformed image could not be uploaded. Please try again later.
   
   [](#comment_transform_error)
 

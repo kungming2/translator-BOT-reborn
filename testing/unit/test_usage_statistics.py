@@ -41,7 +41,7 @@ class TestActionCounter(unittest.TestCase):
             )
             alert_mock.assert_called_once_with(
                 "Ziwen Logging",
-                ("**Action:** `Notifications`\n**Recorded:** `2`\n"),
+                "**Action:** `Notifications`\n**Recorded:** `2`\n",
                 "logs",
             )
 
@@ -152,7 +152,10 @@ class TestUserStatistics(unittest.TestCase):
             user_statistics.user_statistics_writer(instruo)
 
         insert_call = cursor.execute.call_args_list[1]
-        self.assertIn("INSERT INTO total_commands", insert_call.args[0])
+        self.assertEqual(
+            insert_call.args[0],
+            "INSERT INTO total_commands (username, commands) VALUES (?, ?)",
+        )
         self.assertEqual(insert_call.args[1][0], "example_user")
         self.assertEqual(
             orjson.loads(insert_call.args[1][1]),

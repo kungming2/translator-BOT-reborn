@@ -74,14 +74,18 @@ def user_statistics_loader(username: str) -> str | None:
             for language, count in sorted(normalized_notifications.items())
         ]
 
-    commands = fetch_data("SELECT * FROM total_commands WHERE username = ?")
-    notifications = fetch_data("SELECT * FROM total_notifications WHERE username = ?")
-    if not commands and not notifications:
+    command_counts = fetch_data("SELECT * FROM total_commands WHERE username = ?")
+    notification_counts = fetch_data(
+        "SELECT * FROM total_notifications WHERE username = ?"
+    )
+    if not command_counts and not notification_counts:
         logger.debug(f"No statistics found for u/{username}.")
         return None
 
-    command_lines = format_commands(commands) if commands else []
-    notification_lines = format_notifications(notifications) if notifications else []
+    command_lines = format_commands(command_counts) if command_counts else []
+    notification_lines = (
+        format_notifications(notification_counts) if notification_counts else []
+    )
     return header + "\n".join(command_lines + notification_lines)
 
 

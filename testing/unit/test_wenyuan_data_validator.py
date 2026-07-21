@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """Unit tests for Wenyuan data-file validation."""
 
+# noinspection PyProtectedMember
 from wenyuan.data_validator import (
     _extract_date_from_text,
     _get_last_date_from_log,
