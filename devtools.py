@@ -25,6 +25,7 @@ from error import display_event_errors
 from hermes.tools import parse_title_diagnostic, print_statistics, test_parser
 from integrations.ai import fetch_image_description
 from integrations.http import get_random_useragent
+from integrations.image_handling import upload_image_url_to_imgbb
 from integrations.search_handling import build_search_results, fetch_search_reddit_posts
 from lang.languages import converter, parse_language_list
 from lang.languages import logger as lang_logger
@@ -34,7 +35,7 @@ from models.komando import extract_commands_from_text
 from models.kunulo import Kunulo
 from monitoring.points import points_post_retriever, points_user_retriever
 from reddit.connection import (
-    REDDIT_HELPER,
+    REDDIT,
     REDDIT_HERMES,
     reddit_status_check,
     search_removal_reasons,
@@ -344,6 +345,26 @@ def check_integrations_ai_image_description() -> None:
         msg.fail("Failed to fetch image description.")
 
 
+def prepare_integrations_image_upload() -> CheckFunction | None:
+    """Prompt for an image URL and prepare an ImgBB upload action."""
+    image_url = _prompt_text(
+        "Enter an allowlisted image URL (x to back out): ", allow_exit=True
+    )
+    if image_url is None:
+        return None
+
+    title = _prompt_text(
+        "Optional upload title (leave blank for none): ", allow_blank=True
+    )
+
+    def upload_image() -> None:
+        with msg.loading("Downloading and uploading image..."):
+            uploaded_url = upload_image_url_to_imgbb(image_url, title=title or None)
+        msg.good(f"Uploaded image: {uploaded_url}")
+
+    return upload_image
+
+
 # ─── hermes ───────────────────────────────────────────────────────────────────
 
 
@@ -449,7 +470,7 @@ def check_title_reddit() -> None:
     logger_title = logging.getLogger("title_handling")
     logger_title.setLevel(logging.INFO)
     with msg.loading("Fetching 50 live posts..."):
-        submissions = list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=50))
+        submissions = list(REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=50))
     for submission in submissions:
         msg.divider(submission.title[:60])
         titolo_output = process_title(submission.title, submission, False)
@@ -570,7 +591,7 @@ def check_models_ajo_url() -> None:
 def check_models_ajo_live() -> None:
     """ajo: Fetch the last 3 live Reddit posts and build an Ajo for each."""
     with msg.loading("Fetching 3 live posts..."):
-        submissions = list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=3))
+        submissions = list(REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=3))
     for submission_new in submissions:
         msg.divider(submission_new.title[:60])
         ajo_new = Ajo.from_titolo(
@@ -622,7 +643,7 @@ def check_models_instruo_url() -> None:
         return
     try:
         with msg.loading("Loading comment and building Instruo..."):
-            test_comment = REDDIT_HELPER.comment(url=comment_url)
+            test_comment = REDDIT.comment(url=comment_url)
             test_ajo = ajo_loader(test_comment.submission.id)
             parent_lingvos = [test_ajo.lingvo] if test_ajo else []
             test_instruo = Instruo.from_comment(
@@ -1030,7 +1051,11 @@ SECTIONS: SectionMap = {
         "integrations",
         {
             "1": ("ai: image description", check_integrations_ai_image_description),
-            "2": ("search", check_integrations_search),
+            "2": (
+                "image: upload by URL",
+                _timed_check(prepare_integrations_image_upload),
+            ),
+            "3": ("search", check_integrations_search),
         },
     ),
     "6": (

@@ -33,6 +33,7 @@ from models.komando import (
     _strip_markdown_blockquotes,
     extract_commands_from_text,
 )
+from ziwen_lookup import BACKTICK_LOOKUP_PATTERN
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:INSTRUO"})
 
@@ -55,8 +56,10 @@ def _strip_commands(text: str) -> str | None:
     After stripping, runs of blank lines are collapsed and the result is
     stripped of leading/trailing whitespace.
     """
+    text = text.replace("\\`", "`")
+
     # 1. Backtick CJK lookups: `term`:lang! / `term`:lang / `term`! / `term`
-    text = re.sub(r"`[^`]+`(?::\w+)?!?", "", text)
+    text = BACKTICK_LOOKUP_PATTERN.sub("", text)
 
     # 2. Wikipedia lookups: {{term}}
     text = re.sub(r"\{\{[^}]+}}", "", text)
@@ -226,6 +229,7 @@ def comment_has_command(comment: Comment | str) -> bool:
         text = comment.body.lower().strip()
 
     text = _strip_markdown_blockquotes(text)
+    text = text.replace("\\`", "`")
 
     # Remove multiline code blocks (triple backticks)
     text = re.sub(r"```[\s\S]*?```", "", text)  # non-greedy, removes across lines
@@ -237,7 +241,10 @@ def comment_has_command(comment: Comment | str) -> bool:
 
     # Detect lookup commands (e.g. `word` or {{term}})
     for lookup in SETTINGS.get("lookup_commands", []):
-        if lookup in text:
+        if lookup == "`":
+            if BACKTICK_LOOKUP_PATTERN.search(text):
+                return True
+        elif lookup in text:
             return True
 
     # Check commands with required arguments

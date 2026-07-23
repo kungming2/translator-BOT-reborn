@@ -104,8 +104,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
                 )
             if permission_to_send:
                 logger.info("Now sending notifications after identification...")
-                contacted = notifier(new_language, original_post, "identify")
-                ajo.add_notified(contacted)
+                notification_result = notifier(new_language, original_post, "identify")
+                ajo.add_notified(notification_result.sent_usernames)
     else:  # Defined multiple post.
         if ajo.is_defined_multiple:
             logger.info("Handling defined multiple post...")
@@ -113,8 +113,8 @@ def handle(comment: Comment, instruo: Instruo, komando: Komando, ajo: Ajo) -> No
             for language in new_languages:
                 if permission_to_send:
                     logger.info(f"Now sending notifications for {language.name}...")
-                    contacted = notifier(language, original_post, "identify")
-                    ajo.add_notified(contacted)
+                    notification_result = notifier(language, original_post, "identify")
+                    ajo.add_notified(notification_result.sent_usernames)
 
     # Delete the 'Unknown' placeholder comment left by the bot.
     kunulo: Kunulo = Kunulo.from_submission(original_post)

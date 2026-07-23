@@ -372,3 +372,15 @@ def upload_to_imgbb(image: Image.Image, title: str | None = None) -> str:
 
     logger.error(f"ImgBB reported an unsuccessful upload: {result}")
     raise ImgBBUploadError("The image-hosting service reported an unsuccessful upload.")
+
+
+def upload_image_url_to_imgbb(image_url: str, title: str | None = None) -> str:
+    """Download a safe image URL and upload the decoded image to ImgBB.
+
+    This uses the same allowlist, redirect, download, decoding, and upload
+    safeguards as the ``!transform`` command, without changing the image's
+    orientation.
+    """
+    logger.debug(f"Downloading image for upload from {image_url}")
+    image = _open_transform_image(_fetch_transform_image_bytes(image_url))
+    return upload_to_imgbb(image, title=title)

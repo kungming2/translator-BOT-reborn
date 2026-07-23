@@ -739,6 +739,20 @@ class TestLookupMatcher(unittest.TestCase):
         result = lookup_matcher("```斗争```", "zh")
         self.assertEqual(result, {})
 
+    @_skip_on_error
+    def test_double_backtick_tex_quotes_do_not_form_cross_prose_lookup(self):
+        """TeX-style quote openers must not pair across separate phrases."""
+        texts = (
+            "google translate: ``Horsai'' is a combination of ``jin'' (忈), "
+            "which expresses compassion, and ``sai''.",
+            r"google translate: \`\`Horsai'' is a combination of \`\`jin'' (忈), "
+            r"which expresses compassion, and \`\`sai''.",
+        )
+        for text in texts:
+            with self.subTest(text=text):
+                result = lookup_matcher(text, "ja")
+                self.assertEqual(result, {})
+
     # --- Edge cases ---
 
     @_skip_on_error

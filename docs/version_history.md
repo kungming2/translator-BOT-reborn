@@ -30,6 +30,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Alignment of some Zhongsheng commands to be more syntactically consistent with each other.
 * 🔄 CHANGE: Moved notifications database reporting to a monthly Wenju cycle and added public reporting of its contents to r/translatorBOT.
 * 🔄 CHANGE: r/translatorBOT reporting submissions are also now routed through a single handler.
+* 🔄 CHANGE: Consolidated all Ziwen and r/translator Reddit API operations onto the primary `REDDIT` client and retired the separate `REDDIT_HELPER` implementation; Hermes and Chinese Reference retain their dedicated Reddit clients.
 * 🔄 CHANGE: Renamed some exceptions that are handled in order to prepare for [PRAW 8](https://praw.readthedocs.io/en/latest/package_info/praw8_migration.html#praw8-migration)'s upcoming release.
 * 🔄 CHANGE: Added more language data and common country-code mistaken abbreviations for language requests.
 * 🔄 CHANGE: Title assessment AI queries now request strict JSON responses when using [DeepSeek](https://platform.deepseek.com/).

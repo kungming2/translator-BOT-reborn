@@ -1,6 +1,6 @@
 [project]
 name = "translator-BOT"
-version = "2.3.15"
+version = "2.3.16"
 description = "Automated moderator routines for r/translator"
 readme = "README.md"
 requires-python = ">=3.11"

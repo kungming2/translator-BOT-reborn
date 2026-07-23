@@ -244,3 +244,23 @@ def test_imgbb_connection_failure_raises_host_specific_error(monkeypatch) -> Non
         match="image-hosting service could not be reached",
     ):
         image_handling.upload_to_imgbb(Image.new("RGB", (1, 1), "white"))
+
+
+def test_upload_image_url_to_imgbb_reuses_transform_pipeline(monkeypatch) -> None:
+    image_bytes = _png_bytes(width=2, height=1)
+    image = Image.new("RGB", (2, 1), "white")
+    fetch_mock = MagicMock(return_value=image_bytes)
+    open_mock = MagicMock(return_value=image)
+    upload_mock = MagicMock(return_value="https://imgbb.example/upload.jpg")
+    monkeypatch.setattr(image_handling, "_fetch_transform_image_bytes", fetch_mock)
+    monkeypatch.setattr(image_handling, "_open_transform_image", open_mock)
+    monkeypatch.setattr(image_handling, "upload_to_imgbb", upload_mock)
+
+    result = image_handling.upload_image_url_to_imgbb(
+        "https://i.redd.it/image.png", title="Devtools upload"
+    )
+
+    assert result == "https://imgbb.example/upload.jpg"
+    fetch_mock.assert_called_once_with("https://i.redd.it/image.png")
+    open_mock.assert_called_once_with(image_bytes)
+    upload_mock.assert_called_once_with(image, title="Devtools upload")

@@ -453,6 +453,16 @@ class TestCommentHasCommand(unittest.TestCase):
         self.assertTrue(comment_has_command("`中文`"))
 
     @_skip_if_no_data
+    def test_tex_style_double_backtick_quotes_not_detected(self) -> None:
+        texts = (
+            "``Horsai'' is a combination of ``jin'' (忈) and ``sai''.",
+            r"\`\`Horsai'' is a combination of \`\`jin'' (忈) and \`\`sai''.",
+        )
+        for text in texts:
+            with self.subTest(text=text):
+                self.assertFalse(comment_has_command(text))
+
+    @_skip_if_no_data
     def test_command_in_code_block_not_detected(self) -> None:
         # Commands inside triple-backtick code blocks should be ignored
         text = "```\n!translated\n```"

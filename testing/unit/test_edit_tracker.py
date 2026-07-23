@@ -553,7 +553,6 @@ class TestEditTracker:
                     "comment_edit_age_max": 1,
                 },
             ),
-            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
             patch("monitoring.edit_tracker.REDDIT") as reddit,
             patch("monitoring.edit_tracker._get_cached_comment", return_value=cached),
             patch("monitoring.edit_tracker.comment_has_command", return_value=True),
@@ -565,7 +564,7 @@ class TestEditTracker:
             patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
             patch("monitoring.edit_tracker._cleanup_comment_cache"),
         ):
-            helper.subreddit.return_value.comments.return_value = [comment]
+            reddit.subreddit.return_value.comments.return_value = [comment]
             reddit.subreddit.return_value.mod.edited.return_value = []
 
             edit_tracker()
@@ -581,9 +580,8 @@ class TestEditTracker:
 
     def test_phase_one_does_not_seed_already_edited_uncached_comment(self):
         comment = make_comment(body="`福`", edited=True)
-        helper_subreddit = MagicMock()
-        helper_subreddit.comments.return_value = [comment]
         reddit_subreddit = MagicMock()
+        reddit_subreddit.comments.return_value = [comment]
         reddit_subreddit.mod.edited.return_value = []
 
         with (
@@ -595,13 +593,11 @@ class TestEditTracker:
                     "comment_edit_age_max": 1,
                 },
             ),
-            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
             patch("monitoring.edit_tracker.REDDIT") as reddit,
             patch("monitoring.edit_tracker._get_cached_comment", return_value=None),
             patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
             patch("monitoring.edit_tracker._cleanup_comment_cache"),
         ):
-            helper.subreddit.return_value = helper_subreddit
             reddit.subreddit.return_value = reddit_subreddit
 
             edit_tracker()
@@ -611,6 +607,7 @@ class TestEditTracker:
     def test_uncached_edited_command_removes_processed_marker(self):
         comment = make_comment(body="`福`", edited=True)
         reddit_subreddit = MagicMock()
+        reddit_subreddit.comments.return_value = []
         reddit_subreddit.mod.edited.return_value = [comment]
         cmd = make_komando("lookup_cjk", [("zh", "福", False)])
 
@@ -623,7 +620,6 @@ class TestEditTracker:
                     "comment_edit_age_max": 1,
                 },
             ),
-            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
             patch("monitoring.edit_tracker.REDDIT") as reddit,
             patch("monitoring.edit_tracker._get_cached_comment", return_value=None),
             patch(
@@ -636,7 +632,6 @@ class TestEditTracker:
             patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
             patch("monitoring.edit_tracker._cleanup_comment_cache"),
         ):
-            helper.subreddit.return_value.comments.return_value = []
             reddit.subreddit.return_value = reddit_subreddit
 
             edit_tracker()
@@ -652,6 +647,7 @@ class TestEditTracker:
             lookup_content="ja:一貫|ja:性§",
         )
         reddit_subreddit = MagicMock()
+        reddit_subreddit.comments.return_value = []
         reddit_subreddit.mod.edited.return_value = [comment]
 
         with (
@@ -663,7 +659,6 @@ class TestEditTracker:
                     "comment_edit_age_max": 1,
                 },
             ),
-            patch("monitoring.edit_tracker.REDDIT_HELPER") as helper,
             patch("monitoring.edit_tracker.REDDIT") as reddit,
             patch("monitoring.edit_tracker._get_cached_comment", return_value=cached),
             patch("monitoring.edit_tracker.comment_has_command") as has_command,
@@ -671,7 +666,6 @@ class TestEditTracker:
             patch("monitoring.edit_tracker._update_comment_cache") as update_cache,
             patch("monitoring.edit_tracker._cleanup_comment_cache"),
         ):
-            helper.subreddit.return_value.comments.return_value = []
             reddit.subreddit.return_value = reddit_subreddit
 
             edit_tracker()

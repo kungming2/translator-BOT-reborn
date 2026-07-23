@@ -274,6 +274,17 @@ class TestExtractCommandsFromText(unittest.TestCase):
         self.assertEqual(lookup.data, [("zh", "銀", True)])
 
     @_skip_if_no_data
+    def test_tex_style_double_backtick_quotes_do_not_extract_lookup(self) -> None:
+        texts = (
+            "``Horsai'' is a combination of ``jin'' (忈) and ``sai''.",
+            r"\`\`Horsai'' is a combination of \`\`jin'' (忈) and \`\`sai''.",
+        )
+        for text in texts:
+            with self.subTest(text=text):
+                commands = extract_commands_from_text(text)
+                self.assertEqual(commands, [])
+
+    @_skip_if_no_data
     def test_nuke_command_extracted_when_standalone(self) -> None:
         commands = extract_commands_from_text("!nuke")
         names = [cmd.name for cmd in commands]

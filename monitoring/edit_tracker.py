@@ -51,7 +51,7 @@ from models.ajo import Ajo, ajo_loader
 from models.instruo import comment_has_command
 from models.komando import extract_commands_from_text
 from models.kunulo import Kunulo
-from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
+from reddit.connection import REDDIT, USERNAME
 from title.title_handling import process_title
 from ziwen_commands.claim import parse_claim_comment
 
@@ -408,7 +408,7 @@ def edit_tracker() -> None:
     # window before they appear in the mod.edited queue.
     total_fetch_num = SETTINGS["comment_edit_num_limit"] * 2
     total_keep_num = total_fetch_num * 5
-    for comment in REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).comments(
+    for comment in REDDIT.subreddit(SETTINGS["subreddit"]).comments(
         limit=total_fetch_num
     ):
         if not _is_comment_within_edit_window(comment):
@@ -534,7 +534,7 @@ def progress_tracker() -> None:
     current_time = int(time.time())
     search_query = 'flair:"in progress"'
     posts_checked = 0
-    search_results = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).search(
+    search_results = REDDIT.subreddit(SETTINGS["subreddit"]).search(
         search_query, time_filter="week", sort="new"
     )
 
@@ -577,7 +577,7 @@ def progress_tracker() -> None:
             continue
 
         try:
-            claim_comment = REDDIT_HELPER.comment(comment_claim_id)
+            claim_comment = REDDIT.comment(comment_claim_id)
             logger.debug(f"Post {post_id}: claim comment body: {claim_comment.body!r}")
             claim_comment_data = parse_claim_comment(claim_comment.body, current_time)
             time_diff = claim_comment_data.get("seconds_until_expiry")

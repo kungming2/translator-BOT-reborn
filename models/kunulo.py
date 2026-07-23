@@ -22,7 +22,7 @@ from praw.models import Comment, Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
-from reddit.connection import REDDIT, REDDIT_HELPER, USERNAME
+from reddit.connection import REDDIT, USERNAME
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KUNULO"})
 
@@ -546,7 +546,7 @@ def get_submission_from_comment(comment_reference: Comment | str) -> Submission:
     """
     # Get comment object if input is an ID string
     if isinstance(comment_reference, str):
-        comment = REDDIT_HELPER.comment(id=comment_reference)
+        comment = REDDIT.comment(id=comment_reference)
     elif hasattr(comment_reference, "link_id"):  # Check if it's a Comment-like object
         comment = comment_reference
     else:
@@ -554,6 +554,6 @@ def get_submission_from_comment(comment_reference: Comment | str) -> Submission:
 
     # Extract submission ID (removes 't3_' prefix)
     try:
-        return REDDIT_HELPER.submission(id=comment.link_id[3:])
+        return REDDIT.submission(id=comment.link_id[3:])
     except AttributeError as err:
         raise ValueError("Invalid comment reference - missing link_id") from err

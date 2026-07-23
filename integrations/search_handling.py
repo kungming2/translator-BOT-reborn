@@ -19,7 +19,7 @@ from praw.models import Comment
 
 from config import SETTINGS
 from config import logger as _base_logger
-from reddit.connection import REDDIT_HELPER, credentials_source
+from reddit.connection import REDDIT, credentials_source
 
 # ─── Module-level constants ───────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ def _search_reddit_native(search_term: str) -> list[str]:
     logger.info(f"Searching Reddit for: {search_term}")
 
     try:
-        subreddit = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
+        subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
         for submission in subreddit.search(search_term, limit=5):
             post_ids.append(submission.id)
             logger.debug(f"Found post: {submission.title} (ID: {submission.id})")
@@ -155,7 +155,7 @@ def build_search_results(post_ids: list[str], search_term: str) -> str:
     )
 
     for post_id in capped_ids:
-        submission = REDDIT_HELPER.submission(id=post_id)
+        submission = REDDIT.submission(id=post_id)
         submission_date = datetime.fromtimestamp(
             submission.created_utc, tz=UTC
         ).strftime("%Y-%m-%d")

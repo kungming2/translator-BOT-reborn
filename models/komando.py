@@ -18,6 +18,7 @@ from config import SETTINGS
 from config import logger as _base_logger
 from lang.code_standards import PROJECT_LANGUAGE_CODES
 from lang.languages import converter
+from ziwen_lookup import BACKTICK_LOOKUP_PATTERN
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "M:KOMANDO"})
 
@@ -398,12 +399,11 @@ def extract_commands_from_text(
         # Check for disable_tokenization flag (trailing !)
         has_disable_tokenization = False
 
-        # Pattern to match backtick lookups with optional language and trailing !
-        # Matches: `term`!, `term`:lang!
-        backtick_pattern = r"`([^`]+)`(?::(\w+))?(!)?"
-        backtick_matches = re.findall(backtick_pattern, original_text)
+        # Match isolated single-backtick lookups with optional language and !.
+        backtick_matches = BACKTICK_LOOKUP_PATTERN.finditer(text)
 
-        for _term, _lang, exclamation in backtick_matches:
+        for match in backtick_matches:
+            exclamation = match.group(3)
             if exclamation:
                 has_disable_tokenization = True
                 break

@@ -31,6 +31,7 @@ from config import logger as _base_logger
 from integrations.http import get_random_useragent
 from lang.languages import converter
 from title.title_handling import extract_lingvos_from_text
+from ziwen_lookup import BACKTICK_LOOKUP_PATTERN
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
 
@@ -197,8 +198,9 @@ def lookup_matcher(
 
     # ── Backtick segment extraction ────────────────────────────────────────────
 
-    backtick_pattern: str = r"`([^`]+?)`(?::([^!\s]+))?"
-    backtick_matches: list[re.Match] = list(re.finditer(backtick_pattern, content_text))
+    backtick_matches: list[re.Match] = list(
+        BACKTICK_LOOKUP_PATTERN.finditer(content_text)
+    )
 
     match_details: list[tuple[str, str | None]] = [
         (m.group(1), m.group(2)) for m in backtick_matches

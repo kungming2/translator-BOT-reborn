@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
-from reddit.connection import REDDIT_HELPER
+from reddit.connection import REDDIT
 from title.title_handling import process_title
 from utility import format_markdown_table_with_padding
 
@@ -279,7 +279,7 @@ def _save_to_file(content: str) -> Path:
 
 def fetch_posts(fetch_amount: int) -> list:
     """Fetch posts from the configured subreddit."""
-    return list(REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).new(limit=fetch_amount))
+    return list(REDDIT.subreddit(SETTINGS["subreddit"]).new(limit=fetch_amount))
 
 
 def retrieve_titles_test(fetch_amount: int = 1000) -> None:

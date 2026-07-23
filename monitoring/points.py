@@ -38,7 +38,7 @@ from models.ajo import Ajo, ajo_loader, ajo_writer
 from models.instruo import Instruo
 from models.komando import extract_commands_from_text
 from models.lingvo import Lingvo
-from reddit.connection import REDDIT_HELPER, USERNAME, create_mod_note
+from reddit.connection import REDDIT, USERNAME, create_mod_note
 from reddit.wiki import fetch_wiki_statistics_page
 from responses import RESPONSE
 from time_handling import get_current_month
@@ -289,9 +289,7 @@ def points_worth_determiner(lingvo_object: Lingvo) -> int:
             raise ValueError("Could not extract wiki page name from URL.")
 
         wiki_page_name = match.group(1)
-        overall_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
-            wiki_page_name
-        ]
+        overall_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki[wiki_page_name]
         overall_page_content = overall_page.content_md.strip()
         last_month_data = overall_page_content.split("\n")[-1]
 

@@ -17,7 +17,6 @@ from lang.languages import converter, define_language_lists
 from models.ajo import Ajo
 from reddit.connection import (
     REDDIT,
-    REDDIT_HELPER,
     reddit_status_check,
     submit_translatorbot_post,
 )
@@ -110,7 +109,7 @@ def deleted_posts_assessor(
     relevant_ajos = {row[0]: Ajo.from_dict(json.loads(row[2])) for row in stored_ajos}
 
     submission_fullnames = [f"t3_{pid}" for pid in relevant_ajos]
-    submissions = list(REDDIT_HELPER.info(fullnames=submission_fullnames))
+    submissions = list(REDDIT.info(fullnames=submission_fullnames))
 
     deleted_submissions = {}
     for submission in submissions:

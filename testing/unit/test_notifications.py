@@ -67,7 +67,7 @@ def _lingvo(**kwargs) -> Lingvo:
     return Lingvo(**defaults)
 
 
-def test_notifier_returns_only_successfully_sent_usernames():
+def test_notifier_returns_structured_delivery_result():
     db = _Db([("zh", "sent_user"), ("zh", "blocked_user")])
     reddit = SimpleNamespace(
         redditor=lambda username: SimpleNamespace(name=username),
@@ -100,7 +100,12 @@ def test_notifier_returns_only_successfully_sent_usernames():
     ):
         result = notifications.notifier(_lingvo(), _submission())
 
-    assert result == ["sent_user"]
+    assert result.subscriber_count == 2
+    assert result.already_contacted_count == 0
+    assert result.eligible_count == 2
+    assert result.attempted_count == 2
+    assert result.sent_usernames == ["sent_user"]
+    assert result.failed_usernames == ["blocked_user"]
 
 
 def test_notifier_uses_alpha2_country_code_for_regional_subscription_query():
@@ -122,8 +127,63 @@ def test_notifier_uses_alpha2_country_code_for_regional_subscription_query():
             _submission(),
         )
 
-    assert result == []
+    assert result.subscriber_count == 0
+    assert result.attempted_count == 0
+    assert result.sent_usernames == []
+    assert result.failed_usernames == []
     assert db.conn_main.cursor_obj.executed[-1][1] == ("pt-BR",)
+
+
+def test_notifier_reports_previously_contacted_and_failed_page_recipient():
+    subscribers = [f"persian_user_{index}" for index in range(20)]
+    db = _Db([("fa", username) for username in subscribers])
+    reddit = SimpleNamespace(
+        redditor=lambda username: SimpleNamespace(name=username),
+    )
+    ajo = SimpleNamespace(
+        language_history=[],
+        notified=subscribers[:19],
+    )
+
+    with (
+        patch.object(notifications, "db", db),
+        patch.object(notifications, "REDDIT", reddit),
+        patch.object(notifications, "ajo_loader", return_value=ajo),
+        patch.object(notifications, "message_send", return_value=False),
+        patch.object(notifications, "action_counter"),
+        patch.object(notifications, "record_activity_csv"),
+        patch.object(notifications, "increment_runtime_metric"),
+        patch.object(notifications, "check_url_extension", return_value=False),
+        patch.object(notifications.random, "shuffle", lambda _items: None),
+        patch.dict(
+            notifications.SETTINGS,
+            {
+                "notifications_monthly_limit": 30,
+                "notifications_user_limit": 30,
+                "notifications_api_limiter_on": False,
+                "notifications_rare_language_rate_threshold": 5,
+                "unknown_language_default_rate": 1,
+                "num_users_page": 5,
+            },
+        ),
+    ):
+        result = notifications.notifier(
+            _lingvo(
+                name="Persian",
+                language_code_1="fa",
+                language_code_3="fas",
+                rate_monthly=22.09,
+            ),
+            _submission(),
+            mode="page",
+        )
+
+    assert result.subscriber_count == 20
+    assert result.already_contacted_count == 19
+    assert result.eligible_count == 1
+    assert result.attempted_count == 1
+    assert result.sent_usernames == []
+    assert result.failed_usernames == ["persian_user_19"]
 
 
 def test_notification_rate_limiter_uses_configured_rare_language_threshold():

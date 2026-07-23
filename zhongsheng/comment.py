@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from config import logger as _base_logger
 from models.instruo import Instruo
-from reddit.connection import REDDIT_HELPER
+from reddit.connection import REDDIT
 
 from . import command, send_long_message
 
@@ -87,7 +87,7 @@ async def comment_search(ctx: commands.Context, *, comment_input: str) -> None:
             return
 
         try:
-            comment = REDDIT_HELPER.comment(comment_id)
+            comment = REDDIT.comment(comment_id)
             instruo = Instruo.from_comment(comment)
 
             response = f"**Comment ID:** {instruo.id_comment}\n"

@@ -19,7 +19,7 @@ from config import logger as _base_logger
 from models.ajo import Ajo
 from models.instruo import Instruo
 from models.komando import Komando
-from reddit.connection import REDDIT_HELPER
+from reddit.connection import REDDIT
 from reddit.notifications import notifier
 from reddit.reddit_sender import reddit_reply
 from responses import RESPONSE
@@ -79,13 +79,23 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
     paging_languages = valid_paging_languages
 
     for language in paging_languages:
-        original_post = REDDIT_HELPER.submission(ajo.id)
-        people_messaged: list = notifier(language, original_post, mode="page")
+        original_post = REDDIT.submission(ajo.id)
+        notification_result = notifier(language, original_post, mode="page")
+        people_messaged = notification_result.sent_usernames
         logger.info(f">> Messaged {len(people_messaged)} people for {language.name}.")
 
-        if not people_messaged:
+        if notification_result.subscriber_count == 0 and not (
+            notification_result.suppressed_reason
+        ):
             replying_text.append(
                 RESPONSE.COMMENT_NO_LANGUAGE.format(
+                    language_name=language.name,
+                    language_code=language.preferred_code,
+                )
+            )
+        elif not people_messaged:
+            replying_text.append(
+                RESPONSE.COMMENT_PAGE_NO_ADDITIONAL_RECIPIENTS.format(
                     language_name=language.name,
                     language_code=language.preferred_code,
                 )
@@ -98,6 +108,6 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
         lacking_page_languages_text: str = "\n\n".join(replying_text)
         reddit_reply(comment, lacking_page_languages_text + RESPONSE.BOT_DISCLAIMER)
         logger.info(
-            "Left a comment letting users know which languages "
-            "have no notifications coverage."
+            "Left a comment reporting languages with no available "
+            "notification recipients."
         )

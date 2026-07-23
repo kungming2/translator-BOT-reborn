@@ -34,7 +34,7 @@ from database import db
 from lang.languages import converter
 from models.lingvo import Lingvo
 from models.titolo import Titolo
-from reddit.connection import REDDIT, REDDIT_HELPER
+from reddit.connection import REDDIT
 from testing import log_testing_mode
 from title.title_handling import process_title
 from utility import check_url_extension, generate_image_hash
@@ -912,7 +912,7 @@ class Ajo:
         Re-fetches the submission via PRAW, re-processes the title, and re-applies
         initial parsing via from_titolo.
         """
-        submission = REDDIT_HELPER.submission(id=self.id)
+        submission = REDDIT.submission(id=self.id)
         titolo = process_title(submission)
         self._reset_to_titolo(titolo)
 

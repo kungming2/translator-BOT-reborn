@@ -12,6 +12,7 @@ import logging
 import random
 import sqlite3
 import time
+from dataclasses import dataclass, field
 
 import orjson
 from praw.exceptions import RedditAPIException
@@ -35,6 +36,19 @@ from time_handling import time_convert_to_string
 from utility import check_url_extension
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "R:NOTIF"})
+
+
+@dataclass(slots=True)
+class NotificationResult:
+    """Outcome details for one language-notification attempt."""
+
+    subscriber_count: int = 0
+    already_contacted_count: int = 0
+    eligible_count: int = 0
+    attempted_count: int = 0
+    sent_usernames: list[str] = field(default_factory=list)
+    failed_usernames: list[str] = field(default_factory=list)
+    suppressed_reason: str | None = None
 
 
 # ─── Subscription database helpers ───────────────────────────────────────────
@@ -549,7 +563,7 @@ def notifier(
     submission: Submission,
     mode: str = "new_post",
     already_contacted: list[str] | None = None,
-) -> list[str]:
+) -> NotificationResult:
     """
     Notify users about posts in a language they've subscribed to.
     This function also handles curating the list of users who will be
@@ -560,8 +574,9 @@ def notifier(
     :param mode: Notification context: "identify", "new_post", or "page".
     :param already_contacted: Optional in-memory list of users already notified
                               for this post in the current processing pass.
-    :return: List of usernames that were notified.
+    :return: Counts and usernames describing selection and delivery results.
     """
+    result = NotificationResult()
     notify_users_list: list[str] = []
     page_users_count = SETTINGS["num_users_page"]
     contacted: list[str] = []  # Track users already contacted for this post
@@ -598,7 +613,8 @@ def notifier(
 
     # Stop notification if the same users were already contacted recently
     if not permission_to_proceed:
-        return []
+        result.suppressed_reason = "language_history"
+        return result
 
     # This is a country-specific request or a script request.
     if lingvo.country or lingvo.script_code:
@@ -622,18 +638,27 @@ def notifier(
     cursor.execute(sql_lc, (search_code,))
     notify_targets = cursor.fetchall()
 
-    if not notify_targets and not notify_users_list:
-        return []
-
     # Add retrieved usernames to list (avoiding duplicates)
     for target in notify_targets:
         username = target[1]
         notify_users_list.append(username)
 
     notify_users_list = list(set(notify_users_list))
+    result.subscriber_count = len(notify_users_list)
+
+    if not notify_users_list:
+        logger.info(
+            f"Notification selection for '{language_name}': subscribers=0, "
+            "already_contacted=0, eligible=0, selected=0."
+        )
+        return result
 
     # Remove users already contacted for this post
+    result.already_contacted_count = sum(
+        username in contacted for username in notify_users_list
+    )
     notify_users_list = [user for user in notify_users_list if user not in contacted]
+    result.eligible_count = len(notify_users_list)
 
     # Equalize distribution across popular languages
     notify_users_list = _notification_rate_limiter(
@@ -644,13 +669,21 @@ def notifier(
     if mode == "page" and len(notify_users_list) > page_users_count:
         notify_users_list = random.sample(notify_users_list, page_users_count)
 
+    result.attempted_count = len(notify_users_list)
+    logger.info(
+        f"Notification selection for '{language_name}': "
+        f"subscribers={result.subscriber_count}, "
+        f"already_contacted={result.already_contacted_count}, "
+        f"eligible={result.eligible_count}, selected={result.attempted_count}."
+    )
+
     action_counter(len(notify_users_list), "Notifications")
 
     # Clean the post title before including it in messages
     post_title = _notifier_title_cleaner(post_title)
 
     if not notify_users_list:
-        return []
+        return result
 
     # Start timing the notification run
     messaging_start = time.time()
@@ -670,8 +703,6 @@ def notifier(
 
     sent_usernames: list[str] = []
     failed_usernames: list[str] = []
-    attempted_count = len(notify_users_list)
-
     for username in notify_users_list:
         # Choose the message template based on mode
         message_templates = {
@@ -743,16 +774,18 @@ def notifier(
     )
     record_activity_csv("messaging", payload)
 
-    increment_runtime_metric("notifications_attempted", attempted_count)
+    increment_runtime_metric("notifications_attempted", result.attempted_count)
     increment_runtime_metric("notifications_sent", len(sent_usernames))
 
     logger.info(
         f"Notification summary for '{language_name}': "
-        f"attempted={attempted_count}, sent={len(sent_usernames)}, "
+        f"attempted={result.attempted_count}, sent={len(sent_usernames)}, "
         f"failed={len(failed_usernames)}."
     )
 
-    return sent_usernames
+    result.sent_usernames = sent_usernames
+    result.failed_usernames = failed_usernames
+    return result
 
 
 def notifier_internal(post_type: str, submission: Submission) -> list:

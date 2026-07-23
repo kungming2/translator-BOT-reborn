@@ -112,6 +112,27 @@ class FakeLang:
         )
 
 
+class FakeNotificationResult:
+    def __init__(
+        self,
+        *,
+        subscriber_count: int = 0,
+        already_contacted_count: int = 0,
+        eligible_count: int = 0,
+        attempted_count: int = 0,
+        sent_usernames: list[str] | None = None,
+        failed_usernames: list[str] | None = None,
+        suppressed_reason: str | None = None,
+    ) -> None:
+        self.subscriber_count = subscriber_count
+        self.already_contacted_count = already_contacted_count
+        self.eligible_count = eligible_count
+        self.attempted_count = attempted_count
+        self.sent_usernames = sent_usernames or []
+        self.failed_usernames = failed_usernames or []
+        self.suppressed_reason = suppressed_reason
+
+
 class FakeKomando:
     def __init__(self, data: object = None, name: str = "command") -> None:
         self.name = name
@@ -175,6 +196,9 @@ def _response_stub() -> SimpleNamespace:
         ),
         COMMENT_LANGUAGE_NO_RESULTS="invalid language {id_comment_body}",
         COMMENT_NO_LANGUAGE="no subscribers {language_name} {language_code}",
+        COMMENT_PAGE_NO_ADDITIONAL_RECIPIENTS=(
+            "no additional recipients {language_name} {language_code}"
+        ),
         COMMENT_PAGE_DISALLOWED="too young {age}",
         COMMENT_SEARCH_RESULTS_HEADER='results for "{search_query}"',
         COMMENT_SELF_ALREADY_CLAIMED="already claimed",
@@ -220,9 +244,9 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
     reddit = SimpleNamespace(
         comment=MagicMock(),
         redditor=MagicMock(side_effect=lambda name: FakeAuthor(str(name))),
+        submission=MagicMock(return_value=FakeSubmission()),
         subreddit=MagicMock(),
     )
-    reddit_helper = SimpleNamespace(submission=MagicMock(return_value=FakeSubmission()))
 
     stubs = {
         "ziwen_commands": command_package,
@@ -271,7 +295,6 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
         "reddit.connection": _make_stub_module(
             "reddit.connection",
             REDDIT=reddit,
-            REDDIT_HELPER=reddit_helper,
             create_mod_note=MagicMock(),
             is_mod=MagicMock(return_value=False),
             remove_content=MagicMock(),
@@ -280,7 +303,8 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
             "reddit.messaging", notify_op_translated_post=MagicMock()
         ),
         "reddit.notifications": _make_stub_module(
-            "reddit.notifications", notifier=MagicMock(return_value=[])
+            "reddit.notifications",
+            notifier=MagicMock(return_value=FakeNotificationResult()),
         ),
         "reddit.reddit_sender": _make_stub_module(
             "reddit.reddit_sender",
@@ -520,7 +544,18 @@ def test_identify_updates_language_sends_notifications_and_deletes_unknown_comme
     kunulo = FakeKunulo()
     _patch_kunulo(monkeypatch, module, kunulo)
     monkeypatch.setattr(module, "update_language", lambda target, _cmd: setattr(target, "lingvo", new_language))
-    monkeypatch.setattr(module, "notifier", MagicMock(return_value=["reader1"]))
+    monkeypatch.setattr(
+        module,
+        "notifier",
+        MagicMock(
+            return_value=FakeNotificationResult(
+                subscriber_count=1,
+                eligible_count=1,
+                attempted_count=1,
+                sent_usernames=["reader1"],
+            )
+        ),
+    )
 
     module.handle(
         FakeComment(body="!identify:ja", submission=ajo.submission),
@@ -737,7 +772,9 @@ def test_page_replies_when_no_subscribers_exist(monkeypatch) -> None:
     replies: list[str] = []
     monkeypatch.setattr(module.time, "time", lambda: 20 * 86400)
     monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(module, "notifier", MagicMock(return_value=[]))
+    monkeypatch.setattr(
+        module, "notifier", MagicMock(return_value=FakeNotificationResult())
+    )
 
     module.handle(
         FakeComment(author=author),
@@ -748,6 +785,35 @@ def test_page_replies_when_no_subscribers_exist(monkeypatch) -> None:
 
     module.notifier.assert_called_once()
     assert "no subscribers Esperanto eo" in replies[0]
+
+
+def test_page_distinguishes_unreachable_subscribers_from_no_coverage(
+    monkeypatch,
+) -> None:
+    module = _load_command_module(monkeypatch, "page")
+    author = FakeAuthor("helper", created_utc=0)
+    language = FakeLang("Persian", "fa")
+    replies: list[str] = []
+    result = FakeNotificationResult(
+        subscriber_count=20,
+        already_contacted_count=19,
+        eligible_count=1,
+        attempted_count=1,
+        failed_usernames=["blocked_user"],
+    )
+    monkeypatch.setattr(module.time, "time", lambda: 20 * 86400)
+    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    monkeypatch.setattr(module, "notifier", MagicMock(return_value=result))
+
+    module.handle(
+        FakeComment(author=author),
+        None,
+        FakeKomando([language], "page"),
+        FakeAjo(),
+    )
+
+    assert "no additional recipients Persian fa" in replies[0]
+    assert "no subscribers" not in replies[0]
 
 
 def test_page_replies_for_invalid_language_without_notifier(monkeypatch) -> None:

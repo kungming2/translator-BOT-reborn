@@ -326,11 +326,11 @@ def ziwen_posts(post_limit: int | None = None) -> None:
 
             if titolo_content and hasattr(titolo_content, "notify_languages"):
                 for lingvo in titolo_content.notify_languages:
-                    notified = notifier(
+                    notification_result = notifier(
                         lingvo, post, already_contacted=list(already_contacted)
                     )
-                    post_ajo.add_notified(notified)
-                    already_contacted.update(notified)
+                    post_ajo.add_notified(notification_result.sent_usernames)
+                    already_contacted.update(notification_result.sent_usernames)
             else:
                 logger.warning(
                     f"Cannot send notifications for post {post_id} -"

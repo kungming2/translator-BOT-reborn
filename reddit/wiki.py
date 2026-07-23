@@ -22,7 +22,7 @@ from yaml.parser import ParserError
 from config import SETTINGS
 from config import logger as _base_logger
 from integrations.discord_utils import send_discord_alert
-from reddit.connection import REDDIT, REDDIT_HELPER
+from reddit.connection import REDDIT
 from responses import RESPONSE
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ def fetch_wiki_statistics_page(lingvo_object: "Lingvo") -> str | None:
     wiki_page = f"{wiki_page_name.lower()}"
 
     # Attempt to fetch the wiki page content
-    subreddit = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
+    subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
     try:
         page = subreddit.wiki[wiki_page]
         content = page.content_md.strip()
@@ -136,9 +136,7 @@ def fetch_most_requested_languages() -> list[str]:
     logger.debug(
         f"Fetching most-requested languages from wiki page: {three_months_ago_str}."
     )
-    reference_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
-        three_months_ago_str
-    ]
+    reference_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki[three_months_ago_str]
     reference_page_content = reference_page.content_md.strip()
     reference_table = _extract_single_language_statistics_table(reference_page_content)
     if reference_table is None:
@@ -233,9 +231,7 @@ def _frequently_requested_wiki() -> list[dict[str, Any]] | None:
 
     :return: A Python dictionary of all entries.
     """
-    wiki_page = REDDIT_HELPER.subreddit(SETTINGS["subreddit"]).wiki[
-        "frequently-requested"
-    ]
+    wiki_page = REDDIT.subreddit(SETTINGS["subreddit"]).wiki["frequently-requested"]
     processed_data = wiki_page.content_md
     alert_mods = False
     frt_data: list[Any] | None = None

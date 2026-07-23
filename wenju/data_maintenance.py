@@ -31,7 +31,7 @@ from error import CustomDumper
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter, validate_lingvo_dataset
 from monitoring.points import points_worth_determiner
-from reddit.connection import REDDIT, REDDIT_HELPER
+from reddit.connection import REDDIT
 from reddit.wiki import fetch_most_requested_languages
 from time_handling import (
     get_current_month,
@@ -305,7 +305,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> dict:
     :param page_content: Language name (str) or PRAW WikiPage object.
     :return: Dictionary containing language statistics.
     """
-    r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
     language_data: dict[str, Any] = {}
     monthly_totals = []
     months_elapsed = messaging_months_elapsed()
@@ -438,7 +438,7 @@ def refresh_language_statistics() -> None:
 
     :return: Nothing.
     """
-    r = REDDIT_HELPER.subreddit(SETTINGS["subreddit"])
+    r = REDDIT.subreddit(SETTINGS["subreddit"])
 
     # Pages with different formatting that should not be assessed.
     ignore_pages = {"app", "conlang", "multiple", "nonlanguage", "unknown"}

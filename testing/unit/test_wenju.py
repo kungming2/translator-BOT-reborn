@@ -87,7 +87,6 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
         "reddit.connection": _make_stub_module(
             "reddit.connection",
             REDDIT=MagicMock(),
-            REDDIT_HELPER=MagicMock(),
             USERNAME="translator-BOT",
             create_mod_note=MagicMock(),
             get_random_useragent=MagicMock(return_value={}),

@@ -40,22 +40,6 @@ def reddit_login(credentials: dict[str, str]) -> praw.Reddit:
     return reddit
 
 
-def reddit_helper_login(credentials: dict[str, str]) -> praw.Reddit:
-    """
-    Logs in to Reddit with the helper credentials. This is used for non-
-    moderation tasks in order to reduce API calls.
-    """
-    reddit = praw.Reddit(
-        client_id=credentials["HUIBAN_APP_ID"],
-        client_secret=credentials["HUIBAN_APP_SECRET"],
-        username=credentials["HUIBAN_USERNAME"],
-        password=credentials["HUIBAN_PASSWORD"],
-        user_agent="Another assistant for r/translator",
-    )
-
-    return reddit
-
-
 def reddit_hermes_login(credentials: dict[str, str]) -> praw.Reddit:
     """
     Logs in to Reddit with Hermes's dedicated credentials.
@@ -112,7 +96,7 @@ def reddit_status_check() -> list[dict] | None:
 def submission_from_input(user_input: str) -> Submission | None:
     """
     Resolve a Reddit post ID, full URL, or short redd.it URL to a PRAW
-    Submission object using REDDIT_HELPER.
+    Submission object using REDDIT.
 
     Accepts any of:
         - Bare post ID:   1rvpshb
@@ -128,16 +112,16 @@ def submission_from_input(user_input: str) -> Submission | None:
     # Short URL: https://redd.it/1rvpshb
     short_match = re.search(r"redd\.it/([A-Za-z0-9]+)", user_input)
     if short_match:
-        return REDDIT_HELPER.submission(id=short_match.group(1))
+        return REDDIT.submission(id=short_match.group(1))
 
     # Full URL: .../comments/1rvpshb/...
     full_match = re.search(r"comments/([A-Za-z0-9]+)", user_input)
     if full_match:
-        return REDDIT_HELPER.submission(id=full_match.group(1))
+        return REDDIT.submission(id=full_match.group(1))
 
     # Bare post ID: alphanumeric, typically 5-7 chars
     if re.fullmatch(r"[A-Za-z0-9]+", user_input):
-        return REDDIT_HELPER.submission(id=user_input)
+        return REDDIT.submission(id=user_input)
 
     raise ValueError(f"Could not extract a post ID from: {user_input!r}")
 
@@ -240,7 +224,7 @@ def is_valid_user(username: str) -> bool:
     """
     try:
         # Just try to access fullname; no need to assign it if unused
-        _ = REDDIT_HELPER.redditor(username).fullname
+        _ = REDDIT.redditor(username).fullname
         return True
     except exceptions.NotFound:
         logger.debug(f"User {username!r} not found (shadowbanned or deleted).")
@@ -438,7 +422,6 @@ def remove_content(
 
 credentials_source = load_settings(Paths.AUTH["CREDENTIALS"])
 REDDIT = reddit_login(credentials_source)
-REDDIT_HELPER = reddit_helper_login(credentials_source)
 REDDIT_HERMES = reddit_hermes_login(credentials_source)
 USERNAME = credentials_source["USERNAME"]
 
