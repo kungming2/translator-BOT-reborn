@@ -10,7 +10,7 @@ mocked at the boundary.
 Modules covered:
     - wenju/__init__.py  : task decorator & run_schedule
     - community_digest.py: weekly bot-action report calculations
-    - iso_updates.py     : _parse_iso639_newsletter
+    - iso_updates.py     : ISO 639 newsletter and ISO 15924 registry parsing
     - data_maintenance.py: error_log_trimmer (logic), validate_data_files (path scanning)
     - moderator_reporting.py: moderator-report collectors and rule analysis
     - public_statistics.py: dashboard rendering and public-data allowlisting
@@ -489,6 +489,166 @@ class TestParseIso639Newsletter:
 
 
 # ===========================================================================
+# Tests: ISO 15924 registry tracking  (iso_updates.py)
+# ===========================================================================
+
+
+class TestIso15924Registry:
+    SAMPLE_TEXT = textwrap.dedent("""
+        #
+        # Code;N°;English Name;Nom français;PVA;Unicode Version;Date
+        Adlm;166;Adlam;adlam;Adlam;9.0;2016-12-05
+        Hntl;504;Han with Latin;han avec latin;;;2025-04-24
+    """)
+
+    def test_parses_registry_records(self):
+        updates = iso_updates._parse_iso15924_registry(self.SAMPLE_TEXT)
+
+        assert updates == [
+            {
+                "standard": "ISO 15924",
+                "code": "Adlm",
+                "number": "166",
+                "name": "Adlam",
+                "property_value_alias": "Adlam",
+                "unicode_version": "9.0",
+                "date": "2016-12-05",
+                "link": iso_updates.ISO_15924_REGISTRY_URL,
+                "posted": False,
+            },
+            {
+                "standard": "ISO 15924",
+                "code": "Hntl",
+                "number": "504",
+                "name": "Han with Latin",
+                "property_value_alias": "",
+                "unicode_version": "",
+                "date": "2025-04-24",
+                "link": iso_updates.ISO_15924_REGISTRY_URL,
+                "posted": False,
+            },
+        ]
+
+    def test_rejects_response_without_registry_records(self):
+        with pytest.raises(ValueError, match="No ISO 15924 records"):
+            iso_updates._parse_iso15924_registry(
+                "<html><body>Temporary upstream error</body></html>"
+            )
+
+    def test_first_fetch_establishes_posted_baseline(self):
+        fetched = iso_updates._parse_iso15924_registry(self.SAMPLE_TEXT)
+
+        merged = iso_updates._merge_iso15924_updates([], fetched)
+
+        assert all(update["posted"] is True for update in merged)
+
+    def test_new_code_and_date_identity_is_unposted(self):
+        existing = [
+            {
+                "standard": "ISO 15924",
+                "code": "Adlm",
+                "date": "2016-12-05",
+                "posted": True,
+            },
+            {
+                "standard": "ISO 15924",
+                "code": "Hntl",
+                "date": "2025-04-24",
+                "posted": True,
+            }
+        ]
+        fetched = iso_updates._parse_iso15924_registry(
+            self.SAMPLE_TEXT
+            + "Toto;294;Toto;toto;Toto;14.0;2025-04-24\n"
+        )
+
+        merged = iso_updates._merge_iso15924_updates(existing, fetched)
+        posted_by_code = {
+            str(update["code"]): update["posted"] for update in merged
+        }
+
+        assert posted_by_code == {"Adlm": True, "Hntl": True, "Toto": False}
+
+    def test_preserves_unposted_status_for_known_record(self):
+        fetched = iso_updates._parse_iso15924_registry(self.SAMPLE_TEXT)
+        existing = [
+            {
+                "standard": "ISO 15924",
+                "code": "Hntl",
+                "date": "2025-04-24",
+                "posted": False,
+            }
+        ]
+
+        merged = iso_updates._merge_iso15924_updates(existing, fetched)
+        hntl = next(update for update in merged if update["code"] == "Hntl")
+
+        assert hntl["posted"] is False
+
+
+class TestPostIso15924Updates:
+    def test_groups_same_date_updates_into_one_post_and_alert(self, tmp_path):
+        state_file = tmp_path / "iso_codes_updates.yaml"
+        update_date = f"{datetime.now().year}-08-01"
+        state_file.write_text(
+            yaml.safe_dump(
+                [
+                    {
+                        "standard": "ISO 15924",
+                        "code": "Toto",
+                        "number": "294",
+                        "name": "Toto",
+                        "property_value_alias": "Toto",
+                        "unicode_version": "14.0",
+                        "date": update_date,
+                        "link": iso_updates.ISO_15924_REGISTRY_URL,
+                        "posted": False,
+                    },
+                    {
+                        "standard": "ISO 15924",
+                        "code": "Vith",
+                        "number": "228",
+                        "name": "Vithkuqi",
+                        "property_value_alias": "Vithkuqi",
+                        "unicode_version": "14.0",
+                        "date": update_date,
+                        "link": iso_updates.ISO_15924_REGISTRY_URL,
+                        "posted": False,
+                    },
+                ],
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+
+        with (
+            patch.object(
+                iso_updates.Paths,
+                "STATES",
+                {
+                    **iso_updates.Paths.STATES,
+                    "ISO_CODES_UPDATES": str(state_file),
+                },
+            ),
+            patch.object(iso_updates, "submit_translatorbot_post") as post_mock,
+            patch.object(iso_updates, "send_discord_alert") as alert_mock,
+        ):
+            iso_updates.post_iso_reports_to_reddit()
+
+        post_mock.assert_called_once()
+        assert post_mock.call_args.args[0] == f"ISO 15924 Update ({update_date})"
+        assert post_mock.call_args.kwargs["url"] == iso_updates.ISO_15924_REGISTRY_URL
+
+        alert_mock.assert_called_once()
+        alert_message = alert_mock.call_args.kwargs["message"]
+        assert "`Toto` (294)" in alert_message
+        assert "`Vith` (228)" in alert_message
+
+        saved_updates = yaml.safe_load(state_file.read_text(encoding="utf-8"))
+        assert all(update["posted"] is True for update in saved_updates)
+
+
+# ===========================================================================
 # Tests: _error_log_summary  (moderator_reporting.py)
 # ===========================================================================
 
@@ -710,9 +870,7 @@ class TestPublicStatsDashboard:
         assert moderation_monitoring.monitor_controversial_comments in tasks["hourly"]
         assert sidebar_updates.update_sidebar_statistics in tasks["hourly"]
         assert moderator_update.send_moderator_update in tasks["daily"]
-        assert moderation_monitoring.modqueue_assessor in tasks["daily"]
         assert sidebar_updates.language_of_the_day in tasks["daily"]
-        assert subreddit_maintenance.archive_modmail in tasks["daily"]
         assert subreddit_maintenance.update_verified_list in tasks["weekly"]
         assert moderator_update.monthly_rule_violation_report in tasks["monthly"]
         assert subreddit_maintenance.monthly_statistics_unpinner in tasks["monthly"]

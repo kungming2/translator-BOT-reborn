@@ -133,17 +133,17 @@ scheduler.add_job(
     misfire_grace_time=60,
 )
 
-# Chinese Reference: every 5 minutes
-scheduler.add_job(
-    run_script,
-    "interval",
-    minutes=10,
-    id="chinese_reference",
-    kwargs={"script": "main_chinese_reference.py", "lock_name": "chinese_reference"},
-    max_instances=1,
-    coalesce=True,
-    misfire_grace_time=60,
-)
+# Chinese Reference: every 10 minutes (disabled)
+# scheduler.add_job(
+#     run_script,
+#     "interval",
+#     minutes=10,
+#     id="chinese_reference",
+#     kwargs={"script": "main_chinese_reference.py", "lock_name": "chinese_reference"},
+#     max_instances=1,
+#     coalesce=True,
+#     misfire_grace_time=60,
+# )
 
 # Hermes: every 30 minutes
 scheduler.add_job(

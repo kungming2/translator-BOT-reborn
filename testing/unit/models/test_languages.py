@@ -15,15 +15,23 @@ Covers:
 import unittest
 from collections.abc import Callable
 from typing import Any
+from unittest.mock import patch
 
 from config import Paths, load_settings
-from lang.code_standards import alpha3_code, parse_language_tag
+from lang import languages as languages_module
+from lang.code_standards import alpha3_code, parse_language_tag, preferred_standard_code
 from lang.countries import country_converter
+
 # noinspection PyProtectedMember
-from lang.languages import (_is_exact_language_identifier, converter,
-                            define_language_lists, get_lingvos,
-                            has_editable_language_entry, normalize,
-                            parse_language_list)
+from lang.languages import (
+    _is_exact_language_identifier,
+    converter,
+    define_language_lists,
+    get_lingvos,
+    has_editable_language_entry,
+    normalize,
+    parse_language_list,
+)
 from models.lingvo import Lingvo
 
 # ---------------------------------------------------------------------------
@@ -280,6 +288,22 @@ class TestConverterStableCodes(unittest.TestCase):
         result = converter("deu")
         self.assertIsNotNone(result)
         self.assertEqual(result.preferred_code, "de")
+
+    @_skip_if_no_data
+    def test_macrolanguage_alpha3_aliases_use_standard_adapter(self) -> None:
+        expectations = {
+            "est": "et",
+            "msa": "ms",
+            "srd": "sc",
+            "yid": "yi",
+        }
+
+        for input_code, preferred_code in expectations.items():
+            for specific_mode in (False, True):
+                with self.subTest(input_code=input_code, specific_mode=specific_mode):
+                    result = converter(input_code, specific_mode=specific_mode)
+                    self.assertIsNotNone(result)
+                    self.assertEqual(result.preferred_code, preferred_code)
 
     @_skip_if_no_data
     def test_csv_only_language_is_not_yaml_editable(self) -> None:
@@ -683,6 +707,21 @@ class TestCodeStandardsAdapter(unittest.TestCase):
         self.assertEqual(parsed.language, "en")
         self.assertEqual(parsed.territory, "US")
 
+    def test_preferred_macrolanguage_codes(self) -> None:
+        expectations = {
+            "est": "et",
+            "msa": "ms",
+            "srd": "sc",
+            "yid": "yi",
+        }
+
+        for input_code, preferred_code in expectations.items():
+            with self.subTest(input_code=input_code):
+                self.assertEqual(
+                    preferred_standard_code(input_code),
+                    preferred_code,
+                )
+
 
 # ---------------------------------------------------------------------------
 # country_converter()
@@ -780,6 +819,17 @@ class TestLanguageLists(unittest.TestCase):
 
 
 class TestGetLingvos(unittest.TestCase):
+    def test_dataset_key_fills_missing_three_letter_code(self) -> None:
+        with patch.object(
+            languages_module,
+            "_combine_language_data",
+            return_value={"abc": {"name": "Example"}},
+        ):
+            lingvos = languages_module._load_lingvo_dataset()
+
+        self.assertEqual(lingvos["abc"].language_code_3, "abc")
+        self.assertEqual(lingvos["abc"].preferred_code, "abc")
+
     @_skip_if_no_data
     def test_returns_dict(self) -> None:
         lingvos = get_lingvos()
@@ -804,6 +854,29 @@ class TestGetLingvos(unittest.TestCase):
         # Same keys/content but different object after refresh
         self.assertIsInstance(r2, dict)
         self.assertEqual(set(r1.keys()), set(r2.keys()))
+
+    @_skip_if_no_data
+    def test_vangunu_statistics_use_mpr_code(self) -> None:
+        lingvos = get_lingvos(force_refresh=True)
+
+        self.assertEqual(lingvos["mpr"].preferred_code, "mpr")
+        self.assertEqual(
+            lingvos["mpr"].link_statistics,
+            "https://www.reddit.com/r/translator/wiki/vangunu",
+        )
+
+    @_skip_if_no_data
+    def test_unknown_has_no_language_statistics(self) -> None:
+        unknown = get_lingvos(force_refresh=True)["unknown"]
+
+        for field in (
+            "num_months",
+            "rate_daily",
+            "rate_monthly",
+            "rate_yearly",
+            "link_statistics",
+        ):
+            self.assertIsNone(getattr(unknown, field))
 
 
 # ---------------------------------------------------------------------------

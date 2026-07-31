@@ -3,8 +3,7 @@
 This documentation covers the routines, data files, deployment notes, and
 maintenance workflows for translator-BOT Reborn. The repository primarily
 serves [r/translator](https://www.reddit.com/r/translator/), with related
-routines for [r/language_exchange](https://www.reddit.com/r/language_exchange/)
-and Chinese-language reference lookup.
+routines for [r/language_exchange](https://www.reddit.com/r/language_exchange/).
 
 ## Start Here
 
@@ -24,7 +23,6 @@ and Chinese-language reference lookup.
 | Zhongsheng | Discord commands for community oversight and operational checks. | `main_zhongsheng.py` |
 | Wenyuan | Statistics, data analysis, and recurring community reports. | `main_wenyuan.py` |
 | Hermes | Language-exchange matching for r/language_exchange. | `main_hermes.py` |
-| Chinese Reference | Chinese character and word lookup for Chinese-language subreddits. | `main_chinese_reference.py` |
 
 ## Language Codes and Syntax
 
@@ -81,7 +79,6 @@ aliases, and normalization details.
 |------|---------|
 | [Wenju](./wenju.md) | Scheduled maintenance task catalog and behavior. |
 | [Wenyuan](./wenyuan.md) | Statistics and reporting workflows. |
-| [Chinese Reference](./chinese_reference.md) | Chinese lookup bot behavior and maintenance notes. |
 | [Hermes](./hermes.md) | r/language_exchange matching bot behavior. |
 
 ### Reference

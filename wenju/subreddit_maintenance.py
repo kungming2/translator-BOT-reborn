@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Maintain r/translator wiki, sticky, flair, and modmail state."""
+"""Maintain r/translator wiki, sticky, and flair state."""
 
 import logging
 import re
-from datetime import UTC, datetime
 
 import prawcore
 
@@ -14,8 +13,8 @@ from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
 from reddit.connection import REDDIT, USERNAME
 from reddit.verification import get_verified_thread
-from time_handling import get_current_utc_date, time_convert_to_string_seconds
-from wenju import WENJU_SETTINGS, task
+from time_handling import get_current_utc_date
+from wenju import task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:SUBMAINT"})
 
@@ -123,58 +122,3 @@ def monthly_statistics_unpinner() -> None:
             logger.info("Monthly Statistics Unpinner: Unpinned monthly post.")
 
     return
-
-
-@task(schedule="daily")
-def archive_modmail() -> None:
-    """Archive old modmail conversations in which a moderator participated."""
-    days_max = WENJU_SETTINGS["modmail_archival_age"]
-
-    logger.debug("Assessing modmail...")
-    subreddit = REDDIT.subreddit(SETTINGS["subreddit"])
-
-    mod_names = [mod.name.lower() for mod in subreddit.moderator()]
-    logger.debug(f"Moderators: {mod_names}")
-
-    unread_counts = subreddit.modmail.unread_count()
-    for key, count in unread_counts.items():
-        if count > 0:
-            logger.debug(f"Current '{key}' in modmail: {count}")
-
-    current_time = datetime.now(UTC)
-    max_age_seconds = days_max * 86400
-
-    for convo in subreddit.modmail.conversations():
-        convo.read()
-
-        last_updated = datetime.fromisoformat(convo.last_updated)
-        convo_age = (current_time - last_updated).total_seconds()
-        readable_age = time_convert_to_string_seconds(int(convo_age))
-
-        participants = (
-            [author.name for author in convo.authors] if convo.authors else []
-        )
-        mod_participant = next(
-            (name for name in participants if name.lower() in mod_names), None
-        )
-        logger.debug(
-            f"Conversation '{convo.subject}' | Age: {readable_age} | "
-            f"Authors: {participants} | Mod participant: {mod_participant}"
-        )
-
-        if convo_age > max_age_seconds and mod_participant:
-            convo.archive()
-            logger.info(
-                f"Conversation by u/{convo.participant} archived. "
-                f"({readable_age} old, mod u/{mod_participant} participated)."
-            )
-        else:
-            skip_reason = (
-                "not old enough"
-                if convo_age <= max_age_seconds
-                else "no moderator participated"
-            )
-            logger.debug(
-                f"Conversation by u/{convo.participant} not archived. "
-                f"({readable_age}, {skip_reason.title()})."
-            )

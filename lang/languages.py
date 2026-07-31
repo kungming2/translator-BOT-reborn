@@ -128,14 +128,22 @@ def _load_lingvo_dataset(debug: bool = False) -> dict[str, Lingvo]:
             logger.debug(f"combined_data[{code}] = {attrs}")
 
         name = attrs.get("name", None)
-        lang_code = attrs.get("language_code", code)
         extra_attrs = {
             k: v for k, v in attrs.items() if k not in ("name", "language_code")
         }
 
-        lingvo_dict[code] = Lingvo(
-            language_code=lang_code, name=name or "unknown", **extra_attrs
-        )
+        # Some YAML entries rely on their mapping key as their only language
+        # code. Lingvo accepts the explicit ISO fields rather than the legacy
+        # generic ``language_code`` keyword, so preserve that key as a fallback.
+        if not extra_attrs.get("language_code_1") and not extra_attrs.get(
+            "language_code_3"
+        ):
+            if len(code) == 2:
+                extra_attrs["language_code_1"] = code
+            elif len(code) == 3:
+                extra_attrs["language_code_3"] = code
+
+        lingvo_dict[code] = Lingvo(name=name or "unknown", **extra_attrs)
 
     return lingvo_dict
 
@@ -198,9 +206,6 @@ def define_language_lists() -> dict[str, Any]:
 
         if lingvo.language_code_3:
             iso_639_3.append(lingvo.language_code_3)
-
-        if hasattr(lingvo, "language_code_synonym") and lingvo.language_code_synonym:
-            iso_639_3.append(lingvo.language_code_synonym)
 
         if lingvo.name:
             iso_names.append(lingvo.name)

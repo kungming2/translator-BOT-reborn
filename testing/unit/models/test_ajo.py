@@ -674,16 +674,16 @@ class TestAjoFromTitolo(unittest.TestCase):
         """Single-language history should store the language code, not CSS buckets."""
         titolo = make_titolo(
             source_codes=[("English", "en", "eng")],
-            target_codes=[("South Levantine Arabic", None, "ajp")],
+            target_codes=[("Algerian Arabic", None, "arq")],
             final_code="generic",
-            final_text="South Levantine Arabic",
+            final_text="Algerian Arabic",
             direction="english_from",
-            title_original="[English > Levantine Arabic] one sentence",
+            title_original="[English > Algerian Arabic] one sentence",
             title_actual="one sentence",
         )
         ajo = Ajo.from_titolo(titolo)
-        self.assertEqual(ajo.preferred_code, "ajp")
-        self.assertEqual(ajo.language_history, ["ajp"])
+        self.assertEqual(ajo.preferred_code, "arq")
+        self.assertEqual(ajo.language_history, ["arq"])
 
     def test_reset_single_history_uses_preferred_code_not_generic_bucket(self):
         """Reset should use the same history-code logic as initial construction."""
@@ -691,14 +691,14 @@ class TestAjoFromTitolo(unittest.TestCase):
         ajo.language_history = ["generic"]
         titolo = make_titolo(
             source_codes=[("English", "en", "eng")],
-            target_codes=[("South Levantine Arabic", None, "ajp")],
+            target_codes=[("Algerian Arabic", None, "arq")],
             final_code="generic",
-            final_text="South Levantine Arabic",
+            final_text="Algerian Arabic",
             direction="english_from",
         )
         ajo._reset_to_titolo(titolo)
-        self.assertEqual(ajo.preferred_code, "ajp")
-        self.assertEqual(ajo.language_history, ["ajp"])
+        self.assertEqual(ajo.preferred_code, "arq")
+        self.assertEqual(ajo.language_history, ["arq"])
 
     def test_from_titolo_single_sets_title(self):
         titolo = make_titolo(

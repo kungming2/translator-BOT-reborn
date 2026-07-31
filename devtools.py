@@ -903,8 +903,8 @@ def check_reddit_notifications() -> None:
 
 
 def check_wenju_fetch_iso_reports() -> None:
-    """iso_updates: Fetch and save the latest ISO 639-3 change reports."""
-    with msg.loading("Fetching ISO 639-3 reports..."):
+    """iso_updates: Fetch and save the latest ISO 639-3 and ISO 15924 updates."""
+    with msg.loading("Fetching ISO 639-3 and ISO 15924 updates..."):
         fetch_iso_reports()
     msg.good("ISO report fetch complete.")
 

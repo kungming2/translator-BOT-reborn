@@ -15,7 +15,6 @@ translator-BOT is a set of related routines that share configuration, data files
 | `main_wenyuan.py` | Wenyuan | Interactive statistics and reporting menu. |
 | `main_zhongsheng.py` | Zhongsheng | Long-running Discord slash-command bot. |
 | `main_hermes.py` | Hermes | Standalone r/language_exchange matching bot. |
-| `main_chinese_reference.py` | Chinese Reference | Standalone async Chinese lookup bot for Chinese-language subreddits. |
 
 Of note: `devtools.py` also serves as a menu with interrogative functions for various Ziwen functions for debugging or checking purposes.
 
@@ -101,6 +100,6 @@ The menu loop calls `registry.display_menu()`, reads one command key, and passes
 
 ## Scheduling
 
-`scheduler/runner.py` runs Ziwen, Wenju, Hermes, and Chinese Reference as subprocesses under APScheduler. Each job also uses a file lock from `scheduler/lock.py`, so a slow run will not overlap with the next scheduled run of the same job.
+`scheduler/runner.py` runs Ziwen, Wenju, and Hermes as subprocesses under APScheduler. Each job also uses a file lock from `scheduler/lock.py`, so a slow run will not overlap with the next scheduled run of the same job.
 
 Zhongsheng is different: it is a long-running Discord bot and should be managed as its own [systemd](https://en.wikipedia.org/wiki/Systemd) service.

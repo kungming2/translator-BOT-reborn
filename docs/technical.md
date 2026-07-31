@@ -16,9 +16,8 @@ The main entry points are:
 * `main_wenyuan.py`: provides an interactive statistics and reporting menu.
 * `main_zhongsheng.py`: runs the Discord bot and registers slash commands from `/zhongsheng`.
 * `main_hermes.py`: runs the standalone r/language_exchange matching bot.
-* `main_chinese_reference.py`: runs the Chinese Reference lookup bot for Chinese-language subreddits.
 
-The scheduler lives in `scheduler/runner.py`. It launches Ziwen, Wenju, Hermes, and Chinese Reference as subprocesses and uses `scheduler/lock.py` to hold file locks so two copies of the same job do not run at once. Zhongsheng is long-running and managed separately as a systemd service.
+The scheduler lives in `scheduler/runner.py`. It launches Ziwen, Wenju, and Hermes as subprocesses and uses `scheduler/lock.py` to hold file locks so two copies of the same job do not run at once. Zhongsheng is long-running and managed separately as a systemd service.
 
 Configuration and path constants are centralized in `config.py`. Runtime data is stored under `_data`, with settings in `_data/settings`, SQLite databases in `_data/databases`, logs in `_data/logs`, reports in `_data/reports`, and templates in `_data/templates`.
 

@@ -15,13 +15,13 @@ The task modules are organized by responsibility:
 * `community_digest.py`: public/community notifications and reports.
 * `data_maintenance.py`: local file, database, cache, and archival maintenance.
 * `hermes_reporting.py`: scheduled Hermes reporting wrappers.
-* `iso_updates.py`: ISO 639-3 change-report collection and posting.
-* `moderation_monitoring.py`: moderation signals and queue alerts.
+* `iso_updates.py`: ISO 639-3 and ISO 15924 update collection and posting.
+* `moderation_monitoring.py`: moderation signals and alerts.
 * `moderator_reporting.py`: operational and rule-violation reports for moderators.
 * `public_statistics.py`: the generated public statistics dashboard.
 * `sidebar_updates.py`: Old and New Reddit sidebar content.
 * `status_report.py`: Reddit status and database reports.
-* `subreddit_maintenance.py`: subreddit wiki, flair, sticky, and modmail maintenance.
+* `subreddit_maintenance.py`: subreddit wiki, flair, and sticky maintenance.
 
 Each task runs independently inside the selected schedule. If one task fails, Wenju logs the exception, writes an error entry, and continues with the remaining tasks. Weekly and monthly schedules send a Discord alert listing successfully executed tasks; hourly and daily schedules do not.
 
@@ -34,12 +34,10 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 ## Daily Functions
 
-* `archive_modmail()`: Archives modmail conversations older than a pre-configured age where at least one moderator has participated in the conversation.
 * `send_moderator_update()`: Sends the current error-log summary and runtime performance data directly to the moderator Discord webhook. It does not generate a separate dashboard or statistics report.
 * `error_log_trimmer()`: Removes resolved errors older than a configured number of weeks from the error log, keeping it from growing indefinitely.
 * `language_of_the_day()`: Randomly selects a language of the day for inclusion in the sidebar of the subreddit as a widget (New Reddit), and as an update to Discord. The function selects ISO 639-1 languages on even days.
 * `log_trimmer()`: Trims the events log (where `logger` writes to) to keep only a relatively large amount of recent entries. Also trims the activity CSV log.
-* `modqueue_assessor()`: Checks how many items are in the modqueue and alerts the moderators on Discord if the count exceeds a certain threshold.
 * `points_worth_cacher()`: Caches the [point](./points.md) values of frequently used languages into a local database for faster access. If the current month does not yet have entries, it purges the previous month's cache and repopulates it.
 * `send_internal_post_digest()`: Checks for new internal (e.g. meta/community) posts in the last 24 hours and sends notifications for unprocessed ones. Community notifications, especially, have many sign-ups and as such their notifications are deferred to a quieter time.
 * `validate_data_files()`: Checks that all local YAML and JSON files used by the bot are valid. Also runs a validation pass on the Lingvo dataset to catch any malformed language entries. Alerts moderators on Discord if any files fail.
@@ -48,7 +46,7 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 * `clean_processed_database()`: Cleans up the processed comments and posts in the database by pruning old entries from the 'old_comments' and 'old_posts' tables.
 * `deleted_posts_assessor()`: Gathers data on individuals who deleted their posts from the subreddit, focusing on those who deleted translated posts without thanking their translators. This is generally considered quite rude by translators, so this routine helps check for repeat offenders. This also produces a local Markdown report.
-* `fetch_iso_reports()`: Checks ISO 639-3 code change reports from SIL's [change management page](https://iso639-3.sil.org/code_changes/change_management) and if there's something new, saves that report entry to a YAML file for later alerts.
+* `fetch_iso_reports()`: Checks ISO 639-3 code change reports from SIL's [change management page](https://iso639-3.sil.org/code_changes/change_management) and script-code updates in Unicode's [ISO 15924 registry](https://www.unicode.org/iso15924/iso15924.txt). It saves both standards to the same YAML file while preserving which updates have already been posted.
 * `update_verified_list()`:  Updates the subreddit wiki page '[verified](https://www.reddit.com/r/translator/wiki/verified)' with a sorted list of verified users organized by language. Also flags users with problematic flairs.
 * `weekly_bot_action_report()`: Generates a weekly report of mod actions on Reddit taken by u/translator-BOT and posts it to r/translatorBOT, including a breakdown of action types and counts for the period.
 
@@ -59,5 +57,5 @@ Each task runs independently inside the selected schedule. If one task fails, We
 * `monthly_hermes_statistics_post()`: Posts the previous full calendar month's Hermes statistics to r/translatorBOT. If the post already exists for that month, the task skips posting.
 * `monthly_statistics_unpinner()`: Simple routine that unpins the monthly statistics sticky if it's still up when the timing runs. 
 * `notify_db_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
-* `post_iso_reports_to_reddit()`: Takes the information from `fetch_iso_reports()` and posts the file to r/translatorBOT, as well as updates moderators with that information.
+* `post_iso_reports_to_reddit()`: Takes new ISO 639-3 reports and ISO 15924 update batches from `fetch_iso_reports()`, posts them to r/translatorBOT, and alerts moderators on Discord.
 * `refresh_language_statistics()`: Collects all language wiki pages, parses their statistics, and generates a statistics JSON file that serves as a machine-readable format of the statistical information. Also updates the statistics wiki page with a grouped list of links to each individual language's wiki page.

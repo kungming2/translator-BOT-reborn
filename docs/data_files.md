@@ -91,7 +91,6 @@ For logs, _running_ refers to a fixed-size buffer that retains the most recent d
 | `log_counter.json`     | Cumulative JSON log for all commands and actions, sorted by day. Written to by `action_counter()`.                               | 
 | `log_error.yaml`       | General error log to record errors and contextual information.                                                                   | 
 | `log_events.md`        | Main running log for [logger](https://docs.python.org/3/library/logging.html) events (`INFO` and higher).                        | 
-| `log_events_cr.md`     | Main running log for Chinese Reference's events (`INFO` and higher).                                                             |
 | `log_events_hermes.md` | Main running log for Hermes's events (`INFO` and higher).                                                                        | 
 | `log_filter.md`        | Cumulative log for posts that were filtered out and rejected by [title processing](./title_processing.md).                       | 
 | `log_messaging.csv`    | Running log that records runtimes for sending notifications. | 
@@ -112,7 +111,7 @@ This directory is the isolated document root for files that may be served public
 | `discord_settings.yaml`   | Contains webhook data for Discord alerts.                               | 
 | `hermes_settings.yaml`    | Settings for [Hermes](./hermes.md).                                     | 
 | `languages_settings.yaml` | Settings for [language name and code parsing](./language_processing.md). | 
-| `scheduler_settings.yaml` | Settings for scheduler paths used to run Ziwen, Wenju, Hermes, and Chinese Reference. | 
+| `scheduler_settings.yaml` | Settings for scheduler paths used to run Ziwen, Wenju, and Hermes. |
 | `settings.yaml`           | Main settings file.                                                     | 
 | `title_settings.yaml`     | Settings for [title parsing](./title_processing.md).                    | 
 | `wenju_settings.yaml`     | Settings for maintenance operations.                                    | 
