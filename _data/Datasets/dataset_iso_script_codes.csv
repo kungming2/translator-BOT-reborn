@@ -2,9 +2,9 @@
 adlm,Adlam,
 afak,Afaka,
 aghb,Caucasian Albanian,
-ahom,Ahom,
+ahom,Ahom,"Ahom, Tai Ahom; Tai Ahom"
 arab,Arabic,
-aran,Nastaliq,
+aran,Nastaliq,Arabic (Nastaliq variant)
 armi,Imperial Aramaic,
 armn,Armenian,
 avst,Avestan,
@@ -12,7 +12,8 @@ bali,Balinese,
 bamu,Bamum,
 bass,Bassa Vah,
 batk,Batak,
-beng,Bengali,
+beng,Bengali,Bengali (Bangla); Bangla
+berf,Beria Erfe,
 bhks,Bhaiksuki,
 blis,Blissymbols,
 bopo,Bopomofo,
@@ -30,23 +31,23 @@ chrs,Chorasmian,
 cirt,Cirth,
 copt,Coptic,
 cpmn,Cypro-Minoan,
-cprt,Cypriot Syllabary,
+cprt,Cypriot Syllabary,Cypriot
 cyrl,Cyrillic,Cryllic; Kyrillic
-cyrs,Old Church Slavonic Cyrillic,
-deva,Devanagari,Nagari; Nandinagari
+cyrs,Old Church Slavonic Cyrillic,Cyrillic (Old Church Slavonic variant)
+deva,Devanagari,Nagari; Devanagari (Nagari)
 diak,Dives Akuru,
 dogr,Dogra,
-dsrt,Deseret,
-dupl,Duployan,
-egyd,Demotic Egyptian,Demotic
-egyh,Hieratic Egyptian,Hieratic
+dsrt,Deseret,Deseret (Mormon); Mormon
+dupl,Duployan,"Duployan shorthand, Duployan stenography; Duployan shorthand; Duployan stenography"
+egyd,Demotic Egyptian,Demotic; Egyptian demotic
+egyh,Hieratic Egyptian,Hieratic; Egyptian hieratic
 egyp,Egyptian Hieroglyphs,Hieroglyph
 elba,Elbasan,
 elym,Elymaic,
-ethi,Ethiopic,
+ethi,Ethiopic,Ethiopic (Geʻez); Geʻez; Ge‘ez
 gara,Garay,
-geok,Khutsuri,
-geor,Georgian,
+geok,Khutsuri,Khutsuri (Asomtavruli and Nuskhuri); Asomtavruli; Nuskhuri
+geor,Georgian,Georgian (Mkhedruli and Mtavruli); Mkhedruli; Mtavruli
 glag,Glagolitic,
 gong,Gunjala Gondi,
 gonm,Masaram Gondi,
@@ -54,27 +55,28 @@ goth,Gothic,Blackletter; Schwabacher
 gran,Grantha,
 grek,Greek,
 gujr,Gujarati,
-gukh,Gurung Khema,
+gukh,Gurung Khema,Gurung_Khema
 guru,Gurmukhi,
-hanb,Han with Bopomofo,Zhuyin; Zhuyinfuhao
-hang,Hangul,
-hani,Han Characters,Hanzi
-hano,Hanunoo,
-hans,Simplified Han,
-hant,Traditional Han,
+hanb,Han with Bopomofo,Zhuyin; Zhuyinfuhao; Han with Bopomofo (alias for Han + Bopomofo)
+hang,Hangul,"Hangul (Hangŭl, Hangeul); Hangŭl; Hangeul"
+hani,Han Characters,"Hanzi; Han (Hanzi, Kanji, Hanja); Han; Kanji; Hanja"
+hano,Hanunoo,Hanunoo (Hanunóo); Hanunóo
+hans,Simplified Han,Han (Simplified variant)
+hant,Traditional Han,Han (Traditional variant)
 hatr,Hatran,
 hebr,Hebrew,
 hira,Hiragana,
-hluw,Anatolian Hieroglyphs,
+hluw,Anatolian Hieroglyphs,"Anatolian Hieroglyphs (Luwian Hieroglyphs, Hittite Hieroglyphs); Luwian Hieroglyphs; Hittite Hieroglyphs"
 hmng,Pahawh Hmong,
 hmnp,Nyiakeng Puachue Hmong,
-hrkt,Japanese Syllabaries,
-hung,Old Hungarian,
-inds,Indus,
-ital,Old Italic,
-jamo,Jamo,
+hntl,Han (Traditional variant) with Latin (alias for Hant + Latn),
+hrkt,Japanese Syllabaries,Japanese syllabaries (alias for Hiragana + Katakana)
+hung,Old Hungarian,Old Hungarian (Hungarian Runic); Hungarian Runic
+inds,Indus,Indus (Harappan); Harappan
+ital,Old Italic,"Old Italic (Etruscan, Oscan, etc.); Etruscan; Oscan"
+jamo,Jamo,Jamo (alias for Jamo subset of Hangul)
 java,Javanese,
-jpan,Japanese Mixed Script,
+jpan,Japanese Mixed Script,Japanese (alias for Han + Hiragana + Katakana)
 jurc,Jurchen,
 kali,Kayah Li,
 kana,Katakana,
@@ -85,56 +87,56 @@ khoj,Khojki,
 kitl,Khitan Large Script,
 kits,Khitan Small Script,
 knda,Kannada,
-kore,Korean Mixed Script,
+kore,Korean Mixed Script,Korean (alias for Hangul + Han)
 kpel,Kpelle,
-krai,Kirat Rai,
+krai,Kirat Rai,Kirat_Rai
 kthi,Kaithi,
-lana,Tai Tham,
+lana,Tai Tham,Tai Tham (Lanna); Lanna
 laoo,Lao,
-latf,Fraktur,
-latg,Gaelic Latin,Latin Gaelic
+latf,Fraktur,Latin (Fraktur variant)
+latg,Gaelic Latin,Latin Gaelic; Latin (Gaelic variant)
 latn,Latin,
 leke,Leke,
-lepc,Lepcha,
+lepc,Lepcha,Lepcha (Róng); Róng
 limb,Limbu,
 lina,Linear A,
 linb,Linear B,
-lisu,Lisu,
+lisu,Lisu,Lisu (Fraser); Fraser
 loma,Loma,
 lyci,Lycian,
 lydi,Lydian,
 mahj,Mahajani,
 maka,Makasar,
-mand,Mandaic,
+mand,Mandaic,"Mandaic, Mandaean; Mandaean"
 mani,Manichaean,
 marc,Marchen,
 maya,Mayan Hieroglyphs,
-medf,Medefaidrin,
-mend,Mende Kikakui,
+medf,Medefaidrin,"Medefaidrin (Oberi Okaime, Oberi Ɔkaimɛ); Oberi Okaime; Oberi Ɔkaimɛ"
+mend,Mende Kikakui,Mende
 merc,Meroitic Cursive,
 mero,Meroitic Hieroglyphs,
 mlym,Malayalam,
-modi,Modi,
+modi,Modi,"Modi, Moḍī; Moḍī"
 mong,Mongolian,
-moon,Moon,
-mroo,Mro,
-mtei,Meitei Mayek,
+moon,Moon,"Moon (Moon code, Moon script, Moon type); Moon code; Moon script; Moon type"
+mroo,Mro,"Mro, Mru; Mru"
+mtei,Meitei Mayek,"Meitei Mayek (Meithei, Meetei); Meithei; Meetei; Meetei Mayek"
 mult,Multani,
-mymr,Myanmar,
+mymr,Myanmar,Myanmar (Burmese); Burmese
 nagm,Nag Mundari,
 nand,Nandinagari,
-narb,Old North Arabian,
+narb,Old North Arabian,Old North Arabian (Ancient North Arabian); Ancient North Arabian
 nbat,Nabataean,
-newa,Newa,
-nkdb,Naxi Dongba,
-nkgb,Nakhi Geba,
-nkoo,N'Ko,
-nshu,Nushu,
+newa,Newa,"Newa, Newar, Newari, Nepāla lipi; Newar; Newari; Nepāla lipi"
+nkdb,Naxi Dongba,"Naxi Dongba (na²¹ɕi³³ to³³ba²¹, Nakhi Tomba); na²¹ɕi³³ to³³ba²¹; Nakhi Tomba"
+nkgb,Nakhi Geba,"Naxi Geba (na²¹ɕi³³ gʌ²¹ba²¹, 'Na-'Khi ²Ggŏ-¹baw, Nakhi Geba); Naxi Geba; na²¹ɕi³³ gʌ²¹ba²¹; 'Na-'Khi ²Ggŏ-¹baw"
+nkoo,N'Ko,N’Ko; Nko
+nshu,Nushu,Nüshu
 ogam,Ogham,
-olck,Ol Chiki,
-onao,Ol Onal,
-orkh,Old Turkic,
-orya,Oriya,
+olck,Ol Chiki,"Ol Chiki (Ol Cemet’, Ol, Santali); Ol Cemet’; Ol Cemet'; Ol; Santali"
+onao,Ol Onal,Ol_Onal
+orkh,Old Turkic,"Old Turkic, Orkhon Runic; Orkhon Runic"
+orya,Oriya,Oriya (Odia); Odia
 osge,Osage,
 osma,Osmanya,
 ougr,Old Uyghur,
@@ -148,46 +150,51 @@ phli,Inscriptional Pahlavi,
 phlp,Psalter Pahlavi,
 phlv,Book Pahlavi,
 phnx,Phoenician,
-piqd,Klingon,
-plrd,Miao,
+piqd,Klingon,Klingon (KLI pIqaD); KLI pIqaD
+plrd,Miao,Miao (Pollard); Pollard
 prti,Inscriptional Parthian,
+psin,Proto-Sinaitic,
 ranj,Ranjana,
-rjng,Rejang,
+rjng,Rejang,"Rejang (Redjang, Kaganga); Redjang; Kaganga"
+rohg,Hanifi Rohingya,
 roro,Rongorongo,
 runr,Runic,Runes
 samr,Samaritan,
 sara,Sarati,
 sarb,Old South Arabian,
 saur,Saurashtra,
+seal,(Small) Seal,
 sgnw,SignWriting,
-shaw,Shavian,
-shrd,Sharada,
+shaw,Shavian,Shavian (Shaw); Shaw
+shrd,Sharada,"Sharada, Śāradā; Śāradā"
 shui,Shuishu,
-sidd,Siddham,
+sidd,Siddham,"Siddham, Siddhaṃ, Siddhamātṛkā; Siddhaṃ; Siddhamātṛkā"
 sidt,Sidetic,
-sind,Sindhi,
+sind,Sindhi,"Khudawadi, Sindhi; Khudawadi"
 sinh,Sinhala,
+sogd,Sogdian,
+sogo,Old Sogdian,
 sora,Sora Sompeng,
 soyo,Soyombo,
 sund,Sundanese,
 sunu,Sunuwar,
 sylo,Syloti Nagri,
 syrc,Syriac,
-syre,Estrangelo Syriac,
-syrj,Western Syriac,
-syrn,Eastern Syriac,
+syre,Estrangelo Syriac,Syriac (Estrangelo variant)
+syrj,Western Syriac,Syriac (Western variant)
+syrn,Eastern Syriac,Syriac (Eastern variant)
 tagb,Tagbanwa,
-takr,Takri,
+takr,Takri,"Takri, Ṭākrī, Ṭāṅkrī; Ṭākrī; Ṭāṅkrī"
 tale,Tai Le,
-talu,New Tai Lue,
+talu,New Tai Lue,Tai Lue
 taml,Tamil,
 tang,Tangut,
 tavt,Tai Viet,
 tayo,Tai Yo,
 telu,Telugu,
 teng,Tengwar,
-tfng,Tifinagh,
-tglg,Tagalog,
+tfng,Tifinagh,Tifinagh (Berber); Berber
+tglg,Tagalog,"Tagalog (Baybayin, Alibata); Baybayin; Alibata"
 thaa,Thaana,
 thai,Thai,
 tibt,Tibetan,
@@ -196,23 +203,23 @@ tnsa,Tangsa,
 todr,Todhri,
 tols,Tolong Siki,
 toto,Toto,
-tutg,Tulu-Tigalari,
+tutg,Tulu-Tigalari,Tulu_Tigalari
 ugar,Ugaritic,
 vaii,Vai,
 visp,Visible Speech,
 vith,Vithkuqi,
-wara,Warang Citi,
+wara,Warang Citi,Warang Citi (Varang Kshiti); Varang Kshiti
 wcho,Wancho,
 wole,Woleai,
 xpeo,Old Persian,
-xsux,Cuneiform,
+xsux,Cuneiform,"Cuneiform, Sumero-Akkadian; Sumero-Akkadian"
 yezi,Yezidi,
 yiii,Yi,
-zanb,Zanabazar Square,
-zsye,Emoji,
-zinh,Inherited,
+zanb,Zanabazar Square,"Zanabazar Square (Zanabazarin Dörböljin Useg, Xewtee Dörböljin Bicig, Horizontal Square Script); Zanabazarin Dörböljin Useg; Xewtee Dörböljin Bicig; Horizontal Square Script"
+zinh,Inherited,Code for inherited script
 zmth,Mathematical Notation,
+zsye,Emoji,Symbols (Emoji variant)
 zsym,Symbols,
-zxxx,Unwritten Languages,
-zyyy,Undetermined Script,
-zzzz,Uncoded Script,
+zxxx,Unwritten Languages,Code for unwritten documents
+zyyy,Undetermined Script,Code for undetermined script; Common
+zzzz,Uncoded Script,Code for uncoded script

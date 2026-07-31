@@ -364,7 +364,6 @@ ajp:
   link_wikipedia: https://en.wikipedia.org/wiki/Levantine_Arabic
   name: South Levantine Arabic
   name_alternates:
-  - Levantine Arabic
   - Palestinian-Jordanian
   - South Levantine Arabic
   population: 8445000
@@ -511,11 +510,12 @@ apc:
   language_code_3: apc
   link_ethnologue: https://www.ethnologue.com/language/apc
   link_wikipedia: https://en.wikipedia.org/wiki/Levantine_Arabic
-  name: North Levantine Arabic
+  name: Levantine Arabic
   name_alternates:
   - Lebanese-Syrian Arabic
-  - Levantine Arabic
+  - Palestinian
   - North Levantine Arabic
+  - South Levantine Arabic
   - Syro-Lebanese Arabic
   population: 24205200
 apd:
@@ -527,7 +527,6 @@ apd:
   name: Sudanese Arabic
   name_alternates:
   - Khartoum Arabic
-  - Sudanese Arabic
   population: 28876000
 apf:
   country: Philippines
@@ -680,7 +679,7 @@ ars:
   - Najdi
   population: 4188700
 art:
-  alternate_names:
+  name_alternates:
   - Artificial
   - Conlang
   - Constructed
@@ -1165,6 +1164,16 @@ bem:
   - Icibemba
   - Wemba
   population: 4110000
+beq:
+  country: Congo
+  family: Niger-Congo
+  language_code_3: beq
+  link_ethnologue: https://www.ethnologue.com/language/beq
+  link_wikipedia: https://en.wikipedia.org/wiki/Bembe_language_(Kibembe)
+  name: Beembe
+  name_alternates:
+  - Bembe
+  population: 100000
 bfi:
   country: United Kingdom
   family: Sign language
@@ -1615,8 +1624,7 @@ bsq:
   link_ethnologue: https://www.ethnologue.com/language/bsq
   link_wikipedia: https://en.wikipedia.org/wiki/Bassa_language
   name: Bassa
-  name_alternates:
-  - ''
+  name_alternates: []
   population: 653730
 btj:
   country: Indonesia
@@ -2724,7 +2732,7 @@ enf:
 enh:
   country: Russian Federation
   family: Uralic
-  language_code_3: enf
+  language_code_3: enh
   link_ethnologue: https://www.ethnologue.com/language/enh
   link_wikipedia: https://en.wikipedia.org/wiki/Enets_language
   name: Tundra Enets
@@ -2816,7 +2824,6 @@ et:
   greetings: Tere
   language_code_1: et
   language_code_3: ekk
-  language_code_synonym: est
   link_ethnologue: https://www.ethnologue.com/language/ekk
   link_wikipedia: https://en.wikipedia.org/wiki/Estonian_language
   name: Estonian
@@ -5073,6 +5080,20 @@ kk:
   subreddit: Kazakh
   supported: true
   thanks: Рахмет
+kkh:
+  country: Myanmar
+  family: Tai-Kadai
+  language_code_3: kkh
+  link_ethnologue: https://www.ethnologue.com/language/kkh
+  link_wikipedia: https://en.wikipedia.org/wiki/Kh%C3%BCn_language
+  name: Khun
+  name_alternates:
+  - Gon Shan
+  - Khuen
+  - Khun Shan
+  - Tai Khun
+  - Tai-Khuen
+  population: 106880
 kko:
   country: Sudan
   family: Nilo-Saharan
@@ -5526,6 +5547,18 @@ kv:
   - Zyrian
   population: 99000
   thanks: Аттьӧ
+kvv:
+  country: Indonesia
+  family: Austronesian
+  language_code_3: kvv
+  link_ethnologue: https://www.ethnologue.com/language/kvv
+  link_wikipedia: https://en.wikipedia.org/wiki/Kola_language
+  name: Kola
+  name_alternates:
+  - Kulaha
+  - Marlasi
+  - Warilau
+  population: 7400
 kw:
   country: United Kingdom
   family: Indo-European
@@ -5902,6 +5935,17 @@ lkt:
   - Teton
   - Teton Sioux
   population: 175000
+lma:
+  country: Guinea
+  family: Niger-Congo
+  language_code_3: lma
+  link_ethnologue: https://www.ethnologue.com/language/lma
+  link_wikipedia: https://en.wikipedia.org/wiki/Limba_language
+  name: East Limba
+  name_alternates:
+  - Yimba
+  - Yumba
+  population: 4600
 lmo:
   country: Italy
   family: Indo-European
@@ -6593,6 +6637,7 @@ mop:
 mpr:
   country: Solomon Islands
   family: Austronesian
+  language_code_3: mpr
   name: Vangunu
   population: 910
 mqf:
@@ -6709,7 +6754,6 @@ ms:
   language_code_1: ms
   language_code_2b: may
   language_code_3: zlm
-  language_code_synonym: msa
   link_ethnologue: https://www.ethnologue.com/language/zlm
   link_wikipedia: https://en.wikipedia.org/wiki/Malay_language
   name: Malay
@@ -7450,8 +7494,7 @@ nue:
   link_ethnologue: https://www.ethnologue.com/language/nue
   link_wikipedia: https://en.wikipedia.org/wiki/Central_Banda_language
   name: Ngundu
-  name_alternates:
-  - ''
+  name_alternates: []
   population: 5100
 nui:
   country: Equatorial Guinea
@@ -7525,8 +7568,7 @@ nxx:
   link_ethnologue: https://www.ethnologue.com/language/nxx
   link_wikipedia: https://en.wikipedia.org/wiki/Nafri_language
   name: Nafri
-  name_alternates:
-  - ''
+  name_alternates: []
   population: 1630
 ny:
   country: Malawi
@@ -8395,7 +8437,7 @@ qaq:
   name: Singlish
 qas:
   family: Constructed
-  language_code_3: qai
+  language_code_3: qas
   link_wikipedia: https://en.wikipedia.org/wiki/Enochian
   name: Enochian
 qbb:
@@ -8967,7 +9009,6 @@ sc:
   greetings: Saludi
   language_code_1: sc
   language_code_3: sro
-  language_code_synonym: srd
   link_ethnologue: https://www.ethnologue.com/language/sro
   link_wikipedia: https://en.wikipedia.org/wiki/Campidanese_dialect
   name: Sardinian
@@ -10087,8 +10128,7 @@ tdd:
   - Yunnan Shant’ou
   population: 1260000
 tde:
-  country:
-  - Mali
+  country: Mali
   family: Niger-Congo
   language_code_3: tde
   link_ethnologue: https://www.ethnologue.com/language/tde
@@ -11589,6 +11629,16 @@ xno:
   language_code_3: xno
   link_wikipedia: https://en.wikipedia.org/wiki/Anglo-Norman_language
   name: Anglo-Norman
+xor:
+  country: Brazil
+  family: Unclassified
+  language_code_3: xor
+  link_ethnologue: https://www.ethnologue.com/language/xor
+  link_wikipedia: https://en.wikipedia.org/wiki/Korubo_language
+  name: Korubo
+  name_alternates:
+  - Caceteiros
+  population: 250
 xpu:
   family: Afro-Asiatic
   language_code_3: xpu
@@ -11776,7 +11826,6 @@ yi:
   greetings: אַ גוטן טאָג
   language_code_1: yi
   language_code_3: ydd
-  language_code_synonym: yid
   link_ethnologue: https://www.ethnologue.com/language/ydd
   link_wikipedia: https://en.wikipedia.org/wiki/Yiddish
   name: Yiddish

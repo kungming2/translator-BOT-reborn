@@ -63098,6 +63098,48 @@
         "rate_monthly": 0.01,
         "rate_yearly": 0.12
     },
+    "mpr": {
+        "2024-06": {
+            "num_total": 1,
+            "num_translated": 0,
+            "num_untranslated": 1,
+            "percentage_total": 0.0004,
+            "percentage_translated": 0.0,
+            "ri": 3525.71
+        },
+        "code": "mpr",
+        "family": "Austronesian",
+        "maximum_num_total": [
+            "2024-06",
+            1
+        ],
+        "maximum_percentage_total": [
+            "2024-06",
+            0.0004
+        ],
+        "maximum_percentage_translated": [
+            "2024-06",
+            0.0
+        ],
+        "minimum_num_total": [
+            "2024-06",
+            1
+        ],
+        "minimum_percentage_total": [
+            "2024-06",
+            0.0004
+        ],
+        "minimum_percentage_translated": [
+            "2024-06",
+            0.0
+        ],
+        "name": "Vangunu",
+        "num_months": 1,
+        "permalink": "https://www.reddit.com/r/translator/wiki/vangunu",
+        "rate_daily": 0.0,
+        "rate_monthly": 0.01,
+        "rate_yearly": 0.12
+    },
     "mqf": {
         "2023-12": {
             "num_total": 1,
@@ -100544,48 +100586,6 @@
         "rate_daily": 0.39,
         "rate_monthly": 11.78,
         "rate_yearly": 141.36
-    },
-    "unknown": {
-        "2024-06": {
-            "num_total": 1,
-            "num_translated": 0,
-            "num_untranslated": 1,
-            "percentage_total": 0.0004,
-            "percentage_translated": 0.0,
-            "ri": 3525.71
-        },
-        "code": "unknown",
-        "family": "Austronesian",
-        "maximum_num_total": [
-            "2024-06",
-            1
-        ],
-        "maximum_percentage_total": [
-            "2024-06",
-            0.0004
-        ],
-        "maximum_percentage_translated": [
-            "2024-06",
-            0.0
-        ],
-        "minimum_num_total": [
-            "2024-06",
-            1
-        ],
-        "minimum_percentage_total": [
-            "2024-06",
-            0.0004
-        ],
-        "minimum_percentage_translated": [
-            "2024-06",
-            0.0
-        ],
-        "name": "Vangunu",
-        "num_months": 1,
-        "permalink": "https://www.reddit.com/r/translator/wiki/vangunu",
-        "rate_daily": 0.0,
-        "rate_monthly": 0.01,
-        "rate_yearly": 0.12
     },
     "ur": {
         "2016-07": {
