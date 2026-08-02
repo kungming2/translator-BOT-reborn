@@ -63,6 +63,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Hardened `!transform` image fetching against unsafe hosts, private-network redirects, oversized downloads, unsupported content types, and oversized decoded images.
 * 🛠️ BUG FIX: Wiktionary lookups now skip results without definitions instead of attempting to format empty entries or posting an empty reply.
 * 🛠️ BUG FIX: Japanese name-source HTTP failures now fall back cleanly to the remaining Japanese lookup sources instead of aborting the lookup.
+* 🛠️ BUG FIX: Wenyuan's recent-language Ajo table now links defined multiple-language entries with the original Reddit post ID instead of an internal language-suffixed analytics ID.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

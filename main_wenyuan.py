@@ -26,7 +26,7 @@ from config import SETTINGS, logger
 from integrations.discord_utils import send_discord_alert
 from lang.languages import converter
 from monitoring.points import get_month_points_summary
-from processes.wenyuan_stats import Lumo
+from processes.wenyuan_stats import Lumo, get_source_post_id
 from reddit.connection import REDDIT
 from wenyuan.challenge_poster import translation_challenge_poster
 from wenyuan.data_validator import data_validator
@@ -248,10 +248,10 @@ def _print_recent_language_ajos(lumo: Lumo, language: str, limit: int) -> None:
     table.add_column("Direction", style="white", no_wrap=True, min_width=12)
 
     for recent_match in matching_ajos[:limit]:
-        post_id = recent_match.id or "Unknown"
+        post_id = get_source_post_id(recent_match.id)
         table.add_row(
             _format_ajo_date(recent_match.created_utc),
-            f"redd.it/{post_id}" if recent_match.id else post_id,
+            f"redd.it/{post_id}" if post_id else "Unknown",
             str(recent_match.status),
             _format_ajo_direction(recent_match.direction),
         )

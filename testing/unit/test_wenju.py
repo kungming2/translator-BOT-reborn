@@ -1110,6 +1110,19 @@ class TestWenyuanPeriodStats:
         ]
 
 
+class TestWenyuanAjoIds:
+    @pytest.mark.parametrize(
+        ("ajo_id", "expected"),
+        [
+            ("1uvfdnb_nam", "1uvfdnb"),
+            ("1uvfdnb", "1uvfdnb"),
+            (None, None),
+        ],
+    )
+    def test_get_source_post_id(self, ajo_id, expected):
+        assert wenyuan_stats.get_source_post_id(ajo_id) == expected
+
+
 class TestWenyuanDailyVolume:
     def test_returns_zero_filled_utc_calendar_days(self):
         lumo = object.__new__(wenyuan_stats.Lumo)

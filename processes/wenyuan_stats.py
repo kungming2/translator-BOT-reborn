@@ -58,6 +58,13 @@ class FastestStats(TypedDict, total=False):
 # ─── Module-level helpers ─────────────────────────────────────────────────────
 
 
+def get_source_post_id(ajo_id: str | None) -> str | None:
+    """Return the Reddit post ID from a possibly expanded Wenyuan Ajo ID."""
+    if ajo_id is None:
+        return None
+    return ajo_id.partition("_")[0]
+
+
 def get_effective_status(ajo: Ajo) -> str:
     """
     Get effective status string for any Ajo type.
