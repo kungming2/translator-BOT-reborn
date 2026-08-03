@@ -353,9 +353,10 @@ def ziwen_posts(post_limit: int | None = None) -> None:
         # ── Ajo finalization ───────────────────────────────────────────────────
 
         # Save to the wiki if this is not a commonly requested language.
-        if post_ajo.lingvo is None or not post_ajo.lingvo.supported:
+        post_lingvo = post_ajo.lingvo
+        if post_lingvo is None or not post_lingvo.supported:
             language_name = (
-                post_ajo.lingvo.name if post_ajo.lingvo is not None else None
+                post_lingvo.name if post_lingvo is not None else None
             ) or "*Unparsed*"
             update_wiki_page(
                 "save",

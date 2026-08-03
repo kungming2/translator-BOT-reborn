@@ -101,10 +101,11 @@ async def lang_convert(ctx: commands.Context, *, language_input: str) -> None:
         added_alt = False
         editable_language_entry = True
         if add_alt_flag:
-            if not isinstance(ctx.author, Member):
+            author = ctx.author
+            if not isinstance(author, Member):
                 await ctx.send("🚫 This command can only be used in a server.")
                 return
-            user_role_names = [role.name for role in ctx.author.roles]
+            user_role_names = [role.name for role in author.roles]
             if "Moderator" not in user_role_names:
                 await ctx.send("🚫 You do not have permission to use `add_alt`.")
                 add_alt_flag = False  # disable further processing

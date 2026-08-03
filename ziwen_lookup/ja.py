@@ -10,7 +10,7 @@ Logger tag: [L:JA]
 import logging
 import re
 from time import sleep
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import pykakasi
@@ -496,13 +496,15 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
     async with aiohttp.ClientSession() as session:
         word_data: dict | list | None = await fetch_json(session, url)
 
+    main_data: dict[str, Any] | None
     if not word_data or not isinstance(word_data, dict) or not word_data.get("data"):
         logger.warning(f"No JSON or empty data for `{japanese_word}`.")
         word_reading: str = ""
         main_data = None
     else:
-        main_data = word_data["data"][0]
-        word_reading = main_data.get("japanese", [{}])[0].get("reading", "")
+        resolved_main_data = cast(dict[str, Any], word_data["data"][0])
+        main_data = resolved_main_data
+        word_reading = resolved_main_data.get("japanese", [{}])[0].get("reading", "")
 
     yojijukugo_data: str | None = None
     if not word_reading:
@@ -536,7 +538,7 @@ async def _ja_word_fetch(japanese_word: str) -> str | None:
             logger.info("> Found a Japanese sound effect.")
             return sfx_data
 
-    if main_data:
+    if main_data is not None:
         word_reading_chunk: str = f"{word_reading} (*{_to_hepburn(word_reading)}*)"
         word_meaning: str = (
             f'"{", ".join(main_data["senses"][0]["english_definitions"])}."'

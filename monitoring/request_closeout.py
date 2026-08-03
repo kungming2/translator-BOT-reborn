@@ -70,7 +70,8 @@ def _send_closeout_messages(
 
     for post_praw in actionable_posts:
         ajo = ajos_map[post_praw.id]
-        language = ajo.lingvo.name if ajo.lingvo is not None else "Generic"
+        lingvo = ajo.lingvo
+        language = lingvo.name if lingvo is not None else "Generic"
 
         author = post_praw.author
         if author is None:

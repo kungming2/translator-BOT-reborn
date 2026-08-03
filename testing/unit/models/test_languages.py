@@ -19,7 +19,12 @@ from unittest.mock import patch
 
 from config import Paths, load_settings
 from lang import languages as languages_module
-from lang.code_standards import alpha3_code, parse_language_tag, preferred_standard_code
+from lang.code_standards import (
+    StandardLanguageTag,
+    alpha3_code,
+    parse_language_tag,
+    preferred_standard_code,
+)
 from lang.countries import country_converter
 
 # noinspection PyProtectedMember
@@ -256,13 +261,13 @@ class TestConverterStableCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_two_letter_en(self) -> None:
         result = converter("en")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "en")
 
     @_skip_if_no_data
     def test_two_letter_fr(self) -> None:
         result = converter("fr")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "fr")
 
     @_skip_if_no_data
@@ -280,13 +285,13 @@ class TestConverterStableCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_bibliographic_alpha3_fre(self) -> None:
         result = converter("fre")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "fr")
 
     @_skip_if_no_data
     def test_terminology_alpha3_deu(self) -> None:
         result = converter("deu")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "de")
 
     @_skip_if_no_data
@@ -302,13 +307,13 @@ class TestConverterStableCodes(unittest.TestCase):
             for specific_mode in (False, True):
                 with self.subTest(input_code=input_code, specific_mode=specific_mode):
                     result = converter(input_code, specific_mode=specific_mode)
-                    self.assertIsNotNone(result)
+                    self.assertIsInstance(result, Lingvo)
                     self.assertEqual(result.preferred_code, preferred_code)
 
     @_skip_if_no_data
     def test_csv_only_language_is_not_yaml_editable(self) -> None:
         result = converter("pedi")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "nso")
         self.assertFalse(has_editable_language_entry(result.preferred_code))
 
@@ -323,7 +328,7 @@ class TestConverterStableCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_whitespace_stripped(self) -> None:
         result = converter("  en  ")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "en")
 
     @_skip_if_no_data
@@ -340,7 +345,7 @@ class TestConverterStableCodes(unittest.TestCase):
         for input_text, preferred_code in expectations.items():
             with self.subTest(input_text=input_text):
                 result = converter(input_text)
-                self.assertIsNotNone(result)
+                self.assertIsInstance(result, Lingvo)
                 self.assertEqual(result.preferred_code, preferred_code)
 
     @_skip_if_no_data
@@ -360,31 +365,31 @@ class TestConverterStableCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_name_lookup_english(self) -> None:
         result = converter("English")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "en")
 
     @_skip_if_no_data
     def test_name_lookup_french(self) -> None:
         result = converter("French")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "fr")
 
     @_skip_if_no_data
     def test_name_lookup_handles_apostrophe_casing_mikmaq(self) -> None:
         result = converter("Mi'kmaq")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.name, "Mi'kmaq")
 
     @_skip_if_no_data
     def test_name_lookup_handles_apostrophe_casing_tohono_oodham(self) -> None:
         result = converter("Tohono O'odham")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.name, "Tohono O'odham")
 
     @_skip_if_no_data
     def test_iso_name_fallback_returns_project_lingvo_when_available(self) -> None:
         result = converter("Old Norse")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "non")
         self.assertEqual(result.name, "Norse")
         self.assertTrue(result.supported)
@@ -415,7 +420,7 @@ class TestConverterCompoundCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_zh_CN_has_country_set(self) -> None:
         result = converter("zh-CN")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertIsNotNone(result.country)
 
     @_skip_if_no_data
@@ -427,7 +432,7 @@ class TestConverterCompoundCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_pt_BR_has_country_set(self) -> None:
         result = converter("pt-BR")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertIsNotNone(result.country)
 
     @_skip_if_no_data
@@ -439,20 +444,20 @@ class TestConverterCompoundCodes(unittest.TestCase):
     @_skip_if_no_data
     def test_en_uk_standardizes_to_gb_region(self) -> None:
         result = converter("en-uk")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "en")
         self.assertEqual(result.country, "GB")
 
     @_skip_if_no_data
     def test_sgn_us_standardizes_to_american_sign_language(self) -> None:
         result = converter("sgn-US")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "ase")
 
     @_skip_if_no_data
     def test_script_tag_returns_base_lingvo(self) -> None:
         result = converter("zh-Hans")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "zh")
 
 
@@ -468,13 +473,13 @@ class TestConverterScriptPrefix(unittest.TestCase):
     @_skip_if_no_data
     def test_unknown_cyrl_code_1_is_unknown(self) -> None:
         result = converter("unknown-Cyrl")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.language_code_1, "unknown")
 
     @_skip_if_no_data
     def test_unknown_cyrl_script_code_set(self) -> None:
         result = converter("unknown-Cyrl")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertIsNotNone(result.script_code)
 
     @_skip_if_no_data
@@ -490,7 +495,7 @@ class TestConverterSpecificMode(unittest.TestCase):
     @_skip_if_no_data
     def test_specific_mode_2letter_en(self) -> None:
         result = converter("en", specific_mode=True)
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "en")
 
     @_skip_if_no_data
@@ -524,7 +529,7 @@ class TestConverterPreserveCountry(unittest.TestCase):
     def test_preserve_country_false_clears_country(self) -> None:
         # Simple code lookup — country should be cleared
         result = converter("en", preserve_country=False)
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertIsNone(result.country)
 
     @_skip_if_no_data
@@ -539,7 +544,7 @@ class TestConverterPreserveCountry(unittest.TestCase):
     def test_compound_code_always_sets_country(self) -> None:
         # Compound codes attach country regardless of preserve_country
         result = converter("pt-BR", preserve_country=False)
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertIsNotNone(result.country)
 
 
@@ -679,7 +684,7 @@ class TestParseLanguageList(unittest.TestCase):
     @_skip_if_no_data
     def test_country_keyword_language_still_applies_country(self) -> None:
         result = converter("Canadian French")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Lingvo)
         self.assertEqual(result.preferred_code, "fr")
         self.assertEqual(result.country, "CA")
 
@@ -703,7 +708,7 @@ class TestCodeStandardsAdapter(unittest.TestCase):
 
     def test_parse_language_region_tag(self) -> None:
         parsed = parse_language_tag("eng_US")
-        self.assertIsNotNone(parsed)
+        self.assertIsInstance(parsed, StandardLanguageTag)
         self.assertEqual(parsed.language, "en")
         self.assertEqual(parsed.territory, "US")
 

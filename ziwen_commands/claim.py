@@ -65,7 +65,7 @@ def parse_claim_comment(comment_text: str, current_time: int) -> dict[str, Any]:
         result["claimer"] = claimer_match.group(1)
 
     # Extract time (before " UTC")
-    time_match = re.search(r"at \[?(.+?)Z?\]? UTC", comment_text)
+    time_match = re.search(r"at \[?(.+?)Z?]? UTC", comment_text)
     if time_match is not None:
         time_str = time_match.group(1)
         result["time"] = time_str

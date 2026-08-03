@@ -71,8 +71,7 @@ def log_trimmer() -> None:
 
         if len(lines_entries) > lines_to_keep:
             trimmed = "\n".join(lines_entries[-lines_to_keep:]) + "\n"
-            with events_path.open("w", encoding="utf-8") as f:
-                f.write(trimmed)
+            events_path.write_text(trimmed, encoding="utf-8")
             logger.debug(
                 f"Trimmed {events_path.name} to keep the last {lines_to_keep} entries."
             )
@@ -356,11 +355,12 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> dict:
         if months_elapsed == language_data["num_months"] and key != "2016-06":
             prev_key = get_previous_month(key)
             prev_data = language_data.get(prev_key)
-            if prev_data:
-                diff = total - prev_data["num_total"]
+            if isinstance(prev_data, dict):
+                previous_total = int(prev_data["num_total"])
+                diff = total - previous_total
                 language_data[key]["previous_num_change"] = diff
                 language_data[key]["previous_percentage_change"] = round(
-                    diff / prev_data["num_total"], 4
+                    diff / previous_total, 4
                 )
 
     if language_data["num_months"] == 0:

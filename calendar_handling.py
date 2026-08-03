@@ -376,6 +376,9 @@ def lunar_notation_to_recent_solar(
 
     for y in sexagenary_years(ganzhi, start, end):
         try:
+            # lunardate 0.3.0 provides this snake_case API, but PyCharm's
+            # bundled skeleton still exposes only the deprecated camelCase alias.
+            # noinspection PyUnresolvedReferences
             solar = LunarDate(y, lunar_month, lunar_day, leap_month).to_solar_date()
             if solar <= reference:
                 candidates.append(solar)

@@ -31,12 +31,22 @@ def test_language_reference_treats_wikipedia_json_decode_as_missing_link(
     monkeypatch.setattr(
         reference.Paths, "STATES", {"LANGUAGE_DATA": language_data_path}
     )
-    monkeypatch.setattr(reference, "get_lingvos", MagicMock(return_value={"abc": lingvo}))
-    monkeypatch.setattr(reference, "get_random_useragent", MagicMock(return_value={}))
-    monkeypatch.setattr(reference.requests, "get", MagicMock(return_value=ethnologue_response))
-    monkeypatch.setattr(reference, "converter", MagicMock(return_value=lingvo))
+    monkeypatch.setattr(
+        "ziwen_lookup.reference.get_lingvos",
+        MagicMock(return_value={"abc": lingvo}),
+    )
+    monkeypatch.setattr(
+        "ziwen_lookup.reference.get_random_useragent", MagicMock(return_value={})
+    )
+    monkeypatch.setattr(
+        "ziwen_lookup.reference.requests.get",
+        MagicMock(return_value=ethnologue_response),
+    )
+    monkeypatch.setattr(
+        "ziwen_lookup.reference.converter", MagicMock(return_value=lingvo)
+    )
     page_url_mock = MagicMock(return_value=None)
-    monkeypatch.setattr(reference, "wikipedia_page_url", page_url_mock)
+    monkeypatch.setattr("ziwen_lookup.reference.wikipedia_page_url", page_url_mock)
 
     result = reference._fetch_language_reference_data(
         "https://web.archive.org/web/20190606120000/https://www.ethnologue.com/language/abc",

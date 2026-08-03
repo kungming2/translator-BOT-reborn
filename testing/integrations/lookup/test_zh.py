@@ -25,6 +25,7 @@ Requirements (beyond the project's own deps):
 """
 
 import re
+from copy import deepcopy
 from importlib.util import find_spec
 
 import pytest
@@ -607,10 +608,12 @@ class TestCacheRoundTrip:
 
     def test_cache_preserves_unicode(self):
         """Ensure Traditional Chinese Unicode survives the JSON serialization round-trip."""
-        payload = self.BASE_CHARACTER_PAYLOAD.copy()
+        payload = deepcopy(self.BASE_CHARACTER_PAYLOAD)
         payload["traditional"] = "創"
         payload["simplified"] = "创"
-        payload["pronunciations"]["mandarin_pinyin"] = "chuàng"
+        pronunciations = payload["pronunciations"]
+        assert isinstance(pronunciations, dict)
+        pronunciations["mandarin_pinyin"] = "chuàng"
         save_to_cache(payload, "zh", "zh_character")
         cached = get_from_cache("創", "zh", "zh_character")
         assert cached is not None

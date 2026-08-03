@@ -127,16 +127,10 @@ def handle(comment: Comment, _instruo: Instruo, komando: Komando, ajo: Ajo) -> N
 
     # Detect a Diskuto reclassification command (e.g. !set:meta).
     # When the upstream parser cannot resolve the keyword as a language
-    # it stores the raw lowercase string in komando.data as a plain string
-    # rather than a list of Lingvo objects.
+    # it stores the raw lowercase string in komando.data rather than a
+    # Lingvo object.
     raw_keyword: str | None = None
-    if isinstance(komando.data, str):
-        raw_keyword = komando.data.strip().lower()
-    elif (
-        isinstance(komando.data, list)
-        and len(komando.data) == 1
-        and isinstance(komando.data[0], str)
-    ):
+    if komando.data and len(komando.data) == 1 and isinstance(komando.data[0], str):
         raw_keyword = komando.data[0].strip().lower()
 
     if raw_keyword in SETTINGS["internal_post_types"]:

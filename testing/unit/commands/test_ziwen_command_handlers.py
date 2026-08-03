@@ -5,6 +5,7 @@
 import importlib.util
 import logging
 import sys
+import time
 import types
 from datetime import date
 from pathlib import Path
@@ -22,6 +23,9 @@ class HasId(Protocol):
 
 
 class FakeAuthor:
+    submissions: SimpleNamespace
+    comments: SimpleNamespace
+
     def __init__(self, name: str, created_utc: int = 0) -> None:
         self.name = name
         self.created_utc = created_utc
@@ -410,6 +414,11 @@ def _load_command_module(monkeypatch, command_name: str):
     return module
 
 
+def _patch_module(monkeypatch, module: types.ModuleType, **replacements: object) -> None:
+    for name, replacement in replacements.items():
+        monkeypatch.setattr(module, name, replacement)
+
+
 def _patch_kunulo(monkeypatch, module, kunulo: FakeKunulo) -> None:
     monkeypatch.setattr(
         module, "Kunulo", SimpleNamespace(from_submission=MagicMock(return_value=kunulo))
@@ -452,8 +461,12 @@ def _assert_nuke_completed(module, mod: FakeAuthor, banned, sent) -> None:
 def test_calendar_replies_with_converted_date(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "calendar")
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(module, "convert_calendar_payload", lambda _payload: date(2024, 2, 10))
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        convert_calendar_payload=lambda _payload: date(2024, 2, 10),
+    )
 
     module.handle(FakeComment(), None, FakeKomando(["hebrew:5784:Adar:1"]), FakeAjo())
 
@@ -501,11 +514,11 @@ def test_claim_marks_language_in_progress_and_posts_claim_comment(monkeypatch) -
     updates: list[tuple[object, object, str, list[FakeLang]]] = []
     claim_reply = FakeComment()
     _patch_kunulo(monkeypatch, module, FakeKunulo())
-    monkeypatch.setattr(module, "update_status", lambda *args: updates.append(args))
-    monkeypatch.setattr(
+    _patch_module(
+        monkeypatch,
         module,
-        "reddit_reply",
-        lambda target, body: replies.append((target, body)) or claim_reply,
+        update_status=lambda *args: updates.append(args),
+        reddit_reply=lambda target, body: replies.append((target, body)) or claim_reply,
     )
 
     module.handle(
@@ -527,7 +540,9 @@ def test_doublecheck_updates_status_and_deletes_claim_comment(monkeypatch) -> No
     kunulo = FakeKunulo()
     updates: list[tuple[object, object, str]] = []
     _patch_kunulo(monkeypatch, module, kunulo)
-    monkeypatch.setattr(module, "update_status", lambda *args: updates.append(args))
+    _patch_module(
+        monkeypatch, module, update_status=lambda *args: updates.append(args)
+    )
 
     module.handle(FakeComment(), None, FakeKomando(name="doublecheck"), FakeAjo())
 
@@ -543,11 +558,11 @@ def test_identify_updates_language_sends_notifications_and_deletes_unknown_comme
     ajo = FakeAjo()
     kunulo = FakeKunulo()
     _patch_kunulo(monkeypatch, module, kunulo)
-    monkeypatch.setattr(module, "update_language", lambda target, _cmd: setattr(target, "lingvo", new_language))
-    monkeypatch.setattr(
+    _patch_module(
+        monkeypatch,
         module,
-        "notifier",
-        MagicMock(
+        update_language=lambda target, _cmd: setattr(target, "lingvo", new_language),
+        notifier=MagicMock(
             return_value=FakeNotificationResult(
                 subscriber_count=1,
                 eligible_count=1,
@@ -591,12 +606,16 @@ def test_lookup_cjk_replies_with_lookup_result(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "lookup_cjk")
     _patch_kunulo(monkeypatch, module, FakeKunulo())
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
 
     async def fake_lookup(_language: str, terms: list[str]) -> list[str]:
         return [f"lookup {term}" for term in terms]
 
-    monkeypatch.setattr(module, "perform_cjk_lookups", fake_lookup)
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        perform_cjk_lookups=fake_lookup,
+    )
 
     module.handle(
         FakeComment(comment_id="cjk1"),
@@ -613,7 +632,9 @@ def test_lookup_wp_groups_terms_by_language_and_replies(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "lookup_wp")
     _patch_kunulo(monkeypatch, module, FakeKunulo())
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    _patch_module(
+        monkeypatch, module, reddit_reply=lambda _comment, body: replies.append(body)
+    )
 
     module.handle(
         FakeComment(comment_id="wp1"),
@@ -630,7 +651,9 @@ def test_lookup_wt_uses_explicit_language_and_replies(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "lookup_wt")
     _patch_kunulo(monkeypatch, module, FakeKunulo())
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    _patch_module(
+        monkeypatch, module, reddit_reply=lambda _comment, body: replies.append(body)
+    )
 
     module.handle(
         FakeComment(comment_id="wt1"),
@@ -647,11 +670,11 @@ def test_lookup_wt_skips_result_without_definitions(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "lookup_wt")
     _patch_kunulo(monkeypatch, module, FakeKunulo())
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(
+    _patch_module(
+        monkeypatch,
         module,
-        "wiktionary_search",
-        lambda term, _language: (
+        reddit_reply=lambda _comment, body: replies.append(body),
+        wiktionary_search=lambda term, _language: (
             {"word": term, "definition": None}
             if term == "empty"
             else {"word": term, "definition": ["usable"]}
@@ -679,11 +702,14 @@ def test_lookup_wt_does_not_reply_when_all_results_lack_definitions(
     module = _load_command_module(monkeypatch, "lookup_wt")
     _patch_kunulo(monkeypatch, module, FakeKunulo())
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(
+    _patch_module(
+        monkeypatch,
         module,
-        "wiktionary_search",
-        lambda term, _language: {"word": term, "definition": None},
+        reddit_reply=lambda _comment, body: replies.append(body),
+        wiktionary_search=lambda term, _language: {
+            "word": term,
+            "definition": None,
+        },
     )
 
     module.handle(
@@ -700,8 +726,14 @@ def test_missing_updates_status_and_messages_original_poster(monkeypatch) -> Non
     module = _load_command_module(monkeypatch, "missing")
     updates: list[tuple[object, object, str]] = []
     sent: list[tuple[object, str, str]] = []
-    monkeypatch.setattr(module, "update_status", lambda *args: updates.append(args))
-    monkeypatch.setattr(module, "message_send", lambda target, subject, body: sent.append((target, subject, body)))
+    _patch_module(
+        monkeypatch,
+        module,
+        update_status=lambda *args: updates.append(args),
+        message_send=lambda target, subject, body: sent.append(
+            (target, subject, body)
+        ),
+    )
 
     module.handle(FakeComment(), None, FakeKomando(name="missing"), FakeAjo())
 
@@ -770,10 +802,12 @@ def test_page_replies_when_no_subscribers_exist(monkeypatch) -> None:
     author = FakeAuthor("helper", created_utc=0)
     language = FakeLang("Esperanto", "eo")
     replies: list[str] = []
-    monkeypatch.setattr(module.time, "time", lambda: 20 * 86400)
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(
-        module, "notifier", MagicMock(return_value=FakeNotificationResult())
+    monkeypatch.setattr(time, "time", lambda: 20 * 86400)
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        notifier=MagicMock(return_value=FakeNotificationResult()),
     )
 
     module.handle(
@@ -801,9 +835,13 @@ def test_page_distinguishes_unreachable_subscribers_from_no_coverage(
         attempted_count=1,
         failed_usernames=["blocked_user"],
     )
-    monkeypatch.setattr(module.time, "time", lambda: 20 * 86400)
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(module, "notifier", MagicMock(return_value=result))
+    monkeypatch.setattr(time, "time", lambda: 20 * 86400)
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        notifier=MagicMock(return_value=result),
+    )
 
     module.handle(
         FakeComment(author=author),
@@ -820,9 +858,13 @@ def test_page_replies_for_invalid_language_without_notifier(monkeypatch) -> None
     module = _load_command_module(monkeypatch, "page")
     author = FakeAuthor("helper", created_utc=0)
     replies: list[str] = []
-    monkeypatch.setattr(module.time, "time", lambda: 20 * 86400)
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
-    monkeypatch.setattr(module, "notifier", MagicMock(return_value=["reader1"]))
+    monkeypatch.setattr(time, "time", lambda: 20 * 86400)
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        notifier=MagicMock(return_value=["reader1"]),
+    )
 
     module.handle(
         FakeComment(author=author, body="!page:ber"),
@@ -841,7 +883,13 @@ def test_reset_resets_post_and_messages_caller(monkeypatch) -> None:
     submission = FakeSubmission(author=author)
     ajo = FakeAjo(submission)
     sent: list[tuple[object, str, str]] = []
-    monkeypatch.setattr(module, "message_send", lambda target, subject, body: sent.append((target, subject, body)))
+    _patch_module(
+        monkeypatch,
+        module,
+        message_send=lambda target, subject, body: sent.append(
+            (target, subject, body)
+        ),
+    )
 
     module.handle(FakeComment(author=author, submission=submission), None, FakeKomando(), ajo)
 
@@ -853,9 +901,13 @@ def test_reset_resets_post_and_messages_caller(monkeypatch) -> None:
 def test_search_replies_with_frequently_translated_advisory(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "search")
     replies: list[str] = []
-    monkeypatch.setattr(module, "search_integration", MagicMock(return_value="Advisory: common request"))
-    monkeypatch.setattr(module, "fetch_search_reddit_posts", MagicMock())
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    _patch_module(
+        monkeypatch,
+        module,
+        search_integration=MagicMock(return_value="Advisory: common request"),
+        fetch_search_reddit_posts=MagicMock(),
+        reddit_reply=lambda _comment, body: replies.append(body),
+    )
 
     module.handle(FakeComment(), None, FakeKomando(["allergy"], "search"), FakeAjo())
 
@@ -870,9 +922,15 @@ def test_set_updates_language_deletes_stale_comments_and_messages_mod(monkeypatc
     kunulo = FakeKunulo()
     sent: list[tuple[object, str, str]] = []
     _patch_kunulo(monkeypatch, module, kunulo)
-    monkeypatch.setattr(module, "is_mod", lambda _author: True)
-    monkeypatch.setattr(module, "update_language", MagicMock())
-    monkeypatch.setattr(module, "message_send", lambda target, subject, body: sent.append((target, subject, body)))
+    _patch_module(
+        monkeypatch,
+        module,
+        is_mod=lambda _author: True,
+        update_language=MagicMock(),
+        message_send=lambda target, subject, body: sent.append(
+            (target, subject, body)
+        ),
+    )
 
     module.handle(
         FakeComment(author=mod),
@@ -890,7 +948,9 @@ def test_set_updates_language_deletes_stale_comments_and_messages_mod(monkeypatc
 def test_transform_processes_single_image_and_replies(monkeypatch) -> None:
     module = _load_command_module(monkeypatch, "transform")
     replies: list[str] = []
-    monkeypatch.setattr(module, "reddit_reply", lambda _comment, body: replies.append(body))
+    _patch_module(
+        monkeypatch, module, reddit_reply=lambda _comment, body: replies.append(body)
+    )
 
     module.handle(
         FakeComment(body="!transform:90"),
@@ -917,8 +977,12 @@ def test_translated_updates_status_deletes_tracking_comments_and_notifies_op(
     kunulo = FakeKunulo()
     updates: list[tuple[object, object, str]] = []
     _patch_kunulo(monkeypatch, module, kunulo)
-    monkeypatch.setattr(module, "update_status", lambda *args: updates.append(args))
-    monkeypatch.setattr(module, "notify_op_translated_post", MagicMock())
+    _patch_module(
+        monkeypatch,
+        module,
+        update_status=lambda *args: updates.append(args),
+        notify_op_translated_post=MagicMock(),
+    )
 
     module.handle(
         FakeComment(author=author, submission=ajo.submission),

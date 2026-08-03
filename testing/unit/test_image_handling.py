@@ -91,7 +91,7 @@ def test_transform_integer_setting_allows_zero_at_zero_minimum(monkeypatch) -> N
 def test_transform_fetch_rejects_untrusted_host(monkeypatch) -> None:
     get_mock = MagicMock()
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
-    monkeypatch.setattr(image_handling.requests, "get", get_mock)
+    monkeypatch.setattr("integrations.image_handling.requests.get", get_mock)
 
     with pytest.raises(image_handling.TransformImageError, match="not allowed"):
         image_handling._fetch_transform_image_bytes("https://example.com/image.jpg")
@@ -102,7 +102,7 @@ def test_transform_fetch_rejects_untrusted_host(monkeypatch) -> None:
 def test_transform_fetch_rejects_allowed_host_private_dns(monkeypatch) -> None:
     get_mock = MagicMock()
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _private_dns)
-    monkeypatch.setattr(image_handling.requests, "get", get_mock)
+    monkeypatch.setattr("integrations.image_handling.requests.get", get_mock)
 
     with pytest.raises(image_handling.TransformImageError, match="blocked IP"):
         image_handling._fetch_transform_image_bytes("https://i.redd.it/image.jpg")
@@ -113,8 +113,7 @@ def test_transform_fetch_rejects_allowed_host_private_dns(monkeypatch) -> None:
 def test_transform_fetch_rejects_redirect_to_untrusted_host(monkeypatch) -> None:
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
     monkeypatch.setattr(
-        image_handling.requests,
-        "get",
+        "integrations.image_handling.requests.get",
         MagicMock(
             return_value=FakeResponse(
                 headers={"Location": "https://example.com/image.jpg"},
@@ -130,8 +129,7 @@ def test_transform_fetch_rejects_redirect_to_untrusted_host(monkeypatch) -> None
 def test_transform_fetch_rejects_oversized_content_length(monkeypatch) -> None:
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
     monkeypatch.setattr(
-        image_handling.requests,
-        "get",
+        "integrations.image_handling.requests.get",
         MagicMock(
             return_value=FakeResponse(
                 headers={
@@ -150,8 +148,7 @@ def test_transform_fetch_rejects_stream_over_byte_limit(monkeypatch) -> None:
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
     monkeypatch.setattr(image_handling, "MAX_TRANSFORM_IMAGE_BYTES", 3)
     monkeypatch.setattr(
-        image_handling.requests,
-        "get",
+        "integrations.image_handling.requests.get",
         MagicMock(
             return_value=FakeResponse(
                 body=b"1234",
@@ -167,8 +164,7 @@ def test_transform_fetch_rejects_stream_over_byte_limit(monkeypatch) -> None:
 def test_transform_fetch_rejects_wrong_content_type(monkeypatch) -> None:
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
     monkeypatch.setattr(
-        image_handling.requests,
-        "get",
+        "integrations.image_handling.requests.get",
         MagicMock(
             return_value=FakeResponse(headers={"Content-Type": "text/html"})
         ),
@@ -188,8 +184,7 @@ def test_open_transform_image_rejects_oversized_dimensions(monkeypatch) -> None:
 def test_rotate_or_flip_image_accepts_safe_png(monkeypatch) -> None:
     monkeypatch.setattr(image_handling.socket, "getaddrinfo", _public_dns)
     monkeypatch.setattr(
-        image_handling.requests,
-        "get",
+        "integrations.image_handling.requests.get",
         MagicMock(
             return_value=FakeResponse(
                 body=_png_bytes(width=2, height=1),
@@ -215,9 +210,9 @@ def test_imgbb_rejection_logs_response_and_raises_safe_error(monkeypatch) -> Non
         ),
     )
     post_mock = MagicMock(return_value=response)
-    error_mock = MagicMock()
-    monkeypatch.setattr(image_handling.requests, "post", post_mock)
-    monkeypatch.setattr(image_handling.logger, "error", error_mock)
+    logger_mock = MagicMock()
+    monkeypatch.setattr("integrations.image_handling.requests.post", post_mock)
+    monkeypatch.setattr("integrations.image_handling.logger", logger_mock)
 
     with pytest.raises(
         image_handling.ImgBBUploadError,
@@ -225,7 +220,7 @@ def test_imgbb_rejection_logs_response_and_raises_safe_error(monkeypatch) -> Non
     ):
         image_handling.upload_to_imgbb(Image.new("RGB", (1, 1), "white"))
 
-    logged_message = error_mock.call_args.args[0]
+    logged_message = logger_mock.error.call_args.args[0]
     assert "HTTP 400 Bad Request" in logged_message
     assert "Invalid API v1 key" in logged_message
     assert "<redacted API key>" in logged_message
@@ -234,8 +229,7 @@ def test_imgbb_rejection_logs_response_and_raises_safe_error(monkeypatch) -> Non
 
 def test_imgbb_connection_failure_raises_host_specific_error(monkeypatch) -> None:
     monkeypatch.setattr(
-        image_handling.requests,
-        "post",
+        "integrations.image_handling.requests.post",
         MagicMock(side_effect=requests.ConnectionError("network unavailable")),
     )
 

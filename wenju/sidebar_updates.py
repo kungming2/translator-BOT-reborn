@@ -281,10 +281,12 @@ def language_of_the_day(selected_language: str | None = None) -> str | None:
     if country_emoji is not None:
         country_line = f"* **Country**: {country_emoji}\n"
 
+    population = today_language.population
+    population_text = f"{population:,}" if population is not None else "Unknown"
     body = (
         f"* **Family**: [{language_family}]({language_family_link})\n"
         f"{country_line}"
-        f"* **Population**: {today_language.population:,}"
+        f"* **Population**: {population_text}"
     )
 
     if language_subreddit:

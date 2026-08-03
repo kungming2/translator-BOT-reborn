@@ -50,10 +50,9 @@ class TestMonthPointsSummary(unittest.TestCase):
         fake_db.conn_main.commit()
 
         with (
-            patch.object(points, "db", fake_db),
-            patch.object(
-                points,
-                "WENJU_SETTINGS",
+            patch("monitoring.points.db", fake_db),
+            patch(
+                "monitoring.points.WENJU_SETTINGS",
                 {
                     "minimum_points_display_threshold": 5,
                     "points_exclude_usernames": ["AutoModerator"],
@@ -86,8 +85,8 @@ class TestPointRecordReplacement(unittest.TestCase):
         fake_db.conn_main.commit()
 
         with (
-            patch.object(points, "db", fake_db),
-            patch.object(points, "get_current_month", return_value="2026-05"),
+            patch("monitoring.points.db", fake_db),
+            patch("monitoring.points.get_current_month", return_value="2026-05"),
         ):
             points._replace_comment_point_records(
                 "abc123", [["translator_a", 7], ["helper", 1]], "post1"
@@ -114,11 +113,10 @@ class TestPointRecordReplacement(unittest.TestCase):
         fake_db = _FakeDb()
 
         with (
-            patch.object(points, "db", fake_db),
-            patch.object(points, "get_current_month", return_value="2026-05"),
-            patch.object(
-                points,
-                "WENJU_SETTINGS",
+            patch("monitoring.points.db", fake_db),
+            patch("monitoring.points.get_current_month", return_value="2026-05"),
+            patch(
+                "monitoring.points.WENJU_SETTINGS",
                 {"points_exclude_usernames": ["AutoModerator", "translator-BOT"]},
             ),
         ):

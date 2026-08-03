@@ -377,7 +377,7 @@ def _credit_parent_as_translator(
 def points_tabulator(
     comment: Comment,
     original_post: "Submission",
-    original_post_lingvo: Lingvo,
+    original_post_lingvo: Lingvo | None,
     ajo: "Ajo | None" = None,
 ) -> None:
     """
@@ -386,7 +386,7 @@ def points_tabulator(
 
     :param comment: The PRAW comment object for which we are assessing points.
     :param original_post: The post on which the comment was originally posted.
-    :param original_post_lingvo: The Lingvo associated with the original post.
+    :param original_post_lingvo: The Lingvo associated with the original post, if any.
     :param ajo: Optional Ajo object for the post. If not provided, will be loaded.
     """
     if original_post_lingvo is None:

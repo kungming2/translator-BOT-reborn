@@ -1155,7 +1155,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "zh", "zh_word")
             result = get_from_cache("斗爭", "zh", "zh_word")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["traditional"], "斗爭")
 
     def test_save_and_retrieve_zh_chengyu(self):
@@ -1163,7 +1163,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "zh", "zh_word")
             result = get_from_cache("濫竽充數", "zh", "zh_word")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertIsNotNone(result["chinese_meaning"])
 
     def test_save_and_retrieve_ja_character(self):
@@ -1171,7 +1171,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "ja", "ja_character")
             result = get_from_cache("暴", "ja", "ja_character")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["word"], "暴")
 
     def test_save_and_retrieve_ja_word(self):
@@ -1179,7 +1179,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "ja", "ja_word")
             result = get_from_cache("暴虐", "ja", "ja_word")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["part_of_speech"], "noun")
 
     def test_save_and_retrieve_ko_haebang(self):
@@ -1187,7 +1187,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "ko", "ko_word")
             result = get_from_cache("해방", "ko", "ko_word")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["word"], "해방")
 
     def test_save_and_retrieve_ko_tujaeng(self):
@@ -1195,7 +1195,7 @@ class TestCacheReadWrite(unittest.TestCase):
         with self._patch(), self._patch_settings():
             save_to_cache(parsed, "ko", "ko_word")
             result = get_from_cache("투쟁", "ko", "ko_word")
-        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["romanization"], "tujaeng")
 
     def test_cache_miss_returns_none(self):

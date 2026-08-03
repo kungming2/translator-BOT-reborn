@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import cast
 
-from praw.models import Comment
+from praw.models import Comment, Submission
 from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
@@ -548,7 +548,8 @@ def post_monthly_statistics(month_year: str) -> None:
     update_overall_statistics_page(lumo, month_year)
 
     # Step 5: Add points summary comment.
-    if okay_to_post and monthly_post:
+    if okay_to_post and monthly_post is not None:
+        post = cast(Submission, monthly_post)
         msg.info("[5/5] Adding points summary comment...")
 
         # Points use the previous month (handles January → December of prior year).
@@ -561,7 +562,7 @@ def post_monthly_statistics(month_year: str) -> None:
         month_use_string = f"{points_year}-{points_month:02d}"
 
         points_summary = get_month_points_summary(month_use_string)
-        points_comment = cast(Comment, monthly_post.reply(points_summary))
+        points_comment = cast(Comment, post.reply(points_summary))
         points_comment.mod.distinguish(sticky=True)
         msg.good("Added points data comment")
 
@@ -570,13 +571,13 @@ def post_monthly_statistics(month_year: str) -> None:
         )
         message = (
             f"The translation statistics for **{month_english_name} {year_number}** "
-            f"may be viewed [here](https://www.reddit.com{monthly_post.permalink})."
+            f"may be viewed [here](https://www.reddit.com{post.permalink})."
         )
         send_discord_alert(subject_line, message, "notification")
 
         msg.good(
             f"Successfully posted statistics for {month_english_name} {year_number}",
-            f"Post URL: https://redd.it/{monthly_post.id}"
+            f"Post URL: https://redd.it/{post.id}"
             + (f"\n\nWiki URL: {wiki_url}" if wiki_url else ""),
         )
     else:

@@ -1,8 +1,9 @@
 import importlib
+import random
 import sys
 import types
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from models.lingvo import Lingvo
 
@@ -77,16 +78,19 @@ def test_notifier_returns_structured_delivery_result():
         return redditor_obj.name == "sent_user"
 
     with (
-        patch.object(notifications, "db", db),
-        patch.object(notifications, "REDDIT", reddit),
-        patch.object(notifications, "ajo_loader", return_value=None),
-        patch.object(notifications, "message_send", side_effect=fake_message_send),
-        patch.object(notifications, "_update_user_notification_count"),
-        patch.object(notifications, "action_counter"),
-        patch.object(notifications, "record_activity_csv"),
-        patch.object(notifications, "increment_runtime_metric"),
-        patch.object(notifications, "check_url_extension", return_value=False),
-        patch.object(notifications.random, "shuffle", lambda _items: None),
+        patch.multiple(
+            notifications,
+            db=db,
+            REDDIT=reddit,
+            ajo_loader=Mock(return_value=None),
+            message_send=Mock(side_effect=fake_message_send),
+            _update_user_notification_count=Mock(),
+            action_counter=Mock(),
+            record_activity_csv=Mock(),
+            increment_runtime_metric=Mock(),
+            check_url_extension=Mock(return_value=False),
+        ),
+        patch.object(random, "shuffle", lambda _items: None),
         patch.dict(
             notifications.SETTINGS,
             {
@@ -112,10 +116,13 @@ def test_notifier_uses_alpha2_country_code_for_regional_subscription_query():
     db = _Db([])
 
     with (
-        patch.object(notifications, "db", db),
-        patch.object(notifications, "ajo_loader", return_value=None),
-        patch.object(notifications, "country_converter", return_value=("BR", "Brazil")),
-        patch.object(notifications, "_notifier_specific_language_filter", return_value=[]),
+        patch.multiple(
+            notifications,
+            db=db,
+            ajo_loader=Mock(return_value=None),
+            country_converter=Mock(return_value=("BR", "Brazil")),
+            _notifier_specific_language_filter=Mock(return_value=[]),
+        ),
     ):
         result = notifications.notifier(
             _lingvo(
@@ -146,15 +153,18 @@ def test_notifier_reports_previously_contacted_and_failed_page_recipient():
     )
 
     with (
-        patch.object(notifications, "db", db),
-        patch.object(notifications, "REDDIT", reddit),
-        patch.object(notifications, "ajo_loader", return_value=ajo),
-        patch.object(notifications, "message_send", return_value=False),
-        patch.object(notifications, "action_counter"),
-        patch.object(notifications, "record_activity_csv"),
-        patch.object(notifications, "increment_runtime_metric"),
-        patch.object(notifications, "check_url_extension", return_value=False),
-        patch.object(notifications.random, "shuffle", lambda _items: None),
+        patch.multiple(
+            notifications,
+            db=db,
+            REDDIT=reddit,
+            ajo_loader=Mock(return_value=ajo),
+            message_send=Mock(return_value=False),
+            action_counter=Mock(),
+            record_activity_csv=Mock(),
+            increment_runtime_metric=Mock(),
+            check_url_extension=Mock(return_value=False),
+        ),
+        patch.object(random, "shuffle", lambda _items: None),
         patch.dict(
             notifications.SETTINGS,
             {

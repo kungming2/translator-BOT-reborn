@@ -411,7 +411,9 @@ class TestProcessTitleLanguageExtraction(unittest.TestCase):
         self.assertEqual(_codes(titolo.source), ["ar"])
         self.assertEqual(_codes(titolo.target), ["en"])
         self.assertEqual(titolo.final_text, "Arabic")
-        self.assertIn("handwritten label", titolo.title_actual.lower())
+        title_actual = titolo.title_actual
+        self.assertIsInstance(title_actual, str)
+        self.assertIn("handwritten label", title_actual.lower())
 
     @_skip_if_no_data
     def test_leading_english_target_not_replaced_by_tang_in_description(self) -> None:
@@ -422,7 +424,9 @@ class TestProcessTitleLanguageExtraction(unittest.TestCase):
         self.assertEqual(_codes(titolo.source), ["ja"])
         self.assertEqual(_codes(titolo.target), ["en"])
         self.assertEqual(titolo.final_text, "Japanese")
-        self.assertIn("sword tang", titolo.title_actual.lower())
+        title_actual = titolo.title_actual
+        self.assertIsInstance(title_actual, str)
+        self.assertIn("sword tang", title_actual.lower())
 
 
 class TestProcessTitleTitoloFields(unittest.TestCase):

@@ -8,7 +8,7 @@ import re
 import time
 from collections import Counter
 from datetime import datetime
-from typing import Any
+from typing import TypedDict
 
 import yaml
 
@@ -22,7 +22,18 @@ from wenju import task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:MODREPORT"})
 
-ModRemovalReport = dict[str, Any]
+
+class ModRemovalReport(TypedDict):
+    """Structured result from moderator rule-violation analysis."""
+
+    start_time: int
+    end_time: int
+    start_date: str
+    end_date: str
+    total_comments_checked: int
+    total_violations: int
+    unique_rules_violated: int
+    violation_counts: dict[str, int]
 
 
 def _activity_csv_summary() -> tuple[str, dict[str, object]]:
@@ -220,7 +231,7 @@ def _analyze_mod_removals(start_time: int, end_time: int) -> ModRemovalReport:
 
     violation_counts = Counter(rule_violations)
 
-    results = {
+    results: ModRemovalReport = {
         "start_time": start_time,
         "end_time": end_time,
         "start_date": datetime.fromtimestamp(start_time).strftime(

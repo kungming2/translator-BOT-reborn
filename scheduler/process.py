@@ -6,9 +6,9 @@ import logging
 import os
 import signal
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import suppress
-from typing import IO
+from typing import IO, cast
 
 SIGKILL = getattr(signal, "SIGKILL", 9)
 
@@ -16,9 +16,10 @@ SIGKILL = getattr(signal, "SIGKILL", 9)
 def _kill_process_group(pid: int, sig: int) -> None:
     """Call the POSIX process-group signal API used by the Linux scheduler."""
     killpg = getattr(os, "killpg", None)
-    if killpg is None:
+    if not callable(killpg):
         raise RuntimeError("Process-group termination requires a POSIX host")
-    killpg(pid, sig)
+    posix_killpg = cast(Callable[[int, int], None], killpg)
+    posix_killpg(pid, sig)
 
 
 def terminate_process_group(

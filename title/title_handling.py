@@ -70,8 +70,6 @@ def _resolve_flair_code(lang_obj: Lingvo) -> str:
     Prefers language_code_1 (ISO 639-1) over language_code_3, and only uses
     either if the language is marked as supported.
     """
-    if lang_obj is None:
-        return "generic"
     if lang_obj.language_code_1 and lang_obj.supported:
         return lang_obj.language_code_1
     if lang_obj.language_code_3 and lang_obj.supported:
@@ -622,12 +620,11 @@ def _leading_language_phrase(text: str, max_words: int = 4) -> tuple[str, str] |
     once a user has put the direction first, only the words immediately after
     the connector should be considered part of the target language.
     """
-    match = re.match(rf"\s*((?:[A-Za-z][\w-]*\s*){{1,{max_words}}})(.*)$", text)
+    match = re.match(r"\s*([A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*)*)", text)
     if not match:
         return None
 
-    phrase_text = match.group(1).strip()
-    words = phrase_text.split()
+    words = match.group(1).split()[:max_words]
 
     for word_count in range(min(max_words, len(words)), 0, -1):
         candidate = " ".join(words[:word_count]).strip()

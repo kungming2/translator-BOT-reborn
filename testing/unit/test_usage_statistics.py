@@ -26,12 +26,13 @@ class TestActionCounter(unittest.TestCase):
                     "LOGS",
                     {"COUNTER": str(counter_path)},
                 ),
-                patch.object(
-                    action_statistics,
-                    "get_current_utc_date",
+                patch(
+                    "monitoring.action_statistics.get_current_utc_date",
                     return_value="2026-05-03",
                 ),
-                patch.object(action_statistics, "send_discord_alert") as alert_mock,
+                patch(
+                    "monitoring.action_statistics.send_discord_alert"
+                ) as alert_mock,
             ):
                 action_statistics.action_counter(2, "Notifications")
 
@@ -48,7 +49,7 @@ class TestActionCounter(unittest.TestCase):
     def test_skipped_action_does_not_send_discord_log(self) -> None:
         with (
             patch.object(action_statistics.Paths, "LOGS", {"COUNTER": "unused.json"}),
-            patch.object(action_statistics, "send_discord_alert") as alert_mock,
+            patch("monitoring.action_statistics.send_discord_alert") as alert_mock,
         ):
             action_statistics.action_counter(0, "Notifications")
 
@@ -113,9 +114,8 @@ class TestUserStatistics(unittest.TestCase):
             ("example_user", b'{"teng-teng":2,"unknown-teng":3}'),
         ]
 
-        with patch.object(
-            user_statistics,
-            "db",
+        with patch(
+            "monitoring.user_statistics.db",
             SimpleNamespace(cursor_main=cursor),
         ):
             result = user_statistics.user_statistics_loader("example_user")
@@ -144,9 +144,8 @@ class TestUserStatistics(unittest.TestCase):
             ],
         )
 
-        with patch.object(
-            user_statistics,
-            "db",
+        with patch(
+            "monitoring.user_statistics.db",
             SimpleNamespace(cursor_main=cursor, conn_main=connection),
         ):
             user_statistics.user_statistics_writer(instruo)

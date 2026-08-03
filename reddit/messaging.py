@@ -146,7 +146,7 @@ def handle_subscribe(message: Message, message_author: Redditor) -> None:
 
     # Insert the relevant codes.
     subscription_summary = notifier_language_list_editor(
-        language_matches + internal_matches, message_author, "insert"
+        [*language_matches, *internal_matches], message_author, "insert"
     )
 
     # Get the language names of those codes for use in the reply message.
@@ -243,7 +243,7 @@ def handle_unsubscribe(message: Message, message_author: Redditor) -> None:
 
     final_match_names = []  # For formatting
     notifier_language_list_editor(
-        language_matches + internal_matches, message_author, "delete"
+        [*language_matches, *internal_matches], message_author, "delete"
     )
     for lingvo in language_matches:
         if lingvo.name is not None:

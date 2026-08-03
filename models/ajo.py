@@ -24,9 +24,10 @@ Logger tag: [M:AJO]
 
 import ast
 import logging
-from typing import Any, cast
+from typing import Any
 
 import orjson
+from praw.models import Submission
 
 from config import SETTINGS
 from config import logger as _base_logger
@@ -216,7 +217,7 @@ class Ajo:
         return self.__dict__ == other.__dict__
 
     @classmethod
-    def from_titolo(cls, titolo: Titolo, submission: Any = None) -> "Ajo":
+    def from_titolo(cls, titolo: Titolo, submission: Submission | None = None) -> "Ajo":
         """
         Construct an Ajo object from a Titolo instance and an optional PRAW submission.
         This is the primary way to construct an Ajo, as simple as:
@@ -230,7 +231,7 @@ class Ajo:
 
         # Basic info
         ajo.title_original = titolo.title_original or (
-            submission.title if submission else None
+            submission.title if submission is not None else None
         )
         ajo.title = titolo.title_actual
         ajo.direction = titolo.direction
@@ -281,10 +282,11 @@ class Ajo:
             ajo.status = "untranslated"
 
         # Populate fields from Reddit submission if available
-        if submission:
+        if submission is not None:
             ajo.id = submission.id
             ajo.created_utc = int(submission.created_utc)
-            ajo.author = str(submission.author) if submission.author else "[deleted]"
+            submission_author = submission.author
+            ajo.author = str(submission_author) if submission_author else "[deleted]"
 
             # If the submission is a link to an image, set the image hash
             ajo.set_image_hash(submission)
@@ -692,7 +694,7 @@ class Ajo:
             else:
                 # Assume it's a Lingvo object
                 self._lingvo = code_or_lingvo
-                self.preferred_code = self._lingvo.preferred_code
+                self.preferred_code = code_or_lingvo.preferred_code
 
             # Check if this is the "multiple" language code (non-defined multiple post)
             if self.preferred_code == "multiple":
@@ -816,11 +818,13 @@ class Ajo:
             raise ValueError(f"Status must be one of {allowed}.")
 
         # Initialize status as a dict if it's not already
-        if not isinstance(self.status, dict):
-            self.status = cast(dict[str, str], {})
+        status = self.status
+        if not isinstance(status, dict):
+            status = {}
+            self.status = status
 
         # Set the status for the specific language
-        self.status[language_code] = status_value
+        status[language_code] = status_value
 
     def set_is_long(self, value: bool) -> None:
         """
@@ -1146,7 +1150,8 @@ def determine_flair_and_update(
     output_flair_text: str = "Generic"
     code_tag: str | None = None
 
-    if ajo.lingvo is None:
+    lingvo = ajo.lingvo
+    if lingvo is None:
         # Fallback flair when no lingvo is available
         if not testing_mode:
             if output_flair_css in post_templates:
@@ -1177,16 +1182,12 @@ def determine_flair_and_update(
         ajo.output_post_flair_text = output_flair_text
         return  # Early return to prevent AttributeError
 
-    language_name = ajo.lingvo.name or ""
+    language_name = lingvo.name or ""
     language_code_1 = (
-        ajo.lingvo.language_code_1
-        if isinstance(ajo.lingvo.language_code_1, str)
-        else None
+        lingvo.language_code_1 if isinstance(lingvo.language_code_1, str) else None
     )
     language_code_3 = (
-        ajo.lingvo.language_code_3
-        if isinstance(ajo.lingvo.language_code_3, str)
-        else None
+        lingvo.language_code_3 if isinstance(lingvo.language_code_3, str) else None
     )
 
     # Helper to set code_tag and css for a given code and css

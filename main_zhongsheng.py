@@ -138,7 +138,8 @@ async def on_command_error(ctx: Context, error: commands.CommandError) -> None:
 async def on_command_completion(ctx: Context) -> None:
     """Log command usage when a command completes successfully."""
     command_name = ctx.command.name if ctx.command else "<unknown>"
-    guild_name = ctx.guild.name if ctx.guild else "<unknown guild>"
+    guild = ctx.guild
+    guild_name = guild.name if guild is not None else "<unknown guild>"
     logger.info(
         f"Command `/{command_name}` called by user {ctx.author} "
         f"(ID: {ctx.author.id}) in {guild_name}"
@@ -157,7 +158,8 @@ async def only_expected_guild(ctx: Context) -> bool:
 def _is_expected_guild_context(ctx: Context) -> bool:
     """Return whether a command context belongs to the configured guild."""
     expected_guild_id = load_expected_guild_id(logger)
-    actual_guild_id = ctx.guild.id if ctx.guild else None
+    guild = ctx.guild
+    actual_guild_id = guild.id if guild is not None else None
 
     if expected_guild_id is not None and actual_guild_id == expected_guild_id:
         return True

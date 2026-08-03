@@ -23,6 +23,7 @@ import os
 import sqlite3
 import time
 from ast import literal_eval
+from contextlib import closing
 from typing import Any
 
 import orjson
@@ -53,35 +54,31 @@ def initialize_hermes_db() -> None:
     logger.info(f"Creating hermes.db at {db_path} ...")
 
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn: sqlite3.Connection | None = None
     try:
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
+        with closing(sqlite3.connect(db_path)) as conn:
+            cur = conn.cursor()
 
-        cur.execute(
-            """
-            CREATE TABLE entries (
-                username    TEXT PRIMARY KEY,
-                user_data   TEXT NOT NULL,
-                posted_utc  INTEGER NOT NULL
+            cur.execute(
+                """
+                CREATE TABLE entries (
+                    username    TEXT PRIMARY KEY,
+                    user_data   TEXT NOT NULL,
+                    posted_utc  INTEGER NOT NULL
+                )
+                """
             )
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE processed (
-                post_id     TEXT PRIMARY KEY,
-                created_utc INTEGER NOT NULL
+            cur.execute(
+                """
+                CREATE TABLE processed (
+                    post_id     TEXT PRIMARY KEY,
+                    created_utc INTEGER NOT NULL
+                )
+                """
             )
-            """
-        )
-        conn.commit()
+            conn.commit()
         logger.info("hermes.db initialised successfully.")
     except sqlite3.Error as exc:
         logger.error(f"Error initialising hermes.db: {exc}")
-    finally:
-        if conn:
-            conn.close()
 
 
 # ─── Serialisation helpers ────────────────────────────────────────────────────

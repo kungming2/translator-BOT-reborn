@@ -9,6 +9,11 @@ from unittest.mock import AsyncMock
 from zhongsheng import recruit as recruit_module
 
 
+def _patch_recruit_module(monkeypatch, **replacements: object) -> None:
+    for name, replacement in replacements.items():
+        monkeypatch.setattr(recruit_module, name, replacement)
+
+
 def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
     """The Discord /recruit command returns both copyable post fields."""
     language_matches = [SimpleNamespace(name="English", preferred_code="en")]
@@ -33,7 +38,7 @@ def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
         "build_recruitment_markdown",
         lambda _matches: "Recruitment post body",
     )
-    monkeypatch.setattr(recruit_module, "send_long_message", capture_long_message)
+    _patch_recruit_module(monkeypatch, send_long_message=capture_long_message)
 
     ctx = SimpleNamespace(author=SimpleNamespace(name="moderator"), send=AsyncMock())
 
@@ -48,20 +53,15 @@ def test_recruit_discord_response_includes_subject(monkeypatch) -> None:
 
 def test_recruitment_markdown_starts_with_native_greeting(monkeypatch) -> None:
     """The post body uses a native greeting when the Lingvo provides one."""
-    monkeypatch.setattr(
-        recruit_module,
-        "RESPONSE",
-        SimpleNamespace(
+    _patch_recruit_module(
+        monkeypatch,
+        RESPONSE=SimpleNamespace(
             POST_RECRUITMENT_POST_INTRO=(
                 "We're mods over at r/translator for {target_languages}."
             ),
             MSG_SUBSCRIBE_LINK="https://reddit.example/compose?message=",
         ),
-    )
-    monkeypatch.setattr(
-        recruit_module,
-        "describe_language_frequency",
-        lambda _lingvo: None,
+        describe_language_frequency=lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -80,20 +80,15 @@ def test_recruitment_markdown_starts_with_native_greeting(monkeypatch) -> None:
 
 def test_recruitment_markdown_omits_default_english_greeting(monkeypatch) -> None:
     """The default Lingvo greeting is not treated as a native greeting."""
-    monkeypatch.setattr(
-        recruit_module,
-        "RESPONSE",
-        SimpleNamespace(
+    _patch_recruit_module(
+        monkeypatch,
+        RESPONSE=SimpleNamespace(
             POST_RECRUITMENT_POST_INTRO=(
                 "We're mods over at r/translator for {target_languages}."
             ),
             MSG_SUBSCRIBE_LINK="https://reddit.example/compose?message=",
         ),
-    )
-    monkeypatch.setattr(
-        recruit_module,
-        "describe_language_frequency",
-        lambda _lingvo: None,
+        describe_language_frequency=lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -112,20 +107,15 @@ def test_recruitment_markdown_omits_default_english_greeting(monkeypatch) -> Non
 
 def test_recruitment_markdown_puts_signup_before_frequency(monkeypatch) -> None:
     """The signup link is the second table column."""
-    monkeypatch.setattr(
-        recruit_module,
-        "RESPONSE",
-        SimpleNamespace(
+    _patch_recruit_module(
+        monkeypatch,
+        RESPONSE=SimpleNamespace(
             POST_RECRUITMENT_POST_INTRO=(
                 "We're mods over at r/translator for {target_languages}."
             ),
             MSG_SUBSCRIBE_LINK="https://reddit.example/compose?message=",
         ),
-    )
-    monkeypatch.setattr(
-        recruit_module,
-        "describe_language_frequency",
-        lambda _lingvo: (9.12, "year"),
+        describe_language_frequency=lambda _lingvo: (9.12, "year"),
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -150,20 +140,15 @@ def test_recruitment_markdown_puts_signup_before_frequency(monkeypatch) -> None:
 
 def test_recruitment_markdown_ends_with_native_thanks(monkeypatch) -> None:
     """The post body uses native thanks when the Lingvo provides one."""
-    monkeypatch.setattr(
-        recruit_module,
-        "RESPONSE",
-        SimpleNamespace(
+    _patch_recruit_module(
+        monkeypatch,
+        RESPONSE=SimpleNamespace(
             POST_RECRUITMENT_POST_INTRO=(
                 "We're mods over at r/translator for {target_languages}."
             ),
             MSG_SUBSCRIBE_LINK="https://reddit.example/compose?message=",
         ),
-    )
-    monkeypatch.setattr(
-        recruit_module,
-        "describe_language_frequency",
-        lambda _lingvo: None,
+        describe_language_frequency=lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(
@@ -182,20 +167,15 @@ def test_recruitment_markdown_ends_with_native_thanks(monkeypatch) -> None:
 
 def test_recruitment_markdown_falls_back_to_default_thanks(monkeypatch) -> None:
     """The default Lingvo thanks value keeps the English closing line."""
-    monkeypatch.setattr(
-        recruit_module,
-        "RESPONSE",
-        SimpleNamespace(
+    _patch_recruit_module(
+        monkeypatch,
+        RESPONSE=SimpleNamespace(
             POST_RECRUITMENT_POST_INTRO=(
                 "We're mods over at r/translator for {target_languages}."
             ),
             MSG_SUBSCRIBE_LINK="https://reddit.example/compose?message=",
         ),
-    )
-    monkeypatch.setattr(
-        recruit_module,
-        "describe_language_frequency",
-        lambda _lingvo: None,
+        describe_language_frequency=lambda _lingvo: None,
     )
 
     markdown = recruit_module.build_recruitment_markdown(

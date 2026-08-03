@@ -409,11 +409,15 @@ class Lumo:
         else:
             target_lingvo = language
 
-        return [
-            ajo
-            for ajo in self.ajos
-            if ajo.lingvo and ajo.lingvo.preferred_code == target_lingvo.preferred_code
-        ]
+        matching_ajos = []
+        for ajo in self.ajos:
+            lingvo = ajo.lingvo
+            if (
+                lingvo is not None
+                and lingvo.preferred_code == target_lingvo.preferred_code
+            ):
+                matching_ajos.append(ajo)
+        return matching_ajos
 
     def filter_by_status(self, status: str) -> list[Ajo]:
         """
@@ -552,8 +556,9 @@ class Lumo:
         """Get list of all unique languages in the dataset."""
         languages = set()
         for ajo in self.ajos:
-            if ajo.lingvo and ajo.lingvo.name:
-                languages.add(ajo.lingvo.name)
+            lingvo = ajo.lingvo
+            if lingvo is not None and lingvo.name:
+                languages.add(lingvo.name)
         return sorted(list(languages))
 
     def get_language_rankings(self, by: str = "total") -> list[tuple[str, int]]:

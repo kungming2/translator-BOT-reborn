@@ -630,8 +630,8 @@ class TestPostIso15924Updates:
                     "ISO_CODES_UPDATES": str(state_file),
                 },
             ),
-            patch.object(iso_updates, "submit_translatorbot_post") as post_mock,
-            patch.object(iso_updates, "send_discord_alert") as alert_mock,
+            patch("wenju.iso_updates.submit_translatorbot_post") as post_mock,
+            patch("wenju.iso_updates.send_discord_alert") as alert_mock,
         ):
             iso_updates.post_iso_reports_to_reddit()
 
@@ -888,10 +888,11 @@ class TestPublicStatsDashboard:
                 "_activity_csv_summary",
                 return_value=("* **Average API Calls**: 12.5/cycle", {}),
             ),
-            patch.object(
-                moderator_update, "get_current_utc_date", return_value="2026-07-15"
+            patch(
+                "wenju.moderator_reporting.get_current_utc_date",
+                return_value="2026-07-15",
             ),
-            patch.object(moderator_update, "send_discord_alert") as alert_mock,
+            patch("wenju.moderator_reporting.send_discord_alert") as alert_mock,
             patch.object(public_statistics, "_collect_public_statistics") as stats_mock,
         ):
             moderator_update.send_moderator_update()
@@ -938,11 +939,13 @@ class TestPublicStatsDashboard:
                 "ICONS",
                 {"PUBLIC_STATS_TOUCH_ICON": str(touch_icon_source)},
             ),
-            patch.object(
-                public_statistics, "WENJU_SETTINGS", {"report_command_average": 3}
+            patch(
+                "wenju.public_statistics.WENJU_SETTINGS",
+                {"report_command_average": 3},
             ),
-            patch.object(
-                public_statistics, "get_current_utc_date", return_value="2026-07-14"
+            patch(
+                "wenju.public_statistics.get_current_utc_date",
+                return_value="2026-07-14",
             ),
         ):
             public_statistics.generate_public_statistics()
@@ -966,8 +969,9 @@ class TestPublicStatsDashboard:
                     "endDate": "2026-07-15",
                 },
             ),
-            patch.object(
-                public_statistics, "get_action_daily_averages", return_value=actions
+            patch(
+                "wenju.public_statistics.get_action_daily_averages",
+                return_value=actions,
             ) as action_mock,
             patch.object(
                 public_statistics, "_wenyuan_period_stats", return_value={"days": 30}
@@ -1034,8 +1038,9 @@ class TestWenyuanPeriodStats:
             },
             "timing": {"medianTranslationDisplay": "2 hours"},
         }
-        with patch.object(
-            public_statistics, "build_period_stats_data", return_value=sample_stats
+        with patch(
+            "wenju.public_statistics.build_period_stats_data",
+            return_value=sample_stats,
         ) as build_mock:
             data = public_statistics._wenyuan_period_stats(30)
 
@@ -1043,9 +1048,8 @@ class TestWenyuanPeriodStats:
         assert data == sample_stats
 
     def test_collects_wenyuan_period_stats_fails_soft(self):
-        with patch.object(
-            public_statistics,
-            "build_period_stats_data",
+        with patch(
+            "wenju.public_statistics.build_period_stats_data",
             side_effect=RuntimeError("boom"),
         ):
             data = public_statistics._wenyuan_period_stats(30)
@@ -1075,14 +1079,12 @@ class TestWenyuanPeriodStats:
         lumo.get_source_target_pairs.return_value = [("Spanish -> English", 4)]
 
         with (
-            patch.object(
-                period_statistics,
-                "converter",
+            patch(
+                "wenyuan.period_statistics.converter",
                 return_value=types.SimpleNamespace(preferred_code="es"),
             ),
-            patch.object(
-                period_statistics,
-                "time_convert_to_string_seconds",
+            patch(
+                "wenyuan.period_statistics.time_convert_to_string_seconds",
                 return_value="1 hour",
             ),
         ):

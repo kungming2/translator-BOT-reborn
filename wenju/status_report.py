@@ -255,14 +255,14 @@ def notify_db_statistics_calculator(post_to_reddit: bool = True) -> None:
 
     ignore_codes = set(WENJU_SETTINGS["ignored_notification_database_codes"])
     iso_sorted = sorted(iso_639_1_languages, key=lambda x: x.lower())
-    missing_codes = [
-        f"| `{code}` | {_l.name} |"
-        for code in iso_sorted
-        if (_l := converter(code)) is not None
-        and code not in all_lang_codes
-        and len(code) == 2
-        and code not in ignore_codes
-    ]
+    missing_codes = []
+    for code in iso_sorted:
+        if code in all_lang_codes or len(code) != 2 or code in ignore_codes:
+            continue
+        lingvo = converter(code)
+        if lingvo is None:
+            continue
+        missing_codes.append(f"| `{code}` | {lingvo.name} |")
     missing_num = len(missing_codes)
 
     missing_section_raw = (

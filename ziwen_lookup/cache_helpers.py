@@ -365,7 +365,7 @@ def format_zh_character_from_cache(cached_data: dict) -> str:
         table += f"| **Vietnamese** | *{pronunciations['vietnamese']}* |\n"
 
     calligraphy_section = ""
-    if calligraphy:
+    if isinstance(calligraphy, dict):
         sfzd_image = calligraphy.get("sfzd_image")
         sfds = calligraphy.get("sfds")
         variants = calligraphy.get("variants")
@@ -616,7 +616,7 @@ def format_ja_character_from_cache(cached_data: dict) -> str:
         readings_section += f"**On-readings:** {on_formatted}"
 
     calligraphy_section = ""
-    if calligraphy:
+    if isinstance(calligraphy, dict):
         sfzd = calligraphy.get("sfzd_image")
         sfds = calligraphy.get("sfds")
         variants = calligraphy.get("variants")

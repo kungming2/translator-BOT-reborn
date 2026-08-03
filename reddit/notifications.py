@@ -12,7 +12,9 @@ import logging
 import random
 import sqlite3
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import cast
 
 import orjson
 from praw.exceptions import RedditAPIException
@@ -147,7 +149,9 @@ def _prune_deleted_user_notifications(
 
 
 def notifier_language_list_editor(
-    language_list: list, user_object: "str | Redditor", mode: str = "insert"
+    language_list: Sequence[str | Lingvo],
+    user_object: "str | Redditor",
+    mode: str = "insert",
 ) -> dict[str, list[str]]:
     """
     Modify the notification database by inserting or deleting entries for a username.
@@ -192,7 +196,8 @@ def notifier_language_list_editor(
             processed_code = item.lower()
             table, column, internal_flag = "notify_internal", "post_type", True
         else:
-            processed_code = _process_language_code(item.preferred_code)
+            lingvo_item = cast(Lingvo, item)
+            processed_code = _process_language_code(lingvo_item.preferred_code)
             table, column, internal_flag = "notify_users", "language_code", False
 
         if not processed_code:
@@ -339,7 +344,7 @@ def _notifier_specific_language_filter(lingvo_object: Lingvo) -> list[str]:
 
     # Only get users subscribed to ISO code if it exists and differs
     if (
-        iso_associated_code
+        isinstance(iso_associated_code, str)
         and iso_associated_code.lower() != (language_region_code or "").lower()
     ):
         specific_usernames.update(
@@ -705,10 +710,10 @@ def notifier(
     failed_usernames: list[str] = []
     for username in notify_users_list:
         # Choose the message template based on mode
-        message_templates = {
-            "identify": RESPONSE.MSG_NOTIFY_IDENTIFY,
-            "page": RESPONSE.MSG_PAGE,
-            "new_post": RESPONSE.MSG_NOTIFY,
+        message_templates: dict[str, str] = {
+            "identify": cast(str, RESPONSE.MSG_NOTIFY_IDENTIFY),
+            "page": cast(str, RESPONSE.MSG_PAGE),
+            "new_post": cast(str, RESPONSE.MSG_NOTIFY),
         }
 
         # Default to "new_post" if mode is not found

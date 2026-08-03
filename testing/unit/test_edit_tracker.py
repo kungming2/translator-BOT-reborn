@@ -310,6 +310,7 @@ class TestGetCachedComment:
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
             result = _get_cached_comment("abc123")
+        assert isinstance(result, _CachedComment)
         assert result.command_names == set()
 
     def test_lookup_content_populated_from_row(self):
@@ -318,6 +319,7 @@ class TestGetCachedComment:
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
             result = _get_cached_comment("abc123")
+        assert isinstance(result, _CachedComment)
         assert result.lookup_content == "zh:粽子§"
         assert result.cjk_terms == {"zh:粽子"}
 
@@ -327,6 +329,7 @@ class TestGetCachedComment:
         with patch("monitoring.edit_tracker.db") as mock_db:
             mock_db.cursor_cache = cursor
             result = _get_cached_comment("abc123")
+        assert isinstance(result, _CachedComment)
         assert result.lookup_content == ""
 
 

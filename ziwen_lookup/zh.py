@@ -736,7 +736,7 @@ async def _zh_character_other_readings(character: str) -> str | None:
         logger.debug(f"Added Japanese reading: {ja_combined}")
 
     # Korean readings
-    ko_hangul = data.get("kHangul")
+    ko_hangul = data.get("kHangul") or ""
     logger.debug(f"Korean Hangul: {ko_hangul}")
 
     if ko_hangul:

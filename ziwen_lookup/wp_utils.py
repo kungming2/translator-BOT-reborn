@@ -188,12 +188,15 @@ def wikipedia_lookup(terms: str | list[str], language_code: str = "en") -> str |
                 term_summary = term_summary.split("\n")[0].strip()
             if "==" in term_summary:
                 term_summary = term_summary.split("==")[0].strip()
-            if not term_entry:
-                term_entry = f"https://{lang_code}.wikipedia.org/wiki/{term_format}"
-            term_entry = term_entry.replace(")", r"\)")
-            logger.info(f">> Text for {term} to be obtained from `{term_entry}`.")
+            resolved_entry = term_entry or (
+                f"https://{lang_code}.wikipedia.org/wiki/{term_format}"
+            )
+            resolved_entry = resolved_entry.replace(")", r"\)")
+            logger.info(f">> Text for {term} to be obtained from `{resolved_entry}`.")
 
-            entry_text = f"\n**[{term.title()}]({term_entry})**\n\n> {term_summary}\n\n"
+            entry_text = (
+                f"\n**[{term.title()}]({resolved_entry})**\n\n> {term_summary}\n\n"
+            )
 
             if wikipage_obj:
                 location_data = get_page_location_data(wikipage_obj)

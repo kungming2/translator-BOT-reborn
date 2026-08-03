@@ -120,12 +120,13 @@ def _validate_transform_url(url: str) -> str:
     parsed = urlparse(url.strip())
     if parsed.scheme not in {"http", "https"}:
         raise TransformImageError("Image URL must use http or https.")
-    if not parsed.hostname:
+    parsed_hostname = parsed.hostname
+    if parsed_hostname is None:
         raise TransformImageError("Image URL must include a hostname.")
     if parsed.username or parsed.password:
         raise TransformImageError("Image URL must not include credentials.")
 
-    hostname = parsed.hostname.lower()
+    hostname = parsed_hostname.lower()
     if hostname not in ALLOWED_TRANSFORM_IMAGE_HOSTS:
         raise TransformImageError(f"Image host is not allowed: {hostname}")
 
