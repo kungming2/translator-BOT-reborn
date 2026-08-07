@@ -35,17 +35,22 @@ def _translate_part_of_speech(korean_pos: str) -> str:
     equivalent."""
     mapping: dict[str, str] = {
         "명사": "noun",
+        "대명사": "pronoun",
+        "수사": "numeral",
+        "조사": "postpositional particle",
         "동사": "verb",
         "형용사": "adjective",
-        "부사": "adverb",
-        "대명사": "pronoun",
-        "전치사": "preposition",
-        "접속사": "conjunction",
-        "감탄사": "interjection",
-        "조사": "particle",
-        "수사": "numeral",
         "관형사": "determiner",
-        "의존 명사": "dependent noun",
+        "부사": "adverb",
+        "감탄사": "interjection",
+        "접사": "affix",
+        "의존 명사": "bound noun",
+        "보조 동사": "auxiliary verb",
+        "보조 형용사": "auxiliary adjective",
+        "어미": "ending of a word",
+        # KRDict uses this for grammar expressions, roots, and abbreviations,
+        # so no single category is accurate.
+        "품사 없음": "other",
     }
     return mapping.get(korean_pos, korean_pos)
 

@@ -270,7 +270,7 @@ def error_log_extended(error_save_entry: str, bot_version: str) -> None:
 
 def display_event_errors(days: int = 7) -> list[str]:
     """
-    Display errors recorded in the events log (as opposed to the error log).
+    Display ERROR-or-higher entries recorded in the events log.
 
     :param days: How many days back to search (default: 7).
     :return: List of matching log line strings.
@@ -281,7 +281,7 @@ def display_event_errors(days: int = 7) -> list[str]:
     try:
         with open(Paths.LOGS["EVENTS"], encoding="utf-8") as f:
             for line in f:
-                if "ERROR:" in line:
+                if line.startswith(("ERROR:", "CRITICAL:")):
                     try:
                         timestamp_str = line.split(" - ")[0].split(": ")[1]
                         log_date = datetime.fromisoformat(

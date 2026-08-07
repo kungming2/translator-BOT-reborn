@@ -39,8 +39,10 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: More Reddit helper routines have been adjusted for [PRAW 8 compatibility](https://www.reddit.com/r/redditdev/comments/1u5uvwe/praw_and_async_praw_8_has_been_released/).
 * 🔄 CHANGE: Centralized internal project language pseudo-codes in settings, shared Wenyuan utility-code configuration between statistics modules, and moved Wenyuan's bulk title retrieval test into `devtools.py`.
 * 🔄 CHANGE: Logging refinements.
+* 🔄 CHANGE: Developer event-log error display now includes critical entries and matches only explicit error-level log prefixes.
 * 🔄 CHANGE: Japanese and Chinese lookup keys are now Unicode-normalized before cache and dictionary lookups, so compatibility ideographs such as `晴` resolve to their canonical forms.
 * 🔄 CHANGE: Chinese CJK lookup now reads supplementary Southern Min and Hakka pronunciations from MoEDict's JSON endpoints instead of scraping MoEDict HTML pages.
+* 🔄 CHANGE: Korean dictionary lookups now translate KRDict's full set of part-of-speech categories into more accurate English labels, including bound nouns, auxiliary predicates, affixes, word endings, and uncategorized entries.
 * 🔄 CHANGE: Wenju's ISO 639-1 language of the day selection now uses a deterministic shuffled cycle, reducing quick repeats without requiring persistent selection state.
 * 🕯️ REMOVED: Wenju's daily `modqueue_assessor` task has been replaced by the [Modqueue Tools Devvit app](https://developers.reddit.com/apps/modqueue-tools).
 * 🕯️ REMOVED: Wenju's daily `archive_modmail` task has been replaced by the [Modmail Assistant Devvit app](https://developers.reddit.com/apps/modmailassistant).

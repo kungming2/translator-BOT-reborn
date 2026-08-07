@@ -300,7 +300,7 @@ def check_lang_parse() -> None:
 
 
 def check_error_display_event_errors() -> None:
-    """Display ERROR-level entries from the events log within the last N days."""
+    """Display ERROR-or-higher entries from the events log within the last N days."""
     days = _prompt_int(
         "Number of days to look back (default 7): ", default=7, min_value=1
     )
