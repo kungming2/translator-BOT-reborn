@@ -49,6 +49,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🕯️ REMOVED: Chinese Reference's scheduled auto-run has been replaced by the [CJK Lookup Devvit app](https://developers.reddit.com/apps/cjk-lookup) that I (u/kungming2) wrote. The legacy implementation remains in the repository but is inactive and will be removed at a future date.
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
+* 🛠️ BUG FIX: Wenju's ISO 639-3 newsletter parser now treats PDFs without extractable text as parse failures, avoiding misleading reports that no adopted change requests were found.
 * 🛠️ BUG FIX: Refreshed the ISO language and script datasets, restoring missing codes and normalizing malformed names and aliases.
 * 🛠️ BUG FIX: Repaired language-state records with missing or conflicting ISO codes, invalid metadata shapes, and blank aliases; obsolete three-letter synonyms now resolve through the standards adapter, and statistics state was refreshed.
 * 🛠️ BUG FIX: Language list parsing now deduplicates repeated language mentions and avoids treating partial country-name matches as country hints.

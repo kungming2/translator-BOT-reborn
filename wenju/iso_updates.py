@@ -61,9 +61,10 @@ def _parse_iso639_newsletter(pdf_source: str) -> str:
     else:
         reader = PdfReader(pdf_source)
 
-    full_text = ""
-    for page in reader.pages:
-        full_text += page.extract_text()
+    full_text = "".join(page.extract_text() or "" for page in reader.pages)
+
+    if not full_text.strip():
+        raise ValueError("ISO 639 newsletter PDF contains no extractable text.")
 
     adopted_section_match = re.search(
         r"Change requests that have been adopted.*?(?=Newly posted change requests|$)",

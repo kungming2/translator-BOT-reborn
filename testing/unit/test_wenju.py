@@ -471,6 +471,16 @@ class TestParseIso639Newsletter:
 
         assert result == "No adopted change requests found."
 
+    def test_no_extractable_text_raises_parse_error(self):
+        with (
+            patch(
+                "wenju.iso_updates.PdfReader",
+                return_value=self._make_reader(""),
+            ),
+            pytest.raises(ValueError, match="no extractable text"),
+        ):
+            iso_updates._parse_iso639_newsletter("/fake/path.pdf")
+
     def test_adopted_section_with_no_parseable_entries(self):
         text = "Change requests that have been adopted\nNo entries here."
         with patch("wenju.iso_updates.PdfReader", return_value=self._make_reader(text)):
