@@ -52,7 +52,6 @@ from wenju.moderator_reporting import send_moderator_update
 from wenju.public_statistics import generate_public_statistics
 from wenju.sidebar_updates import language_of_the_day
 from wenju.status_report import notify_db_statistics_calculator
-from wenyuan.code_manager import create_entry, deprecate_entry, update_entry
 from wenyuan.title_full_retrieval import retrieve_titles_test
 from zhongsheng.recruit import (
     build_recruitment_markdown,
@@ -985,24 +984,6 @@ def check_wenju_recruitment_markdown() -> None:
         msg.warn(f"Skipped unresolved items: {skipped}")
 
 
-# ─── wenyuan ──────────────────────────────────────────────────────────────────
-
-
-def check_wenyuan_iso_create() -> None:
-    """code_manager: Create a new ISO 639-3 dataset entry."""
-    create_entry()
-
-
-def check_wenyuan_iso_update() -> None:
-    """code_manager: Update an existing ISO 639-3 dataset entry."""
-    update_entry()
-
-
-def check_wenyuan_iso_deprecate() -> None:
-    """code_manager: Remove an ISO 639-3 dataset entry."""
-    deprecate_entry()
-
-
 # ─── Menu runner ──────────────────────────────────────────────────────────────
 #
 # Two-level menu structure:
@@ -1016,30 +997,19 @@ SectionMap = dict[str, tuple[str, dict[str, tuple[str, SectionEntry]]]]
 
 SECTIONS: SectionMap = {
     "1": (
-        "code_manager",
-        {
-            "1": ("code_manager: create ISO 639-3 entry", check_wenyuan_iso_create),
-            "2": ("code_manager: update ISO 639-3 entry", check_wenyuan_iso_update),
-            "3": (
-                "code_manager: deprecate ISO 639-3 entry",
-                check_wenyuan_iso_deprecate,
-            ),
-        },
-    ),
-    "2": (
         "database",
         {
             "1": ("search", check_database_search),
             "2": ("initialize all", check_database_initialize),
         },
     ),
-    "3": (
+    "2": (
         "error",
         {
             "1": ("display event errors from log", check_error_display_event_errors),
         },
     ),
-    "4": (
+    "3": (
         "hermes",
         {
             "1": ("statistics (last 30 days)", check_hermes_statistics),
@@ -1047,7 +1017,7 @@ SECTIONS: SectionMap = {
             "3": ("manually parse title for matching", check_hermes_title),
         },
     ),
-    "5": (
+    "4": (
         "integrations",
         {
             "1": ("ai: image description", check_integrations_ai_image_description),
@@ -1058,14 +1028,14 @@ SECTIONS: SectionMap = {
             "3": ("search", check_integrations_search),
         },
     ),
-    "6": (
+    "5": (
         "lang",
         {
             "1": ("converter", check_lang_converter),
             "2": ("parse language list", check_lang_parse),
         },
     ),
-    "7": (
+    "6": (
         "models",
         {
             "1": ("ajo: from URL", check_models_ajo_url),
@@ -1077,14 +1047,14 @@ SECTIONS: SectionMap = {
             "7": ("kunulo: from URL", check_models_kunulo),
         },
     ),
-    "8": (
+    "7": (
         "monitoring",
         {
             "1": ("user points", check_monitoring_user),
             "2": ("post points", check_monitoring_post),
         },
     ),
-    "9": (
+    "8": (
         "reddit",
         {
             "1": ("connection: status check", check_reddit_status),
@@ -1096,7 +1066,7 @@ SECTIONS: SectionMap = {
             "7": ("wiki: most requested langs", check_reddit_wiki_most_requested),
         },
     ),
-    "10": (
+    "9": (
         "title",
         {
             "1": ("manual test", _timed_check(prepare_title_manual)),
@@ -1104,7 +1074,7 @@ SECTIONS: SectionMap = {
             "3": ("bulk retrieval test", check_title_full_retrieval),
         },
     ),
-    "11": (
+    "10": (
         "utility",
         {
             "1": ("calendar conversion", check_utility_calendar),
@@ -1112,7 +1082,7 @@ SECTIONS: SectionMap = {
             "3": ("youtube length", check_utility_youtube),
         },
     ),
-    "12": (
+    "11": (
         "wenju",
         {
             "1": ("iso_updates: fetch reports", check_wenju_fetch_iso_reports),
@@ -1138,7 +1108,7 @@ SECTIONS: SectionMap = {
             ),
         },
     ),
-    "13": (
+    "12": (
         "ziwen_lookup",
         {
             "1": ("ja: character", check_ziwen_lookup_ja_character),

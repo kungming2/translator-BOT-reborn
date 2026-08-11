@@ -44,9 +44,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🔄 CHANGE: Chinese CJK lookup now reads supplementary Southern Min and Hakka pronunciations from MoEDict's JSON endpoints instead of scraping MoEDict HTML pages.
 * 🔄 CHANGE: Korean dictionary lookups now translate KRDict's full set of part-of-speech categories into more accurate English labels, including bound nouns, auxiliary predicates, affixes, word endings, and uncategorized entries.
 * 🔄 CHANGE: Wenju's ISO 639-1 language of the day selection now uses a deterministic shuffled cycle, reducing quick repeats without requiring persistent selection state.
-* 🕯️ REMOVED: Wenju's daily `modqueue_assessor` task has been replaced by the [Modqueue Tools Devvit app](https://developers.reddit.com/apps/modqueue-tools).
-* 🕯️ REMOVED: Wenju's daily `archive_modmail` task has been replaced by the [Modmail Assistant Devvit app](https://developers.reddit.com/apps/modmailassistant).
-* 🕯️ REMOVED: Chinese Reference's scheduled auto-run has been replaced by the [CJK Lookup Devvit app](https://developers.reddit.com/apps/cjk-lookup) that I (u/kungming2) wrote. The legacy implementation remains in the repository but is inactive and will be removed at a future date.
+
 * 🛠️ BUG FIX: Fixed some over-eager matching of non-existent two-letter codes by [langcodes](github.com/rspeer/langcodes).
 * 🛠️ BUG FIX: The language converter now honors configured mistaken abbreviations such as `gr` for Greek and `vn` for Vietnamese before rejecting non-ISO two-letter codes. This had been accidentally dropped after the langcodes fix above.
 * 🛠️ BUG FIX: Wenju's ISO 639-3 newsletter parser now treats PDFs without extractable text as parse failures, avoiding misleading reports that no adopted change requests were found.
@@ -67,6 +65,11 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Wiktionary lookups now skip results without definitions instead of attempting to format empty entries or posting an empty reply.
 * 🛠️ BUG FIX: Japanese name-source HTTP failures now fall back cleanly to the remaining Japanese lookup sources instead of aborting the lookup.
 * 🛠️ BUG FIX: Wenyuan's recent-language Ajo table now links defined multiple-language entries with the original Reddit post ID instead of an internal language-suffixed analytics ID.
+* 🛠️ BUG FIX: Wenju's monthly maintenance now runs at 00:10 UTC with exclusive access to the primary Reddit client, allowing Ziwen to skip overlapping cycles; monthly wiki reads and edits also retry bounded HTTP 429 responses rather than aborting the statistics refresh and archival.
+* 🕯️ REMOVED: Wenju's daily `modqueue_assessor` task has been replaced by the [Modqueue Tools Devvit app](https://developers.reddit.com/apps/modqueue-tools).
+* 🕯️ REMOVED: Wenju's daily `archive_modmail` task has been replaced by the [Modmail Assistant Devvit app](https://developers.reddit.com/apps/modmailassistant).
+* 🕯️ REMOVED: The manual ISO 639-3 dataset code manager has been removed from `devtools.py`; adopted standards changes are now maintained directly in the dataset.
+* 🕯️ REMOVED: Chinese Reference's scheduled auto-run has been replaced by the [CJK Lookup Devvit app](https://developers.reddit.com/apps/cjk-lookup) that I (u/kungming2) wrote. The legacy implementation remains in the repository but is inactive and will be removed at a future date.
 
 
 ### translator-BOT 2.2 "The Hermes Update" (2026-03-12)

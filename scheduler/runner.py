@@ -72,9 +72,13 @@ log = logging.getLogger("scheduler")
 
 
 def run_script(
-    script: str, args: list[str] | None = None, lock_name: str | None = None
+    script: str,
+    args: list[str] | None = None,
+    lock_name: str | None = None,
+    coordination_lock_name: str | None = None,
+    wait_for_coordination_lock: bool = False,
 ) -> None:
-    """Run a bot script as a subprocess, with optional exclusive lock."""
+    """Run a bot script as a subprocess, with optional exclusive locks."""
     args = args or []
     name = lock_name or Path(script).stem
     log_file = LOG_DIR / f"{name}.log"
@@ -82,24 +86,44 @@ def run_script(
         JOB_TIMEOUTS.get(name), f"job_timeouts_seconds.{name}"
     )
 
+    def launch_process() -> None:
+        log.info(f"Starting {name} {' '.join(args)}")
+        with open(log_file, "a") as lf:
+            return_code = run_bounded_process(
+                [sys.executable, str(BOT_DIR / script)] + args,
+                lf,
+                timeout_seconds,
+                TERMINATION_GRACE_SECONDS,
+                name,
+                log,
+            )
+        if return_code is None:
+            return
+        if return_code != 0:
+            log.error(f"{name} exited with code {return_code}")
+        else:
+            log.info(f"Finished {name}")
+
     try:
         with script_lock(name):
-            log.info(f"Starting {name} {' '.join(args)}")
-            with open(log_file, "a") as lf:
-                return_code = run_bounded_process(
-                    [sys.executable, str(BOT_DIR / script)] + args,
-                    lf,
-                    timeout_seconds,
-                    TERMINATION_GRACE_SECONDS,
-                    name,
-                    log,
-                )
-            if return_code is None:
+            if coordination_lock_name is None:
+                launch_process()
                 return
-            if return_code != 0:
-                log.error(f"{name} exited with code {return_code}")
-            else:
-                log.info(f"Finished {name}")
+
+            if wait_for_coordination_lock:
+                log.info(
+                    f"Waiting for shared lock {coordination_lock_name} before {name}"
+                )
+            try:
+                with script_lock(
+                    coordination_lock_name,
+                    blocking=wait_for_coordination_lock,
+                ):
+                    launch_process()
+            except AlreadyRunningError:
+                log.warning(
+                    f"Skipping {name} — shared lock {coordination_lock_name} is busy"
+                )
     except AlreadyRunningError:
         log.warning(f"Skipping {name} — previous instance still running")
 
@@ -127,7 +151,11 @@ scheduler.add_job(
     "interval",
     minutes=3,
     id="ziwen",
-    kwargs={"script": "main_ziwen.py", "lock_name": "ziwen"},
+    kwargs={
+        "script": "main_ziwen.py",
+        "lock_name": "ziwen",
+        "coordination_lock_name": "reddit_primary",
+    },
     max_instances=1,  # belt-and-suspenders alongside flock
     coalesce=True,  # if missed runs pile up, only run once on recovery
     misfire_grace_time=60,
@@ -206,18 +234,20 @@ scheduler.add_job(
     misfire_grace_time=3600,
 )
 
-# Monthly — 10th at 00:01 UTC
+# Monthly — 10th at 00:10 UTC
 scheduler.add_job(
     run_script,
     "cron",
     day=10,
     hour=0,
-    minute=1,
+    minute=10,
     id="wenju_monthly",
     kwargs={
         "script": "main_wenju.py",
         "args": ["monthly"],
         "lock_name": "wenju_monthly",
+        "coordination_lock_name": "reddit_primary",
+        "wait_for_coordination_lock": True,
     },
     max_instances=1,
     coalesce=True,

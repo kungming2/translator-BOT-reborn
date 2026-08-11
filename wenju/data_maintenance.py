@@ -32,6 +32,7 @@ from integrations.discord_utils import send_discord_alert
 from lang.languages import converter, validate_lingvo_dataset
 from monitoring.points import points_worth_determiner
 from reddit.connection import REDDIT
+from reddit.retry import call_with_429_retry
 from reddit.wiki import fetch_most_requested_languages
 from time_handling import (
     get_current_month,
@@ -43,6 +44,14 @@ from wenju import WENJU_SETTINGS, task
 # ─── Module-level constants ───────────────────────────────────────────────────
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:DATA"})
+
+
+def _read_wiki_page_content(wiki_page: WikiPage) -> str:
+    """Read a wiki page with bounded HTTP 429 recovery."""
+    return call_with_429_retry(
+        lambda: wiki_page.content_md,
+        operation=f'Read wikipage "{wiki_page.name}"',
+    )
 
 
 # ─── Log & data trimming ──────────────────────────────────────────────────────
@@ -311,7 +320,7 @@ def _wikipage_statistics_parser(page_content: Union[str, "WikiPage"]) -> dict:
 
     if isinstance(page_content, str):
         page_content = cast(WikiPage, r.wiki[page_content.lower()])
-    page_body = page_content.content_md
+    page_body = _read_wiki_page_content(page_content)
 
     try:
         table_content = page_body.split("---|---", 1)[1]
@@ -413,17 +422,21 @@ def _statistics_list_updater(input_data: dict[str, list]) -> None:
                 f"* [{language}](https://www.reddit.com/r/translator/wiki/{page_name}) {wiki_link}"
             )
 
+    statistics_page = r.wiki["statistics"]
+    current_content = _read_wiki_page_content(statistics_page)
     new_content = (
-        r.wiki["statistics"]
-        .content_md.split("## Individual Language Statistics")[0]
-        .strip()
+        current_content.split("## Individual Language Statistics")[0].strip()
         + "\n\n## Individual Language Statistics\n\n"
         + "\n".join(total_data)
         + "\n\n"
     )
 
-    r.wiki["statistics"].edit(
-        content=new_content, reason="Updating the language statistics main table."
+    call_with_429_retry(
+        lambda: statistics_page.edit(
+            content=new_content,
+            reason="Updating the language statistics main table.",
+        ),
+        operation='Edit wikipage "statistics"',
     )
     logger.info("> Statistics table on the wiki updated.")
 
@@ -449,7 +462,7 @@ def refresh_language_statistics() -> None:
         if page.name in ignore_pages or "20" in page.name or "config" in page.name:
             continue
 
-        body = page.content_md
+        body = _read_wiki_page_content(page)
         if "%%statistics-x%%" in body:
             logger.info(f"Skipping deprecated language page {page.name}...")
             continue
@@ -602,7 +615,7 @@ def archive_identified_saved() -> None:
     splitter = "|-------"
 
     def archive_page(wiki_page: WikiPage, file_path: str, page_name: str) -> None:
-        content = wiki_page.content_md
+        content = _read_wiki_page_content(wiki_page)
         top, lines = content.rsplit(splitter, 1)
         top += splitter
 
@@ -610,8 +623,12 @@ def archive_identified_saved() -> None:
             with open(file_path, "a+", encoding="utf-8") as f:
                 f.write(lines.strip() + "\n")
 
-            wiki_page.edit(
-                content=top, reason=f"Archived tabular data for {get_current_month()}."
+            call_with_429_retry(
+                lambda: wiki_page.edit(
+                    content=top,
+                    reason=f"Archived tabular data for {get_current_month()}.",
+                ),
+                operation=f'Edit wikipage "{wiki_page.name}"',
             )
             logger.info(f"{page_name} page archived.")
 
