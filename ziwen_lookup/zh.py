@@ -1133,8 +1133,12 @@ async def _zh_word_fetch(word: str) -> str:
 
     async with httpx.AsyncClient(timeout=10) as client:
         # MDBG dictionary lookup
-        mdbg_url = f"https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=c:{word}"
-        response = await client.get(mdbg_url, headers=useragent)
+        mdbg_url = "https://www.mdbg.net/chinese/dictionary"
+        response = await client.get(
+            mdbg_url,
+            params={"page": "worddict", "wdrst": "0", "wdqb": f"c:{word}"},
+            headers=useragent,
+        )
         tree = html.fromstring(response.content)
         word_exists = str(
             tree.xpath('//p[contains(@class,"nonprintable")]/strong/text()')

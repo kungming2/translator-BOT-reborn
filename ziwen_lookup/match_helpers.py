@@ -31,7 +31,7 @@ from config import logger as _base_logger
 from integrations.http import get_random_useragent
 from lang.languages import converter
 from title.title_handling import extract_lingvos_from_text
-from ziwen_lookup import BACKTICK_LOOKUP_PATTERN
+from ziwen_lookup import BACKTICK_LOOKUP_PATTERN, normalize_lookup_term
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "L:MATCH"})
 
@@ -212,7 +212,12 @@ def lookup_matcher(
     inline_language_codes: list[str | None] = []
 
     for match_obj in backtick_matches:
-        text: str = match_obj.group(1)
+        raw_text: str = match_obj.group(1)
+        text = normalize_lookup_term(raw_text)
+        if text is None:
+            logger.warning(f"Rejected invalid lookup term: {raw_text!r}")
+            continue
+
         inline_lang: str | None = match_obj.group(2)
         matches.append(text)
 

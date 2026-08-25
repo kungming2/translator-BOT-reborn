@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """Focused handler tests for Ziwen command modules."""
 
+import asyncio
 import importlib.util
 import logging
 import sys
@@ -12,6 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Protocol
 from unittest.mock import MagicMock
+
+from ziwen_lookup import normalize_lookup_term
 
 
 class FakeNotFound(Exception):
@@ -361,7 +364,9 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
             convert_calendar_payload=MagicMock(return_value=date(2024, 2, 10)),
             format_calendar_query=MagicMock(side_effect=lambda payload: payload),
         ),
-        "ziwen_lookup": _make_stub_module("ziwen_lookup"),
+        "ziwen_lookup": _make_stub_module(
+            "ziwen_lookup", normalize_lookup_term=normalize_lookup_term
+        ),
         "ziwen_lookup.ja": _make_stub_module(
             "ziwen_lookup.ja",
             ja_character=MagicMock(return_value="ja character"),
@@ -626,6 +631,28 @@ def test_lookup_cjk_replies_with_lookup_result(monkeypatch) -> None:
 
     assert "lookup 成功" in replies[0]
     assert "[](#cjk_parent_cjk1)" in replies[0]
+
+
+def test_perform_cjk_lookups_rejects_control_characters(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_cjk")
+    looked_up: list[str] = []
+
+    async def fake_lookup(term: str) -> str:
+        looked_up.append(term)
+        return f"lookup {term}"
+
+    async def no_delay() -> None:
+        return None
+
+    monkeypatch.setattr(module, "_lookup_chinese_term", fake_lookup)
+    monkeypatch.setattr(module, "_rate_limit_delay", no_delay)
+
+    results = asyncio.run(
+        module.perform_cjk_lookups("Chinese", [" 歲月流逝 ", "bad\nterm"])
+    )
+
+    assert looked_up == ["歲月流逝"]
+    assert results == ["lookup 歲月流逝"]
 
 
 def test_lookup_wp_groups_terms_by_language_and_replies(monkeypatch) -> None:

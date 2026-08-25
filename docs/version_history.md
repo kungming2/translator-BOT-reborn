@@ -66,6 +66,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: Japanese name-source HTTP failures now fall back cleanly to the remaining Japanese lookup sources instead of aborting the lookup.
 * 🛠️ BUG FIX: Wenyuan's recent-language Ajo table now links defined multiple-language entries with the original Reddit post ID instead of an internal language-suffixed analytics ID.
 * 🛠️ BUG FIX: Wenju's monthly maintenance now runs at 00:10 UTC with exclusive access to the primary Reddit client, allowing Ziwen to skip overlapping cycles; monthly wiki reads and edits also retry bounded HTTP 429 responses rather than aborting the statistics refresh and archival.
+* 🛠️ BUG FIX: CJK lookups now reject control-character input and prevent unmatched backticks from pairing across lines, so malformed lookup syntax is skipped without aborting valid terms in the same comment; MDBG query parameters are also encoded safely.
 * 🕯️ REMOVED: Wenju's daily `modqueue_assessor` task has been replaced by the [Modqueue Tools Devvit app](https://developers.reddit.com/apps/modqueue-tools).
 * 🕯️ REMOVED: Wenju's daily `archive_modmail` task has been replaced by the [Modmail Assistant Devvit app](https://developers.reddit.com/apps/modmailassistant).
 * 🕯️ REMOVED: The manual ISO 639-3 dataset code manager has been removed from `devtools.py`; adopted standards changes are now maintained directly in the dataset.

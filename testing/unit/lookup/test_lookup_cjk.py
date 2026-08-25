@@ -525,6 +525,49 @@ class TestCjkLookupNormalization(unittest.TestCase):
         fetch.assert_called_once_with("晴")
 
 
+class TestZhWordMdbgRequest(unittest.TestCase):
+    """Tests for safe MDBG request construction."""
+
+    def test_mdbg_query_uses_encoded_params(self):
+        import ziwen_lookup.zh as zh
+
+        class FakeAsyncClient:
+            request = None
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_args):
+                return False
+
+            async def get(self, url, **kwargs):
+                self.request = (url, kwargs)
+                raise RuntimeError("stop after MDBG request")
+
+        client = FakeAsyncClient()
+
+        with (
+            patch("ziwen_lookup.zh.httpx.AsyncClient", return_value=client),
+            self.assertRaisesRegex(RuntimeError, "stop after MDBG request"),
+        ):
+            asyncio.run(zh._zh_word_fetch("歲月流逝"))
+
+        self.assertEqual(
+            client.request,
+            (
+                "https://www.mdbg.net/chinese/dictionary",
+                {
+                    "params": {
+                        "page": "worddict",
+                        "wdrst": "0",
+                        "wdqb": "c:歲月流逝",
+                    },
+                    "headers": zh.useragent,
+                },
+            ),
+        )
+
+
 # ---------------------------------------------------------------------------
 # TestKoTokenizer
 # ---------------------------------------------------------------------------
@@ -752,6 +795,25 @@ class TestLookupMatcher(unittest.TestCase):
             with self.subTest(text=text):
                 result = lookup_matcher(text, "ja")
                 self.assertEqual(result, {})
+
+    @_skip_on_error
+    def test_unmatched_backticks_do_not_form_cross_line_lookup(self):
+        """A stray closing backtick must not pair with one on a later line."""
+        text = (
+            r'"歲月流年\` "time is fleeting"' "\n\n"
+            r"Maybe a reference to the idiom \`歲月流逝\`"
+        )
+
+        result = lookup_matcher(text, "zh", disable_tokenization=True)
+
+        self.assertEqual(result, {"zh": [("歲月流逝", False)]})
+
+    @_skip_on_error
+    def test_control_characters_are_rejected(self):
+        """Lookup terms containing controls are discarded rather than altered."""
+        result = lookup_matcher("`歲月\t流逝`", "zh", disable_tokenization=True)
+
+        self.assertEqual(result, {})
 
     # --- Edge cases ---
 

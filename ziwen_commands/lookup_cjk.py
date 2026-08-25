@@ -21,6 +21,7 @@ from models.komando import Komando
 from models.kunulo import Kunulo
 from reddit.reddit_sender import reddit_edit, reddit_reply
 from responses import RESPONSE
+from ziwen_lookup import normalize_lookup_term
 from ziwen_lookup.ja import ja_character, ja_word
 from ziwen_lookup.ko import ko_word
 from ziwen_lookup.zh import zh_character, zh_word
@@ -98,7 +99,12 @@ async def perform_cjk_lookups(cjk_language: str, search_terms: list[str]) -> lis
     results: list[str] = []
     logger.info(f"Passing {search_terms} to the {cjk_language} lookup function...")
     for term in search_terms:
-        result = await lookup_func(term)
+        normalized_term = normalize_lookup_term(term)
+        if normalized_term is None:
+            logger.warning(f"Skipping invalid {cjk_language} lookup term: {term!r}")
+            continue
+
+        result = await lookup_func(normalized_term)
         if result:
             results.append(result)
         await _rate_limit_delay()
