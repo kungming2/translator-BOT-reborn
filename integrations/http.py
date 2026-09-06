@@ -7,6 +7,10 @@ from random_user_agent.user_agent import UserAgent
 
 DEFAULT_HTTP_TIMEOUT: tuple[int, int] = (5, 15)
 DISCORD_HTTP_TIMEOUT: tuple[int, int] = (5, 20)
+WIKIMEDIA_USER_AGENT = (
+    "translator-BOT/2.3 "
+    "(https://github.com/kungming2/translator-BOT-reborn; u/translator-BOT)"
+)
 
 
 def get_random_useragent() -> dict[str, str]:
@@ -25,4 +29,12 @@ def get_random_useragent() -> dict[str, str]:
             "text/html,application/json,application/xhtml+xml,"
             "application/xml;q=0.9,image/webp,*/*;q=0.8"
         ),
+    }
+
+
+def get_wikimedia_useragent() -> dict[str, str]:
+    """Return a stable, contactable User-Agent for Wikimedia API requests."""
+    return {
+        "User-Agent": WIKIMEDIA_USER_AGENT,
+        "Accept": "application/json",
     }

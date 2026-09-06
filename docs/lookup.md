@@ -61,6 +61,8 @@ Due to the not-fully-standardized nature of English Wiktionary content, lookup r
 
 The Wiktionary lookup uses the same backtick syntax as CJK lookup. Internally, Ziwen first runs the backtick text through the lookup matcher. Chinese, Japanese, and Korean terms are routed to `lookup_cjk`; all other recognized languages are routed to `lookup_wt`. The Wiktionary lookup will generally be conducted in the language of the post. That is, a lookup for `Sprache` on a German post will be automatically conducted for German. Appending a language tag like the CJK lookup text above will also work.
 
+Ziwen accepts at most five unique Wiktionary terms in one comment. If a comment contains more than five, the entire Wiktionary lookup bundle is ignored; this prevents large blocks of backtick-formatted prose from producing accidental API traffic.
+
 ```text
 `Wasser`               # Returns word data for Wasser ("water") on a German post
 `вода`:ru              # Returns word data for вода ("water") in Russian

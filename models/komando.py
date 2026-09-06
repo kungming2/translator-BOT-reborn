@@ -26,6 +26,9 @@ _LOOKUP_COMMANDS_WITH_PER_ITEM_STATS = frozenset(
     {"lookup_cjk", "lookup_wp", "lookup_wt"}
 )
 _STANDALONE_ONLY_COMMANDS = frozenset({"!nuke"})
+MAX_WIKTIONARY_LOOKUPS_PER_COMMENT = int(
+    SETTINGS.get("max_wiktionary_lookups_per_comment", 5)
+)
 
 
 # ─── Regex pattern builders ───────────────────────────────────────────────────
@@ -461,6 +464,18 @@ def extract_commands_from_text(
 
         # Deduplicate arguments
         deduped_args = _deduplicate_args(args)
+
+        if (
+            name == "lookup_wt"
+            and len(deduped_args) > MAX_WIKTIONARY_LOOKUPS_PER_COMMENT
+        ):
+            logger.info(
+                "Ignoring Wiktionary lookup bundle with %s unique terms; "
+                "the per-comment maximum is %s.",
+                len(deduped_args),
+                MAX_WIKTIONARY_LOOKUPS_PER_COMMENT,
+            )
+            continue
 
         if any(isinstance(arg, tuple) for arg in deduped_args):
             commands.append(

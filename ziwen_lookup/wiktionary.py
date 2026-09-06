@@ -12,7 +12,7 @@ import re
 import requests
 
 from config import SETTINGS
-from integrations.http import DEFAULT_HTTP_TIMEOUT, get_random_useragent
+from integrations.http import DEFAULT_HTTP_TIMEOUT, get_wikimedia_useragent
 from lang.languages import converter
 
 # ─── Wiktionary parser ────────────────────────────────────────────────────────
@@ -457,7 +457,7 @@ def wiktionary_search(search_term: str, language_name: str) -> dict | None:
 
     response = requests.get(
         api_url,
-        headers=get_random_useragent(),
+        headers=get_wikimedia_useragent(),
         params=params,
         timeout=DEFAULT_HTTP_TIMEOUT,
     )

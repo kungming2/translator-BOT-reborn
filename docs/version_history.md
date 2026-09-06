@@ -63,6 +63,7 @@ This page records the version history of the various routines of translator-BOT.
 * 🛠️ BUG FIX: The `!nuke` command now treats 404 responses while fetching a banned user's profile history as a partial cleanup case, so shadowbanned users can still be banned, have the targeted item removed, and notify the moderator without aborting the command.
 * 🛠️ BUG FIX: Hardened `!transform` image fetching against unsafe hosts, private-network redirects, oversized downloads, unsupported content types, and oversized decoded images.
 * 🛠️ BUG FIX: Wiktionary lookups now skip results without definitions instead of attempting to format empty entries or posting an empty reply.
+* 🛠️ BUG FIX: Wiktionary lookups now identify themselves to Wikimedia with a dedicated user agent, ignore comments containing more than five unique terms, and make one bounded retry after an HTTP 429 response before stopping the remaining lookup bundle.
 * 🛠️ BUG FIX: Japanese name-source HTTP failures now fall back cleanly to the remaining Japanese lookup sources instead of aborting the lookup.
 * 🛠️ BUG FIX: Wenyuan's recent-language Ajo table now links defined multiple-language entries with the original Reddit post ID instead of an internal language-suffixed analytics ID.
 * 🛠️ BUG FIX: Wenju's monthly maintenance now runs at 00:10 UTC with exclusive access to the primary Reddit client, allowing Ziwen to skip overlapping cycles; monthly wiki reads and edits also retry bounded HTTP 429 responses rather than aborting the statistics refresh and archival.

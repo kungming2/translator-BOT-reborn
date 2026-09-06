@@ -422,7 +422,7 @@ def format_lumo_stats_for_reddit(lumo: Lumo, month_year: str) -> str:
         content += "---|---\n"
 
         for pair, count in source_target_pairs:
-            content += f"{pair} | {count}\n"
+            content += f"{pair.replace(' -> ', ' → ')} | {count}\n"
 
         content += "\n"
 

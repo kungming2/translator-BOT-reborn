@@ -14,6 +14,9 @@ from types import SimpleNamespace
 from typing import Protocol
 from unittest.mock import MagicMock
 
+from requests import Response
+from requests.exceptions import HTTPError
+
 from ziwen_lookup import normalize_lookup_term
 
 
@@ -274,6 +277,7 @@ def _common_stubs(monkeypatch) -> dict[str, types.ModuleType]:
                 "internal_post_types": ["community", "meta"],
                 "max_gallery_images_transform": 5,
                 "max_page_languages": 10,
+                "max_wiktionary_lookups_per_comment": 5,
                 "subreddit": "translator",
                 "user_age_page": 7,
             },
@@ -691,6 +695,141 @@ def test_lookup_wt_uses_explicit_language_and_replies(monkeypatch) -> None:
 
     assert "WT kunulo EO" in replies[0]
     assert "[](#wt_parent_wt1)" in replies[0]
+
+
+def _wiktionary_http_error(
+    status_code: int, retry_after: str | None = None
+) -> HTTPError:
+    response = Response()
+    response.status_code = status_code
+    response.url = "https://en.wiktionary.org/w/api.php"
+    if retry_after is not None:
+        response.headers["Retry-After"] = retry_after
+    return HTTPError(response=response)
+
+
+def test_lookup_wt_defensively_rejects_more_than_five_terms(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    comment = FakeComment(comment_id="wt-limit")
+    terms = [("fr", f"term {index}", True) for index in range(6)]
+
+    module.handle(comment, None, FakeKomando(terms, "lookup_wt"), FakeAjo())
+
+    module.wiktionary_search.assert_not_called()
+    module.Kunulo.from_submission.assert_not_called()
+
+
+def test_lookup_wt_retries_one_429_using_retry_after(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    replies: list[str] = []
+    sleep = MagicMock()
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        wiktionary_search=MagicMock(
+            side_effect=[
+                _wiktionary_http_error(429, "2.5"),
+                {"word": "kunulo", "definition": ["companion"]},
+            ]
+        ),
+    )
+    monkeypatch.setattr(module.time, "sleep", sleep)
+
+    module.handle(
+        FakeComment(comment_id="wt-retry"),
+        None,
+        FakeKomando([("eo", "kunulo", True)], "lookup_wt"),
+        FakeAjo(),
+    )
+
+    assert module.wiktionary_search.call_count == 2
+    sleep.assert_called_once_with(2.5)
+    assert len(replies) == 1
+
+
+def test_lookup_wt_uses_only_one_429_retry_for_the_bundle(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    replies: list[str] = []
+    sleep = MagicMock()
+    _patch_module(
+        monkeypatch,
+        module,
+        reddit_reply=lambda _comment, body: replies.append(body),
+        wiktionary_search=MagicMock(
+            side_effect=[
+                _wiktionary_http_error(429, "1"),
+                {"word": "first", "definition": ["usable"]},
+                _wiktionary_http_error(429, "1"),
+            ]
+        ),
+    )
+    monkeypatch.setattr(module.time, "sleep", sleep)
+
+    module.handle(
+        FakeComment(comment_id="wt-budget"),
+        None,
+        FakeKomando(
+            [("fr", "first", True), ("fr", "second", True)],
+            "lookup_wt",
+        ),
+        FakeAjo(),
+    )
+
+    assert module.wiktionary_search.call_count == 3
+    sleep.assert_called_once_with(1.0)
+    assert len(replies) == 1
+    assert "WT first FR" in replies[0]
+    assert "WT second FR" not in replies[0]
+
+
+def test_lookup_wt_five_terms_with_one_retry_make_at_most_six_requests(
+    monkeypatch,
+) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    sleep = MagicMock()
+    successful_result = {"word": "term", "definition": ["usable"]}
+    module.wiktionary_search.side_effect = [
+        _wiktionary_http_error(429, "1"),
+        successful_result,
+        successful_result,
+        successful_result,
+        successful_result,
+        successful_result,
+    ]
+    monkeypatch.setattr(module.time, "sleep", sleep)
+    terms = [("fr", f"term {index}", True) for index in range(5)]
+
+    module.handle(
+        FakeComment(comment_id="wt-six-request-budget"),
+        None,
+        FakeKomando(terms, "lookup_wt"),
+        FakeAjo(),
+    )
+
+    assert module.wiktionary_search.call_count == 6
+    sleep.assert_called_once_with(1.0)
+
+
+def test_lookup_wt_does_not_retry_beyond_delay_budget(monkeypatch) -> None:
+    module = _load_command_module(monkeypatch, "lookup_wt")
+    _patch_kunulo(monkeypatch, module, FakeKunulo())
+    sleep = MagicMock()
+    module.wiktionary_search.side_effect = _wiktionary_http_error(429, "120")
+    monkeypatch.setattr(module.time, "sleep", sleep)
+
+    module.handle(
+        FakeComment(comment_id="wt-long-delay"),
+        None,
+        FakeKomando([("fr", "bonjour", True)], "lookup_wt"),
+        FakeAjo(),
+    )
+
+    module.wiktionary_search.assert_called_once_with("bonjour", "FR")
+    sleep.assert_not_called()
 
 
 def test_lookup_wt_skips_result_without_definitions(monkeypatch) -> None:

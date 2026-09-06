@@ -646,6 +646,14 @@ class TestWiktionarySearch:
         )
         assert params["titles"] == "schadenfreude"
         assert call_kwargs.kwargs["timeout"] == (5, 15)
+        assert call_kwargs.kwargs["headers"] == {
+            "User-Agent": (
+                "translator-BOT/2.3 "
+                "(https://github.com/kungming2/translator-BOT-reborn; "
+                "u/translator-BOT)"
+            ),
+            "Accept": "application/json",
+        }
 
     @patch("ziwen_lookup.wiktionary.requests.get")
     def test_language_name_normalized_via_converter(self, mock_get):

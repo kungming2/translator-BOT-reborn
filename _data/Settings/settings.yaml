@@ -251,6 +251,9 @@ transform_upload_timeout_seconds: 45
 
 # Maximum number of lines in a Wiktionary definition to keep
 max_num_definition_lines: 8
+# Maximum number of unique Wiktionary terms accepted from one comment. Larger
+# backtick bundles are treated as Markdown formatting and ignored in full.
+max_wiktionary_lookups_per_comment: 5
 
 # ─── Notification Settings ───---──────────────────────────────────────
 

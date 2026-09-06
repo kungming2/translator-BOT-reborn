@@ -250,6 +250,52 @@ class TestDeduplicateArgs(unittest.TestCase):
 class TestExtractCommandsFromText(unittest.TestCase):
     """Command extraction handles Reddit editor escaping."""
 
+    @_skip_if_no_data
+    def test_wiktionary_lookup_accepts_five_unique_terms(self) -> None:
+        text = " ".join(f"`term {index}`:fr" for index in range(5))
+
+        commands = extract_commands_from_text(text)
+
+        lookup = next(cmd for cmd in commands if cmd.name == "lookup_wt")
+        self.assertEqual(len(lookup.data), 5)
+
+    @_skip_if_no_data
+    def test_wiktionary_lookup_rejects_more_than_five_unique_terms(self) -> None:
+        text = " ".join(f"`term {index}`:fr" for index in range(6))
+
+        commands = extract_commands_from_text(text)
+
+        self.assertNotIn("lookup_wt", [cmd.name for cmd in commands])
+
+    @_skip_if_no_data
+    def test_oversized_wiktionary_lookup_preserves_other_commands(self) -> None:
+        lookups = " ".join(f"`term {index}`:fr" for index in range(6))
+
+        commands = extract_commands_from_text(f"!translated\n{lookups}")
+        names = [cmd.name for cmd in commands]
+
+        self.assertIn("translated", names)
+        self.assertNotIn("lookup_wt", names)
+
+    @_skip_if_no_data
+    def test_wiktionary_lookup_limit_is_applied_after_deduplication(self) -> None:
+        terms = ["one", "two", "three", "four", "five", "one"]
+        text = " ".join(f"`{term}`:fr" for term in terms)
+
+        commands = extract_commands_from_text(text)
+
+        lookup = next(cmd for cmd in commands if cmd.name == "lookup_wt")
+        self.assertEqual(
+            lookup.data,
+            [
+                ("fr", "one", True),
+                ("fr", "two", True),
+                ("fr", "three", True),
+                ("fr", "four", True),
+                ("fr", "five", True),
+            ],
+        )
+
     def test_calendar_command_keeps_raw_conversion_payload(self) -> None:
         commands = extract_commands_from_text("!calendar:hebrew:5784:Tishrei:1")
         calendar = next(cmd for cmd in commands if cmd.name == "calendar")
