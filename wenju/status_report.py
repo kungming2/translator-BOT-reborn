@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Generate scheduled Reddit status and database reports."""
+"""Generate scheduled deleted-post and notification-database reports."""
 
 import json
 import logging
@@ -12,82 +12,21 @@ from praw.models import Comment
 from config import SETTINGS, get_reports_directory
 from config import logger as _base_logger
 from database import db
-from integrations.discord_utils import send_discord_alert
 from lang.languages import converter, define_language_lists
 from models.ajo import Ajo
 from reddit.connection import (
     REDDIT,
-    reddit_status_check,
     submit_translatorbot_post,
 )
 from time_handling import (
     get_current_month,
     get_current_month_name,
     get_current_utc_date,
-    time_convert_to_utc,
 )
 from utility import format_markdown_table_with_padding
 from wenju import WENJU_SETTINGS, task
 
 logger = logging.LoggerAdapter(_base_logger, {"tag": "WJ:REPORT"})
-
-
-@task(schedule="hourly")
-def reddit_status_report() -> None:
-    """Call the Reddit Status API and alert Discord about active incidents."""
-    incidents = reddit_status_check()
-
-    if incidents is None:
-        logger.warning("Unable to reach Reddit Status API.")
-        return
-
-    if not incidents:
-        logger.debug("No Reddit Status incidents found.")
-        return
-
-    lines = ["### ⚠️ Active Reddit Incidents\n"]
-    for incident in incidents:
-        name = incident.get("name", "Unknown")
-        status = incident.get("status", "N/A")
-        impact = incident.get("impact", "unknown")
-        if impact.lower() == "minor":
-            logger.info(f"Skipping incident {name} (minor incident).")
-            continue
-        created = time_convert_to_utc(incident.get("created_at", "N/A"))
-        updated = time_convert_to_utc(incident.get("updated_at", "N/A"))
-        shortlink = incident.get("shortlink") or incident.get("shortlink_url") or ""
-
-        latest_update = None
-        updates = incident.get("incident_updates") or []
-        if updates:
-            latest_update = (
-                sorted(updates, key=lambda u: u.get("created_at", ""), reverse=True)[0]
-                .get("body", "")
-                .strip()
-            )
-
-        logger.info(
-            f"[Reddit Incident] {name} — {status.upper()} ({impact})\n"
-            f"Created: {created} | "
-            f"Updated: {updated}\n"
-            f"{('Latest update: ' + latest_update) if latest_update else 'No update text.'}\n"
-            f"Link: {shortlink or 'N/A'}"
-        )
-
-        title = f"**[{name}]({shortlink})**" if shortlink else f"**{name}**"
-
-        lines.append(
-            f"- {title}  \n"
-            f"  - **Status:** {status.title()} ({impact})  \n"
-            f"  - **Created:** [{created}](https://time.lol/#{created})  \n"
-            f"  - **Updated:** [{updated}](https://time.lol/#{updated})"
-        )
-
-    if len(lines) > 1:
-        alert_text = "\n".join(lines)
-        send_discord_alert("Reddit Status", alert_text, "reddit_status")
-
-    return
 
 
 @task(schedule="weekly")

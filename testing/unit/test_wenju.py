@@ -14,7 +14,6 @@ Modules covered:
     - data_maintenance.py: error_log_trimmer (logic), validate_data_files (path scanning)
     - moderator_reporting.py: moderator-report collectors and rule analysis
     - public_statistics.py: dashboard rendering and public-data allowlisting
-    - status_report.py   : reddit_status_report (incident formatting)
 """
 
 # Load the real config module directly by file path, bypassing any stub that
@@ -90,7 +89,6 @@ def _register_stubs() -> dict[str, types.ModuleType | None]:
             USERNAME="translator-BOT",
             create_mod_note=MagicMock(),
             get_random_useragent=MagicMock(return_value={}),
-            reddit_status_check=MagicMock(),
             submit_translatorbot_post=MagicMock(),
             widget_update=MagicMock(),
         ),

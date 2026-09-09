@@ -20,7 +20,7 @@ The task modules are organized by responsibility:
 * `moderator_reporting.py`: operational and rule-violation reports for moderators.
 * `public_statistics.py`: the generated public statistics dashboard.
 * `sidebar_updates.py`: Old and New Reddit sidebar content.
-* `status_report.py`: Reddit status and database reports.
+* `status_report.py`: Deleted-post and notification-database reports.
 * `subreddit_maintenance.py`: subreddit wiki, flair, and sticky maintenance.
 
 Each task runs independently inside the selected schedule. If one task fails, Wenju logs the exception, writes an error entry, and continues with the remaining tasks. Weekly and monthly schedules send a Discord alert listing successfully executed tasks; hourly and daily schedules do not.
@@ -29,7 +29,6 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 * `monitor_controversial_comments()`: Checks r/translator for heavily downvoted comments and alerts moderators to them. 
 * `generate_public_statistics()`: Refreshes the isolated public `index.html` statistics snapshot from the `public_stats.html` template. It includes a current-versus-previous 30-day comparison and a 30-day daily request-volume chart. This is the sole generated statistics dashboard and does not send a Discord alert.
-* `reddit_status_report()`: Checks the [Reddit Status API](https://www.redditstatus.com/) for any issues. Alerts the Discord if there are any current incidents recorded. 
 * `update_sidebar_statistics()`: Updates the r/translator sidebar with the latest statistics from the past 24 hours. It edits the sidebar "wikipage" on Old Reddit and edits a widget on New Reddit.
 
 ## Daily Functions
