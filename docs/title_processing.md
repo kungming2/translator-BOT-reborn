@@ -9,6 +9,13 @@ This document covers the logic Ziwen uses when it parses incoming posts to r/tra
 For transparency about the AI fallback used when rule-based title parsing cannot
 identify a language, see [AI Usage](./ai_usage.md).
 
+When English is a recognized target but the source remains unresolved, Ziwen
+sends the original title to AI, even if other target languages were recognized.
+Both returned language codes must resolve and produce usable flair. If the AI
+request fails, confidence is insufficient, or its result is unusable, Ziwen
+assigns Generic, suppresses translator notifications, and reports the failure
+to moderators on Discord.
+
 ## Single-Language Posts
 
 Ziwen independently determines the right source and target languages from post titles. r/translator encourages people to follow the [proper formatting guidelines](https://www.reddit.com/r/translator/wiki/request-guidelines#wiki_how_should_i_submit_requests_for_translations.3F), especially the inclusion of `>` in the title. However, it's okay for someone to submit a title like `[English to Dutch] Text Paragraph`, even if it doesn't have the `>`, as Ziwen is intentionally written to be tolerant of bad formatting in post titles and to account for as many variations as possible.

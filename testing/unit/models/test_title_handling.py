@@ -668,30 +668,30 @@ class TestProcessTitleAIFallback(unittest.TestCase):
     @_skip_if_no_data
     @patch("title.title_handling.title_ai_parser")
     @patch("title.title_ai.send_discord_alert")
-    def test_unresolved_source_with_english_target_uses_generic_report(
+    def test_unresolved_source_with_alternative_targets_tries_ai_before_generic(
         self,
         mock_alert: MagicMock,
         mock_ai_parser: MagicMock,
     ) -> None:
         raw_title = (
-            "[Purépecha>Spanish,English, or German] "
-            "Vestido de Oro by La Deuda Jejéa"
+            "[Purépecha>Spanish,English, or German] Vestido de Oro by La Deuda Jejéa"
         )
         post = MagicMock()
         post.title = raw_title
         post.id = "1uvhcjj"
         post.permalink = "/r/translator/comments/1uvhcjj/example/"
 
+        mock_ai_parser.return_value = ("error", "Confidence value too low")
         result = process_title(raw_title, post=post)
 
         self.assertEqual(result.final_code, "generic")
         self.assertEqual(result.final_text, "Generic")
         self.assertEqual(result.notify_languages, [])
-        mock_ai_parser.assert_not_called()
+        mock_ai_parser.assert_called_once_with(raw_title, post)
         mock_alert.assert_called_once()
         self.assertEqual(
             mock_alert.call_args.args[0],
-            "Unable to Parse Title; No Language Assigned",
+            "AI Unable to Parse Title; No Language Assigned",
         )
         self.assertEqual(mock_alert.call_args.args[2], "report")
 
@@ -760,7 +760,104 @@ class TestProcessTitleAIFallback(unittest.TestCase):
         self.assertEqual(result.final_code, "generic")
         self.assertEqual(result.final_text, "Generic")
         mock_alert.assert_called_once()
-        self.assertIn("**Generic** (`generic`)", mock_alert.call_args.args[1])
+        self.assertEqual(
+            mock_alert.call_args.args[0],
+            "AI Unable to Parse Title; No Language Assigned",
+        )
+        self.assertFalse(result.ai_assessed)
+
+    @_skip_if_no_data
+    @patch("title.title_handling.title_ai_parser")
+    @patch("title.title_ai.send_discord_alert")
+    def test_sanskrit_title_recovers_through_ai(
+        self, mock_alert: MagicMock, mock_ai_parser: MagicMock
+    ) -> None:
+        raw_title = "Sanskrit > English [What does my shirt say?]"
+        post = MagicMock(title=raw_title, id="1wb417h", permalink="/example/")
+        mock_ai_parser.return_value = {
+            "source_language": {"code": "sa", "name": "Sanskrit"},
+            "target_language": {"code": "en", "name": "English"},
+            "confidence": 0.99,
+        }
+        result = process_title(post)
+        mock_ai_parser.assert_called_once_with(raw_title, post)
+        self.assertEqual(result.final_code, "sa")
+        self.assertEqual(_names(result.source), ["Sanskrit"])
+        self.assertEqual(_names(result.target), ["English"])
+        self.assertEqual(_names(result.notify_languages), ["Sanskrit"])
+        self.assertTrue(result.ai_assessed)
+        mock_alert.assert_called_once()
+        self.assertEqual(
+            mock_alert.call_args.args[0],
+            "AI Parsed Title and Assigned Language to Post",
+        )
+
+    @_skip_if_no_data
+    @patch("title.title_handling.title_ai_parser")
+    @patch("title.title_ai.send_discord_alert")
+    def test_invalid_ai_source_cannot_route_using_existing_targets(
+        self, mock_alert: MagicMock, mock_ai_parser: MagicMock
+    ) -> None:
+        raw_title = "[Purépecha>Spanish,English, or German] test"
+        post = MagicMock(title=raw_title, id="test", permalink="/example/")
+        for source in (None, {}, {"code": "morse"}, {"code": "generic"}, {"code": []}):
+            with self.subTest(source=source):
+                mock_alert.reset_mock()
+                mock_ai_parser.return_value = {
+                    "source_language": source,
+                    "target_language": {"code": "en"},
+                    "confidence": 0.99,
+                }
+                result = process_title(post)
+                self.assertEqual(result.final_code, "generic")
+                self.assertEqual(result.notify_languages, [])
+                self.assertFalse(result.ai_assessed)
+                mock_alert.assert_called_once()
+                self.assertEqual(
+                    mock_alert.call_args.args[0],
+                    "AI Unable to Parse Title; No Language Assigned",
+                )
+
+    @_skip_if_no_data
+    @patch("title.title_ai.ai_query")
+    @patch("title.title_ai.send_discord_alert")
+    def test_failed_ai_responses_use_generic_without_notifications(
+        self, mock_alert: MagicMock, mock_query: MagicMock
+    ) -> None:
+        raw_title = "Sanskrit > English [What does my shirt say?]"
+        post = MagicMock(title=raw_title, id="test", permalink="/example/")
+        post.post_hint = "self"
+        post.is_gallery = False
+        for response in (
+            None,
+            "invalid json",
+            "[]",
+            "null",
+            '{"confidence": 0.2}',
+            '{"confidence": "high"}',
+            '{"confidence": NaN}',
+            '{"confidence": true}',
+            '{"confidence": 0.99, "source_language": {"code": "sa"}}',
+        ):
+            with self.subTest(response=response):
+                mock_alert.reset_mock()
+                mock_query.return_value = response
+                result = process_title(post)
+                self.assertTrue(
+                    mock_query.call_args.kwargs["query"].endswith(raw_title)
+                )
+                self.assertEqual(result.final_code, "generic")
+                self.assertEqual(result.notify_languages, [])
+                self.assertFalse(result.ai_assessed)
+                mock_alert.assert_called_once()
+                self.assertEqual(
+                    mock_alert.call_args.args[0],
+                    "AI Unable to Parse Title; No Language Assigned",
+                )
+
+        mock_alert.reset_mock()
+        process_title(post, discord_notify=False)
+        mock_alert.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

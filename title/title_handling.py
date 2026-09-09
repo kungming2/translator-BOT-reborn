@@ -10,7 +10,7 @@ the Titolo class, which carries all parsed results downstream.
 
 The AI fallback path (for titles that defeat the rule-based parser) lives in
 title/title_ai.py and is called from process_title when no non-English
-language can be resolved.
+language can be resolved or an English target has an unresolved source.
 
 Key components:
     process_title        -- Main entry point: title string or PRAW submission → Titolo.
@@ -40,7 +40,6 @@ from lang.languages import converter, define_language_lists
 from models.lingvo import Lingvo
 from models.titolo import Titolo
 from title.title_ai import (
-    assign_generic_and_report,
     title_ai_parser,
     update_titolo_from_ai_result,
 )
@@ -1047,18 +1046,11 @@ def process_title(
     # When English is one of the requested targets, the source language drives
     # flair and subscriber routing. Recognized alternative targets must not make
     # an unresolved source look like a successfully parsed defined multiple.
-    if (
-        source_chunk.strip()
-        and target_has_english
-        and not source_has_english
-        and not source_has_non_english
-    ):
-        reason = "The source-language label could not be resolved."
-        logger.warning(f"{reason} Title: {title!r}")
-        assign_generic_and_report(result, post, discord_notify, reason)
-        return result
+    unresolved_source = (
+        target_has_english and not source_has_english and not source_has_non_english
+    )
 
-    # AI fallback: triggered when no non-English language was resolved
+    # AI also handles unresolved sources even if alternative targets resolved.
     combined_languages = [
         x
         for x in (result.source or []) + (result.target or [])
@@ -1069,7 +1061,7 @@ def process_title(
         + str([x.preferred_code for x in combined_languages])
     )
 
-    if not combined_languages:
+    if unresolved_source or not combined_languages:
         logger.info(f"> Could not make sense of title ({title!r}). Asking AI...")
         ai_result = title_ai_parser(title, post)
         if not isinstance(ai_result, dict):

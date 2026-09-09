@@ -9,8 +9,8 @@ post title. It calls an external AI service (OpenAI) to assess the title,
 optionally using an attached image for additional context, and writes the
 result back into a Titolo object.
 
-It also owns the Discord report used when rule-based parsing can recognize
-targets but cannot resolve the source language that should drive routing.
+It also handles unresolved sources when rule-based parsing recognizes English
+among the targets, reporting Generic only if AI recovery fails.
 
 It also provides format_title_correction_comment, which constructs a Reddit
 comment suggesting a reformatted title when a post fails the filter.
@@ -34,6 +34,7 @@ from __future__ import annotations
 # ─── Imports ──────────────────────────────────────────────────────────────────
 import json
 import logging
+import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -119,8 +120,16 @@ def title_ai_parser(
         logger.error(f"Failed to parse query data: `{query_data}`")
         return "error", "Service returned invalid JSON"
 
-    confidence: float = query_dict.get("confidence", 0.0)
-    if confidence < 0.7:
+    if not isinstance(query_dict, dict):
+        return "error", "Service returned a non-object JSON result"
+
+    confidence = query_dict.get("confidence", 0.0)
+    if (
+        isinstance(confidence, bool)
+        or not isinstance(confidence, (int, float))
+        or not math.isfinite(confidence)
+        or not 0.7 <= confidence <= 1.0
+    ):
         logger.warning("AI confidence value too low for title.")
         return "error", "Confidence value too low"
 
@@ -178,18 +187,19 @@ def assign_generic_and_report(
     post: Submission | None,
     discord_notify: bool,
     reason: str,
+    subject: str = "Unable to Parse Title; No Language Assigned",
 ) -> None:
     """Assign generic routing and report a title that needs identification."""
     result.final_code = "generic"
     result.final_text = "Generic"
     result.notify_languages = []
+    result.ai_assessed = False
 
     if post:
         logger.info(
             f"Generic title routing applied to '{post.title}' | `{post.id}`: {reason}"
         )
         if discord_notify:
-            subject = "Unable to Parse Title; No Language Assigned"
             message = (
                 f"{reason} Assigned a generic category. Please check and assign "
                 f"[this post](https://www.reddit.com{post.permalink}) an accurate "
@@ -233,23 +243,36 @@ def update_titolo_from_ai_result(
         determine_direction_fn: _determine_title_direction from title_handling.
         get_notification_languages_fn: _get_notification_languages from title_handling.
     """
+    # Validate both sides before replacing any rule-based results. Otherwise an
+    # invalid source can leave recognized targets looking like a successful parse.
+    source_language = target_language = None
     if isinstance(ai_result, dict):
         try:
-            src: dict[str, Any] | None = ai_result.get("source_language")
-            tgt: dict[str, Any] | None = ai_result.get("target_language")
+            src = ai_result.get("source_language")
+            tgt = ai_result.get("target_language")
+            if isinstance(src, dict) and isinstance(src.get("code"), str):
+                source_language = converter(src["code"])
+            if isinstance(tgt, dict) and isinstance(tgt.get("code"), str):
+                target_language = converter(tgt["code"])
+            if any(
+                language is None or language.preferred_code == "generic"
+                for language in (source_language, target_language)
+            ):
+                ai_result = (
+                    "error",
+                    "AI returned an unresolved source or target language",
+                )
+        except Exception as exc:
+            ai_result = ("error", f"Invalid AI language result: {exc}")
 
-            if src and "code" in src:
-                _src_lingvo = converter(src["code"])
-                if _src_lingvo is not None:
-                    result.source = [_src_lingvo]
-            if tgt and "code" in tgt:
-                _tgt_lingvo = converter(tgt["code"])
-                if _tgt_lingvo is not None:
-                    result.target = [_tgt_lingvo]
+    if isinstance(ai_result, dict):
+        try:
+            assert source_language is not None and target_language is not None
+            result.source = [source_language]
+            result.target = [target_language]
 
             result.direction = determine_direction_fn(result.source, result.target)
             result.notify_languages = get_notification_languages_fn(result) or []
-            result.ai_assessed = True
 
             logger.info(
                 f"AI updated source: {result.source}, target: {result.target}, "
@@ -257,18 +280,22 @@ def update_titolo_from_ai_result(
             )
 
             determine_flair_fn(result)
-            if result.final_code is None or result.final_text is None:
-                logger.warning(
-                    "AI result did not produce a usable flair; assigning generic."
-                )
-                result.final_code = "generic"
-                result.final_text = "Generic"
+            if result.final_code in {None, "generic"} or not result.final_text:
+                raise ValueError("AI result did not produce a usable flair")
+            result.ai_assessed = True
             logger.info(
                 f"AI determined flair: {result.final_code=}; {result.final_text=}"
             )
 
         except Exception as e:
             logger.error(f"Failed to update Titolo from AI result: {e}")
+            assign_generic_and_report(
+                result,
+                post,
+                discord_notify,
+                "AI result did not produce usable language routing.",
+                subject="AI Unable to Parse Title; No Language Assigned",
+            )
             return
 
         if post:
@@ -293,8 +320,11 @@ def update_titolo_from_ai_result(
 
     else:
         # AI parsing failed — assign generic flair
+        logger.warning(f"AI title recovery failed: {ai_result[1]}")
         result.final_code = "generic"
         result.final_text = "Generic"
+        result.notify_languages = []
+        result.ai_assessed = False
 
         if post:
             updating_subject = "AI Unable to Parse Title; No Language Assigned"
