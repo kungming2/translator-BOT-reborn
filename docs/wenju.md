@@ -53,7 +53,7 @@ Each task runs independently inside the selected schedule. If one task fails, We
 
 * `archive_identified_saved()`: Archives the wikipages of '[identified](https://www.reddit.com/r/translator/wiki/identified)' and '[saved](https://www.reddit.com/r/translator/wiki/saved)' to local Markdown files to prevent the wikipages from getting too large.
 * `monthly_rule_violation_report()`: Analyzes the past 30 days of moderation comments to tally rule violations by type, then sends a summary report via Discord.
-* `monthly_hermes_statistics_post()`: Posts the previous full calendar month's Hermes statistics to r/translatorBOT. If the post already exists for that month, the task skips posting.
+* `monthly_hermes_statistics_post()`: Posts the previous full calendar month's [Hermes statistics](./hermes.md#statistics) to r/translatorBOT, combining offered and sought languages in a table sorted by language name, with separate counts and percentages and Wikipedia links. If the post already exists for that month, the task skips posting.
 * `monthly_statistics_unpinner()`: Simple routine that unpins the monthly statistics sticky if it's still up when the timing runs. 
 * `notify_db_statistics_calculator()`: Gathers statistics on the state of the notifications database, including how many people are signed up for which languages. This also produces a local Markdown report.
 * `post_iso_reports_to_reddit()`: Takes new ISO 639-3 reports and ISO 15924 update batches from `fetch_iso_reports()`, posts them to r/translatorBOT, and alerts moderators on Discord.

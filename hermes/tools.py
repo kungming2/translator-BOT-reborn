@@ -110,29 +110,40 @@ def format_statistics_for_reddit(stats: HermesStatistics) -> str:
     ]
 
     header = (
-        "| Language | Code | Count | Percentage |\n"
-        "|----------|------|-------|------------|\n"
+        "| Language | Code | Offered | Offered % | Sought | Sought % | Wikipedia Link |\n"
+        "|----------|------|--------:|----------:|-------:|---------:|----------------|\n"
     )
-    row_fmt = "| {name} | `{code}` | {count:,} | {pct:.2%} |"
-
-    for counts, label in [
-        (stats.offered_counts, "Offered"),
-        (stats.sought_counts, "Sought"),
-    ]:
-        total = sum(counts.values())
-        table_lines: list[str] = []
-        for code in sorted(counts):
-            count = counts[code]
-            lingvo = converter(code)
-            name = lingvo.name if lingvo else code
-            percentage = count / total if total else 0
-            table_lines.append(
-                row_fmt.format(name=name, code=code, count=count, pct=percentage)
-            )
-        if not table_lines:
-            table_lines.append("| None | `-` | 0 | 0.00% |")
-        lines.append(f"## {label}\n{header}" + "\n".join(table_lines))
-        lines.append("")
+    offered_total = sum(stats.offered_counts.values())
+    sought_total = sum(stats.sought_counts.values())
+    table_lines: list[str] = []
+    languages = []
+    for code in stats.offered_counts.keys() | stats.sought_counts.keys():
+        lingvo = converter(code)
+        name = lingvo.name if lingvo else code
+        wiki_code = lingvo.preferred_code if lingvo else code
+        languages.append((name, code, wiki_code))
+    for name, code, wiki_code in sorted(
+        languages, key=lambda language: (language[0].casefold(), language[1])
+    ):
+        offered = stats.offered_counts[code]
+        sought = stats.sought_counts[code]
+        offered_pct = offered / offered_total if offered_total else 0
+        sought_pct = sought / sought_total if sought_total else 0
+        wp_link = f"[WP](https://en.wikipedia.org/wiki/ISO_639:{wiki_code})"
+        table_lines.append(
+            f"| {name} | `{code}` | {offered:,} | {offered_pct:.2%} | "
+            f"{sought:,} | {sought_pct:.2%} | {wp_link} |"
+        )
+    if not table_lines:
+        table_lines.append("| None | `-` | 0 | 0.00% | 0 | 0.00% | — |")
+    lines.append("## Languages Exchanged\n" + header + "\n".join(table_lines))
+    lines.extend(
+        [
+            "",
+            "Percentages are calculated separately from total offered and total "
+            "sought language mentions.",
+        ]
+    )
 
     return "\n".join(lines).strip()
 

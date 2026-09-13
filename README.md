@@ -21,7 +21,7 @@ The main r/translator routines share the same repository and data model:
 | Wenyuan      | Gathers statistics and makes monthly posts on the state of the community.             |
 | Zhongsheng   | Responds to commands on Discord; mostly for inquiry into the state of bot operations. |
 
-The repository also contains related routines for [r/language_exchange](https://www.reddit.com/r/language_exchange/) and Chinese-language reference lookups. See the documentation index for the full list.
+The repository also contains related routines for [r/language_exchange](https://www.reddit.com/r/language_exchange/) and Chinese-language reference lookups. See the documentation index for the full list. [Hermes monthly statistics](docs/hermes.md#statistics) combine offered and sought languages in one table sorted by language name, with separate counts and percentages and Wikipedia links.
 
 ## Documentation
 

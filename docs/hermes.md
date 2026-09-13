@@ -36,6 +36,19 @@ In making matches, Hermes ranks users in its database in a table by a relevance 
 
 These points are *cumulative*, so if the OP and a matched user match in more than one language, that user will then be ranked higher in the results. If there are multiple individuals with the same relevance score, the bot will randomly select up to seven users with that score.
 
+## Statistics
+
+Wenju posts Hermes statistics for the previous full calendar month (UTC) to r/translatorBOT. The report summarizes active database entries dated within that month and includes the number of posts and the unique offered and sought language counts.
+
+Offered and sought languages share one table, sorted alphabetically by language name, with these columns:
+
+| Language | Code | Offered | Offered % | Sought | Sought % | Wikipedia Link |
+|----------|------|---------|-----------|--------|----------|----------------|
+
+Each language present in either category appears once. If it occurs in only one category, the other category shows `0` and `0.00%`. Percentages use the total language mentions in each category separately, rather than the number of posts. Wikipedia links use the same `[WP]` label and `ISO_639:<preferred code>` URL format as Wenyuan reports.
+
+The DevTools `hermes > statistics (last 30 days)` view uses the same table format for its rolling 30-day window.
+
 ## Notes
 
 * Hermes runs every thirty minutes.
